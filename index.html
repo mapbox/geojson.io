@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="leaflet/leaflet.css" />
+  <!--[if lte IE 8]>
+      <link rel="stylesheet" href="leaflet/leaflet.ie.css" />
+  <![endif]-->
+  <script src="leaflet/leaflet.js"></script>
+  <script src='draw/leaflet.draw.js'></script>
+  <link href='draw/leaflet.draw.css' rel='stylesheet' />
+  <style>
+    body { margin:0; padding:0; }
+    #map { position:absolute; top:0; bottom:0; left:0; right:30%; }
+    #geojson {
+        position:absolute;
+        bottom:0;
+        top:0;
+        right:0;
+        width:30%;
+        font-family:monospace;
+        box-sizing:border-box;
+        padding:10px;
+        font-size:14px;
+    }
+    #load {
+        position:absolute;
+        width:30%;
+        bottom:0;
+        right:0;
+        padding:10px;
+    }
+  </style>
+</head>
+<body>
+<div id='map'></div>
+<textarea id='geojson'></textarea>
+<button id='load'>load</button>
+<script type='text/javascript'>
+var map = L.map('map').setView([0, 0], 3).addLayer(L.tileLayer('http://a.tiles.mapbox.com/v3/tmcw.map-7s15q36b/{z}/{x}/{y}.png'));
+
+// Initialize the FeatureGroup to store editable layers
+var drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+// Initialize the draw control and pass it the FeatureGroup of editable layers
+var drawControl = new L.Control.Draw({
+    edit: { featureGroup: drawnItems }
+});
+
+map.addControl(drawControl);
+
+map.on('draw:created', function(e) {
+    drawnItems.addLayer(e.layer);
+});
+
+document.getElementById('load').onclick = function() {
+    drawnItems.clearLayers();
+    L.geoJson(JSON.parse(document.getElementById('geojson').value)).eachLayer(function(l) {
+        l.addTo(drawnItems);
+    });
+};
+
+function updateG() {
+    var features = [];
+    drawnItems.eachLayer(function(l) {
+        if ('toGeoJSON' in l) features.push({
+            type: 'Feature',
+            geometry: l.toGeoJSON()
+        });
+    });
+    var gj = {
+        type: 'FeatureCollection',
+        features: features
+    };
+    document.getElementById('geojson').value = JSON.stringify(gj, null, 2);
+}
+
+map.on('draw:created', updateG);
+map.on('draw:edited', updateG);
+
+</script>
+</body>
+</html>
