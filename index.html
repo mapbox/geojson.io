@@ -42,6 +42,8 @@ var map = L.map('map').setView([0, 0], 3).addLayer(L.tileLayer('http://a.tiles.m
 var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
+map.attributionControl.setPrefix('').addAttribution('<a href="http://mapbox.com/about/maps" target="_blank">Terms &amp; Feedback</a>');
+
 // Initialize the draw control and pass it the FeatureGroup of editable layers
 var drawControl = new L.Control.Draw({
     edit: { featureGroup: drawnItems }
