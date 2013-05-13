@@ -9,12 +9,26 @@
   <script src='draw/leaflet.draw.js'></script>
   <link href='draw/leaflet.draw.css' rel='stylesheet' />
   <style>
-    body { margin:0; padding:0; }
-    #map { position:absolute; top:0; bottom:0; left:0; right:30%; }
+    body {
+        margin:0; padding:0;
+        font-family:sans-serif;
+    }
+    #head { position:absolute; top:0; bottom:0; left:0; right:0; height:100px;
+        padding:0 20px;
+        box-sizing:border-box;
+    }
+    p {
+        line-height:150%;
+        color:#555;
+    }
+    a {
+        color:darkblue;
+    }
+    #map { position:absolute; top:100px; bottom:0; left:0; right:30%; }
     #geojson {
         position:absolute;
         bottom:0;
-        top:0;
+        top:100px;
         right:0;
         width:30%;
         font-family:monospace;
@@ -32,6 +46,17 @@
   </style>
 </head>
 <body>
+<div id='head'>
+<p>
+<strong>Edit GeoJSON</strong> /
+Use the tools on the left to author GeoJSON shapes, and then copy it from the
+right. This uses <a href='https://github.com/Leaflet/Leaflet.draw'>Leaflet.draw</a>.
+<br />
+Just want to convert data into GeoJSON? Use
+<a href='http://macwright.org/csv2geojson'>csv2geojson</a>,
+<a href='http://macwright.org/togeojson'>toGeoJSON (for KML and GPX)</a> or
+<a href='http://www.gdal.org/ogr2ogr.html'>ogr2ogr</a>,
+</div>
 <div id='map'></div>
 <textarea id='geojson'></textarea>
 <button id='load'>load</button>
@@ -80,6 +105,19 @@ function updateG() {
 map.on('draw:created', updateG);
 map.on('draw:edited', updateG);
 
+</script>
+<script type="text/javascript">
+  var _gauges = _gauges || [];
+  (function() {
+    var t   = document.createElement('script');
+    t.type  = 'text/javascript';
+    t.async = true;
+    t.id    = 'gauges-tracker';
+    t.setAttribute('data-site-id', '4e36eb1ef5a1f53d6f000001');
+    t.src = '//secure.gaug.es/track.js';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(t, s);
+  })();
 </script>
 </body>
 </html>
