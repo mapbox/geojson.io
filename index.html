@@ -1,115 +1,34 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="leaflet/leaflet.css" />
+  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />
   <!--[if lte IE 8]>
-      <link rel="stylesheet" href="leaflet/leaflet.ie.css" />
+    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' />
   <![endif]-->
-  <title>Edit and Create GeoJSON</title>
-  <script src="leaflet/leaflet.js"></script>
-  <script src='draw/leaflet.draw.js'></script>
-  <link href='draw/leaflet.draw.css' rel='stylesheet' />
-  <style>
-    body {
-        margin:0; padding:0;
-        font-family:sans-serif;
-    }
-    #head { position:absolute; top:0; bottom:0; left:0; right:0; height:100px;
-        padding:0 20px;
-        box-sizing:border-box;
-    }
-    p {
-        line-height:150%;
-        color:#555;
-    }
-    a {
-        color:darkblue;
-    }
-    #map { position:absolute; top:100px; bottom:0; left:0; right:30%; }
-    #geojson {
-        position:absolute;
-        bottom:0;
-        top:100px;
-        right:0;
-        width:30%;
-        font-family:monospace;
-        box-sizing:border-box;
-        padding:10px;
-        font-size:14px;
-    }
-    #load {
-        position:absolute;
-        width:30%;
-        bottom:0;
-        right:0;
-        padding:10px;
-    }
-  </style>
+  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>
+  <title>Edit GeoJSON</title>
+  <link href='lib/draw/leaflet.draw.css' rel='stylesheet' />
+  <script src='lib/draw/leaflet.draw.js'></script>
+  <script src='lib/codemirror/lib/codemirror.js'></script>
+  <script src='lib/codemirror/mode/javascript/javascript.js'></script>
+  <link href='lib/codemirror/lib/codemirror.css' rel='stylesheet' />
+  <link href='css/site.css' rel='stylesheet' />
 </head>
 <body>
-<div id='head'>
-<p>
-<strong>Edit GeoJSON</strong> /
-Use the tools on the left to author GeoJSON shapes, and then copy it from the
-right. This uses <a href='https://github.com/Leaflet/Leaflet.draw'>Leaflet.draw</a>.
-<br />
-Just want to convert data into GeoJSON? Use
-<a href='http://macwright.org/csv2geojson'>csv2geojson</a>,
-<a href='http://macwright.org/togeojson'>toGeoJSON (for KML and GPX)</a> or
-<a href='http://www.gdal.org/ogr2ogr.html'>ogr2ogr</a>,
-</div>
 <div id='map'></div>
-<textarea id='geojson'></textarea>
-<button id='load'>load</button>
-<script type='text/javascript'>
-var map = L.map('map').setView([0, 0], 3).addLayer(L.tileLayer('http://a.tiles.mapbox.com/v3/tmcw.map-7s15q36b/{z}/{x}/{y}.png'));
-
-// Initialize the FeatureGroup to store editable layers
-var drawnItems = new L.FeatureGroup();
-map.addLayer(drawnItems);
-
-map.attributionControl.setPrefix('').addAttribution('<a href="http://mapbox.com/about/maps" target="_blank">Terms &amp; Feedback</a>');
-
-// Initialize the draw control and pass it the FeatureGroup of editable layers
-var drawControl = new L.Control.Draw({
-    edit: { featureGroup: drawnItems }
-});
-
-map.addControl(drawControl);
-
-map.on('draw:created', function(e) {
-    drawnItems.addLayer(e.layer);
-});
-
-document.getElementById('load').onclick = function() {
-    drawnItems.clearLayers();
-    L.geoJson(JSON.parse(document.getElementById('geojson').value)).eachLayer(function(l) {
-        l.addTo(drawnItems);
-    });
-};
-
-function updateG() {
-    var features = [];
-    drawnItems.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push({
-            type: 'Feature',
-            geometry: l.toGeoJSON()
-        });
-    });
-    var gj = {
-        type: 'FeatureCollection',
-        features: features
-    };
-    document.getElementById('geojson').value = JSON.stringify(gj, null, 2);
-}
-
-map.on('draw:created', updateG);
-map.on('draw:edited', updateG);
-
-</script>
+<div class='right'>
+    <textarea id='geojson'></textarea>
+</div>
+<div id='buttons'>
+    <button id='about'>?</button>
+    <button id='saved'>unsaved</button>
+    <button id='upload'>⬆ UPLOAD</button>
+    <button id='load'>&larr; LOAD</button>
+</div>
+<script src='index.js'></script>
 <script type="text/javascript">
-  var _gauges = _gauges || [];
-  (function() {
+var _gauges = _gauges || [];
+(function() {
     var t   = document.createElement('script');
     t.type  = 'text/javascript';
     t.async = true;
@@ -118,7 +37,7 @@ map.on('draw:edited', updateG);
     t.src = '//secure.gaug.es/track.js';
     var s = document.getElementsByTagName('script')[0];
     s.parentNode.insertBefore(t, s);
-  })();
+})();
 </script>
 </body>
 </html>

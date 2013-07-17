@@ -1,0 +1,63 @@
+body {
+    margin:0; padding:0;
+    font-family:sans-serif;
+}
+
+a {
+    color:darkblue;
+}
+
+#map {
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    right:30%;
+}
+
+.right {
+    position:absolute;
+    bottom:0;
+    top:0;
+    right:0;
+    width:30%;
+    box-sizing:border-box;
+    padding:10px;
+    font-size:14px;
+}
+
+.right .CodeMirror {
+     height:100%;
+}
+
+#buttons {
+    position:absolute;
+    right:30%;
+    padding:10px;
+}
+
+#buttons button {
+    height:40px;
+    vertical-align:middle;
+    background:#149;
+    color:#fff;
+    border:0;
+    font-size:15px;
+    padding:10px;
+    border:1px solid #fff;
+    border-radius:3px;
+    cursor:pointer;
+}
+
+#buttons button#saved,
+#buttons button#about {
+    border:none;
+    background:#fff;
+    color:#149;
+    border:1px solid #149;
+    font-size:12px;
+}
+
+#buttons button:hover {
+    background:#25f;
+}
