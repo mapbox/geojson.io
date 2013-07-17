@@ -1,8 +1,35 @@
 var map = L.mapbox.map('map', 'tmcw.map-7s15q36b')
-    .setView([20, 0], 2);
+    .setView([20, 0], 2)
+    .on('click', function () {
+        updateG();
+        drawnItems.unfocus();
+    });
 
 // Initialize the FeatureGroup to store editable layers
 var drawnItems = new L.FeatureGroup().addTo(map);
+
+L.FeatureGroup.prototype.unfocus = function () {
+    this.eachLayer(function (layer) {
+        // Can't `setStyle` for L.Marker
+        if ('setStyle' in layer) {
+            layer.setStyle({
+                opacity: 0.5,
+                fillOpacity: 0.2
+            });
+        }
+    });
+};
+
+drawnItems.on('click', function(event) {
+    this.unfocus();
+    if ('setStyle' in event.layer) {
+        event.layer.setStyle({
+            opacity: 0.9,
+            fillOpacity: 0.5
+        });
+    }
+    editor.setValue(JSON.stringify(event.layer.toGeoJSON().geometry, null, 2));
+});
 
 // Initialize the draw control and pass it the FeatureGroup of editable layers
 var drawControl = new L.Control.Draw({
@@ -74,7 +101,7 @@ document.onkeydown = function(e) {
 };
 
 function loadGeoJSON(gj) {
-    editor.setValue(JSON.stringify(gj, null, 2))
+    editor.setValue(JSON.stringify(gj, null, 2));
     drawnItems.clearLayers();
     L.geoJson(gj).eachLayer(function(l) {
         l.addTo(drawnItems);
@@ -85,6 +112,9 @@ map.on('draw:created', updateG)
     .on('draw:edited', updateG)
     .on('draw:created', function(e) {
         drawnItems.addLayer(e.layer);
+    })
+    .on('draw:drawstart', function(e) {
+        drawnItems.unfocus();
     });
 
 function updateG() {
