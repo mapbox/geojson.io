@@ -88,7 +88,7 @@ function showProperties(l){
         html = '';
     for(var key in properties){
         hasProperties = true;
-        html += '<b>' + key + '</b>: ' + properties[key];
+        html += '<b>' + key + '</b>: ' + properties[key] + '</br>';
     }
     if(hasProperties) l.bindPopup(html);
 }
