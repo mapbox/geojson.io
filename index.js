@@ -74,7 +74,7 @@ document.onkeydown = function(e) {
 };
 
 function loadGeoJSON(gj) {
-    editor.setValue(JSON.stringify(gj, null, 2))
+    editor.setValue(JSON.stringify(gj, null, 2));
     drawnItems.clearLayers();
     L.geoJson(gj).eachLayer(function(l) {
         showProperties(l);
@@ -82,15 +82,15 @@ function loadGeoJSON(gj) {
     });
 }
 
-function showProperties(l){
-    var properties = l.toGeoJSON().properties,
-        hasProperties = false,
-        html = '';
-    for(var key in properties){
-        hasProperties = true;
-        html += '<b>' + key + '</b>: ' + properties[key] + '</br>';
+function showProperties(l) {
+    var properties = l.toGeoJSON().properties, table = '';
+
+    for (var key in properties) {
+        table += '<tr><th>' + key + '</th>' +
+            '<td>' + properties[key] + '</td></tr>';
     }
-    if(hasProperties) l.bindPopup(html);
+
+    if (table) l.bindPopup('<table class="marker-properties">' + table + '</table>');
 }
 
 map.on('draw:created', updateG)

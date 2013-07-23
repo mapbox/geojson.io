@@ -61,3 +61,29 @@ a {
 #buttons button:hover {
     background:#25f;
 }
+
+.marker-properties {
+    border-collapse:collapse;
+    font-size:11px;
+    border:1px solid #eee;
+    margin:0;
+}
+
+.marker-properties th {
+    white-space:nowrap;
+    border:1px solid #eee;
+    padding:5px 10px;
+}
+
+.marker-properties td {
+    border:1px solid #eee;
+    padding:5px 10px;
+}
+
+.marker-properties tr:last-child td,.marker-properties tr:last-child th {
+    border-bottom:none;
+}
+
+.marker-properties tr:nth-child(even) th,.marker-properties tr:nth-child(even) td {
+    background-color:#f7f7f7;
+}
