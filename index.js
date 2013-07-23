@@ -1,7 +1,7 @@
 var savedButton = document.getElementById('saved'),
     geojsonField = document.getElementById('geojson'),
     uploadButton = document.getElementById('upload'),
-    downloadButton = document.getElementById('download')
+    downloadButton = document.getElementById('download'),
     aboutButton = document.getElementById('about'),
     copyButton = document.getElementById('copy'),
     loadButton = document.getElementById('load');
