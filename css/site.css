@@ -37,15 +37,16 @@ a {
 }
 
 #buttons button {
-    height:40px;
+    height:30px;
     vertical-align:middle;
-    background:#149;
+    transition:background 50ms ease-in;
+    background:#347;
     color:#fff;
     border:0;
-    font-size:15px;
-    padding:10px;
-    border:1px solid #fff;
-    border-radius:3px;
+    font-size:13px;
+    padding:5px 10px;
+    border:1px solid #100;
+    border-radius:2px;
     cursor:pointer;
 }
 
@@ -59,7 +60,11 @@ a {
 }
 
 #buttons button:hover {
-    background:#25f;
+    background:#57a;
+}
+
+#buttons button.done {
+    background:#15A;
 }
 
 .marker-properties {

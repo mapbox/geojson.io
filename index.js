@@ -1,3 +1,10 @@
+var savedButton = document.getElementById('saved'),
+    geojsonField = document.getElementById('geojson'),
+    uploadButton = document.getElementById('upload'),
+    aboutButton = document.getElementById('about'),
+    copyButton = document.getElementById('copy'),
+    loadButton = document.getElementById('load');
+
 var map = L.mapbox.map('map', 'tmcw.map-7s15q36b')
     .setView([20, 0], 2);
 
@@ -14,16 +21,17 @@ var drawControl = new L.Control.Draw({
     }
 }).addTo(map);
 
-var saved = document.getElementById('saved');
-
 function saveAsGist(editor) {
     var content = editor.getValue(),
         h = new window.XMLHttpRequest();
 
-    document.body.className = 'loading';
-
     h.onload = function() {
-        document.body.className = '';
+        uploadButton.className = 'done';
+        uploadButton.innerHTML = 'saved';
+        setTimeout(function() {
+            uploadButton.className = '';
+            uploadButton.innerHTML = 'upload';
+        }, 1000);
         var d = (JSON.parse(h.responseText));
         window.location.hash = '#' + d.id;
     };
@@ -42,7 +50,7 @@ function saveAsGist(editor) {
     }));
 }
 
-var editor = CodeMirror.fromTextArea(document.getElementById('geojson'), {
+var editor = CodeMirror.fromTextArea(geojsonField, {
     mode: 'javascript',
     matchBrackets: true,
     tabSize: 2,
@@ -54,15 +62,11 @@ var editor = CodeMirror.fromTextArea(document.getElementById('geojson'), {
     smartIndent: true
 });
 
-document.getElementById('upload').onclick = function() {
-    saveAsGist(editor);
-};
+uploadButton.onclick = function() { saveAsGist(editor); };
 
-document.getElementById('about').onclick = function() {
-    window.open('about.html');
-};
+aboutButton.onclick = function() { window.open('about.html'); };
 
-document.getElementById('load').onclick = function() {
+loadButton.onclick = function() {
     loadGeoJSON(JSON.parse(editor.getValue()));
 };
 
@@ -72,6 +76,25 @@ document.onkeydown = function(e) {
         e.preventDefault();
     }
 };
+
+ZeroClipboard.setDefaults({
+    moviePath: 'lib/zeroclipboard/ZeroClipboard.swf'
+});
+
+var clip = new ZeroClipboard(copyButton);
+
+clip.on('complete', function(client, args) {
+    copyButton.className = 'done';
+    copyButton.innerHTML = 'copied to your clipboard';
+    setTimeout(function() {
+        copyButton.innerHTML = 'copy';
+        copyButton.className = '';
+    }, 1000);
+});
+
+clip.on('mousedown', function(client) {
+    clip.setText(JSON.stringify(getGeoJSON(), null, 2));
+});
 
 function loadGeoJSON(gj) {
     editor.setValue(JSON.stringify(gj, null, 2));
@@ -142,8 +165,8 @@ function hashChange() {
             if (this.status < 400 && this.responseText) {
                 loadGeoJSON(firstFile(JSON.parse(this.responseText)));
             }
-            saved.innerHTML = 'gist#' + id;
-            saved.onclick = function() {
+            savedButton.innerHTML = 'gist#' + id;
+            savedButton.onclick = function() {
                 window.open('http://gist.github.com/' + id);
             };
     });
