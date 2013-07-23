@@ -1,6 +1,7 @@
 var savedButton = document.getElementById('saved'),
     geojsonField = document.getElementById('geojson'),
     uploadButton = document.getElementById('upload'),
+    downloadButton = document.getElementById('download')
     aboutButton = document.getElementById('about'),
     copyButton = document.getElementById('copy'),
     loadButton = document.getElementById('load');
@@ -50,6 +51,14 @@ function saveAsGist(editor) {
     }));
 }
 
+function saveAsFile(editor) {
+    var content = editor.getValue();
+    if(content) {
+        var blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, "map.geojson");
+    }
+}
+
 var editor = CodeMirror.fromTextArea(geojsonField, {
     mode: 'javascript',
     matchBrackets: true,
@@ -63,6 +72,8 @@ var editor = CodeMirror.fromTextArea(geojsonField, {
 });
 
 uploadButton.onclick = function() { saveAsGist(editor); };
+
+downloadButton.onclick = function() { saveAsFile(editor); };
 
 aboutButton.onclick = function() { window.open('about.html'); };
 
@@ -171,3 +182,5 @@ function hashChange() {
             };
     });
 }
+
+
