@@ -88,6 +88,22 @@ document.onkeydown = function(e) {
     }
 };
 
+document.getElementById('map').onkeydown = function(e){
+    var el;
+    if(e.keyCode == 76) { // l
+        el = document.getElementsByClassName("leaflet-draw-draw-polyline");
+    } else if (e.keyCode == 80) { // p
+        el = document.getElementsByClassName("leaflet-draw-draw-polygon");
+    } else if (e.keyCode == 82) { // r
+        el = document.getElementsByClassName("leaflet-draw-draw-rectangle");
+    } else if (e.keyCode == 77) { // m
+        el = document.getElementsByClassName("leaflet-draw-draw-marker");
+    } else {
+        return;
+    }
+    el[0].click();
+}
+
 ZeroClipboard.setDefaults({
     moviePath: 'lib/zeroclipboard/ZeroClipboard.swf'
 });
