@@ -77,8 +77,20 @@ function loadGeoJSON(gj) {
     editor.setValue(JSON.stringify(gj, null, 2))
     drawnItems.clearLayers();
     L.geoJson(gj).eachLayer(function(l) {
+        showProperties(l);
         l.addTo(drawnItems);
     });
+}
+
+function showProperties(l){
+    var properties = l.toGeoJSON().properties,
+        hasProperties = false,
+        html = '';
+    for(var key in properties){
+        hasProperties = true;
+        html += '<b>' + key + '</b>: ' + properties[key];
+    }
+    if(hasProperties) l.bindPopup(html);
 }
 
 map.on('draw:created', updateG)
