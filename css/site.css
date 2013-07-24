@@ -1,10 +1,6 @@
 body {
     margin:0; padding:0;
-    font-family:sans-serif;
-}
-
-a {
-    color:darkblue;
+    font-family:'Helvetica Neue', sans-serif;
 }
 
 #map {
@@ -22,49 +18,65 @@ a {
     right:0;
     width:30%;
     box-sizing:border-box;
-    padding:10px;
     font-size:14px;
+    background:#363636;
+    border-left:2px solid #000;
 }
 
 .right .CodeMirror {
-     height:100%;
+    height:100%;
+    background:#363636;
+    font-family: 'Droid Sans Mono', sans-serif;
+    line-height:1.5em;
 }
 
 #buttons {
-    position:absolute;
-    right:30%;
-    padding:10px;
+    background:#363636;
 }
 
-#buttons button {
-    height:30px;
-    vertical-align:middle;
-    transition:background 50ms ease-in;
-    background:#347;
-    color:#fff;
-    border:0;
-    font-size:13px;
-    padding:5px 10px;
-    border:1px solid #100;
-    border-radius:2px;
+.top button {
     cursor:pointer;
-}
-
-#buttons button#saved,
-#buttons button#about {
-    border:none;
-    background:#fff;
-    color:#149;
-    border:1px solid #149;
+    background:#363636;
+    margin:0;
+    border:0;
+    color:#888;
+    font-size:14px;
+    border-right:1px solid #272822;
+    border-bottom:1px solid #272822;
+    padding:12px 15px;
+    font-weight:normal;
     font-size:12px;
+    transition:all 200ms ease-in-out;
 }
 
-#buttons button:hover {
-    background:#57a;
+.top button span {
+    font-size:16px;
+    margin-right:5px;
+    vertical-align:middle;
+    color:#eee;
 }
 
-#buttons button.done {
+.top button:hover {
+    background:#000;
+    color:#fff;
+}
+
+.top button.done {
     background:#15A;
+}
+
+#status {
+    font-size:16px;
+    color:#BDEEBD;
+    position:absolute;
+    top:10px;
+    right:10px;
+    transition:all 200ms;
+}
+
+#status.icon-thumbs-down,
+#status.icon-thumbs-down-alt {
+    color:#EDBBD5;
 }
 
 .marker-properties {
@@ -85,10 +97,12 @@ a {
     padding:5px 10px;
 }
 
-.marker-properties tr:last-child td,.marker-properties tr:last-child th {
+.marker-properties tr:last-child td,
+.marker-properties tr:last-child th {
     border-bottom:none;
 }
 
-.marker-properties tr:nth-child(even) th,.marker-properties tr:nth-child(even) td {
+.marker-properties tr:nth-child(even) th,
+.marker-properties tr:nth-child(even) td {
     background-color:#f7f7f7;
 }

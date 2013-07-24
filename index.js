@@ -1,13 +1,13 @@
 var savedButton = document.getElementById('saved'),
     geojsonField = document.getElementById('geojson'),
-    uploadButton = document.getElementById('upload'),
+    uploadButton = document.getElementById('save'),
     downloadButton = document.getElementById('download'),
     aboutButton = document.getElementById('about'),
     copyButton = document.getElementById('copy'),
+    statusIcon = document.getElementById('status'),
     loadButton = document.getElementById('load');
 
-var map = L.mapbox.map('map', 'tmcw.map-7s15q36b')
-    .setView([20, 0], 2);
+var map = L.mapbox.map('map', 'tmcw.map-7s15q36b').setView([20, 0], 2);
 
 // Initialize the FeatureGroup to store editable layers
 var drawnItems = new L.FeatureGroup().addTo(map);
@@ -41,10 +41,10 @@ function saveAsGist(editor) {
 
     h.open('POST', 'https://api.github.com/gists', true);
     h.send(JSON.stringify({
-        description: "Gist from edit-GeoJSON",
+        description: 'Gist from edit-GeoJSON',
         public: true,
         files: {
-            "map.geojson": {
+            'map.geojson': {
                 content: content
             }
         }
@@ -53,9 +53,10 @@ function saveAsGist(editor) {
 
 function saveAsFile(editor) {
     var content = editor.getValue();
-    if(content) {
-        var blob = new Blob([content], {type: "text/plain;charset=utf-8"});
-        saveAs(blob, "map.geojson");
+    if (content) {
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'map.geojson');
     }
 }
 
@@ -63,6 +64,7 @@ var editor = CodeMirror.fromTextArea(geojsonField, {
     mode: 'javascript',
     matchBrackets: true,
     tabSize: 2,
+    theme: 'monokai',
     autofocus: (window === window.top),
     extraKeys: {
         'Ctrl-S': saveAsGist,
@@ -71,15 +73,11 @@ var editor = CodeMirror.fromTextArea(geojsonField, {
     smartIndent: true
 });
 
+editor.on('change', editorChange);
+
 uploadButton.onclick = function() { saveAsGist(editor); };
 
 downloadButton.onclick = function() { saveAsFile(editor); };
-
-aboutButton.onclick = function() { window.open('about.html'); };
-
-loadButton.onclick = function() {
-    loadGeoJSON(JSON.parse(editor.getValue()));
-};
 
 document.onkeydown = function(e) {
     if (e.keyCode == 83 && e.metaKey) {
@@ -108,12 +106,27 @@ clip.on('mousedown', function(client) {
 });
 
 function loadGeoJSON(gj) {
-    editor.setValue(JSON.stringify(gj, null, 2));
     drawnItems.clearLayers();
     L.geoJson(gj).eachLayer(function(l) {
         showProperties(l);
         l.addTo(drawnItems);
     });
+}
+
+function editorChange() {
+    try {
+        var gj = JSON.parse(editor.getValue());
+        statusIcon.className = 'icon-thumbs-up';
+        try {
+            loadGeoJSON(gj);
+        } catch(e) {
+            statusIcon.className = 'icon-thumbs-down';
+            statusIcon.title = 'invalid GeoJSON';
+        }
+    } catch(e) {
+        statusIcon.className = 'icon-thumbs-down-alt';
+        statusIcon.title = 'invalid JSON';
+    }
 }
 
 function showProperties(l) {
@@ -164,7 +177,7 @@ if (window.location.hash) {
 }
 
 function firstFile(gist) {
-    for (f in gist.files) {
+    for (var f in gist.files) {
         return JSON.parse(gist.files[f].content);
     }
 }
@@ -174,7 +187,8 @@ function hashChange() {
     xhr('https://api.github.com/gists/' + id,
         function() {
             if (this.status < 400 && this.responseText) {
-                loadGeoJSON(firstFile(JSON.parse(this.responseText)));
+                editor.setValue(firstFile(JSON.parse(this.responseText)));
+                updateGeoJSON();
             }
             savedButton.innerHTML = 'gist#' + id;
             savedButton.onclick = function() {
@@ -182,5 +196,3 @@ function hashChange() {
             };
     });
 }
-
-

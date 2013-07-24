@@ -7,6 +7,8 @@
     <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' />
   <![endif]-->
   <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>
+  <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="css/font-awesome/css/font-awesome.min.css">
   <title>Edit GeoJSON</title>
   <link href='lib/draw/leaflet.draw.css' rel='stylesheet' />
   <script src='lib/draw/leaflet.draw.js'></script>
@@ -16,19 +18,19 @@
   <script src='lib/FileSaver.min.js'></script>
   <link href='lib/codemirror/lib/codemirror.css' rel='stylesheet' />
   <link href='css/site.css' rel='stylesheet' />
+  <link href='css/theme.css' rel='stylesheet' />
 </head>
 <body>
 <div id='map'></div>
 <div class='right'>
+    <div class='top'>
+        <button
+            id='save'><span class='icon-cloud-upload'></span> upload</button><button
+            id='copy'><span class='icon-copy'></span> copy</button><button
+            id='download'><span class='icon-save'></span> save</button>
+        <span id='status' class='icon-thumbs-up'></span>
+    </div>
     <textarea id='geojson'></textarea>
-</div>
-<div id='buttons'>
-    <button id='about'>?</button>
-    <button id='saved'>unsaved</button>
-    <button id='upload'>upload</button>
-    <button id='download'>download</button>
-    <button id='copy'>copy</button>
-    <button id='load'>load</button>
 </div>
 <script src='index.js'></script>
 <script type="text/javascript">
