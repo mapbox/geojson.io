@@ -5,6 +5,8 @@ var savedButton = document.getElementById('saved'),
     aboutButton = document.getElementById('about'),
     copyButton = document.getElementById('copy'),
     statusIcon = document.getElementById('status'),
+    aboutButton = document.getElementById('about'),
+    editButton = document.getElementById('edit'),
     loadButton = document.getElementById('load');
 
 var map = L.mapbox.map('map', 'tmcw.map-7s15q36b').setView([20, 0], 2);
@@ -89,6 +91,16 @@ editor.on('change', editorChange);
 uploadButton.onclick = function() { saveAsGist(editor); };
 
 downloadButton.onclick = function() { saveAsFile(editor); };
+
+aboutButton.onclick = function() {
+    document.getElementsByClassName('edit-pane')[0].className = 'edit-pane pane';
+    document.getElementsByClassName('about-pane')[0].className = 'about-pane pane active';
+};
+
+editButton.onclick = function() {
+    document.getElementsByClassName('edit-pane')[0].className = 'edit-pane pane active';
+    document.getElementsByClassName('about-pane')[0].className = 'about-pane pane';
+};
 
 document.onkeydown = function(e) {
     if (e.keyCode == 83 && e.metaKey) {

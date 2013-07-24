@@ -24,14 +24,29 @@
 <body>
 <div id='map'></div>
 <div class='right'>
-    <div class='top'>
-        <button
-            id='save'><span class='icon icon-cloud-upload'></span> <span class='label'>upload</span></button><button
-            id='copy'><span class='icon icon-copy'></span> <span class='label'>copy</span></button><button
-            id='download'><span class='icon icon-save'></span> <span class='label'>save</span></button>
-        <span id='status' class='icon-thumbs-up'></span>
+    <div class='edit-pane pane active'>
+        <div class='top'>
+            <button
+                id='save'><span class='icon icon-cloud-upload'></span> <span class='label'>upload</span></button><button
+                id='copy'><span class='icon icon-copy'></span> <span class='label'>copy</span></button><button
+                id='download'><span class='icon icon-save'></span> <span class='label'>save</span></button><button
+                id='about'><span class='icon icon-question'></span> <span class='label'>help</span></button>
+            <span id='status' class='icon-thumbs-up'></span>
+        </div>
+        <textarea id='geojson'></textarea>
     </div>
-    <textarea id='geojson'></textarea>
+    <div class='about-pane'>
+        <div class='top'>
+            <button id='edit'><span class='icon icon-pencil'></span> <span class='label'>edit</span></button>
+        </div>
+        <div class='pad prose'>
+            <h2>geojson.io</h2>
+            <p><a href='http://geojson.org/'>GeoJSON</a> is a simple, popular format
+            for map data. geojson.io lets you edit it.</p>
+            <p>This is an <a href='https://github.com/tmcw/edit-geojson'>open source project</a>
+            that you can contribute to and improve.</p>
+        </div>
+    </div>
 </div>
 <script src='index.js'></script>
 <script type="text/javascript">

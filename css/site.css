@@ -3,6 +3,14 @@ body {
     font-family:'Helvetica Neue', sans-serif;
 }
 
+a {
+    color:#dff;
+}
+
+a:hover {
+    color:#9ED;
+}
+
 #map {
     position:absolute;
     top:0;
@@ -12,6 +20,7 @@ body {
 }
 
 .right {
+    overflow-x:hidden;
     position:absolute;
     bottom:0;
     top:0;
@@ -28,6 +37,19 @@ body {
     background:#363636;
     font-family: 'Droid Sans Mono', sans-serif;
     line-height:1.5em;
+}
+
+.right .pane {
+    position:absolute;
+    top:0;
+    width:100%;
+    right:-100%;
+    transition:all 200ms;
+    -webkit-transition:all 200ms;
+}
+
+.right .pane.active {
+    right:0;
 }
 
 #buttons {
@@ -110,11 +132,8 @@ body {
 
 .error-marker {
     width:10px;
-    height:10px;
-    margin-top:6px;
-    margin-left:2px;
+    height:1.5em;
     background:#EAB;
-    border-radius:5px;
     transition:all 100ms;
 }
 
@@ -134,11 +153,27 @@ body {
     border:1px solid #000;
     position:absolute;
     background:#272822;
+    z-index:999;
 }
 
 .error-marker:hover:before {
-    opacity:0.9;
-    margin-left:15px;
+    opacity:1;
+    margin-left:35px;
+}
+
+.pad {
+    padding:20px;
+}
+
+.prose {
+    color:#eee;
+}
+
+.prose h2 {
+    font-family: 'Droid Sans Mono', sans-serif;
+    font-size:30px;
+    font-weight:normal;
+    text-align:center;
 }
 
 @media screen and (max-width:800px) {
