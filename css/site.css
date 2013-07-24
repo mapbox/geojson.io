@@ -56,7 +56,8 @@ body {
     color:#eee;
 }
 
-.top button:hover {
+.top button:hover,
+.top button.zeroclipboard-is-hover {
     background:#000;
     color:#fff;
 }
