@@ -46,10 +46,12 @@ a:hover {
     right:-100%;
     transition:all 200ms;
     -webkit-transition:all 200ms;
+    opacity:0;
 }
 
 .right .pane.active {
     right:0;
+    opacity:1;
 }
 
 #buttons {
