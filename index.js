@@ -125,16 +125,18 @@ function loadGeoJSON(gj) {
 }
 
 function editorChange() {
-    var gj;
-    try {
-        gj = jsonlint.parse(editor.getValue());
-        statusIcon.className = 'icon-thumbs-up';
-    } catch(e) {
-        handleError(e.message);
+    var err = geojsonhint.hint(editor.getValue());
+    statusIcon.className = 'icon-thumbs-up';
+    if (err && err instanceof Error) {
+        handleError(err.message);
         statusIcon.className = 'icon-thumbs-down-alt';
         statusIcon.title = 'invalid JSON';
-    }
-    if (gj) {
+    } else if (err && err.length) {
+        handleErrors(err);
+        statusIcon.className = 'icon-thumbs-down';
+        statusIcon.title = 'invalid GeoJSON';
+    } else {
+        var gj = JSON.parse(editor.getValue());
         try {
             loadGeoJSON(gj);
             editor.clearGutter('error');
@@ -151,6 +153,13 @@ function handleError(msg) {
         editor.clearGutter('error');
         editor.setGutterMarker(parseInt(match[1], 10) - 1, 'error', makeMarker(msg));
     }
+}
+
+function handleErrors(errors) {
+    editor.clearGutter('error');
+    errors.forEach(function(e) {
+        editor.setGutterMarker(e.line, 'error', makeMarker(e.message));
+    });
 }
 
 function makeMarker(msg) {
@@ -212,12 +221,8 @@ function hashChange() {
         function() {
             if (this.status < 400 && this.responseText) {
                 editor.setValue(firstFile(JSON.parse(this.responseText)));
-                updateGeoJSON();
+                editorChange();
             }
-            savedButton.innerHTML = 'gist#' + id;
-            savedButton.onclick = function() {
-                window.open('http://gist.github.com/' + id);
-            };
     });
 }
 
