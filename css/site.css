@@ -49,7 +49,7 @@ body {
     transition:all 200ms ease-in-out;
 }
 
-.top button span {
+.top button span.icon {
     font-size:16px;
     margin-right:5px;
     vertical-align:middle;
@@ -139,4 +139,16 @@ body {
 .error-marker:hover:before {
     opacity:0.9;
     margin-left:15px;
+}
+
+@media screen and (max-width:800px) {
+    span.label {
+        display:none;
+    }
+    .right {
+        width:50%;
+    }
+    #map {
+        right:50%;
+    }
 }

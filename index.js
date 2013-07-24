@@ -60,6 +60,14 @@ function saveAsFile(editor) {
     }
 }
 
+CodeMirror.keyMap.tabSpace = {
+    Tab: function(cm) {
+        var spaces = Array(cm.getOption('indentUnit') + 1).join(' ');
+        cm.replaceSelection(spaces, 'end', '+input');
+    },
+    fallthrough: ['default']
+};
+
 var editor = CodeMirror.fromTextArea(geojsonField, {
     mode: 'javascript',
     matchBrackets: true,
@@ -71,6 +79,7 @@ var editor = CodeMirror.fromTextArea(geojsonField, {
         'Ctrl-S': saveAsGist,
         'Cmd-S': saveAsGist
     },
+    keyMap: 'tabSpace',
     lineNumbers: true,
     smartIndent: true
 });
