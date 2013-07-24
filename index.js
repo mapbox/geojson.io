@@ -64,12 +64,14 @@ var editor = CodeMirror.fromTextArea(geojsonField, {
     mode: 'javascript',
     matchBrackets: true,
     tabSize: 2,
+    gutters: ['error'],
     theme: 'monokai',
     autofocus: (window === window.top),
     extraKeys: {
         'Ctrl-S': saveAsGist,
         'Cmd-S': saveAsGist
     },
+    lineNumbers: true,
     smartIndent: true
 });
 
@@ -114,19 +116,39 @@ function loadGeoJSON(gj) {
 }
 
 function editorChange() {
+    var gj;
     try {
-        var gj = JSON.parse(editor.getValue());
+        gj = jsonlint.parse(editor.getValue());
         statusIcon.className = 'icon-thumbs-up';
+    } catch(e) {
+        handleError(e.message);
+        statusIcon.className = 'icon-thumbs-down-alt';
+        statusIcon.title = 'invalid JSON';
+    }
+    if (gj) {
         try {
             loadGeoJSON(gj);
+            editor.clearGutter('error');
         } catch(e) {
             statusIcon.className = 'icon-thumbs-down';
             statusIcon.title = 'invalid GeoJSON';
         }
-    } catch(e) {
-        statusIcon.className = 'icon-thumbs-down-alt';
-        statusIcon.title = 'invalid JSON';
     }
+}
+
+function handleError(msg) {
+    var match = msg.match(/line (\d+)/);
+    if (match && match[1]) {
+        editor.clearGutter('error');
+        editor.setGutterMarker(parseInt(match[1], 10) - 1, 'error', makeMarker(msg));
+    }
+}
+
+function makeMarker(msg) {
+    var el = document.createElement('div');
+    el.className = 'error-marker';
+    el.setAttribute('message', msg);
+    return el;
 }
 
 function showProperties(l) {
@@ -152,6 +174,12 @@ function updateG() {
     }, 100);
 }
 
+window.onhashchange = hashChange;
+
+if (window.location.hash) {
+    hashChange();
+}
+
 function getGeoJSON() {
     var features = [];
     drawnItems.eachLayer(function(l) {
@@ -163,22 +191,9 @@ function getGeoJSON() {
     };
 }
 
-function xhr(url, cb) {
-    var h = new window.XMLHttpRequest();
-    h.onload = cb;
-    h.open('GET', url, true);
-    h.send();
-}
-
-window.onhashchange = hashChange;
-
-if (window.location.hash) {
-    hashChange();
-}
-
 function firstFile(gist) {
     for (var f in gist.files) {
-        return JSON.parse(gist.files[f].content);
+        return gist.files[f].content;
     }
 }
 
@@ -195,4 +210,11 @@ function hashChange() {
                 window.open('http://gist.github.com/' + id);
             };
     });
+}
+
+function xhr(url, cb) {
+    var h = new window.XMLHttpRequest();
+    h.onload = cb;
+    h.open('GET', url, true);
+    h.send();
 }

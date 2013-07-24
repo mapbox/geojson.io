@@ -106,3 +106,36 @@ body {
 .marker-properties tr:nth-child(even) td {
     background-color:#f7f7f7;
 }
+
+.error-marker {
+    width:10px;
+    height:10px;
+    margin-top:6px;
+    margin-left:2px;
+    background:#EAB;
+    border-radius:5px;
+    transition:all 100ms;
+}
+
+.error-marker:hover {
+    background:#D68;
+}
+
+.error-marker:before {
+    opacity:0;
+    pointer-events:none;
+    content:attr(message);
+    transition:all 100ms;
+    content:attr(message);
+    width:300px;
+    font-size:10px;
+    padding:5px;
+    border:1px solid #000;
+    position:absolute;
+    background:#272822;
+}
+
+.error-marker:hover:before {
+    opacity:0.9;
+    margin-left:15px;
+}
