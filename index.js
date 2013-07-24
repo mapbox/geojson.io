@@ -124,7 +124,7 @@ clip.on('complete', function(client, args) {
     copyButton.className = 'done';
     copyButton.innerHTML = 'copied to your clipboard';
     setTimeout(function() {
-        copyButton.innerHTML = 'copy';
+        copyButton.innerHTML = "<span class='icon icon-copy'></span>";
         copyButton.className = '';
     }, 1000);
 });
@@ -143,14 +143,14 @@ function loadGeoJSON(gj) {
 
 function editorChange() {
     var err = geojsonhint.hint(editor.getValue());
-    statusIcon.className = 'icon-thumbs-up';
+    statusIcon.className = 'icon-circle';
     if (err && err instanceof Error) {
         handleError(err.message);
-        statusIcon.className = 'icon-thumbs-down-alt';
+        statusIcon.className = 'icon-circle-blank';
         statusIcon.title = 'invalid JSON';
     } else if (err && err.length) {
         handleErrors(err);
-        statusIcon.className = 'icon-thumbs-down';
+        statusIcon.className = 'icon-circle-blank';
         statusIcon.title = 'invalid GeoJSON';
     } else {
         var gj = JSON.parse(editor.getValue());
@@ -158,7 +158,7 @@ function editorChange() {
             loadGeoJSON(gj);
             editor.clearGutter('error');
         } catch(e) {
-            statusIcon.className = 'icon-thumbs-down';
+            statusIcon.className = 'icon-circle-blank';
             statusIcon.title = 'invalid GeoJSON';
         }
     }
@@ -237,8 +237,12 @@ function hashChange() {
     xhr('https://api.github.com/gists/' + id,
         function() {
             if (this.status < 400 && this.responseText) {
+                var first = !editor.getValue();
                 editor.setValue(firstFile(JSON.parse(this.responseText)));
                 editorChange();
+                if (first && drawnItems.getBounds()) {
+                    map.fitBounds(drawnItems.getBounds());
+                }
             }
     });
 }

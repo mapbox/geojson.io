@@ -132,10 +132,10 @@ a:hover {
     top:10px;
     right:10px;
     transition:all 200ms;
+    -webkit-transition:all 200ms;
 }
 
-#status.icon-thumbs-down,
-#status.icon-thumbs-down-alt {
+#status.icon-circle-blank {
     color:#EDBBD5;
 }
 
@@ -172,6 +172,7 @@ a:hover {
     height:1.5em;
     background:#EAB;
     transition:all 100ms;
+    -webkit-transition:all 100ms;
 }
 
 .error-marker:hover {
@@ -183,6 +184,7 @@ a:hover {
     pointer-events:none;
     content:attr(message);
     transition:all 100ms;
+    -webkit-transition:all 100ms;
     content:attr(message);
     width:300px;
     font-size:10px;
