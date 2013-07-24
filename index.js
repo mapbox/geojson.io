@@ -7,7 +7,11 @@ var savedButton = document.getElementById('saved'),
     statusIcon = document.getElementById('status'),
     aboutButton = document.getElementById('about'),
     editButton = document.getElementById('edit'),
-    loadButton = document.getElementById('load');
+    loadButton = document.getElementById('load'),
+    gistLink = document.getElementById('gist-link'),
+    hereLink = document.getElementById('here-link'),
+    linkUi = document.getElementsByClassName('link-ui')[0];
+    linkUiClose = document.getElementById('link-ui-close');
 
 var map = L.mapbox.map('map', 'tmcw.map-7s15q36b').setView([20, 0], 2);
 
@@ -29,14 +33,17 @@ function saveAsGist(editor) {
         h = new window.XMLHttpRequest();
 
     h.onload = function() {
-        uploadButton.className = 'done';
-        uploadButton.innerHTML = 'saved';
-        setTimeout(function() {
-            uploadButton.className = '';
-            uploadButton.innerHTML = 'upload';
-        }, 1000);
         var d = (JSON.parse(h.responseText));
         window.location.hash = '#' + d.id;
+
+        hereLink.innerHTML = window.location;
+        hereLink.setAttribute('href', window.location);
+
+        var gistUrl = 'http://gist.github.com/' + d.id;
+        gistLink.innerHTML = gistUrl;
+        gistLink.setAttribute('href', gistUrl);
+
+        linkUi.className = 'link-ui active';
     };
 
     h.onerror = function() {};
@@ -77,10 +84,6 @@ var editor = CodeMirror.fromTextArea(geojsonField, {
     gutters: ['error'],
     theme: 'monokai',
     autofocus: (window === window.top),
-    extraKeys: {
-        'Ctrl-S': saveAsGist,
-        'Cmd-S': saveAsGist
-    },
     keyMap: 'tabSpace',
     lineNumbers: true,
     smartIndent: true
@@ -91,6 +94,8 @@ editor.on('change', editorChange);
 uploadButton.onclick = function() { saveAsGist(editor); };
 
 downloadButton.onclick = function() { saveAsFile(editor); };
+
+linkUiClose.onclick = function() { linkUi.className = 'link-ui'; };
 
 aboutButton.onclick = function() {
     document.getElementsByClassName('edit-pane')[0].className = 'edit-pane pane';

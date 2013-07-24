@@ -25,15 +25,23 @@
 <div id='map'></div>
 <div class='right'>
     <div class='edit-pane pane active'>
+
         <div class='top'>
             <button
-                id='save'><span class='icon icon-cloud-upload'></span> <span class='label'>upload</span></button><button
-                id='copy'><span class='icon icon-copy'></span> <span class='label'>copy</span></button><button
-                id='download'><span class='icon icon-save'></span> <span class='label'>save</span></button><button
+                id='save'><span class='icon icon-link'></span> <span class='label'></span></button><button
+                id='copy'><span class='icon icon-copy'></span> <span class='label'></span></button><button
+                id='download'><span class='icon icon-download'></span> <span class='label'>save</span></button><button
                 id='about'><span class='icon icon-question'></span> <span class='label'>help</span></button>
             <span id='status' class='icon-thumbs-up'></span>
         </div>
         <textarea id='geojson'></textarea>
+        <div class='link-ui'>
+            <div class='pad1'>
+                <span class='icon-chevron-up' id='link-ui-close'></span>
+                <div><small>data</small> <a target='_blank' id='gist-link' href=''></a></div>
+                <div><small>map</small> <a target='_blank' id='here-link' href=''></a></div>
+            </div>
+        </div>
     </div>
     <div class='about-pane pane'>
         <div class='top'>

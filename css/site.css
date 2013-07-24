@@ -32,6 +32,41 @@ a:hover {
     border-left:2px solid #000;
 }
 
+.link-ui {
+    background:#363636;
+    border-bottom:1px solid #272822;
+    border-right:1px solid #272822;
+    position:absolute;
+    top:-100px;
+    left:0px;
+    width:240px;
+    z-index:999;
+    transition:all 200ms;
+    -webkit-transition:all 200ms;
+}
+
+.link-ui #link-ui-close {
+    color:#fff;
+    float:right;
+}
+
+.link-ui.active {
+    top:42px;
+}
+
+.pad1 {
+    padding:10px;
+}
+
+.link-ui small {
+    font-size:10px;
+    color:#aaa;
+}
+
+.link-ui a {
+    font-size:11px;
+}
+
 .right .CodeMirror {
     height:100%;
     background:#363636;
