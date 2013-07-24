@@ -114,6 +114,7 @@ function loadGeoJSON(gj) {
         showProperties(l);
         l.addTo(drawnItems);
     });
+    map.fitBounds(drawnItems.getBounds());
 }
 
 function showProperties(l) {
