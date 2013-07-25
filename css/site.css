@@ -133,7 +133,14 @@ a:hover {
     top:10px;
     right:10px;
     transition:all 200ms;
+    display:block;
     -webkit-transition:all 200ms;
+}
+
+#status:hover:before {
+    content:attr(message);
+    font-size:10px;
+    color:#eee;
 }
 
 #status.icon-circle-blank {

@@ -117,18 +117,20 @@ function editorChange() {
         handleError(err.message);
         statusIcon.className = 'icon-circle-blank';
         statusIcon.title = 'invalid JSON';
+        statusIcon.setAttribute('message', 'invalid JSON');
     } else if (err && err.length) {
         handleErrors(err);
         statusIcon.className = 'icon-circle-blank';
-        statusIcon.title = 'invalid GeoJSON';
+        statusIcon.setAttribute('message', 'invalid GeoJSON');
     } else {
         var gj = JSON.parse(editor.getValue());
         try {
             loadGeoJSON(gj);
             editor.clearGutter('error');
+            statusIcon.setAttribute('message', 'valid');
         } catch(e) {
             statusIcon.className = 'icon-circle-blank';
-            statusIcon.title = 'invalid GeoJSON';
+            statusIcon.setAttribute('message', 'invalid GeoJSON');
         }
     }
 }
