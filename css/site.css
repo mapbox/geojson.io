@@ -90,6 +90,61 @@ a:hover {
     opacity:1;
 }
 
+.sub-pane {
+    display:none;
+    position:absolute;
+}
+
+.sub-pane.active {
+    display:block;
+    left: 0px;
+    right: 0;
+    top: 41px;
+    bottom: 0;
+    overflow: auto;
+    background: #000;
+    z-index: 999;
+}
+
+/* PROPERTIES -------------------------------------- */
+.mini-map {
+    height:150px;
+}
+
+.property-table table {
+    border-collapse: collapse;
+    border-spacing:0;
+    width:100%;
+}
+
+.property-table table input {
+    font:inherit;
+    width:100%;
+    font-family: 'Droid Sans Mono', sans-serif;
+    box-sizing:border-box;
+    background:#000000;
+    border:0;
+    border-bottom:1px solid #363636;
+    color:#eee;
+}
+
+.sub-pane button {
+    background:#363636;
+    color:#eee;
+    font:inherit;
+    border:0;
+    transition:all 200ms ease-in-out;
+}
+
+.sub-pane button:hover {
+    color:#fff;
+    background:#333;
+}
+
+.sub-pane button.addrow {
+    width:100%;
+}
+
 #buttons {
     background:#363636;
 }
@@ -117,6 +172,7 @@ a:hover {
 }
 
 .top button:hover,
+.top button.active,
 .top button.zeroclipboard-is-hover {
     background:#000;
     color:#fff;

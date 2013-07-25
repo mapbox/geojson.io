@@ -9,8 +9,13 @@ var geojsonField = document.getElementById('geojson'),
     loadButton = document.getElementById('load'),
     gistLink = document.getElementById('gist-link'),
     hereLink = document.getElementById('here-link'),
+
+    propertiesLink = document.getElementById('properties-view'),
+    propertiesPane = document.getElementById('properties-pane'),
+
     linkUi = document.getElementsByClassName('link-ui')[0];
-    linkUiClose = document.getElementById('link-ui-close');
+    linkUiClose = document.getElementById('link-ui-close'),
+    clip = new ZeroClipboard(copyButton);
 
 var map = L.mapbox.map('map', 'tmcw.map-7s15q36b').setView([20, 0], 2);
 
@@ -48,8 +53,6 @@ uploadButton.onclick = function() { saveAsGist(editor); };
 
 downloadButton.onclick = function() { saveAsFile(editor); };
 
-function closeLinkUI() { linkUi.className = 'link-ui'; }
-
 linkUiClose.onclick = closeLinkUI;
 
 aboutButton.onclick = function() {
@@ -73,21 +76,11 @@ ZeroClipboard.setDefaults({
     moviePath: 'lib/zeroclipboard/ZeroClipboard.swf'
 });
 
-var clip = new ZeroClipboard(copyButton);
-
-clip.on('complete', function(client, args) {
-    copyButton.className = 'done';
-    copyButton.innerHTML = 'copied to your clipboard';
-    setTimeout(function() {
-        copyButton.innerHTML = "<span class='icon icon-copy'></span>";
-        copyButton.className = '';
-    }, 1000);
-});
+clip.on('complete', clipComplete);
 
 clip.on('mousedown', function(client) {
     clip.setText(JSON.stringify(getGeoJSON(), null, 2));
 });
-
 
 map.on('draw:created', updateG)
     .on('draw:edited', updateG)
@@ -96,10 +89,18 @@ map.on('draw:created', updateG)
     });
 
 window.onhashchange = hashChange;
+if (window.location.hash) hashChange();
 
-if (window.location.hash) {
-    hashChange();
+function clipComplete(client, args) {
+    copyButton.className = 'done';
+    copyButton.innerHTML = 'copied to your clipboard';
+    setTimeout(function() {
+        copyButton.innerHTML = "<span class='icon icon-copy'></span>";
+        copyButton.className = '';
+    }, 1000);
 }
+
+function closeLinkUI() { linkUi.className = 'link-ui'; }
 
 function loadGeoJSON(gj) {
     drawnItems.clearLayers();
@@ -172,7 +173,117 @@ function updateG() {
     }, 100);
 }
 
+function fieldArrayToProperties(arr) {
+    var obj = {};
+    for (var i = 0; i < arr.length; i++) {
+        obj[arr[i][0].value] = arr[i][1].value;
+    }
+    return obj;
+}
 
+// PROPERTIES
+// ----------------------------------------------------------------------------
+function propertyTable(layer, container) {
+
+    var properties = layer.toGeoJSON().properties;
+    var div = document.createElement('div');
+    div.className = 'property-table';
+
+    var table = div.appendChild(document.createElement('table'));
+
+    function removeRow() {
+        this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode);
+    }
+
+    var fields = [];
+
+    for (var key in properties) {
+        var tr = table.appendChild(document.createElement('tr'));
+
+        var removeTd = tr.appendChild(document.createElement('td'));
+        var removeButton = removeTd.appendChild(document.createElement('button'));
+
+        removeButton.onclick = removeRow;
+        removeButton.innerHTML = 'x';
+
+        var keyTd = tr.appendChild(document.createElement('td'));
+        var keyInput = tr.appendChild(document.createElement('input'));
+        keyInput.value = key;
+
+        var valueTd = tr.appendChild(document.createElement('td'));
+        var valueInput = tr.appendChild(document.createElement('input'));
+        valueInput.value = properties[key];
+
+        keyInput.onblur =
+            keyInput.onchange =
+            valueInput.onchange =
+            valueInput.onblur = onchange;
+
+        fields.push([keyInput, valueInput]);
+    }
+
+    var addRowButton = div.appendChild(document.createElement('button'));
+    addRowButton.innerHTML = 'add row';
+    addRowButton.className = 'addrow';
+
+    function onchange() {
+        var props = fieldArrayToProperties(fields);
+        layer.feature.properties = props;
+    }
+
+    addRowButton.onclick = function() {
+        var props = fieldArrayToProperties(fields);
+        props[''] = '';
+        layer.feature.properties = props;
+        propertyTable(layer, container);
+    };
+
+    container.innerHTML = '';
+    container.appendChild(div);
+}
+
+function clean(o) {
+    var x = {};
+    for (var k in o) {
+        if (k) x[k] = o[k];
+    }
+    return x;
+}
+
+propertiesLink.onclick = function() {
+    if (propertiesPane.className === 'sub-pane') {
+        this.className = 'active';
+        propertiesPane.className = 'sub-pane active';
+        propertiesPane.innerHTML = '';
+        drawnItems.eachLayer(function(l) {
+            if (!('toGeoJSON' in l)) return;
+            var fDiv = propertiesPane.appendChild(document.createElement('div')),
+                mDiv = fDiv.appendChild(document.createElement('div'));
+            fDiv.className = 'pad1';
+            mDiv.className = 'mini-map';
+            var map = L.mapbox.map(mDiv, 'tmcw.map-7s15q36b', {
+                scrollWheelZoom: false
+            });
+            var gj = l.toGeoJSON();
+            var gjL = L.geoJson(gj).addTo(map);
+            map.fitBounds(gjL.getBounds());
+            var tableContainer = fDiv.appendChild(document.createElement('div'));
+            propertyTable(l, tableContainer);
+        });
+    } else {
+        this.className = '';
+        propertiesPane.className = 'sub-pane';
+        propertiesPane.innerHTML = '';
+        drawnItems.eachLayer(function(l) {
+            if (!('toGeoJSON' in l)) return;
+            l.feature.properties = clean(l.feature.properties);
+        });
+        updateG();
+    }
+};
+
+// GIST
+// ----------------------------------------------------------------------------
 function getGeoJSON() {
     var features = [];
     drawnItems.eachLayer(function(l) {
@@ -192,7 +303,6 @@ function firstFile(gist) {
 
 function hashChange() {
     var id = window.location.hash.substring(1);
-
     uploadButton.className = 'loading';
     xhr('https://api.github.com/gists/' + id,
         function() {
@@ -238,9 +348,7 @@ function saveAsGist(editor) {
             alert('Gist API limit exceeded; saving to GitHub temporarily disabled.');
         }
     };
-
     h.onerror = function() {};
-
     h.open('POST', 'https://api.github.com/gists', true);
     h.send(JSON.stringify({
         description: 'Gist from edit-GeoJSON',
