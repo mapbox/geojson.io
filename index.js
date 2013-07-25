@@ -1,5 +1,4 @@
-var savedButton = document.getElementById('saved'),
-    geojsonField = document.getElementById('geojson'),
+var geojsonField = document.getElementById('geojson'),
     uploadButton = document.getElementById('save'),
     downloadButton = document.getElementById('download'),
     aboutButton = document.getElementById('about'),
@@ -20,54 +19,9 @@ var drawnItems = new L.FeatureGroup().addTo(map);
 
 // Initialize the draw control and pass it the FeatureGroup of editable layers
 var drawControl = new L.Control.Draw({
-    edit: {
-        featureGroup: drawnItems
-    },
-    draw: {
-        circle: false
-    }
+    edit: { featureGroup: drawnItems },
+    draw: { circle: false }
 }).addTo(map);
-
-function saveAsGist(editor) {
-    var content = editor.getValue(),
-        h = new window.XMLHttpRequest();
-
-    h.onload = function() {
-        var d = (JSON.parse(h.responseText));
-        window.location.hash = '#' + d.id;
-
-        hereLink.innerHTML = window.location;
-        hereLink.setAttribute('href', window.location);
-
-        var gistUrl = 'http://gist.github.com/' + d.id;
-        gistLink.innerHTML = gistUrl;
-        gistLink.setAttribute('href', gistUrl);
-
-        linkUi.className = 'link-ui active';
-    };
-
-    h.onerror = function() {};
-
-    h.open('POST', 'https://api.github.com/gists', true);
-    h.send(JSON.stringify({
-        description: 'Gist from edit-GeoJSON',
-        public: true,
-        files: {
-            'map.geojson': {
-                content: content
-            }
-        }
-    }));
-}
-
-function saveAsFile(editor) {
-    var content = editor.getValue();
-    if (content) {
-        saveAs(new Blob([content], {
-            type: 'text/plain;charset=utf-8'
-        }), 'map.geojson');
-    }
-}
 
 CodeMirror.keyMap.tabSpace = {
     Tab: function(cm) {
@@ -78,15 +32,14 @@ CodeMirror.keyMap.tabSpace = {
 };
 
 var editor = CodeMirror.fromTextArea(geojsonField, {
-    mode: 'javascript',
+    mode: 'application/json',
     matchBrackets: true,
     tabSize: 2,
     gutters: ['error'],
     theme: 'monokai',
     autofocus: (window === window.top),
     keyMap: 'tabSpace',
-    lineNumbers: true,
-    smartIndent: true
+    lineNumbers: true
 });
 
 editor.on('change', editorChange);
@@ -95,7 +48,9 @@ uploadButton.onclick = function() { saveAsGist(editor); };
 
 downloadButton.onclick = function() { saveAsFile(editor); };
 
-linkUiClose.onclick = function() { linkUi.className = 'link-ui'; };
+function closeLinkUI() { linkUi.className = 'link-ui'; }
+
+linkUiClose.onclick = closeLinkUI;
 
 aboutButton.onclick = function() {
     document.getElementsByClassName('edit-pane')[0].className = 'edit-pane pane';
@@ -133,6 +88,19 @@ clip.on('mousedown', function(client) {
     clip.setText(JSON.stringify(getGeoJSON(), null, 2));
 });
 
+
+map.on('draw:created', updateG)
+    .on('draw:edited', updateG)
+    .on('draw:created', function(e) {
+        drawnItems.addLayer(e.layer);
+    });
+
+window.onhashchange = hashChange;
+
+if (window.location.hash) {
+    hashChange();
+}
+
 function loadGeoJSON(gj) {
     drawnItems.clearLayers();
     L.geoJson(gj).eachLayer(function(l) {
@@ -142,6 +110,7 @@ function loadGeoJSON(gj) {
 }
 
 function editorChange() {
+    closeLinkUI();
     var err = geojsonhint.hint(editor.getValue());
     statusIcon.className = 'icon-circle';
     if (err && err instanceof Error) {
@@ -188,20 +157,12 @@ function makeMarker(msg) {
 
 function showProperties(l) {
     var properties = l.toGeoJSON().properties, table = '';
-
     for (var key in properties) {
         table += '<tr><th>' + key + '</th>' +
             '<td>' + properties[key] + '</td></tr>';
     }
-
     if (table) l.bindPopup('<table class="marker-properties">' + table + '</table>');
 }
-
-map.on('draw:created', updateG)
-    .on('draw:edited', updateG)
-    .on('draw:created', function(e) {
-        drawnItems.addLayer(e.layer);
-    });
 
 function updateG() {
     window.setTimeout(function() {
@@ -209,11 +170,6 @@ function updateG() {
     }, 100);
 }
 
-window.onhashchange = hashChange;
-
-if (window.location.hash) {
-    hashChange();
-}
 
 function getGeoJSON() {
     var features = [];
@@ -234,8 +190,11 @@ function firstFile(gist) {
 
 function hashChange() {
     var id = window.location.hash.substring(1);
+
+    uploadButton.className = 'loading';
     xhr('https://api.github.com/gists/' + id,
         function() {
+            uploadButton.className = '';
             if (this.status < 400 && this.responseText) {
                 var first = !editor.getValue();
                 editor.setValue(firstFile(JSON.parse(this.responseText)));
@@ -243,6 +202,8 @@ function hashChange() {
                 if (first && drawnItems.getBounds()) {
                     map.fitBounds(drawnItems.getBounds());
                 }
+            } else {
+                alert('Gist API limit exceeded, come back in a bit.');
             }
     });
 }
@@ -252,4 +213,49 @@ function xhr(url, cb) {
     h.onload = cb;
     h.open('GET', url, true);
     h.send();
+}
+
+function saveAsGist(editor) {
+    var content = editor.getValue(),
+        h = new window.XMLHttpRequest();
+
+    h.onload = function() {
+        if (this.status < 400 && this.responseText) {
+            var d = (JSON.parse(h.responseText));
+            window.location.hash = '#' + d.id;
+
+            hereLink.innerHTML = window.location;
+            hereLink.setAttribute('href', window.location);
+
+            var gistUrl = 'http://gist.github.com/' + d.id;
+            gistLink.innerHTML = gistUrl;
+            gistLink.setAttribute('href', gistUrl);
+
+            linkUi.className = 'link-ui active';
+        } else {
+            alert('Gist API limit exceeded; saving to GitHub temporarily disabled.');
+        }
+    };
+
+    h.onerror = function() {};
+
+    h.open('POST', 'https://api.github.com/gists', true);
+    h.send(JSON.stringify({
+        description: 'Gist from edit-GeoJSON',
+        public: true,
+        files: {
+            'map.geojson': {
+                content: content
+            }
+        }
+    }));
+}
+
+function saveAsFile(editor) {
+    var content = editor.getValue();
+    if (content) {
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'map.geojson');
+    }
 }
