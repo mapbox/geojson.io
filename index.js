@@ -1,3 +1,7 @@
+ZeroClipboard.setDefaults({
+    moviePath: 'lib/zeroclipboard/ZeroClipboard.swf'
+});
+
 var geojsonField = document.getElementById('geojson'),
     uploadButton = document.getElementById('save'),
     downloadButton = document.getElementById('download'),
@@ -73,9 +77,6 @@ document.onkeydown = function(e) {
     }
 };
 
-ZeroClipboard.setDefaults({
-    moviePath: 'lib/zeroclipboard/ZeroClipboard.swf'
-});
 
 clip.on('complete', clipComplete);
 
