@@ -192,7 +192,10 @@ function propertyTable(layer, container) {
     var table = div.appendChild(document.createElement('table'));
 
     function removeRow() {
+        var inputs = this.parentNode.parentNode.getElementsByTagName('input');
+        for (var i = 0; i < inputs.length; i++) { inputs[i].value = ''; }
         this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode);
+        onchange();
     }
 
     var fields = [];
