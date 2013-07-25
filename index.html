@@ -23,16 +23,20 @@
 <div class='right'>
     <div class='edit-pane pane active'>
         <div class='top'>
-            <button title='Save to a Gist and get a URL'
-                id='save'><span class='icon icon-link'></span> <span class='label'></span></button><button
+            <button
+                title='Edit GeoJSON Feature Properties'
+                id='properties-view'><span class='icon icon-table'></span></button><button
+                title='Save to a Gist and get a URL'
+                id='save'><span class='icon icon-link'></span></button><button
                 title='Copy to Clipboard'
-                id='copy'><span class='icon icon-copy'></span> <span class='label'></span></button><button
+                id='copy'><span class='icon icon-copy'></span></button><button
                 title='Download to a File'
-                id='download'><span class='icon icon-download'></span> <span class='label'></span></button><button
+                id='download'><span class='icon icon-download'></span></button><button
                 id='about'><span class='icon icon-question'></span> <span class='label'>help</span></button>
             <span id='status' message='valid' class='icon-circle'></span>
         </div>
         <textarea id='geojson'></textarea>
+        <div id='properties-pane' class='sub-pane'></div>
         <div class='link-ui'>
             <div class='pad1'>
                 <a class='icon-chevron-up' id='link-ui-close'></a>
