@@ -8,6 +8,7 @@ var geojsonField = document.getElementById('geojson'),
     editButton = document.getElementById('edit'),
     loadButton = document.getElementById('load'),
     gistLink = document.getElementById('gist-link'),
+    newHere = document.getElementById('new-here'),
     hereLink = document.getElementById('here-link'),
 
     propertiesLink = document.getElementById('properties-view'),
@@ -372,3 +373,14 @@ function saveAsFile(editor) {
         }), 'map.geojson');
     }
 }
+
+try {
+    if (window.localStorage && !localStorage.visited) {
+        newHere.className = 'active pad1';
+        document.getElementById('close-new').onclick =
+        document.getElementById('new-load-file').onclick = function() {
+            newHere.className = '';
+        };
+        localStorage.visited = true;
+    }
+} catch(e) { }

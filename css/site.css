@@ -296,3 +296,26 @@ a:hover {
         right:50%;
     }
 }
+
+#new-here {
+    position:absolute;
+    top:10px;
+    left:45px;
+    max-width:30%;
+    background:#fefefe;
+    display:none;
+    z-index:999;
+}
+
+#new-here p {
+    font-size:14px;
+    line-height:20px;
+}
+
+#new-here p a {
+    color:darkblue;
+}
+
+#new-here.active {
+    display:block;
+}
