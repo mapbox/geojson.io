@@ -6,30 +6,74 @@
   <!--[if lte IE 8]>
     <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' />
   <![endif]-->
-  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>
-  <title>Edit GeoJSON</title>
+  <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="css/font-awesome/css/font-awesome.min.css">
+  <title>geojson.io: Edit GeoJSON</title>
   <link href='lib/draw/leaflet.draw.css' rel='stylesheet' />
-  <script src='lib/draw/leaflet.draw.js'></script>
-  <script src='lib/codemirror/lib/codemirror.js'></script>
-  <script src='lib/codemirror/mode/javascript/javascript.js'></script>
-  <script src='lib/zeroclipboard/ZeroClipboard.js'></script>
-  <script src='lib/FileSaver.min.js'></script>
   <link href='lib/codemirror/lib/codemirror.css' rel='stylesheet' />
   <link href='css/site.css' rel='stylesheet' />
+  <link href='css/theme.css' rel='stylesheet' />
+  <link rel='icon' type='image/x-icon' href='/favicon.png' />
+  <meta name='author' content='Tom MacWright' />
+  <meta name='description' content='simply edit geojson map data' />
+  <meta property='og:site_name' content='geojson.io'/>
 </head>
 <body>
 <div id='map'></div>
 <div class='right'>
-    <textarea id='geojson'></textarea>
+    <div class='edit-pane pane active'>
+        <div class='top'>
+            <button title='Save to a Gist and get a URL'
+                id='save'><span class='icon icon-link'></span> <span class='label'></span></button><button
+                title='Copy to Clipboard'
+                id='copy'><span class='icon icon-copy'></span> <span class='label'></span></button><button
+                title='Download to a File'
+                id='download'><span class='icon icon-download'></span> <span class='label'></span></button><button
+                id='about'><span class='icon icon-question'></span> <span class='label'>help</span></button>
+            <span id='status' message='valid' class='icon-circle'></span>
+        </div>
+        <textarea id='geojson'></textarea>
+        <div class='link-ui'>
+            <div class='pad1'>
+                <a class='icon-chevron-up' id='link-ui-close'></a>
+                <div><small>data</small> <a target='_blank' id='gist-link' href=''></a></div>
+                <div><small>map</small> <a target='_blank' id='here-link' href=''></a></div>
+            </div>
+        </div>
+    </div>
+    <div class='about-pane pane'>
+        <div class='top'>
+            <button id='edit'><span class='icon icon-pencil'></span> <span class='label'>edit</span></button>
+        </div>
+        <div class='pad prose'>
+            <h2>geojson.io</h2>
+            <p><a href='http://geojson.org/'>GeoJSON</a> is a simple, popular format
+            for map data. geojson.io lets you edit it.</p>
+            <p>This is an <a href='https://github.com/tmcw/edit-geojson'>open source project</a>
+            that you can contribute to and improve.</p>
+            <h3>Getting Started</h3>
+            <p><a href='/#6074458'>Try an example GeoJSON file</a> with a few
+            basic elements. You can click on the buttons on the left to add and
+            remove geometry, and edit the code on the right. If you make a mistake,
+            a pink box will appear and give hints on mouseover.</p>
+            <h3>Protips</h3>
+            <p>Hit <code>Cmd-S</code> (or Ctrl-S) to 'save' what you're working on.</p>
+            <h3>Like it? Spread the word</h3>
+            <p>
+            <iframe class="github-btn" src="http://ghbtns.com/github-btn.html?user=tmcw&repo=edit-geojson&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
+            <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://geojson.io/" data-text="geojson.io edits map data" data-via="tmcw">Tweet</a>
+            <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+            </p>
+        </div>
+    </div>
 </div>
-<div id='buttons'>
-    <button id='about'>?</button>
-    <button id='saved'>unsaved</button>
-    <button id='upload'>upload</button>
-    <button id='download'>download</button>
-    <button id='copy'>copy</button>
-    <button id='load'>load</button>
-</div>
+<script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>
+<script src='lib/draw/leaflet.draw.js'></script>
+<script src='lib/geojsonhint.js'></script>
+<script src='lib/codemirror/lib/codemirror.js'></script>
+<script src='lib/codemirror/mode/javascript/javascript.js'></script>
+<script src='lib/zeroclipboard/ZeroClipboard.js'></script>
+<script src='lib/FileSaver.min.js'></script>
 <script src='index.js'></script>
 <script type="text/javascript">
   var _gauges = _gauges || [];
