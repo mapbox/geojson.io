@@ -112,7 +112,6 @@ function loadGeoJSON(gj) {
 }
 
 function editorChange() {
-    closeLinkUI();
     var err = geojsonhint.hint(editor.getValue());
     statusIcon.className = 'icon-circle';
     if (err && err instanceof Error) {
