@@ -79,15 +79,12 @@ a:hover {
     position:absolute;
     top:0;
     width:100%;
-    right:-100%;
-    transition:all 200ms;
-    -webkit-transition:all 200ms;
-    opacity:0;
+    display:none;
 }
 
 .right .pane.active {
+    display:block;
     right:0;
-    opacity:1;
 }
 
 .sub-pane {
