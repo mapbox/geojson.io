@@ -207,16 +207,21 @@ function propertyTable(layer, container) {
 
         var removeTd = tr.appendChild(document.createElement('td'));
         var removeButton = removeTd.appendChild(document.createElement('button'));
-
+        removeButton.className = 'remove';
         removeButton.onclick = removeRow;
         removeButton.innerHTML = 'x';
 
         var keyTd = tr.appendChild(document.createElement('td'));
-        var keyInput = tr.appendChild(document.createElement('input'));
+        var keyInput = keyTd.appendChild(document.createElement('input'));
         keyInput.value = key;
 
+        var colonTd = tr.appendChild(document.createElement('td'));
+        var colon = colonTd.appendChild(document.createElement('div'));
+        colon.className = 'separator';
+        colon.innerHTML = ': ';
+
         var valueTd = tr.appendChild(document.createElement('td'));
-        var valueInput = tr.appendChild(document.createElement('input'));
+        var valueInput = valueTd.appendChild(document.createElement('input'));
         valueInput.value = properties[key];
 
         keyInput.onblur =
