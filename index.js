@@ -131,12 +131,13 @@ function loadGeoJSON(gj) {
 function editorChange() {
     var err = geojsonhint.hint(editor.getValue());
     statusIcon.className = 'icon-circle';
-    if (err && err instanceof Error) {
+    editor.clearGutter('error');
+    if (err instanceof Error) {
         handleError(err.message);
         statusIcon.className = 'icon-circle-blank';
         statusIcon.title = 'invalid JSON';
         statusIcon.setAttribute('message', 'invalid JSON');
-    } else if (err && err.length) {
+    } else if (err.length) {
         handleErrors(err);
         statusIcon.className = 'icon-circle-blank';
         statusIcon.setAttribute('message', 'invalid GeoJSON');
@@ -144,7 +145,6 @@ function editorChange() {
         var gj = JSON.parse(editor.getValue());
         try {
             loadGeoJSON(gj);
-            editor.clearGutter('error');
             statusIcon.setAttribute('message', 'valid');
         } catch(e) {
             statusIcon.className = 'icon-circle-blank';
@@ -328,21 +328,38 @@ function firstFile(gist) {
 
 function hashChange() {
     var id = window.location.hash.substring(1);
-    uploadButton.className = 'loading';
-    xhr('https://api.github.com/gists/' + id,
+    if (!isNaN(+id)) {
+        uploadButton.className = 'loading';
+        xhr('https://api.github.com/gists/' + id,
+            function() {
+                uploadButton.className = '';
+                if (this.status < 400 && this.responseText) {
+                    var first = !editor.getValue();
+                    editor.setValue(firstFile(JSON.parse(this.responseText)));
+                    editorChange();
+                    if (first && drawnItems.getBounds().isValid()) {
+                        map.fitBounds(drawnItems.getBounds());
+                    }
+                } else {
+                    alert('Gist API limit exceeded, come back in a bit.');
+                }
+        });
+    } else {
+        xhr(id,
         function() {
             uploadButton.className = '';
             if (this.status < 400 && this.responseText) {
                 var first = !editor.getValue();
-                editor.setValue(firstFile(JSON.parse(this.responseText)));
+                editor.setValue(JSON.parse(this.responseText));
                 editorChange();
-                if (first && drawnItems.getBounds()) {
+                if (first && drawnItems.getBounds().isValid()) {
                     map.fitBounds(drawnItems.getBounds());
                 }
             } else {
-                alert('Gist API limit exceeded, come back in a bit.');
+                alert('URL load failed');
             }
-    });
+        });
+    }
 }
 
 function xhr(url, cb) {
