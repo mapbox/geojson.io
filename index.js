@@ -350,7 +350,7 @@ function hashChange() {
             uploadButton.className = '';
             if (this.status < 400 && this.responseText) {
                 var first = !editor.getValue();
-                editor.setValue(JSON.parse(this.responseText));
+                editor.setValue(this.responseText);
                 editorChange();
                 if (first && drawnItems.getBounds().isValid()) {
                     map.fitBounds(drawnItems.getBounds());
