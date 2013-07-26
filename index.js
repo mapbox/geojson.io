@@ -23,17 +23,19 @@ var geojsonField = document.getElementById('geojson'),
     linkUiClose = document.getElementById('link-ui-close'),
     clip = new ZeroClipboard(copyButton);
 
-var map = L.mapbox.map('map', 'tmcw.map-7s15q36b').setView([20, 0], 2);
-
-var osmTiles = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-});
+var map = L.mapbox.map('map').setView([20, 0], 2),
+    osmTiles = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    }),
+    mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b').addTo(map);
 
 switchBasemap.onclick = function() {
     if (map.hasLayer(osmTiles)) {
         map.removeLayer(osmTiles);
+        map.addLayer(mapboxTiles);
     } else {
         map.addLayer(osmTiles);
+        map.removeLayer(mapboxTiles);
     }
 };
 
