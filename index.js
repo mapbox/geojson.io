@@ -30,7 +30,7 @@ var osmTiles = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 });
 
 switchBasemap.onclick = function() {
-    if( map.hasLayer(osmTiles) ){
+    if (map.hasLayer(osmTiles)) {
         map.removeLayer(osmTiles);
     } else {
         map.addLayer(osmTiles);
