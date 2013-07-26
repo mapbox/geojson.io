@@ -14,6 +14,7 @@ var geojsonField = document.getElementById('geojson'),
     gistLink = document.getElementById('gist-link'),
     newHere = document.getElementById('new-here'),
     hereLink = document.getElementById('here-link'),
+    switchBasemap = document.getElementById('switch-basemap'),
 
     propertiesLink = document.getElementById('properties-view'),
     propertiesPane = document.getElementById('properties-pane'),
@@ -23,6 +24,18 @@ var geojsonField = document.getElementById('geojson'),
     clip = new ZeroClipboard(copyButton);
 
 var map = L.mapbox.map('map', 'tmcw.map-7s15q36b').setView([20, 0], 2);
+
+var osmTiles = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+});
+
+switchBasemap.onclick = function() {
+    if( map.hasLayer(osmTiles) ){
+        map.removeLayer(osmTiles);
+    } else {
+        map.addLayer(osmTiles);
+    }
+};
 
 // Initialize the FeatureGroup to store editable layers
 var drawnItems = new L.FeatureGroup().addTo(map);
