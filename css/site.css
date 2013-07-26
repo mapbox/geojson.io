@@ -111,7 +111,9 @@ a:hover {
 .property-table table {
     border-collapse: collapse;
     border-spacing:0;
+    border: none;
     width:100%;
+    margin-top: 5px;
 }
 
 .property-table table input {
@@ -123,6 +125,26 @@ a:hover {
     border:0;
     border-bottom:1px solid #363636;
     color:#eee;
+    margin: 0px 5px 0px 0px;
+}
+
+.property-table .remove {
+    margin: 0px 5px 5px 0px;
+}
+
+.property-table .separator {
+    color: #eee;
+    padding-right: 3px;
+}
+
+.property-table tr {
+    padding: 0;
+}
+
+.property-table td {
+    padding: 0;
+    margin: 0;
+    vertical-align: top;
 }
 
 .sub-pane button {
@@ -140,6 +162,7 @@ a:hover {
 
 .sub-pane button.addrow {
     width:100%;
+    margin: 0;
 }
 
 #buttons {
