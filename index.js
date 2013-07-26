@@ -86,6 +86,7 @@ clip.on('mousedown', function(client) {
 
 map.on('draw:created', updateG)
     .on('draw:edited', updateG)
+    .on('draw:deleted', updateG)
     .on('draw:created', function(e) {
         drawnItems.addLayer(e.layer);
     });
