@@ -294,15 +294,6 @@ propertiesLink.onclick = function() {
     }
 };
 
-function updatePropertiesPane(){
-    propertiesLink.className = 'active';
-    propertiesPane.className = 'sub-pane active';
-    propertiesPane.innerHTML = '';
-    drawnItems.eachLayer(function(l) {
-        addMiniMap(l);
-    });
-}
-
 function addMiniMap(layer){
     if (!('toGeoJSON' in layer)) return;
     var fDiv = propertiesPane.appendChild(document.createElement('div')),
