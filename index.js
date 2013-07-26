@@ -101,13 +101,9 @@ clip.on('mousedown', function(client) {
 
 map.on('draw:created', updateG)
     .on('draw:edited', updateG)
-    .on('draw:deleted', function(e){
-        if (propertiesPane.className === 'sub-pane active') updatePropertiesPane();
-        updateG();
-    })
+    .on('draw:deleted', updateG)
     .on('draw:created', function(e) {
         drawnItems.addLayer(e.layer);
-        if (propertiesPane.className === 'sub-pane active') addMiniMap(e.layer);
     });
 
 window.onhashchange = hashChange;
@@ -191,6 +187,7 @@ function showProperties(l) {
 function updateG() {
     window.setTimeout(function() {
         editor.setValue(JSON.stringify(getGeoJSON(), null, 2));
+        if (propertiesPane.className === 'sub-pane active') updatePropertiesPane();
     }, 100);
 }
 
