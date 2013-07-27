@@ -187,6 +187,7 @@ function showProperties(l) {
 function updateG() {
     window.setTimeout(function() {
         editor.setValue(JSON.stringify(getGeoJSON(), null, 2));
+        if (propertiesPane.className === 'sub-pane active') updatePropertiesPane();
     }, 100);
 }
 
@@ -277,24 +278,7 @@ function clean(o) {
 
 propertiesLink.onclick = function() {
     if (propertiesPane.className === 'sub-pane') {
-        this.className = 'active';
-        propertiesPane.className = 'sub-pane active';
-        propertiesPane.innerHTML = '';
-        drawnItems.eachLayer(function(l) {
-            if (!('toGeoJSON' in l)) return;
-            var fDiv = propertiesPane.appendChild(document.createElement('div')),
-                mDiv = fDiv.appendChild(document.createElement('div'));
-            fDiv.className = 'pad1';
-            mDiv.className = 'mini-map';
-            var map = L.mapbox.map(mDiv, 'tmcw.map-7s15q36b', {
-                scrollWheelZoom: false
-            });
-            var gj = l.toGeoJSON();
-            var gjL = L.geoJson(gj).addTo(map);
-            map.fitBounds(gjL.getBounds());
-            var tableContainer = fDiv.appendChild(document.createElement('div'));
-            propertyTable(l, tableContainer);
-        });
+        updatePropertiesPane();
     } else {
         this.className = '';
         propertiesPane.className = 'sub-pane';
@@ -306,6 +290,32 @@ propertiesLink.onclick = function() {
         updateG();
     }
 };
+
+function addMiniMap(layer){
+    if (!('toGeoJSON' in layer)) return;
+    var fDiv = propertiesPane.appendChild(document.createElement('div')),
+        mDiv = fDiv.appendChild(document.createElement('div'));
+
+    fDiv.className = 'pad1';
+    mDiv.className = 'mini-map';
+    var map = L.mapbox.map(mDiv, 'tmcw.map-7s15q36b', {
+        scrollWheelZoom: false
+    });
+    var gj = layer.toGeoJSON();
+    var gjL = L.geoJson(gj).addTo(map);
+    map.fitBounds(gjL.getBounds());
+    var tableContainer = fDiv.appendChild(document.createElement('div'));
+    propertyTable(layer, tableContainer);
+}
+
+function updatePropertiesPane(){
+    propertiesLink.className = 'active';
+    propertiesPane.className = 'sub-pane active';
+    propertiesPane.innerHTML = '';
+    drawnItems.eachLayer(function(l) {
+        addMiniMap(l);
+    });
+}
 
 // GIST
 // ----------------------------------------------------------------------------
