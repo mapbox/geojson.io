@@ -1,16 +1,4 @@
-var geojsonField = d3.select('#geojson'),
-    aboutButton = d3.select('#about'),
-    statusIcon = d3.select('#status'),
-    aboutButton = d3.select('#about'),
-    editButton = d3.select('#edit'),
-    loadButton = d3.select('#load'),
-    newHere = d3.select('#new-here'),
-
-    propertiesLink = d3.select('#properties-view'),
-    propertiesPane = d3.select('#properties-pane'),
-
-    linkUi = d3.select('.link-ui'),
-    linkUiClose = d3.select('#link-ui-close');
+var pane = d3.select('.pane');
 
 var map = L.mapbox.map('map').setView([20, 0], 2),
     osmTiles = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -18,10 +6,8 @@ var map = L.mapbox.map('map').setView([20, 0], 2),
     }),
     mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b').addTo(map);
 
-// Initialize the FeatureGroup to store editable layers
 var drawnItems = new L.FeatureGroup().addTo(map);
 
-// Initialize the draw control and pass it the FeatureGroup of editable layers
 var drawControl = new L.Control.Draw({
     edit: { featureGroup: drawnItems },
     draw: { circle: false }
@@ -35,43 +21,7 @@ CodeMirror.keyMap.tabSpace = {
     fallthrough: ['default']
 };
 
-var editor = CodeMirror.fromTextArea(geojsonField.node(), {
-    mode: 'application/json',
-    matchBrackets: true,
-    tabSize: 2,
-    gutters: ['error'],
-    theme: 'monokai',
-    autofocus: (window === window.top),
-    keyMap: 'tabSpace',
-    lineNumbers: true
-});
-
-d3.select('.buttons')
-    .call(clipButton)
-    .call(download, editor)
-    .call(switchMap, map, mapboxTiles, osmTiles)
-    .call(gistButton, editor);
-
-editor.on('change', editorChange);
-
-linkUiClose.onclick = closeLinkUI;
-
-aboutButton.on('click', function() {
-    d3.select('.edit-pane').classed('active', false);
-    d3.select('.about-pane').classed('active', true);
-});
-
-editButton.on('click', function() {
-    d3.select('.edit-pane').classed('active', true);
-    d3.select('.about-pane').classed('active', false);
-});
-
-d3.select(document).on('keydown', function(e) {
-    if (d3.event.keyCode == 83 && d3.event.metaKey) {
-        saveAsGist(editor.getValue());
-        d3.event.preventDefault();
-    }
-});
+var editor;
 
 map.on('draw:created', updateG)
     .on('draw:edited', updateG)
@@ -80,10 +30,120 @@ map.on('draw:created', updateG)
         drawnItems.addLayer(e.layer);
     });
 
+d3.select('.buttons')
+    .call(jsonEditButton)
+    .call(propertiesEditButton)
+    .call(shareButton);
+    // .call(download, editor)
+    // .call(gistButton, editor);
+
+// JSON EDITOR ----------------------------------------------------------------
+function toggleJsonEditor() {
+
+    if (d3.event) {
+        d3.select('.buttons')
+            .selectAll('button')
+            .classed('active', false);
+
+        d3.select(d3.event.target).classed('active', true);
+    }
+
+    pane.html('');
+    var textarea = pane.append('textarea');
+    editor = CodeMirror.fromTextArea(textarea.node(), {
+        mode: 'application/json',
+        matchBrackets: true,
+        tabSize: 2,
+        gutters: ['error'],
+        theme: 'eclipse',
+        autofocus: (window === window.top),
+        keyMap: 'tabSpace',
+        lineNumbers: true
+    });
+    editor.on('change', editorChange);
+}
+
+function jsonEditButton(container) {
+    var button = container.append('button')
+        .attr('class', 'active')
+        .on('click', toggleJsonEditor);
+    button.append('span').attr('class', 'icon icon-code');
+}
+
+toggleJsonEditor();
+// ----------------------------------------------------------------------------
+
+// PROPERTIES  ----------------------------------------------------------------
+function togglePropertiesEditor() {
+    pane.html('');
+    var textarea = pane.append('textarea');
+    editor = CodeMirror.fromTextArea(textarea.node(), {
+        mode: 'application/json',
+        matchBrackets: true,
+        tabSize: 2,
+        gutters: ['error'],
+        theme: 'eclipse',
+        autofocus: (window === window.top),
+        keyMap: 'tabSpace',
+        lineNumbers: true
+    });
+    editor.on('change', editorChange);
+}
+
+function propertiesEditButton(container) {
+    var button = container.append('button').on('click', togglePropertiesEditor);
+    button.append('span').attr('class', 'icon icon-table');
+}
+// ----------------------------------------------------------------------------
+
+// PROPERTIES  ----------------------------------------------------------------
+function toggleShare() {
+    if (d3.event) {
+        d3.select('.buttons')
+            .selectAll('button')
+            .classed('active', false);
+        d3.select(d3.event.target).classed('active', true);
+    }
+    pane.html('');
+    saveAsGist(editor.getValue(), function(err, resp) {
+        if (err) return alert(err);
+        var id = resp.id;
+        var wrap = pane.append('div').attr('class', 'pad1 share');
+        wrap.append('label').text('Map Embed').attr('class', 'horizontal');
+        wrap.append('input').attr('class', 'horizontal')
+            .property('value', '<iframe frameborder="0" width="100%" height="300" src="http://bl.ocks.org/d/' + id + '"></iframe>');
+
+        wrap.append('label').text('Link to Editor').attr('class', 'horizontal');
+        wrap.append('input').attr('class', 'horizontal')
+            .property('value', 'http://geojson.io/#' + id);
+
+        wrap.append('label').text('On GitHub Gist').attr('class', 'horizontal');
+        wrap.append('input').attr('class', 'horizontal')
+            .property('value', 'http://gist.github.com/anonymous/' + id);
+
+        wrap.append('label').text('Raw GeoJSON Data').attr('class', 'horizontal');
+        wrap.append('input').attr('class', 'horizontal')
+            .property('value', 'http://gist.github.com/anonymous/' + id + '/raw/map.geojson');
+    });
+}
+
+function shareButton(container) {
+    var button = container.append('button').on('click', toggleShare);
+    button.append('span').attr('class', 'icon icon-share-alt');
+}
+// ----------------------------------------------------------------------------
+
+d3.select(document).on('keydown', keydown);
 d3.select(window).on('hashchange', hashChange);
+
 if (window.location.hash) hashChange();
 
-function closeLinkUI() { linkUi.className = 'link-ui'; }
+function keydown(e) {
+    if (d3.event.keyCode == 83 && d3.event.metaKey) {
+        saveAsGist(editor.getValue());
+        d3.event.preventDefault();
+    }
+}
 
 function loadGeoJSON(gj) {
     drawnItems.clearLayers();
@@ -104,32 +164,10 @@ function showProperties(l) {
 
 function updateG() {
     window.setTimeout(function() {
-        editor.setValue(JSON.stringify(getGeoJSON(), null, 2));
-        if (propertiesPane.classed('active')) updatePropertiesPane();
+         editor.setValue(JSON.stringify(getGeoJSON(), null, 2));
+        // if (propertiesPane.classed('active')) updatePropertiesPane();
     }, 100);
 }
-
-function fieldArrayToProperties(arr) {
-    var obj = {};
-    for (var i = 0; i < arr.length; i++) {
-        obj[arr[i][0].value] = arr[i][1].value;
-    }
-    return obj;
-}
-
-propertiesLink.on('click', function() {
-    if (!propertiesPane.classed('active')) {
-        updatePropertiesPane();
-    } else {
-        this.className = '';
-        propertiesPane.attr('class', 'sub-pane').html('');
-        drawnItems.eachLayer(function(l) {
-            if (!('toGeoJSON' in l)) return;
-            l.feature.properties = clean(l.feature.properties);
-        });
-        updateG();
-    }
-});
 
 // GIST
 // ----------------------------------------------------------------------------
@@ -180,16 +218,3 @@ function hashChange() {
             }).get();
     }
 }
-
-function closeNewHere() {
-    newHere.attr('class', '');
-}
-
-try {
-    if (window.localStorage && !localStorage.visited) {
-        newHere.className = 'active pad1';
-        d3.select('#close-new').on('click', closeNewHere);
-        d3.select('#new-load-file').on('click', closeNewHere);
-        localStorage.visited = true;
-    }
-} catch(e) { }

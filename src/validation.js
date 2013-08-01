@@ -1,5 +1,7 @@
 function editorChange() {
 
+    var statusIcon = d3.select('#status');
+
     var err = geojsonhint.hint(editor.getValue());
     statusIcon.attr('class', 'icon-circle');
     editor.clearGutter('error');
