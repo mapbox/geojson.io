@@ -2,26 +2,26 @@ ZeroClipboard.setDefaults({
     moviePath: 'lib/zeroclipboard/ZeroClipboard.swf'
 });
 
-var geojsonField = document.getElementById('geojson'),
-    uploadButton = document.getElementById('save'),
-    downloadButton = document.getElementById('download'),
-    aboutButton = document.getElementById('about'),
-    copyButton = document.getElementById('copy'),
-    statusIcon = document.getElementById('status'),
-    aboutButton = document.getElementById('about'),
-    editButton = document.getElementById('edit'),
-    loadButton = document.getElementById('load'),
-    gistLink = document.getElementById('gist-link'),
-    newHere = document.getElementById('new-here'),
-    hereLink = document.getElementById('here-link'),
-    switchBasemap = document.getElementById('switch-basemap'),
+var geojsonField = d3.select('#geojson'),
+    uploadButton = d3.select('#save'),
+    downloadButton = d3.select('#download'),
+    aboutButton = d3.select('#about'),
+    copyButton = d3.select('#copy'),
+    statusIcon = d3.select('#status'),
+    aboutButton = d3.select('#about'),
+    editButton = d3.select('#edit'),
+    loadButton = d3.select('#load'),
+    gistLink = d3.select('#gist-link'),
+    newHere = d3.select('#new-here'),
+    hereLink = d3.select('#here-link'),
+    switchBasemap = d3.select('#switch-basemap'),
 
-    propertiesLink = document.getElementById('properties-view'),
-    propertiesPane = document.getElementById('properties-pane'),
+    propertiesLink = d3.select('#properties-view'),
+    propertiesPane = d3.select('#properties-pane'),
 
-    linkUi = document.getElementsByClassName('link-ui')[0];
-    linkUiClose = document.getElementById('link-ui-close'),
-    clip = new ZeroClipboard(copyButton);
+    linkUi = d3.select('.link-ui');
+    linkUiClose = d3.select('#link-ui-close'),
+    clip = new ZeroClipboard(copyButton.node());
 
 var map = L.mapbox.map('map').setView([20, 0], 2),
     osmTiles = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -29,7 +29,7 @@ var map = L.mapbox.map('map').setView([20, 0], 2),
     }),
     mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b').addTo(map);
 
-switchBasemap.onclick = function() {
+switchBasemap.on('click', function() {
     if (map.hasLayer(osmTiles)) {
         map.removeLayer(osmTiles);
         map.addLayer(mapboxTiles);
@@ -37,7 +37,7 @@ switchBasemap.onclick = function() {
         map.addLayer(osmTiles);
         map.removeLayer(mapboxTiles);
     }
-};
+});
 
 // Initialize the FeatureGroup to store editable layers
 var drawnItems = new L.FeatureGroup().addTo(map);
@@ -56,7 +56,7 @@ CodeMirror.keyMap.tabSpace = {
     fallthrough: ['default']
 };
 
-var editor = CodeMirror.fromTextArea(geojsonField, {
+var editor = CodeMirror.fromTextArea(geojsonField.node(), {
     mode: 'application/json',
     matchBrackets: true,
     tabSize: 2,
@@ -69,28 +69,27 @@ var editor = CodeMirror.fromTextArea(geojsonField, {
 
 editor.on('change', editorChange);
 
-uploadButton.onclick = function() { saveAsGist(editor); };
-
-downloadButton.onclick = function() { saveAsFile(editor); };
+uploadButton.on('click', function() { saveAsGist(editor.getValue()); });
+downloadButton.on('click', function() { saveAsFile(editor); });
 
 linkUiClose.onclick = closeLinkUI;
 
-aboutButton.onclick = function() {
-    document.getElementsByClassName('edit-pane')[0].className = 'edit-pane pane';
-    document.getElementsByClassName('about-pane')[0].className = 'about-pane pane active';
-};
+aboutButton.on('click', function() {
+    d3.select('.edit-pane').classed('active', false);
+    d3.select('.about-pane').classed('active', true);
+});
 
-editButton.onclick = function() {
-    document.getElementsByClassName('edit-pane')[0].className = 'edit-pane pane active';
-    document.getElementsByClassName('about-pane')[0].className = 'about-pane pane';
-};
+editButton.on('click', function() {
+    d3.select('.edit-pane').classed('active', true);
+    d3.select('.about-pane').classed('active', false);
+});
 
-document.onkeydown = function(e) {
-    if (e.keyCode == 83 && e.metaKey) {
-        saveAsGist(editor);
-        e.preventDefault();
+d3.select(document).on('keydown', function(e) {
+    if (d3.event.keyCode == 83 && d3.event.metaKey) {
+        saveAsGist(editor.getValue());
+        d3.event.preventDefault();
     }
-};
+});
 
 
 clip.on('complete', clipComplete);
@@ -106,15 +105,15 @@ map.on('draw:created', updateG)
         drawnItems.addLayer(e.layer);
     });
 
-window.onhashchange = hashChange;
+d3.select(window).on('hashchange', hashChange);
 if (window.location.hash) hashChange();
 
 function clipComplete(client, args) {
-    copyButton.className = 'done';
-    copyButton.innerHTML = 'copied to your clipboard';
+    copyButton.classed('done', true);
+    copyButton.text('copied to your clipboard');
     setTimeout(function() {
-        copyButton.innerHTML = "<span class='icon icon-copy'></span>";
-        copyButton.className = '';
+        copyButton.html("<span class='icon icon-copy'></span>");
+        copyButton.classed('done', false);
     }, 1000);
 }
 
@@ -130,25 +129,25 @@ function loadGeoJSON(gj) {
 
 function editorChange() {
     var err = geojsonhint.hint(editor.getValue());
-    statusIcon.className = 'icon-circle';
+    statusIcon.attr('class', 'icon-circle');
     editor.clearGutter('error');
     if (err instanceof Error) {
         handleError(err.message);
-        statusIcon.className = 'icon-circle-blank';
-        statusIcon.title = 'invalid JSON';
-        statusIcon.setAttribute('message', 'invalid JSON');
+        statusIcon.attr('class', 'icon-circle-blank')
+            .attr('title', 'invalid JSON')
+            .attr('message', 'invalid JSON');
     } else if (err.length) {
         handleErrors(err);
-        statusIcon.className = 'icon-circle-blank';
-        statusIcon.setAttribute('message', 'invalid GeoJSON');
+        statusIcon.attr('class', 'icon-circle-blank')
+            .attr('message', 'invalid GeoJSON');
     } else {
         var gj = JSON.parse(editor.getValue());
         try {
             loadGeoJSON(gj);
-            statusIcon.setAttribute('message', 'valid');
+            statusIcon.attr('message', 'valid');
         } catch(e) {
-            statusIcon.className = 'icon-circle-blank';
-            statusIcon.setAttribute('message', 'invalid GeoJSON');
+            statusIcon.attr('class', 'icon-circle-blank')
+                .attr('message', 'invalid GeoJSON');
         }
     }
 }
@@ -169,10 +168,9 @@ function handleErrors(errors) {
 }
 
 function makeMarker(msg) {
-    var el = document.createElement('div');
-    el.className = 'error-marker';
-    el.setAttribute('message', msg);
-    return el;
+    return d3.select(document.createElement('div'))
+        .attr('class', 'error-marker')
+        .attr('message', msg).node();
 }
 
 function showProperties(l) {
@@ -187,7 +185,7 @@ function showProperties(l) {
 function updateG() {
     window.setTimeout(function() {
         editor.setValue(JSON.stringify(getGeoJSON(), null, 2));
-        if (propertiesPane.className === 'sub-pane active') updatePropertiesPane();
+        if (propertiesPane.classed('active')) updatePropertiesPane();
     }, 100);
 }
 
@@ -199,123 +197,19 @@ function fieldArrayToProperties(arr) {
     return obj;
 }
 
-// PROPERTIES
-// ----------------------------------------------------------------------------
-function propertyTable(layer, container) {
-
-    var properties = layer.toGeoJSON().properties;
-    var div = document.createElement('div');
-    div.className = 'property-table';
-
-    var table = div.appendChild(document.createElement('table'));
-
-    function removeRow() {
-        var inputs = this.parentNode.parentNode.getElementsByTagName('input');
-        for (var i = 0; i < inputs.length; i++) { inputs[i].value = ''; }
-        this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode);
-        onchange();
-    }
-
-    var fields = [];
-
-    for (var key in properties) {
-        var tr = table.appendChild(document.createElement('tr'));
-
-        var removeTd = tr.appendChild(document.createElement('td'));
-        var removeButton = removeTd.appendChild(document.createElement('button'));
-        removeButton.className = 'remove';
-        removeButton.onclick = removeRow;
-        removeButton.innerHTML = 'x';
-
-        var keyTd = tr.appendChild(document.createElement('td'));
-        var keyInput = keyTd.appendChild(document.createElement('input'));
-        keyInput.value = key;
-
-        var colonTd = tr.appendChild(document.createElement('td'));
-        var colon = colonTd.appendChild(document.createElement('div'));
-        colon.className = 'separator';
-        colon.innerHTML = ': ';
-
-        var valueTd = tr.appendChild(document.createElement('td'));
-        var valueInput = valueTd.appendChild(document.createElement('input'));
-        valueInput.value = properties[key];
-
-        keyInput.onblur =
-            keyInput.onchange =
-            valueInput.onchange =
-            valueInput.onblur = onchange;
-
-        fields.push([keyInput, valueInput]);
-    }
-
-    var addRowButton = div.appendChild(document.createElement('button'));
-    addRowButton.innerHTML = 'add row';
-    addRowButton.className = 'addrow';
-
-    function onchange() {
-        var props = fieldArrayToProperties(fields);
-        layer.feature.properties = props;
-    }
-
-    addRowButton.onclick = function() {
-        var props = fieldArrayToProperties(fields);
-        props[''] = '';
-        layer.feature.properties = props;
-        propertyTable(layer, container);
-    };
-
-    container.innerHTML = '';
-    container.appendChild(div);
-}
-
-function clean(o) {
-    var x = {};
-    for (var k in o) {
-        if (k) x[k] = o[k];
-    }
-    return x;
-}
-
-propertiesLink.onclick = function() {
-    if (propertiesPane.className === 'sub-pane') {
+propertiesLink.on('click', function() {
+    if (!propertiesPane.classed('active')) {
         updatePropertiesPane();
     } else {
         this.className = '';
-        propertiesPane.className = 'sub-pane';
-        propertiesPane.innerHTML = '';
+        propertiesPane.attr('class', 'sub-pane').html('');
         drawnItems.eachLayer(function(l) {
             if (!('toGeoJSON' in l)) return;
             l.feature.properties = clean(l.feature.properties);
         });
         updateG();
     }
-};
-
-function addMiniMap(layer){
-    if (!('toGeoJSON' in layer)) return;
-    var fDiv = propertiesPane.appendChild(document.createElement('div')),
-        mDiv = fDiv.appendChild(document.createElement('div'));
-
-    fDiv.className = 'pad1';
-    mDiv.className = 'mini-map';
-    var map = L.mapbox.map(mDiv, 'tmcw.map-7s15q36b', {
-        scrollWheelZoom: false
-    });
-    var gj = layer.toGeoJSON();
-    var gjL = L.geoJson(gj).addTo(map);
-    map.fitBounds(gjL.getBounds());
-    var tableContainer = fDiv.appendChild(document.createElement('div'));
-    propertyTable(layer, tableContainer);
-}
-
-function updatePropertiesPane(){
-    propertiesLink.className = 'active';
-    propertiesPane.className = 'sub-pane active';
-    propertiesPane.innerHTML = '';
-    drawnItems.eachLayer(function(l) {
-        addMiniMap(l);
-    });
-}
+});
 
 // GIST
 // ----------------------------------------------------------------------------
@@ -339,78 +233,35 @@ function firstFile(gist) {
 function hashChange() {
     var id = window.location.hash.substring(1);
     if (!isNaN(+id)) {
-        uploadButton.className = 'loading';
-        xhr('https://api.github.com/gists/' + id,
-            function() {
-                uploadButton.className = '';
-                if (this.status < 400 && this.responseText) {
-                    var first = !editor.getValue();
-                    editor.setValue(firstFile(JSON.parse(this.responseText)));
-                    editorChange();
-                    if (first && drawnItems.getBounds().isValid()) {
-                        map.fitBounds(drawnItems.getBounds());
-                    }
-                } else {
-                    alert('Gist API limit exceeded, come back in a bit.');
-                }
-        });
-    } else {
-        xhr(id,
-        function() {
-            uploadButton.className = '';
-            if (this.status < 400 && this.responseText) {
+        uploadButton.attr('class', 'loading');
+        d3.json('https://api.github.com/gists/' + id).on('load',
+            function(json) {
+                uploadButton.attr('class', '');
                 var first = !editor.getValue();
-                editor.setValue(this.responseText);
+                editor.setValue(firstFile(json));
                 editorChange();
                 if (first && drawnItems.getBounds().isValid()) {
                     map.fitBounds(drawnItems.getBounds());
                 }
-            } else {
+            })
+            .on('error', function() {
+                alert('Gist API limit exceeded, come back in a bit.');
+            }).get();
+    } else {
+        d3.text(id).on('load',
+            function(text) {
+                uploadButton.attr('class', '');
+                var first = !editor.getValue();
+                editor.setValue(text);
+                editorChange();
+                if (first && drawnItems.getBounds().isValid()) {
+                    map.fitBounds(drawnItems.getBounds());
+                }
+            })
+            .on('error', function() {
                 alert('URL load failed');
-            }
-        });
+            }).get();
     }
-}
-
-function xhr(url, cb) {
-    var h = new window.XMLHttpRequest();
-    h.onload = cb;
-    h.open('GET', url, true);
-    h.send();
-}
-
-function saveAsGist(editor) {
-    var content = editor.getValue(),
-        h = new window.XMLHttpRequest();
-
-    h.onload = function() {
-        if (this.status < 400 && this.responseText) {
-            var d = (JSON.parse(h.responseText));
-            window.location.hash = '#' + d.id;
-
-            hereLink.innerHTML = window.location;
-            hereLink.setAttribute('href', window.location);
-
-            var gistUrl = 'http://gist.github.com/' + d.id;
-            gistLink.innerHTML = gistUrl;
-            gistLink.setAttribute('href', gistUrl);
-
-            linkUi.className = 'link-ui active';
-        } else {
-            alert('Gist API limit exceeded; saving to GitHub temporarily disabled.');
-        }
-    };
-    h.onerror = function() {};
-    h.open('POST', 'https://api.github.com/gists', true);
-    h.send(JSON.stringify({
-        description: 'Gist from edit-GeoJSON',
-        public: true,
-        files: {
-            'map.geojson': {
-                content: content
-            }
-        }
-    }));
 }
 
 function saveAsFile(editor) {
@@ -422,13 +273,15 @@ function saveAsFile(editor) {
     }
 }
 
+function closeNewHere() {
+    newHere.attr('class', '');
+}
+
 try {
     if (window.localStorage && !localStorage.visited) {
         newHere.className = 'active pad1';
-        document.getElementById('close-new').onclick =
-        document.getElementById('new-load-file').onclick = function() {
-            newHere.className = '';
-        };
+        d3.select('#close-new').on('click', closeNewHere);
+        d3.select('#new-load-file').on('click', closeNewHere);
         localStorage.visited = true;
     }
 } catch(e) { }
