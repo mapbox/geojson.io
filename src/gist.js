@@ -30,3 +30,10 @@ function saveAsGist(content) {
         }
     }));
 }
+
+function gistButton(container, editor) {
+    var button = container.append('button').on('click', function() {
+        saveAsGist(editor.getValue());
+    });
+    button.append('span').attr('class', 'icon icon-link');
+}

@@ -1,12 +1,5 @@
-ZeroClipboard.setDefaults({
-    moviePath: 'lib/zeroclipboard/ZeroClipboard.swf'
-});
-
 var geojsonField = d3.select('#geojson'),
-    uploadButton = d3.select('#save'),
-    downloadButton = d3.select('#download'),
     aboutButton = d3.select('#about'),
-    copyButton = d3.select('#copy'),
     statusIcon = d3.select('#status'),
     aboutButton = d3.select('#about'),
     editButton = d3.select('#edit'),
@@ -14,30 +7,18 @@ var geojsonField = d3.select('#geojson'),
     gistLink = d3.select('#gist-link'),
     newHere = d3.select('#new-here'),
     hereLink = d3.select('#here-link'),
-    switchBasemap = d3.select('#switch-basemap'),
 
     propertiesLink = d3.select('#properties-view'),
     propertiesPane = d3.select('#properties-pane'),
 
-    linkUi = d3.select('.link-ui');
-    linkUiClose = d3.select('#link-ui-close'),
-    clip = new ZeroClipboard(copyButton.node());
+    linkUi = d3.select('.link-ui'),
+    linkUiClose = d3.select('#link-ui-close');
 
 var map = L.mapbox.map('map').setView([20, 0], 2),
     osmTiles = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
     }),
     mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b').addTo(map);
-
-switchBasemap.on('click', function() {
-    if (map.hasLayer(osmTiles)) {
-        map.removeLayer(osmTiles);
-        map.addLayer(mapboxTiles);
-    } else {
-        map.addLayer(osmTiles);
-        map.removeLayer(mapboxTiles);
-    }
-});
 
 // Initialize the FeatureGroup to store editable layers
 var drawnItems = new L.FeatureGroup().addTo(map);
@@ -67,10 +48,13 @@ var editor = CodeMirror.fromTextArea(geojsonField.node(), {
     lineNumbers: true
 });
 
-editor.on('change', editorChange);
+d3.select('.buttons')
+    .call(clipButton)
+    .call(download, editor)
+    .call(switchMap, map, mapboxTiles, osmTiles)
+    .call(gistButton, editor);
 
-uploadButton.on('click', function() { saveAsGist(editor.getValue()); });
-downloadButton.on('click', function() { saveAsFile(editor); });
+editor.on('change', editorChange);
 
 linkUiClose.onclick = closeLinkUI;
 
@@ -91,13 +75,6 @@ d3.select(document).on('keydown', function(e) {
     }
 });
 
-
-clip.on('complete', clipComplete);
-
-clip.on('mousedown', function(client) {
-    clip.setText(JSON.stringify(getGeoJSON(), null, 2));
-});
-
 map.on('draw:created', updateG)
     .on('draw:edited', updateG)
     .on('draw:deleted', updateG)
@@ -107,15 +84,6 @@ map.on('draw:created', updateG)
 
 d3.select(window).on('hashchange', hashChange);
 if (window.location.hash) hashChange();
-
-function clipComplete(client, args) {
-    copyButton.classed('done', true);
-    copyButton.text('copied to your clipboard');
-    setTimeout(function() {
-        copyButton.html("<span class='icon icon-copy'></span>");
-        copyButton.classed('done', false);
-    }, 1000);
-}
 
 function closeLinkUI() { linkUi.className = 'link-ui'; }
 
@@ -233,10 +201,8 @@ function firstFile(gist) {
 function hashChange() {
     var id = window.location.hash.substring(1);
     if (!isNaN(+id)) {
-        uploadButton.attr('class', 'loading');
         d3.json('https://api.github.com/gists/' + id).on('load',
             function(json) {
-                uploadButton.attr('class', '');
                 var first = !editor.getValue();
                 editor.setValue(firstFile(json));
                 editorChange();
@@ -250,7 +216,6 @@ function hashChange() {
     } else {
         d3.text(id).on('load',
             function(text) {
-                uploadButton.attr('class', '');
                 var first = !editor.getValue();
                 editor.setValue(text);
                 editorChange();
@@ -261,15 +226,6 @@ function hashChange() {
             .on('error', function() {
                 alert('URL load failed');
             }).get();
-    }
-}
-
-function saveAsFile(editor) {
-    var content = editor.getValue();
-    if (content) {
-        saveAs(new Blob([content], {
-            type: 'text/plain;charset=utf-8'
-        }), 'map.geojson');
     }
 }
 

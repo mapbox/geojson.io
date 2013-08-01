@@ -23,17 +23,12 @@
 <div class='right'>
     <div class='edit-pane pane active'>
         <div class='top'>
+            <div class='buttons'>
             <button
                 title='Edit GeoJSON Feature Properties'
                 id='properties-view'><span class='icon icon-table'></span></button><button
-                title='Save to a Gist and get a URL'
-                id='save'><span class='icon icon-link'></span></button><button
-                title='Copy to Clipboard'
-                id='copy'><span class='icon icon-copy'></span></button><button
-                title='Download to a File'
-                id='download'><span class='icon icon-download'></span></button><button title='Switch base map'
-                id='switch-basemap'><span class='icon icon-adjust'></span></button><button
                 id='about'><span class='icon icon-question'></span><span class='label'>help</span></button>
+            </div>
             <span id='status' message='valid' class='icon-circle'></span>
         </div>
         <textarea id='geojson'></textarea>
@@ -97,6 +92,9 @@
 <script src='lib/zeroclipboard/ZeroClipboard.js'></script>
 <script src='lib/FileSaver.min.js'></script>
 <script src='src/gist.js'></script>
+<script src='src/switchmap.js'></script>
+<script src='src/clip.js'></script>
+<script src='src/download.js'></script>
 <script src='src/properties.js'></script>
 <script src='index.js'></script>
 <script type="text/javascript">
