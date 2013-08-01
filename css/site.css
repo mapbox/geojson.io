@@ -335,21 +335,6 @@ input.horizontal {
     display:block;
 }
 
-.swatch {
-    width:10%;
-    height:20px;
-    box-sizing:border-box;
-    display:inline-block;
-    border-right:1px solid #f1f1f1;
-    border-top:5px solid #f1f1f1;
-    transition:all 200ms;
-    -webkit-transition:all 200ms;
-}
-
-.swatch:hover,
-.swatch.active {
-    border-top:0;
-}
 
 input[type=range] {
     width:100%;
@@ -370,10 +355,51 @@ div.shared {
     display: inline-block;
 }
 
+.footlinks {
+    border-top:1px solid #ccc;
+    padding:5px;
+    margin-top:20px;
+}
+
+.footlinks a {
+    cursor:pointer;
+    margin-right:10px;
+    font-size:small;
+}
+
 /*
  * Leaflet Overrides ----------------------------------------------------------
  */
 .leaflet-container .leaflet-control-attribution {
     background:none;
     box-shadow:none;
+}
+
+.inspector {
+    position:absolute;
+    bottom:0;
+    right:0;
+    height:200px;
+    width:100%;
+}
+
+#brushes {
+    position:absolute;
+    left:10px;
+    bottom:10px;
+}
+
+.swatch {
+    width:20px;
+    height:20px;
+    box-sizing:border-box;
+    display:inline-block;
+    border:5px solid #f1f1f1;
+    transition:all 200ms;
+    -webkit-transition:all 200ms;
+}
+
+.swatch:hover,
+.swatch.active {
+    border:0;
 }

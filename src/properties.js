@@ -1,66 +1,49 @@
-module.exports = function(container, updates) {
+module.exports = function(container, feature, updates) {
     container.html('');
 
-    updates.on('update_map', function(data) {
+    var div = container
+        .datum(feature);
 
-        function render() {
-            var feature = container
-                .selectAll('.feature')
-                .data(data.features, function(d, i) { return i; });
+    function render() {
 
-            var featureEnter = feature.enter()
-                .append('div')
-                .attr('class', 'feature pad1');
+    div.selectAll('table').data([feature]).enter().append('table');
 
-            featureEnter.append('div')
-                .attr('class', 'mini-map')
-                .call(function(container) {
-                    var d = container.datum();
-                    var map = L.mapbox.map(this.node(), 'tmcw.map-7s15q36b', {
-                        scrollWheelZoom: false
-                    });
-                    var gjL = L.geoJson(d).addTo(map);
-                    map.fitBounds(gjL.getBounds());
-                });
+    var tr = div.select('table').selectAll('tr')
+        .data(function(d) {
+            return d3.entries(d.feature.properties);
+        }, function(d) {
+            return JSON.stringify(d);
+        });
 
-            featureEnter.append('table');
+    var trEnter = tr.enter().append('tr');
+    tr.exit().remove();
 
-            var tr = feature.selectAll('table').selectAll('tr')
-                .data(function(d) {
-                    return d3.entries(d.properties);
-                });
+    var keyInput = trEnter.append('td').append('input')
+        .property('value', function(d) {
+            return d.key;
+        });
 
-            tr.enter().append('tr');
-            tr.exit().remove();
+    trEnter.append('td').append('div').attr('class', 'separator').text(': ');
 
-            var keyInput = tr.append('td').append('input')
-                .property('value', function(d) {
-                    return d.key;
-                });
+    var valueInput = trEnter.append('td').append('input')
+        .property('value', function(d) {
+            return d.value;
+        });
 
-            tr.append('td').append('div').attr('class', 'separator').text(': ');
+    var addRowButton = div.selectAll('button').data([feature]).enter().append('button')
+        .text('add row')
+        .attr('class', 'addrow')
+        .on('click', function(d) {
+            d.feature.properties[''] = '';
+            render();
+        });
+    }
+    render();
 
-            var valueInput = tr.append('td').append('input')
-                .property('value', function(d) {
-                    return d.value;
-                });
-
-            var addRowButton = featureEnter.append('button')
-                .text('add row')
-                .attr('class', 'addrow')
-                .on('click', function(d) {
-                    d.properties[''] = '';
-                    render();
-                });
-
-            function onchange() {
-                var props = fieldArrayToProperties(fields);
-                layer.feature.properties = props;
-            }
-        }
-
-        render();
-    });
+    function onchange() {
+        var props = fieldArrayToProperties(fields);
+        layer.feature.properties = props;
+    }
 };
 
 function clean(o) {

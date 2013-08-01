@@ -1,8 +1,3 @@
-var validation = require('./validation'),
-    propertyPanel = require('./properties'),
-    stylePanel = require('./style');
-
-
 var pane = d3.select('.pane');
 
 var map = L.mapbox.map('map').setView([20, 0], 2);
@@ -15,15 +10,75 @@ var drawControl = new L.Control.Draw({
     edit: { featureGroup: drawnItems },
     draw: { circle: false }
 }).addTo(map);
+
 map.on('draw:edited', updateFromMap)
     .on('draw:deleted', updateFromMap)
     .on('draw:created', drawCreated)
     .on('draw:created', updateFromMap);
 
+drawnItems.on('click', function(e) {
+    pane.style('bottom', '200px');
+    d3.select('.inspector')
+        .style('display', 'block');
+    propertyPanel(d3.select('.inspector'), e.layer, updates);
+});
+
+var brush = {
+    color: undefined,
+    weight: undefined,
+    opacity: undefined,
+    fillColor: undefined,
+    fillOpacity: undefined
+};
+
+function swatches() {
+    var color = '';
+    var event = d3.dispatch('chosen');
+    function s(container) {
+        var color = d3.scale.category20c();
+        var swatches = container.selectAll('.swatch')
+            .data(d3.range(9).map(color))
+            .enter()
+            .append('div')
+            .attr('class', 'swatch')
+            .style('background-color', String)
+            .on('click', function(d) {
+                swatches.classed('active', function() {
+                    return this == d3.event.target;
+                });
+                event.chosen(d);
+            });
+    }
+    return d3.rebind(s, event, 'on');
+}
+
+var brushes = d3.select('#brushes');
+
+brushes.append('div').call(swatches().on('chosen', function(d) {
+    brush.color = d;
+}));
+
+brushes.append('div').call(swatches().on('chosen', function(d) {
+    brush.fillColor = d;
+}));
+
 var updates = d3.dispatch('update_map', 'update_editor');
 
+function geoify(layer) {
+    var features = [];
+    layer.eachLayer(function(l) {
+        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
+    });
+    layer.clearLayers();
+    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
+        l.addTo(layer);
+    });
+}
 
-function drawCreated(e) { drawnItems.addLayer(e.layer); }
+function drawCreated(e) {
+    drawnItems.addLayer(e.layer);
+    geoify(drawnItems);
+}
 
 CodeMirror.keyMap.tabSpace = {
     Tab: function(cm) {
@@ -33,7 +88,6 @@ CodeMirror.keyMap.tabSpace = {
     fallthrough: ['default']
 };
 
-
 var editor;
 
 var buttons = d3.select('.buttons')
@@ -41,12 +95,6 @@ var buttons = d3.select('.buttons')
     .data([{
             icon: 'code',
             behavior: jsonPanel
-        }, {
-            icon: 'table',
-            behavior: propertyPanel
-        }, {
-            icon: 'pencil',
-            behavior: stylePanel
         }, {
             icon: 'share-alt',
             behavior: sharePanel
@@ -82,7 +130,7 @@ function jsonPanel(container) {
     var statusIcon = d3.select('#status'),
         // shush the callback-back
         quiet = false;
-    editor.on('change', validation(changeValidated));
+    // editor.on('change', validation(changeValidated));
 
     function changeValidated(err, data) {
         if (quiet) { quiet = false; return; }
@@ -103,20 +151,39 @@ function jsonPanel(container) {
 }
 
 
-function sharePanel(container) {
+function sharePanel(container, updates) {
     container.html('');
 
-    saveAsGist(editor.getValue(), function(err, resp) {
-        if (err) return alert(err);
-        var id = resp.id;
-        var wrap = pane.append('div').attr('class', 'pad1 share');
-        wrap.append('label').text('Map Embed').attr('class', 'horizontal');
-        wrap.append('input').attr('class', 'horizontal')
-            .property('value', '<iframe frameborder="0" width="100%" height="300" src="http://bl.ocks.org/d/' + id + '"></iframe>');
+    updates.on('update_map.mode', function(data) {
+        saveAsGist(JSON.stringify(data), function(err, resp) {
+            if (err) return alert(err);
+            var id = resp.id;
+            var wrap = pane.append('div').attr('class', 'pad1 share');
 
-        wrap.append('a').text('raw data')
-            .attr('target', '_target')
-            .attr('href', 'http://gist.github.com/anonymous/' + id);
+            wrap.append('label').text('Map Embed').attr('class', 'horizontal');
+            wrap.append('input').attr('class', 'horizontal')
+                .property('value', '<iframe frameborder="0" width="100%" height="300" src="http://bl.ocks.org/d/' + id + '"></iframe>');
+
+            function saveAsFile(data) {
+                var content = editor.getValue();
+                if (content) {
+                    saveAs(new Blob([content], {
+                        type: 'text/plain;charset=utf-8'
+                    }), 'map.geojson');
+                }
+            }
+
+            var links = wrap.append('div').attr('class', 'footlinks');
+
+            links.append('a').text('download data')
+                .on('click', function() {
+                    saveAsFile(data);
+                });
+
+            links.append('a').text('link to data')
+                .attr('target', '_target')
+                .attr('href', 'http://gist.github.com/anonymous/' + id);
+        });
     });
 }
 
@@ -161,7 +228,6 @@ function loadToMap(gj) {
         if (properties.fill_opacity !== undefined) l.setStyle({ fillOpacity: properties.fill_opacity });
         if (properties.stroke_width !== undefined) l.setStyle({ weight: properties.stroke_width });
     }
-
 
     function showProperties(l) {
         var properties = l.toGeoJSON().properties, table = '';
