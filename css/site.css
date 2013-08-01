@@ -31,7 +31,7 @@
     padding-right:10px;
     font-weight:bold;
     font-size:10px;
-    line-height:42px;
+    line-height:40px;
 }
 
 .link-ui {
@@ -84,7 +84,7 @@
 
 .right .pane {
     position:absolute;
-    top:42px;
+    top:40px;
     bottom:0;
     width:100%;
 }
@@ -161,6 +161,7 @@
 
 .top .buttons {
     margin-left:28px;
+    height:40px;
     border-left:1px solid #ddd;
 }
 
@@ -176,8 +177,8 @@ button {
     top:0;
     left:0;
     width:28px;
-    height:42px;
-    line-height:42px;
+    height:40px;
+    line-height:40px;
     text-align:center;
     transition:all 200ms ease-in-out;
 }
@@ -193,6 +194,7 @@ button {
     padding:12px 15px;
     font-weight:normal;
     font-size:12px;
+    height:40px;
     transition:all 200ms ease-in-out;
 }
 
@@ -331,6 +333,41 @@ input.horizontal {
 
 #new-here.active {
     display:block;
+}
+
+.swatch {
+    width:10%;
+    height:20px;
+    box-sizing:border-box;
+    display:inline-block;
+    border-right:1px solid #f1f1f1;
+    border-top:5px solid #f1f1f1;
+    transition:all 200ms;
+    -webkit-transition:all 200ms;
+}
+
+.swatch:hover,
+.swatch.active {
+    border-top:0;
+}
+
+input[type=range] {
+    width:100%;
+}
+
+label.shared {
+    width: 30%;
+    padding: 10px 0;
+    height:20px;
+    display: inline-block;
+}
+
+div.shared {
+    width: 70%;
+    padding: 10px 0;
+    height:20px;
+    padding: 0;
+    display: inline-block;
 }
 
 /*

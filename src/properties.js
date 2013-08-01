@@ -1,62 +1,67 @@
-// PROPERTIES
-// ----------------------------------------------------------------------------
-function propertyTable(container, layer) {
+module.exports = function(container, updates) {
+    container.html('');
 
-    var properties = layer.toGeoJSON().properties;
-    var div = container.html('').append('div')
-        .attr('class', 'property-table');
+    updates.on('update_map', function(data) {
 
-    var table = div.append('table');
+        function render() {
+            var feature = container
+                .selectAll('.feature')
+                .data(data.features, function(d, i) { return i; });
 
-    function removeRow() {
-        var inputs = this.parentNode.parentNode.getElementsByTagName('input');
-        for (var i = 0; i < inputs.length; i++) { inputs[i].value = ''; }
-        this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode);
-        onchange();
-    }
+            var featureEnter = feature.enter()
+                .append('div')
+                .attr('class', 'feature pad1');
 
-    var fields = [];
+            featureEnter.append('div')
+                .attr('class', 'mini-map')
+                .call(function(container) {
+                    var d = container.datum();
+                    var map = L.mapbox.map(this.node(), 'tmcw.map-7s15q36b', {
+                        scrollWheelZoom: false
+                    });
+                    var gjL = L.geoJson(d).addTo(map);
+                    map.fitBounds(gjL.getBounds());
+                });
 
-    for (var key in properties) {
-        var tr = table.append('tr');
+            featureEnter.append('table');
 
-        var removeButton = tr.append('td').append('button')
-            .attr('class', 'remove')
-            .on('click', removeRow)
-            .text('x');
+            var tr = feature.selectAll('table').selectAll('tr')
+                .data(function(d) {
+                    return d3.entries(d.properties);
+                });
 
-        var keyInput = tr.append('td').append('input')
-            .property('value', key);
+            tr.enter().append('tr');
+            tr.exit().remove();
 
-        tr.append('td').append('div').attr('class', 'separator').text(': ');
+            var keyInput = tr.append('td').append('input')
+                .property('value', function(d) {
+                    return d.key;
+                });
 
-        var valueInput = tr.append('td').append('input')
-            .property('value', properties[key]);
+            tr.append('td').append('div').attr('class', 'separator').text(': ');
 
-        keyInput.onblur =
-            keyInput.onchange =
-            valueInput.onchange =
-            valueInput.onblur = onchange;
+            var valueInput = tr.append('td').append('input')
+                .property('value', function(d) {
+                    return d.value;
+                });
 
-        fields.push([keyInput, valueInput]);
-    }
+            var addRowButton = featureEnter.append('button')
+                .text('add row')
+                .attr('class', 'addrow')
+                .on('click', function(d) {
+                    d.properties[''] = '';
+                    render();
+                });
 
-    var addRowButton = div.append('button')
-        .text('add row')
-        .attr('class', 'addrow');
+            function onchange() {
+                var props = fieldArrayToProperties(fields);
+                layer.feature.properties = props;
+            }
+        }
 
-    function onchange() {
-        var props = fieldArrayToProperties(fields);
-        layer.feature.properties = props;
-    }
-
-    addRowButton.on('click', function() {
-        var props = fieldArrayToProperties(fields);
-        props[''] = '';
-        layer.feature.properties = props;
-        container.call(propertyTable, layer);
+        render();
     });
-}
+};
 
 function clean(o) {
     var x = {};
@@ -64,28 +69,6 @@ function clean(o) {
         if (k) x[k] = o[k];
     }
     return x;
-}
-
-function addMiniMap(layer) {
-    if (!('toGeoJSON' in layer)) return;
-    var fDiv = propertiesPane.append('div').attr('class', 'pad1'),
-        mDiv = fDiv.append('div').attr('class', 'mini-map');
-
-    var map = L.mapbox.map(mDiv.node(), 'tmcw.map-7s15q36b', {
-        scrollWheelZoom: false
-    });
-    var gj = layer.toGeoJSON();
-    var gjL = L.geoJson(gj).addTo(map);
-    map.fitBounds(gjL.getBounds());
-    var tableContainer = fDiv.append('div').call(propertyTable, layer);
-}
-
-function updatePropertiesPane() {
-    propertiesLink.classed('active', true);
-    propertiesPane.classed('active', true).html('');
-    drawnItems.eachLayer(function(l) {
-        addMiniMap(l);
-    });
 }
 
 function fieldArrayToProperties(arr) {
