@@ -151,6 +151,7 @@ fillTools.select('.swatch').trigger('click');
 var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh', 'focus_layer');
 
 updates.on('focus_layer', function(layer) {
+    if (!layer) return;
     if ('getBounds' in layer && layer.getBounds().isValid()) {
         layer.openPopup();
         map.fitBounds(layer.getBounds());
