@@ -367,6 +367,12 @@ function importPanel(container) {
         .on('click', function() {
             fileInput.trigger('click');
         });
+
+    wrap.append('p')
+        .attr('class', 'intro')
+        .style('text-align', 'center')
+        .style('color', '#888')
+        .html('Need help or found a bug? Ask in <a href="http://support.mapbox.com/">support.mapbox.com</a>');
 }
 
 function sharePanel(container, updates) {
