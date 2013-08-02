@@ -471,6 +471,7 @@ table thead tr th {
 }
 
 table thead tr th,
+table tr th input,
 table tbody tr td input {
     text-align:left;
     font:inherit;
@@ -480,7 +481,18 @@ table tbody tr td input {
     margin:0;
 }
 
-table tbody tr td input {
+.leaflet-popup-content-wrapper table input {
+    width:80px;
+    background:transparent;
+}
+
+.leaflet-popup-content-wrapper button {
+    padding:2px;
+    width:50%;
+}
+
+table tr td input,
+table tr th input {
     border:none;
 }
 
