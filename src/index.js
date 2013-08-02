@@ -123,7 +123,7 @@ strokeTools.select('.swatch').trigger('click');
 strokeTools.selectAll('.swatch-stroke').filter(function(d, i) { return i == 1; }).trigger('click');
 fillTools.select('.swatch').trigger('click');
 
-var updates = d3.dispatch('update_map', 'update_editor');
+var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh');
 
 function geoify(layer) {
     var features = [];
@@ -264,46 +264,58 @@ function keydown(e) {
     }
 }
 
-function updateFromMap() {
+function featuresFromMap() {
     var features = [];
     drawnItems.eachLayer(function(l) {
         if ('toGeoJSON' in l) features.push(l.toGeoJSON());
     });
-    updates.update_map({ type: 'FeatureCollection', features: features }, drawnItems);
+    return features;
+}
+
+function updateFromMap() {
+    updates.update_map({ type: 'FeatureCollection', features: featuresFromMap() }, drawnItems);
+}
+
+function refresh() {
+    drawnItems.eachLayer(function(l) {
+        showProperties(l);
+        setStyles(l);
+    });
 }
 
 updates.on('update_editor', loadToMap);
+updates.on('update_refresh', refresh);
 
 function loadToMap(gj) {
     drawnItems.clearLayers();
 
-    var styleProps = ['fill_color', 'stroke_color', 'stroke_opacity', 'fill_opacity', 'stroke_width'];
 
     L.geoJson(gj).eachLayer(function(l) {
         showProperties(l);
         setStyles(l);
         l.addTo(drawnItems);
     });
+}
 
-    function setStyles(l) {
-        var properties = l.toGeoJSON().properties;
-        if (properties.fill_color) l.setStyle({ fillColor: properties.fill_color });
-        if (properties.stroke_color) l.setStyle({ color: properties.stroke_color });
-        if (properties.stroke_opacity !== undefined) l.setStyle({ opacity: properties.stroke_opacity });
-        if (properties.fill_opacity !== undefined) l.setStyle({ fillOpacity: properties.fill_opacity });
-        if (properties.stroke_width !== undefined) l.setStyle({ weight: properties.stroke_width });
-    }
+function setStyles(l) {
+    var properties = l.toGeoJSON().properties;
+    if (properties.fill_color) l.setStyle({ fillColor: properties.fill_color });
+    if (properties.stroke_color) l.setStyle({ color: properties.stroke_color });
+    if (properties.stroke_opacity !== undefined) l.setStyle({ opacity: properties.stroke_opacity });
+    if (properties.fill_opacity !== undefined) l.setStyle({ fillOpacity: properties.fill_opacity });
+    if (properties.stroke_width !== undefined) l.setStyle({ weight: properties.stroke_width });
+}
 
-    function showProperties(l) {
-        var properties = l.toGeoJSON().properties, table = '';
-        for (var key in properties) {
-            if (styleProps.indexOf(key) == -1) {
-            table += '<tr><th>' + key + '</th>' +
-                '<td>' + properties[key] + '</td></tr>';
-            }
+function showProperties(l) {
+    var styleProps = ['fill_color', 'stroke_color', 'stroke_opacity', 'fill_opacity', 'stroke_width'];
+    var properties = l.toGeoJSON().properties, table = '';
+    for (var key in properties) {
+        if (styleProps.indexOf(key) == -1) {
+        table += '<tr><th>' + key + '</th>' +
+            '<td>' + properties[key] + '</td></tr>';
         }
-        if (table) l.bindPopup('<table class="marker-properties">' + table + '</table>');
     }
+    if (table) l.bindPopup('<table class="marker-properties">' + table + '</table>');
 }
 
 function mapFile(gist) {
