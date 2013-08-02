@@ -168,8 +168,17 @@
 
 button {
     cursor:pointer;
+    background:#f7f7f7;
+    font:inherit;
     margin:0;
     border:0;
+    padding:5px;
+    box-sizing:border-box;
+    border-bottom:2px solid #f7f7f7;
+}
+
+button:hover {
+    border-bottom:2px solid red;
 }
 
 .top .collapse-button {
