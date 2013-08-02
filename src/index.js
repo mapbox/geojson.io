@@ -394,7 +394,7 @@ function sharePanel(container, updates) {
                 .node().select();
 
             function saveAsFile(data) {
-                var content = editor.getValue();
+                var content = JSON.stringify(data, null, 2);
                 if (content) {
                     saveAs(new Blob([content], {
                         type: 'text/plain;charset=utf-8'
