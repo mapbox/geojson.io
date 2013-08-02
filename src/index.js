@@ -408,7 +408,7 @@ function sharePanel(container, updates) {
             var facebook = links.append('a')
                 .attr('target', '_blank')
                 .attr('href', function() {
-                    analytics.track('Shared via Twitter');
+                    analytics.track('Shared via Facebook');
                     return 'https://www.facebook.com/sharer/sharer.php?u=' +
                         encodeURIComponent(thisurl);
                 });
