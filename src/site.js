@@ -257,7 +257,7 @@ if (window.location.hash) hashChange();
 
 function keydown(e) {
     if (d3.event.keyCode == 83 && d3.event.metaKey) {
-        saveAsGist(editor.getValue());
+        saveAsGist(editor.getValue(), function() {});
         d3.event.preventDefault();
     }
 }

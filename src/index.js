@@ -451,7 +451,11 @@ if (window.location.hash) hashChange();
 
 function keydown(e) {
     if (d3.event.keyCode == 83 && d3.event.metaKey) {
-        saveAsGist(editor.getValue());
+        saveAsGist(JSON.stringify({ type: 'FeatureCollection', features: featuresFromMap() }, null, 2), function(err, resp) {
+            if (err) return alert(err);
+            var id = resp.id;
+            location.hash = '#' + id;
+        });
         d3.event.preventDefault();
     }
 }
