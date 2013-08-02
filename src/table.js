@@ -1,5 +1,6 @@
 function tablePanel(container, updates) {
     container.html('');
+
     updates.on('update_map.mode', function(data, layers) {
         if (!data.features.length) {
             container.text('no features');
@@ -31,4 +32,6 @@ function tablePanel(container, updates) {
                 );
         }
     });
+
+    analytics.track('Entered Table Mode');
 }
