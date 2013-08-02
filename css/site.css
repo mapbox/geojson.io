@@ -8,6 +8,21 @@
     top:0;
     bottom:0;
     left:0;
+    right:30%;
+}
+
+p {
+    padding:10px 0;
+    line-height:200%;
+}
+
+p.intro {
+    margin:10px;
+    padding:0;
+    font-size:small;
+}
+
+#map.fullsize {
     right:0;
 }
 
@@ -28,9 +43,7 @@
 
 .right.hidden {
     height:40px;
-    overflow:hidden;
-    bottom:0;
-    top:auto;
+    bottom:auto;
 }
 
 .wordmark {
@@ -183,7 +196,9 @@ button {
     border:0;
     padding:5px;
     box-sizing:border-box;
-    border-bottom:2px solid #f7f7f7;
+    border:1px solid #f0f0f0;
+    transition:all 200ms ease-in-out;
+    border-bottom:2px solid #f0f0f0;
 }
 
 button:hover {
@@ -214,6 +229,7 @@ button:hover {
     font-weight:normal;
     font-size:12px;
     height:40px;
+    border:0;
     transition:all 200ms ease-in-out;
 }
 
@@ -473,6 +489,10 @@ div.import {
     padding:40px 20px;
     margin:10px;
     border-radius:3px;
+}
+
+div.import.dragover {
+    border:1px solid red;
 }
 
 div.import .message {

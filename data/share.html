@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -44,6 +45,7 @@
 <div id='map'></div>
 <script type='text/javascript'>
 var map = L.mapbox.map('map', 'tmcw.map-ajwqaq7t');
+map.attributionControl.addAttribution('<a href="http://geojson.io/">geojson.io</a>');
 $.getJSON('map.geojson', function(geojson) {
     var geojsonLayer = L.geoJson(geojson).addTo(map);
     map.fitBounds(geojsonLayer.getBounds());
@@ -62,3 +64,5 @@ function showProperties(l) {
 </script>
 </body>
 </html>
+
+

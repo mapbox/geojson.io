@@ -20,8 +20,12 @@ d3.select('.collapse-button')
     .on('click', function() {
         d3.select('.right').classed('hidden',
             !d3.select('.right').classed('hidden'));
+        d3.select('#map').classed('fullsize',
+            !d3.select('#map').classed('fullsize'));
+        map.invalidateSize();
     });
 
+    /*
 var brush = {
     color: '#1f77b4',
     weight: 2,
@@ -77,7 +81,6 @@ function strokes(color) {
     return d3.rebind(s, event, 'on', 'color');
 }
 
-/*
 var brushes = d3.select('#brushes');
 
 var strokeTools = brushes.append('div').attr('class', 'stroketools brush-tools');
@@ -131,11 +134,12 @@ fillTools.select('.swatch').trigger('click');
 var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh', 'focus_layer');
 
 updates.on('focus_layer', function(layer) {
-    console.log(arguments);
     if ('getBounds' in layer && layer.getBounds().isValid()) {
+        layer.openPopup();
         map.fitBounds(layer.getBounds());
     } else if ('getLatLng' in layer) {
-        map.setView(layer.getLatLng(), 12);
+        layer.openPopup();
+        map.setView(layer.getLatLng(), 15);
     }
 });
 
@@ -172,14 +176,14 @@ var buttons = d3.select('.buttons')
             icon: 'beaker',
             behavior: importPanel
         }, {
-            icon: 'code',
-            behavior: jsonPanel
-        },{
             icon: 'table',
             behavior: tablePanel
         }, {
             icon: 'share-alt',
             behavior: sharePanel
+        }, {
+            icon: 'code',
+            behavior: jsonPanel
         }])
     .enter()
     .append('button')
@@ -231,14 +235,48 @@ function importPanel(container) {
     container.html('');
     var wrap = container.append('div').attr('class', 'pad1');
 
+    wrap.append('p')
+        .attr('class', 'intro')
+        .text('Make a map! To start, draw with the tools on the left or import your own data.');
+
     function over() {
         d3.event.stopPropagation();
         d3.event.preventDefault();
         d3.event.dataTransfer.dropEffect = 'copy';
+        import_landing.classed('dragover', true);
+    }
+
+    function exit() {
+        d3.event.stopPropagation();
+        d3.event.preventDefault();
+        d3.event.dataTransfer.dropEffect = 'copy';
+        import_landing.classed('dragover', false);
     }
 
     function toDom(x) {
         return (new DOMParser()).parseFromString(x, 'text/xml');
+    }
+
+    function readFile(f) {
+        var reader = new FileReader();
+        import_landing.classed('dragover', false);
+
+        reader.onload = function(e) {
+            var gj;
+            if (f.type === "application/vnd.google-earth.kml+xml" ||
+                f.name.indexOf('.kml') !== -1) {
+                gj = toGeoJSON.kml(toDom(e.target.result));
+            } else if (f.name.indexOf('.gpx') !== -1) {
+                gj = toGeoJSON.gpx(toDom(e.target.result));
+            } else if (f.name.indexOf('.geojson') !== -1) {
+                gj = JSON.parse(e.target.result);
+            } else if (f.name.indexOf('.csv') !== -1) {
+                gj = csv2geojson.csv2geojson(e.target.result);
+            }
+            if (gj) updates.update_editor(gj);
+        };
+
+        reader.readAsText(f);
     }
 
     var import_landing = wrap.append('div')
@@ -247,34 +285,30 @@ function importPanel(container) {
         .on('drop.localgpx', function() {
             d3.event.stopPropagation();
             d3.event.preventDefault();
+            import_landing.classed('dragover', false);
 
-            var f = d3.event.dataTransfer.files[0],
-                reader = new FileReader();
-
-            reader.onload = function(e) {
-                var gj;
-                if (f.type === "application/vnd.google-earth.kml+xml" ||
-                    f.name.indexOf('.kml') !== -1) {
-                    gj = toGeoJSON.kml(toDom(e.target.result));
-                } else if (f.name.indexOf('.gpx') !== -1) {
-                    gj = toGeoJSON.gpx(toDom(e.target.result));
-                } else if (f.name.indexOf('.geojson') !== -1) {
-                    gj = JSON.parse(e.target.result);
-                } else if (f.name.indexOf('.csv') !== -1) {
-                    gj = csv2geojson.csv2geojson(e.target.result);
-                }
-                if (gj) updates.update_editor(gj);
-            };
-
-            reader.readAsText(f);
+            var f = d3.event.dataTransfer.files[0];
+            readFile(f);
         })
         .on('dragenter.localgpx', over)
-        .on('dragexit.localgpx', over)
+        .on('dragexit.localgpx', exit)
         .on('dragover.localgpx', over);
 
     var message = import_landing.append('div').attr('class', 'message');
     message.append('span').attr('class', 'icon-arrow-down');
-    message.append('span').text(' drop a GeoJSON, KML, CSV, or GPX file');
+    message.append('span').text(' Drop a GeoJSON, KML, CSV, or GPX file');
+    message.append('p').text('or');
+    var fileInput = message
+        .append('input')
+        .attr('type', 'file')
+        .style('display', 'none')
+        .on('change', function() {
+            if (this.files[0]) readFile(this.files[0]);
+        });
+    message.append('p').append('button').text('Choose a file to upload')
+        .on('click', function() {
+            fileInput.trigger('click');
+        });
 }
 
 function sharePanel(container, updates) {
