@@ -16,8 +16,11 @@ map.on('draw:edited', updateFromMap)
     .on('draw:created', drawCreated)
     .on('draw:created', updateFromMap);
 
-drawnItems.on('click', function(e) {
-});
+d3.select('.collapse-button')
+    .on('click', function() {
+        d3.select('.right').classed('hidden',
+            !d3.select('.right').classed('hidden'));
+    });
 
 var brush = {
     color: '#1f77b4',
@@ -74,6 +77,7 @@ function strokes(color) {
     return d3.rebind(s, event, 'on', 'color');
 }
 
+/*
 var brushes = d3.select('#brushes');
 
 var strokeTools = brushes.append('div').attr('class', 'stroketools brush-tools');
@@ -122,8 +126,18 @@ brushButton
 strokeTools.select('.swatch').trigger('click');
 strokeTools.selectAll('.swatch-stroke').filter(function(d, i) { return i == 1; }).trigger('click');
 fillTools.select('.swatch').trigger('click');
+*/
 
-var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh');
+var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh', 'focus_layer');
+
+updates.on('focus_layer', function(layer) {
+    console.log(arguments);
+    if ('getBounds' in layer && layer.getBounds().isValid()) {
+        map.fitBounds(layer.getBounds());
+    } else if ('getLatLng' in layer) {
+        map.setView(layer.getLatLng(), 12);
+    }
+});
 
 function geoify(layer) {
     var features = [];
@@ -155,6 +169,9 @@ var editor;
 var buttons = d3.select('.buttons')
     .selectAll('button')
     .data([{
+            icon: 'beaker',
+            behavior: importPanel
+        }, {
             icon: 'code',
             behavior: jsonPanel
         },{
@@ -180,6 +197,7 @@ d3.select(buttons.node()).trigger('click');
 
 function jsonPanel(container) {
     container.html('');
+
     var textarea = container.append('textarea');
     editor = CodeMirror.fromTextArea(textarea.node(), {
         mode: 'application/json',
@@ -192,19 +210,13 @@ function jsonPanel(container) {
         lineNumbers: true
     });
 
-    var statusIcon = d3.select('#status'),
-        // shush the callback-back
+    var // shush the callback-back
         quiet = false;
     editor.on('change', validate(changeValidated));
 
     function changeValidated(err, data) {
         if (quiet) { quiet = false; return; }
-        if (err) {
-            statusIcon.attr('class', err.class)
-                .attr('title', err.title)
-                .attr('message', err.message);
-        } else {
-            statusIcon.attr('class', 'icon-circle');
+        if (!err) {
             loadToMap(data);
         }
     }
@@ -215,6 +227,55 @@ function jsonPanel(container) {
     });
 }
 
+function importPanel(container) {
+    container.html('');
+    var wrap = container.append('div').attr('class', 'pad1');
+
+    function over() {
+        d3.event.stopPropagation();
+        d3.event.preventDefault();
+        d3.event.dataTransfer.dropEffect = 'copy';
+    }
+
+    function toDom(x) {
+        return (new DOMParser()).parseFromString(x, 'text/xml');
+    }
+
+    var import_landing = wrap.append('div')
+        .attr('class', 'import')
+        .attr('dropzone', 'copy')
+        .on('drop.localgpx', function() {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+
+            var f = d3.event.dataTransfer.files[0],
+                reader = new FileReader();
+
+            reader.onload = function(e) {
+                var gj;
+                if (f.type === "application/vnd.google-earth.kml+xml" ||
+                    f.name.indexOf('.kml') !== -1) {
+                    gj = toGeoJSON.kml(toDom(e.target.result));
+                } else if (f.name.indexOf('.gpx') !== -1) {
+                    gj = toGeoJSON.gpx(toDom(e.target.result));
+                } else if (f.name.indexOf('.geojson') !== -1) {
+                    gj = JSON.parse(e.target.result);
+                } else if (f.name.indexOf('.csv') !== -1) {
+                    gj = csv2geojson.csv2geojson(e.target.result);
+                }
+                if (gj) updates.update_editor(gj);
+            };
+
+            reader.readAsText(f);
+        })
+        .on('dragenter.localgpx', over)
+        .on('dragexit.localgpx', over)
+        .on('dragover.localgpx', over);
+
+    var message = import_landing.append('div').attr('class', 'message');
+    message.append('span').attr('class', 'icon-arrow-down');
+    message.append('span').text(' drop a GeoJSON, KML, CSV, or GPX file');
+}
 
 function sharePanel(container, updates) {
     container.html('');
@@ -224,10 +285,13 @@ function sharePanel(container, updates) {
             if (err) return alert(err);
             var id = resp.id;
             var wrap = pane.append('div').attr('class', 'pad1 share');
+            var thisurl = 'http://geojson.io/#' + id;
+            location.hash = '#' + id;
 
             wrap.append('label').text('Map Embed').attr('class', 'horizontal');
             wrap.append('input').attr('class', 'horizontal')
-                .property('value', '<iframe frameborder="0" width="100%" height="300" src="http://bl.ocks.org/d/' + id + '"></iframe>');
+                .property('value', '<iframe frameborder="0" width="100%" height="300" src="http://bl.ocks.org/d/' + id + '"></iframe>')
+                .node().select();
 
             function saveAsFile(data) {
                 var content = editor.getValue();
@@ -240,14 +304,28 @@ function sharePanel(container, updates) {
 
             var links = wrap.append('div').attr('class', 'footlinks');
 
-            links.append('a').text('download data')
-                .on('click', function() {
-                    saveAsFile(data);
+            var tweet = links.append('a')
+                .attr('target', '_blank')
+                .attr('href', function() {
+                    return 'https://twitter.com/intent/tweet?source=webclient&text=' +
+                        encodeURIComponent('my map: ' + thisurl);
                 });
 
-            links.append('a').text('link to data')
+            tweet.append('span').attr('class', 'icon-twitter');
+            tweet.append('span').text(' tweet');
+
+            var dl = links.append('a').on('click', function() {
+                saveAsFile(data);
+            });
+
+            dl.append('span').attr('class', 'icon-download');
+            dl.append('span').text(' download');
+
+            var gist = links.append('a')
                 .attr('target', '_target')
                 .attr('href', 'http://gist.github.com/anonymous/' + id);
+            gist.append('span').attr('class', 'icon-link');
+            gist.append('span').text(' gist source');
         });
     });
 }
@@ -288,8 +366,6 @@ updates.on('update_refresh', refresh);
 
 function loadToMap(gj) {
     drawnItems.clearLayers();
-
-
     L.geoJson(gj).eachLayer(function(l) {
         showProperties(l);
         setStyles(l);
@@ -319,36 +395,21 @@ function showProperties(l) {
 }
 
 function mapFile(gist) {
-    for (var f in gist.files) if (f == 'map.geojson') return gist.files[f].content;
+    for (var f in gist.files) if (f == 'map.geojson') return JSON.parse(gist.files[f].content);
 }
 
 function hashChange() {
     var id = window.location.hash.substring(1);
-    if (!isNaN(+id)) {
-        d3.json('https://api.github.com/gists/' + id).on('load',
-            function(json) {
-                var first = !editor.getValue();
-                editor.setValue(firstFile(json));
-                editorChange();
-                if (first && drawnItems.getBounds().isValid()) {
-                    map.fitBounds(drawnItems.getBounds());
-                }
-            })
-            .on('error', function() {
-                alert('Gist API limit exceeded, come back in a bit.');
-            }).get();
-    } else {
-        d3.text(id).on('load',
-            function(text) {
-                var first = !editor.getValue();
-                editor.setValue(text);
-                editorChange();
-                if (first && drawnItems.getBounds().isValid()) {
-                    map.fitBounds(drawnItems.getBounds());
-                }
-            })
-            .on('error', function() {
-                alert('URL load failed');
-            }).get();
-    }
+    d3.json('https://api.github.com/gists/' + id).on('load',
+        function(json) {
+            var first = !drawnItems.getBounds().isValid();
+            updates.update_editor(mapFile(json));
+            if (first && drawnItems.getBounds().isValid()) {
+                map.fitBounds(drawnItems.getBounds());
+                buttons.filter(function(d, i) { return i == 1; }).trigger('click');
+            }
+        })
+        .on('error', function() {
+            alert('Gist API limit exceeded, come back in a bit.');
+        }).get();
 }

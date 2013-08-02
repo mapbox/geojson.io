@@ -15,13 +15,22 @@
     overflow-x:hidden;
     position:absolute;
     bottom:0;
-    top:25%;
+    top:0;
     right:0;
     width:30%;
     min-width:400px;
     box-sizing:border-box;
     font-size:14px;
     background:#f1f1f1;
+    transition:all 200ms;
+    -webkit-transition:all 200ms;
+}
+
+.right.hidden {
+    height:40px;
+    overflow:hidden;
+    bottom:0;
+    top:auto;
 }
 
 .wordmark {
@@ -317,7 +326,6 @@ input.horizontal {
 }
 
 .footlinks {
-    border-top:1px solid #ccc;
     padding:5px;
     margin-top:20px;
 }
@@ -325,7 +333,7 @@ input.horizontal {
 .footlinks a {
     cursor:pointer;
     margin-right:10px;
-    font-size:small;
+    padding:10px;
 }
 
 /*
@@ -458,4 +466,15 @@ table tbody tr td input {
 
 table tbody tr td input {
     border:none;
+}
+
+div.import {
+    background:#fff;
+    padding:40px 20px;
+    margin:10px;
+    border-radius:3px;
+}
+
+div.import .message {
+    text-align:center;
 }
