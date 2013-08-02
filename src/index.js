@@ -158,6 +158,7 @@ function drawCreated(e) {
     // if ('setStyle' in e.layer) e.layer.setStyle(brush);
     drawnItems.addLayer(e.layer);
     geoify(drawnItems);
+    refresh();
 }
 
 CodeMirror.keyMap.tabSpace = {
@@ -442,14 +443,18 @@ function setStyles(l) {
     if (properties.stroke_width !== undefined) l.setStyle({ weight: properties.stroke_width });
 }
 
+function isEmpty(o) {
+    for (var i in o) { return false; }
+    return true;
+}
+
 function showProperties(l) {
     var styleProps = ['fill_color', 'stroke_color', 'stroke_opacity', 'fill_opacity', 'stroke_width'];
     var properties = l.toGeoJSON().properties, table = '';
+    if (isEmpty(properties)) properties = { '': '' };
     for (var key in properties) {
-        if (styleProps.indexOf(key) == -1) {
         table += '<tr><th><input type="text" value="' + key + '" /></th>' +
             '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
-        }
     }
     if (table) l.bindPopup('<table class="marker-properties">' + table + '</table>' +
         '<button class="save">save</button>' +
