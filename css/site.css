@@ -416,3 +416,37 @@ button.brush {
     background:#fff;
     vertical-align:bottom;
 }
+
+.table-wrap {
+    overflow:auto;
+    padding:10px;
+}
+
+table thead {
+    background:#f7f7f7;
+}
+
+table {
+}
+
+table td {
+    border:1px solid #ccc;
+}
+
+table thead tr th {
+    font-weight:bold;
+}
+
+table thead tr th,
+table tbody tr td input {
+    text-align:left;
+    font:inherit;
+    padding:5px;
+    width:150px;
+    box-sizing:border-box;
+    margin:0;
+}
+
+table tbody tr td input {
+    border:none;
+}

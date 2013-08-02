@@ -8,7 +8,8 @@ function tablePanel(container, updates) {
             layers.eachLayer(function(p) {
                 props.push(p.feature.properties);
             });
-            container.data([props]).call(metatable().on('change', function() {
+            container.html('');
+            container.append('div').attr('class', 'table-wrap').data([props]).call(metatable().on('change', function() {
                 updates.update_refresh();
             }));
         }
