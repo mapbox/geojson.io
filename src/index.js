@@ -139,7 +139,7 @@ function geoify(layer) {
 function drawCreated(e) {
     if ('setStyle' in e.layer) e.layer.setStyle(brush);
     drawnItems.addLayer(e.layer);
-    // geoify(drawnItems);
+    geoify(drawnItems);
 }
 
 CodeMirror.keyMap.tabSpace = {
@@ -157,6 +157,9 @@ var buttons = d3.select('.buttons')
     .data([{
             icon: 'code',
             behavior: jsonPanel
+        },{
+            icon: 'table',
+            behavior: tablePanel
         }, {
             icon: 'share-alt',
             behavior: sharePanel
@@ -192,7 +195,7 @@ function jsonPanel(container) {
     var statusIcon = d3.select('#status'),
         // shush the callback-back
         quiet = false;
-    // editor.on('change', validation(changeValidated));
+    editor.on('change', validate(changeValidated));
 
     function changeValidated(err, data) {
         if (quiet) { quiet = false; return; }
@@ -266,7 +269,7 @@ function updateFromMap() {
     drawnItems.eachLayer(function(l) {
         if ('toGeoJSON' in l) features.push(l.toGeoJSON());
     });
-    updates.update_map({ type: 'FeatureCollection', features: features });
+    updates.update_map({ type: 'FeatureCollection', features: features }, drawnItems);
 }
 
 updates.on('update_editor', loadToMap);
