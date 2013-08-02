@@ -8,16 +8,17 @@
     top:0;
     bottom:0;
     left:0;
-    right:30%;
+    right:0;
 }
 
 .right {
     overflow-x:hidden;
     position:absolute;
     bottom:0;
-    top:0;
+    top:25%;
     right:0;
     width:30%;
+    min-width:400px;
     box-sizing:border-box;
     font-size:14px;
     background:#f1f1f1;
@@ -304,55 +305,6 @@ input.horizontal {
     span.label {
         display:none;
     }
-    .right {
-        width:50%;
-    }
-    #map {
-        right:50%;
-    }
-}
-
-#new-here {
-    position:absolute;
-    top:10px;
-    left:45px;
-    max-width:30%;
-    background:#fefefe;
-    display:none;
-    z-index:999;
-}
-
-#new-here p {
-    font-size:14px;
-    line-height:20px;
-}
-
-#new-here p a {
-    color:darkblue;
-}
-
-#new-here.active {
-    display:block;
-}
-
-
-input[type=range] {
-    width:100%;
-}
-
-label.shared {
-    width: 30%;
-    padding: 10px 0;
-    height:20px;
-    display: inline-block;
-}
-
-div.shared {
-    width: 70%;
-    padding: 10px 0;
-    height:20px;
-    padding: 0;
-    display: inline-block;
 }
 
 .footlinks {
@@ -389,17 +341,78 @@ div.shared {
     bottom:10px;
 }
 
+.swatch-bin {
+    display:inline-block;
+    padding:5px;
+    background:#fff;
+}
+
 .swatch {
     width:20px;
     height:20px;
+    border-radius:10px;
     box-sizing:border-box;
     display:inline-block;
-    border:5px solid #f1f1f1;
+    border:3px solid #f1f1f1;
     transition:all 200ms;
     -webkit-transition:all 200ms;
 }
 
+.brush-tools {
+    background:rgba(255, 255, 255, 0.3);
+    display:inline-block;
+}
+
+.brush-tools {
+    margin-right:10px;
+    vertical-align:bottom;
+}
+
+.brush.active {
+    color:#fff;
+    -webkit-animation-name: blinker;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-timing-function: ease-in-out;
+    -webkit-animation-duration: 1000ms;
+}
+
+@-webkit-keyframes blinker {
+    from { background:#000; }
+    to { background:#888; }
+}
+
+.brush-label {
+    font-size:10px;
+    padding:5px;
+}
+
+.swatch-stroke {
+    width:20px;
+    height:20px;
+    box-sizing:border-box;
+    display:inline-block;
+    transition:all 200ms;
+    opacity:0.5;
+    -webkit-transition:all 200ms;
+    border-radius:10px;
+}
+
+.swatch.swatch-stroke-color:hover,
+.swatch.swatch-stroke-color.active {
+    border-width:8px;
+}
+
 .swatch:hover,
-.swatch.active {
-    border:0;
+.swatch.active,
+.swatch-stroke:active,
+.swatch-stroke.active {
+    border-width:0;
+    opacity:1;
+}
+
+button.brush {
+    background:transparent;
+    font-size:30px;
+    background:#fff;
+    vertical-align:bottom;
 }

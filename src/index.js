@@ -17,31 +17,27 @@ map.on('draw:edited', updateFromMap)
     .on('draw:created', updateFromMap);
 
 drawnItems.on('click', function(e) {
-    pane.style('bottom', '200px');
-    d3.select('.inspector')
-        .style('display', 'block');
-    propertyPanel(d3.select('.inspector'), e.layer, updates);
 });
 
 var brush = {
-    color: undefined,
-    weight: undefined,
-    opacity: undefined,
-    fillColor: undefined,
-    fillOpacity: undefined
+    color: '#1f77b4',
+    weight: 2,
+    opacity: 0.8,
+    fillColor: '#1f77b4',
+    fillOpacity: 0.2
 };
 
-function swatches() {
+function swatches(type) {
     var color = '';
     var event = d3.dispatch('chosen');
     function s(container) {
-        var color = d3.scale.category20c();
+        var color = d3.scale.category10();
         var swatches = container.selectAll('.swatch')
-            .data(d3.range(9).map(color))
+            .data(d3.range(5).map(color))
             .enter()
             .append('div')
-            .attr('class', 'swatch')
-            .style('background-color', String)
+            .attr('class', 'swatch swatch-' + type)
+            .style(type === 'stroke-color' ? 'border-color' : 'background-color', String)
             .on('click', function(d) {
                 swatches.classed('active', function() {
                     return this == d3.event.target;
@@ -52,15 +48,80 @@ function swatches() {
     return d3.rebind(s, event, 'on');
 }
 
+function strokes(color) {
+    var stroke = 2;
+    var event = d3.dispatch('chosen', 'color');
+    function s(container) {
+
+        event.on('color', function(color) {
+            swatches.style('background-color', color);
+        });
+
+        var swatches = container.selectAll('.swatch-stroke')
+            .data(d3.range(1, 10, 2))
+            .enter()
+            .append('div')
+            .attr('class', 'swatch-stroke')
+            .style('background-color', color)
+            .style('border', function(d) { return (10 - d) + 'px solid #fff'; })
+            .on('click', function(d) {
+                swatches.classed('active', function() {
+                    return this == d3.event.target;
+                });
+                event.chosen(d);
+            });
+    }
+    return d3.rebind(s, event, 'on', 'color');
+}
+
 var brushes = d3.select('#brushes');
 
-brushes.append('div').call(swatches().on('chosen', function(d) {
-    brush.color = d;
-}));
+var strokeTools = brushes.append('div').attr('class', 'stroketools brush-tools');
+strokeTools.append('div').attr('class', 'brush-label').text('line');
+strokeTools.append('div')
+    .attr('class', 'swatch-bin')
+    .call(swatches('stroke-color').on('chosen', function(d) {
+        brush.color = d;
+        strokeUI.color(d);
+    }));
+var strokeUI = strokes().on('chosen', function(d) {
+    brush.weight = d;
+});
+strokeTools.append('div').attr('class', 'swatch-bin').call(strokeUI);
 
-brushes.append('div').call(swatches().on('chosen', function(d) {
+var fillTools = brushes.append('div').attr('class', 'filltools brush-tools');
+fillTools.append('div').attr('class', 'brush-label').text('fill');
+fillTools.append('div').attr('class', 'swatch-bin').call(swatches().on('chosen', function(d) {
     brush.fillColor = d;
 }));
+
+var theBrush = brushes.append('div').attr('class', 'brush-tools');
+
+var brushButton = theBrush.append('button')
+    .attr('class', 'brush')
+    .on('click', function() {
+        if (brushButton.classed('active')) {
+            return deactivate();
+        }
+        brushButton.classed('active', true);
+        function doBrush(e) {
+            e.layer.setStyle(brush);
+        }
+        drawnItems.on('click', doBrush);
+        map.on('click', deactivate);
+        function deactivate(l) {
+            brushButton.classed('active', false);
+            drawnItems.off('click', doBrush);
+        }
+        d3.event.stopPropagation();
+    });
+brushButton
+    .append('span')
+    .attr('class', 'icon-pencil');
+
+strokeTools.select('.swatch').trigger('click');
+strokeTools.selectAll('.swatch-stroke').filter(function(d, i) { return i == 1; }).trigger('click');
+fillTools.select('.swatch').trigger('click');
 
 var updates = d3.dispatch('update_map', 'update_editor');
 
@@ -76,8 +137,9 @@ function geoify(layer) {
 }
 
 function drawCreated(e) {
+    if ('setStyle' in e.layer) e.layer.setStyle(brush);
     drawnItems.addLayer(e.layer);
-    geoify(drawnItems);
+    // geoify(drawnItems);
 }
 
 CodeMirror.keyMap.tabSpace = {
