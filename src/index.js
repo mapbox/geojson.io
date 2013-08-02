@@ -189,6 +189,8 @@ CodeMirror.keyMap.tabSpace = {
 
 var editor;
 
+var dropSupport = (window.FileReader && 'ondrop' in window);
+
 var buttons = d3.select('.buttons')
     .selectAll('button')
     .data([{
@@ -324,7 +326,7 @@ function importPanel(container) {
             } else if (f.name.indexOf('.gpx') !== -1) {
                 gj = toGeoJSON.gpx(toDom(e.target.result));
                 trackImport('GPX', method);
-            } else if (f.name.indexOf('.geojson') !== -1) {
+            } else if (f.name.indexOf('.geojson') !== -1 || f.name.indexOf('.json') !== -1) {
                 gj = JSON.parse(e.target.result);
                 trackImport('GeoJSON', method);
             } else if (f.name.indexOf('.csv') !== -1) {
