@@ -5,14 +5,14 @@
     margin:0;
 }
 
+.marker-properties td,
 .marker-properties th {
     white-space:nowrap;
     border:1px solid #eee;
-    padding:5px 10px;
 }
 
-.marker-properties td {
-    border:1px solid #eee;
+.marker-properties.display td,
+.marker-properties.display th {
     padding:5px 10px;
 }
 

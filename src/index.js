@@ -1,7 +1,7 @@
 var pane = d3.select('.pane');
 
 var map = L.mapbox.map('map').setView([20, 0], 2);
-var osmTiles = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 });
 var mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b').addTo(map);
@@ -23,6 +23,23 @@ d3.select('.collapse-button')
         d3.select('#map').classed('fullsize',
             !d3.select('#map').classed('fullsize'));
         map.invalidateSize();
+    });
+
+var layerButtons = d3.select('#layer-switch')
+    .selectAll('button')
+    .on('click', function() {
+        var clicked = this;
+        layerButtons.classed('active', function() {
+            return clicked === this;
+        });
+        if (this.id == 'mapbox' && map.hasLayer(osmTiles)) {
+            map.removeLayer(osmTiles);
+            map.addLayer(mapboxTiles);
+        }
+        if (this.id == 'osm' && map.hasLayer(mapboxTiles)) {
+            map.addLayer(osmTiles);
+            map.removeLayer(mapboxTiles);
+        }
     });
 
     /*
@@ -159,6 +176,7 @@ function drawCreated(e) {
     drawnItems.addLayer(e.layer);
     geoify(drawnItems);
     refresh();
+    analytics.track('Drew Feature');
 }
 
 CodeMirror.keyMap.tabSpace = {
@@ -175,12 +193,15 @@ var buttons = d3.select('.buttons')
     .selectAll('button')
     .data([{
             icon: 'beaker',
+            title: ' Import',
             behavior: importPanel
         }, {
             icon: 'table',
+            title: ' Table',
             behavior: tablePanel
         }, {
             icon: 'share-alt',
+            title: ' Share',
             behavior: sharePanel
         }, {
             icon: 'code',
@@ -191,6 +212,7 @@ var buttons = d3.select('.buttons')
     .attr('class', function(d) {
         return 'icon-' + d.icon;
     })
+    .text(function(d) { return d.title; })
     .on('click', function(d) {
         updates.on('update_map.mode', null);
         buttons.classed('active', function(_) { return d.icon == _.icon; });
@@ -223,6 +245,7 @@ map.on('popupopen', function(e) {
         e.popup._source.feature.properties = obj;
         map.closePopup(e.popup);
         refresh();
+        analytics.track('Save Properties via Popup');
     }
 });
 
@@ -284,7 +307,11 @@ function importPanel(container) {
         return (new DOMParser()).parseFromString(x, 'text/xml');
     }
 
-    function readFile(f) {
+    function trackImport(format, method) {
+        analytics.track('Imported Data / ' + method + ' / ' + format);
+    }
+
+    function readFile(f, method) {
         var reader = new FileReader();
         import_landing.classed('dragover', false);
 
@@ -293,12 +320,16 @@ function importPanel(container) {
             if (f.type === "application/vnd.google-earth.kml+xml" ||
                 f.name.indexOf('.kml') !== -1) {
                 gj = toGeoJSON.kml(toDom(e.target.result));
+                trackImport('KML', method);
             } else if (f.name.indexOf('.gpx') !== -1) {
                 gj = toGeoJSON.gpx(toDom(e.target.result));
+                trackImport('GPX', method);
             } else if (f.name.indexOf('.geojson') !== -1) {
                 gj = JSON.parse(e.target.result);
+                trackImport('GeoJSON', method);
             } else if (f.name.indexOf('.csv') !== -1) {
                 gj = csv2geojson.csv2geojson(e.target.result);
+                trackImport('CSV', method);
             }
             if (gj) updates.update_editor(gj);
         };
@@ -315,7 +346,7 @@ function importPanel(container) {
             import_landing.classed('dragover', false);
 
             var f = d3.event.dataTransfer.files[0];
-            readFile(f);
+            readFile(f, 'drag');
         })
         .on('dragenter.localgpx', over)
         .on('dragexit.localgpx', exit)
@@ -330,7 +361,7 @@ function importPanel(container) {
         .attr('type', 'file')
         .style('display', 'none')
         .on('change', function() {
-            if (this.files[0]) readFile(this.files[0]);
+            if (this.files[0]) readFile(this.files[0], 'click');
         });
     message.append('p').append('button').text('Choose a file to upload')
         .on('click', function() {
@@ -365,9 +396,21 @@ function sharePanel(container, updates) {
 
             var links = wrap.append('div').attr('class', 'footlinks');
 
+            var facebook = links.append('a')
+                .attr('target', '_blank')
+                .attr('href', function() {
+                    analytics.track('Shared via Twitter');
+                    return 'https://www.facebook.com/sharer/sharer.php?u=' +
+                        encodeURIComponent(thisurl);
+                });
+
+            facebook.append('span').attr('class', 'icon-facebook');
+            facebook.append('span').text(' facebook');
+
             var tweet = links.append('a')
                 .attr('target', '_blank')
                 .attr('href', function() {
+                    analytics.track('Shared via Twitter');
                     return 'https://twitter.com/intent/tweet?source=webclient&text=' +
                         encodeURIComponent('my map: ' + thisurl);
                 });
@@ -377,6 +420,7 @@ function sharePanel(container, updates) {
 
             var dl = links.append('a').on('click', function() {
                 saveAsFile(data);
+                analytics.track('Saved as File');
             });
 
             dl.append('span').attr('class', 'icon-download');
@@ -386,7 +430,7 @@ function sharePanel(container, updates) {
                 .attr('target', '_target')
                 .attr('href', 'http://gist.github.com/anonymous/' + id);
             gist.append('span').attr('class', 'icon-link');
-            gist.append('span').text(' gist source');
+            gist.append('span').text(' source');
         });
     });
 }
@@ -418,7 +462,6 @@ function updateFromMap() {
 function refresh() {
     drawnItems.eachLayer(function(l) {
         showProperties(l);
-        setStyles(l);
     });
 }
 
@@ -429,18 +472,8 @@ function loadToMap(gj) {
     drawnItems.clearLayers();
     L.geoJson(gj).eachLayer(function(l) {
         showProperties(l);
-        setStyles(l);
         l.addTo(drawnItems);
     });
-}
-
-function setStyles(l) {
-    var properties = l.toGeoJSON().properties;
-    if (properties.fill_color) l.setStyle({ fillColor: properties.fill_color });
-    if (properties.stroke_color) l.setStyle({ color: properties.stroke_color });
-    if (properties.stroke_opacity !== undefined) l.setStyle({ opacity: properties.stroke_opacity });
-    if (properties.fill_opacity !== undefined) l.setStyle({ fillOpacity: properties.fill_opacity });
-    if (properties.stroke_width !== undefined) l.setStyle({ weight: properties.stroke_width });
 }
 
 function isEmpty(o) {

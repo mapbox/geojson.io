@@ -8,7 +8,7 @@
     top:0;
     bottom:0;
     left:0;
-    right:30%;
+    right:40%;
 }
 
 p {
@@ -32,7 +32,7 @@ p.intro {
     bottom:0;
     top:0;
     right:0;
-    width:30%;
+    width:40%;
     min-width:400px;
     box-sizing:border-box;
     font-size:14px;
@@ -347,9 +347,14 @@ input.horizontal {
 }
 
 .footlinks a {
+    color:#444;
     cursor:pointer;
     margin-right:10px;
     padding:10px;
+}
+
+.footlinks a:hover {
+    color:#000;
 }
 
 /*
@@ -457,6 +462,7 @@ button.brush {
 
 table thead {
     background:#f7f7f7;
+    border:1px solid #ccc;
 }
 
 table {
@@ -479,6 +485,18 @@ table tbody tr td input {
     width:150px;
     box-sizing:border-box;
     margin:0;
+}
+
+.controls {
+    padding-bottom:20px;
+}
+
+.controls button {
+    border:1px solid #ccc;
+}
+
+.controls button:hover {
+    background:#fff;
 }
 
 .leaflet-popup-content-wrapper table input {
@@ -509,4 +527,20 @@ div.import.dragover {
 
 div.import .message {
     text-align:center;
+}
+
+#layer-switch {
+    position:absolute;
+    bottom:10px;
+    font-size:small;
+    left:10px;
+}
+
+#layer-switch button {
+    opacity:0.5;
+}
+
+#layer-switch button.active {
+    opacity:1;
+    background:#f7f7f7;
 }
