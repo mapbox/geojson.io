@@ -4,7 +4,12 @@ var map = L.mapbox.map('map').setView([20, 0], 2);
 var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 });
-var mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b').addTo(map);
+
+var mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b', {
+    retinaVersion: 'tmcw.map-u4ca5hnt',
+    detectRetina: true
+}).addTo(map);
+
 var drawnItems = new L.FeatureGroup().addTo(map);
 var drawControl = new L.Control.Draw({
     edit: { featureGroup: drawnItems },

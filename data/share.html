@@ -44,7 +44,13 @@
 <body>
 <div id='map'></div>
 <script type='text/javascript'>
-var map = L.mapbox.map('map', 'tmcw.map-ajwqaq7t');
+var map = L.mapbox.map('map');
+
+L.mapbox.tileLayer('tmcw.map-ajwqaq7t', {
+    retinaVersion: 'tmcw.map-u8vb5w83',
+    detectRetina: true
+}).addTo(map);
+
 map.attributionControl.addAttribution('<a href="http://geojson.io/">geojson.io</a>');
 $.getJSON('map.geojson', function(geojson) {
     var geojsonLayer = L.geoJson(geojson).addTo(map);
