@@ -10,6 +10,8 @@ var mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b', {
     detectRetina: true
 }).addTo(map);
 
+L.mapbox.geocoderControl('tmcw.map-u4ca5hnt').addTo(map);
+
 var drawnItems = new L.FeatureGroup().addTo(map);
 var drawControl = new L.Control.Draw({
     edit: { featureGroup: drawnItems },
