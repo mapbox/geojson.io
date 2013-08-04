@@ -544,3 +544,23 @@ div.import .message {
     opacity:1;
     background:#f7f7f7;
 }
+
+.geocode-ui {
+    padding:10px;
+}
+
+button.major {
+    font-size: large;
+    border: 1px solid #aaa;
+    border-bottom: 2px solid #aaa;
+    padding: 10px;
+}
+
+button.major:hover {
+    border-bottom:2px solid red;
+}
+
+.fail {
+    font-size:11px;
+    padding:5px;
+}
