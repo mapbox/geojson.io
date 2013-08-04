@@ -10,6 +10,11 @@ var mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b', {
     detectRetina: true
 }).addTo(map);
 
+var mapboxSatelliteTiles = L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
+    retinaVersion: 'tmcw.map-ujx9se0r',
+    detectRetina: true
+});
+
 L.mapbox.geocoderControl('tmcw.map-u4ca5hnt').addTo(map);
 
 var drawnItems = new L.FeatureGroup().addTo(map);
@@ -39,13 +44,20 @@ var layerButtons = d3.select('#layer-switch')
         layerButtons.classed('active', function() {
             return clicked === this;
         });
-        if (this.id == 'mapbox' && map.hasLayer(osmTiles)) {
-            map.removeLayer(osmTiles);
+        if (this.id == 'mapbox' && !map.hasLayer(mapboxTiles)) {
             map.addLayer(mapboxTiles);
+            if (map.hasLayer(osmTiles)) map.removeLayer(osmTiles);
+            if (map.hasLayer(mapboxSatelliteTiles)) map.removeLayer(mapboxSatelliteTiles);
         }
-        if (this.id == 'osm' && map.hasLayer(mapboxTiles)) {
+        if (this.id == 'mapbox-satellite' && !map.hasLayer(mapboxSatelliteTiles)) {
+            map.addLayer(mapboxSatelliteTiles);
+            if (map.hasLayer(osmTiles)) map.removeLayer(osmTiles);
+            if (map.hasLayer(mapboxTiles)) map.removeLayer(mapboxTiles);
+        }
+        if (this.id == 'osm' && !map.hasLayer(osmTiles)) {
             map.addLayer(osmTiles);
-            map.removeLayer(mapboxTiles);
+            if (map.hasLayer(mapboxTiles)) map.removeLayer(mapboxTiles);
+            if (map.hasLayer(mapboxSatelliteTiles)) map.removeLayer(mapboxSatelliteTiles);
         }
     });
 
@@ -432,7 +444,7 @@ function handleGeocode(container, text) {
             return d3.entries(obj)
                 .filter(function(e) { return fields.indexOf(e.key) !== -1; })
                 .map(function(e) { return e.value; })
-                .join(' ');
+                .join(', ');
          };
      }
 
