@@ -405,6 +405,8 @@ function importPanel(container) {
 
 function handleGeocode(container, text) {
 
+    analytics.track('A CSV Required Geocoding');
+
     var list = csv2geojson.csv(text);
 
     var button = container.append('div')
@@ -466,6 +468,7 @@ function handleGeocode(container, text) {
              button.attr('disabled', null)
                 .text('Geocode');
              button.on('click', function() {
+                 analytics.track('Ran a Geocode batch');
                  runGeocode(container, list, transformRow(fields));
              });
              var se = showExample(fields);
@@ -579,9 +582,10 @@ function sharePanel(container, updates) {
             var facebook = links.append('a')
                 .attr('target', '_blank')
                 .attr('href', function() {
-                    analytics.track('Shared via Facebook');
                     return 'https://www.facebook.com/sharer/sharer.php?u=' +
                         encodeURIComponent(thisurl);
+                }).on('click', function() {
+                    analytics.track('Shared via Facebook');
                 });
 
             facebook.append('span').attr('class', 'icon-facebook');
@@ -590,9 +594,10 @@ function sharePanel(container, updates) {
             var tweet = links.append('a')
                 .attr('target', '_blank')
                 .attr('href', function() {
-                    analytics.track('Shared via Twitter');
                     return 'https://twitter.com/intent/tweet?source=webclient&text=' +
                         encodeURIComponent('my map: ' + thisurl);
+                }).on('click', function() {
+                    analytics.track('Shared via Twitter');
                 });
 
             tweet.append('span').attr('class', 'icon-twitter');
