@@ -1,0 +1,85 @@
+.bucket-deposit {
+    padding:10px;
+    background:#f0f0f0;
+    text-align:center;
+}
+
+.bucket-store {
+    padding:10px;
+    background:#f7f7f7;
+    border-top:0;
+}
+
+.bucket-actions {
+    text-align:center;
+    padding:10px;
+}
+
+.bucket {
+    color:#aaa;
+    box-shadow: inset 1px 1px 1px 1px #eee;
+    border:1px solid #888;
+    border-radius:20px;
+    padding:10px 20px;
+    line-height:20px;
+    height:20px;
+    margin:5px;
+    display:inline-block;
+    background:#fff;
+    transition:all 400ms;
+    -webkit-transition:all 400ms;
+}
+
+.bucket.filled {
+    background:#BBDAB4;
+    box-shadow:none;
+    color:#444;
+}
+
+.remove-button:after {
+    content: '×';
+    background:#D8E7D5;
+    width:20px;
+    height:20px;
+    border-radius:10px;
+    font-weight:bold;
+    vertical-align:bottom;
+    line-height:17px;
+    text-align:center;
+    display:inline-block;
+    cursor:pointer;
+    margin-left:10px;
+}
+
+.bucket-join .bucket {
+    border-radius:0;
+    border-right:0;
+    margin:0px;
+}
+
+.bucket-join .bucket:first-child {
+    border-radius:20px 0 0 20px;
+}
+
+.bucket-join .bucket:last-child {
+    border-right:1px solid #888;
+    border-radius:0 20px 20px 0 ;
+}
+
+.bucket-source {
+    border:1px solid #888;
+    border-radius:5px;
+    padding:5px 10px;
+    line-height:20px;
+    height:20px;
+    margin:5px;
+    display:inline-block;
+    background:#fff;
+    z-index:999;
+}
+
+.example {
+    padding:10px;
+    text-align:center;
+    font-style:italic;
+}
