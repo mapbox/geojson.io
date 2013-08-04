@@ -10,6 +10,11 @@ var mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b', {
     detectRetina: true
 }).addTo(map);
 
+var mapboxSatelliteTiles = L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
+    retinaVersion: 'tmcw.map-ujx9se0r',
+    detectRetina: true
+});
+
 L.mapbox.geocoderControl('tmcw.map-u4ca5hnt').addTo(map);
 
 var drawnItems = new L.FeatureGroup().addTo(map);
@@ -39,13 +44,20 @@ var layerButtons = d3.select('#layer-switch')
         layerButtons.classed('active', function() {
             return clicked === this;
         });
-        if (this.id == 'mapbox' && map.hasLayer(osmTiles)) {
-            map.removeLayer(osmTiles);
+        if (this.id == 'mapbox' && !map.hasLayer(mapboxTiles)) {
             map.addLayer(mapboxTiles);
+            if (map.hasLayer(osmTiles)) map.removeLayer(osmTiles);
+            if (map.hasLayer(mapboxSatelliteTiles)) map.removeLayer(mapboxSatelliteTiles);
         }
-        if (this.id == 'osm' && map.hasLayer(mapboxTiles)) {
+        if (this.id == 'mapbox-satellite' && !map.hasLayer(mapboxSatelliteTiles)) {
+            map.addLayer(mapboxSatelliteTiles);
+            if (map.hasLayer(osmTiles)) map.removeLayer(osmTiles);
+            if (map.hasLayer(mapboxTiles)) map.removeLayer(mapboxTiles);
+        }
+        if (this.id == 'osm' && !map.hasLayer(osmTiles)) {
             map.addLayer(osmTiles);
-            map.removeLayer(mapboxTiles);
+            if (map.hasLayer(mapboxTiles)) map.removeLayer(mapboxTiles);
+            if (map.hasLayer(mapboxSatelliteTiles)) map.removeLayer(mapboxSatelliteTiles);
         }
     });
 
@@ -339,6 +351,9 @@ function importPanel(container) {
                 trackImport('GeoJSON', method);
             } else if (f.name.indexOf('.csv') !== -1) {
                 gj = csv2geojson.csv2geojson(e.target.result);
+                if (gj.type === 'Error') {
+                    return handleGeocode(container.append('div'), e.target.result);
+                }
                 trackImport('CSV', method);
             }
             if (gj) updates.update_editor(gj);
@@ -383,6 +398,155 @@ function importPanel(container) {
         .style('text-align', 'center')
         .style('color', '#888')
         .html('Need help or found a bug? Ask in <a href="http://support.mapbox.com/">support.mapbox.com</a>');
+
+    wrap.append('div')
+        .attr('class', 'geocode-ui');
+}
+
+function handleGeocode(container, text) {
+
+    var list = csv2geojson.csv(text);
+
+    var button = container.append('div')
+        .attr('class', 'bucket-actions')
+        .append('button')
+        .attr('class', 'major')
+        .attr('disabled', true)
+        .text('At least one field required to geocode');
+
+    var join = container.append('div')
+        .attr('class', 'bucket-deposit')
+        .append('div')
+        .attr('class', 'bucket-join');
+
+    var buckets = join.selectAll('.bucket')
+        .data(['City', 'State', 'ZIP', 'Country'])
+        .enter()
+        .append('div')
+        .attr('class', 'bucket')
+        .text(String);
+
+    var example = container.append('div')
+        .attr('class', 'example');
+
+    var store = container.append('div')
+        .attr('class', 'bucket-store');
+
+     var sources = store.selectAll('bucket-source')
+        .data(Object.keys(list[0]))
+        .enter()
+        .append('div')
+        .attr('class', 'bucket-source')
+        .text(String);
+
+     function transformRow(fields) {
+         return function(obj) {
+            return d3.entries(obj)
+                .filter(function(e) { return fields.indexOf(e.key) !== -1; })
+                .map(function(e) { return e.value; })
+                .join(', ');
+         };
+     }
+
+     function showExample(fields) {
+         var i = 0;
+         return function() {
+             if (++i > list.length) i = 0;
+             example.html('');
+             example.text(transformRow(fields)(list[i]));
+         };
+     }
+
+     var ti;
+     var broker = bucket();
+     buckets.call(broker.deposit());
+     sources.call(broker.store().on('chosen', function(fields) {
+         if (ti) window.clearInterval(ti);
+         if (fields.length) {
+             button.attr('disabled', null)
+                .text('Geocode');
+             button.on('click', function() {
+                 runGeocode(container, list, transformRow(fields));
+             });
+             var se = showExample(fields);
+             se();
+             ti = window.setInterval(se, 2000);
+         } else {
+             button.attr('disabled', true)
+                .text('At least one field required to geocode');
+             example.text('');
+         }
+     }));
+}
+
+function runGeocode(container, list, transform) {
+    container.html('');
+
+    var wrap = container.append('div').attr('class', 'pad1');
+
+    var doneBtn = wrap.append('div')
+        .style('text-align', 'center')
+        .style('padding', '10px')
+        .append('button')
+        .attr('class', 'major')
+        .text('Close')
+        .on('click', function() {
+            container.html('');
+            if (task) task();
+        });
+
+    var chartDiv = wrap.append('div');
+    var failedDiv = wrap.append('div');
+
+    var geocode = geocodemany('tmcw.map-u4ca5hnt');
+
+    function progressChart(elem, w, h) {
+        var c = elem.appendChild(document.createElement('canvas'));
+        c.width = w;
+        c.height = h;
+        var ctx = c.getContext('2d');
+        var gap;
+        var fill = {
+            success: '#e3e4b8',
+            error: '#E0A990'
+        };
+
+        return function(e) {
+            if (!gap) gap = ((e.done) / e.todo * w) - ((e.done - 1) / e.todo * w);
+            ctx.fillStyle = fill[e.status];
+            ctx.fillRect((e.done - 1) / e.todo * w, 0, gap, h);
+        };
+    }
+
+    var chart = progressChart(chartDiv.node(), chartDiv.node().offsetWidth, 50);
+
+    function progress(e) {
+        chart(e);
+    }
+
+    function printObj(o) {
+        return '(' + d3.entries(o)
+            .map(function(_) {
+                return _.key + ': ' + _.value;
+            }).join(',') + ')';
+    }
+
+    function done(failed, completed) {
+
+        failedDiv
+            .selectAll('.fail')
+            .data(failed)
+            .enter()
+            .append('div')
+            .attr('class', 'fail')
+            .text(function(d) {
+                return 'failed: ' + transform(d.data) + ' / ' + printObj(d.data);
+            });
+
+        updates.update_editor(csv2geojson.csv2geojson(completed));
+    }
+
+    var task = geocode(list, transform, progress, done);
 }
 
 function sharePanel(container, updates) {

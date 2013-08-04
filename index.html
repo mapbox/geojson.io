@@ -12,6 +12,7 @@
   <title>geojson.io: Edit GeoJSON</title>
   <link href='lib/draw/leaflet.draw.css' rel='stylesheet' />
   <link href='lib/codemirror/lib/codemirror.css' rel='stylesheet' />
+  <link href='lib/bucket.css' rel='stylesheet' />
   <link href='css/base.css' rel='stylesheet' />
   <link href='css/marker.css' rel='stylesheet' />
   <link href='css/site.css' rel='stylesheet' />
@@ -27,7 +28,7 @@
 <body id='geojsonio-body'>
 <div id='map'></div>
 <div id='layer-switch'>
-    <button class='active' id='mapbox'>MapBox</button><button id='osm'>OSM</button>
+    <button class='active' id='mapbox'>MapBox</button><button id='mapbox-satellite'>Satellite</button><button id='osm'>OSM</button>
 </div>
 <div id='brushes'>
 </div>
@@ -58,6 +59,9 @@
 <script src='lib/metatable.js'></script>
 <script src='lib/togeojson.js'></script>
 <script src='lib/csv2geojson.js'></script>
+<script src='lib/geocodemany.js'></script>
+<script src='lib/bucket.js'></script>
+<script src='lib/queue.js'></script>
 <script src='src/gist.js'></script>
 <script src='src/switchmap.js'></script>
 <script src='src/clip.js'></script>
