@@ -4,7 +4,14 @@ src/site.js: src/index.js src/properties.js
 	browserify src/index.js > src/site.js
 
 lib/lib.js: lib/%.js:
-	cat lib/d3.v3.min.js \
+	cat lib/geojsonhint.js \
+		lib/metatable.js \
+		lib/togeojson.js \
+		lib/csv2geojson.js \
+		lib/geocodemany.js \
+		lib/bucket.js \
+		lib/queue.js \
+		lib/d3.v3.min.js \
 		lib/d3.trigger.js \
 		lib/draw/leaflet.draw.js \
 		lib/codemirror/lib/codemirror.js \
