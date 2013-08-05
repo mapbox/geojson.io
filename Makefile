@@ -1,12 +1,13 @@
 all: src/site.js lib/lib.js
 
-src/site.js: src/index.js src/properties.js
+src/site.js: src/index.js
 	browserify src/index.js > src/site.js
 
 lib/lib.js: lib/%.js:
 	cat lib/geojsonhint.js \
 		lib/metatable.js \
 		lib/togeojson.js \
+		lib/base64.js \
 		lib/csv2geojson.js \
 		lib/geocodemany.js \
 		lib/bucket.js \

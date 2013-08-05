@@ -1,5 +1,15 @@
 var pane = d3.select('.pane');
 
+var production = (location.hostname === 'geojson.io');
+
+var client_id = production ?
+    '62c753fd0faf18392d85' :
+    'bb7bbe70bd1f707125bc';
+
+var gatekeeper_url = production ?
+    'http://geojsonioauth.herokuapp.com' :
+    'http://localhostauth.herokuapp.com';
+
 var map = L.mapbox.map('map').setView([20, 0], 2);
 var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -105,6 +115,16 @@ var editor;
 
 var dropSupport = (window.FileReader && 'ondrop' in window);
 
+function authorize(xhr) {
+    return localStorage.github_token ?
+        xhr.header('Authorization', 'token ' + localStorage.github_token) :
+        xhr;
+}
+
+function loggedin() {
+    return !!localStorage.github_token;
+}
+
 var buttons = d3.select('.buttons')
     .selectAll('button')
     .data([{
@@ -119,9 +139,12 @@ var buttons = d3.select('.buttons')
             icon: 'share-alt',
             title: ' Share',
             behavior: sharePanel
-        }, {
+        },{
             icon: 'code',
             behavior: jsonPanel
+        }, {
+            icon: 'github',
+            behavior: loginPanel
         }])
     .enter()
     .append('button')
@@ -134,6 +157,9 @@ var buttons = d3.select('.buttons')
         buttons.classed('active', function(_) { return d.icon == _.icon; });
         pane.call(d.behavior, updates);
         updateFromMap();
+    })
+    .each(function(d) {
+        if (d.behavior.init) d.behavior.init(this);
     });
 
 d3.select(buttons.node()).trigger('click');
@@ -182,8 +208,8 @@ function jsonPanel(container) {
         lineNumbers: true
     });
 
-    var // shush the callback-back
-        quiet = false;
+    // shush the callback-back
+    var quiet = false;
     editor.on('change', validate(changeValidated));
 
     function changeValidated(err, data) {
@@ -199,8 +225,6 @@ function jsonPanel(container) {
     });
 }
 
-
-
 d3.select(document).on('keydown', keydown);
 d3.select(window).on('hashchange', hashChange);
 
@@ -208,12 +232,21 @@ if (window.location.hash) hashChange();
 
 function keydown(e) {
     if (d3.event.keyCode == 83 && d3.event.metaKey) {
-        saveAsGist(JSON.stringify({ type: 'FeatureCollection', features: featuresFromMap() }, null, 2), function(err, resp) {
-            if (err) return alert(err);
-            var id = resp.id;
-            location.hash = '#' + id;
-        });
         d3.event.preventDefault();
+
+        var content = JSON.stringify({ type: 'FeatureCollection', features: featuresFromMap() }, null, 2);
+
+        if (!source() || source().type == 'gist') {
+            saveAsGist(content, function(err, resp) {
+                if (err) return alert(err);
+                var id = resp.id;
+                location.hash = '#gist:' + id;
+            });
+        } else if (!source() || source().type == 'github') {
+            saveAsGitHub(content, function(err, resp) {
+                if (err) return alert(err);
+            });
+        }
     }
 }
 
@@ -252,7 +285,6 @@ function isEmpty(o) {
 }
 
 function showProperties(l) {
-    var styleProps = ['fill_color', 'stroke_color', 'stroke_opacity', 'fill_opacity', 'stroke_width'];
     var properties = l.toGeoJSON().properties, table = '';
     if (isEmpty(properties)) properties = { '': '' };
     for (var key in properties) {
@@ -268,14 +300,44 @@ function mapFile(gist) {
     for (var f in gist.files) if (f == 'map.geojson') return JSON.parse(gist.files[f].content);
 }
 
+function source() {
+    if (!location.hash) return null;
+
+    var txt = location.hash.substring(1);
+
+    if (!isNaN(parseInt(txt, 10))) {
+        // legacy gist
+        return {
+            type: 'gist',
+            id: parseInt(txt, 10)
+        };
+    } else if (txt.indexOf('gist:') === 0) {
+        return {
+            type: 'gist',
+            id: parseInt(txt.replace(/^gist:/, ''), 10)
+        };
+    } else if (txt.indexOf('github:') === 0) {
+        return {
+            type: 'github',
+            id: txt.replace(/^github:\/?/, '')
+        };
+    }
+}
+
 function hashChange() {
-    var id = window.location.hash.substring(1);
+    var s = source();
 
-    d3.json('https://api.github.com/gists/' + id)
-        .on('load', onLoad)
-        .on('error', onError).get();
+    if (!s) {
+        location.hash = '';
+        return;
+    }
 
-    function onLoad(json) {
+    if (s.type == 'gist') loadGist(s.id, onGistLoad);
+    if (s.type == 'github') loadGitHub(s.id, onGitHubLoad);
+
+    function onGistLoad(err, json) {
+        if (err) return alert('Gist API limit exceeded, come back in a bit.');
+
         var first = !drawnItems.getBounds().isValid();
         updates.update_editor(mapFile(json));
         if (first && drawnItems.getBounds().isValid()) {
@@ -284,7 +346,15 @@ function hashChange() {
         }
     }
 
-    function onError() {
-        alert('Gist API limit exceeded, come back in a bit.');
+    function onGitHubLoad(err, file) {
+        if (err) return alert('Gist API limit exceeded, come back in a bit.');
+
+        var json = JSON.parse(Base64.fromBase64(file.content));
+        var first = !drawnItems.getBounds().isValid();
+        updates.update_editor(json);
+        if (first && drawnItems.getBounds().isValid()) {
+            map.fitBounds(drawnItems.getBounds());
+            buttons.filter(function(d, i) { return i == 1; }).trigger('click');
+        }
     }
 }

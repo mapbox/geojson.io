@@ -61,7 +61,7 @@ function sharePanel(container, updates) {
 
             var gist = links.append('a')
                 .attr('target', '_target')
-                .attr('href', 'http://gist.github.com/anonymous/' + id);
+                .attr('href', resp.html_url);
             gist.append('span').attr('class', 'icon-link');
             gist.append('span').text(' source');
         });
