@@ -22,6 +22,20 @@ p.intro {
     font-size:small;
 }
 
+p.intro-hint {
+    max-width:250px;
+    margin:10px auto;
+    padding:10px;
+    opacity:0.5;
+    font-size:small;
+    border:1px solid #e0e0e0;
+    border-radius:1px;
+}
+
+p.intro-hint:hover {
+    opacity:1;
+}
+
 #map.fullsize {
     right:0;
 }
@@ -46,51 +60,8 @@ p.intro {
     bottom:auto;
 }
 
-.wordmark {
-    position:absolute;
-    color:#888;
-    top:0px;
-    right:0px;
-    padding-right:10px;
-    font-weight:bold;
-    font-size:10px;
-    line-height:40px;
-}
-
-.link-ui {
-    background:#363636;
-    border-bottom:1px solid #272822;
-    border-right:1px solid #272822;
-    position:absolute;
-    top:-100px;
-    left:0px;
-    width:240px;
-    z-index:999;
-    transition:all 200ms;
-    -webkit-transition:all 200ms;
-}
-
-.link-ui #link-ui-close {
-    color:#fff;
-    float:right;
-    cursor:pointer;
-}
-
-.link-ui.active {
-    top:42px;
-}
-
 .pad1 {
     padding:10px;
-}
-
-.link-ui small {
-    font-size:10px;
-    color:#aaa;
-}
-
-.link-ui a {
-    font-size:11px;
 }
 
 .right .CodeMirror {
@@ -113,49 +84,6 @@ p.intro {
 }
 
 /* PROPERTIES -------------------------------------- */
-.mini-map {
-    height:150px;
-}
-
-.property-table table {
-    border-collapse: collapse;
-    border-spacing:0;
-    border: none;
-    width:100%;
-    margin-top: 5px;
-}
-
-.property-table table input {
-    font:inherit;
-    width:100%;
-    font-family: 'Droid Sans Mono', sans-serif;
-    box-sizing:border-box;
-    background:#000000;
-    border:0;
-    border-bottom:1px solid #363636;
-    color:#eee;
-    margin: 0px 5px 0px 0px;
-}
-
-.property-table .remove {
-    margin: 0px 5px 5px 0px;
-}
-
-.property-table .separator {
-    color: #eee;
-    padding-right: 3px;
-}
-
-.property-table tr {
-    padding: 0;
-}
-
-.property-table td {
-    padding: 0;
-    margin: 0;
-    vertical-align: top;
-}
-
 #buttons {
     background:#363636;
 }
@@ -185,6 +113,12 @@ button {
 
 .top button.icon-github.logged-in {
     color:red;
+}
+
+.top button.icon-github:hover:after {
+    font-size:11px;
+    margin-left:5px;
+    content:attr(title);
 }
 
 button:hover {
@@ -237,13 +171,7 @@ button:hover {
     background:#15A;
 }
 
-label.horizontal {
-    display:block;
-    padding:10px 0;
-}
-
-input.horizontal {
-    width:100%;
+input[type=text] {
     font:inherit;
 }
 
@@ -525,6 +453,17 @@ button.major:hover {
     border-bottom:2px solid red;
 }
 
+button.semimajor {
+    font-size: 15px;
+    border: 1px solid #aaa;
+    border-bottom: 2px solid #aaa;
+    padding: 10px;
+}
+
+button.semimajor:hover {
+    border-bottom:2px solid red;
+}
+
 .fail {
     font-size:11px;
     padding:5px;
@@ -535,4 +474,17 @@ button.major:hover {
     font-size:20px;
     padding:80px 20px;
     color:#888;
+}
+
+.center {
+    text-align:center;
+}
+
+textarea.full-width {
+    width:80%;
+    padding:5px;
+    height:200px;
+    border:1px solid #ccc;
+    border-radius:2px;
+    font:inherit;
 }

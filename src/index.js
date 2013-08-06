@@ -124,52 +124,62 @@ function authorize(xhr) {
 function loggedin() {
     return !!localStorage.github_token;
 }
+var buttonData = [{
+    icon: 'beaker',
+    title: ' Import',
+    behavior: importPanel
+}, {
+    icon: 'table',
+    title: ' Table',
+    alt: 'Edit feature properties in a table',
+    behavior: tablePanel
+}, {
+    icon: 'share-alt',
+    title: ' Share',
+    alt: 'Share via Facebook, Twitter, or a map embed',
+    behavior: sharePanel
+},{
+    icon: 'code',
+    alt: 'JSON Source',
+    behavior: jsonPanel
+}, {
+    icon: 'github',
+    alt: 'Log in to GitHub',
+    behavior: loginPanel
+}];
 
-var buttons = d3.select('.buttons')
-    .selectAll('button')
-    .data([{
-            icon: 'beaker',
-            title: ' Import',
-            behavior: importPanel
-        }, {
-            icon: 'table',
-            title: ' Table',
-            alt: 'Edit feature properties in a table',
-            behavior: tablePanel
-        }, {
-            icon: 'share-alt',
-            title: ' Share',
-            alt: 'Share via Facebook, Twitter, or a map embed',
-            behavior: sharePanel
-        },{
-            icon: 'code',
-            alt: 'JSON Source',
-            behavior: jsonPanel
-        }, {
-            icon: 'github',
-            alt: 'Log in to GitHub',
-            behavior: loginPanel
-        }])
-    .enter()
-    .append('button')
-    .attr('title', function(d) {
-        return d.alt;
-    })
-    .attr('class', function(d) {
-        return 'icon-' + d.icon;
-    })
-    .text(function(d) { return d.title; })
-    .on('click', function(d) {
-        updates.on('update_map.mode', null);
-        buttons.classed('active', function(_) { return d.icon == _.icon; });
-        pane.call(d.behavior, updates);
-        updateFromMap();
-    })
-    .each(function(d) {
-        if (d.behavior.init) d.behavior.init(this);
-    });
+var buttons;
 
-d3.select(buttons.node()).trigger('click');
+function drawButtons(data) {
+    buttons = d3.select('.buttons')
+        .selectAll('button')
+        .data(data, function(d) {
+            return d.icon;
+        });
+    buttons.enter()
+        .append('button')
+        .attr('title', function(d) {
+            return d.alt;
+        })
+        .attr('class', function(d) {
+            return 'icon-' + d.icon;
+        })
+        .text(function(d) { return d.title; })
+        .on('click', function(d) {
+            updates.on('update_map.mode', null);
+            buttons.classed('active', function(_) { return d.icon == _.icon; });
+            pane.call(d.behavior, updates);
+            updateFromMap();
+        })
+        .each(function(d) {
+            if (d.behavior.init) d.behavior.init(this);
+        });
+    buttons.exit().remove();
+
+    d3.select(buttons.node()).trigger('click');
+}
+
+drawButtons(buttonData);
 
 map.on('popupopen', onPopupOpen);
 
@@ -240,20 +250,25 @@ if (window.location.hash) hashChange();
 function keydown(e) {
     if (d3.event.keyCode == 83 && d3.event.metaKey) {
         d3.event.preventDefault();
+        saveChanges();
+    }
+}
 
-        var content = JSON.stringify({ type: 'FeatureCollection', features: featuresFromMap() }, null, 2);
+function saveChanges(message, callback) {
+    var content = JSON.stringify({ type: 'FeatureCollection', features: featuresFromMap() }, null, 2);
 
-        if (!source() || source().type == 'gist') {
-            saveAsGist(content, function(err, resp) {
-                if (err) return alert(err);
-                var id = resp.id;
-                location.hash = '#gist:' + id;
-            });
-        } else if (!source() || source().type == 'github') {
-            saveAsGitHub(content, function(err, resp) {
-                if (err) return alert(err);
-            });
-        }
+    if (!source() || source().type == 'gist') {
+        saveAsGist(content, function(err, resp) {
+            if (err) return alert(err);
+            var id = resp.id;
+            location.hash = '#gist:' + id;
+            callback();
+        });
+    } else if (!source() || source().type == 'github') {
+        saveAsGitHub(content, function(err, resp) {
+            if (err) return alert(err);
+            callback();
+        }, message);
     }
 }
 
@@ -364,6 +379,11 @@ function hashChange() {
                 map.fitBounds(drawnItems.getBounds());
                 buttons.filter(function(d, i) { return i == 1; }).trigger('click');
             }
+            drawButtons(buttonData.concat([{
+                icon: 'save',
+                title: ' Commit',
+                behavior: commitPanel
+            }]));
         } catch(e) {
             alert('Loading a file from GitHub failed');
             console.error(e);

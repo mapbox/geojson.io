@@ -34,7 +34,7 @@ function importPanel(container) {
 
         reader.onload = function(e) {
             var gj;
-            if (f.type === "application/vnd.google-earth.kml+xml" ||
+            if (f.type === 'application/vnd.google-earth.kml+xml' ||
                 f.name.indexOf('.kml') !== -1) {
                 gj = toGeoJSON.kml(toDom(e.target.result));
                 trackImport('KML', method);
@@ -50,6 +50,9 @@ function importPanel(container) {
                     return handleGeocode(container.append('div'), e.target.result);
                 }
                 trackImport('CSV', method);
+            } else {
+                analytics.track('Failed to upload a file with type ' + f.type);
+                return alert('Sorry, that file type is not supported');
             }
             if (gj) updates.update_editor(gj);
         };
@@ -72,7 +75,9 @@ function importPanel(container) {
         .on('dragexit.localgpx', exit)
         .on('dragover.localgpx', over);
 
-    var message = import_landing.append('div').attr('class', 'message');
+    var message = import_landing
+        .append('div')
+        .attr('class', 'message');
     message.append('span').attr('class', 'icon-arrow-down');
     message.append('span').text(' Drop a GeoJSON, KML, CSV, or GPX file');
     message.append('p').text('or');
@@ -87,12 +92,16 @@ function importPanel(container) {
         .on('click', function() {
             fileInput.trigger('click');
         });
-
     wrap.append('p')
         .attr('class', 'intro')
         .style('text-align', 'center')
         .style('color', '#888')
         .html('Need help or found a bug? Ask in <a href="http://support.mapbox.com/">support.mapbox.com</a>');
+
+    if (window.chrome) wrap.append('p')
+        .attr('class', 'intro-hint')
+        .style('color', '#888')
+        .html('Use GitHub? The <a target="_blank" href="/about.html#extension">geojson.io chrome extension</a> lets you edit map data in your repositories!');
 
     wrap.append('div')
         .attr('class', 'geocode-ui');

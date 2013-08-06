@@ -5,13 +5,13 @@ function githubFileUrl() {
             '/contents/' + pts.file + '?ref=' + pts.branch;
 }
 
-function saveAsGitHub(content, callback) {
+function saveAsGitHub(content, callback, message) {
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
             'Please use a modern browser to enjoy the full featureset of geojson.io');
     }
 
-    var commitMessage = prompt('Commit message:');
+    var commitMessage = message || prompt('Commit message:');
     if (!commitMessage) return;
 
     loadGitHub(source().id, function(err, file) {
