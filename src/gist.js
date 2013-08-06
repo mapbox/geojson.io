@@ -17,7 +17,7 @@ function saveAsGist(content, callback) {
                 callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
             })
             .send(update ? 'PATCH' : 'POST', JSON.stringify({
-                description: 'Gist from edit-GeoJSON',
+                description: 'via:geojson.io',
                 public: true,
                 files: {
                     'map.geojson': {
