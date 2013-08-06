@@ -156,24 +156,6 @@ p.intro {
     vertical-align: top;
 }
 
-.sub-pane button {
-    background:#363636;
-    color:#eee;
-    font:inherit;
-    border:0;
-    transition:all 200ms ease-in-out;
-}
-
-.sub-pane button:hover {
-    color:#fff;
-    background:#333;
-}
-
-.sub-pane button.addrow {
-    width:100%;
-    margin: 0;
-}
-
 #buttons {
     background:#363636;
 }
@@ -194,7 +176,7 @@ button {
     font:inherit;
     margin:0;
     border:0;
-    padding:5px;
+    padding:5px 10px;
     box-sizing:border-box;
     border:1px solid #f0f0f0;
     transition:all 200ms ease-in-out;
@@ -253,27 +235,6 @@ button:hover {
 
 .top button.done {
     background:#15A;
-}
-
-#status {
-    font-size:16px;
-    color:#BDEEBD;
-    position:absolute;
-    top:52px;
-    right:10px;
-    transition:all 200ms;
-    display:block;
-    -webkit-transition:all 200ms;
-}
-
-#status:hover:before {
-    content:attr(message);
-    font-size:10px;
-    color:#eee;
-}
-
-#status.icon-circle-blank {
-    color:#EDBBD5;
 }
 
 label.horizontal {
@@ -567,4 +528,11 @@ button.major:hover {
 .fail {
     font-size:11px;
     padding:5px;
+}
+
+.blank-banner {
+    text-align:center;
+    font-size:20px;
+    padding:80px 20px;
+    color:#888;
 }

@@ -3,7 +3,7 @@ function tablePanel(container, updates) {
 
     updates.on('update_map.mode', function(data, layers) {
         if (!data.features.length) {
-            container.text('no features');
+            container.append('div').attr('class', 'blank-banner').text('no features');
         } else {
             var props = [];
             layers.eachLayer(function(p) {

@@ -134,20 +134,27 @@ var buttons = d3.select('.buttons')
         }, {
             icon: 'table',
             title: ' Table',
+            alt: 'Edit feature properties in a table',
             behavior: tablePanel
         }, {
             icon: 'share-alt',
             title: ' Share',
+            alt: 'Share via Facebook, Twitter, or a map embed',
             behavior: sharePanel
         },{
             icon: 'code',
+            alt: 'JSON Source',
             behavior: jsonPanel
         }, {
             icon: 'github',
+            alt: 'Log in to GitHub',
             behavior: loginPanel
         }])
     .enter()
     .append('button')
+    .attr('title', function(d) {
+        return d.alt;
+    })
     .attr('class', function(d) {
         return 'icon-' + d.icon;
     })
@@ -349,12 +356,17 @@ function hashChange() {
     function onGitHubLoad(err, file) {
         if (err) return alert('Gist API limit exceeded, come back in a bit.');
 
-        var json = JSON.parse(Base64.fromBase64(file.content));
-        var first = !drawnItems.getBounds().isValid();
-        updates.update_editor(json);
-        if (first && drawnItems.getBounds().isValid()) {
-            map.fitBounds(drawnItems.getBounds());
-            buttons.filter(function(d, i) { return i == 1; }).trigger('click');
+        try {
+            var json = JSON.parse(Base64.fromBase64(file.content));
+            var first = !drawnItems.getBounds().isValid();
+            updates.update_editor(json);
+            if (first && drawnItems.getBounds().isValid()) {
+                map.fitBounds(drawnItems.getBounds());
+                buttons.filter(function(d, i) { return i == 1; }).trigger('click');
+            }
+        } catch(e) {
+            alert('Loading a file from GitHub failed');
+            console.error(e);
         }
     }
 }
