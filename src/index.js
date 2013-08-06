@@ -262,12 +262,12 @@ function saveChanges(message, callback) {
             if (err) return alert(err);
             var id = resp.id;
             location.hash = '#gist:' + id;
-            callback();
+            if (callback) callback();
         });
     } else if (!source() || source().type == 'github') {
         saveAsGitHub(content, function(err, resp) {
             if (err) return alert(err);
-            callback();
+            if (callback) callback();
         }, message);
     }
 }
