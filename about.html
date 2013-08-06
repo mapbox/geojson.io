@@ -8,9 +8,20 @@
         <meta name='viewport' content='initial-scale=1.0 maximum-scale=1.0'>
         <style>
         body {
-            font:normal 12px/20px sans-serif;
+            font:normal 14px/25px sans-serif;
             max-width:500px;
             margin:50px auto;
+            color:#333;
+        }
+        a {
+            color:blue;
+            text-decoration:none;
+        }
+        h1 {
+            margin-top:40px;
+        }
+        img {
+            max-width:100%;
         }
         </style>
     </head>
@@ -18,12 +29,11 @@
         <h1>About</h1>
         <p>A little site to edit <a href='http://geojson.org/'>GeoJSON</a>,
         a good geospatial format.</p>
-        <p>Like the rest of <a href='http://github.com/tmcw'>things I do</a>,
-        <a href='http://github.com/tmcw/edit-geojson'>edit geojson is open source</a>
-        and you can (and should!) help make it better.</p>
-        <p>Protips: hit cmd-s or ctrl-s to save your drawing.</p>
-        <p>Uses <a href='https://github.com/Leaflet/Leaflet.draw'>Leaflet.draw</a>
-        for the hard parts and <a href='https://gist.github.com/'>Gist</a>
-        for storage.</p>
+        <h1 id='extension'>Chrome Extension</h1>
+        <img alt='GitHub Extension' src='http://i.cloudup.com/d6Z9dko1gr.png' />
+        <a href='https://github.com/mapbox/geojsonio-extension/releases/download/v0.2.0/geojsonio-chrome.crx'>Download the latest release of the geojson.io extension</a>
+        to add a 'geojson.io' button to applicable Gists and files on <a href='http://github.com/'>GitHub</a>
+        <h1 id='source'>Open Source</h1>
+        <p>This site is an <a href='http://github.com/mapbox/geojson.io'>open source project</a>.</p>
     </body>
 </html>
