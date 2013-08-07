@@ -118,7 +118,7 @@ button {
     content:' ✓';
 }
 
-.top button.icon-github:hover:after {
+.top button.icon-github:after {
     font-size:11px;
     margin-left:5px;
     content:attr(title);

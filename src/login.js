@@ -1,7 +1,5 @@
 function loginPanel(container) {
-    analytics.track('GitHub Account / to Authorize', function() {
-        location.href = 'https://github.com/login/oauth/authorize?client_id=' + client_id + '&scope=gist,public_repo';
-    });
+    location.href = 'https://github.com/login/oauth/authorize?client_id=' + client_id + '&scope=gist,public_repo';
 }
 
 loginPanel.init = function(container) {
