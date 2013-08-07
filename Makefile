@@ -12,7 +12,7 @@ lib/lib.js: lib/%.js:
 		lib/queue.js \
 		lib/d3.v3.min.js \
 		lib/d3.trigger.js \
-		lib/draw/leaflet.draw.js \
+		lib/draw/leaflet.draw-src.js \
 		lib/codemirror/lib/codemirror.js \
 		lib/codemirror/mode/javascript/javascript.js \
 		lib/FileSaver.min.js > lib/lib.js
