@@ -50,7 +50,7 @@ function importPanel(container) {
                     analytics.track('Uploaded invalid JSON');
                     return;
                 }
-            } else if (f.name.indexOf('.csv') !== -1) {
+            } else if (f.type === 'text/csv' || f.name.indexOf('.csv') !== -1) {
                 gj = csv2geojson.csv2geojson(e.target.result);
                 if (gj.type === 'Error') {
                     return handleGeocode(container.append('div'), e.target.result);
