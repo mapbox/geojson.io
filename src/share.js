@@ -64,6 +64,9 @@ function sharePanel(container, updates) {
                 .attr('href', resp.html_url);
             gist.append('span').attr('class', 'icon-link');
             gist.append('span').text(' source');
+
+            wrap.append('p').attr('class', 'intro-hint')
+                .html('<a target="_blank" href="/about.html#what-now">Need help about what to do with the files you download here?</a>');
         });
     }
 }
