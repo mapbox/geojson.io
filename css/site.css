@@ -114,10 +114,6 @@ button {
     color:red;
 }
 
-.top button.icon-github.logged-in:after {
-    content:' ✓';
-}
-
 .top button.icon-github:after {
     font-size:11px;
     margin-left:5px;

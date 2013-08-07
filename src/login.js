@@ -1,17 +1,21 @@
 function loginPanel(container) {
-    location.href = 'https://github.com/login/oauth/authorize?client_id=' + client_id + '&scope=gist,public_repo';
 }
 
 loginPanel.init = function(container) {
     var sel = d3.select(container);
     sel.attr('title', 'login to GitHub');
+    sel.on('click', login);
+
+    function login() {
+        location.href = 'https://github.com/login/oauth/authorize?client_id=' + client_id + '&scope=gist,public_repo';
+    }
 
     function logout() {
         analytics.track('Logged Out');
         localStorage.removeItem('github_token');
-        sel.on('click.logout', null);
-        sel.attr('title', 'login to GitHub');
-        d3.event.preventDefault();
+        sel.attr('title', 'login to GitHub')
+            .classed('logged-in', true)
+            .on('click', login);
     }
 
     function killTokenUrl() {
@@ -23,9 +27,7 @@ loginPanel.init = function(container) {
         d3.json(gatekeeper_url + '/authenticate/' + code)
             .on('load', function(l) {
                 if (l.token) localStorage.github_token = l.token;
-                analytics.track('GitHub Account / Successful', function() {
-                    killTokenUrl();
-                });
+                killTokenUrl();
             })
             .on('error', function() {
                 analytics.track('GitHub Account / Fail');
@@ -41,7 +43,7 @@ loginPanel.init = function(container) {
                 sel
                     .classed('logged-in', true)
                     .attr('title', 'logout (' + user.login + ')')
-                    .on('click.logout', logout);
+                    .on('click', logout);
             })
             .on('error', function() {
                 sel.classed('logged-in', false);
