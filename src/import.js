@@ -102,7 +102,7 @@ function importPanel(container) {
         .attr('class', 'intro')
         .style('text-align', 'center')
         .style('color', '#888')
-        .html('Need help or found a bug? Ask in <a href="http://support.mapbox.com/">support.mapbox.com</a>');
+        .html('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Submit feedback or get help</a>');
 
     if (window.chrome) wrap.append('p')
         .attr('class', 'intro-hint')
