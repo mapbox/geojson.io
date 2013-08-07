@@ -11,6 +11,30 @@
     right:40%;
 }
 
+.right {
+    overflow-x:hidden;
+    position:absolute;
+    bottom:0;
+    top:0;
+    right:0;
+    width:40%;
+    min-width:400px;
+    box-sizing:border-box;
+    font-size:14px;
+    background:#f1f1f1;
+    transition:all 200ms;
+    -webkit-transition:all 200ms;
+}
+
+#map.fullsize {
+    right:0;
+}
+
+.right.hidden {
+    height:40px;
+    bottom:auto;
+}
+
 p {
     padding:10px 0;
     line-height:200%;
@@ -36,30 +60,6 @@ p.intro-hint:hover {
     opacity:1;
 }
 
-#map.fullsize {
-    right:0;
-}
-
-.right {
-    overflow-x:hidden;
-    position:absolute;
-    bottom:0;
-    top:0;
-    right:0;
-    width:40%;
-    min-width:400px;
-    box-sizing:border-box;
-    font-size:14px;
-    background:#f1f1f1;
-    transition:all 200ms;
-    -webkit-transition:all 200ms;
-}
-
-.right.hidden {
-    height:40px;
-    bottom:auto;
-}
-
 .pad1 {
     padding:10px;
 }
@@ -83,7 +83,6 @@ p.intro-hint:hover {
     width:100%;
 }
 
-/* PROPERTIES -------------------------------------- */
 #buttons {
     background:#363636;
 }
@@ -113,6 +112,10 @@ button {
 
 .top button.icon-github.logged-in {
     color:red;
+}
+
+.top button.icon-github.logged-in:after {
+    content:' ✓';
 }
 
 .top button.icon-github:hover:after {
@@ -256,96 +259,6 @@ input[type=text] {
 .leaflet-container .leaflet-control-attribution {
     background:none;
     box-shadow:none;
-}
-
-.inspector {
-    position:absolute;
-    bottom:0;
-    right:0;
-    height:200px;
-    width:100%;
-}
-
-#brushes {
-    position:absolute;
-    left:10px;
-    bottom:10px;
-}
-
-.swatch-bin {
-    display:inline-block;
-    padding:5px;
-    background:#fff;
-}
-
-.swatch {
-    width:20px;
-    height:20px;
-    border-radius:10px;
-    box-sizing:border-box;
-    display:inline-block;
-    border:3px solid #f1f1f1;
-    transition:all 200ms;
-    -webkit-transition:all 200ms;
-}
-
-.brush-tools {
-    background:rgba(255, 255, 255, 0.3);
-    display:inline-block;
-}
-
-.brush-tools {
-    margin-right:10px;
-    vertical-align:bottom;
-}
-
-.brush.active {
-    color:#fff;
-    -webkit-animation-name: blinker;
-    -webkit-animation-iteration-count: infinite;
-    -webkit-animation-timing-function: ease-in-out;
-    -webkit-animation-duration: 1000ms;
-}
-
-@-webkit-keyframes blinker {
-    from { background:#000; }
-    to { background:#888; }
-}
-
-.brush-label {
-    font-size:10px;
-    padding:5px;
-}
-
-.swatch-stroke {
-    width:20px;
-    height:20px;
-    box-sizing:border-box;
-    display:inline-block;
-    transition:all 200ms;
-    opacity:0.5;
-    -webkit-transition:all 200ms;
-    border-radius:10px;
-}
-
-.swatch.swatch-stroke-color:hover,
-.swatch.swatch-stroke-color.active {
-    border-width:8px;
-}
-
-.swatch:hover,
-.swatch.active,
-.swatch-stroke:active,
-.swatch-stroke.active {
-    border-width:0;
-    opacity:1;
-}
-
-button.brush {
-    background:transparent;
-    font-size:30px;
-    background:#fff;
-    vertical-align:bottom;
 }
 
 .table-wrap {
