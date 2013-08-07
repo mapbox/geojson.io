@@ -1,11 +1,9 @@
-all: src/site.js lib/lib.js
-
-src/site.js: src/index.js
-	browserify src/index.js > src/site.js
+all: lib/lib.js
 
 lib/lib.js: lib/%.js:
 	cat lib/geojsonhint.js \
 		lib/metatable.js \
+		lib/blob.js \
 		lib/togeojson.js \
 		lib/base64.js \
 		lib/csv2geojson.js \
@@ -21,4 +19,3 @@ lib/lib.js: lib/%.js:
 
 clean:
 	rm -r lib/lib.js
-	rm -r src/site.js
