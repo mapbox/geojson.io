@@ -42,7 +42,7 @@ loginPanel.init = function(container) {
             .on('load', function(user) {
                 sel
                     .classed('logged-in', true)
-                    .attr('title', 'logout (' + user.login + ')')
+                    .attr('title', 'logout')
                     .on('click', logout);
             })
             .on('error', function() {
