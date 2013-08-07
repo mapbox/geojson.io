@@ -361,6 +361,12 @@ function hashChange() {
         if (err) return alert('Gist API limit exceeded, come back in a bit.');
 
         var first = !drawnItems.getBounds().isValid();
+        try {
+            var file = mapFile(json);
+        } catch(e) {
+            alert('Invalid GeoJSON data in this Gist');
+            analytics.track('Invalid JSON in Gist');
+        }
         updates.update_editor(mapFile(json));
         if (first && drawnItems.getBounds().isValid()) {
             map.fitBounds(drawnItems.getBounds());

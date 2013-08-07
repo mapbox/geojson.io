@@ -304,9 +304,9 @@
        height="250"
        x="499.99997"
        y="552.36218"
-       inkscape:export-filename="/Users/tmcw/src/geojson.io/img/icon-small-large.png"
-       inkscape:export-xdpi="179.99998"
-       inkscape:export-ydpi="179.99998" />
+       inkscape:export-filename="/Users/tmcw/src/geojson.io/img/icon-small.png"
+       inkscape:export-xdpi="100.8"
+       inkscape:export-ydpi="100.8" />
     <path
        style="color:#000000;fill:#28353d;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:5;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        d="m 640,667.36218 0,80 59.73792,-26.20801 0,-80 c 0,0 -52.5159,23.07135 -59.73792,26.20801 z"

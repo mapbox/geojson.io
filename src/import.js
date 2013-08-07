@@ -42,8 +42,14 @@ function importPanel(container) {
                 gj = toGeoJSON.gpx(toDom(e.target.result));
                 trackImport('GPX', method);
             } else if (f.name.indexOf('.geojson') !== -1 || f.name.indexOf('.json') !== -1) {
-                gj = JSON.parse(e.target.result);
-                trackImport('GeoJSON', method);
+                try {
+                    gj = JSON.parse(e.target.result);
+                    trackImport('GeoJSON', method);
+                } catch(err) {
+                    alert('Invalid JSON file: ' + err);
+                    analytics.track('Uploaded invalid JSON');
+                    return;
+                }
             } else if (f.name.indexOf('.csv') !== -1) {
                 gj = csv2geojson.csv2geojson(e.target.result);
                 if (gj.type === 'Error') {
