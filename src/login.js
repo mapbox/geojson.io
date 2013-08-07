@@ -1,5 +1,7 @@
 function loginPanel(container) {
-    location.href = 'https://github.com/login/oauth/authorize?client_id=' + client_id + '&scope=gist,public_repo';
+    analytics.track('GitHub Account / to Authorize', function() {
+        location.href = 'https://github.com/login/oauth/authorize?client_id=' + client_id + '&scope=gist,public_repo';
+    });
 }
 
 loginPanel.init = function(container) {
@@ -22,9 +24,10 @@ loginPanel.init = function(container) {
         var code = location.search.replace('?code=', '');
         d3.json(gatekeeper_url + '/authenticate/' + code)
             .on('load', function(l) {
-                analytics.track('GitHub Account / Successful');
                 if (l.token) localStorage.github_token = l.token;
-                killTokenUrl();
+                analytics.track('GitHub Account / Successful', function() {
+                    killTokenUrl();
+                });
             })
             .on('error', function() {
                 analytics.track('GitHub Account / Fail');
