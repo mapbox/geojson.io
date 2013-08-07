@@ -11,6 +11,10 @@ function saveAsGitHub(content, callback, message) {
             'Please use a modern browser to enjoy the full featureset of geojson.io');
     }
 
+    if (!localStorage.github_token) {
+        return alert('You need to log in with GitHub to commit changes');
+    }
+
     var commitMessage = message || prompt('Commit message:');
     if (!commitMessage) return;
 
