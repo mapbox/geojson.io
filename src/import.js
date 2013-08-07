@@ -34,14 +34,17 @@ function importPanel(container) {
 
         reader.onload = function(e) {
             var gj;
-            if (f.type === 'application/vnd.google-earth.kml+xml' ||
-                f.name.indexOf('.kml') !== -1) {
+            var filename = f.name ? f.name.toLowerCase() : '';
+            function ext(_) {
+                return filename.indexOf(_) !== -1;
+            }
+            if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
                 gj = toGeoJSON.kml(toDom(e.target.result));
                 trackImport('KML', method);
-            } else if (f.name.indexOf('.gpx') !== -1) {
+            } else if (ext('.gpx')) {
                 gj = toGeoJSON.gpx(toDom(e.target.result));
                 trackImport('GPX', method);
-            } else if (f.name.indexOf('.geojson') !== -1 || f.name.indexOf('.json') !== -1) {
+            } else if (ext('.geojson') || ext('.json')) {
                 try {
                     gj = JSON.parse(e.target.result);
                     trackImport('GeoJSON', method);
@@ -50,7 +53,7 @@ function importPanel(container) {
                     analytics.track('Uploaded invalid JSON');
                     return;
                 }
-            } else if (f.type === 'text/csv' || f.name.indexOf('.csv') !== -1) {
+            } else if (f.type === 'text/csv' || ext('.csv')) {
                 gj = csv2geojson.csv2geojson(e.target.result);
                 if (gj.type === 'Error') {
                     return handleGeocode(container.append('div'), e.target.result);
