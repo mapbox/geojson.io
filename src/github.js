@@ -20,10 +20,12 @@ function saveAsGitHub(content, callback, message) {
         }
         authorize(d3.json(githubFileUrl()))
             .on('load', function(data) {
+                analytics.track('Saved to GitHub / Successful');
                 callback(null, data);
             })
             .on('error', function(err) {
-                callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+                analytics.track('Saved to GitHub / Fail');
+                callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
             })
             .send('PUT', JSON.stringify({
                 message: commitMessage,

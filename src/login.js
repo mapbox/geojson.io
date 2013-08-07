@@ -7,6 +7,7 @@ loginPanel.init = function(container) {
     sel.attr('title', 'login to GitHub');
 
     function logout() {
+        analytics.track('Logged Out');
         localStorage.removeItem('github_token');
         sel.on('click.logout', null);
         sel.attr('title', 'login to GitHub');
@@ -21,10 +22,12 @@ loginPanel.init = function(container) {
         var code = location.search.replace('?code=', '');
         d3.json(gatekeeper_url + '/authenticate/' + code)
             .on('load', function(l) {
+                analytics.track('GitHub Account / Successful');
                 if (l.token) localStorage.github_token = l.token;
                 killTokenUrl();
             })
             .on('error', function() {
+                analytics.track('GitHub Account / Fail');
                 alert('Authentication with GitHub failed');
             })
             .get();
