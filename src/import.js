@@ -130,7 +130,7 @@ function importPanel(container) {
     if (window.chrome) wrap.append('p')
         .attr('class', 'intro-hint')
         .style('color', '#888')
-        .html('Use GitHub? The <a target="_blank" href="/about.html#extension">geojson.io chrome extension</a> lets you edit map data in your repositories!');
+        .html('Use GitHub? The <a target="_blank" href="https://chrome.google.com/webstore/detail/geojsonio/oibjgofbhldcajfamjganpeacipebckp">geojson.io chrome extension</a> lets you edit map data in your repositories!');
 
     wrap.append('div')
         .attr('class', 'geocode-ui');
