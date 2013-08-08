@@ -34,6 +34,15 @@ function importPanel(container) {
         analytics.track('Imported Data / ' + method + ' / ' + format);
     }
 
+    function detectIndentationStyle(f) {
+        var indent = f.split('\n')[1].match(/^(\s*)/)[0];
+        if (indent[0] == '\t') {
+            return '\t';
+        } else {
+            return indent.length;
+        }
+    }
+
     function readFile(f, method) {
         var reader = new FileReader();
         import_landing.classed('dragover', false);
@@ -53,6 +62,8 @@ function importPanel(container) {
             } else if (ext('.geojson') || ext('.json')) {
                 try {
                     gj = JSON.parse(e.target.result);
+                    exportIndentationStyle = detectIndentationStyle(e.target.result);
+
                     trackImport('GeoJSON', method);
                 } catch(err) {
                     alert('Invalid JSON file: ' + err);

@@ -254,8 +254,10 @@ function keydown(e) {
     }
 }
 
+var exportIndentationStyle = 2;
+
 function saveChanges(message, callback) {
-    var content = JSON.stringify({ type: 'FeatureCollection', features: featuresFromMap() }, null, 2);
+    var content = JSON.stringify({ type: 'FeatureCollection', features: featuresFromMap() }, null, indentationStyle);
 
     if (!source() || source().type == 'gist') {
         saveAsGist(content, function(err, resp) {
@@ -387,6 +389,8 @@ function hashChange() {
 
         try {
             var json = JSON.parse(Base64.fromBase64(file.content));
+            exportIndentationStyle = detectIndentationStyle(file.content);
+
             var first = !drawnItems.getBounds().isValid();
             updates.update_editor(json);
             if (first && drawnItems.getBounds().isValid()) {
