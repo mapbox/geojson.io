@@ -29,28 +29,12 @@ function importPanel(container) {
     }
 
     function detectIndentationStyle(f) {
-        var lines = f.split('\n');
-        if (lines[1][0] === '\t' && lines[2][0] === '\t') {
+        var indent = f.split('\n')[1].match(/^(\s*)/)[0];
+        if (indent[0] == '\t') {
             return '\t';
+        } else {
+            return indent.length;
         }
-
-        var guess = {}, previous = 0, spaces, diff;
-        lines.slice(1, 10).forEach(function (line) {
-            spaces = line.match(/^(\s*)/)[0].length;
-            diff = spaces - previous;
-
-            guess[diff] = guess[diff] ? (guess[diff] + 1) : 1;
-            previous = spaces;
-        });
-
-        var highest = 0;
-        guess[0] = 0;
-        for (var key in guess) {
-            if (guess[highest] < guess[key]) {
-                highest = key;
-            }
-        }
-        return parseInt(highest, 10);
     }
 
     function readFile(f, method) {
