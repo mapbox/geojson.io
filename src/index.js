@@ -254,8 +254,10 @@ function keydown(e) {
     }
 }
 
+var exportIndentationStyle = 2;
+
 function saveChanges(message, callback) {
-    var content = JSON.stringify({ type: 'FeatureCollection', features: featuresFromMap() }, null, 2);
+    var content = JSON.stringify({ type: 'FeatureCollection', features: featuresFromMap() }, null, indentationStyle);
 
     if (!source() || source().type == 'gist') {
         saveAsGist(content, function(err, resp) {
