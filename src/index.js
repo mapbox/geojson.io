@@ -381,6 +381,8 @@ function hashChange() {
 
         try {
             var json = JSON.parse(Base64.fromBase64(file.content));
+            exportIndentationStyle = detectIndentationStyle(file.content);
+
             var first = !drawnItems.getBounds().isValid();
             updates.update_editor(json);
             if (first && drawnItems.getBounds().isValid()) {
