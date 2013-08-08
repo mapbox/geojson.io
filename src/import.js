@@ -69,7 +69,10 @@ function importPanel(container) {
                 analytics.track('Failed to upload a file with type ' + f.type);
                 return alert('Sorry, that file type is not supported');
             }
-            if (gj) updates.update_editor(gj);
+            if (gj) {
+                updates.update_editor(gj);
+                updates.zoom_extent();
+            }
         };
 
         reader.readAsText(f);
