@@ -93,13 +93,14 @@ function importPanel(container) {
     var fileInput = message
         .append('input')
         .attr('type', 'file')
-        .style('display', 'none')
+        .style('visibility', 'hidden')
+        .style('height', '0')
         .on('change', function() {
             if (this.files && this.files[0]) readFile(this.files[0], 'click');
         });
     message.append('p').append('button').text('Choose a file to upload')
         .on('click', function() {
-            fileInput.trigger('click');
+            fileInput.node().click();
         });
     wrap.append('p')
         .attr('class', 'intro')
