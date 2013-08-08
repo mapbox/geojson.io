@@ -2,6 +2,8 @@ function importPanel(container) {
     container.html('');
     var wrap = container.append('div').attr('class', 'pad1');
 
+    var importSupport = !!(window.FileReader);
+
     wrap.append('p')
         .attr('class', 'intro')
         .text('Make a map! To start, draw with the tools on the left or import your own data.');
@@ -69,39 +71,46 @@ function importPanel(container) {
         reader.readAsText(f);
     }
 
-    var import_landing = wrap.append('div')
-        .attr('class', 'import')
-        .attr('dropzone', 'copy')
-        .on('drop.localgpx', function() {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
-            import_landing.classed('dragover', false);
+    if (importSupport) {
+        var import_landing = wrap.append('div')
+            .attr('class', 'import')
+            .attr('dropzone', 'copy')
+            .on('drop.localgpx', function() {
+                d3.event.stopPropagation();
+                d3.event.preventDefault();
+                import_landing.classed('dragover', false);
 
-            var f = d3.event.dataTransfer.files[0];
-            readFile(f, 'drag');
-        })
-        .on('dragenter.localgpx', over)
-        .on('dragexit.localgpx', exit)
-        .on('dragover.localgpx', over);
+                var f = d3.event.dataTransfer.files[0];
+                readFile(f, 'drag');
+            })
+            .on('dragenter.localgpx', over)
+            .on('dragexit.localgpx', exit)
+            .on('dragover.localgpx', over);
 
-    var message = import_landing
-        .append('div')
-        .attr('class', 'message');
-    message.append('span').attr('class', 'icon-arrow-down');
-    message.append('span').text(' Drop a GeoJSON, KML, CSV, or GPX file');
-    message.append('p').text('or');
-    var fileInput = message
-        .append('input')
-        .attr('type', 'file')
-        .style('visibility', 'hidden')
-        .style('height', '0')
-        .on('change', function() {
-            if (this.files && this.files[0]) readFile(this.files[0], 'click');
-        });
-    message.append('p').append('button').text('Choose a file to upload')
-        .on('click', function() {
-            fileInput.node().click();
-        });
+        var message = import_landing
+            .append('div')
+            .attr('class', 'message');
+        message.append('span').attr('class', 'icon-arrow-down');
+        message.append('span').text(' Drop a GeoJSON, KML, CSV, or GPX file');
+        message.append('p').text('or');
+        var fileInput = message
+            .append('input')
+            .attr('type', 'file')
+            .style('visibility', 'hidden')
+            .style('height', '0')
+            .on('change', function() {
+                if (this.files && this.files[0]) readFile(this.files[0], 'click');
+            });
+        message.append('p').append('button').text('Choose a file to upload')
+            .on('click', function() {
+                fileInput.node().click();
+            });
+    } else {
+        wrap.append('p')
+            .attr('class', 'blank-banner')
+            .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
+                  'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
+    }
     wrap.append('p')
         .attr('class', 'intro')
         .style('text-align', 'center')
