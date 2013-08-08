@@ -71,7 +71,7 @@ var layerButtons = d3.select('#layer-switch')
         }
     });
 
-var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh', 'focus_layer');
+var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh', 'focus_layer', 'zoom_extent');
 
 updates.on('focus_layer', function(layer) {
     if (!layer) return;
@@ -294,6 +294,14 @@ function refresh() {
 
 updates.on('update_editor', loadToMap);
 updates.on('update_refresh', refresh);
+updates.on('zoom_extent', zoomToExtent);
+
+function zoomToExtent() {
+    if (drawnItems.getBounds().isValid()) {
+        map.fitBounds(drawnItems.getBounds());
+    }
+}
+
 
 function loadToMap(gj) {
     drawnItems.clearLayers();
