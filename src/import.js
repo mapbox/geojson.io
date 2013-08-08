@@ -53,7 +53,14 @@ function importPanel(container) {
             } else if (ext('.geojson') || ext('.json')) {
                 try {
                     gj = JSON.parse(e.target.result);
-                    trackImport('GeoJSON', method);
+                    if (gj && gj.type === 'Topology' && gj.objects) {
+                        var collection = { type: 'FeatureCollection', features: [] };
+                        for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
+                        gj = collection;
+                        trackImport('TopoJSON', method);
+                    } else {
+                        trackImport('GeoJSON', method);
+                    }
                 } catch(err) {
                     alert('Invalid JSON file: ' + err);
                     analytics.track('Uploaded invalid JSON');
@@ -101,7 +108,7 @@ function importPanel(container) {
             .attr('class', 'message');
 
         message.append('span').attr('class', 'icon-arrow-down');
-        message.append('span').text(' Drop a GeoJSON, KML, CSV, or GPX file or ');
+        message.append('span').text(' Drop a GeoJSON, TopoJSON, KML, CSV, or GPX file or ');
         message.append('button').text('Choose a file to upload')
             .on('click', function() {
                 fileInput.node().click();

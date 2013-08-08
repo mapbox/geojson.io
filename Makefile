@@ -6,6 +6,7 @@ lib/lib.js: lib/%.js:
 		lib/blob.js \
 		lib/togeojson.js \
 		lib/base64.js \
+		lib/topojson.js \
 		lib/csv2geojson.js \
 		lib/geocodemany.js \
 		lib/bucket.js \
