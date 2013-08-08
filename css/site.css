@@ -296,15 +296,25 @@ button:hover {
     width:50%;
 }
 
-div.import {
+.fillL {
     background:#fff;
-    padding:40px 20px;
     margin:10px;
     border-radius:3px;
 }
 
-div.import.dragover {
-    border:1px solid red;
+body.dragover {
+    opacity:0.6;
+}
+
+.modal-message {
+    display:none;
+}
+
+body.dragover .modal-message {
+    position:fixed;
+    left:50%;
+    top:50%;
+    text-align:center;
 }
 
 div.import .message {

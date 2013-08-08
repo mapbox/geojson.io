@@ -8,18 +8,22 @@ function importPanel(container) {
         .attr('class', 'intro')
         .text('Make a map! To start, draw with the tools on the left or import your own data.');
 
+    wrap.append('div')
+        .attr('class', 'modal-message')
+        .text('Drop files to map!');
+
     function over() {
         d3.event.stopPropagation();
         d3.event.preventDefault();
         d3.event.dataTransfer.dropEffect = 'copy';
-        import_landing.classed('dragover', true);
+        d3.select('body').classed('dragover', true);
     }
 
     function exit() {
         d3.event.stopPropagation();
         d3.event.preventDefault();
         d3.event.dataTransfer.dropEffect = 'copy';
-        import_landing.classed('dragover', false);
+        d3.select('body').classed('dragover', false);
     }
 
     function toDom(x) {
@@ -72,14 +76,13 @@ function importPanel(container) {
     }
 
     if (importSupport) {
-        var import_landing = wrap.append('div')
-            .attr('class', 'import')
+
+        d3.select('body')
             .attr('dropzone', 'copy')
             .on('drop.localgpx', function() {
                 d3.event.stopPropagation();
                 d3.event.preventDefault();
-                import_landing.classed('dragover', false);
-
+                d3.select('body').classed('dragover', false);
                 var f = d3.event.dataTransfer.files[0];
                 readFile(f, 'drag');
             })
@@ -87,23 +90,27 @@ function importPanel(container) {
             .on('dragexit.localgpx', exit)
             .on('dragover.localgpx', over);
 
+        var import_landing = wrap.append('div')
+            .attr('class', 'pad fillL');
+
         var message = import_landing
             .append('div')
             .attr('class', 'message');
+
         message.append('span').attr('class', 'icon-arrow-down');
-        message.append('span').text(' Drop a GeoJSON, KML, CSV, or GPX file');
-        message.append('p').text('or');
+        message.append('span').text(' Drop a GeoJSON, KML, CSV, or GPX file or ');
+        message.append('button').text('Choose a file to upload')
+            .on('click', function() {
+                fileInput.node().click();
+            });
         var fileInput = message
             .append('input')
             .attr('type', 'file')
             .style('visibility', 'hidden')
+            .style('position', 'absolute')
             .style('height', '0')
             .on('change', function() {
                 if (this.files && this.files[0]) readFile(this.files[0], 'click');
-            });
-        message.append('p').append('button').text('Choose a file to upload')
-            .on('click', function() {
-                fileInput.node().click();
             });
     } else {
         wrap.append('p')
