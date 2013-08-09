@@ -164,7 +164,6 @@ function drawButtons(data) {
         .attr('class', function(d) {
             return 'icon-' + d.icon;
         })
-        .text(function(d) { return d.title; })
         .on('click', function(d) {
             updates.on('update_map.mode', null);
             buttons.classed('active', function(_) { return d.icon == _.icon; });
@@ -173,7 +172,9 @@ function drawButtons(data) {
         })
         .each(function(d) {
             if (d.behavior.init) d.behavior.init(this);
-        });
+        })
+        .append('span')
+        .text(function(d) { return d.title; });
     buttons.exit().remove();
 
     d3.select(buttons.node()).trigger('click');

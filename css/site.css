@@ -35,6 +35,7 @@ table tbody tr td input {
 }
 
 button {
+    font-family: 'Open Sans', sans-serif;
     cursor:pointer;
     background:#f7f7f7;
     font:inherit;
@@ -45,6 +46,10 @@ button {
     border:1px solid #f0f0f0;
     transition:all 200ms ease-in-out;
     border-bottom:2px solid #f0f0f0;
+}
+
+button span {
+    font-family: 'Open Sans', sans-serif;
 }
 
 input[type=text] {
@@ -158,6 +163,7 @@ p.intro-hint:hover {
     font-size:11px;
     margin-left:5px;
     content:attr(title);
+    font-family: 'Open Sans', sans-serif;
 }
 
 button:hover {
