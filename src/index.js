@@ -257,7 +257,10 @@ function keydown(e) {
 var exportIndentationStyle = 2;
 
 function saveChanges(message, callback) {
-    var content = JSON.stringify({ type: 'FeatureCollection', features: featuresFromMap() }, null, indentationStyle);
+    var content = JSON.stringify({
+        type: 'FeatureCollection',
+        features: featuresFromMap()
+    }, null, exportIndentationStyle);
 
     if (!source() || source().type == 'gist') {
         saveAsGist(content, function(err, resp) {
