@@ -7,13 +7,14 @@ function sharePanel(container, updates) {
         saveAsGist(JSON.stringify(data), function(err, resp) {
             if (err) return alert(err);
             var id = resp.id;
-            var wrap = pane.append('div').attr('class', 'pad1 share');
+            var wrap = pane.append('div').attr('class', 'pad share');
             var thisurl = 'http://geojson.io/#' + id;
             location.hash = '#' + id;
 
-            wrap.append('label').text('Map Embed').attr('class', 'horizontal');
+            wrap.append('label').text('Map Embed');
             wrap.append('input').attr('class', 'horizontal')
-                .property('value', '<iframe frameborder="0" width="100%" height="300" src="http://bl.ocks.org/d/' + id + '"></iframe>')
+                .attr('type', 'text')
+                .property('value', '<script src="https://gist.github.com/' + id + '.js"></script>')
                 .node().select();
 
             function saveAsFile(data) {

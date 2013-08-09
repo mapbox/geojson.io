@@ -275,8 +275,7 @@ button.semimajor:hover {
 .footlinks a {
     color:#444;
     cursor:pointer;
-    margin-right:10px;
-    padding:10px;
+    padding-right:20px;
 }
 
 .footlinks a:hover {
