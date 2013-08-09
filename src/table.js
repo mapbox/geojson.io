@@ -19,7 +19,7 @@ function tablePanel(container, updates) {
                 return layer;
             }
             container.html('');
-            container.append('div').attr('class', 'table-wrap')
+            container.append('div').attr('class', 'pad1 scrollable')
                 .data([props])
                 .call(
                     metatable()

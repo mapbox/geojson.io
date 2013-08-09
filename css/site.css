@@ -1,10 +1,4 @@
 /* Elements */
-
-p {
-    padding:10px 0;
-    line-height:200%;
-}
-
 table tr td input,
 table tr th input {
     border:none;
@@ -32,24 +26,6 @@ table tbody tr td input {
     width:150px;
     box-sizing:border-box;
     margin:0;
-}
-
-button {
-    font-family: 'Open Sans', sans-serif;
-    cursor:pointer;
-    background:#f7f7f7;
-    font:inherit;
-    margin:0;
-    border:0;
-    padding:5px 10px;
-    box-sizing:border-box;
-    border:1px solid #f0f0f0;
-    transition:all 200ms ease-in-out;
-    border-bottom:2px solid #f0f0f0;
-}
-
-button span {
-    font-family: 'Open Sans', sans-serif;
 }
 
 input[type=text] {
@@ -110,7 +86,6 @@ p.intro {
 p.intro-hint {
     max-width:250px;
     margin:10px auto;
-    padding:10px;
     opacity:0.5;
     font-size:small;
     border:1px solid #e0e0e0;
@@ -166,9 +141,52 @@ p.intro-hint:hover {
     font-family: 'Open Sans', sans-serif;
 }
 
+button {
+    font-family: 'Open Sans', sans-serif;
+    cursor:pointer;
+    background:#f7f7f7;
+    font:inherit;
+    margin:0;
+    border:0;
+    padding:5px 10px;
+    box-sizing:border-box;
+    border:1px solid #f0f0f0;
+    transition:all 200ms ease-in-out;
+    -webkit-transition:all 200ms ease-in-out;
+    border-bottom:2px solid #f0f0f0;
+}
+
+button span {
+    font-family: 'Open Sans', sans-serif;
+}
+
 button:hover {
     border-bottom:2px solid red;
 }
+
+button.major {
+    font-size: large;
+    border: 1px solid #aaa;
+    border-bottom: 2px solid #aaa;
+    padding: 10px;
+}
+
+button.major:hover {
+    border-bottom:2px solid red;
+}
+
+button.semimajor {
+    font-size: 15px;
+    border: 1px solid #aaa;
+    border-bottom: 2px solid #aaa;
+    padding: 10px;
+}
+
+button.semimajor:hover {
+    border-bottom:2px solid red;
+}
+
+
 
 .top .collapse-button {
     position:absolute;
@@ -210,11 +228,6 @@ button:hover {
     color:#000;
     border-bottom:2px solid red;
 }
-
-.top button.done {
-    background:#15A;
-}
-
 
 .error-marker {
     width:10px;
@@ -275,9 +288,8 @@ button:hover {
     box-shadow:none;
 }
 
-.table-wrap {
+.scrollable {
     overflow:auto;
-    padding:10px;
 }
 
 .controls {
@@ -323,10 +335,6 @@ body.dragover .modal-message {
     text-align:center;
 }
 
-div.import .message {
-    text-align:center;
-}
-
 #layer-switch {
     position:absolute;
     bottom:10px;
@@ -343,32 +351,6 @@ div.import .message {
     background:#f7f7f7;
 }
 
-.geocode-ui {
-    padding:10px;
-}
-
-button.major {
-    font-size: large;
-    border: 1px solid #aaa;
-    border-bottom: 2px solid #aaa;
-    padding: 10px;
-}
-
-button.major:hover {
-    border-bottom:2px solid red;
-}
-
-button.semimajor {
-    font-size: 15px;
-    border: 1px solid #aaa;
-    border-bottom: 2px solid #aaa;
-    padding: 10px;
-}
-
-button.semimajor:hover {
-    border-bottom:2px solid red;
-}
-
 .fail {
     font-size:11px;
     padding:5px;
@@ -380,7 +362,6 @@ button.semimajor:hover {
     padding:80px 20px;
     color:#888;
 }
-
 
 textarea.full-width {
     width:80%;

@@ -119,7 +119,7 @@ function importPanel(container) {
 
         var message = import_landing
             .append('div')
-            .attr('class', 'message');
+            .attr('class', 'center');
 
         message.append('span').attr('class', 'icon-arrow-down');
         message.append('span').text(' Drop a GeoJSON, TopoJSON, KML, CSV, or GPX file or ');
@@ -149,12 +149,12 @@ function importPanel(container) {
         .html('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Submit feedback or get help</a>');
 
     if (window.chrome) wrap.append('p')
-        .attr('class', 'intro-hint')
+        .attr('class', 'intro-hint pad1')
         .style('color', '#888')
         .html('Use GitHub? The <a target="_blank" href="https://chrome.google.com/webstore/detail/geojsonio/oibjgofbhldcajfamjganpeacipebckp">geojson.io chrome extension</a> lets you edit map data in your repositories!');
 
     wrap.append('div')
-        .attr('class', 'geocode-ui');
+        .attr('class', 'pad1');
 }
 
 function handleGeocode(container, text) {

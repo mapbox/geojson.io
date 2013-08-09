@@ -65,7 +65,7 @@ function sharePanel(container, updates) {
             gist.append('span').attr('class', 'icon-link');
             gist.append('span').text(' source');
 
-            wrap.append('p').attr('class', 'intro-hint')
+            wrap.append('p').attr('class', 'intro-hint pad1')
                 .html('<a target="_blank" href="/about.html#what-now">Need help about what to do with the files you download here?</a>');
         });
     }
