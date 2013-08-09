@@ -4,11 +4,11 @@
 
 a fast, simple editor for map data.
 
-## using it
+## chrome extension
 
-![](http://i.cloudup.com/d6Z9dko1gr.png)
+![](https://chrome.google.com/webstore/detail/geojsonio/oibjgofbhldcajfamjganpeacipebckp)
 
-[Using geojson.io with GitHub is better with the Chrome Extension](https://github.com/mapbox/geojsonio-extension/releases/tag/v0.2.0)
+[Using geojson.io with GitHub is better with the Chrome Extension](https://chrome.google.com/webstore/detail/geojsonio/oibjgofbhldcajfamjganpeacipebckp)
 
 ## development
 
