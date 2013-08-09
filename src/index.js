@@ -75,7 +75,17 @@ var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh', 'focu
 
 updates.on('focus_layer', function(layer) {
     if (!layer) return;
-    if ('getBounds' in layer && layer.getBounds().isValid()) {
+    // geometrycollections
+    if ('eachLayer' in layer) {
+        var first = null;
+        layer.eachLayer(function(l) {
+            if (!first && 'openPopup' in l) first = l;
+        });
+        if (first) {
+            first.openPopup();
+            map.fitBounds(first.getBounds());
+        }
+    } else if ('getBounds' in layer && layer.getBounds().isValid()) {
         layer.openPopup();
         map.fitBounds(layer.getBounds());
     } else if ('getLatLng' in layer) {
