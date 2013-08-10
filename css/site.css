@@ -287,6 +287,21 @@ button.semimajor:hover {
     box-shadow:none;
 }
 
+.leaflet-popup-content {
+    max-height: 200px;
+    overflow: scroll;
+}
+
+.leaflet-popup-content-wrapper table input {
+    width:120px;
+    background:transparent;
+}
+
+.leaflet-popup-content-wrapper button {
+    padding:2px;
+    width:50%;
+}
+
 .scrollable {
     overflow:auto;
 }
@@ -301,16 +316,6 @@ button.semimajor:hover {
 
 .controls button:hover {
     background:#fff;
-}
-
-.leaflet-popup-content-wrapper table input {
-    width:120px;
-    background:transparent;
-}
-
-.leaflet-popup-content-wrapper button {
-    padding:2px;
-    width:50%;
 }
 
 .fillL {
