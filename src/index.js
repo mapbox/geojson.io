@@ -7,7 +7,7 @@ var jsonPanel = require('./json_panel'),
     gist = require('./gist'),
     github = require('./github'),
     source = require('./source'),
-    detectIndentationStyle = require('./indentation');
+    detectIndentationStyle = require('detect-json-indent');
 
 var pane = d3.select('.pane');
 

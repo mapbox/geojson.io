@@ -1,6 +1,6 @@
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
-    detectIndentationStyle = require('./indentation');
+    detectIndentationStyle = require('detect-json-indent');
 
 module.exports = importPanel;
 
