@@ -1,4 +1,8 @@
-function jsonPanel(container) {
+var validate = require('./validate');
+
+module.exports = jsonPanel;
+
+function jsonPanel(container, updates) {
     container.html('');
 
     var textarea = container.append('textarea');
@@ -19,9 +23,7 @@ function jsonPanel(container) {
 
     function changeValidated(err, data) {
         if (quiet) { quiet = false; return; }
-        if (!err) {
-            loadToMap(data);
-        }
+        if (!err) updates.update_editor(data);
     }
 
     updates.on('update_map.mode', function(data) {

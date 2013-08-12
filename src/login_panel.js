@@ -1,3 +1,7 @@
+var source = require('./source');
+
+module.exports = loginPanel;
+
 function loginPanel(container) {
 }
 

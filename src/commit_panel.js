@@ -1,3 +1,4 @@
+module.exports = commitPanel;
 function commitPanel(container, updates) {
     container.html('');
 

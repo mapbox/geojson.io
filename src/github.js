@@ -1,3 +1,14 @@
+var source = require('./source');
+
+module.exports.saveAsGitHub = saveAsGitHub;
+module.exports.loadGitHub = loadGitHub;
+
+function authorize(xhr) {
+    return localStorage.github_token ?
+        xhr.header('Authorization', 'token ' + localStorage.github_token) :
+        xhr;
+}
+
 function githubFileUrl() {
     var pts = parseGitHubId(source().id);
     return 'https://api.github.com/repos/' + pts.user +

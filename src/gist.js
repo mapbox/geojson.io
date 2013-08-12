@@ -1,3 +1,18 @@
+var source = require('./source');
+
+module.exports.saveAsGist = saveAsGist;
+module.exports.loadGist = loadGist;
+
+function loggedin() {
+    return !!localStorage.github_token;
+}
+
+function authorize(xhr) {
+    return localStorage.github_token ?
+        xhr.header('Authorization', 'token ' + localStorage.github_token) :
+        xhr;
+}
+
 function saveAsGist(content, callback) {
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +

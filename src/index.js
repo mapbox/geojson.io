@@ -1,3 +1,12 @@
+var jsonPanel = require('./json_panel'),
+    tablePanel = require('./table_panel'),
+    importPanel = require('./import_panel'),
+    commitPanel = require('./commit_panel'),
+    sharePanel = require('./share_panel'),
+    loginPanel = require('./login_panel'),
+    gist = require('./gist'),
+    source = require('./source');
+
 var pane = d3.select('.pane');
 
 var map = L.mapbox.map('map').setView([20, 0], 2);
@@ -115,15 +124,6 @@ var editor;
 
 var dropSupport = (window.FileReader && 'ondrop' in window);
 
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
-
-function loggedin() {
-    return !!localStorage.github_token;
-}
 var buttonData = [{
     icon: 'beaker',
     title: ' Import',
@@ -138,7 +138,7 @@ var buttonData = [{
     title: ' Share',
     alt: 'Share via Facebook, Twitter, or a map embed',
     behavior: sharePanel
-},{
+}, {
     icon: 'code',
     alt: 'JSON Source',
     behavior: jsonPanel
@@ -232,14 +232,14 @@ function saveChanges(message, callback) {
     }, null, exportIndentationStyle);
 
     if (!source() || source().type == 'gist') {
-        saveAsGist(content, function(err, resp) {
+        gist.saveAsGist(content, function(err, resp) {
             if (err) return alert(err);
             var id = resp.id;
             location.hash = '#gist:' + id;
             if (callback) callback();
         });
     } else if (!source() || source().type == 'github') {
-        saveAsGitHub(content, function(err, resp) {
+        github.saveAsGitHub(content, function(err, resp) {
             if (err) return alert(err);
             if (callback) callback();
         }, message);
@@ -274,7 +274,6 @@ function zoomToExtent() {
     }
 }
 
-
 function loadToMap(gj) {
     drawnItems.clearLayers();
     L.geoJson(gj).eachLayer(function(l) {
@@ -304,29 +303,7 @@ function mapFile(gist) {
     for (var f in gist.files) if (f == 'map.geojson') return JSON.parse(gist.files[f].content);
 }
 
-function source() {
-    if (!location.hash) return null;
 
-    var txt = location.hash.substring(1);
-
-    if (!isNaN(parseInt(txt, 10))) {
-        // legacy gist
-        return {
-            type: 'gist',
-            id: parseInt(txt, 10)
-        };
-    } else if (txt.indexOf('gist:') === 0) {
-        return {
-            type: 'gist',
-            id: parseInt(txt.replace(/^gist:/, ''), 10)
-        };
-    } else if (txt.indexOf('github:') === 0) {
-        return {
-            type: 'github',
-            id: txt.replace(/^github:\/?/, '')
-        };
-    }
-}
 
 function hashChange() {
     var s = source();
@@ -336,8 +313,8 @@ function hashChange() {
         return;
     }
 
-    if (s.type == 'gist') loadGist(s.id, onGistLoad);
-    if (s.type == 'github') loadGitHub(s.id, onGitHubLoad);
+    if (s.type == 'gist') gist.loadGist(s.id, onGistLoad);
+    if (s.type == 'github') github.loadGitHub(s.id, onGitHubLoad);
 
     function onGistLoad(err, json) {
         if (err) return alert('Gist API limit exceeded, come back in a bit.');

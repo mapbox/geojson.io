@@ -1,3 +1,7 @@
+var topojson = require('topojson');
+
+module.exports = importPanel;
+
 function detectIndentationStyle(f) {
     var lines = f.split('\n');
     if (lines.length < 2) return 4;
@@ -10,7 +14,7 @@ function detectIndentationStyle(f) {
     }
 }
 
-function importPanel(container) {
+function importPanel(container, updates) {
     container.html('');
     var wrap = container.append('div').attr('class', 'pad1');
 
@@ -45,7 +49,6 @@ function importPanel(container) {
     function trackImport(format, method) {
         analytics.track('Imported Data / ' + method + ' / ' + format);
     }
-
 
     function readFile(f, method) {
         var reader = new FileReader();
@@ -247,8 +250,7 @@ function runGeocode(container, list, transform) {
     var wrap = container.append('div').attr('class', 'pad1');
 
     var doneBtn = wrap.append('div')
-        .style('text-align', 'center')
-        .style('padding', '10px')
+        .attr('class', 'pad1 center')
         .append('button')
         .attr('class', 'major')
         .text('Close')
