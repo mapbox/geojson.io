@@ -1,14 +1,5 @@
 var pane = d3.select('.pane');
 
-var production = (location.hostname === 'geojson.io');
-
-var client_id = production ?
-    '62c753fd0faf18392d85' :
-    'bb7bbe70bd1f707125bc';
-
-var gatekeeper_url = production ?
-    'http://geojsonioauth.herokuapp.com' :
-    'http://localhostauth.herokuapp.com';
 
 var map = L.mapbox.map('map').setView([20, 0], 2);
 var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -219,38 +210,6 @@ function onPopupOpen(e) {
         refresh();
         analytics.track('Save Properties via Popup');
     }
-}
-
-function jsonPanel(container) {
-    container.html('');
-
-    var textarea = container.append('textarea');
-    editor = CodeMirror.fromTextArea(textarea.node(), {
-        mode: 'application/json',
-        matchBrackets: true,
-        tabSize: 2,
-        gutters: ['error'],
-        theme: 'eclipse',
-        autofocus: (window === window.top),
-        keyMap: 'tabSpace',
-        lineNumbers: true
-    });
-
-    // shush the callback-back
-    var quiet = false;
-    editor.on('change', validate(changeValidated));
-
-    function changeValidated(err, data) {
-        if (quiet) { quiet = false; return; }
-        if (!err) {
-            loadToMap(data);
-        }
-    }
-
-    updates.on('update_map.mode', function(data) {
-        quiet = true;
-        editor.setValue(JSON.stringify(data, null, 2));
-    });
 }
 
 d3.select(document).on('keydown', keydown);

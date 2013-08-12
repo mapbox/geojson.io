@@ -4,19 +4,20 @@
   "description": "edit-geojson",
   "main": "index.js",
   "dependencies": {
-    "mapbox.js": "~1.3.1",
     "leaflet-draw": "~0.2.0",
     "jsonlint": "~1.6.0",
-    "geojsonhint": "~0.1.2",
-    "color-picker": "git://github.com/component/color-picker"
+    "geojsonhint": "~0.1.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "expect.js": "~0.2.0",
+    "mocha": "~1.12.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha -R spec"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/tmcw/edit-geojson.git"
+    "url": "git://github.com/mapbox/geojson.io.git"
   },
   "author": "",
   "license": "BSD",

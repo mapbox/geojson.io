@@ -77,6 +77,7 @@ input[type=text] {
     height:40px;
     bottom:auto;
 }
+
 p.intro {
     margin:10px;
     padding:0;
@@ -113,10 +114,6 @@ p.intro-hint:hover {
     top:40px;
     bottom:0;
     width:100%;
-}
-
-#buttons {
-    background:#363636;
 }
 
 .top {
@@ -186,8 +183,6 @@ button.semimajor:hover {
     border-bottom:2px solid red;
 }
 
-
-
 .top .collapse-button {
     position:absolute;
     background:#f7f7f7;
@@ -197,7 +192,6 @@ button.semimajor:hover {
     height:40px;
     line-height:40px;
     text-align:center;
-    transition:all 200ms ease-in-out;
 }
 
 .top .collapse-button:hover {
@@ -289,7 +283,7 @@ button.semimajor:hover {
 
 .leaflet-popup-content {
     max-height: 200px;
-    overflow: scroll;
+    overflow: auto;
 }
 
 .leaflet-popup-content-wrapper table input {
