@@ -6,113 +6,11 @@ var jsonPanel = require('./json_panel'),
     loginPanel = require('./login_panel'),
     gist = require('./gist'),
     github = require('./github'),
+    map = require('./map')(),
     source = require('./source'),
-    detectIndentationStyle = require('detect-json-indent');
-
-var pane = d3.select('.pane');
-
-var map = L.mapbox.map('map').setView([20, 0], 2);
-var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-});
-
-var mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-    retinaVersion: 'tmcw.map-u4ca5hnt',
-    detectRetina: true
-}).addTo(map);
-
-var mapboxSatelliteTiles = L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-    retinaVersion: 'tmcw.map-ujx9se0r',
-    detectRetina: true
-});
-
-L.mapbox.geocoderControl('tmcw.map-u4ca5hnt').addTo(map);
-
-var drawnItems = new L.FeatureGroup().addTo(map);
-var drawControl = new L.Control.Draw({
-    edit: { featureGroup: drawnItems },
-    draw: { circle: false }
-}).addTo(map);
-
-map.on('draw:edited', updateFromMap)
-    .on('draw:deleted', updateFromMap)
-    .on('draw:created', drawCreated)
-    .on('draw:created', updateFromMap);
-
-d3.select('.collapse-button')
-    .on('click', function() {
-        d3.select('.right').classed('hidden',
-            !d3.select('.right').classed('hidden'));
-        d3.select('#map').classed('fullsize',
-            !d3.select('#map').classed('fullsize'));
-        map.invalidateSize();
-    });
-
-var layerButtons = d3.select('#layer-switch')
-    .selectAll('button')
-    .on('click', function() {
-        var clicked = this;
-        layerButtons.classed('active', function() {
-            return clicked === this;
-        });
-        if (this.id == 'mapbox' && !map.hasLayer(mapboxTiles)) {
-            map.addLayer(mapboxTiles);
-            if (map.hasLayer(osmTiles)) map.removeLayer(osmTiles);
-            if (map.hasLayer(mapboxSatelliteTiles)) map.removeLayer(mapboxSatelliteTiles);
-        }
-        if (this.id == 'mapbox-satellite' && !map.hasLayer(mapboxSatelliteTiles)) {
-            map.addLayer(mapboxSatelliteTiles);
-            if (map.hasLayer(osmTiles)) map.removeLayer(osmTiles);
-            if (map.hasLayer(mapboxTiles)) map.removeLayer(mapboxTiles);
-        }
-        if (this.id == 'osm' && !map.hasLayer(osmTiles)) {
-            map.addLayer(osmTiles);
-            if (map.hasLayer(mapboxTiles)) map.removeLayer(mapboxTiles);
-            if (map.hasLayer(mapboxSatelliteTiles)) map.removeLayer(mapboxSatelliteTiles);
-        }
-    });
-
-var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh', 'focus_layer', 'zoom_extent');
-
-updates.on('focus_layer', function(layer) {
-    if (!layer) return;
-    // geometrycollections
-    if ('eachLayer' in layer) {
-        var first = null;
-        layer.eachLayer(function(l) {
-            if (!first && 'openPopup' in l) first = l;
-        });
-        if (first) {
-            first.openPopup();
-            map.fitBounds(first.getBounds());
-        }
-    } else if ('getBounds' in layer && layer.getBounds().isValid()) {
-        layer.openPopup();
-        map.fitBounds(layer.getBounds());
-    } else if ('getLatLng' in layer) {
-        layer.openPopup();
-        map.setView(layer.getLatLng(), 15);
-    }
-});
-
-function geoify(layer) {
-    var features = [];
-    layer.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    layer.clearLayers();
-    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
-        l.addTo(layer);
-    });
-}
-
-function drawCreated(e) {
-    // if ('setStyle' in e.layer) e.layer.setStyle(brush);
-    drawnItems.addLayer(e.layer);
-    geoify(drawnItems);
-    refresh();
-    analytics.track('Drew Feature');
-}
+    detectIndentationStyle = require('detect-json-indent'),
+    exportIndentationStyle = 2,
+    dropSupport = (window.FileReader && 'ondrop' in window);
 
 CodeMirror.keyMap.tabSpace = {
     Tab: function(cm) {
@@ -122,9 +20,36 @@ CodeMirror.keyMap.tabSpace = {
     fallthrough: ['default']
 };
 
-var editor;
+var pane = d3.select('.pane');
 
-var dropSupport = (window.FileReader && 'ondrop' in window);
+var editor, buttons;
+
+var drawnItems = new L.FeatureGroup().addTo(map);
+var drawControl = new L.Control.Draw({
+    edit: { featureGroup: drawnItems },
+    draw: { circle: false }
+}).addTo(map);
+
+d3.select(document).on('keydown', keydown);
+d3.select(window).on('hashchange', hashChange);
+
+map.on('draw:edited', updateFromMap)
+    .on('draw:deleted', updateFromMap)
+    .on('draw:created', drawCreated)
+    .on('draw:created', updateFromMap)
+    .on('popupopen', onPopupOpen);
+
+d3.select('.collapse-button').on('click', clickCollapse);
+
+var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh',
+    'focus_layer', 'zoom_extent');
+
+updates.on('focus_layer', focusLayer)
+    .on('update_editor', loadToMap)
+    .on('update_refresh', refresh)
+    .on('zoom_extent', zoomToExtent);
+
+if (window.location.hash) hashChange();
 
 var buttonData = [{
     icon: 'beaker',
@@ -150,7 +75,55 @@ var buttonData = [{
     behavior: loginPanel
 }];
 
-var buttons;
+drawButtons(buttonData);
+
+function clickCollapse() {
+    d3.select('.right').classed('hidden',
+        !d3.select('.right').classed('hidden'));
+    d3.select('#map').classed('fullsize',
+        !d3.select('#map').classed('fullsize'));
+    map.invalidateSize();
+}
+
+function focusLayer(layer) {
+    if (!layer) return;
+    // geometrycollections
+    if ('eachLayer' in layer) {
+        var first = null;
+        layer.eachLayer(function(l) {
+            if (!first && 'openPopup' in l) first = l;
+        });
+        if (first) {
+            first.openPopup();
+            map.fitBounds(first.getBounds());
+        }
+    } else if ('getBounds' in layer && layer.getBounds().isValid()) {
+        layer.openPopup();
+        map.fitBounds(layer.getBounds());
+    } else if ('getLatLng' in layer) {
+        layer.openPopup();
+        map.setView(layer.getLatLng(), 15);
+    }
+}
+
+function geoify(layer) {
+    var features = [];
+    layer.eachLayer(function(l) {
+        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
+    });
+    layer.clearLayers();
+    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
+        l.addTo(layer);
+    });
+}
+
+function drawCreated(e) {
+    // if ('setStyle' in e.layer) e.layer.setStyle(brush);
+    drawnItems.addLayer(e.layer);
+    geoify(drawnItems);
+    refresh();
+    analytics.track('Drew Feature');
+}
 
 function drawButtons(data) {
     buttons = d3.select('.buttons')
@@ -166,25 +139,24 @@ function drawButtons(data) {
         .attr('class', function(d) {
             return 'icon-' + d.icon;
         })
-        .on('click', function(d) {
-            updates.on('update_map.mode', null);
-            buttons.classed('active', function(_) { return d.icon == _.icon; });
-            pane.call(d.behavior, updates);
-            updateFromMap();
-        })
+        .on('click', buttonClick)
         .each(function(d) {
             if (d.behavior.init) d.behavior.init(this);
         })
         .append('span')
         .text(function(d) { return d.title; });
+
     buttons.exit().remove();
 
     d3.select(buttons.node()).trigger('click');
+
+    function buttonClick(d) {
+        updates.on('update_map.mode', null);
+        buttons.classed('active', function(_) { return d.icon == _.icon; });
+        pane.call(d.behavior, updates);
+        updateFromMap();
+    }
 }
-
-drawButtons(buttonData);
-
-map.on('popupopen', onPopupOpen);
 
 function onPopupOpen(e) {
     var sel = d3.select(e.popup._contentNode);
@@ -201,11 +173,11 @@ function onPopupOpen(e) {
 
     function saveFeature() {
         var obj = {};
-        sel.selectAll('tr')
-            .each(function() {
-                obj[d3.select(this).selectAll('input')[0][0].value] =
-                    d3.select(this).selectAll('input')[0][1].value;
-            });
+        sel.selectAll('tr').each(collectRow);
+        function collectRow() {
+            obj[d3.select(this).selectAll('input')[0][0].value] =
+                d3.select(this).selectAll('input')[0][1].value;
+        }
         e.popup._source.feature.properties = obj;
         map.closePopup(e.popup);
         refresh();
@@ -213,19 +185,12 @@ function onPopupOpen(e) {
     }
 }
 
-d3.select(document).on('keydown', keydown);
-d3.select(window).on('hashchange', hashChange);
-
-if (window.location.hash) hashChange();
-
 function keydown(e) {
     if (d3.event.keyCode == 83 && d3.event.metaKey) {
         d3.event.preventDefault();
         saveChanges();
     }
 }
-
-var exportIndentationStyle = 2;
 
 function saveChanges(message, callback) {
     var content = JSON.stringify({
@@ -266,10 +231,6 @@ function refresh() {
     });
 }
 
-updates.on('update_editor', loadToMap);
-updates.on('update_refresh', refresh);
-updates.on('zoom_extent', zoomToExtent);
-
 function zoomToExtent() {
     if (drawnItems.getBounds().isValid()) {
         map.fitBounds(drawnItems.getBounds());
@@ -305,8 +266,6 @@ function mapFile(gist) {
     for (var f in gist.files) if (f == 'map.geojson') return JSON.parse(gist.files[f].content);
 }
 
-
-
 function hashChange() {
     var s = source();
 
@@ -336,7 +295,7 @@ function hashChange() {
     }
 
     function onGitHubLoad(err, file) {
-        if (err) return alert('Gist API limit exceeded, come back in a bit.');
+        if (err) return alert('GitHub API limit exceeded, come back in a bit.');
 
         try {
             var json = JSON.parse(Base64.fromBase64(file.content));
