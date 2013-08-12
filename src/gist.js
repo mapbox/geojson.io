@@ -2,6 +2,7 @@ var source = require('./source');
 
 module.exports.saveAsGist = saveAsGist;
 module.exports.loadGist = loadGist;
+module.exports.urlHash = urlHash;
 
 function loggedin() {
     return !!localStorage.github_token;
@@ -19,10 +20,23 @@ function saveAsGist(content, callback) {
             'Please use a modern browser to enjoy the full featureset of geojson.io');
     }
 
-    var update = (loggedin() && (source() && source().id));
-    var endpoint = update ?
-        'https://api.github.com/gists/' + source().id :
-        'https://api.github.com/gists';
+    var user = localStorage.github_user ?
+        JSON.parse(localStorage.github_user) : {};
+
+    var endpoint,
+        method = 'POST';
+
+    if (loggedin() && (source() && source().id)) {
+        if (user && source().login == user.login) {
+            endpoint = 'https://api.github.com/gists/' + source().id;
+            method = 'PATCH';
+        } else {
+            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
+        }
+    } else {
+        endpoint = 'https://api.github.com/gists';
+    }
+
     authorize(d3.json(endpoint))
         .on('load', function(data) {
             callback(null, data);
@@ -30,7 +44,7 @@ function saveAsGist(content, callback) {
         .on('error', function(err) {
             callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
         })
-        .send(update ? 'PATCH' : 'POST', JSON.stringify({
+        .send(method, JSON.stringify({
             description: 'via:geojson.io',
             public: true,
             files: {
@@ -48,4 +62,17 @@ function loadGist(id, callback) {
 
     function onLoad(json) { callback(null, json); }
     function onError(err) { callback(err, null); }
+}
+
+function urlHash(data) {
+    if (source() && source().id == data.id) {
+        return {
+            url: '#gist:' + data.user.login + '/' + data.id,
+            redirect: true
+        };
+    } else {
+        return {
+            url: '#gist:' + data.user.login + '/' + data.id
+        };
+    }
 }

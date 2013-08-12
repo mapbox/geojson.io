@@ -45,6 +45,7 @@ loginPanel.init = function(container) {
         d3.json('https://api.github.com/user')
             .header('Authorization', 'token ' + localStorage.github_token)
             .on('load', function(user) {
+                localStorage.github_user = JSON.stringify(user);
                 sel
                     .classed('logged-in', true)
                     .attr('title', 'logout')

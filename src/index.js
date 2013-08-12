@@ -9,7 +9,7 @@ var jsonPanel = require('./json_panel'),
     map = require('./map')(),
     source = require('./source'),
     detectIndentationStyle = require('detect-json-indent'),
-    exportIndentationStyle = 2,
+    exportIndentationStyle = 4,
     dropSupport = (window.FileReader && 'ondrop' in window);
 
 CodeMirror.keyMap.tabSpace = {
@@ -23,6 +23,7 @@ CodeMirror.keyMap.tabSpace = {
 var pane = d3.select('.pane');
 
 var editor, buttons;
+var silentHash = false;
 
 var drawnItems = new L.FeatureGroup().addTo(map);
 var drawControl = new L.Control.Draw({
@@ -202,14 +203,13 @@ function saveChanges(message, callback) {
         gist.saveAsGist(content, function(err, resp) {
             if (err) return alert(err);
             var id = resp.id;
-            location.hash = '#gist:' + id;
+            location.hash = gist.urlHash(resp).url;
             if (callback) callback();
         });
     } else if (!source() || source().type == 'github') {
-        github.saveAsGitHub(content, function(err, resp) {
-            if (err) return alert(err);
-            if (callback) callback();
-        }, message);
+        buttons.filter(function(d) {
+            return d.icon === 'save';
+        }).trigger('click');
     }
 }
 
@@ -222,7 +222,10 @@ function featuresFromMap() {
 }
 
 function updateFromMap() {
-    updates.update_map({ type: 'FeatureCollection', features: featuresFromMap() }, drawnItems);
+    updates.update_map({
+        type: 'FeatureCollection',
+        features: featuresFromMap()
+    }, drawnItems, exportIndentationStyle);
 }
 
 function refresh() {
@@ -263,10 +266,19 @@ function showProperties(l) {
 }
 
 function mapFile(gist) {
-    for (var f in gist.files) if (f == 'map.geojson') return JSON.parse(gist.files[f].content);
+    var f;
+    for (f in gist.files) if (f.indexOf('.geojson') !== -1) return JSON.parse(gist.files[f].content);
+    for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
 }
 
 function hashChange() {
+
+    // quiet a hashchange for one step
+    if (silentHash) {
+        silentHash = false;
+        return;
+    }
+
     var s = source();
 
     if (!s) {
@@ -279,18 +291,20 @@ function hashChange() {
 
     function onGistLoad(err, json) {
         if (err) return alert('Gist API limit exceeded, come back in a bit.');
-
         var first = !drawnItems.getBounds().isValid();
+
         try {
             var file = mapFile(json);
+            updates.update_editor(mapFile(json));
+            if (first && drawnItems.getBounds().isValid()) {
+                map.fitBounds(drawnItems.getBounds());
+                buttons.filter(function(d, i) { return i == 1; }).trigger('click');
+            }
+            silentHash = gist.urlHash(json).redirect;
+            location.hash = gist.urlHash(json).url;
         } catch(e) {
             alert('Invalid GeoJSON data in this Gist');
             analytics.track('Invalid JSON in Gist');
-        }
-        updates.update_editor(mapFile(json));
-        if (first && drawnItems.getBounds().isValid()) {
-            map.fitBounds(drawnItems.getBounds());
-            buttons.filter(function(d, i) { return i == 1; }).trigger('click');
         }
     }
 
@@ -300,7 +314,6 @@ function hashChange() {
         try {
             var json = JSON.parse(Base64.fromBase64(file.content));
             exportIndentationStyle = detectIndentationStyle(file.content);
-
             var first = !drawnItems.getBounds().isValid();
             updates.update_editor(json);
             if (first && drawnItems.getBounds().isValid()) {
@@ -311,10 +324,11 @@ function hashChange() {
                 icon: 'save',
                 title: ' Commit',
                 behavior: commitPanel
-            }]));
+            }]).filter(function(d) {
+                return d.icon !== 'share-alt';
+            }));
         } catch(e) {
             alert('Loading a file from GitHub failed');
-            console.error(e);
         }
     }
 }

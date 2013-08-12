@@ -10,10 +10,19 @@ module.exports = function source() {
             id: parseInt(txt, 10)
         };
     } else if (txt.indexOf('gist:') === 0) {
-        return {
-            type: 'gist',
-            id: parseInt(txt.replace(/^gist:/, ''), 10)
-        };
+        var clean = txt.replace(/^gist:/, '');
+        if (clean.indexOf('/') !== -1) {
+            return {
+                type: 'gist',
+                user: clean.split('/')[0],
+                id: parseInt(clean.split('/')[1], 10)
+            };
+        } else {
+            return {
+                type: 'gist',
+                id: parseInt(clean, 10)
+            };
+        }
     } else if (txt.indexOf('github:') === 0) {
         return {
             type: 'github',
