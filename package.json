@@ -10,7 +10,8 @@
     "d3-metatable": "0.0.0",
     "topojson": "~1.2.3",
     "brfs": "0.0.7",
-    "togeojson": "~0.2.1"
+    "togeojson": "~0.2.1",
+    "csv2geojson": "~3.1.0"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",
