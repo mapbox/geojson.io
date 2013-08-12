@@ -1,21 +1,29 @@
+var jsonPanel = require('./json_panel'),
+    tablePanel = require('./table_panel'),
+    importPanel = require('./import_panel'),
+    commitPanel = require('./commit_panel'),
+    sharePanel = require('./share_panel'),
+    loginPanel = require('./login_panel'),
+    gist = require('./gist'),
+    github = require('./github'),
+    map = require('./map')(),
+    source = require('./source'),
+    detectIndentationStyle = require('detect-json-indent'),
+    exportIndentationStyle = 4,
+    dropSupport = (window.FileReader && 'ondrop' in window);
+
+CodeMirror.keyMap.tabSpace = {
+    Tab: function(cm) {
+        var spaces = Array(cm.getOption('indentUnit') + 1).join(' ');
+        cm.replaceSelection(spaces, 'end', '+input');
+    },
+    fallthrough: ['default']
+};
+
 var pane = d3.select('.pane');
 
-var map = L.mapbox.map('map').setView([20, 0], 2);
-var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-});
-
-var mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-    retinaVersion: 'tmcw.map-u4ca5hnt',
-    detectRetina: true
-}).addTo(map);
-
-var mapboxSatelliteTiles = L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-    retinaVersion: 'tmcw.map-ujx9se0r',
-    detectRetina: true
-});
-
-L.mapbox.geocoderControl('tmcw.map-u4ca5hnt').addTo(map);
+var editor, buttons;
+var silentHash = false;
 
 var drawnItems = new L.FeatureGroup().addTo(map);
 var drawControl = new L.Control.Draw({
@@ -23,47 +31,62 @@ var drawControl = new L.Control.Draw({
     draw: { circle: false }
 }).addTo(map);
 
+d3.select(document).on('keydown', keydown);
+d3.select(window).on('hashchange', hashChange);
+
 map.on('draw:edited', updateFromMap)
     .on('draw:deleted', updateFromMap)
     .on('draw:created', drawCreated)
-    .on('draw:created', updateFromMap);
+    .on('draw:created', updateFromMap)
+    .on('popupopen', onPopupOpen);
 
-d3.select('.collapse-button')
-    .on('click', function() {
-        d3.select('.right').classed('hidden',
-            !d3.select('.right').classed('hidden'));
-        d3.select('#map').classed('fullsize',
-            !d3.select('#map').classed('fullsize'));
-        map.invalidateSize();
-    });
+d3.select('.collapse-button').on('click', clickCollapse);
 
-var layerButtons = d3.select('#layer-switch')
-    .selectAll('button')
-    .on('click', function() {
-        var clicked = this;
-        layerButtons.classed('active', function() {
-            return clicked === this;
-        });
-        if (this.id == 'mapbox' && !map.hasLayer(mapboxTiles)) {
-            map.addLayer(mapboxTiles);
-            if (map.hasLayer(osmTiles)) map.removeLayer(osmTiles);
-            if (map.hasLayer(mapboxSatelliteTiles)) map.removeLayer(mapboxSatelliteTiles);
-        }
-        if (this.id == 'mapbox-satellite' && !map.hasLayer(mapboxSatelliteTiles)) {
-            map.addLayer(mapboxSatelliteTiles);
-            if (map.hasLayer(osmTiles)) map.removeLayer(osmTiles);
-            if (map.hasLayer(mapboxTiles)) map.removeLayer(mapboxTiles);
-        }
-        if (this.id == 'osm' && !map.hasLayer(osmTiles)) {
-            map.addLayer(osmTiles);
-            if (map.hasLayer(mapboxTiles)) map.removeLayer(mapboxTiles);
-            if (map.hasLayer(mapboxSatelliteTiles)) map.removeLayer(mapboxSatelliteTiles);
-        }
-    });
+var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh',
+    'focus_layer', 'zoom_extent');
 
-var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh', 'focus_layer', 'zoom_extent');
+updates.on('focus_layer', focusLayer)
+    .on('update_editor', loadToMap)
+    .on('update_refresh', refresh)
+    .on('zoom_extent', zoomToExtent);
 
-updates.on('focus_layer', function(layer) {
+if (window.location.hash) hashChange();
+
+var buttonData = [{
+    icon: 'beaker',
+    title: ' Import',
+    behavior: importPanel
+}, {
+    icon: 'table',
+    title: ' Table',
+    alt: 'Edit feature properties in a table',
+    behavior: tablePanel
+}, {
+    icon: 'share-alt',
+    title: ' Share',
+    alt: 'Share via Facebook, Twitter, or a map embed',
+    behavior: sharePanel
+}, {
+    icon: 'code',
+    alt: 'JSON Source',
+    behavior: jsonPanel
+}, {
+    icon: 'github',
+    alt: 'Log in to GitHub',
+    behavior: loginPanel
+}];
+
+drawButtons(buttonData);
+
+function clickCollapse() {
+    d3.select('.right').classed('hidden',
+        !d3.select('.right').classed('hidden'));
+    d3.select('#map').classed('fullsize',
+        !d3.select('#map').classed('fullsize'));
+    map.invalidateSize();
+}
+
+function focusLayer(layer) {
     if (!layer) return;
     // geometrycollections
     if ('eachLayer' in layer) {
@@ -82,7 +105,7 @@ updates.on('focus_layer', function(layer) {
         layer.openPopup();
         map.setView(layer.getLatLng(), 15);
     }
-});
+}
 
 function geoify(layer) {
     var features = [];
@@ -103,53 +126,6 @@ function drawCreated(e) {
     analytics.track('Drew Feature');
 }
 
-CodeMirror.keyMap.tabSpace = {
-    Tab: function(cm) {
-        var spaces = Array(cm.getOption('indentUnit') + 1).join(' ');
-        cm.replaceSelection(spaces, 'end', '+input');
-    },
-    fallthrough: ['default']
-};
-
-var editor;
-
-var dropSupport = (window.FileReader && 'ondrop' in window);
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
-
-function loggedin() {
-    return !!localStorage.github_token;
-}
-var buttonData = [{
-    icon: 'beaker',
-    title: ' Import',
-    behavior: importPanel
-}, {
-    icon: 'table',
-    title: ' Table',
-    alt: 'Edit feature properties in a table',
-    behavior: tablePanel
-}, {
-    icon: 'share-alt',
-    title: ' Share',
-    alt: 'Share via Facebook, Twitter, or a map embed',
-    behavior: sharePanel
-},{
-    icon: 'code',
-    alt: 'JSON Source',
-    behavior: jsonPanel
-}, {
-    icon: 'github',
-    alt: 'Log in to GitHub',
-    behavior: loginPanel
-}];
-
-var buttons;
-
 function drawButtons(data) {
     buttons = d3.select('.buttons')
         .selectAll('button')
@@ -164,25 +140,24 @@ function drawButtons(data) {
         .attr('class', function(d) {
             return 'icon-' + d.icon;
         })
-        .on('click', function(d) {
-            updates.on('update_map.mode', null);
-            buttons.classed('active', function(_) { return d.icon == _.icon; });
-            pane.call(d.behavior, updates);
-            updateFromMap();
-        })
+        .on('click', buttonClick)
         .each(function(d) {
             if (d.behavior.init) d.behavior.init(this);
         })
         .append('span')
         .text(function(d) { return d.title; });
+
     buttons.exit().remove();
 
     d3.select(buttons.node()).trigger('click');
+
+    function buttonClick(d) {
+        updates.on('update_map.mode', null);
+        buttons.classed('active', function(_) { return d.icon == _.icon; });
+        pane.call(d.behavior, updates);
+        updateFromMap();
+    }
 }
-
-drawButtons(buttonData);
-
-map.on('popupopen', onPopupOpen);
 
 function onPopupOpen(e) {
     var sel = d3.select(e.popup._contentNode);
@@ -199,22 +174,17 @@ function onPopupOpen(e) {
 
     function saveFeature() {
         var obj = {};
-        sel.selectAll('tr')
-            .each(function() {
-                obj[d3.select(this).selectAll('input')[0][0].value] =
-                    d3.select(this).selectAll('input')[0][1].value;
-            });
+        sel.selectAll('tr').each(collectRow);
+        function collectRow() {
+            obj[d3.select(this).selectAll('input')[0][0].value] =
+                d3.select(this).selectAll('input')[0][1].value;
+        }
         e.popup._source.feature.properties = obj;
         map.closePopup(e.popup);
         refresh();
         analytics.track('Save Properties via Popup');
     }
 }
-
-d3.select(document).on('keydown', keydown);
-d3.select(window).on('hashchange', hashChange);
-
-if (window.location.hash) hashChange();
 
 function keydown(e) {
     if (d3.event.keyCode == 83 && d3.event.metaKey) {
@@ -223,8 +193,6 @@ function keydown(e) {
     }
 }
 
-var exportIndentationStyle = 2;
-
 function saveChanges(message, callback) {
     var content = JSON.stringify({
         type: 'FeatureCollection',
@@ -232,17 +200,16 @@ function saveChanges(message, callback) {
     }, null, exportIndentationStyle);
 
     if (!source() || source().type == 'gist') {
-        saveAsGist(content, function(err, resp) {
+        gist.saveAsGist(content, function(err, resp) {
             if (err) return alert(err);
             var id = resp.id;
-            location.hash = '#gist:' + id;
+            location.hash = gist.urlHash(resp).url;
             if (callback) callback();
         });
     } else if (!source() || source().type == 'github') {
-        saveAsGitHub(content, function(err, resp) {
-            if (err) return alert(err);
-            if (callback) callback();
-        }, message);
+        buttons.filter(function(d) {
+            return d.icon === 'save';
+        }).trigger('click');
     }
 }
 
@@ -255,7 +222,10 @@ function featuresFromMap() {
 }
 
 function updateFromMap() {
-    updates.update_map({ type: 'FeatureCollection', features: featuresFromMap() }, drawnItems);
+    updates.update_map({
+        type: 'FeatureCollection',
+        features: featuresFromMap()
+    }, drawnItems, exportIndentationStyle);
 }
 
 function refresh() {
@@ -264,16 +234,11 @@ function refresh() {
     });
 }
 
-updates.on('update_editor', loadToMap);
-updates.on('update_refresh', refresh);
-updates.on('zoom_extent', zoomToExtent);
-
 function zoomToExtent() {
     if (drawnItems.getBounds().isValid()) {
         map.fitBounds(drawnItems.getBounds());
     }
 }
-
 
 function loadToMap(gj) {
     drawnItems.clearLayers();
@@ -301,34 +266,19 @@ function showProperties(l) {
 }
 
 function mapFile(gist) {
-    for (var f in gist.files) if (f == 'map.geojson') return JSON.parse(gist.files[f].content);
-}
-
-function source() {
-    if (!location.hash) return null;
-
-    var txt = location.hash.substring(1);
-
-    if (!isNaN(parseInt(txt, 10))) {
-        // legacy gist
-        return {
-            type: 'gist',
-            id: parseInt(txt, 10)
-        };
-    } else if (txt.indexOf('gist:') === 0) {
-        return {
-            type: 'gist',
-            id: parseInt(txt.replace(/^gist:/, ''), 10)
-        };
-    } else if (txt.indexOf('github:') === 0) {
-        return {
-            type: 'github',
-            id: txt.replace(/^github:\/?/, '')
-        };
-    }
+    var f;
+    for (f in gist.files) if (f.indexOf('.geojson') !== -1) return JSON.parse(gist.files[f].content);
+    for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
 }
 
 function hashChange() {
+
+    // quiet a hashchange for one step
+    if (silentHash) {
+        silentHash = false;
+        return;
+    }
+
     var s = source();
 
     if (!s) {
@@ -336,33 +286,34 @@ function hashChange() {
         return;
     }
 
-    if (s.type == 'gist') loadGist(s.id, onGistLoad);
-    if (s.type == 'github') loadGitHub(s.id, onGitHubLoad);
+    if (s.type == 'gist') gist.loadGist(s.id, onGistLoad);
+    if (s.type == 'github') github.loadGitHub(s.id, onGitHubLoad);
 
     function onGistLoad(err, json) {
         if (err) return alert('Gist API limit exceeded, come back in a bit.');
-
         var first = !drawnItems.getBounds().isValid();
+
         try {
             var file = mapFile(json);
+            updates.update_editor(mapFile(json));
+            if (first && drawnItems.getBounds().isValid()) {
+                map.fitBounds(drawnItems.getBounds());
+                buttons.filter(function(d, i) { return i == 1; }).trigger('click');
+            }
+            silentHash = gist.urlHash(json).redirect;
+            location.hash = gist.urlHash(json).url;
         } catch(e) {
             alert('Invalid GeoJSON data in this Gist');
             analytics.track('Invalid JSON in Gist');
         }
-        updates.update_editor(mapFile(json));
-        if (first && drawnItems.getBounds().isValid()) {
-            map.fitBounds(drawnItems.getBounds());
-            buttons.filter(function(d, i) { return i == 1; }).trigger('click');
-        }
     }
 
     function onGitHubLoad(err, file) {
-        if (err) return alert('Gist API limit exceeded, come back in a bit.');
+        if (err) return alert('GitHub API limit exceeded, come back in a bit.');
 
         try {
             var json = JSON.parse(Base64.fromBase64(file.content));
             exportIndentationStyle = detectIndentationStyle(file.content);
-
             var first = !drawnItems.getBounds().isValid();
             updates.update_editor(json);
             if (first && drawnItems.getBounds().isValid()) {
@@ -373,10 +324,11 @@ function hashChange() {
                 icon: 'save',
                 title: ' Commit',
                 behavior: commitPanel
-            }]));
+            }]).filter(function(d) {
+                return d.icon !== 'share-alt';
+            }));
         } catch(e) {
             alert('Loading a file from GitHub failed');
-            console.error(e);
         }
     }
 }

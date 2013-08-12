@@ -1,12 +1,8 @@
-all: lib/lib.js
+all: lib/lib.js src/site.js
 
 lib/lib.js: lib/%.js:
-	cat lib/geojsonhint.js \
-		lib/metatable.js \
-		lib/blob.js \
-		lib/togeojson.js \
+	cat lib/blob.js \
 		lib/base64.js \
-		lib/topojson.js \
 		lib/csv2geojson.js \
 		lib/geocodemany.js \
 		lib/bucket.js \
@@ -17,6 +13,9 @@ lib/lib.js: lib/%.js:
 		lib/codemirror/lib/codemirror.js \
 		lib/codemirror/mode/javascript/javascript.js \
 		lib/FileSaver.min.js > lib/lib.js
+
+src/site.js: src/index.js
+	browserify -t brfs -r topojson src/index.js > src/site.js
 
 clean:
 	rm -r lib/lib.js
