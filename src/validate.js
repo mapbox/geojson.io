@@ -1,4 +1,6 @@
-function validate(callback) {
+var geojsonhint = require('geojsonhint');
+
+module.exports = function(callback) {
     return function(editor) {
 
         var err = geojsonhint.hint(editor.getValue());
@@ -49,4 +51,4 @@ function validate(callback) {
                 .attr('message', msg).node();
         }
     };
-}
+};

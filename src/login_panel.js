@@ -1,3 +1,8 @@
+var source = require('./source'),
+    config = require('./config')(location.hostname);
+
+module.exports = loginPanel;
+
 function loginPanel(container) {
 }
 
@@ -7,7 +12,7 @@ loginPanel.init = function(container) {
     sel.on('click', login);
 
     function login() {
-        location.href = 'https://github.com/login/oauth/authorize?client_id=' + client_id + '&scope=gist,public_repo';
+        location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
     }
 
     function logout() {
@@ -24,7 +29,7 @@ loginPanel.init = function(container) {
 
     if (location.search && location.search.indexOf('?code') === 0) {
         var code = location.search.replace('?code=', '');
-        d3.json(gatekeeper_url + '/authenticate/' + code)
+        d3.json(config.gatekeeper_url + '/authenticate/' + code)
             .on('load', function(l) {
                 if (l.token) localStorage.github_token = l.token;
                 killTokenUrl();
@@ -40,6 +45,7 @@ loginPanel.init = function(container) {
         d3.json('https://api.github.com/user')
             .header('Authorization', 'token ' + localStorage.github_token)
             .on('load', function(user) {
+                localStorage.github_user = JSON.stringify(user);
                 sel
                     .classed('logged-in', true)
                     .attr('title', 'logout')

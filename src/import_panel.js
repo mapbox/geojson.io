@@ -1,16 +1,10 @@
-function detectIndentationStyle(f) {
-    var lines = f.split('\n');
-    if (lines.length < 2) return 4;
-    var indent = lines[1].match(/^(\s*)/);
-    if (!indent || !indent.length) return 4;
-    if (indent[0][0] == '\t') {
-        return '\t';
-    } else {
-        return indent[0].length;
-    }
-}
+var topojson = require('topojson'),
+    toGeoJSON = require('togeojson'),
+    detectIndentationStyle = require('detect-json-indent');
 
-function importPanel(container) {
+module.exports = importPanel;
+
+function importPanel(container, updates) {
     container.html('');
     var wrap = container.append('div').attr('class', 'pad1');
 
@@ -45,7 +39,6 @@ function importPanel(container) {
     function trackImport(format, method) {
         analytics.track('Imported Data / ' + method + ' / ' + format);
     }
-
 
     function readFile(f, method) {
         var reader = new FileReader();
@@ -82,11 +75,14 @@ function importPanel(container) {
                     return;
                 }
             } else if (f.type === 'text/csv' || ext('.csv')) {
-                gj = csv2geojson.csv2geojson(e.target.result);
-                if (gj.type === 'Error') {
-                    return handleGeocode(container.append('div'), e.target.result);
-                }
-                trackImport('CSV', method);
+                csv2geojson.csv2geojson(e.target.result, function(err, result) {
+                    if (err) {
+                        return handleGeocode(container.append('div'), e.target.result, updates);
+                    } else {
+                        gj = result;
+                        trackImport('CSV', method);
+                    }
+                });
             } else {
                 analytics.track('Failed to upload a file with type ' + f.type);
                 return alert('Sorry, that file type is not supported');
@@ -160,7 +156,7 @@ function importPanel(container) {
         .attr('class', 'pad1');
 }
 
-function handleGeocode(container, text) {
+function handleGeocode(container, text, updates) {
 
     analytics.track('A CSV Required Geocoding');
 
@@ -228,7 +224,7 @@ function handleGeocode(container, text) {
                 .text('Geocode');
              button.on('click', function() {
                  analytics.track('Ran a Geocode batch');
-                 runGeocode(container, list, transformRow(fields));
+                 runGeocode(container, list, transformRow(fields), updates);
              });
              var se = showExample(fields);
              se();
@@ -241,14 +237,13 @@ function handleGeocode(container, text) {
      }
 }
 
-function runGeocode(container, list, transform) {
+function runGeocode(container, list, transform, updates) {
     container.html('');
 
     var wrap = container.append('div').attr('class', 'pad1');
 
     var doneBtn = wrap.append('div')
-        .style('text-align', 'center')
-        .style('padding', '10px')
+        .attr('class', 'pad1 center')
         .append('button')
         .attr('class', 'major')
         .text('Close')
@@ -305,7 +300,9 @@ function runGeocode(container, list, transform) {
                 return 'failed: ' + transform(d.data) + ' / ' + printObj(d.data);
             });
 
-        updates.update_editor(csv2geojson.csv2geojson(completed));
+        csv2geojson.csv2geojson(completed, function(err, result) {
+            updates.update_editor(result);
+        });
     }
 
     var task = geocode(list, transform, progress, done);

@@ -1,10 +1,13 @@
+var gist = require('./gist');
+module.exports = sharePanel;
+
 function sharePanel(container, updates) {
     container.html('');
 
     updates.on('update_map.mode', onUpdate);
 
     function onUpdate(data) {
-        saveAsGist(JSON.stringify(data), function(err, resp) {
+        gist.saveAsGist(JSON.stringify(data), function(err, resp) {
             if (err) return alert(err);
             var id = resp.id;
             var wrap = pane.append('div').attr('class', 'pad share');
