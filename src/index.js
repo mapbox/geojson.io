@@ -5,7 +5,9 @@ var jsonPanel = require('./json_panel'),
     sharePanel = require('./share_panel'),
     loginPanel = require('./login_panel'),
     gist = require('./gist'),
-    source = require('./source');
+    github = require('./github'),
+    source = require('./source'),
+    detectIndentationStyle = require('./indentation');
 
 var pane = d3.select('.pane');
 

@@ -1,3 +1,5 @@
+var geojsonhint = require('geojsonhint');
+
 module.exports = function(callback) {
     return function(editor) {
 

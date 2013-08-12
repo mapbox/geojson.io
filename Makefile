@@ -1,9 +1,7 @@
 all: lib/lib.js src/site.js
 
 lib/lib.js: lib/%.js:
-	cat lib/geojsonhint.js \
-		lib/blob.js \
-		lib/togeojson.js \
+	cat lib/blob.js \
 		lib/base64.js \
 		lib/csv2geojson.js \
 		lib/geocodemany.js \

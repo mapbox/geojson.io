@@ -9,7 +9,8 @@
     "geojsonhint": "~0.1.2",
     "d3-metatable": "0.0.0",
     "topojson": "~1.2.3",
-    "brfs": "0.0.7"
+    "brfs": "0.0.7",
+    "togeojson": "~0.2.1"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",
