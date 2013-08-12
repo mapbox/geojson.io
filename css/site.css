@@ -84,6 +84,8 @@ p.intro {
     font-size:small;
 }
 
+.deemphasize { color: #888;}
+
 p.intro-hint {
     max-width:250px;
     margin:10px auto;

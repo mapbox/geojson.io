@@ -122,12 +122,16 @@ function importPanel(container) {
             .append('div')
             .attr('class', 'center');
 
-        message.append('span').attr('class', 'icon-arrow-down');
-        message.append('span').text(' Drop a GeoJSON, TopoJSON, KML, CSV, or GPX file or ');
-        message.append('button').text('Choose a file to upload')
+        var button = message.append('button')
             .on('click', function() {
                 fileInput.node().click();
             });
+        button.append('span').attr('class', 'icon-arrow-down');
+        button.append('span').text(' Import');
+        message.append('p')
+            .attr('class', 'deemphasize')
+            .append('small')
+            .text('GeoJSON, TopoJSON, KML, CSV, GPX supported. You can also drag & drop files.');
         var fileInput = message
             .append('input')
             .attr('type', 'file')
@@ -143,15 +147,13 @@ function importPanel(container) {
             .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
                   'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
     }
+
     wrap.append('p')
-        .attr('class', 'intro')
-        .style('text-align', 'center')
-        .style('color', '#888')
-        .html('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Submit feedback or get help</a>');
+        .attr('class', 'intro center deemphasize')
+        .html('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Submit feedback or get help</a>, and <a target="_blank" href="http://github.com/mapbox/geojson.io"><span class="icon-github"></span> fork on GitHub</a>');
 
     if (window.chrome) wrap.append('p')
-        .attr('class', 'intro-hint pad1')
-        .style('color', '#888')
+        .attr('class', 'intro-hint pad1 deemphasize')
         .html('Use GitHub? The <a target="_blank" href="https://chrome.google.com/webstore/detail/geojsonio/oibjgofbhldcajfamjganpeacipebckp">geojson.io chrome extension</a> lets you edit map data in your repositories!');
 
     wrap.append('div')

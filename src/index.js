@@ -1,6 +1,5 @@
 var pane = d3.select('.pane');
 
-
 var map = L.mapbox.map('map').setView([20, 0], 2);
 var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
