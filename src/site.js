@@ -553,7 +553,8 @@ function sharePanel(container, updates) {
 }
 
 },{"./gist":8}],7:[function(require,module,exports){
-var source = require('./source');
+var source = require('./source'),
+    config = require('./config')(location.hostname);
 
 module.exports = loginPanel;
 
@@ -566,7 +567,7 @@ loginPanel.init = function(container) {
     sel.on('click', login);
 
     function login() {
-        location.href = 'https://github.com/login/oauth/authorize?client_id=' + client_id + '&scope=gist,public_repo';
+        location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
     }
 
     function logout() {
@@ -583,7 +584,7 @@ loginPanel.init = function(container) {
 
     if (location.search && location.search.indexOf('?code') === 0) {
         var code = location.search.replace('?code=', '');
-        d3.json(gatekeeper_url + '/authenticate/' + code)
+        d3.json(config.gatekeeper_url + '/authenticate/' + code)
             .on('load', function(l) {
                 if (l.token) localStorage.github_token = l.token;
                 killTokenUrl();
@@ -612,7 +613,7 @@ loginPanel.init = function(container) {
     }
 };
 
-},{"./source":10}],8:[function(require,module,exports){
+},{"./source":10,"./config":20}],8:[function(require,module,exports){
 var source = require('./source');
 
 module.exports.saveAsGist = saveAsGist;
@@ -757,52 +758,7 @@ function loadGitHub(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"./source":10}],3:[function(require,module,exports){
-var metatable = require('d3-metatable')(d3);
-
-module.exports = tablePanel;
-
-function tablePanel(container, updates) {
-    container.html('');
-
-    updates.on('update_map.mode', function(data, layers) {
-        function findLayer(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
-        if (!data.features.length) {
-            container.append('div')
-                .attr('class', 'blank-banner')
-                .text('no features');
-        } else {
-            var props = [];
-            layers.eachLayer(function(p) {
-                props.push(p.feature.properties);
-            });
-            container.html('');
-            container
-                .append('div')
-                .attr('class', 'pad1 scrollable')
-                .data([props])
-                .call(
-                    metatable()
-                        .on('change', function() {
-                            updates.update_refresh();
-                        })
-                        .on('rowfocus', function(d) {
-                            updates.focus_layer(findLayer(d));
-                        })
-                );
-        }
-    });
-
-    analytics.track('Entered Table Mode');
-}
-
-},{"d3-metatable":20}],4:[function(require,module,exports){
+},{"./source":10}],4:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     detectIndentationStyle = require('./indentation');
@@ -880,9 +836,7 @@ function importPanel(container, updates) {
                     return;
                 }
             } else if (f.type === 'text/csv' || ext('.csv')) {
-                console.log(e.target.result);
                 csv2geojson.csv2geojson(e.target.result, function(err, result) {
-                    console.log(arguments);
                     if (err) {
                         return handleGeocode(container.append('div'), e.target.result, updates);
                     } else {
@@ -1115,7 +1069,52 @@ function runGeocode(container, list, transform, updates) {
     var task = geocode(list, transform, progress, done);
 }
 
-},{"topojson":"g070js","./indentation":11,"togeojson":21}],13:[function(require,module,exports){
+},{"topojson":"g070js","./indentation":11,"togeojson":21}],3:[function(require,module,exports){
+var metatable = require('d3-metatable')(d3);
+
+module.exports = tablePanel;
+
+function tablePanel(container, updates) {
+    container.html('');
+
+    updates.on('update_map.mode', function(data, layers) {
+        function findLayer(p) {
+            var layer;
+            layers.eachLayer(function(l) {
+                if (p == l.feature.properties) layer = l;
+            });
+            return layer;
+        }
+        if (!data.features.length) {
+            container.append('div')
+                .attr('class', 'blank-banner')
+                .text('no features');
+        } else {
+            var props = [];
+            layers.eachLayer(function(p) {
+                props.push(p.feature.properties);
+            });
+            container.html('');
+            container
+                .append('div')
+                .attr('class', 'pad1 scrollable')
+                .data([props])
+                .call(
+                    metatable()
+                        .on('change', function() {
+                            updates.update_refresh();
+                        })
+                        .on('rowfocus', function(d) {
+                            updates.focus_layer(findLayer(d));
+                        })
+                );
+        }
+    });
+
+    analytics.track('Entered Table Mode');
+}
+
+},{"d3-metatable":22}],13:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -1457,7 +1456,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./type":22,"./stitch-poles":23,"./hashtable":24,"./coordinate-systems":25}],14:[function(require,module,exports){
+},{"./type":23,"./stitch-poles":24,"./hashtable":25,"./coordinate-systems":26}],14:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -1589,7 +1588,21 @@ function transformRelative(transform) {
   };
 }
 
-},{"./min-heap":26,"./coordinate-systems":25}],15:[function(require,module,exports){
+},{"./min-heap":27,"./coordinate-systems":26}],20:[function(require,module,exports){
+module.exports = function(hostname) {
+    var production = (hostname === 'geojson.io');
+
+    return {
+        client_id: production ?
+            '62c753fd0faf18392d85' :
+            'bb7bbe70bd1f707125bc',
+        gatekeeper_url: production ?
+            'http://geojsonioauth.herokuapp.com' :
+            'http://localhostauth.herokuapp.com'
+    };
+};
+
+},{}],15:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -1662,7 +1675,7 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"./type":22,"./coordinate-systems":25,"../../":"g070js"}],17:[function(require,module,exports){
+},{"./type":23,"./coordinate-systems":26,"../../":"g070js"}],17:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1721,7 +1734,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":22,"../../":"g070js"}],16:[function(require,module,exports){
+},{"./type":23,"../../":"g070js"}],16:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -1791,7 +1804,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"./type":22,"./prune":17,"./clockwise":15,"./coordinate-systems":25,"../../":"g070js"}],18:[function(require,module,exports){
+},{"./type":23,"./prune":17,"./clockwise":15,"./coordinate-systems":26,"../../":"g070js"}],18:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1821,123 +1834,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"./type":22,"../../":"g070js"}],20:[function(require,module,exports){
-if (typeof module !== 'undefined') {
-    module.exports = function(d3) {
-        return metatable;
-    };
-}
-
-function metatable() {
-    var event = d3.dispatch('change', 'rowfocus');
-
-    function table(selection) {
-        selection.each(function(d) {
-            var sel = d3.select(this),
-                table;
-
-            var keyset = d3.set();
-            d.map(Object.keys).forEach(function(k) {
-                k.forEach(function(_) {
-                    keyset.add(_);
-                });
-            });
-
-            var keys = keyset.values();
-
-            bootstrap();
-            paint();
-
-            function bootstrap() {
-
-                var controls = sel.selectAll('.controls')
-                    .data([d])
-                    .enter()
-                    .append('div')
-                    .attr('class', 'controls');
-
-                var colbutton = controls.append('button')
-                    .on('click', function() {
-                        var name = prompt('column name');
-                        if (name) {
-                            keys.push(name);
-                            paint();
-                        }
-                    });
-                colbutton.append('span').attr('class', 'icon-plus');
-                colbutton.append('span').text(' new column');
-                var enter = sel.selectAll('table').data([d]).enter().append('table');
-                var thead = enter.append('thead');
-                var tbody = enter.append('tbody');
-                var tr = thead.append('tr');
-
-                table = sel.select('table');
-            }
-
-            function paint() {
-
-                var th = table
-                    .select('thead')
-                    .select('tr')
-                    .selectAll('th')
-                    .data(keys);
-
-                th.enter()
-                    .append('th')
-                    .text(String);
-
-                th.exit().remove();
-
-                var tr = table.select('tbody').selectAll('tr')
-                    .data(function(d) { return d; });
-
-                tr.enter()
-                    .append('tr');
-
-                tr.exit().remove();
-
-                var td = tr.selectAll('td')
-                    .data(keys);
-
-                td.enter()
-                    .append('td')
-                    .append('input')
-                    .attr('field', String);
-
-                function write(d) {
-                    d[d3.select(this).attr('field')] = this.value;
-                    event.change();
-                }
-
-                tr.selectAll('input')
-                    .data(function(d) {
-                        return d3.range(keys.length).map(function() { return d; });
-                    })
-                    .classed('disabled', function(d) {
-                        return d[d3.select(this).attr('field')] === undefined;
-                    })
-                    .property('value', function(d) {
-                        return d[d3.select(this).attr('field')] || '';
-                    })
-                    .on('keyup', write)
-                    .on('change', write)
-                    .on('click', function(d) {
-                        if (d[d3.select(this).attr('field')] === undefined) {
-                            d[d3.select(this).attr('field')] = '';
-                            paint();
-                        }
-                    })
-                    .on('focus', function(d) {
-                        event.rowfocus(d);
-                    });
-            }
-        });
-    }
-
-    return d3.rebind(table, event, 'on');
-}
-
-},{}],21:[function(require,module,exports){
+},{"./type":23,"../../":"g070js"}],21:[function(require,module,exports){
 toGeoJSON = (function() {
     'use strict';
 
@@ -2150,6 +2047,122 @@ toGeoJSON = (function() {
 
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
+},{}],22:[function(require,module,exports){
+if (typeof module !== 'undefined') {
+    module.exports = function(d3) {
+        return metatable;
+    };
+}
+
+function metatable() {
+    var event = d3.dispatch('change', 'rowfocus');
+
+    function table(selection) {
+        selection.each(function(d) {
+            var sel = d3.select(this),
+                table;
+
+            var keyset = d3.set();
+            d.map(Object.keys).forEach(function(k) {
+                k.forEach(function(_) {
+                    keyset.add(_);
+                });
+            });
+
+            var keys = keyset.values();
+
+            bootstrap();
+            paint();
+
+            function bootstrap() {
+
+                var controls = sel.selectAll('.controls')
+                    .data([d])
+                    .enter()
+                    .append('div')
+                    .attr('class', 'controls');
+
+                var colbutton = controls.append('button')
+                    .on('click', function() {
+                        var name = prompt('column name');
+                        if (name) {
+                            keys.push(name);
+                            paint();
+                        }
+                    });
+                colbutton.append('span').attr('class', 'icon-plus');
+                colbutton.append('span').text(' new column');
+                var enter = sel.selectAll('table').data([d]).enter().append('table');
+                var thead = enter.append('thead');
+                var tbody = enter.append('tbody');
+                var tr = thead.append('tr');
+
+                table = sel.select('table');
+            }
+
+            function paint() {
+
+                var th = table
+                    .select('thead')
+                    .select('tr')
+                    .selectAll('th')
+                    .data(keys);
+
+                th.enter()
+                    .append('th')
+                    .text(String);
+
+                th.exit().remove();
+
+                var tr = table.select('tbody').selectAll('tr')
+                    .data(function(d) { return d; });
+
+                tr.enter()
+                    .append('tr');
+
+                tr.exit().remove();
+
+                var td = tr.selectAll('td')
+                    .data(keys);
+
+                td.enter()
+                    .append('td')
+                    .append('input')
+                    .attr('field', String);
+
+                function write(d) {
+                    d[d3.select(this).attr('field')] = this.value;
+                    event.change();
+                }
+
+                tr.selectAll('input')
+                    .data(function(d) {
+                        return d3.range(keys.length).map(function() { return d; });
+                    })
+                    .classed('disabled', function(d) {
+                        return d[d3.select(this).attr('field')] === undefined;
+                    })
+                    .property('value', function(d) {
+                        return d[d3.select(this).attr('field')] || '';
+                    })
+                    .on('keyup', write)
+                    .on('change', write)
+                    .on('click', function(d) {
+                        if (d[d3.select(this).attr('field')] === undefined) {
+                            d[d3.select(this).attr('field')] = '';
+                            paint();
+                        }
+                    })
+                    .on('focus', function(d) {
+                        event.rowfocus(d);
+                    });
+            }
+        });
+    }
+
+    return d3.rebind(table, event, 'on');
+}
+
 },{}],19:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
@@ -2206,7 +2219,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":27}],22:[function(require,module,exports){
+},{"geojsonhint":28}],23:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -2300,7 +2313,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -2366,7 +2379,7 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -2416,7 +2429,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":22}],24:[function(require,module,exports){
+},{"./type":23}],25:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -2471,13 +2484,13 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":28}],25:[function(require,module,exports){
+},{"./hash":29}],26:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":29,"./spherical":30}],27:[function(require,module,exports){
+},{"./cartesian":30,"./spherical":31}],28:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -2716,7 +2729,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":31}],32:[function(require,module,exports){
+},{"jsonlint-lines":32}],33:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -2770,7 +2783,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function(process){/* parser generated by jison 0.4.6 */
 /*
   Returns a Parser object of the following structure:
@@ -3426,7 +3439,133 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 })(require("__browserify_process"))
-},{"fs":12,"path":33,"__browserify_process":32}],33:[function(require,module,exports){
+},{"fs":12,"path":34,"__browserify_process":33}],30:[function(require,module,exports){
+exports.name = "cartesian";
+exports.formatDistance = formatDistance;
+exports.ringArea = ringArea;
+exports.absoluteArea = Math.abs;
+exports.triangleArea = triangleArea;
+exports.distance = distance;
+
+function formatDistance(d) {
+  return d.toString();
+}
+
+function ringArea(ring) {
+  var i = 0,
+      n = ring.length,
+      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
+  while (++i < n) {
+    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
+  }
+  return area * .5;
+}
+
+function triangleArea(triangle) {
+  return Math.abs(
+    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
+    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
+  );
+}
+
+function distance(x0, y0, x1, y1) {
+  var dx = x0 - x1, dy = y0 - y1;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+},{}],29:[function(require,module,exports){
+// Note: requires that size is a power of two!
+module.exports = function(size) {
+  var mask = size - 1;
+  return function(point) {
+    var key = (point[0] + 31 * point[1]) | 0;
+    return (key < 0 ? ~key : key) & mask;
+  };
+};
+
+},{}],31:[function(require,module,exports){
+var π = Math.PI,
+    π_4 = π / 4,
+    radians = π / 180;
+
+exports.name = "spherical";
+exports.formatDistance = formatDistance;
+exports.ringArea = ringArea;
+exports.absoluteArea = absoluteArea;
+exports.triangleArea = triangleArea;
+exports.distance = haversinDistance; // XXX why two implementations?
+
+function formatDistance(radians) {
+  var km = radians * 6371;
+  return (km > 1 ? km.toFixed(3) + "km" : (km * 1000).toPrecision(3) + "m")
+      + " (" + (radians * 180 / Math.PI).toPrecision(3) + "°)";
+}
+
+function ringArea(ring) {
+  if (!ring.length) return 0;
+  var area = 0,
+      p = ring[0],
+      λ = p[0] * radians,
+      φ = p[1] * radians / 2 + π_4,
+      λ0 = λ,
+      cosφ0 = Math.cos(φ),
+      sinφ0 = Math.sin(φ);
+
+  for (var i = 1, n = ring.length; i < n; ++i) {
+    p = ring[i], λ = p[0] * radians, φ = p[1] * radians / 2 + π_4;
+
+    // Spherical excess E for a spherical triangle with vertices: south pole,
+    // previous point, current point.  Uses a formula derived from Cagnoli’s
+    // theorem.  See Todhunter, Spherical Trig. (1871), Sec. 103, Eq. (2).
+    var dλ = λ - λ0,
+        cosφ = Math.cos(φ),
+        sinφ = Math.sin(φ),
+        k = sinφ0 * sinφ,
+        u = cosφ0 * cosφ + k * Math.cos(dλ),
+        v = k * Math.sin(dλ);
+    area += Math.atan2(v, u);
+
+    // Advance the previous point.
+    λ0 = λ, cosφ0 = cosφ, sinφ0 = sinφ;
+  }
+
+  return 2 * area;
+}
+
+function absoluteArea(a) {
+  return a < 0 ? a + 4 * π : a;
+}
+
+function triangleArea(t) {
+  var a = distance(t[0], t[1]),
+      b = distance(t[1], t[2]),
+      c = distance(t[2], t[0]),
+      s = (a + b + c) / 2;
+  return 4 * Math.atan(Math.sqrt(Math.max(0, Math.tan(s / 2) * Math.tan((s - a) / 2) * Math.tan((s - b) / 2) * Math.tan((s - c) / 2))));
+}
+
+function distance(a, b) {
+  var Δλ = (b[0] - a[0]) * radians,
+      sinΔλ = Math.sin(Δλ),
+      cosΔλ = Math.cos(Δλ),
+      sinφ0 = Math.sin(a[1] * radians),
+      cosφ0 = Math.cos(a[1] * radians),
+      sinφ1 = Math.sin(b[1] * radians),
+      cosφ1 = Math.cos(b[1] * radians),
+      _;
+  return Math.atan2(Math.sqrt((_ = cosφ1 * sinΔλ) * _ + (_ = cosφ0 * sinφ1 - sinφ0 * cosφ1 * cosΔλ) * _), sinφ0 * sinφ1 + cosφ0 * cosφ1 * cosΔλ);
+}
+
+function haversinDistance(x0, y0, x1, y1) {
+  x0 *= radians, y0 *= radians, x1 *= radians, y1 *= radians;
+  return 2 * Math.asin(Math.sqrt(haversin(y1 - y0) + Math.cos(y0) * Math.cos(y1) * haversin(x1 - x0)));
+}
+
+function haversin(x) {
+  return (x = Math.sin(x / 2)) * x;
+}
+
+},{}],34:[function(require,module,exports){
 (function(process){function filter (xs, fn) {
     var res = [];
     for (var i = 0; i < xs.length; i++) {
@@ -3604,131 +3743,5 @@ exports.relative = function(from, to) {
 };
 
 })(require("__browserify_process"))
-},{"__browserify_process":32}],29:[function(require,module,exports){
-exports.name = "cartesian";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = Math.abs;
-exports.triangleArea = triangleArea;
-exports.distance = distance;
-
-function formatDistance(d) {
-  return d.toString();
-}
-
-function ringArea(ring) {
-  var i = 0,
-      n = ring.length,
-      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
-  while (++i < n) {
-    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
-  }
-  return area * .5;
-}
-
-function triangleArea(triangle) {
-  return Math.abs(
-    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
-    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
-  );
-}
-
-function distance(x0, y0, x1, y1) {
-  var dx = x0 - x1, dy = y0 - y1;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-},{}],28:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
-  };
-};
-
-},{}],30:[function(require,module,exports){
-var π = Math.PI,
-    π_4 = π / 4,
-    radians = π / 180;
-
-exports.name = "spherical";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = absoluteArea;
-exports.triangleArea = triangleArea;
-exports.distance = haversinDistance; // XXX why two implementations?
-
-function formatDistance(radians) {
-  var km = radians * 6371;
-  return (km > 1 ? km.toFixed(3) + "km" : (km * 1000).toPrecision(3) + "m")
-      + " (" + (radians * 180 / Math.PI).toPrecision(3) + "°)";
-}
-
-function ringArea(ring) {
-  if (!ring.length) return 0;
-  var area = 0,
-      p = ring[0],
-      λ = p[0] * radians,
-      φ = p[1] * radians / 2 + π_4,
-      λ0 = λ,
-      cosφ0 = Math.cos(φ),
-      sinφ0 = Math.sin(φ);
-
-  for (var i = 1, n = ring.length; i < n; ++i) {
-    p = ring[i], λ = p[0] * radians, φ = p[1] * radians / 2 + π_4;
-
-    // Spherical excess E for a spherical triangle with vertices: south pole,
-    // previous point, current point.  Uses a formula derived from Cagnoli’s
-    // theorem.  See Todhunter, Spherical Trig. (1871), Sec. 103, Eq. (2).
-    var dλ = λ - λ0,
-        cosφ = Math.cos(φ),
-        sinφ = Math.sin(φ),
-        k = sinφ0 * sinφ,
-        u = cosφ0 * cosφ + k * Math.cos(dλ),
-        v = k * Math.sin(dλ);
-    area += Math.atan2(v, u);
-
-    // Advance the previous point.
-    λ0 = λ, cosφ0 = cosφ, sinφ0 = sinφ;
-  }
-
-  return 2 * area;
-}
-
-function absoluteArea(a) {
-  return a < 0 ? a + 4 * π : a;
-}
-
-function triangleArea(t) {
-  var a = distance(t[0], t[1]),
-      b = distance(t[1], t[2]),
-      c = distance(t[2], t[0]),
-      s = (a + b + c) / 2;
-  return 4 * Math.atan(Math.sqrt(Math.max(0, Math.tan(s / 2) * Math.tan((s - a) / 2) * Math.tan((s - b) / 2) * Math.tan((s - c) / 2))));
-}
-
-function distance(a, b) {
-  var Δλ = (b[0] - a[0]) * radians,
-      sinΔλ = Math.sin(Δλ),
-      cosΔλ = Math.cos(Δλ),
-      sinφ0 = Math.sin(a[1] * radians),
-      cosφ0 = Math.cos(a[1] * radians),
-      sinφ1 = Math.sin(b[1] * radians),
-      cosφ1 = Math.cos(b[1] * radians),
-      _;
-  return Math.atan2(Math.sqrt((_ = cosφ1 * sinΔλ) * _ + (_ = cosφ0 * sinφ1 - sinφ0 * cosφ1 * cosΔλ) * _), sinφ0 * sinφ1 + cosφ0 * cosφ1 * cosΔλ);
-}
-
-function haversinDistance(x0, y0, x1, y1) {
-  x0 *= radians, y0 *= radians, x1 *= radians, y1 *= radians;
-  return 2 * Math.asin(Math.sqrt(haversin(y1 - y0) + Math.cos(y0) * Math.cos(y1) * haversin(x1 - x0)));
-}
-
-function haversin(x) {
-  return (x = Math.sin(x / 2)) * x;
-}
-
-},{}]},{},[1])
+},{"__browserify_process":33}]},{},[1])
 ;
