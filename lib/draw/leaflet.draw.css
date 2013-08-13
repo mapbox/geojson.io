@@ -47,6 +47,11 @@
 	top: 0;
 }
 
+.leaflet-right .leaflet-draw-actions {
+	right:26px;
+	left:auto;
+}
+
 .leaflet-draw-actions li {
 	float: left;
 }
@@ -58,6 +63,16 @@
 .leaflet-draw-actions li:last-child a {
 	-webkit-border-radius: 0 4px 4px 0;
 	        border-radius: 0 4px 4px 0;
+}
+
+.leaflet-right .leaflet-draw-actions li:last-child a {
+	-webkit-border-radius: 0;
+	        border-radius: 0;
+}
+
+.leaflet-right .leaflet-draw-actions li:first-child a {
+	-webkit-border-radius: 4px 0 0 4px;
+	        border-radius: 4px 0 0 4px;
 }
 
 .leaflet-draw-actions a {
