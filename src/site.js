@@ -373,44 +373,7 @@ function hashChange() {
     }
 }
 
-},{"./json_panel":9,"./table_panel":10,"./import_panel":11,"./commit_panel":12,"./share_panel":13,"./login_panel":14,"./gist":15,"./github":16,"./source":17,"./map":18,"is-mobile":19,"detect-json-indent":20}],17:[function(require,module,exports){
-'use strict';
-
-module.exports = function source() {
-
-    if (!window.location.hash) return null;
-
-    var txt = window.location.hash.substring(1);
-
-    if (!isNaN(parseInt(txt, 10))) {
-        // legacy gist
-        return {
-            type: 'gist',
-            id: parseInt(txt, 10)
-        };
-    } else if (txt.indexOf('gist:') === 0) {
-        var clean = txt.replace(/^gist:/, '');
-        if (clean.indexOf('/') !== -1) {
-            return {
-                type: 'gist',
-                login: clean.split('/')[0],
-                id: parseInt(clean.split('/')[1], 10)
-            };
-        } else {
-            return {
-                type: 'gist',
-                id: parseInt(clean, 10)
-            };
-        }
-    } else if (txt.indexOf('github:') === 0) {
-        return {
-            type: 'github',
-            id: txt.replace(/^github:\/?/, '')
-        };
-    }
-};
-
-},{}],18:[function(require,module,exports){
+},{"./json_panel":9,"./table_panel":10,"./import_panel":11,"./commit_panel":12,"./share_panel":13,"./login_panel":14,"./gist":15,"./map":16,"./source":17,"./github":18,"is-mobile":19,"detect-json-indent":20}],16:[function(require,module,exports){
 'use strict';
 
 module.exports = function() {
@@ -460,6 +423,43 @@ module.exports = function() {
     return map;
 };
 
+},{}],17:[function(require,module,exports){
+'use strict';
+
+module.exports = function source() {
+
+    if (!window.location.hash) return null;
+
+    var txt = window.location.hash.substring(1);
+
+    if (!isNaN(parseInt(txt, 10))) {
+        // legacy gist
+        return {
+            type: 'gist',
+            id: parseInt(txt, 10)
+        };
+    } else if (txt.indexOf('gist:') === 0) {
+        var clean = txt.replace(/^gist:/, '');
+        if (clean.indexOf('/') !== -1) {
+            return {
+                type: 'gist',
+                login: clean.split('/')[0],
+                id: parseInt(clean.split('/')[1], 10)
+            };
+        } else {
+            return {
+                type: 'gist',
+                id: parseInt(clean, 10)
+            };
+        }
+    } else if (txt.indexOf('github:') === 0) {
+        return {
+            type: 'github',
+            id: txt.replace(/^github:\/?/, '')
+        };
+    }
+};
+
 },{}],9:[function(require,module,exports){
 var validate = require('./validate');
 
@@ -495,44 +495,7 @@ function jsonPanel(container, updates) {
     });
 }
 
-},{"./validate":21}],12:[function(require,module,exports){
-var github = require('./github');
-
-module.exports = commitPanel;
-
-function commitPanel(container, updates) {
-    container.html('');
-
-    var wrap = container.append('div')
-        .attr('class', 'pad1 center');
-
-    var message = wrap.append('textarea')
-        .attr('placeholder', 'Commit message')
-        .attr('class', 'full-width');
-
-    var commitButton = wrap.append('button')
-        .text('Commit changes to GitHub')
-        .attr('class', 'semimajor');
-
-    updates.on('update_map.mode', function(data, layer, exportIndentationStyle) {
-        commitButton.on('click', function() {
-            github.saveAsGitHub(
-                JSON.stringify(data, null, exportIndentationStyle),
-                done,
-                message.property('value'));
-
-            function done(err, resp) {
-                if (err) return alert(err);
-                commitButton.text('Changes saved');
-                setTimeout(function() {
-                    commitButton.text('Commit changes to GitHub');
-                }, 1000);
-            }
-        });
-    });
-}
-
-},{"./github":16}],13:[function(require,module,exports){
+},{"./validate":21}],13:[function(require,module,exports){
 var gist = require('./gist');
 module.exports = sharePanel;
 
@@ -611,7 +574,44 @@ function sharePanel(container, updates) {
     }
 }
 
-},{"./gist":15}],14:[function(require,module,exports){
+},{"./gist":15}],12:[function(require,module,exports){
+var github = require('./github');
+
+module.exports = commitPanel;
+
+function commitPanel(container, updates) {
+    container.html('');
+
+    var wrap = container.append('div')
+        .attr('class', 'pad1 center');
+
+    var message = wrap.append('textarea')
+        .attr('placeholder', 'Commit message')
+        .attr('class', 'full-width');
+
+    var commitButton = wrap.append('button')
+        .text('Commit changes to GitHub')
+        .attr('class', 'semimajor');
+
+    updates.on('update_map.mode', function(data, layer, exportIndentationStyle) {
+        commitButton.on('click', function() {
+            github.saveAsGitHub(
+                JSON.stringify(data, null, exportIndentationStyle),
+                done,
+                message.property('value'));
+
+            function done(err, resp) {
+                if (err) return alert(err);
+                commitButton.text('Changes saved');
+                setTimeout(function() {
+                    commitButton.text('Commit changes to GitHub');
+                }, 1000);
+            }
+        });
+    });
+}
+
+},{"./github":18}],14:[function(require,module,exports){
 'use strict';
 
 var source = require('./source'),
@@ -760,7 +760,7 @@ function urlHash(data) {
     }
 }
 
-},{"./source":17}],16:[function(require,module,exports){
+},{"./source":17}],18:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
@@ -1233,7 +1233,7 @@ function runGeocode(container, list, transform, updates) {
     var task = geocode(list, transform, progress, done);
 }
 
-},{"topojson":"g070js","togeojson":24,"detect-json-indent":20}],3:[function(require,module,exports){
+},{"topojson":"g070js","detect-json-indent":20,"togeojson":24}],3:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -1365,7 +1365,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./min-heap":25,"./coordinate-systems":26}],2:[function(require,module,exports){
+},{"./coordinate-systems":25,"./min-heap":26}],2:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -1707,7 +1707,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./type":27,"./stitch-poles":28,"./hashtable":29,"./coordinate-systems":26}],22:[function(require,module,exports){
+},{"./type":27,"./coordinate-systems":25,"./stitch-poles":28,"./hashtable":29}],22:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -1794,7 +1794,7 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"./type":27,"./coordinate-systems":26,"../../":"g070js"}],5:[function(require,module,exports){
+},{"./coordinate-systems":25,"./type":27,"../../":"g070js"}],5:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -1864,7 +1864,37 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"./type":27,"./prune":6,"./clockwise":4,"./coordinate-systems":26,"../../":"g070js"}],6:[function(require,module,exports){
+},{"./type":27,"./prune":6,"./clockwise":4,"./coordinate-systems":25,"../../":"g070js"}],7:[function(require,module,exports){
+var type = require("./type"),
+    topojson = require("../../");
+
+module.exports = function(topology, propertiesById) {
+  var bind = type({
+    geometry: function(geometry) {
+      var properties0 = geometry.properties,
+          properties1 = propertiesById[geometry.id];
+      if (properties1) {
+        if (properties0) for (var k in properties1) properties0[k] = properties1[k];
+        else for (var k in properties1) { geometry.properties = properties1; break; }
+      }
+      this.defaults.geometry.call(this, geometry);
+    },
+    LineString: noop,
+    MultiLineString: noop,
+    Point: noop,
+    MultiPoint: noop,
+    Polygon: noop,
+    MultiPolygon: noop
+  });
+
+  for (var key in topology.objects) {
+    bind.object(topology.objects[key]);
+  }
+};
+
+function noop() {}
+
+},{"./type":27,"../../":"g070js"}],6:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1923,37 +1953,232 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":27,"../../":"g070js"}],7:[function(require,module,exports){
-var type = require("./type"),
-    topojson = require("../../");
+},{"./type":27,"../../":"g070js"}],24:[function(require,module,exports){
+toGeoJSON = (function() {
+    'use strict';
 
-module.exports = function(topology, propertiesById) {
-  var bind = type({
-    geometry: function(geometry) {
-      var properties0 = geometry.properties,
-          properties1 = propertiesById[geometry.id];
-      if (properties1) {
-        if (properties0) for (var k in properties1) properties0[k] = properties1[k];
-        else for (var k in properties1) { geometry.properties = properties1; break; }
-      }
-      this.defaults.geometry.call(this, geometry);
-    },
-    LineString: noop,
-    MultiLineString: noop,
-    Point: noop,
-    MultiPoint: noop,
-    Polygon: noop,
-    MultiPolygon: noop
-  });
+    var removeSpace = (/\s*/g),
+        trimSpace = (/^\s*|\s*$/g),
+        splitSpace = (/\s+/);
+    // generate a short, numeric hash of a string
+    function okhash(x) {
+        if (!x || !x.length) return 0;
+        for (var i = 0, h = 0; i < x.length; i++) {
+            h = ((h << 5) - h) + x.charCodeAt(i) | 0;
+        } return h;
+    }
+    // all Y children of X
+    function get(x, y) { return x.getElementsByTagName(y); }
+    function attr(x, y) { return x.getAttribute(y); }
+    function attrf(x, y) { return parseFloat(attr(x, y)); }
+    // one Y child of X, if any, otherwise null
+    function get1(x, y) { var n = get(x, y); return n.length ? n[0] : null; }
+    // https://developer.mozilla.org/en-US/docs/Web/API/Node.normalize
+    function norm(el) { if (el.normalize) { el.normalize(); } return el; }
+    // cast array x into numbers
+    function numarray(x) {
+        for (var j = 0, o = []; j < x.length; j++) o[j] = parseFloat(x[j]);
+        return o;
+    }
+    function clean(x) {
+        var o = {};
+        for (var i in x) if (x[i]) o[i] = x[i];
+        return o;
+    }
+    // get the content of a text node, if any
+    function nodeVal(x) { if (x) {norm(x);} return x && x.firstChild && x.firstChild.nodeValue; }
+    // get one coordinate from a coordinate array, if any
+    function coord1(v) { return numarray(v.replace(removeSpace, '').split(',')); }
+    // get all coordinates from a coordinate array as [[],[]]
+    function coord(v) {
+        var coords = v.replace(trimSpace, '').split(splitSpace),
+            o = [];
+        for (var i = 0; i < coords.length; i++) {
+            o.push(coord1(coords[i]));
+        }
+        return o;
+    }
+    function coordPair(x) { return [attrf(x, 'lon'), attrf(x, 'lat')]; }
 
-  for (var key in topology.objects) {
-    bind.object(topology.objects[key]);
-  }
-};
+    // create a new feature collection parent object
+    function fc() {
+        return {
+            type: 'FeatureCollection',
+            features: []
+        };
+    }
 
-function noop() {}
+    var styleSupport = false;
+    if (typeof XMLSerializer !== 'undefined') {
+        var serializer = new XMLSerializer();
+        styleSupport = true;
+    }
+    function xml2str(str) { return serializer.serializeToString(str); }
 
-},{"./type":27,"../../":"g070js"}],23:[function(require,module,exports){
+    var t = {
+        kml: function(doc, o) {
+            o = o || {};
+
+            var gj = fc(),
+                // styleindex keeps track of hashed styles in order to match features
+                styleIndex = {},
+                // atomic geospatial types supported by KML - MultiGeometry is
+                // handled separately
+                geotypes = ['Polygon', 'LineString', 'Point', 'Track'],
+                // all root placemarks in the file
+                placemarks = get(doc, 'Placemark'),
+                styles = get(doc, 'Style');
+
+            if (styleSupport) for (var k = 0; k < styles.length; k++) {
+                styleIndex['#' + attr(styles[k], 'id')] = okhash(xml2str(styles[k])).toString(16);
+            }
+            for (var j = 0; j < placemarks.length; j++) {
+                gj.features = gj.features.concat(getPlacemark(placemarks[j]));
+            }
+            function gxCoord(v) { return numarray(v.split(' ')); }
+            function gxCoords(root) {
+                var elems = get(root, 'coord', 'gx'), coords = [];
+                for (var i = 0; i < elems.length; i++) coords.push(gxCoord(nodeVal(elems[i])));
+                return coords;
+            }
+            function getGeometry(root) {
+                var geomNode, geomNodes, i, j, k, geoms = [];
+                if (get1(root, 'MultiGeometry')) return getGeometry(get1(root, 'MultiGeometry'));
+                if (get1(root, 'MultiTrack')) return getGeometry(get1(root, 'MultiTrack'));
+                for (i = 0; i < geotypes.length; i++) {
+                    geomNodes = get(root, geotypes[i]);
+                    if (geomNodes) {
+                        for (j = 0; j < geomNodes.length; j++) {
+                            geomNode = geomNodes[j];
+                            if (geotypes[i] == 'Point') {
+                                geoms.push({
+                                    type: 'Point',
+                                    coordinates: coord1(nodeVal(get1(geomNode, 'coordinates')))
+                                });
+                            } else if (geotypes[i] == 'LineString') {
+                                geoms.push({
+                                    type: 'LineString',
+                                    coordinates: coord(nodeVal(get1(geomNode, 'coordinates')))
+                                });
+                            } else if (geotypes[i] == 'Polygon') {
+                                var rings = get(geomNode, 'LinearRing'),
+                                    coords = [];
+                                for (k = 0; k < rings.length; k++) {
+                                    coords.push(coord(nodeVal(get1(rings[k], 'coordinates'))));
+                                }
+                                geoms.push({
+                                    type: 'Polygon',
+                                    coordinates: coords
+                                });
+                            } else if (geotypes[i] == 'Track') {
+                                geoms.push({
+                                    type: 'LineString',
+                                    coordinates: gxCoords(geomNode)
+                                });
+                            }
+                        }
+                    }
+                }
+                return geoms;
+            }
+            function getPlacemark(root) {
+                var geoms = getGeometry(root), i, properties = {},
+                    name = nodeVal(get1(root, 'name')),
+                    styleUrl = nodeVal(get1(root, 'styleUrl')),
+                    description = nodeVal(get1(root, 'description')),
+                    extendedData = get1(root, 'ExtendedData');
+
+                if (!geoms.length) return [];
+                if (name) properties.name = name;
+                if (styleUrl && styleIndex[styleUrl]) {
+                    properties.styleUrl = styleUrl;
+                    properties.styleHash = styleIndex[styleUrl];
+                }
+                if (description) properties.description = description;
+                if (extendedData) {
+                    var datas = get(extendedData, 'Data'),
+                        simpleDatas = get(extendedData, 'SimpleData');
+
+                    for (i = 0; i < datas.length; i++) {
+                        properties[datas[i].getAttribute('name')] = nodeVal(get1(datas[i], 'value'));
+                    }
+                    for (i = 0; i < simpleDatas.length; i++) {
+                        properties[simpleDatas[i].getAttribute('name')] = nodeVal(simpleDatas[i]);
+                    }
+                }
+                return [{
+                    type: 'Feature',
+                    geometry: (geoms.length === 1) ? geoms[0] : {
+                        type: 'GeometryCollection',
+                        geometries: geoms
+                    },
+                    properties: properties
+                }];
+            }
+            return gj;
+        },
+        gpx: function(doc, o) {
+            var i,
+                tracks = get(doc, 'trk'),
+                routes = get(doc, 'rte'),
+                waypoints = get(doc, 'wpt'),
+                // a feature collection
+                gj = fc();
+            for (i = 0; i < tracks.length; i++) {
+                gj.features.push(getLinestring(tracks[i], 'trkpt'));
+            }
+            for (i = 0; i < routes.length; i++) {
+                gj.features.push(getLinestring(routes[i], 'rtept'));
+            }
+            for (i = 0; i < waypoints.length; i++) {
+                gj.features.push(getPoint(waypoints[i]));
+            }
+            function getLinestring(node, pointname) {
+                var j, pts = get(node, pointname), line = [];
+                for (j = 0; j < pts.length; j++) {
+                    line.push(coordPair(pts[j]));
+                }
+                return {
+                    type: 'Feature',
+                    properties: getProperties(node),
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: line
+                    }
+                };
+            }
+            function getPoint(node) {
+                var prop = getProperties(node);
+                prop.ele = nodeVal(get1(node, 'ele'));
+                prop.sym = nodeVal(get1(node, 'sym'));
+                return {
+                    type: 'Feature',
+                    properties: prop,
+                    geometry: {
+                        type: 'Point',
+                        coordinates: coordPair(node)
+                    }
+                };
+            }
+            function getProperties(node) {
+                var meta = ['name', 'desc', 'author', 'copyright', 'link',
+                            'time', 'keywords'],
+                    prop = {},
+                    k;
+                for (k = 0; k < meta.length; k++) {
+                    prop[meta[k]] = nodeVal(get1(node, meta[k]));
+                }
+                return clean(prop);
+            }
+            return gj;
+        }
+    };
+    return t;
+})();
+
+if (typeof module !== 'undefined') module.exports = toGeoJSON;
+
+},{}],23:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -2069,219 +2294,6 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],24:[function(require,module,exports){
-toGeoJSON = (function() {
-    'use strict';
-
-    var removeSpace = (/\s*/g),
-        trimSpace = (/^\s*|\s*$/g),
-        splitSpace = (/\s+/);
-    // generate a short, numeric hash of a string
-    function okhash(x) {
-        if (!x || !x.length) return 0;
-        for (var i = 0, h = 0; i < x.length; i++) {
-            h = ((h << 5) - h) + x.charCodeAt(i) | 0;
-        } return h;
-    }
-    // all Y children of X
-    function get(x, y) { return x.getElementsByTagName(y); }
-    function attr(x, y) { return x.getAttribute(y); }
-    function attrf(x, y) { return parseFloat(attr(x, y)); }
-    // one Y child of X, if any, otherwise null
-    function get1(x, y) { var n = get(x, y); return n.length ? n[0] : null; }
-    // https://developer.mozilla.org/en-US/docs/Web/API/Node.normalize
-    function norm(el) { if (el.normalize) { el.normalize(); } return el; }
-    // cast array x into numbers
-    function numarray(x) {
-        for (var j = 0, o = []; j < x.length; j++) o[j] = parseFloat(x[j]);
-        return o;
-    }
-    function clean(x) {
-        var o = {};
-        for (var i in x) if (x[i]) o[i] = x[i];
-        return o;
-    }
-    // get the content of a text node, if any
-    function nodeVal(x) { if (x) {norm(x);} return x && x.firstChild && x.firstChild.nodeValue; }
-    // get one coordinate from a coordinate array, if any
-    function coord1(v) { return numarray(v.replace(removeSpace, '').split(',')); }
-    // get all coordinates from a coordinate array as [[],[]]
-    function coord(v) {
-        var coords = v.replace(trimSpace, '').split(splitSpace),
-            o = [];
-        for (var i = 0; i < coords.length; i++) {
-            o.push(coord1(coords[i]));
-        }
-        return o;
-    }
-    function coordPair(x) { return [attrf(x, 'lon'), attrf(x, 'lat')]; }
-
-    // create a new feature collection parent object
-    function fc() {
-        return {
-            type: 'FeatureCollection',
-            features: []
-        };
-    }
-
-    var styleSupport = false;
-    if (typeof XMLSerializer !== 'undefined') {
-        var serializer = new XMLSerializer();
-        styleSupport = true;
-    }
-    function xml2str(str) { return serializer.serializeToString(str); }
-
-    var t = {
-        kml: function(doc, o) {
-            o = o || {};
-
-            var gj = fc(),
-                // styleindex keeps track of hashed styles in order to match features
-                styleIndex = {},
-                // atomic geospatial types supported by KML - MultiGeometry is
-                // handled separately
-                geotypes = ['Polygon', 'LineString', 'Point'],
-                // all root placemarks in the file
-                placemarks = get(doc, 'Placemark'),
-                styles = get(doc, 'Style');
-
-            if (styleSupport) for (var k = 0; k < styles.length; k++) {
-                styleIndex['#' + attr(styles[k], 'id')] = okhash(xml2str(styles[k])).toString(16);
-            }
-            for (var j = 0; j < placemarks.length; j++) {
-                gj.features = gj.features.concat(getPlacemark(placemarks[j]));
-            }
-            function getGeometry(root) {
-                var geomNode, geomNodes, i, j, k, geoms = [];
-                if (get1(root, 'MultiGeometry')) return getGeometry(get1(root, 'MultiGeometry'));
-                for (i = 0; i < geotypes.length; i++) {
-                    geomNodes = get(root, geotypes[i]);
-                    if (geomNodes) {
-                        for (j = 0; j < geomNodes.length; j++) {
-                            geomNode = geomNodes[j];
-                            if (geotypes[i] == 'Point') {
-                                geoms.push({
-                                    type: 'Point',
-                                    coordinates: coord1(nodeVal(get1(geomNode, 'coordinates')))
-                                });
-                            } else if (geotypes[i] == 'LineString') {
-                                geoms.push({
-                                    type: 'LineString',
-                                    coordinates: coord(nodeVal(get1(geomNode, 'coordinates')))
-                                });
-                            } else if (geotypes[i] == 'Polygon') {
-                                var rings = get(geomNode, 'LinearRing'),
-                                    coords = [];
-                                for (k = 0; k < rings.length; k++) {
-                                    coords.push(coord(nodeVal(get1(rings[k], 'coordinates'))));
-                                }
-                                geoms.push({
-                                    type: 'Polygon',
-                                    coordinates: coords
-                                });
-                            }
-                        }
-                    }
-                }
-                return geoms;
-            }
-            function getPlacemark(root) {
-                var geoms = getGeometry(root), i, properties = {},
-                    name = nodeVal(get1(root, 'name')),
-                    styleUrl = nodeVal(get1(root, 'styleUrl')),
-                    description = nodeVal(get1(root, 'description')),
-                    extendedData = get1(root, 'ExtendedData');
-
-                if (!geoms.length) return false;
-                if (name) properties.name = name;
-                if (styleUrl && styleIndex[styleUrl]) {
-                    properties.styleUrl = styleUrl;
-                    properties.styleHash = styleIndex[styleUrl];
-                }
-                if (description) properties.description = description;
-                if (extendedData) {
-                    var datas = get(extendedData, 'Data'),
-                        simpleDatas = get(extendedData, 'SimpleData');
-
-                    for (i = 0; i < datas.length; i++) {
-                        properties[datas[i].getAttribute('name')] = nodeVal(get1(datas[i], 'value'));
-                    }
-                    for (i = 0; i < simpleDatas.length; i++) {
-                        properties[simpleDatas[i].getAttribute('name')] = nodeVal(simpleDatas[i]);
-                    }
-                }
-                return [{
-                    type: 'Feature',
-                    geometry: (geoms.length === 1) ? geoms[0] : {
-                        type: 'GeometryCollection',
-                        geometries: geoms
-                    },
-                    properties: properties
-                }];
-            }
-            return gj;
-        },
-        gpx: function(doc, o) {
-            var i,
-                tracks = get(doc, 'trk'),
-                routes = get(doc, 'rte'),
-                waypoints = get(doc, 'wpt'),
-                // a feature collection
-                gj = fc();
-            for (i = 0; i < tracks.length; i++) {
-                gj.features.push(getLinestring(tracks[i], 'trkpt'));
-            }
-            for (i = 0; i < routes.length; i++) {
-                gj.features.push(getLinestring(routes[i], 'rtept'));
-            }
-            for (i = 0; i < waypoints.length; i++) {
-                gj.features.push(getPoint(waypoints[i]));
-            }
-            function getLinestring(node, pointname) {
-                var j, pts = get(node, pointname), line = [];
-                for (j = 0; j < pts.length; j++) {
-                    line.push(coordPair(pts[j]));
-                }
-                return {
-                    type: 'Feature',
-                    properties: getProperties(node),
-                    geometry: {
-                        type: 'LineString',
-                        coordinates: line
-                    }
-                };
-            }
-            function getPoint(node) {
-                var prop = getProperties(node);
-                prop.ele = nodeVal(get1(node, 'ele'));
-                prop.sym = nodeVal(get1(node, 'sym'));
-                return {
-                    type: 'Feature',
-                    properties: prop,
-                    geometry: {
-                        type: 'Point',
-                        coordinates: coordPair(node)
-                    }
-                };
-            }
-            function getProperties(node) {
-                var meta = ['name', 'desc', 'author', 'copyright', 'link',
-                            'time', 'keywords'],
-                    prop = {},
-                    k;
-                for (k = 0; k < meta.length; k++) {
-                    prop[meta[k]] = nodeVal(get1(node, meta[k]));
-                }
-                return clean(prop);
-            }
-            return gj;
-        }
-    };
-    return t;
-})();
-
-if (typeof module !== 'undefined') module.exports = toGeoJSON;
-
 },{}],21:[function(require,module,exports){
 'use strict';
 
@@ -2340,7 +2352,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":30}],25:[function(require,module,exports){
+},{"geojsonhint":30}],26:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -2500,13 +2512,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],26:[function(require,module,exports){
-module.exports = {
-  cartesian: require("./cartesian"),
-  spherical: require("./spherical")
-};
-
-},{"./cartesian":31,"./spherical":32}],28:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -2556,7 +2562,13 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":27}],29:[function(require,module,exports){
+},{"./type":27}],25:[function(require,module,exports){
+module.exports = {
+  cartesian: require("./cartesian"),
+  spherical: require("./spherical")
+};
+
+},{"./spherical":31,"./cartesian":32}],29:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -3560,7 +3572,133 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 })(require("__browserify_process"))
-},{"fs":1,"path":36,"__browserify_process":35}],36:[function(require,module,exports){
+},{"fs":1,"path":36,"__browserify_process":35}],31:[function(require,module,exports){
+var π = Math.PI,
+    π_4 = π / 4,
+    radians = π / 180;
+
+exports.name = "spherical";
+exports.formatDistance = formatDistance;
+exports.ringArea = ringArea;
+exports.absoluteArea = absoluteArea;
+exports.triangleArea = triangleArea;
+exports.distance = haversinDistance; // XXX why two implementations?
+
+function formatDistance(radians) {
+  var km = radians * 6371;
+  return (km > 1 ? km.toFixed(3) + "km" : (km * 1000).toPrecision(3) + "m")
+      + " (" + (radians * 180 / Math.PI).toPrecision(3) + "°)";
+}
+
+function ringArea(ring) {
+  if (!ring.length) return 0;
+  var area = 0,
+      p = ring[0],
+      λ = p[0] * radians,
+      φ = p[1] * radians / 2 + π_4,
+      λ0 = λ,
+      cosφ0 = Math.cos(φ),
+      sinφ0 = Math.sin(φ);
+
+  for (var i = 1, n = ring.length; i < n; ++i) {
+    p = ring[i], λ = p[0] * radians, φ = p[1] * radians / 2 + π_4;
+
+    // Spherical excess E for a spherical triangle with vertices: south pole,
+    // previous point, current point.  Uses a formula derived from Cagnoli’s
+    // theorem.  See Todhunter, Spherical Trig. (1871), Sec. 103, Eq. (2).
+    var dλ = λ - λ0,
+        cosφ = Math.cos(φ),
+        sinφ = Math.sin(φ),
+        k = sinφ0 * sinφ,
+        u = cosφ0 * cosφ + k * Math.cos(dλ),
+        v = k * Math.sin(dλ);
+    area += Math.atan2(v, u);
+
+    // Advance the previous point.
+    λ0 = λ, cosφ0 = cosφ, sinφ0 = sinφ;
+  }
+
+  return 2 * area;
+}
+
+function absoluteArea(a) {
+  return a < 0 ? a + 4 * π : a;
+}
+
+function triangleArea(t) {
+  var a = distance(t[0], t[1]),
+      b = distance(t[1], t[2]),
+      c = distance(t[2], t[0]),
+      s = (a + b + c) / 2;
+  return 4 * Math.atan(Math.sqrt(Math.max(0, Math.tan(s / 2) * Math.tan((s - a) / 2) * Math.tan((s - b) / 2) * Math.tan((s - c) / 2))));
+}
+
+function distance(a, b) {
+  var Δλ = (b[0] - a[0]) * radians,
+      sinΔλ = Math.sin(Δλ),
+      cosΔλ = Math.cos(Δλ),
+      sinφ0 = Math.sin(a[1] * radians),
+      cosφ0 = Math.cos(a[1] * radians),
+      sinφ1 = Math.sin(b[1] * radians),
+      cosφ1 = Math.cos(b[1] * radians),
+      _;
+  return Math.atan2(Math.sqrt((_ = cosφ1 * sinΔλ) * _ + (_ = cosφ0 * sinφ1 - sinφ0 * cosφ1 * cosΔλ) * _), sinφ0 * sinφ1 + cosφ0 * cosφ1 * cosΔλ);
+}
+
+function haversinDistance(x0, y0, x1, y1) {
+  x0 *= radians, y0 *= radians, x1 *= radians, y1 *= radians;
+  return 2 * Math.asin(Math.sqrt(haversin(y1 - y0) + Math.cos(y0) * Math.cos(y1) * haversin(x1 - x0)));
+}
+
+function haversin(x) {
+  return (x = Math.sin(x / 2)) * x;
+}
+
+},{}],32:[function(require,module,exports){
+exports.name = "cartesian";
+exports.formatDistance = formatDistance;
+exports.ringArea = ringArea;
+exports.absoluteArea = Math.abs;
+exports.triangleArea = triangleArea;
+exports.distance = distance;
+
+function formatDistance(d) {
+  return d.toString();
+}
+
+function ringArea(ring) {
+  var i = 0,
+      n = ring.length,
+      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
+  while (++i < n) {
+    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
+  }
+  return area * .5;
+}
+
+function triangleArea(triangle) {
+  return Math.abs(
+    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
+    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
+  );
+}
+
+function distance(x0, y0, x1, y1) {
+  var dx = x0 - x1, dy = y0 - y1;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+},{}],33:[function(require,module,exports){
+// Note: requires that size is a power of two!
+module.exports = function(size) {
+  var mask = size - 1;
+  return function(point) {
+    var key = (point[0] + 31 * point[1]) | 0;
+    return (key < 0 ? ~key : key) & mask;
+  };
+};
+
+},{}],36:[function(require,module,exports){
 (function(process){function filter (xs, fn) {
     var res = [];
     for (var i = 0; i < xs.length; i++) {
@@ -3738,131 +3876,5 @@ exports.relative = function(from, to) {
 };
 
 })(require("__browserify_process"))
-},{"__browserify_process":35}],31:[function(require,module,exports){
-exports.name = "cartesian";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = Math.abs;
-exports.triangleArea = triangleArea;
-exports.distance = distance;
-
-function formatDistance(d) {
-  return d.toString();
-}
-
-function ringArea(ring) {
-  var i = 0,
-      n = ring.length,
-      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
-  while (++i < n) {
-    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
-  }
-  return area * .5;
-}
-
-function triangleArea(triangle) {
-  return Math.abs(
-    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
-    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
-  );
-}
-
-function distance(x0, y0, x1, y1) {
-  var dx = x0 - x1, dy = y0 - y1;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-},{}],33:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
-  };
-};
-
-},{}],32:[function(require,module,exports){
-var π = Math.PI,
-    π_4 = π / 4,
-    radians = π / 180;
-
-exports.name = "spherical";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = absoluteArea;
-exports.triangleArea = triangleArea;
-exports.distance = haversinDistance; // XXX why two implementations?
-
-function formatDistance(radians) {
-  var km = radians * 6371;
-  return (km > 1 ? km.toFixed(3) + "km" : (km * 1000).toPrecision(3) + "m")
-      + " (" + (radians * 180 / Math.PI).toPrecision(3) + "°)";
-}
-
-function ringArea(ring) {
-  if (!ring.length) return 0;
-  var area = 0,
-      p = ring[0],
-      λ = p[0] * radians,
-      φ = p[1] * radians / 2 + π_4,
-      λ0 = λ,
-      cosφ0 = Math.cos(φ),
-      sinφ0 = Math.sin(φ);
-
-  for (var i = 1, n = ring.length; i < n; ++i) {
-    p = ring[i], λ = p[0] * radians, φ = p[1] * radians / 2 + π_4;
-
-    // Spherical excess E for a spherical triangle with vertices: south pole,
-    // previous point, current point.  Uses a formula derived from Cagnoli’s
-    // theorem.  See Todhunter, Spherical Trig. (1871), Sec. 103, Eq. (2).
-    var dλ = λ - λ0,
-        cosφ = Math.cos(φ),
-        sinφ = Math.sin(φ),
-        k = sinφ0 * sinφ,
-        u = cosφ0 * cosφ + k * Math.cos(dλ),
-        v = k * Math.sin(dλ);
-    area += Math.atan2(v, u);
-
-    // Advance the previous point.
-    λ0 = λ, cosφ0 = cosφ, sinφ0 = sinφ;
-  }
-
-  return 2 * area;
-}
-
-function absoluteArea(a) {
-  return a < 0 ? a + 4 * π : a;
-}
-
-function triangleArea(t) {
-  var a = distance(t[0], t[1]),
-      b = distance(t[1], t[2]),
-      c = distance(t[2], t[0]),
-      s = (a + b + c) / 2;
-  return 4 * Math.atan(Math.sqrt(Math.max(0, Math.tan(s / 2) * Math.tan((s - a) / 2) * Math.tan((s - b) / 2) * Math.tan((s - c) / 2))));
-}
-
-function distance(a, b) {
-  var Δλ = (b[0] - a[0]) * radians,
-      sinΔλ = Math.sin(Δλ),
-      cosΔλ = Math.cos(Δλ),
-      sinφ0 = Math.sin(a[1] * radians),
-      cosφ0 = Math.cos(a[1] * radians),
-      sinφ1 = Math.sin(b[1] * radians),
-      cosφ1 = Math.cos(b[1] * radians),
-      _;
-  return Math.atan2(Math.sqrt((_ = cosφ1 * sinΔλ) * _ + (_ = cosφ0 * sinφ1 - sinφ0 * cosφ1 * cosΔλ) * _), sinφ0 * sinφ1 + cosφ0 * cosφ1 * cosΔλ);
-}
-
-function haversinDistance(x0, y0, x1, y1) {
-  x0 *= radians, y0 *= radians, x1 *= radians, y1 *= radians;
-  return 2 * Math.asin(Math.sqrt(haversin(y1 - y0) + Math.cos(y0) * Math.cos(y1) * haversin(x1 - x0)));
-}
-
-function haversin(x) {
-  return (x = Math.sin(x / 2)) * x;
-}
-
-},{}]},{},[8])
+},{"__browserify_process":35}]},{},[8])
 ;
