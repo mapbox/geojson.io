@@ -12,7 +12,8 @@
     "brfs": "0.0.7",
     "togeojson": "~0.2.1",
     "csv2geojson": "~3.3.0",
-    "detect-json-indent": "0.0.0"
+    "detect-json-indent": "0.0.0",
+    "is-mobile": "~0.1.0"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",

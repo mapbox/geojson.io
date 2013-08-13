@@ -1,4 +1,4 @@
-all: lib/lib.js src/site.js
+all: lib/lib.js src/site.js src/site.mobile.js
 
 lib/lib.js: lib/%.js:
 	cat lib/blob.js \
@@ -16,6 +16,9 @@ lib/lib.js: lib/%.js:
 
 src/site.js: src/index.js
 	browserify -t brfs -r topojson src/index.js > src/site.js
+
+src/site.mobile.js: src/mobile.js
+	browserify -t brfs -r topojson src/mobile.js > src/site.mobile.js
 
 clean:
 	rm -r lib/lib.js

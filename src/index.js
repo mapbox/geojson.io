@@ -1,5 +1,12 @@
 'use strict';
 
+var mobile = require('is-mobile');
+
+if (mobile()) {
+    var hash = window.location.hash;
+    window.location.href = '/mobile.html' + hash;
+}
+
 var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
     importPanel = require('./import_panel'),
