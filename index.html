@@ -25,6 +25,13 @@
   <!--[if lt IE 9]>
     <script type='text/javascript' src='lib/aight.min.js'></script>
   <![endif]-->
+  <script src="//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js"></script>
+  <script>
+  Raven.config('https://c2d096c944dd4150ab7e44b0881b4a46@app.getsentry.com/11480', {
+      whitelistUrls: [/geojson\.io/],
+      ignoreErrors: ['Uncaught Error: Error connecting to extension ckibcdccnfeookdmbahgiakhnjcddpki']
+  }).install();
+  </script>
 </head>
 <body id='geojsonio-body'>
 <div id='map'></div>
@@ -47,21 +54,8 @@
 <script src='lib/lib.js'></script>
 <script src='src/site.js'></script>
 <script type="text/javascript">
-  var _gauges = _gauges || [];
-  (function() {
-    var t   = document.createElement('script');
-    t.type  = 'text/javascript';
-    t.async = true;
-    t.id    = 'gauges-tracker';
-    t.setAttribute('data-site-id', '51eee846108d7b2871000081');
-    t.src = '//secure.gaug.es/track.js';
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(t, s);
-  })();
-</script>
-<script type="text/javascript">
-  var analytics=analytics||[];(function(){var e=["identify","track","trackLink","trackForm","trackClick","trackSubmit","page","pageview","ab","alias","ready","group"],t=function(e){return function(){analytics.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var n=0;n<e.length;n++)analytics[e[n]]=t(e[n])})(),analytics.load=function(e){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=("https:"===document.location.protocol?"https://":"http://")+"d2dq2ahtl5zl1z.cloudfront.net/analytics.js/v1/"+e+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(t,n)};
-  analytics.load("xu28n5b6t9");
+var analytics=analytics||[];(function(){var e=["identify","track","trackLink","trackForm","trackClick","trackSubmit","page","pageview","ab","alias","ready","group"],t=function(e){return function(){analytics.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var n=0;n<e.length;n++)analytics[e[n]]=t(e[n])})(),analytics.load=function(e){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=("https:"===document.location.protocol?"https://":"http://")+"d2dq2ahtl5zl1z.cloudfront.net/analytics.js/v1/"+e+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(t,n)};
+analytics.load("xu28n5b6t9");
 </script>
 </body>
 </html>
