@@ -87,11 +87,11 @@ p.intro {
 .deemphasize { color: #888;}
 
 p.intro-hint {
-    max-width:250px;
     margin:10px auto;
     opacity:0.5;
     font-size:small;
-    border:1px solid #e0e0e0;
+    border-top:1px solid #e0e0e0;
+    border-bottom:1px solid #e0e0e0;
     border-radius:1px;
 }
 
@@ -364,9 +364,10 @@ body.dragover .modal-message {
 }
 
 textarea.full-width {
-    width:80%;
+    box-sizing:border-box;
+    width:100%;
     padding:5px;
-    height:200px;
+    height:60px;
     border:1px solid #ccc;
     border-radius:2px;
     font:inherit;

@@ -14,7 +14,7 @@ module.exports = function source() {
         if (clean.indexOf('/') !== -1) {
             return {
                 type: 'gist',
-                user: clean.split('/')[0],
+                login: clean.split('/')[0],
                 id: parseInt(clean.split('/')[1], 10)
             };
         } else {

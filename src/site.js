@@ -14,7 +14,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"fs":1,"./lib/topojson/topology":2,"./lib/topojson/simplify":3,"./lib/topojson/clockwise":4,"./lib/topojson/filter":5,"./lib/topojson/prune":6,"./lib/topojson/bind":7}],8:[function(require,module,exports){
+},{"fs":1,"./lib/topojson/topology":2,"./lib/topojson/clockwise":3,"./lib/topojson/simplify":4,"./lib/topojson/filter":5,"./lib/topojson/bind":6,"./lib/topojson/prune":7}],8:[function(require,module,exports){
 var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
     importPanel = require('./import_panel'),
@@ -350,7 +350,7 @@ function hashChange() {
     }
 }
 
-},{"./json_panel":9,"./table_panel":10,"./import_panel":11,"./commit_panel":12,"./login_panel":13,"./share_panel":14,"./gist":15,"./github":16,"./map":17,"./source":18,"detect-json-indent":19}],17:[function(require,module,exports){
+},{"./json_panel":9,"./table_panel":10,"./import_panel":11,"./commit_panel":12,"./share_panel":13,"./login_panel":14,"./gist":15,"./github":16,"./map":17,"./source":18,"detect-json-indent":19}],17:[function(require,module,exports){
 module.exports = function() {
     var map = L.mapbox.map('map')
         .setView([20, 0], 2);
@@ -415,7 +415,7 @@ module.exports = function source() {
         if (clean.indexOf('/') !== -1) {
             return {
                 type: 'gist',
-                user: clean.split('/')[0],
+                login: clean.split('/')[0],
                 id: parseInt(clean.split('/')[1], 10)
             };
         } else {
@@ -505,68 +505,6 @@ function commitPanel(container, updates) {
 }
 
 },{"./github":16}],13:[function(require,module,exports){
-var source = require('./source'),
-    config = require('./config')(location.hostname);
-
-module.exports = loginPanel;
-
-function loginPanel(container) {
-}
-
-loginPanel.init = function(container) {
-    var sel = d3.select(container);
-    sel.attr('title', 'login to GitHub');
-    sel.on('click', login);
-
-    function login() {
-        location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
-    }
-
-    function logout() {
-        analytics.track('Logged Out');
-        localStorage.removeItem('github_token');
-        sel.attr('title', 'login to GitHub')
-            .classed('logged-in', true)
-            .on('click', login);
-    }
-
-    function killTokenUrl() {
-        if (location.href.indexOf('?code') !== -1) location.href = location.href.replace(/\?code=.*$/, '');
-    }
-
-    if (location.search && location.search.indexOf('?code') === 0) {
-        var code = location.search.replace('?code=', '');
-        d3.json(config.gatekeeper_url + '/authenticate/' + code)
-            .on('load', function(l) {
-                if (l.token) localStorage.github_token = l.token;
-                killTokenUrl();
-            })
-            .on('error', function() {
-                analytics.track('GitHub Account / Fail');
-                alert('Authentication with GitHub failed');
-            })
-            .get();
-    }
-
-    if (localStorage.github_token) {
-        d3.json('https://api.github.com/user')
-            .header('Authorization', 'token ' + localStorage.github_token)
-            .on('load', function(user) {
-                localStorage.github_user = JSON.stringify(user);
-                sel
-                    .classed('logged-in', true)
-                    .attr('title', 'logout')
-                    .on('click', logout);
-            })
-            .on('error', function() {
-                sel.classed('logged-in', false);
-                localStorage.removeItem('github_token');
-            })
-            .get();
-    }
-};
-
-},{"./source":18,"./config":21}],14:[function(require,module,exports){
 var gist = require('./gist');
 module.exports = sharePanel;
 
@@ -579,15 +517,17 @@ function sharePanel(container, updates) {
         gist.saveAsGist(JSON.stringify(data), function(err, resp) {
             if (err) return alert(err);
             var id = resp.id;
-            var wrap = pane.append('div').attr('class', 'pad share');
+            var wrap = container.append('div').attr('class', 'pad share');
             var thisurl = 'http://geojson.io/#' + id;
             location.hash = '#' + id;
 
-            wrap.append('label').text('Map Embed');
-            wrap.append('input').attr('class', 'horizontal')
+            wrap.append('div').append('label').text('Map Embed');
+            wrap.append('textarea')
+                .attr('class', 'full-width')
                 .attr('type', 'text')
                 .property('value', '<script src="https://gist.github.com/' + id + '.js"></script>')
-                .node().select();
+                .node()
+                .select();
 
             function saveAsFile(data) {
                 var content = JSON.stringify(data, null, 2);
@@ -638,7 +578,8 @@ function sharePanel(container, updates) {
             gist.append('span').attr('class', 'icon-link');
             gist.append('span').text(' source');
 
-            wrap.append('p').attr('class', 'intro-hint pad1')
+            wrap.append('p')
+                .attr('class', 'intro-hint pad1')
                 .html('<a target="_blank" href="/about.html#what-now">Need help about what to do with the files you download here?</a>');
         });
     }
@@ -816,7 +757,69 @@ function loadGitHub(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"./source":18}],19:[function(require,module,exports){
+},{"./source":18}],14:[function(require,module,exports){
+var source = require('./source'),
+    config = require('./config')(location.hostname);
+
+module.exports = loginPanel;
+
+function loginPanel(container) {
+}
+
+loginPanel.init = function(container) {
+    var sel = d3.select(container);
+    sel.attr('title', 'login to GitHub');
+    sel.on('click', login);
+
+    function login() {
+        location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
+    }
+
+    function logout() {
+        analytics.track('Logged Out');
+        localStorage.removeItem('github_token');
+        sel.attr('title', 'login to GitHub')
+            .classed('logged-in', true)
+            .on('click', login);
+    }
+
+    function killTokenUrl() {
+        if (location.href.indexOf('?code') !== -1) location.href = location.href.replace(/\?code=.*$/, '');
+    }
+
+    if (location.search && location.search.indexOf('?code') === 0) {
+        var code = location.search.replace('?code=', '');
+        d3.json(config.gatekeeper_url + '/authenticate/' + code)
+            .on('load', function(l) {
+                if (l.token) localStorage.github_token = l.token;
+                killTokenUrl();
+            })
+            .on('error', function() {
+                analytics.track('GitHub Account / Fail');
+                alert('Authentication with GitHub failed');
+            })
+            .get();
+    }
+
+    if (localStorage.github_token) {
+        d3.json('https://api.github.com/user')
+            .header('Authorization', 'token ' + localStorage.github_token)
+            .on('load', function(user) {
+                localStorage.github_user = JSON.stringify(user);
+                sel
+                    .classed('logged-in', true)
+                    .attr('title', 'logout')
+                    .on('click', logout);
+            })
+            .on('error', function() {
+                sel.classed('logged-in', false);
+                localStorage.removeItem('github_token');
+            })
+            .get();
+    }
+};
+
+},{"./source":18,"./config":21}],19:[function(require,module,exports){
 module.exports = function(_, def) {
     def = def === undefined ? 4 : def;
     if (_ === '{}') return '    ';
@@ -945,7 +948,9 @@ function importPanel(container, updates) {
                 } catch(err) {
                     alert('Invalid JSON file: ' + err);
                     analytics.track('Uploaded invalid JSON');
-                    Raven.captureException(err);
+                    Raven.captureException(err, {
+                        snippet: e.target.result.substring(0, 20)
+                    });
                     return;
                 }
             } else if (f.type === 'text/csv' || ext('.csv')) {
@@ -1524,7 +1529,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./type":24,"./stitch-poles":25,"./coordinate-systems":26,"./hashtable":27}],3:[function(require,module,exports){
+},{"./type":24,"./stitch-poles":25,"./hashtable":26,"./coordinate-systems":27}],4:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -1656,7 +1661,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./min-heap":28,"./coordinate-systems":26}],21:[function(require,module,exports){
+},{"./min-heap":28,"./coordinate-systems":27}],21:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -1670,7 +1675,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -1743,7 +1748,7 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"./type":24,"./coordinate-systems":26,"../../":"g070js"}],5:[function(require,module,exports){
+},{"./type":24,"./coordinate-systems":27,"../../":"g070js"}],5:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -1813,7 +1818,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"./type":24,"./prune":6,"./clockwise":4,"./coordinate-systems":26,"../../":"g070js"}],6:[function(require,module,exports){
+},{"./type":24,"./prune":7,"./clockwise":3,"./coordinate-systems":27,"../../":"g070js"}],7:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1872,7 +1877,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":24,"../../":"g070js"}],7:[function(require,module,exports){
+},{"./type":24,"../../":"g070js"}],6:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -2498,12 +2503,6 @@ module.exports = function(objects, options) {
 };
 
 },{"./type":24}],26:[function(require,module,exports){
-module.exports = {
-  cartesian: require("./cartesian"),
-  spherical: require("./spherical")
-};
-
-},{"./cartesian":30,"./spherical":31}],27:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -2558,7 +2557,13 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":32}],29:[function(require,module,exports){
+},{"./hash":30}],27:[function(require,module,exports){
+module.exports = {
+  cartesian: require("./cartesian"),
+  spherical: require("./spherical")
+};
+
+},{"./cartesian":31,"./spherical":32}],29:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -3686,6 +3691,16 @@ exports.relative = function(from, to) {
 
 })(require("__browserify_process"))
 },{"__browserify_process":34}],30:[function(require,module,exports){
+// Note: requires that size is a power of two!
+module.exports = function(size) {
+  var mask = size - 1;
+  return function(point) {
+    var key = (point[0] + 31 * point[1]) | 0;
+    return (key < 0 ? ~key : key) & mask;
+  };
+};
+
+},{}],31:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -3720,16 +3735,6 @@ function distance(x0, y0, x1, y1) {
 }
 
 },{}],32:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
-  };
-};
-
-},{}],31:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;

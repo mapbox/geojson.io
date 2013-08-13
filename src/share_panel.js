@@ -10,15 +10,17 @@ function sharePanel(container, updates) {
         gist.saveAsGist(JSON.stringify(data), function(err, resp) {
             if (err) return alert(err);
             var id = resp.id;
-            var wrap = pane.append('div').attr('class', 'pad share');
+            var wrap = container.append('div').attr('class', 'pad share');
             var thisurl = 'http://geojson.io/#' + id;
             location.hash = '#' + id;
 
-            wrap.append('label').text('Map Embed');
-            wrap.append('input').attr('class', 'horizontal')
+            wrap.append('div').append('label').text('Map Embed');
+            wrap.append('textarea')
+                .attr('class', 'full-width')
                 .attr('type', 'text')
                 .property('value', '<script src="https://gist.github.com/' + id + '.js"></script>')
-                .node().select();
+                .node()
+                .select();
 
             function saveAsFile(data) {
                 var content = JSON.stringify(data, null, 2);
@@ -69,7 +71,8 @@ function sharePanel(container, updates) {
             gist.append('span').attr('class', 'icon-link');
             gist.append('span').text(' source');
 
-            wrap.append('p').attr('class', 'intro-hint pad1')
+            wrap.append('p')
+                .attr('class', 'intro-hint pad1')
                 .html('<a target="_blank" href="/about.html#what-now">Need help about what to do with the files you download here?</a>');
         });
     }

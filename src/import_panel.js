@@ -71,7 +71,9 @@ function importPanel(container, updates) {
                 } catch(err) {
                     alert('Invalid JSON file: ' + err);
                     analytics.track('Uploaded invalid JSON');
-                    Raven.captureException(err);
+                    Raven.captureException(err, {
+                        snippet: e.target.result.substring(0, 20)
+                    });
                     return;
                 }
             } else if (f.type === 'text/csv' || ext('.csv')) {
