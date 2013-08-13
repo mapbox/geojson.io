@@ -80,7 +80,6 @@ input[type=text] {
     transition:all 200ms;
     -webkit-transition:all 200ms;
     border-left: 1px solid #d9d9d9;
-    border-bottom: 1px solid #d9d9d9;
     border-color: rgba(102,102,102,0.25);
 }
 
@@ -91,6 +90,7 @@ input[type=text] {
 .right.hidden {
     height:40px;
     bottom:auto;
+    border-bottom: 1px solid #d9d9d9;
 }
 
 p.intro {
