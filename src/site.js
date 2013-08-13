@@ -14,7 +14,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"fs":1,"./lib/topojson/topology":2,"./lib/topojson/clockwise":3,"./lib/topojson/simplify":4,"./lib/topojson/filter":5,"./lib/topojson/prune":6,"./lib/topojson/bind":7}],8:[function(require,module,exports){
+},{"fs":1,"./lib/topojson/topology":2,"./lib/topojson/simplify":3,"./lib/topojson/clockwise":4,"./lib/topojson/filter":5,"./lib/topojson/prune":6,"./lib/topojson/bind":7}],8:[function(require,module,exports){
 var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
     importPanel = require('./import_panel'),
@@ -185,8 +185,17 @@ function onPopupOpen(e) {
     sel.selectAll('.save')
         .on('click', saveFeature);
 
+    sel.selectAll('.delete-invert')
+        .on('click', removeFeature);
+
     function clickClose() {
         map.closePopup(e.popup);
+    }
+
+    function removeFeature() {
+        if (e.popup._source && drawnItems.hasLayer(e.popup._source)) {
+            drawnItems.removeLayer(e.popup._source);
+        }
     }
 
     function saveFeature() {
@@ -277,9 +286,15 @@ function showProperties(l) {
         table += '<tr><th><input type="text" value="' + key + '" /></th>' +
             '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
     }
-    if (table) l.bindPopup('<table class="marker-properties">' + table + '</table>' +
-        '<button class="save">save</button>' +
-        '<button class="cancel">cancel</button>');
+    l.bindPopup(L.popup({
+        maxWidth: 500,
+        maxHeight:300
+    }, l).setContent('<table class="marker-properties">' + table + '</table>' +
+        '<div class="clearfix col12 drop">' +
+            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
+            '<button class="cancel">cancel</button></div>' +
+            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
+        '</div>'));
 }
 
 function mapFile(gist) {
@@ -350,7 +365,7 @@ function hashChange() {
     }
 }
 
-},{"./json_panel":9,"./table_panel":10,"./import_panel":11,"./commit_panel":12,"./share_panel":13,"./login_panel":14,"./gist":15,"./github":16,"./map":17,"./source":18,"detect-json-indent":19}],17:[function(require,module,exports){
+},{"./json_panel":9,"./table_panel":10,"./import_panel":11,"./share_panel":12,"./commit_panel":13,"./login_panel":14,"./gist":15,"./github":16,"./map":17,"./source":18,"detect-json-indent":19}],17:[function(require,module,exports){
 module.exports = function() {
     var map = L.mapbox.map('map')
         .setView([20, 0], 2);
@@ -468,43 +483,6 @@ function jsonPanel(container, updates) {
 }
 
 },{"./validate":20}],12:[function(require,module,exports){
-var github = require('./github');
-
-module.exports = commitPanel;
-
-function commitPanel(container, updates) {
-    container.html('');
-
-    var wrap = container.append('div')
-        .attr('class', 'pad1 center');
-
-    var message = wrap.append('textarea')
-        .attr('placeholder', 'Commit message')
-        .attr('class', 'full-width');
-
-    var commitButton = wrap.append('button')
-        .text('Commit changes to GitHub')
-        .attr('class', 'semimajor');
-
-    updates.on('update_map.mode', function(data, layer, exportIndentationStyle) {
-        commitButton.on('click', function() {
-            github.saveAsGitHub(
-                JSON.stringify(data, null, exportIndentationStyle),
-                done,
-                message.property('value'));
-
-            function done(err, resp) {
-                if (err) return alert(err);
-                commitButton.text('Changes saved');
-                setTimeout(function() {
-                    commitButton.text('Commit changes to GitHub');
-                }, 1000);
-            }
-        });
-    });
-}
-
-},{"./github":16}],13:[function(require,module,exports){
 var gist = require('./gist');
 module.exports = sharePanel;
 
@@ -585,7 +563,44 @@ function sharePanel(container, updates) {
     }
 }
 
-},{"./gist":15}],14:[function(require,module,exports){
+},{"./gist":15}],13:[function(require,module,exports){
+var github = require('./github');
+
+module.exports = commitPanel;
+
+function commitPanel(container, updates) {
+    container.html('');
+
+    var wrap = container.append('div')
+        .attr('class', 'pad1 center');
+
+    var message = wrap.append('textarea')
+        .attr('placeholder', 'Commit message')
+        .attr('class', 'full-width');
+
+    var commitButton = wrap.append('button')
+        .text('Commit changes to GitHub')
+        .attr('class', 'semimajor');
+
+    updates.on('update_map.mode', function(data, layer, exportIndentationStyle) {
+        commitButton.on('click', function() {
+            github.saveAsGitHub(
+                JSON.stringify(data, null, exportIndentationStyle),
+                done,
+                message.property('value'));
+
+            function done(err, resp) {
+                if (err) return alert(err);
+                commitButton.text('Changes saved');
+                setTimeout(function() {
+                    commitButton.text('Commit changes to GitHub');
+                }, 1000);
+            }
+        });
+    });
+}
+
+},{"./github":16}],14:[function(require,module,exports){
 var source = require('./source'),
     config = require('./config')(location.hostname);
 
@@ -647,7 +662,7 @@ loginPanel.init = function(container) {
     }
 };
 
-},{"./source":18,"./config":21}],15:[function(require,module,exports){
+},{"./config":21,"./source":18}],15:[function(require,module,exports){
 var source = require('./source');
 
 module.exports.saveAsGist = saveAsGist;
@@ -1530,7 +1545,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./type":24,"./stitch-poles":25,"./hashtable":26,"./coordinate-systems":27}],4:[function(require,module,exports){
+},{"./type":24,"./stitch-poles":25,"./hashtable":26,"./coordinate-systems":27}],3:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -1676,7 +1691,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -1749,7 +1764,66 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"./coordinate-systems":27,"./type":24,"../../":"g070js"}],5:[function(require,module,exports){
+},{"./type":24,"./coordinate-systems":27,"../../":"g070js"}],6:[function(require,module,exports){
+var type = require("./type"),
+    topojson = require("../../");
+
+module.exports = function(topology, options) {
+  var verbose = false,
+      retained = [],
+      j = -1,
+      n = topology.arcs.length;
+
+  if (options)
+    "verbose" in options && (verbose = !!options["verbose"]);
+
+  var prune = type({
+    LineString: function(lineString) {
+      this.line(lineString.arcs);
+    },
+    MultiLineString: function(multiLineString) {
+      var arcs = multiLineString.arcs, i = -1, n = arcs.length;
+      while (++i < n) this.line(arcs[i]);
+    },
+    MultiPoint: noop,
+    MultiPolygon: function(multiPolygon) {
+      var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
+      while (++i < n) this.polygon(arcs[i]);
+    },
+    Point: noop,
+    Polygon: function(polygon) {
+      this.polygon(polygon.arcs);
+    },
+    line: function(arcs) {
+      var i = -1, n = arcs.length, arc, reversed;
+      while (++i < n) {
+        arc = arcs[i];
+        if (reversed = arc < 0) arc = ~arc;
+        if (retained[arc] == null) retained[arc] = ++j, arc = j;
+        else arc = retained[arc];
+        arcs[i] = reversed ? ~arc : arc;
+      }
+    },
+    polygon: function(arcs) {
+      var i = -1, n = arcs.length;
+      while (++i < n) this.line(arcs[i]);
+    }
+  });
+
+  for (var key in topology.objects) {
+    prune.object(topology.objects[key]);
+  }
+
+  if (verbose) console.warn("prune: retained " + (j + 1) + " / " + n + " arcs (" + Math.round((j + 1) / n * 100) + "%)");
+
+  var arcs = [];
+  retained.forEach(function(i, j) { arcs[i] = topology.arcs[j]; });
+  topology.arcs = arcs;
+};
+
+function noop() {}
+
+},{"./type":24,"../../":"g070js"}],5:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -1819,66 +1893,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"./type":24,"./prune":6,"./clockwise":3,"./coordinate-systems":27,"../../":"g070js"}],6:[function(require,module,exports){
-var type = require("./type"),
-    topojson = require("../../");
-
-module.exports = function(topology, options) {
-  var verbose = false,
-      retained = [],
-      j = -1,
-      n = topology.arcs.length;
-
-  if (options)
-    "verbose" in options && (verbose = !!options["verbose"]);
-
-  var prune = type({
-    LineString: function(lineString) {
-      this.line(lineString.arcs);
-    },
-    MultiLineString: function(multiLineString) {
-      var arcs = multiLineString.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    },
-    MultiPoint: noop,
-    MultiPolygon: function(multiPolygon) {
-      var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.polygon(arcs[i]);
-    },
-    Point: noop,
-    Polygon: function(polygon) {
-      this.polygon(polygon.arcs);
-    },
-    line: function(arcs) {
-      var i = -1, n = arcs.length, arc, reversed;
-      while (++i < n) {
-        arc = arcs[i];
-        if (reversed = arc < 0) arc = ~arc;
-        if (retained[arc] == null) retained[arc] = ++j, arc = j;
-        else arc = retained[arc];
-        arcs[i] = reversed ? ~arc : arc;
-      }
-    },
-    polygon: function(arcs) {
-      var i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    }
-  });
-
-  for (var key in topology.objects) {
-    prune.object(topology.objects[key]);
-  }
-
-  if (verbose) console.warn("prune: retained " + (j + 1) + " / " + n + " arcs (" + Math.round((j + 1) / n * 100) + "%)");
-
-  var arcs = [];
-  retained.forEach(function(i, j) { arcs[i] = topology.arcs[j]; });
-  topology.arcs = arcs;
-};
-
-function noop() {}
-
-},{"./type":24,"../../":"g070js"}],7:[function(require,module,exports){
+},{"./type":24,"./prune":6,"./clockwise":4,"./coordinate-systems":27,"../../":"g070js"}],7:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -3701,6 +3716,40 @@ module.exports = function(size) {
   };
 };
 
+},{}],31:[function(require,module,exports){
+exports.name = "cartesian";
+exports.formatDistance = formatDistance;
+exports.ringArea = ringArea;
+exports.absoluteArea = Math.abs;
+exports.triangleArea = triangleArea;
+exports.distance = distance;
+
+function formatDistance(d) {
+  return d.toString();
+}
+
+function ringArea(ring) {
+  var i = 0,
+      n = ring.length,
+      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
+  while (++i < n) {
+    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
+  }
+  return area * .5;
+}
+
+function triangleArea(triangle) {
+  return Math.abs(
+    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
+    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
+  );
+}
+
+function distance(x0, y0, x1, y1) {
+  var dx = x0 - x1, dy = y0 - y1;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
 },{}],32:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
@@ -3781,40 +3830,6 @@ function haversinDistance(x0, y0, x1, y1) {
 
 function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
-}
-
-},{}],31:[function(require,module,exports){
-exports.name = "cartesian";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = Math.abs;
-exports.triangleArea = triangleArea;
-exports.distance = distance;
-
-function formatDistance(d) {
-  return d.toString();
-}
-
-function ringArea(ring) {
-  var i = 0,
-      n = ring.length,
-      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
-  while (++i < n) {
-    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
-  }
-  return area * .5;
-}
-
-function triangleArea(triangle) {
-  return Math.abs(
-    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
-    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
-  );
-}
-
-function distance(x0, y0, x1, y1) {
-  var dx = x0 - x1, dy = y0 - y1;
-  return Math.sqrt(dx * dx + dy * dy);
 }
 
 },{}]},{},[8])

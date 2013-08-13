@@ -168,8 +168,17 @@ function onPopupOpen(e) {
     sel.selectAll('.save')
         .on('click', saveFeature);
 
+    sel.selectAll('.delete-invert')
+        .on('click', removeFeature);
+
     function clickClose() {
         map.closePopup(e.popup);
+    }
+
+    function removeFeature() {
+        if (e.popup._source && drawnItems.hasLayer(e.popup._source)) {
+            drawnItems.removeLayer(e.popup._source);
+        }
     }
 
     function saveFeature() {
@@ -260,9 +269,15 @@ function showProperties(l) {
         table += '<tr><th><input type="text" value="' + key + '" /></th>' +
             '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
     }
-    if (table) l.bindPopup('<table class="marker-properties">' + table + '</table>' +
-        '<button class="save">save</button>' +
-        '<button class="cancel">cancel</button>');
+    l.bindPopup(L.popup({
+        maxWidth: 500,
+        maxHeight:300
+    }, l).setContent('<table class="marker-properties">' + table + '</table>' +
+        '<div class="clearfix col12 drop">' +
+            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
+            '<button class="cancel">cancel</button></div>' +
+            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
+        '</div>'));
 }
 
 function mapFile(gist) {

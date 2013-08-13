@@ -46,6 +46,18 @@ input[type=text] {
     text-align:center;
 }
 
+.fr {
+    float:right;
+}
+
+.drop {
+    margin-top:10px;
+}
+
+.fl {
+    float:left;
+}
+
 #map {
     position:absolute;
     top:0;
@@ -140,6 +152,36 @@ p.intro-hint:hover {
     font-family: 'Open Sans', sans-serif;
 }
 
+.buttons-joined button {
+    border-right:0;
+}
+
+.buttons-joined button:first-child {
+    border-radius:3px 0 0 3px;
+}
+
+.buttons-joined button:last-child {
+    border-radius:0 3px 3px 0;
+    border-right:1px solid #f0f0f0;
+}
+
+button.delete-invert {
+    color:#882255;
+}
+
+.clear-buttons button {
+    background:transparent;
+    padding:0;
+    margin:0;
+    border:0;
+    opacity:0.6;
+}
+
+.clear-buttons button:hover {
+    opacity:1;
+    border:0;
+}
+
 button {
     font-family: 'Open Sans', sans-serif;
     cursor:pointer;
@@ -183,6 +225,11 @@ button.semimajor {
 
 button.semimajor:hover {
     border-bottom:2px solid red;
+}
+
+/* http://www.mollietaylor.com/2012/10/color-blindness-and-palette-choice.html */
+button.positive {
+    background:#a6d854;
 }
 
 .top .collapse-button {
@@ -291,11 +338,6 @@ button.semimajor:hover {
 .leaflet-popup-content-wrapper table input {
     width:120px;
     background:transparent;
-}
-
-.leaflet-popup-content-wrapper button {
-    padding:2px;
-    width:50%;
 }
 
 .scrollable {

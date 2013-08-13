@@ -1,14 +1,14 @@
 .marker-properties {
     border-collapse:collapse;
     font-size:11px;
-    border:1px solid #eee;
+    border:1px solid #ccc;
     margin:0;
 }
 
 .marker-properties td,
 .marker-properties th {
     white-space:nowrap;
-    border:1px solid #eee;
+    border:1px solid #ccc;
 }
 
 .marker-properties.display td,
