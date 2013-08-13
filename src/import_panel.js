@@ -78,8 +78,10 @@ function importPanel(container, updates) {
                     });
                     return;
                 }
-            } else if (f.type === 'text/csv' || ext('.csv')) {
-                csv2geojson.csv2geojson(e.target.result, function(err, result) {
+            } else if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
+                csv2geojson.csv2geojson(e.target.result, {
+                    delimiter: 'auto'
+                }, function(err, result) {
                     if (err) {
                         return handleGeocode(container.append('div'), e.target.result, updates);
                     } else {
@@ -164,7 +166,7 @@ function importPanel(container, updates) {
 
 function handleGeocode(container, text, updates) {
 
-    var list = csv2geojson.csv(text);
+    var list = csv2geojson.auto(text);
 
     var button = container.append('div')
         .attr('class', 'bucket-actions')
