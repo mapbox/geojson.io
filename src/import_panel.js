@@ -60,10 +60,8 @@ function importPanel(container, updates) {
                           'Please export and upload KML without NetworkLinks for optimal performance');
                 }
                 gj = toGeoJSON.kml(kmldom);
-                trackImport('KML', method);
             } else if (ext('.gpx')) {
                 gj = toGeoJSON.gpx(toDom(e.target.result));
-                trackImport('GPX', method);
             } else if (ext('.geojson') || ext('.json')) {
                 try {
                     gj = JSON.parse(e.target.result);
@@ -72,9 +70,6 @@ function importPanel(container, updates) {
                         var collection = { type: 'FeatureCollection', features: [] };
                         for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
                         gj = collection;
-                        trackImport('TopoJSON', method);
-                    } else {
-                        trackImport('GeoJSON', method);
                     }
                 } catch(err) {
                     alert('Invalid JSON file: ' + err);
@@ -89,7 +84,6 @@ function importPanel(container, updates) {
                         return handleGeocode(container.append('div'), e.target.result, updates);
                     } else {
                         gj = result;
-                        trackImport('CSV', method);
                     }
                 });
             } else {
