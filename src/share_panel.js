@@ -40,7 +40,6 @@ function sharePanel(container, updates) {
                     return 'https://www.facebook.com/sharer/sharer.php?u=' +
                         encodeURIComponent(thisurl);
                 }).on('click', function() {
-                    analytics.track('Shared via Facebook');
                 });
 
             facebook.append('span').attr('class', 'icon-facebook');
@@ -52,7 +51,6 @@ function sharePanel(container, updates) {
                     return 'https://twitter.com/intent/tweet?source=webclient&text=' +
                         encodeURIComponent('my map: ' + thisurl);
                 }).on('click', function() {
-                    analytics.track('Shared via Twitter');
                 });
 
             tweet.append('span').attr('class', 'icon-twitter');
@@ -60,7 +58,6 @@ function sharePanel(container, updates) {
 
             var dl = links.append('a').on('click', function() {
                 saveAsFile(data);
-                analytics.track('Saved as File');
             });
 
             dl.append('span').attr('class', 'icon-download');

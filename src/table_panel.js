@@ -40,6 +40,4 @@ function tablePanel(container, updates) {
                 );
         }
     });
-
-    analytics.track('Entered Table Mode');
 }

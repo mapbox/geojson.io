@@ -125,7 +125,6 @@ function drawCreated(e) {
     drawnItems.addLayer(e.layer);
     geoify(drawnItems);
     refresh();
-    analytics.track('Drew Feature');
 }
 
 function drawButtons(data) {
@@ -193,7 +192,6 @@ function onPopupOpen(e) {
         e.popup._source.feature.properties = obj;
         map.closePopup(e.popup);
         refresh();
-        analytics.track('Save Properties via Popup');
     }
 }
 
@@ -323,7 +321,6 @@ function hashChange() {
             window.location.hash = gist.urlHash(json).url;
         } catch(e) {
             alert('Invalid GeoJSON data in this Gist');
-            analytics.track('Invalid JSON in Gist');
         }
     }
 

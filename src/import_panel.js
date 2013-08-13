@@ -53,7 +53,6 @@ function importPanel(container, updates) {
             if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
                 var kmldom = toDom(e.target.result);
                 if (!kmldom) {
-                    analytics.track('Uploaded invalid KML, invalid XML');
                     return alert('Invalid KML file: not valid XML');
                 }
                 if (kmldom.getElementsByTagName('NetworkLink').length) {
@@ -79,8 +78,7 @@ function importPanel(container, updates) {
                     }
                 } catch(err) {
                     alert('Invalid JSON file: ' + err);
-                    analytics.track('Uploaded invalid JSON');
-                    Raven.captureException(err, {
+                    analytics.track('Uploaded invalid JSON', {
                         snippet: e.target.result.substring(0, 20)
                     });
                     return;
@@ -95,7 +93,10 @@ function importPanel(container, updates) {
                     }
                 });
             } else {
-                analytics.track('Failed to upload a file with type ' + f.type);
+                analytics.track('Invalid file', {
+                    type: f.type,
+                    snippet: e.target.result.substring(0, 20)
+                });
                 return alert('Sorry, that file type is not supported');
             }
             if (gj) {
@@ -169,8 +170,6 @@ function importPanel(container, updates) {
 
 function handleGeocode(container, text, updates) {
 
-    analytics.track('A CSV Required Geocoding');
-
     var list = csv2geojson.csv(text);
 
     var button = container.append('div')
@@ -234,7 +233,6 @@ function handleGeocode(container, text, updates) {
              button.attr('disabled', null)
                 .text('Geocode');
              button.on('click', function() {
-                 analytics.track('Ran a Geocode batch');
                  runGeocode(container, list, transformRow(fields), updates);
              });
              var se = showExample(fields);
