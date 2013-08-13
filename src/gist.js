@@ -65,14 +65,15 @@ function loadGist(id, callback) {
 }
 
 function urlHash(data) {
+    var login = (data.user && data.user.login) || 'anonymous';
     if (source() && source().id == data.id) {
         return {
-            url: '#gist:' + data.user.login + '/' + data.id,
+            url: '#gist:' + login + '/' + data.id,
             redirect: true
         };
     } else {
         return {
-            url: '#gist:' + data.user.login + '/' + data.id
+            url: '#gist:' + login + '/' + data.id
         };
     }
 }

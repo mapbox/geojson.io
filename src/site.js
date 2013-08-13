@@ -14,7 +14,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"fs":1,"./lib/topojson/topology":2,"./lib/topojson/clockwise":3,"./lib/topojson/simplify":4,"./lib/topojson/filter":5,"./lib/topojson/bind":6,"./lib/topojson/prune":7}],8:[function(require,module,exports){
+},{"fs":1,"./lib/topojson/topology":2,"./lib/topojson/clockwise":3,"./lib/topojson/simplify":4,"./lib/topojson/filter":5,"./lib/topojson/prune":6,"./lib/topojson/bind":7}],8:[function(require,module,exports){
 var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
     importPanel = require('./import_panel'),
@@ -585,7 +585,69 @@ function sharePanel(container, updates) {
     }
 }
 
-},{"./gist":15}],15:[function(require,module,exports){
+},{"./gist":15}],14:[function(require,module,exports){
+var source = require('./source'),
+    config = require('./config')(location.hostname);
+
+module.exports = loginPanel;
+
+function loginPanel(container) {
+}
+
+loginPanel.init = function(container) {
+    var sel = d3.select(container);
+    sel.attr('title', 'login to GitHub');
+    sel.on('click', login);
+
+    function login() {
+        location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
+    }
+
+    function logout() {
+        analytics.track('Logged Out');
+        localStorage.removeItem('github_token');
+        sel.attr('title', 'login to GitHub')
+            .classed('logged-in', true)
+            .on('click', login);
+    }
+
+    function killTokenUrl() {
+        if (location.href.indexOf('?code') !== -1) location.href = location.href.replace(/\?code=.*$/, '');
+    }
+
+    if (location.search && location.search.indexOf('?code') === 0) {
+        var code = location.search.replace('?code=', '');
+        d3.json(config.gatekeeper_url + '/authenticate/' + code)
+            .on('load', function(l) {
+                if (l.token) localStorage.github_token = l.token;
+                killTokenUrl();
+            })
+            .on('error', function() {
+                analytics.track('GitHub Account / Fail');
+                alert('Authentication with GitHub failed');
+            })
+            .get();
+    }
+
+    if (localStorage.github_token) {
+        d3.json('https://api.github.com/user')
+            .header('Authorization', 'token ' + localStorage.github_token)
+            .on('load', function(user) {
+                localStorage.github_user = JSON.stringify(user);
+                sel
+                    .classed('logged-in', true)
+                    .attr('title', 'logout')
+                    .on('click', logout);
+            })
+            .on('error', function() {
+                sel.classed('logged-in', false);
+                localStorage.removeItem('github_token');
+            })
+            .get();
+    }
+};
+
+},{"./source":18,"./config":21}],15:[function(require,module,exports){
 var source = require('./source');
 
 module.exports.saveAsGist = saveAsGist;
@@ -653,14 +715,15 @@ function loadGist(id, callback) {
 }
 
 function urlHash(data) {
+    var login = (data.user && data.user.login) || 'anonymous';
     if (source() && source().id == data.id) {
         return {
-            url: '#gist:' + data.user.login + '/' + data.id,
+            url: '#gist:' + login + '/' + data.id,
             redirect: true
         };
     } else {
         return {
-            url: '#gist:' + data.user.login + '/' + data.id
+            url: '#gist:' + login + '/' + data.id
         };
     }
 }
@@ -757,69 +820,7 @@ function loadGitHub(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"./source":18}],14:[function(require,module,exports){
-var source = require('./source'),
-    config = require('./config')(location.hostname);
-
-module.exports = loginPanel;
-
-function loginPanel(container) {
-}
-
-loginPanel.init = function(container) {
-    var sel = d3.select(container);
-    sel.attr('title', 'login to GitHub');
-    sel.on('click', login);
-
-    function login() {
-        location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
-    }
-
-    function logout() {
-        analytics.track('Logged Out');
-        localStorage.removeItem('github_token');
-        sel.attr('title', 'login to GitHub')
-            .classed('logged-in', true)
-            .on('click', login);
-    }
-
-    function killTokenUrl() {
-        if (location.href.indexOf('?code') !== -1) location.href = location.href.replace(/\?code=.*$/, '');
-    }
-
-    if (location.search && location.search.indexOf('?code') === 0) {
-        var code = location.search.replace('?code=', '');
-        d3.json(config.gatekeeper_url + '/authenticate/' + code)
-            .on('load', function(l) {
-                if (l.token) localStorage.github_token = l.token;
-                killTokenUrl();
-            })
-            .on('error', function() {
-                analytics.track('GitHub Account / Fail');
-                alert('Authentication with GitHub failed');
-            })
-            .get();
-    }
-
-    if (localStorage.github_token) {
-        d3.json('https://api.github.com/user')
-            .header('Authorization', 'token ' + localStorage.github_token)
-            .on('load', function(user) {
-                localStorage.github_user = JSON.stringify(user);
-                sel
-                    .classed('logged-in', true)
-                    .attr('title', 'logout')
-                    .on('click', logout);
-            })
-            .on('error', function() {
-                sel.classed('logged-in', false);
-                localStorage.removeItem('github_token');
-            })
-            .get();
-    }
-};
-
-},{"./source":18,"./config":21}],19:[function(require,module,exports){
+},{"./source":18}],19:[function(require,module,exports){
 module.exports = function(_, def) {
     def = def === undefined ? 4 : def;
     if (_ === '{}') return '    ';
@@ -1748,7 +1749,7 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"./type":24,"./coordinate-systems":27,"../../":"g070js"}],5:[function(require,module,exports){
+},{"./coordinate-systems":27,"./type":24,"../../":"g070js"}],5:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -1818,7 +1819,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"./type":24,"./prune":7,"./clockwise":3,"./coordinate-systems":27,"../../":"g070js"}],7:[function(require,module,exports){
+},{"./type":24,"./prune":6,"./clockwise":3,"./coordinate-systems":27,"../../":"g070js"}],6:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1877,7 +1878,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":24,"../../":"g070js"}],6:[function(require,module,exports){
+},{"./type":24,"../../":"g070js"}],7:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -3700,40 +3701,6 @@ module.exports = function(size) {
   };
 };
 
-},{}],31:[function(require,module,exports){
-exports.name = "cartesian";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = Math.abs;
-exports.triangleArea = triangleArea;
-exports.distance = distance;
-
-function formatDistance(d) {
-  return d.toString();
-}
-
-function ringArea(ring) {
-  var i = 0,
-      n = ring.length,
-      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
-  while (++i < n) {
-    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
-  }
-  return area * .5;
-}
-
-function triangleArea(triangle) {
-  return Math.abs(
-    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
-    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
-  );
-}
-
-function distance(x0, y0, x1, y1) {
-  var dx = x0 - x1, dy = y0 - y1;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
 },{}],32:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
@@ -3814,6 +3781,40 @@ function haversinDistance(x0, y0, x1, y1) {
 
 function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
+}
+
+},{}],31:[function(require,module,exports){
+exports.name = "cartesian";
+exports.formatDistance = formatDistance;
+exports.ringArea = ringArea;
+exports.absoluteArea = Math.abs;
+exports.triangleArea = triangleArea;
+exports.distance = distance;
+
+function formatDistance(d) {
+  return d.toString();
+}
+
+function ringArea(ring) {
+  var i = 0,
+      n = ring.length,
+      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
+  while (++i < n) {
+    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
+  }
+  return area * .5;
+}
+
+function triangleArea(triangle) {
+  return Math.abs(
+    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
+    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
+  );
+}
+
+function distance(x0, y0, x1, y1) {
+  var dx = x0 - x1, dy = y0 - y1;
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
 },{}]},{},[8])
