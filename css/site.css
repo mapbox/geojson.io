@@ -330,11 +330,6 @@ button.positive {
     box-shadow:none;
 }
 
-.leaflet-popup-content {
-    max-height: 200px;
-    overflow: auto;
-}
-
 .leaflet-popup-content-wrapper table input {
     width:120px;
     background:transparent;

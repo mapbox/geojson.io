@@ -1,3 +1,9 @@
+.marker-properties-limit {
+    overflow:auto;
+    max-height:150px;
+    max-width:500px;
+}
+
 .marker-properties {
     border-collapse:collapse;
     font-size:11px;
