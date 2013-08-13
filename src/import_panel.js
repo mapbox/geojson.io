@@ -51,7 +51,16 @@ function importPanel(container, updates) {
                 return filename.indexOf(_) !== -1;
             }
             if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-                gj = toGeoJSON.kml(toDom(e.target.result));
+                var kmldom = toDom(e.target.result);
+                if (!kmldom) {
+                    analytics.track('Uploaded invalid KML, invalid XML');
+                    return alert('Invalid KML file: not valid XML');
+                }
+                if (kmldom.getElementsByTagName('NetworkLink').length) {
+                    alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                          'Please export and upload KML without NetworkLinks for optimal performance');
+                }
+                gj = toGeoJSON.kml(kmldom);
                 trackImport('KML', method);
             } else if (ext('.gpx')) {
                 gj = toGeoJSON.gpx(toDom(e.target.result));
