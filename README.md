@@ -6,7 +6,7 @@ a fast, simple editor for map data.
 
 ## chrome extension
 
-![](https://chrome.google.com/webstore/detail/geojsonio/oibjgofbhldcajfamjganpeacipebckp)
+[![](http://farm8.staticflickr.com/7427/9501469193_1f3522dee8_o.png)](https://chrome.google.com/webstore/detail/geojsonio/oibjgofbhldcajfamjganpeacipebckp)
 
 [Using geojson.io with GitHub is better with the Chrome Extension](https://chrome.google.com/webstore/detail/geojsonio/oibjgofbhldcajfamjganpeacipebckp)
 
