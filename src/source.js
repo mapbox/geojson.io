@@ -1,7 +1,10 @@
-module.exports = function source() {
-    if (!location.hash) return null;
+'use strict';
 
-    var txt = location.hash.substring(1);
+module.exports = function source() {
+
+    if (!window.location.hash) return null;
+
+    var txt = window.location.hash.substring(1);
 
     if (!isNaN(parseInt(txt, 10))) {
         // legacy gist

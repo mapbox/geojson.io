@@ -2,6 +2,7 @@ var gist = require('./gist');
 module.exports = sharePanel;
 
 function sharePanel(container, updates) {
+    'use strict';
     container.html('');
 
     updates.on('update_map.mode', onUpdate);

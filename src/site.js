@@ -15,6 +15,8 @@ topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
 },{"fs":1,"./lib/topojson/topology":2,"./lib/topojson/simplify":3,"./lib/topojson/clockwise":4,"./lib/topojson/filter":5,"./lib/topojson/prune":6,"./lib/topojson/bind":7}],8:[function(require,module,exports){
+'use strict';
+
 var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
     importPanel = require('./import_panel'),
@@ -229,7 +231,7 @@ function saveChanges(message, callback) {
         gist.saveAsGist(content, function(err, resp) {
             if (err) return alert(err);
             var id = resp.id;
-            location.hash = gist.urlHash(resp).url;
+            window.location.hash = gist.urlHash(resp).url;
             if (callback) callback();
         });
     } else if (!source() || source().type == 'github') {
@@ -316,7 +318,7 @@ function hashChange() {
     var s = source();
 
     if (!s) {
-        location.hash = '';
+        window.location.hash = '';
         return;
     }
 
@@ -335,7 +337,7 @@ function hashChange() {
                 buttons.filter(function(d, i) { return i == 1; }).trigger('click');
             }
             silentHash = gist.urlHash(json).redirect;
-            location.hash = gist.urlHash(json).url;
+            window.location.hash = gist.urlHash(json).url;
         } catch(e) {
             alert('Invalid GeoJSON data in this Gist');
             analytics.track('Invalid JSON in Gist');
@@ -368,6 +370,8 @@ function hashChange() {
 }
 
 },{"./json_panel":9,"./table_panel":10,"./import_panel":11,"./commit_panel":12,"./share_panel":13,"./login_panel":14,"./gist":15,"./github":16,"./map":17,"./source":18,"detect-json-indent":19}],17:[function(require,module,exports){
+'use strict';
+
 module.exports = function() {
     var map = L.mapbox.map('map')
         .setView([20, 0], 2);
@@ -416,10 +420,13 @@ module.exports = function() {
 };
 
 },{}],18:[function(require,module,exports){
-module.exports = function source() {
-    if (!location.hash) return null;
+'use strict';
 
-    var txt = location.hash.substring(1);
+module.exports = function source() {
+
+    if (!window.location.hash) return null;
+
+    var txt = window.location.hash.substring(1);
 
     if (!isNaN(parseInt(txt, 10))) {
         // legacy gist
@@ -526,6 +533,7 @@ var gist = require('./gist');
 module.exports = sharePanel;
 
 function sharePanel(container, updates) {
+    'use strict';
     container.html('');
 
     updates.on('update_map.mode', onUpdate);
@@ -602,7 +610,158 @@ function sharePanel(container, updates) {
     }
 }
 
-},{"./gist":15}],16:[function(require,module,exports){
+},{"./gist":15}],14:[function(require,module,exports){
+'use strict';
+
+var source = require('./source'),
+    config = require('./config')(location.hostname);
+
+module.exports = loginPanel;
+
+function loginPanel(container) {
+}
+
+loginPanel.init = function(container) {
+    var sel = d3.select(container);
+    sel.attr('title', 'login to GitHub');
+    sel.on('click', login);
+
+    function login() {
+        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
+    }
+
+    function logout() {
+        analytics.track('Logged Out');
+        window.localStorage.removeItem('github_token');
+        sel.attr('title', 'login to GitHub')
+            .classed('logged-in', true)
+            .on('click', login);
+    }
+
+    function killTokenUrl() {
+        if (window.location.href.indexOf('?code') !== -1) {
+            window.location.href = window.location.href.replace(/\?code=.*$/, '');
+        }
+    }
+
+    if (window.location.search && window.location.search.indexOf('?code') === 0) {
+        var code = window.location.search.replace('?code=', '');
+        d3.json(config.gatekeeper_url + '/authenticate/' + code)
+            .on('load', function(l) {
+                if (l.token) window.localStorage.github_token = l.token;
+                killTokenUrl();
+            })
+            .on('error', function() {
+                analytics.track('GitHub Account / Fail');
+                alert('Authentication with GitHub failed');
+            })
+            .get();
+    }
+
+    if (localStorage.github_token) {
+        d3.json('https://api.github.com/user')
+            .header('Authorization', 'token ' + window.localStorage.github_token)
+            .on('load', function(user) {
+                localStorage.github_user = JSON.stringify(user);
+                sel
+                    .classed('logged-in', true)
+                    .attr('title', 'logout')
+                    .on('click', logout);
+            })
+            .on('error', function() {
+                sel.classed('logged-in', false);
+                window.localStorage.removeItem('github_token');
+            })
+            .get();
+    }
+};
+
+},{"./source":18,"./config":21}],15:[function(require,module,exports){
+'use strict';
+
+var source = require('./source');
+
+module.exports.saveAsGist = saveAsGist;
+module.exports.loadGist = loadGist;
+module.exports.urlHash = urlHash;
+
+function loggedin() {
+    return !!localStorage.github_token;
+}
+
+function authorize(xhr) {
+    return localStorage.github_token ?
+        xhr.header('Authorization', 'token ' + localStorage.github_token) :
+        xhr;
+}
+
+function saveAsGist(content, callback) {
+    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
+        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
+            'Please use a modern browser to enjoy the full featureset of geojson.io');
+    }
+
+    var user = localStorage.github_user ?
+        JSON.parse(localStorage.github_user) : {};
+
+    var endpoint,
+        method = 'POST';
+
+    if (loggedin() && (source() && source().id)) {
+        if (user && source().login == user.login) {
+            endpoint = 'https://api.github.com/gists/' + source().id;
+            method = 'PATCH';
+        } else {
+            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
+        }
+    } else {
+        endpoint = 'https://api.github.com/gists';
+    }
+
+    authorize(d3.json(endpoint))
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+        })
+        .send(method, JSON.stringify({
+            description: 'via:geojson.io',
+            public: true,
+            files: {
+                'map.geojson': {
+                    content: content
+                }
+            }
+        }));
+}
+
+function loadGist(id, callback) {
+    d3.json('https://api.github.com/gists/' + id)
+        .on('load', onLoad)
+        .on('error', onError).get();
+
+    function onLoad(json) { callback(null, json); }
+    function onError(err) { callback(err, null); }
+}
+
+function urlHash(data) {
+    var login = (data.user && data.user.login) || 'anonymous';
+    if (source() && source().id == data.id) {
+        return {
+            url: '#gist:' + login + '/' + data.id,
+            redirect: true
+        };
+    } else {
+        return {
+            url: '#gist:' + login + '/' + data.id
+        };
+    }
+}
+
+},{"./source":18}],16:[function(require,module,exports){
+'use strict';
+
 var source = require('./source');
 
 module.exports.saveAsGitHub = saveAsGitHub;
@@ -694,149 +853,6 @@ function loadGitHub(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"./source":18}],14:[function(require,module,exports){
-var source = require('./source'),
-    config = require('./config')(location.hostname);
-
-module.exports = loginPanel;
-
-function loginPanel(container) {
-}
-
-loginPanel.init = function(container) {
-    var sel = d3.select(container);
-    sel.attr('title', 'login to GitHub');
-    sel.on('click', login);
-
-    function login() {
-        location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
-    }
-
-    function logout() {
-        analytics.track('Logged Out');
-        localStorage.removeItem('github_token');
-        sel.attr('title', 'login to GitHub')
-            .classed('logged-in', true)
-            .on('click', login);
-    }
-
-    function killTokenUrl() {
-        if (location.href.indexOf('?code') !== -1) location.href = location.href.replace(/\?code=.*$/, '');
-    }
-
-    if (location.search && location.search.indexOf('?code') === 0) {
-        var code = location.search.replace('?code=', '');
-        d3.json(config.gatekeeper_url + '/authenticate/' + code)
-            .on('load', function(l) {
-                if (l.token) localStorage.github_token = l.token;
-                killTokenUrl();
-            })
-            .on('error', function() {
-                analytics.track('GitHub Account / Fail');
-                alert('Authentication with GitHub failed');
-            })
-            .get();
-    }
-
-    if (localStorage.github_token) {
-        d3.json('https://api.github.com/user')
-            .header('Authorization', 'token ' + localStorage.github_token)
-            .on('load', function(user) {
-                localStorage.github_user = JSON.stringify(user);
-                sel
-                    .classed('logged-in', true)
-                    .attr('title', 'logout')
-                    .on('click', logout);
-            })
-            .on('error', function() {
-                sel.classed('logged-in', false);
-                localStorage.removeItem('github_token');
-            })
-            .get();
-    }
-};
-
-},{"./source":18,"./config":21}],15:[function(require,module,exports){
-var source = require('./source');
-
-module.exports.saveAsGist = saveAsGist;
-module.exports.loadGist = loadGist;
-module.exports.urlHash = urlHash;
-
-function loggedin() {
-    return !!localStorage.github_token;
-}
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
-
-function saveAsGist(content, callback) {
-    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
-        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
-    }
-
-    var user = localStorage.github_user ?
-        JSON.parse(localStorage.github_user) : {};
-
-    var endpoint,
-        method = 'POST';
-
-    if (loggedin() && (source() && source().id)) {
-        if (user && source().login == user.login) {
-            endpoint = 'https://api.github.com/gists/' + source().id;
-            method = 'PATCH';
-        } else {
-            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
-        }
-    } else {
-        endpoint = 'https://api.github.com/gists';
-    }
-
-    authorize(d3.json(endpoint))
-        .on('load', function(data) {
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-        })
-        .send(method, JSON.stringify({
-            description: 'via:geojson.io',
-            public: true,
-            files: {
-                'map.geojson': {
-                    content: content
-                }
-            }
-        }));
-}
-
-function loadGist(id, callback) {
-    d3.json('https://api.github.com/gists/' + id)
-        .on('load', onLoad)
-        .on('error', onError).get();
-
-    function onLoad(json) { callback(null, json); }
-    function onError(err) { callback(err, null); }
-}
-
-function urlHash(data) {
-    var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id) {
-        return {
-            url: '#gist:' + login + '/' + data.id,
-            redirect: true
-        };
-    } else {
-        return {
-            url: '#gist:' + login + '/' + data.id
-        };
-    }
-}
-
 },{"./source":18}],19:[function(require,module,exports){
 module.exports = function(_, def) {
     def = def === undefined ? 4 : def;
@@ -847,7 +863,54 @@ module.exports = function(_, def) {
     return space[0];
 };
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
+'use strict';
+
+var metatable = require('d3-metatable')(d3);
+
+module.exports = tablePanel;
+
+function tablePanel(container, updates) {
+    container.html('');
+
+    updates.on('update_map.mode', function(data, layers) {
+        function findLayer(p) {
+            var layer;
+            layers.eachLayer(function(l) {
+                if (p == l.feature.properties) layer = l;
+            });
+            return layer;
+        }
+        if (!data.features.length) {
+            container.append('div')
+                .attr('class', 'blank-banner')
+                .text('no features');
+        } else {
+            var props = [];
+            layers.eachLayer(function(p) {
+                props.push(p.feature.properties);
+            });
+            container.html('');
+            container
+                .append('div')
+                .attr('class', 'pad1 scrollable')
+                .data([props])
+                .call(
+                    metatable()
+                        .on('change', function() {
+                            updates.update_refresh();
+                        })
+                        .on('rowfocus', function(d) {
+                            updates.focus_layer(findLayer(d));
+                        })
+                );
+        }
+    });
+
+    analytics.track('Entered Table Mode');
+}
+
+},{"d3-metatable":22}],11:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     detectIndentationStyle = require('detect-json-indent');
@@ -1169,52 +1232,139 @@ function runGeocode(container, list, transform, updates) {
     var task = geocode(list, transform, progress, done);
 }
 
-},{"topojson":"g070js","togeojson":22,"detect-json-indent":19}],10:[function(require,module,exports){
-var metatable = require('d3-metatable')(d3);
+},{"topojson":"g070js","detect-json-indent":19,"togeojson":23}],3:[function(require,module,exports){
+var minHeap = require("./min-heap"),
+    systems = require("./coordinate-systems");
 
-module.exports = tablePanel;
+module.exports = function(topology, options) {
+  var mininumArea = 0,
+      retainProportion,
+      verbose = false,
+      heap = minHeap(),
+      maxArea = 0,
+      system = null,
+      triangle,
+      N = 0,
+      M = 0;
 
-function tablePanel(container, updates) {
-    container.html('');
+  if (options)
+    "minimum-area" in options && (mininumArea = +options["minimum-area"]),
+    "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
+    "retain-proportion" in options && (retainProportion = +options["retain-proportion"]),
+    "verbose" in options && (verbose = !!options["verbose"]);
 
-    updates.on('update_map.mode', function(data, layers) {
-        function findLayer(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
-        if (!data.features.length) {
-            container.append('div')
-                .attr('class', 'blank-banner')
-                .text('no features');
-        } else {
-            var props = [];
-            layers.eachLayer(function(p) {
-                props.push(p.feature.properties);
-            });
-            container.html('');
-            container
-                .append('div')
-                .attr('class', 'pad1 scrollable')
-                .data([props])
-                .call(
-                    metatable()
-                        .on('change', function() {
-                            updates.update_refresh();
-                        })
-                        .on('rowfocus', function(d) {
-                            updates.focus_layer(findLayer(d));
-                        })
-                );
-        }
+  topology.arcs.forEach(function(arc) {
+    var triangles = [];
+
+    arc.forEach(transformAbsolute(topology.transform));
+
+    for (var i = 1, n = arc.length - 1; i < n; ++i) {
+      triangle = arc.slice(i - 1, i + 2);
+      triangle[1].area = system.triangleArea(triangle);
+      triangles.push(triangle);
+      heap.push(triangle);
+    }
+
+    // Always keep the arc endpoints!
+    arc[0].area = arc[n].area = Infinity;
+
+    N += n + 1;
+
+    for (var i = 0, n = triangles.length; i < n; ++i) {
+      triangle = triangles[i];
+      triangle.previous = triangles[i - 1];
+      triangle.next = triangles[i + 1];
+    }
+  });
+
+  while (triangle = heap.pop()) {
+    var previous = triangle.previous,
+        next = triangle.next;
+
+    // If the area of the current point is less than that of the previous point
+    // to be eliminated, use the latter's area instead. This ensures that the
+    // current point cannot be eliminated without eliminating previously-
+    // eliminated points.
+    if (triangle[1].area < maxArea) triangle[1].area = maxArea;
+    else maxArea = triangle[1].area;
+
+    if (previous) {
+      previous.next = next;
+      previous[2] = triangle[2];
+      update(previous);
+    }
+
+    if (next) {
+      next.previous = previous;
+      next[0] = triangle[0];
+      update(next);
+    }
+  }
+
+  if (retainProportion) {
+    var areas = [];
+    topology.arcs.forEach(function(arc) {
+      arc.forEach(function(point) {
+        areas.push(point.area);
+      });
     });
+    mininumArea = areas.sort(function(a, b) { return b - a; })[Math.ceil((N - 1) * retainProportion)];
+    if (verbose) console.warn("simplification: effective minimum area " + mininumArea.toPrecision(3));
+  }
 
-    analytics.track('Entered Table Mode');
+  topology.arcs = topology.arcs.map(function(arc) {
+    return arc.filter(function(point) {
+      return point.area >= mininumArea;
+    });
+  });
+
+  topology.arcs.forEach(function(arc) {
+    arc.forEach(transformRelative(topology.transform));
+    M += arc.length;
+  });
+
+  function update(triangle) {
+    heap.remove(triangle);
+    triangle[1].area = system.triangleArea(triangle);
+    heap.push(triangle);
+  }
+
+  if (verbose) console.warn("simplification: retained " + M + " / " + N + " points (" + Math.round((M / N) * 100) + "%)");
+
+  return topology;
+};
+
+function transformAbsolute(transform) {
+  var x0 = 0,
+      y0 = 0,
+      kx = transform.scale[0],
+      ky = transform.scale[1],
+      dx = transform.translate[0],
+      dy = transform.translate[1];
+  return function(point) {
+    point[0] = (x0 += point[0]) * kx + dx;
+    point[1] = (y0 += point[1]) * ky + dy;
+  };
 }
 
-},{"d3-metatable":23}],2:[function(require,module,exports){
+function transformRelative(transform) {
+  var x0 = 0,
+      y0 = 0,
+      kx = transform.scale[0],
+      ky = transform.scale[1],
+      dx = transform.translate[0],
+      dy = transform.translate[1];
+  return function(point) {
+    var x1 = (point[0] - dx) / kx | 0,
+        y1 = (point[1] - dy) / ky | 0;
+    point[0] = x1 - x0;
+    point[1] = y1 - y0;
+    x0 = x1;
+    y0 = y1;
+  };
+}
+
+},{"./min-heap":24,"./coordinate-systems":25}],2:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -1556,139 +1706,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./type":24,"./stitch-poles":25,"./hashtable":26,"./coordinate-systems":27}],3:[function(require,module,exports){
-var minHeap = require("./min-heap"),
-    systems = require("./coordinate-systems");
-
-module.exports = function(topology, options) {
-  var mininumArea = 0,
-      retainProportion,
-      verbose = false,
-      heap = minHeap(),
-      maxArea = 0,
-      system = null,
-      triangle,
-      N = 0,
-      M = 0;
-
-  if (options)
-    "minimum-area" in options && (mininumArea = +options["minimum-area"]),
-    "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
-    "retain-proportion" in options && (retainProportion = +options["retain-proportion"]),
-    "verbose" in options && (verbose = !!options["verbose"]);
-
-  topology.arcs.forEach(function(arc) {
-    var triangles = [];
-
-    arc.forEach(transformAbsolute(topology.transform));
-
-    for (var i = 1, n = arc.length - 1; i < n; ++i) {
-      triangle = arc.slice(i - 1, i + 2);
-      triangle[1].area = system.triangleArea(triangle);
-      triangles.push(triangle);
-      heap.push(triangle);
-    }
-
-    // Always keep the arc endpoints!
-    arc[0].area = arc[n].area = Infinity;
-
-    N += n + 1;
-
-    for (var i = 0, n = triangles.length; i < n; ++i) {
-      triangle = triangles[i];
-      triangle.previous = triangles[i - 1];
-      triangle.next = triangles[i + 1];
-    }
-  });
-
-  while (triangle = heap.pop()) {
-    var previous = triangle.previous,
-        next = triangle.next;
-
-    // If the area of the current point is less than that of the previous point
-    // to be eliminated, use the latter's area instead. This ensures that the
-    // current point cannot be eliminated without eliminating previously-
-    // eliminated points.
-    if (triangle[1].area < maxArea) triangle[1].area = maxArea;
-    else maxArea = triangle[1].area;
-
-    if (previous) {
-      previous.next = next;
-      previous[2] = triangle[2];
-      update(previous);
-    }
-
-    if (next) {
-      next.previous = previous;
-      next[0] = triangle[0];
-      update(next);
-    }
-  }
-
-  if (retainProportion) {
-    var areas = [];
-    topology.arcs.forEach(function(arc) {
-      arc.forEach(function(point) {
-        areas.push(point.area);
-      });
-    });
-    mininumArea = areas.sort(function(a, b) { return b - a; })[Math.ceil((N - 1) * retainProportion)];
-    if (verbose) console.warn("simplification: effective minimum area " + mininumArea.toPrecision(3));
-  }
-
-  topology.arcs = topology.arcs.map(function(arc) {
-    return arc.filter(function(point) {
-      return point.area >= mininumArea;
-    });
-  });
-
-  topology.arcs.forEach(function(arc) {
-    arc.forEach(transformRelative(topology.transform));
-    M += arc.length;
-  });
-
-  function update(triangle) {
-    heap.remove(triangle);
-    triangle[1].area = system.triangleArea(triangle);
-    heap.push(triangle);
-  }
-
-  if (verbose) console.warn("simplification: retained " + M + " / " + N + " points (" + Math.round((M / N) * 100) + "%)");
-
-  return topology;
-};
-
-function transformAbsolute(transform) {
-  var x0 = 0,
-      y0 = 0,
-      kx = transform.scale[0],
-      ky = transform.scale[1],
-      dx = transform.translate[0],
-      dy = transform.translate[1];
-  return function(point) {
-    point[0] = (x0 += point[0]) * kx + dx;
-    point[1] = (y0 += point[1]) * ky + dy;
-  };
-}
-
-function transformRelative(transform) {
-  var x0 = 0,
-      y0 = 0,
-      kx = transform.scale[0],
-      ky = transform.scale[1],
-      dx = transform.translate[0],
-      dy = transform.translate[1];
-  return function(point) {
-    var x1 = (point[0] - dx) / kx | 0,
-        y1 = (point[1] - dy) / ky | 0;
-    point[0] = x1 - x0;
-    point[1] = y1 - y0;
-    x0 = x1;
-    y0 = y1;
-  };
-}
-
-},{"./min-heap":28,"./coordinate-systems":27}],21:[function(require,module,exports){
+},{"./type":26,"./stitch-poles":27,"./hashtable":28,"./coordinate-systems":25}],21:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -1775,7 +1793,66 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"./type":24,"./coordinate-systems":27,"../../":"g070js"}],5:[function(require,module,exports){
+},{"./type":26,"./coordinate-systems":25,"../../":"g070js"}],6:[function(require,module,exports){
+var type = require("./type"),
+    topojson = require("../../");
+
+module.exports = function(topology, options) {
+  var verbose = false,
+      retained = [],
+      j = -1,
+      n = topology.arcs.length;
+
+  if (options)
+    "verbose" in options && (verbose = !!options["verbose"]);
+
+  var prune = type({
+    LineString: function(lineString) {
+      this.line(lineString.arcs);
+    },
+    MultiLineString: function(multiLineString) {
+      var arcs = multiLineString.arcs, i = -1, n = arcs.length;
+      while (++i < n) this.line(arcs[i]);
+    },
+    MultiPoint: noop,
+    MultiPolygon: function(multiPolygon) {
+      var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
+      while (++i < n) this.polygon(arcs[i]);
+    },
+    Point: noop,
+    Polygon: function(polygon) {
+      this.polygon(polygon.arcs);
+    },
+    line: function(arcs) {
+      var i = -1, n = arcs.length, arc, reversed;
+      while (++i < n) {
+        arc = arcs[i];
+        if (reversed = arc < 0) arc = ~arc;
+        if (retained[arc] == null) retained[arc] = ++j, arc = j;
+        else arc = retained[arc];
+        arcs[i] = reversed ? ~arc : arc;
+      }
+    },
+    polygon: function(arcs) {
+      var i = -1, n = arcs.length;
+      while (++i < n) this.line(arcs[i]);
+    }
+  });
+
+  for (var key in topology.objects) {
+    prune.object(topology.objects[key]);
+  }
+
+  if (verbose) console.warn("prune: retained " + (j + 1) + " / " + n + " arcs (" + Math.round((j + 1) / n * 100) + "%)");
+
+  var arcs = [];
+  retained.forEach(function(i, j) { arcs[i] = topology.arcs[j]; });
+  topology.arcs = arcs;
+};
+
+function noop() {}
+
+},{"./type":26,"../../":"g070js"}],5:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -1845,66 +1922,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"./type":24,"./prune":6,"./clockwise":4,"./coordinate-systems":27,"../../":"g070js"}],6:[function(require,module,exports){
-var type = require("./type"),
-    topojson = require("../../");
-
-module.exports = function(topology, options) {
-  var verbose = false,
-      retained = [],
-      j = -1,
-      n = topology.arcs.length;
-
-  if (options)
-    "verbose" in options && (verbose = !!options["verbose"]);
-
-  var prune = type({
-    LineString: function(lineString) {
-      this.line(lineString.arcs);
-    },
-    MultiLineString: function(multiLineString) {
-      var arcs = multiLineString.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    },
-    MultiPoint: noop,
-    MultiPolygon: function(multiPolygon) {
-      var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.polygon(arcs[i]);
-    },
-    Point: noop,
-    Polygon: function(polygon) {
-      this.polygon(polygon.arcs);
-    },
-    line: function(arcs) {
-      var i = -1, n = arcs.length, arc, reversed;
-      while (++i < n) {
-        arc = arcs[i];
-        if (reversed = arc < 0) arc = ~arc;
-        if (retained[arc] == null) retained[arc] = ++j, arc = j;
-        else arc = retained[arc];
-        arcs[i] = reversed ? ~arc : arc;
-      }
-    },
-    polygon: function(arcs) {
-      var i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    }
-  });
-
-  for (var key in topology.objects) {
-    prune.object(topology.objects[key]);
-  }
-
-  if (verbose) console.warn("prune: retained " + (j + 1) + " / " + n + " arcs (" + Math.round((j + 1) / n * 100) + "%)");
-
-  var arcs = [];
-  retained.forEach(function(i, j) { arcs[i] = topology.arcs[j]; });
-  topology.arcs = arcs;
-};
-
-function noop() {}
-
-},{"./type":24,"../../":"g070js"}],7:[function(require,module,exports){
+},{"./type":26,"./prune":6,"./clockwise":4,"./coordinate-systems":25,"../../":"g070js"}],7:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1934,7 +1952,123 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"./type":24,"../../":"g070js"}],22:[function(require,module,exports){
+},{"./type":26,"../../":"g070js"}],22:[function(require,module,exports){
+if (typeof module !== 'undefined') {
+    module.exports = function(d3) {
+        return metatable;
+    };
+}
+
+function metatable() {
+    var event = d3.dispatch('change', 'rowfocus');
+
+    function table(selection) {
+        selection.each(function(d) {
+            var sel = d3.select(this),
+                table;
+
+            var keyset = d3.set();
+            d.map(Object.keys).forEach(function(k) {
+                k.forEach(function(_) {
+                    keyset.add(_);
+                });
+            });
+
+            var keys = keyset.values();
+
+            bootstrap();
+            paint();
+
+            function bootstrap() {
+
+                var controls = sel.selectAll('.controls')
+                    .data([d])
+                    .enter()
+                    .append('div')
+                    .attr('class', 'controls');
+
+                var colbutton = controls.append('button')
+                    .on('click', function() {
+                        var name = prompt('column name');
+                        if (name) {
+                            keys.push(name);
+                            paint();
+                        }
+                    });
+                colbutton.append('span').attr('class', 'icon-plus');
+                colbutton.append('span').text(' new column');
+                var enter = sel.selectAll('table').data([d]).enter().append('table');
+                var thead = enter.append('thead');
+                var tbody = enter.append('tbody');
+                var tr = thead.append('tr');
+
+                table = sel.select('table');
+            }
+
+            function paint() {
+
+                var th = table
+                    .select('thead')
+                    .select('tr')
+                    .selectAll('th')
+                    .data(keys);
+
+                th.enter()
+                    .append('th')
+                    .text(String);
+
+                th.exit().remove();
+
+                var tr = table.select('tbody').selectAll('tr')
+                    .data(function(d) { return d; });
+
+                tr.enter()
+                    .append('tr');
+
+                tr.exit().remove();
+
+                var td = tr.selectAll('td')
+                    .data(keys);
+
+                td.enter()
+                    .append('td')
+                    .append('input')
+                    .attr('field', String);
+
+                function write(d) {
+                    d[d3.select(this).attr('field')] = this.value;
+                    event.change();
+                }
+
+                tr.selectAll('input')
+                    .data(function(d) {
+                        return d3.range(keys.length).map(function() { return d; });
+                    })
+                    .classed('disabled', function(d) {
+                        return d[d3.select(this).attr('field')] === undefined;
+                    })
+                    .property('value', function(d) {
+                        return d[d3.select(this).attr('field')] || '';
+                    })
+                    .on('keyup', write)
+                    .on('change', write)
+                    .on('click', function(d) {
+                        if (d[d3.select(this).attr('field')] === undefined) {
+                            d[d3.select(this).attr('field')] = '';
+                            paint();
+                        }
+                    })
+                    .on('focus', function(d) {
+                        event.rowfocus(d);
+                    });
+            }
+        });
+    }
+
+    return d3.rebind(table, event, 'on');
+}
+
+},{}],23:[function(require,module,exports){
 toGeoJSON = (function() {
     'use strict';
 
@@ -2147,123 +2281,9 @@ toGeoJSON = (function() {
 
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
-},{}],23:[function(require,module,exports){
-if (typeof module !== 'undefined') {
-    module.exports = function(d3) {
-        return metatable;
-    };
-}
-
-function metatable() {
-    var event = d3.dispatch('change', 'rowfocus');
-
-    function table(selection) {
-        selection.each(function(d) {
-            var sel = d3.select(this),
-                table;
-
-            var keyset = d3.set();
-            d.map(Object.keys).forEach(function(k) {
-                k.forEach(function(_) {
-                    keyset.add(_);
-                });
-            });
-
-            var keys = keyset.values();
-
-            bootstrap();
-            paint();
-
-            function bootstrap() {
-
-                var controls = sel.selectAll('.controls')
-                    .data([d])
-                    .enter()
-                    .append('div')
-                    .attr('class', 'controls');
-
-                var colbutton = controls.append('button')
-                    .on('click', function() {
-                        var name = prompt('column name');
-                        if (name) {
-                            keys.push(name);
-                            paint();
-                        }
-                    });
-                colbutton.append('span').attr('class', 'icon-plus');
-                colbutton.append('span').text(' new column');
-                var enter = sel.selectAll('table').data([d]).enter().append('table');
-                var thead = enter.append('thead');
-                var tbody = enter.append('tbody');
-                var tr = thead.append('tr');
-
-                table = sel.select('table');
-            }
-
-            function paint() {
-
-                var th = table
-                    .select('thead')
-                    .select('tr')
-                    .selectAll('th')
-                    .data(keys);
-
-                th.enter()
-                    .append('th')
-                    .text(String);
-
-                th.exit().remove();
-
-                var tr = table.select('tbody').selectAll('tr')
-                    .data(function(d) { return d; });
-
-                tr.enter()
-                    .append('tr');
-
-                tr.exit().remove();
-
-                var td = tr.selectAll('td')
-                    .data(keys);
-
-                td.enter()
-                    .append('td')
-                    .append('input')
-                    .attr('field', String);
-
-                function write(d) {
-                    d[d3.select(this).attr('field')] = this.value;
-                    event.change();
-                }
-
-                tr.selectAll('input')
-                    .data(function(d) {
-                        return d3.range(keys.length).map(function() { return d; });
-                    })
-                    .classed('disabled', function(d) {
-                        return d[d3.select(this).attr('field')] === undefined;
-                    })
-                    .property('value', function(d) {
-                        return d[d3.select(this).attr('field')] || '';
-                    })
-                    .on('keyup', write)
-                    .on('change', write)
-                    .on('click', function(d) {
-                        if (d[d3.select(this).attr('field')] === undefined) {
-                            d[d3.select(this).attr('field')] = '';
-                            paint();
-                        }
-                    })
-                    .on('focus', function(d) {
-                        event.rowfocus(d);
-                    });
-            }
-        });
-    }
-
-    return d3.rebind(table, event, 'on');
-}
-
 },{}],20:[function(require,module,exports){
+'use strict';
+
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -2320,6 +2340,72 @@ module.exports = function(callback) {
 };
 
 },{"geojsonhint":29}],24:[function(require,module,exports){
+module.exports = function() {
+  var heap = {},
+      array = [];
+
+  heap.push = function() {
+    for (var i = 0, n = arguments.length; i < n; ++i) {
+      var object = arguments[i];
+      up(object.index = array.push(object) - 1);
+    }
+    return array.length;
+  };
+
+  heap.pop = function() {
+    var removed = array[0],
+        object = array.pop();
+    if (array.length) {
+      array[object.index = 0] = object;
+      down(0);
+    }
+    return removed;
+  };
+
+  heap.remove = function(removed) {
+    var i = removed.index,
+        object = array.pop();
+    if (i !== array.length) {
+      array[object.index = i] = object;
+      (compare(object, removed) < 0 ? up : down)(i);
+    }
+    return i;
+  };
+
+  function up(i) {
+    var object = array[i];
+    while (i > 0) {
+      var up = ((i + 1) >> 1) - 1,
+          parent = array[up];
+      if (compare(object, parent) >= 0) break;
+      array[parent.index = i] = parent;
+      array[object.index = i = up] = object;
+    }
+  }
+
+  function down(i) {
+    var object = array[i];
+    while (true) {
+      var right = (i + 1) << 1,
+          left = right - 1,
+          down = i,
+          child = array[down];
+      if (left < array.length && compare(array[left], child) < 0) child = array[down = left];
+      if (right < array.length && compare(array[right], child) < 0) child = array[down = right];
+      if (down === i) break;
+      array[child.index = i] = child;
+      array[object.index = i = down] = object;
+    }
+  }
+
+  return heap;
+};
+
+function compare(a, b) {
+  return a[1].area - b[1].area;
+}
+
+},{}],26:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -2413,79 +2499,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],28:[function(require,module,exports){
-module.exports = function() {
-  var heap = {},
-      array = [];
-
-  heap.push = function() {
-    for (var i = 0, n = arguments.length; i < n; ++i) {
-      var object = arguments[i];
-      up(object.index = array.push(object) - 1);
-    }
-    return array.length;
-  };
-
-  heap.pop = function() {
-    var removed = array[0],
-        object = array.pop();
-    if (array.length) {
-      array[object.index = 0] = object;
-      down(0);
-    }
-    return removed;
-  };
-
-  heap.remove = function(removed) {
-    var i = removed.index,
-        object = array.pop();
-    if (i !== array.length) {
-      array[object.index = i] = object;
-      (compare(object, removed) < 0 ? up : down)(i);
-    }
-    return i;
-  };
-
-  function up(i) {
-    var object = array[i];
-    while (i > 0) {
-      var up = ((i + 1) >> 1) - 1,
-          parent = array[up];
-      if (compare(object, parent) >= 0) break;
-      array[parent.index = i] = parent;
-      array[object.index = i = up] = object;
-    }
-  }
-
-  function down(i) {
-    var object = array[i];
-    while (true) {
-      var right = (i + 1) << 1,
-          left = right - 1,
-          down = i,
-          child = array[down];
-      if (left < array.length && compare(array[left], child) < 0) child = array[down = left];
-      if (right < array.length && compare(array[right], child) < 0) child = array[down = right];
-      if (down === i) break;
-      array[child.index = i] = child;
-      array[object.index = i = down] = object;
-    }
-  }
-
-  return heap;
-};
-
-function compare(a, b) {
-  return a[1].area - b[1].area;
-}
-
 },{}],27:[function(require,module,exports){
-module.exports = {
-  cartesian: require("./cartesian"),
-  spherical: require("./spherical")
-};
-
-},{"./cartesian":30,"./spherical":31}],25:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -2535,7 +2549,13 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":24}],26:[function(require,module,exports){
+},{"./type":26}],25:[function(require,module,exports){
+module.exports = {
+  cartesian: require("./cartesian"),
+  spherical: require("./spherical")
+};
+
+},{"./cartesian":30,"./spherical":31}],28:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -3751,16 +3771,6 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],32:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
-  };
-};
-
 },{}],31:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
@@ -3842,6 +3852,16 @@ function haversinDistance(x0, y0, x1, y1) {
 function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
+
+},{}],32:[function(require,module,exports){
+// Note: requires that size is a power of two!
+module.exports = function(size) {
+  var mask = size - 1;
+  return function(point) {
+    var key = (point[0] + 31 * point[1]) | 0;
+    return (key < 0 ? ~key : key) & mask;
+  };
+};
 
 },{}]},{},[8])
 ;

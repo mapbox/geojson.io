@@ -1,3 +1,5 @@
+'use strict';
+
 var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
     importPanel = require('./import_panel'),
@@ -212,7 +214,7 @@ function saveChanges(message, callback) {
         gist.saveAsGist(content, function(err, resp) {
             if (err) return alert(err);
             var id = resp.id;
-            location.hash = gist.urlHash(resp).url;
+            window.location.hash = gist.urlHash(resp).url;
             if (callback) callback();
         });
     } else if (!source() || source().type == 'github') {
@@ -299,7 +301,7 @@ function hashChange() {
     var s = source();
 
     if (!s) {
-        location.hash = '';
+        window.location.hash = '';
         return;
     }
 
@@ -318,7 +320,7 @@ function hashChange() {
                 buttons.filter(function(d, i) { return i == 1; }).trigger('click');
             }
             silentHash = gist.urlHash(json).redirect;
-            location.hash = gist.urlHash(json).url;
+            window.location.hash = gist.urlHash(json).url;
         } catch(e) {
             alert('Invalid GeoJSON data in this Gist');
             analytics.track('Invalid JSON in Gist');

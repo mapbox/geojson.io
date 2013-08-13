@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = function() {
     var map = L.mapbox.map('map')
         .setView([20, 0], 2);

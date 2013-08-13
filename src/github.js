@@ -1,3 +1,5 @@
+'use strict';
+
 var source = require('./source');
 
 module.exports.saveAsGitHub = saveAsGitHub;
