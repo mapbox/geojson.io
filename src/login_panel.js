@@ -10,7 +10,6 @@ function loginPanel(container) {
 
 loginPanel.init = function(container) {
     var sel = d3.select(container);
-    sel.attr('title', 'login to GitHub');
     sel.on('click', login);
 
     function login() {
@@ -18,10 +17,8 @@ loginPanel.init = function(container) {
     }
 
     function logout() {
-        analytics.track('Logged Out');
         window.localStorage.removeItem('github_token');
-        sel.attr('title', 'login to GitHub')
-            .classed('logged-in', true)
+        sel.classed('logged-in', true)
             .on('click', login);
     }
 
@@ -39,7 +36,6 @@ loginPanel.init = function(container) {
                 killTokenUrl();
             })
             .on('error', function() {
-                analytics.track('GitHub Account / Fail');
                 alert('Authentication with GitHub failed');
             })
             .get();
@@ -51,12 +47,12 @@ loginPanel.init = function(container) {
             .on('load', function(user) {
                 localStorage.github_user = JSON.stringify(user);
                 sel
-                    .classed('logged-in', true)
-                    .attr('title', 'logout')
+                    .style('background-image', 'url(' + user.avatar_url + ')')
+                    .style('background-size', '40px 40px')
+                    .style('background-repeat', 'no-repeat')
                     .on('click', logout);
             })
             .on('error', function() {
-                sel.classed('logged-in', false);
                 window.localStorage.removeItem('github_token');
             })
             .get();

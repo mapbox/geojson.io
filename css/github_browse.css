@@ -1,0 +1,81 @@
+.browser .item {
+    transition:all 100ms ease-in;
+    margin-right:5px;
+    margin-bottom:5px;
+    -webkit-transition:all 100ms ease-in;
+    cursor:pointer;
+    border:1px solid #eee;
+    width:202px;
+    height:202px;
+    box-sizing:border-box;
+    position:relative;
+}
+
+.browser .item:hover {
+    border:1px solid #777;
+}
+
+.browser .item .overlay {
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    padding:5px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    overflow:hidden;
+    background:rgba(255, 255, 255, 0.1);
+    -webkit-transition:all 100ms ease-in;
+    transition:all 100ms ease-in;
+}
+
+.browser .item:hover .overlay {
+    background:rgba(255, 255, 255, 0.9);
+}
+
+.static-map-preview canvas,
+.static-map-preview img {
+    position:absolute;
+}
+
+/* repos */
+.miller-wrap {
+    overflow:auto;
+    white-space:nowrap;
+}
+
+.miller-column {
+    box-sizing:border-box;
+    width:200px;
+    border-right:1px solid #ccc;
+    float:left;
+}
+
+.miller-column .item {
+    border-bottom:1px solid #ccc;
+    -webkit-transition:all 100ms ease-in;
+    transition:all 100ms ease-in;
+    cursor:pointer;
+    line-height:35px;
+    font-size:12px;
+    padding:0 10px;
+    box-sizing:border-box;
+    height:35px;
+}
+
+.miller-column .item:last-child {
+    border:none;
+}
+
+.miller-column .item:hover,
+.miller-column .item.active {
+    background:#eee;
+}
+
+.miller-column .item.tree {
+    background:#F3FCFF;
+}
+
+.miller-outer {
+    overflow:auto;
+}

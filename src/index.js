@@ -13,6 +13,7 @@ var jsonPanel = require('./json_panel'),
     commitPanel = require('./commit_panel'),
     sharePanel = require('./share_panel'),
     loginPanel = require('./login_panel'),
+    fileBar = require('./file_bar'),
     gist = require('./gist'),
     github = require('./github'),
     map = require('./map')(),
@@ -62,30 +63,28 @@ updates.on('focus_layer', focusLayer)
 if (window.location.hash) hashChange();
 
 var buttonData = [{
-    icon: 'beaker',
-    title: ' Import',
-    behavior: importPanel
-}, {
     icon: 'table',
     title: ' Table',
     alt: 'Edit feature properties in a table',
     behavior: tablePanel
-}, {
-    icon: 'share-alt',
-    title: ' Share',
-    alt: 'Share via Facebook, Twitter, or a map embed',
-    behavior: sharePanel
 }, {
     icon: 'code',
     alt: 'JSON Source',
     behavior: jsonPanel
 }, {
     icon: 'github',
-    alt: 'Log in to GitHub',
+    alt: '',
     behavior: loginPanel
 }];
 
 drawButtons(buttonData);
+
+d3.select('.file-bar').call(fileBar(updates)
+    .on('import', clickImport));
+
+function clickImport() {
+    d3.select('.left-panel').call(importPanel(updates));
+}
 
 function clickCollapse() {
     d3.select('.right').classed('hidden',

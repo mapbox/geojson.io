@@ -1,10 +1,93 @@
-var topojson = require('topojson'),
+var verticalPanel = require('./vertical_panel'),
+    topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
+    githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
 
 module.exports = importPanel;
 
-function importPanel(container, updates) {
+function importPanel(updates) {
+
+    function panel(selection) {
+
+        var sources = [
+            {
+                title: 'Import',
+                alt: 'CSV, KML, GPX, and other filetypes',
+                icon: 'icon-cog'
+            },
+            {
+                title: 'GitHub',
+                alt: 'GeoJSON files in GitHub Repositories',
+                icon: 'icon-github',
+                action: clickGitHub
+            },
+            {
+                title: 'Gist',
+                alt: 'GeoJSON files in GitHub Gists',
+                icon: 'icon-github-alt',
+                action: clickGist
+            }
+        ];
+
+        selection
+            .classed('hide', false)
+            .html('');
+
+        var $sources = selection
+            .append('div')
+            .attr('class', 'import-sources col12 clearfix')
+            .selectAll('div.import-source')
+            .data(sources)
+            .enter()
+            .append('div')
+            .attr('class', 'import-source col4')
+            .append('div')
+            .attr('class', 'pad1 center clickable')
+            .attr('title', function(d) { return d.alt; })
+            .on('click', function(d) {
+                var that = this;
+                $sources.classed('active', function() {
+                    return that === this;
+                });
+                d.action.apply(this, d);
+            });
+
+        $sources.append('span')
+            .attr('class', function(d) {
+                return d.icon + ' icon-spaced';
+            });
+
+        $sources.append('span')
+            .attr('class', 'label')
+            .text(function(d) {
+                return d.title;
+            });
+
+        var $subpane = selection.append('div')
+            .attr('class', 'subpane');
+
+        function clickGitHub() {
+            $subpane
+                .html('')
+                .append('div')
+                .attr('class', 'repos')
+                .call(githubBrowser.gitHubBrowse(localStorage.github_token));
+        }
+
+        function clickGist() {
+            $subpane
+                .html('')
+                .append('div')
+                .attr('class', 'browser pad1')
+                .call(githubBrowser.gistBrowse(localStorage.github_token));
+        }
+    }
+
+    return panel;
+}
+
+function noop() {
     container.html('');
     var wrap = container.append('div').attr('class', 'pad1');
 
