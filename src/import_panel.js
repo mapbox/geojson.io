@@ -31,12 +31,19 @@ function importPanel(updates) {
         ];
 
         selection
+            .html('')
+            .style('top', window.innerHeight + 'px')
             .classed('hide', false)
-            .html('');
+            .transition()
+            .duration(500)
+            .style('top', '40px');
 
-        var $sources = selection
+        var $top = selection
             .append('div')
-            .attr('class', 'import-sources col12 clearfix')
+            .attr('class', 'import-sources col12 clearfix');
+
+       var $sources = $top.append('div')
+            .attr('class', 'col10')
             .selectAll('div.import-source')
             .data(sources)
             .enter()
@@ -62,6 +69,26 @@ function importPanel(updates) {
             .attr('class', 'label')
             .text(function(d) {
                 return d.title;
+            });
+
+        $top.append('div')
+            .attr('class', 'col2')
+            .append('div')
+            .attr('class', 'pad1 center clickable')
+            .on('click', function(d) {
+                selection
+                    .transition()
+                    .duration(500)
+                    .style('top', window.innerHeight + 'px')
+                    .each('end', function() {
+                        d3.select(this)
+                            .html('')
+                            .classed('hide', true);
+                    });
+            })
+            .append('span')
+            .attr('class', function(d) {
+                return 'icon-collapse-top';
             });
 
         var $subpane = selection.append('div')

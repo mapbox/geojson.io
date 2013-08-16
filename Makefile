@@ -1,3 +1,5 @@
+BROWSERIFY = node_modules/.bin/browserify
+
 all: lib/lib.js src/site.js src/site.mobile.js
 
 lib/lib.js: lib/%.js:
@@ -14,7 +16,7 @@ lib/lib.js: lib/%.js:
 		lib/codemirror/mode/javascript/javascript.js \
 		lib/FileSaver.min.js > lib/lib.js
 
-src/site.js: src/index.js
+src/site.js: src/index.js $(shell $(BROWSERIFY) --list src/index.js)
 	browserify -t brfs -r topojson src/index.js > src/site.js
 
 src/site.mobile.js: src/mobile.js
