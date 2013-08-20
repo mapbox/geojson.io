@@ -187,6 +187,7 @@ function onPopupOpen(e) {
         if (e.popup._source && drawnItems.hasLayer(e.popup._source)) {
             drawnItems.removeLayer(e.popup._source);
         }
+        updateFromMap();
     }
 
     function saveFeature() {
