@@ -116,7 +116,7 @@ function importPanel(container, updates) {
                 readFile(f, 'drag');
             })
             .on('dragenter.localgpx', over)
-            .on('dragexit.localgpx', exit)
+            .on('dragleave.localgpx', exit)
             .on('dragover.localgpx', over);
 
         var import_landing = wrap.append('div')
