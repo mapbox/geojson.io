@@ -1514,7 +1514,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":11,"./lib/topojson/clockwise":13,"./lib/topojson/filter":17,"./lib/topojson/prune":21,"./lib/topojson/simplify":22,"./lib/topojson/topology":25,"fs":1}],11:[function(require,module,exports){
+},{"./lib/topojson/bind":11,"./lib/topojson/clockwise":13,"./lib/topojson/filter":15,"./lib/topojson/prune":21,"./lib/topojson/simplify":22,"./lib/topojson/topology":25,"fs":1}],11:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1651,73 +1651,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":16,"./type":26}],14:[function(require,module,exports){
-'use strict';
-
-var geojsonhint = require('geojsonhint');
-
-module.exports = function(callback) {
-    return function(editor) {
-
-        var err = geojsonhint.hint(editor.getValue());
-        editor.clearGutter('error');
-
-        if (err instanceof Error) {
-            handleError(err.message);
-            return callback({
-                'class': 'icon-circle-blank',
-                title: 'invalid JSON',
-                message: 'invalid JSON'});
-        } else if (err.length) {
-            handleErrors(err);
-            return callback({
-                'class': 'icon-circle-blank',
-                title: 'invalid GeoJSON',
-                message: 'invalid GeoJSON'});
-        } else {
-            var gj = JSON.parse(editor.getValue());
-            try {
-                return callback(null, gj);
-            } catch(e) {
-                return callback({
-                    'class': 'icon-circle-blank',
-                    title: 'invalid GeoJSON',
-                    message: 'invalid GeoJSON'});
-            }
-        }
-
-        function handleError(msg) {
-            var match = msg.match(/line (\d+)/);
-            if (match && match[1]) {
-                editor.clearGutter('error');
-                editor.setGutterMarker(parseInt(match[1], 10) - 1, 'error', makeMarker(msg));
-            }
-        }
-
-        function handleErrors(errors) {
-            editor.clearGutter('error');
-            errors.forEach(function(e) {
-                editor.setGutterMarker(e.line, 'error', makeMarker(e.message));
-            });
-        }
-
-        function makeMarker(msg) {
-            return d3.select(document.createElement('div'))
-                .attr('class', 'error-marker')
-                .attr('message', msg).node();
-        }
-    };
-};
-
-},{"geojsonhint":6}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],16:[function(require,module,exports){
+},{"../../":"PBmiWO","./coordinate-systems":14,"./type":26}],14:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":12,"./spherical":23}],17:[function(require,module,exports){
+},{"./cartesian":12,"./spherical":23}],15:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -1787,7 +1727,75 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":13,"./coordinate-systems":16,"./prune":21,"./type":26}],18:[function(require,module,exports){
+},{"../../":"PBmiWO","./clockwise":13,"./coordinate-systems":14,"./prune":21,"./type":26}],16:[function(require,module,exports){
+'use strict';
+
+var source = require('./source'),
+    config = require('./config')(location.hostname);
+
+module.exports = loginPanel;
+
+function loginPanel(container) {
+}
+
+loginPanel.init = function(container) {
+    var sel = d3.select(container);
+    sel.attr('title', 'login to GitHub');
+    sel.on('click', login);
+
+    function login() {
+        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
+    }
+
+    function logout() {
+        analytics.track('Logged Out');
+        window.localStorage.removeItem('github_token');
+        sel.attr('title', 'login to GitHub')
+            .classed('logged-in', true)
+            .on('click', login);
+    }
+
+    function killTokenUrl() {
+        if (window.location.href.indexOf('?code') !== -1) {
+            window.location.href = window.location.href.replace(/\?code=.*$/, '');
+        }
+    }
+
+    if (window.location.search && window.location.search.indexOf('?code') === 0) {
+        var code = window.location.search.replace('?code=', '');
+        d3.json(config.gatekeeper_url + '/authenticate/' + code)
+            .on('load', function(l) {
+                if (l.token) window.localStorage.github_token = l.token;
+                killTokenUrl();
+            })
+            .on('error', function() {
+                analytics.track('GitHub Account / Fail');
+                alert('Authentication with GitHub failed');
+            })
+            .get();
+    }
+
+    if (localStorage.github_token) {
+        d3.json('https://api.github.com/user')
+            .header('Authorization', 'token ' + window.localStorage.github_token)
+            .on('load', function(user) {
+                localStorage.github_user = JSON.stringify(user);
+                sel
+                    .classed('logged-in', true)
+                    .attr('title', 'logout')
+                    .on('click', logout);
+            })
+            .on('error', function() {
+                sel.classed('logged-in', false);
+                window.localStorage.removeItem('github_token');
+            })
+            .get();
+    }
+};
+
+},{"./config":28,"./source":36}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}],18:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -2109,7 +2117,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":16,"./min-heap":20}],23:[function(require,module,exports){
+},{"./coordinate-systems":14,"./min-heap":20}],23:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -2583,7 +2591,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":16,"./hashtable":19,"./stitch-poles":24,"./type":26}],26:[function(require,module,exports){
+},{"./coordinate-systems":14,"./hashtable":19,"./stitch-poles":24,"./type":26}],26:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -2811,7 +2819,7 @@ function urlHash(data) {
     }
 }
 
-},{"./source":37}],30:[function(require,module,exports){
+},{"./source":36}],30:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
@@ -2903,7 +2911,7 @@ function loadGitHub(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"./source":37}],31:[function(require,module,exports){
+},{"./source":36}],31:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     detectIndentationStyle = require('detect-json-indent');
@@ -3579,7 +3587,7 @@ function hashChange() {
     }
 }
 
-},{"./commit_panel":27,"./gist":29,"./github":30,"./import_panel":31,"./json_panel":33,"./login_panel":34,"./map":35,"./share_panel":36,"./source":37,"./table_panel":38,"detect-json-indent":5,"is-mobile":8}],33:[function(require,module,exports){
+},{"./commit_panel":27,"./gist":29,"./github":30,"./import_panel":31,"./json_panel":33,"./login_panel":16,"./map":34,"./share_panel":35,"./source":36,"./table_panel":37,"detect-json-indent":5,"is-mobile":8}],33:[function(require,module,exports){
 var validate = require('./validate');
 
 module.exports = jsonPanel;
@@ -3614,73 +3622,7 @@ function jsonPanel(container, updates) {
     });
 }
 
-},{"./validate":14}],34:[function(require,module,exports){
-'use strict';
-
-var source = require('./source'),
-    config = require('./config')(location.hostname);
-
-module.exports = loginPanel;
-
-function loginPanel(container) {
-}
-
-loginPanel.init = function(container) {
-    var sel = d3.select(container);
-    sel.attr('title', 'login to GitHub');
-    sel.on('click', login);
-
-    function login() {
-        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
-    }
-
-    function logout() {
-        analytics.track('Logged Out');
-        window.localStorage.removeItem('github_token');
-        sel.attr('title', 'login to GitHub')
-            .classed('logged-in', true)
-            .on('click', login);
-    }
-
-    function killTokenUrl() {
-        if (window.location.href.indexOf('?code') !== -1) {
-            window.location.href = window.location.href.replace(/\?code=.*$/, '');
-        }
-    }
-
-    if (window.location.search && window.location.search.indexOf('?code') === 0) {
-        var code = window.location.search.replace('?code=', '');
-        d3.json(config.gatekeeper_url + '/authenticate/' + code)
-            .on('load', function(l) {
-                if (l.token) window.localStorage.github_token = l.token;
-                killTokenUrl();
-            })
-            .on('error', function() {
-                analytics.track('GitHub Account / Fail');
-                alert('Authentication with GitHub failed');
-            })
-            .get();
-    }
-
-    if (localStorage.github_token) {
-        d3.json('https://api.github.com/user')
-            .header('Authorization', 'token ' + window.localStorage.github_token)
-            .on('load', function(user) {
-                localStorage.github_user = JSON.stringify(user);
-                sel
-                    .classed('logged-in', true)
-                    .attr('title', 'logout')
-                    .on('click', logout);
-            })
-            .on('error', function() {
-                sel.classed('logged-in', false);
-                window.localStorage.removeItem('github_token');
-            })
-            .get();
-    }
-};
-
-},{"./config":28,"./source":37}],35:[function(require,module,exports){
+},{"./validate":38}],34:[function(require,module,exports){
 'use strict';
 
 module.exports = function() {
@@ -3730,7 +3672,7 @@ module.exports = function() {
     return map;
 };
 
-},{}],36:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var gist = require('./gist');
 module.exports = sharePanel;
 
@@ -3809,7 +3751,7 @@ function sharePanel(container, updates) {
     }
 }
 
-},{"./gist":29}],37:[function(require,module,exports){
+},{"./gist":29}],36:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -3846,7 +3788,7 @@ module.exports = function source() {
     }
 };
 
-},{}],38:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 var metatable = require('d3-metatable')(d3);
@@ -3891,5 +3833,63 @@ function tablePanel(container, updates) {
     });
 }
 
-},{"d3-metatable":4}]},{},[32])
+},{"d3-metatable":4}],38:[function(require,module,exports){
+'use strict';
+
+var geojsonhint = require('geojsonhint');
+
+module.exports = function(callback) {
+    return function(editor) {
+
+        var err = geojsonhint.hint(editor.getValue());
+        editor.clearGutter('error');
+
+        if (err instanceof Error) {
+            handleError(err.message);
+            return callback({
+                'class': 'icon-circle-blank',
+                title: 'invalid JSON',
+                message: 'invalid JSON'});
+        } else if (err.length) {
+            handleErrors(err);
+            return callback({
+                'class': 'icon-circle-blank',
+                title: 'invalid GeoJSON',
+                message: 'invalid GeoJSON'});
+        } else {
+            var gj = JSON.parse(editor.getValue());
+            try {
+                return callback(null, gj);
+            } catch(e) {
+                return callback({
+                    'class': 'icon-circle-blank',
+                    title: 'invalid GeoJSON',
+                    message: 'invalid GeoJSON'});
+            }
+        }
+
+        function handleError(msg) {
+            var match = msg.match(/line (\d+)/);
+            if (match && match[1]) {
+                editor.clearGutter('error');
+                editor.setGutterMarker(parseInt(match[1], 10) - 1, 'error', makeMarker(msg));
+            }
+        }
+
+        function handleErrors(errors) {
+            editor.clearGutter('error');
+            errors.forEach(function(e) {
+                editor.setGutterMarker(e.line, 'error', makeMarker(e.message));
+            });
+        }
+
+        function makeMarker(msg) {
+            return d3.select(document.createElement('div'))
+                .attr('class', 'error-marker')
+                .attr('message', msg).node();
+        }
+    };
+};
+
+},{"geojsonhint":6}]},{},[32])
 ;
