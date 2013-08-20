@@ -21,4 +21,6 @@ src/site.mobile.js: src/mobile.js
 	browserify -t brfs -r topojson src/mobile.js > src/site.mobile.js
 
 clean:
+	rm -r src/site.js
+	rm -r src/site.mobile.js
 	rm -r lib/lib.js
