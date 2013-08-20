@@ -270,18 +270,44 @@ function isEmpty(o) {
 }
 
 function showProperties(l) {
-    var properties = l.toGeoJSON().properties, table = '';
+    var properties = l.toGeoJSON().properties, table = '', info = '', coordinates, totalDist;
     if (isEmpty(properties)) properties = { '': '' };
 
     for (var key in properties) {
         table += '<tr><th><input type="text" value="' + key + '" /></th>' +
             '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
     }
+    
+    if (l['feature']) {
+      if (l.feature['geometry']) {
+        coordinates = l.feature.geometry.coordinates;
 
+        if (l.feature.geometry.type === 'LineString') {
+          totalDist = 0.0;
+
+          coordinates.forEach(function(coord, i) {
+            if (i < l.feature.geometry.coordinates.length - 1) {
+              var start = new L.LatLng(coord[0], coord[1]);
+              var end = new L.LatLng(coordinates[i + 1][0], coordinates[i + 1][1]);
+
+              totalDist += start.distanceTo(end);
+            }
+          });
+
+          info += '<div class="marker-info-distance">Length: ' + totalDist + ' m</div>';
+        }
+        else if (l.feature.geometry.type === 'Point') {
+          info += '<div class="marker-info-lat">Latitude: ' + coordinates[0] + '</div>';
+          info += '<div class="marker-info-lng">Longitude: ' + coordinates[1] + '</div>';
+        }
+      }
+    }
+    
     l.bindPopup(L.popup({
         maxWidth: 500,
         maxHeight: 400
     }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
+        '<div class="marker-info">' + info + ' </div>' +
         '<div class="clearfix col12 drop">' +
             '<div class="buttons-joined fl"><button class="save positive">save</button>' +
             '<button class="cancel">cancel</button></div>' +
