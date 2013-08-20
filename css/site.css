@@ -91,6 +91,7 @@ input[type=text] {
     height:40px;
     bottom:auto;
     border-bottom: 1px solid #d9d9d9;
+    overflow-y: hidden;
 }
 
 p.intro {
