@@ -1218,11 +1218,196 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
+<<<<<<< Updated upstream
 },{}],14:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
+=======
+},{}],17:[function(require,module,exports){
+'use strict';
+
+var source = require('./source');
+
+module.exports.saveAsGist = saveAsGist;
+module.exports.loadGist = loadGist;
+module.exports.urlHash = urlHash;
+
+function loggedin() {
+    return !!localStorage.github_token;
+}
+
+function authorize(xhr) {
+    return localStorage.github_token ?
+        xhr.header('Authorization', 'token ' + localStorage.github_token) :
+        xhr;
+}
+
+function saveAsGist(content, callback) {
+    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
+        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
+            'Please use a modern browser to enjoy the full featureset of geojson.io');
+    }
+
+    var user = localStorage.github_user ?
+        JSON.parse(localStorage.github_user) : {};
+
+    var endpoint,
+        method = 'POST';
+
+    if (loggedin() && (source() && source().id)) {
+        if (user && source().login == user.login) {
+            endpoint = 'https://api.github.com/gists/' + source().id;
+            method = 'PATCH';
+        } else {
+            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
+        }
+    } else {
+        endpoint = 'https://api.github.com/gists';
+    }
+
+    authorize(d3.json(endpoint))
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+        })
+        .send(method, JSON.stringify({
+            description: 'via:geojson.io',
+            public: true,
+            files: {
+                'map.geojson': {
+                    content: content
+                }
+            }
+        }));
+}
+
+function loadGist(id, callback) {
+    d3.json('https://api.github.com/gists/' + id)
+        .on('load', onLoad)
+        .on('error', onError).get();
+
+    function onLoad(json) { callback(null, json); }
+    function onError(err) { callback(err, null); }
+}
+
+function urlHash(data) {
+    var login = (data.user && data.user.login) || 'anonymous';
+    if (source() && source().id == data.id) {
+        return {
+            url: '#gist:' + login + '/' + data.id,
+            redirect: true
+        };
+    } else {
+        return {
+            url: '#gist:' + login + '/' + data.id
+        };
+    }
+}
+
+},{"./source":21}],18:[function(require,module,exports){
+'use strict';
+
+var source = require('./source');
+
+module.exports.saveAsGitHub = saveAsGitHub;
+module.exports.loadGitHub = loadGitHub;
+
+function authorize(xhr) {
+    return localStorage.github_token ?
+        xhr.header('Authorization', 'token ' + localStorage.github_token) :
+        xhr;
+}
+
+function githubFileUrl() {
+    var pts = parseGitHubId(source().id);
+    return 'https://api.github.com/repos/' + pts.user +
+            '/' + pts.repo +
+            '/contents/' + pts.file + '?ref=' + pts.branch;
+}
+
+function saveAsGitHub(content, callback, message) {
+    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
+        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
+            'Please use a modern browser to enjoy the full featureset of geojson.io');
+    }
+
+    if (!localStorage.github_token) {
+        return alert('You need to log in with GitHub to commit changes');
+    }
+
+    var commitMessage = message || prompt('Commit message:');
+    if (!commitMessage) return;
+
+    loadGitHub(source().id, function(err, file) {
+        if (err) {
+            return alert('Failed to load file before saving');
+        }
+        authorize(d3.json(githubFileUrl()))
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(err) {
+                callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+            })
+            .send('PUT', JSON.stringify({
+                message: commitMessage,
+                sha: file.sha,
+                branch: file.branch,
+                content: Base64.toBase64(content)
+            }));
+    });
+}
+
+function encode(content) {
+  // Encode UTF-8 to Base64
+  // https://developer.mozilla.org/en-US/docs/Web/API/window.btoa#Unicode_Strings
+  return window.btoa(window.encodeURIComponent(content));
+}
+
+function decode(content) {
+  // Decode Base64 to UTF-8
+  // https://developer.mozilla.org/en-US/docs/Web/API/window.btoa#Unicode_Strings
+  return window.decodeURIComponent(window.atob(content));
+}
+
+function parseGitHubId(id) {
+    var parts = id.split('/');
+    return {
+        user: parts[0],
+        repo: parts[1],
+        mode: parts[2],
+        branch: parts[3],
+        file: parts.slice(4).join('/')
+    };
+}
+
+function loadGitHub(id, callback) {
+    var pts = parseGitHubId(id);
+    d3.json('https://api.github.com/repos/' + pts.user +
+        '/' + pts.repo +
+        '/contents/' + pts.file + '?ref=' + pts.branch)
+        .on('load', onLoad)
+        .on('error', onError)
+        .header('Accept', 'application/vnd.github.raw').get();
+
+    function onLoad(file) {
+        if (file.type !== 'file') return;
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+},{"./source":21}],19:[function(require,module,exports){
+'use strict';
+
+module.exports = function() {
+    var map = L.mapbox.map('map')
+        .setView([20, 0], 2);
+>>>>>>> Stashed changes
 
 },{"./cartesian":18,"./spherical":19}],16:[function(require,module,exports){
 var type = require("./type");
@@ -1274,8 +1459,16 @@ module.exports = function(objects, options) {
   }
 };
 
+<<<<<<< Updated upstream
 },{"./type":15}],17:[function(require,module,exports){
 var hasher = require("./hash");
+=======
+},{}],20:[function(require,module,exports){
+var map = require('./map')();
+var gist = require('./gist'),
+    source = require('./source'),
+    github = require('./github');
+>>>>>>> Stashed changes
 
 module.exports = function(size) {
   var hashtable = new Array(size = 1 << Math.ceil(Math.log(size) / Math.LN2)),
@@ -1391,6 +1584,7 @@ function formatDistance(radians) {
       + " (" + (radians * 180 / Math.PI).toPrecision(3) + "°)";
 }
 
+<<<<<<< Updated upstream
 function ringArea(ring) {
   if (!ring.length) return 0;
   var area = 0,
@@ -1400,6 +1594,10 @@ function ringArea(ring) {
       λ0 = λ,
       cosφ0 = Math.cos(φ),
       sinφ0 = Math.sin(φ);
+=======
+},{"./gist":17,"./github":18,"./map":19,"./source":21}],21:[function(require,module,exports){
+'use strict';
+>>>>>>> Stashed changes
 
   for (var i = 1, n = ring.length; i < n; ++i) {
     p = ring[i], λ = p[0] * radians, φ = p[1] * radians / 2 + π_4;
@@ -1455,5 +1653,11 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
+<<<<<<< Updated upstream
 },{}]},{},[1])
+=======
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}]},{},[20])
+>>>>>>> Stashed changes
 ;

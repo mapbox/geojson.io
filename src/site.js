@@ -2895,6 +2895,7 @@ var typeDefaults = {
     while (++i < n) this.line(coordinates[i]);
   },
 
+<<<<<<< Updated upstream
   MultiPoint: function(multiPoint) {
     var coordinates = multiPoint.coordinates, i = -1, n = coordinates.length;
     while (++i < n) this.point(coordinates[i]);
@@ -2904,6 +2905,16 @@ var typeDefaults = {
     var coordinates = multiPolygon.coordinates, i = -1, n = coordinates.length;
     while (++i < n) this.polygon(coordinates[i]);
   },
+=======
+function loadGitHub(id, callback) {
+    var pts = parseGitHubId(id);
+    d3.json('https://api.github.com/repos/' + pts.user +
+        '/' + pts.repo +
+        '/contents/' + pts.file + '?ref=' + pts.branch)
+        .on('load', onLoad)
+        .on('error', onError)
+        .header('Accept', 'application/vnd.github.raw').get();
+>>>>>>> Stashed changes
 
   Point: function(point) {
     this.point(point.coordinates);
@@ -4001,6 +4012,7 @@ _currentRules:function _currentRules() {
         }
     },
 
+<<<<<<< Updated upstream
 // return the currently active lexer condition state; when an index argument is provided it produces the N-th previous condition state, if available
 topState:function topState(n) {
         n = this.conditionStack.length - 1 - Math.abs(n || 0);
@@ -4008,6 +4020,26 @@ topState:function topState(n) {
             return this.conditionStack[n];
         } else {
             return "INITIAL";
+=======
+        try {
+            var json = JSON.parse(file);
+            exportIndentationStyle = detectIndentationStyle(file);
+            var first = !drawnItems.getBounds().isValid();
+            updates.update_editor(json);
+            if (first && drawnItems.getBounds().isValid()) {
+                map.fitBounds(drawnItems.getBounds());
+                buttons.filter(function(d, i) { return i == 1; }).trigger('click');
+            }
+            drawButtons(buttonData.concat([{
+                icon: 'save',
+                title: ' Commit',
+                behavior: commitPanel
+            }]).filter(function(d) {
+                return d.icon !== 'share-alt';
+            }));
+        } catch(e) {
+            alert('Loading a file from GitHub failed');
+>>>>>>> Stashed changes
         }
     },
 
