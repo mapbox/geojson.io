@@ -2723,8 +2723,8 @@ module.exports = function(hostname) {
             '62c753fd0faf18392d85' :
             'bb7bbe70bd1f707125bc',
         gatekeeper_url: production ?
-            'http://geojsonioauth.herokuapp.com' :
-            'http://localhostauth.herokuapp.com'
+            'https://geojsonioauth.herokuapp.com' :
+            'https://localhostauth.herokuapp.com'
     };
 };
 
