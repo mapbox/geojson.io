@@ -1115,9 +1115,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],18:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
@@ -1200,7 +1198,7 @@ function urlHash(data) {
     }
 }
 
-},{"./source":22}],19:[function(require,module,exports){
+},{"./source":21}],18:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
@@ -1292,7 +1290,7 @@ function loadGitHub(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"./source":22}],20:[function(require,module,exports){
+},{"./source":21}],19:[function(require,module,exports){
 'use strict';
 
 module.exports = function() {
@@ -1342,7 +1340,7 @@ module.exports = function() {
     return map;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var map = require('./map')();
 var gist = require('./gist'),
     source = require('./source'),
@@ -1418,7 +1416,7 @@ function showProperties(l) {
     }, l).setContent('<table class="marker-properties display">' + table + '</table>'));
 }
 
-},{"./gist":18,"./github":19,"./map":20,"./source":22}],22:[function(require,module,exports){
+},{"./gist":17,"./github":18,"./map":19,"./source":21}],21:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -1455,5 +1453,7 @@ module.exports = function source() {
     }
 };
 
-},{}]},{},[21])
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}]},{},[20])
 ;
