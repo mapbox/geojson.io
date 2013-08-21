@@ -13,7 +13,8 @@
     "togeojson": "~0.3.0",
     "csv2geojson": "~3.3.0",
     "detect-json-indent": "0.0.0",
-    "is-mobile": "~0.1.0"
+    "is-mobile": "~0.1.0",
+    "browserify": "~2.28.0"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",
