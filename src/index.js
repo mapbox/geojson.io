@@ -53,7 +53,7 @@ map.on('draw:edited', updateFromMap)
 d3.select('.collapse-button').on('click', clickCollapse);
 
 var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh',
-    'focus_layer', 'zoom_extent');
+    'focus_layer', 'zoom_extent', 'sourcechange');
 
 updates.on('focus_layer', focusLayer)
     .on('update_editor', loadToMap)
@@ -325,7 +325,12 @@ function hashChange() {
             }
             silentHash = gist.urlHash(json).redirect;
             window.location.hash = gist.urlHash(json).url;
+            updates.sourcechange({
+                type: 'gist',
+                name: '#' + json.id
+            });
         } catch(e) {
+            console.log(e);
             alert('Invalid GeoJSON data in this Gist');
         }
     }
@@ -349,6 +354,10 @@ function hashChange() {
             }]).filter(function(d) {
                 return d.icon !== 'share-alt';
             }));
+            updates.sourcechange({
+                type: 'github',
+                name: source().id
+            });
         } catch(e) {
             alert('Loading a file from GitHub failed');
         }

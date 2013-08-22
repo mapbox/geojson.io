@@ -14,6 +14,16 @@ function fileBar(updates) {
             .attr('class', 'filename')
             .text('unsaved');
 
+        updates.on('sourcechange', onSource);
+
+        function onSource(d) {
+            filename.text(d.name);
+            filetype.attr('class', function() {
+                if (d.type == 'github') return 'icon-github';
+                if (d.type == 'gist') return 'icon-github-alt';
+            });
+        }
+
         var actions = [
             {
                 title: 'Save'
