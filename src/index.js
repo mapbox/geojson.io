@@ -9,7 +9,7 @@ if (mobile()) {
 
 var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
-    importPanel = require('./import_panel'),
+    sourcePanel = require('./source_panel'),
     commitPanel = require('./commit_panel'),
     sharePanel = require('./share_panel'),
     loginPanel = require('./login_panel'),
@@ -80,10 +80,10 @@ var buttonData = [{
 drawButtons(buttonData);
 
 d3.select('.file-bar').call(fileBar(updates)
-    .on('import', clickImport));
+    .on('source', clickSource));
 
-function clickImport() {
-    d3.select('.left-panel').call(importPanel(updates));
+function clickSource() {
+    d3.select('.left-panel').call(sourcePanel(updates));
 }
 
 function clickCollapse() {

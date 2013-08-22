@@ -1,7 +1,7 @@
 module.exports = fileBar;
 
 function fileBar(updates) {
-    var event = d3.dispatch('import');
+    var event = d3.dispatch('source');
 
     function bar(selection) {
         var name = selection.append('div')
@@ -21,7 +21,7 @@ function fileBar(updates) {
             {
                 title: 'Open',
                 action: function() {
-                    event.import();
+                    event.source();
                 }
             }
         ];

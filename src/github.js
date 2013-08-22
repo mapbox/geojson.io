@@ -52,18 +52,6 @@ function saveAsGitHub(content, callback, message) {
     });
 }
 
-function encode(content) {
-  // Encode UTF-8 to Base64
-  // https://developer.mozilla.org/en-US/docs/Web/API/window.btoa#Unicode_Strings
-  return window.btoa(window.encodeURIComponent(content));
-}
-
-function decode(content) {
-  // Decode Base64 to UTF-8
-  // https://developer.mozilla.org/en-US/docs/Web/API/window.btoa#Unicode_Strings
-  return window.decodeURIComponent(window.atob(content));
-}
-
 function parseGitHubId(id) {
     var parts = id.split('/');
     return {
