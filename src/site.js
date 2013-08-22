@@ -14,7 +14,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"fs":1,"./lib/topojson/topology":2,"./lib/topojson/simplify":3,"./lib/topojson/clockwise":4,"./lib/topojson/filter":5,"./lib/topojson/prune":6,"./lib/topojson/bind":7}],8:[function(require,module,exports){
+},{"fs":1,"./lib/topojson/topology":2,"./lib/topojson/clockwise":3,"./lib/topojson/simplify":4,"./lib/topojson/filter":5,"./lib/topojson/prune":6,"./lib/topojson/bind":7}],8:[function(require,module,exports){
 'use strict';
 
 var mobile = require('is-mobile');
@@ -372,7 +372,7 @@ function hashChange() {
     }
 }
 
-},{"./json_panel":9,"./source_panel":10,"./table_panel":11,"./commit_panel":12,"./share_panel":13,"./login_panel":14,"./file_bar":15,"./gist":16,"./github":17,"./map":18,"./source":19,"is-mobile":20,"detect-json-indent":21}],15:[function(require,module,exports){
+},{"./json_panel":9,"./table_panel":10,"./source_panel":11,"./commit_panel":12,"./share_panel":13,"./login_panel":14,"./file_bar":15,"./gist":16,"./github":17,"./map":18,"./source":19,"is-mobile":20,"detect-json-indent":21}],15:[function(require,module,exports){
 module.exports = fileBar;
 
 function fileBar(updates) {
@@ -718,90 +718,7 @@ loginPanel.init = function(container) {
     }
 };
 
-},{"./source":19,"./config":23}],16:[function(require,module,exports){
-'use strict';
-
-var source = require('./source');
-
-module.exports.saveAsGist = saveAsGist;
-module.exports.loadGist = loadGist;
-module.exports.urlHash = urlHash;
-
-function loggedin() {
-    return !!localStorage.github_token;
-}
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
-
-function saveAsGist(content, callback) {
-    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
-        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
-    }
-
-    var user = localStorage.github_user ?
-        JSON.parse(localStorage.github_user) : {};
-
-    var endpoint,
-        method = 'POST';
-
-    if (loggedin() && (source() && source().id)) {
-        if (user && source().login == user.login) {
-            endpoint = 'https://api.github.com/gists/' + source().id;
-            method = 'PATCH';
-        } else {
-            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
-        }
-    } else {
-        endpoint = 'https://api.github.com/gists';
-    }
-
-    authorize(d3.json(endpoint))
-        .on('load', function(data) {
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-        })
-        .send(method, JSON.stringify({
-            description: 'via:geojson.io',
-            public: true,
-            files: {
-                'map.geojson': {
-                    content: content
-                }
-            }
-        }));
-}
-
-function loadGist(id, callback) {
-    d3.json('https://api.github.com/gists/' + id)
-        .on('load', onLoad)
-        .on('error', onError).get();
-
-    function onLoad(json) { callback(null, json); }
-    function onError(err) { callback(err, null); }
-}
-
-function urlHash(data) {
-    var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id) {
-        return {
-            url: '#gist:' + login + '/' + data.id,
-            redirect: true
-        };
-    } else {
-        return {
-            url: '#gist:' + login + '/' + data.id
-        };
-    }
-}
-
-},{"./source":19}],17:[function(require,module,exports){
+},{"./source":19,"./config":23}],17:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
@@ -888,6 +805,89 @@ function urlHash(d) {
     };
 }
 
+},{"./source":19}],16:[function(require,module,exports){
+'use strict';
+
+var source = require('./source');
+
+module.exports.saveAsGist = saveAsGist;
+module.exports.loadGist = loadGist;
+module.exports.urlHash = urlHash;
+
+function loggedin() {
+    return !!localStorage.github_token;
+}
+
+function authorize(xhr) {
+    return localStorage.github_token ?
+        xhr.header('Authorization', 'token ' + localStorage.github_token) :
+        xhr;
+}
+
+function saveAsGist(content, callback) {
+    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
+        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
+            'Please use a modern browser to enjoy the full featureset of geojson.io');
+    }
+
+    var user = localStorage.github_user ?
+        JSON.parse(localStorage.github_user) : {};
+
+    var endpoint,
+        method = 'POST';
+
+    if (loggedin() && (source() && source().id)) {
+        if (user && source().login == user.login) {
+            endpoint = 'https://api.github.com/gists/' + source().id;
+            method = 'PATCH';
+        } else {
+            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
+        }
+    } else {
+        endpoint = 'https://api.github.com/gists';
+    }
+
+    authorize(d3.json(endpoint))
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+        })
+        .send(method, JSON.stringify({
+            description: 'via:geojson.io',
+            public: true,
+            files: {
+                'map.geojson': {
+                    content: content
+                }
+            }
+        }));
+}
+
+function loadGist(id, callback) {
+    d3.json('https://api.github.com/gists/' + id)
+        .on('load', onLoad)
+        .on('error', onError).get();
+
+    function onLoad(json) { callback(null, json); }
+    function onError(err) { callback(err, null); }
+}
+
+function urlHash(data) {
+    var login = (data.user && data.user.login) || 'anonymous';
+    if (source() && source().id == data.id) {
+        return {
+            url: '#gist:' + login + '/' + data.id,
+            redirect: true
+        };
+    } else {
+        return {
+            url: '#gist:' + login + '/' + data.id
+        };
+    }
+}
+
 },{"./source":19}],20:[function(require,module,exports){
 module.exports = isMobile;
 
@@ -909,6 +909,51 @@ module.exports = function(_, def) {
 };
 
 },{}],10:[function(require,module,exports){
+'use strict';
+
+var metatable = require('d3-metatable')(d3);
+
+module.exports = tablePanel;
+
+function tablePanel(container, updates) {
+    container.html('');
+
+    updates.on('update_map.mode', function(data, layers) {
+        function findLayer(p) {
+            var layer;
+            layers.eachLayer(function(l) {
+                if (p == l.feature.properties) layer = l;
+            });
+            return layer;
+        }
+        if (!data.features.length) {
+            container.append('div')
+                .attr('class', 'blank-banner')
+                .text('no features');
+        } else {
+            var props = [];
+            layers.eachLayer(function(p) {
+                props.push(p.feature.properties);
+            });
+            container.html('');
+            container
+                .append('div')
+                .attr('class', 'pad1 scrollable')
+                .data([props])
+                .call(
+                    metatable()
+                        .on('change', function() {
+                            updates.update_refresh();
+                        })
+                        .on('rowfocus', function(d) {
+                            updates.focus_layer(findLayer(d));
+                        })
+                );
+        }
+    });
+}
+
+},{"d3-metatable":24}],11:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     gist = require('./gist'),
     github = require('./github'),
@@ -1031,7 +1076,7 @@ function sourcePanel(updates) {
             $subpane
                 .html('')
                 .append('div')
-                .call(importPanel);
+                .call(importPanel, updates);
 
             function gitHubChosen(d) {
                 var hash = github.urlHash(d);
@@ -1060,52 +1105,7 @@ function sourcePanel(updates) {
     return panel;
 }
 
-},{"./vertical_panel":24,"./gist":16,"./github":17,"./import_panel":25,"github-file-browser":26,"detect-json-indent":21}],11:[function(require,module,exports){
-'use strict';
-
-var metatable = require('d3-metatable')(d3);
-
-module.exports = tablePanel;
-
-function tablePanel(container, updates) {
-    container.html('');
-
-    updates.on('update_map.mode', function(data, layers) {
-        function findLayer(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
-        if (!data.features.length) {
-            container.append('div')
-                .attr('class', 'blank-banner')
-                .text('no features');
-        } else {
-            var props = [];
-            layers.eachLayer(function(p) {
-                props.push(p.feature.properties);
-            });
-            container.html('');
-            container
-                .append('div')
-                .attr('class', 'pad1 scrollable')
-                .data([props])
-                .call(
-                    metatable()
-                        .on('change', function() {
-                            updates.update_refresh();
-                        })
-                        .on('rowfocus', function(d) {
-                            updates.focus_layer(findLayer(d));
-                        })
-                );
-        }
-    });
-}
-
-},{"d3-metatable":27}],2:[function(require,module,exports){
+},{"./vertical_panel":25,"./gist":16,"./github":17,"./import_panel":26,"github-file-browser":27,"detect-json-indent":21}],2:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -1447,7 +1447,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./type":28,"./stitch-poles":29,"./hashtable":30,"./coordinate-systems":31}],3:[function(require,module,exports){
+},{"./type":28,"./stitch-poles":29,"./hashtable":30,"./coordinate-systems":31}],4:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -1579,7 +1579,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./min-heap":32,"./coordinate-systems":31}],24:[function(require,module,exports){
+},{"./min-heap":32,"./coordinate-systems":31}],25:[function(require,module,exports){
 module.exports = verticalPanel;
 
 function verticalPanel(updates) {
@@ -1627,7 +1627,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -1770,7 +1770,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"./type":28,"./prune":6,"./clockwise":4,"./coordinate-systems":31,"../../":"g070js"}],6:[function(require,module,exports){
+},{"./type":28,"./prune":6,"./clockwise":3,"./coordinate-systems":31,"../../":"g070js"}],6:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1859,7 +1859,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"./type":28,"../../":"g070js"}],27:[function(require,module,exports){
+},{"./type":28,"../../":"g070js"}],24:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -2033,7 +2033,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":33}],25:[function(require,module,exports){
+},{"geojsonhint":33}],26:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
@@ -2042,7 +2042,7 @@ var verticalPanel = require('./vertical_panel'),
 
 module.exports = importPanel;
 
-function importPanel(container) {
+function importPanel(container, updates) {
     container.html('');
     var wrap = container.append('div').attr('class', 'pad1');
 
@@ -2078,61 +2078,84 @@ function importPanel(container) {
         analytics.track('Imported Data / ' + method + ' / ' + format);
     }
 
+    function detectType(f) {
+        var filename = f.name ? f.name.toLowerCase() : '';
+        function ext(_) {
+            return filename.indexOf(_) !== -1;
+        }
+        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
+            return 'kml';
+        }
+        if (ext('.gpx')) return 'gpx';
+        if (ext('.geojson') || ext('.json')) return 'geojson';
+        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
+            return 'dsv';
+        }
+    }
+
     function readFile(f, method) {
         var reader = new FileReader();
         import_landing.classed('dragover', false);
 
         reader.onload = function(e) {
             var gj;
-            var filename = f.name ? f.name.toLowerCase() : '';
-            function ext(_) {
-                return filename.indexOf(_) !== -1;
-            }
-            if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-                var kmldom = toDom(e.target.result);
-                if (!kmldom) {
-                    return alert('Invalid KML file: not valid XML');
-                }
-                if (kmldom.getElementsByTagName('NetworkLink').length) {
-                    alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                          'Please export and upload KML without NetworkLinks for optimal performance');
-                }
-                gj = toGeoJSON.kml(kmldom);
-            } else if (ext('.gpx')) {
-                gj = toGeoJSON.gpx(toDom(e.target.result));
-            } else if (ext('.geojson') || ext('.json')) {
-                try {
-                    gj = JSON.parse(e.target.result);
-                    exportIndentationStyle = detectIndentationStyle(e.target.result);
-                    if (gj && gj.type === 'Topology' && gj.objects) {
-                        var collection = { type: 'FeatureCollection', features: [] };
-                        for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                        gj = collection;
+            
+            switch (detectType(f)) {
+
+                case 'kml': 
+                    var kmldom = toDom(e.target.result);
+                    if (!kmldom) {
+                        return alert('Invalid KML file: not valid XML');
                     }
-                } catch(err) {
-                    alert('Invalid JSON file: ' + err);
-                    analytics.track('Uploaded invalid JSON', {
+                    if (kmldom.getElementsByTagName('NetworkLink').length) {
+                        alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                              'Please export and upload KML without NetworkLinks for optimal performance');
+                    }
+                    gj = toGeoJSON.kml(kmldom);
+                    break;
+
+                case 'gpx':
+                    gj = toGeoJSON.gpx(toDom(e.target.result));
+                    break;
+
+                case 'geojson':
+                    try {
+                        gj = JSON.parse(e.target.result);
+                        exportIndentationStyle = detectIndentationStyle(e.target.result);
+                        if (gj && gj.type === 'Topology' && gj.objects) {
+                            var collection = { type: 'FeatureCollection', features: [] };
+                            for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
+                            gj = collection;
+                        }
+                    } catch(err) {
+                        alert('Invalid JSON file: ' + err);
+                        analytics.track('Uploaded invalid JSON', {
+                            snippet: e.target.result.substring(0, 20)
+                        });
+                        return;
+                    }
+                    break;
+
+                case 'dsv':
+                    csv2geojson.csv2geojson(e.target.result, {
+                        delimiter: 'auto'
+                    }, function(err, result) {
+                        if (err) {
+                            return handleGeocode(container.append('div'), e.target.result, updates);
+                        } else {
+                            gj = result;
+                        }
+                    });
+                    break;
+
+                default:
+                    analytics.track('Invalid file', {
+                        type: f.type,
                         snippet: e.target.result.substring(0, 20)
                     });
-                    return;
-                }
-            } else if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
-                csv2geojson.csv2geojson(e.target.result, {
-                    delimiter: 'auto'
-                }, function(err, result) {
-                    if (err) {
-                        return handleGeocode(container.append('div'), e.target.result, updates);
-                    } else {
-                        gj = result;
-                    }
-                });
-            } else {
-                analytics.track('Invalid file', {
-                    type: f.type,
-                    snippet: e.target.result.substring(0, 20)
-                });
-                return alert('Sorry, that file type is not supported');
+                    return alert('Sorry, that file type is not supported');
             }
+
             if (gj) {
                 updates.update_editor(gj);
                 updates.zoom_extent();
@@ -2351,7 +2374,7 @@ function runGeocode(container, list, transform, updates) {
     var task = geocode(list, transform, progress, done);
 }
 
-},{"topojson":"g070js","./gist":16,"./vertical_panel":24,"togeojson":34,"detect-json-indent":21}],26:[function(require,module,exports){
+},{"topojson":"g070js","./vertical_panel":25,"./gist":16,"togeojson":34,"detect-json-indent":21}],27:[function(require,module,exports){
 module.exports = function(d3) {
     var preview = require('static-map-preview')(d3, 'tmcw.map-dsejpecw');
 
@@ -2794,7 +2817,57 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],30:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
+var type = require("./type");
+
+module.exports = function(objects, options) {
+  var verbose = false;
+
+  if (options)
+    "verbose" in options && (verbose = !!options["verbose"]);
+
+  var stitch = type({
+    polygon: function(polygon) {
+      for (var j = 0, m = polygon.length; j < m; ++j) {
+        var line = polygon[j],
+            i = -1,
+            n = line.length,
+            a = false,
+            b = false,
+            c = false,
+            i0 = -1;
+        for (i = 0; i < n; ++i) {
+          var point = line[i],
+              antimeridian = Math.abs(Math.abs(point[0]) - 180) < 1e-2,
+              polar = Math.abs(Math.abs(point[1]) - 90) < 1e-2;
+          if (antimeridian || polar) {
+            if (!(a || b || c)) i0 = i;
+            if (antimeridian) {
+              if (a) c = true;
+              else a = true;
+            }
+            if (polar) b = true;
+          }
+          if (!antimeridian && !polar || i === n - 1) {
+            if (a && b && c) {
+              if (verbose) console.warn("stitch: removed polar cut [" + line[i0] + "] … [" + line[i] + "]");
+              line.splice(i0, i - i0);
+              n -= i - i0;
+              i = i0;
+            }
+            a = b = c = false;
+          }
+        }
+      }
+    }
+  });
+
+  for (var key in objects) {
+    stitch.object(objects[key]);
+  }
+};
+
+},{"./type":28}],30:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -2849,57 +2922,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":36}],29:[function(require,module,exports){
-var type = require("./type");
-
-module.exports = function(objects, options) {
-  var verbose = false;
-
-  if (options)
-    "verbose" in options && (verbose = !!options["verbose"]);
-
-  var stitch = type({
-    polygon: function(polygon) {
-      for (var j = 0, m = polygon.length; j < m; ++j) {
-        var line = polygon[j],
-            i = -1,
-            n = line.length,
-            a = false,
-            b = false,
-            c = false,
-            i0 = -1;
-        for (i = 0; i < n; ++i) {
-          var point = line[i],
-              antimeridian = Math.abs(Math.abs(point[0]) - 180) < 1e-2,
-              polar = Math.abs(Math.abs(point[1]) - 90) < 1e-2;
-          if (antimeridian || polar) {
-            if (!(a || b || c)) i0 = i;
-            if (antimeridian) {
-              if (a) c = true;
-              else a = true;
-            }
-            if (polar) b = true;
-          }
-          if (!antimeridian && !polar || i === n - 1) {
-            if (a && b && c) {
-              if (verbose) console.warn("stitch: removed polar cut [" + line[i0] + "] … [" + line[i] + "]");
-              line.splice(i0, i - i0);
-              n -= i - i0;
-              i = i0;
-            }
-            a = b = c = false;
-          }
-        }
-      }
-    }
-  });
-
-  for (var key in objects) {
-    stitch.object(objects[key]);
-  }
-};
-
-},{"./type":28}],31:[function(require,module,exports){
+},{"./hash":36}],31:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
@@ -4330,17 +4353,7 @@ exports.relative = function(from, to) {
 };
 
 })(require("__browserify_process"))
-},{"__browserify_process":41}],36:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
-  };
-};
-
-},{}],37:[function(require,module,exports){
+},{"__browserify_process":41}],37:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -4455,6 +4468,16 @@ function haversinDistance(x0, y0, x1, y1) {
 function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
+
+},{}],36:[function(require,module,exports){
+// Note: requires that size is a power of two!
+module.exports = function(size) {
+  var mask = size - 1;
+  return function(point) {
+    var key = (point[0] + 31 * point[1]) | 0;
+    return (key < 0 ? ~key : key) & mask;
+  };
+};
 
 },{}]},{},[8])
 ;

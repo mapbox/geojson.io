@@ -6,7 +6,7 @@ var verticalPanel = require('./vertical_panel'),
 
 module.exports = importPanel;
 
-function importPanel(container) {
+function importPanel(container, updates) {
     container.html('');
     var wrap = container.append('div').attr('class', 'pad1');
 
@@ -42,61 +42,84 @@ function importPanel(container) {
         analytics.track('Imported Data / ' + method + ' / ' + format);
     }
 
+    function detectType(f) {
+        var filename = f.name ? f.name.toLowerCase() : '';
+        function ext(_) {
+            return filename.indexOf(_) !== -1;
+        }
+        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
+            return 'kml';
+        }
+        if (ext('.gpx')) return 'gpx';
+        if (ext('.geojson') || ext('.json')) return 'geojson';
+        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
+            return 'dsv';
+        }
+    }
+
     function readFile(f, method) {
         var reader = new FileReader();
         import_landing.classed('dragover', false);
 
         reader.onload = function(e) {
             var gj;
-            var filename = f.name ? f.name.toLowerCase() : '';
-            function ext(_) {
-                return filename.indexOf(_) !== -1;
-            }
-            if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-                var kmldom = toDom(e.target.result);
-                if (!kmldom) {
-                    return alert('Invalid KML file: not valid XML');
-                }
-                if (kmldom.getElementsByTagName('NetworkLink').length) {
-                    alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                          'Please export and upload KML without NetworkLinks for optimal performance');
-                }
-                gj = toGeoJSON.kml(kmldom);
-            } else if (ext('.gpx')) {
-                gj = toGeoJSON.gpx(toDom(e.target.result));
-            } else if (ext('.geojson') || ext('.json')) {
-                try {
-                    gj = JSON.parse(e.target.result);
-                    exportIndentationStyle = detectIndentationStyle(e.target.result);
-                    if (gj && gj.type === 'Topology' && gj.objects) {
-                        var collection = { type: 'FeatureCollection', features: [] };
-                        for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                        gj = collection;
+            
+            switch (detectType(f)) {
+
+                case 'kml': 
+                    var kmldom = toDom(e.target.result);
+                    if (!kmldom) {
+                        return alert('Invalid KML file: not valid XML');
                     }
-                } catch(err) {
-                    alert('Invalid JSON file: ' + err);
-                    analytics.track('Uploaded invalid JSON', {
+                    if (kmldom.getElementsByTagName('NetworkLink').length) {
+                        alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                              'Please export and upload KML without NetworkLinks for optimal performance');
+                    }
+                    gj = toGeoJSON.kml(kmldom);
+                    break;
+
+                case 'gpx':
+                    gj = toGeoJSON.gpx(toDom(e.target.result));
+                    break;
+
+                case 'geojson':
+                    try {
+                        gj = JSON.parse(e.target.result);
+                        exportIndentationStyle = detectIndentationStyle(e.target.result);
+                        if (gj && gj.type === 'Topology' && gj.objects) {
+                            var collection = { type: 'FeatureCollection', features: [] };
+                            for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
+                            gj = collection;
+                        }
+                    } catch(err) {
+                        alert('Invalid JSON file: ' + err);
+                        analytics.track('Uploaded invalid JSON', {
+                            snippet: e.target.result.substring(0, 20)
+                        });
+                        return;
+                    }
+                    break;
+
+                case 'dsv':
+                    csv2geojson.csv2geojson(e.target.result, {
+                        delimiter: 'auto'
+                    }, function(err, result) {
+                        if (err) {
+                            return handleGeocode(container.append('div'), e.target.result, updates);
+                        } else {
+                            gj = result;
+                        }
+                    });
+                    break;
+
+                default:
+                    analytics.track('Invalid file', {
+                        type: f.type,
                         snippet: e.target.result.substring(0, 20)
                     });
-                    return;
-                }
-            } else if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
-                csv2geojson.csv2geojson(e.target.result, {
-                    delimiter: 'auto'
-                }, function(err, result) {
-                    if (err) {
-                        return handleGeocode(container.append('div'), e.target.result, updates);
-                    } else {
-                        gj = result;
-                    }
-                });
-            } else {
-                analytics.track('Invalid file', {
-                    type: f.type,
-                    snippet: e.target.result.substring(0, 20)
-                });
-                return alert('Sorry, that file type is not supported');
+                    return alert('Sorry, that file type is not supported');
             }
+
             if (gj) {
                 updates.update_editor(gj);
                 updates.zoom_extent();

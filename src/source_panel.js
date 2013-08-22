@@ -120,7 +120,7 @@ function sourcePanel(updates) {
             $subpane
                 .html('')
                 .append('div')
-                .call(importPanel);
+                .call(importPanel, updates);
 
             function gitHubChosen(d) {
                 var hash = github.urlHash(d);
