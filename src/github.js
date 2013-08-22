@@ -4,6 +4,7 @@ var source = require('./source');
 
 module.exports.saveAsGitHub = saveAsGitHub;
 module.exports.loadGitHub = loadGitHub;
+module.exports.urlHash = urlHash;
 
 function authorize(xhr) {
     return localStorage.github_token ?
@@ -76,7 +77,7 @@ function parseGitHubId(id) {
 
 function loadGitHub(id, callback) {
     var pts = parseGitHubId(id);
-    d3.json('https://api.github.com/repos/' + pts.user +
+    d3.text('https://api.github.com/repos/' + pts.user +
         '/' + pts.repo +
         '/contents/' + pts.file + '?ref=' + pts.branch)
         .on('load', onLoad)
@@ -84,8 +85,13 @@ function loadGitHub(id, callback) {
         .header('Accept', 'application/vnd.github.raw').get();
 
     function onLoad(file) {
-        if (file.type !== 'file') return;
         callback(null, file);
     }
     function onError(err) { callback(err, null); }
+}
+
+function urlHash(d) {
+    return {
+        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + d.path
+    };
 }
