@@ -80,7 +80,8 @@ function loadGitHub(id, callback) {
         '/' + pts.repo +
         '/contents/' + pts.file + '?ref=' + pts.branch)
         .on('load', onLoad)
-        .on('error', onError).get();
+        .on('error', onError)
+        .header('Accept', 'application/vnd.github.raw').get();
 
     function onLoad(file) {
         if (file.type !== 'file') return;

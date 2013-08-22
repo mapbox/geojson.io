@@ -1,6 +1,8 @@
 var verticalPanel = require('./vertical_panel'),
     topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
+    gist = require('./gist'),
+    github = require('./github'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
 
@@ -52,13 +54,15 @@ function importPanel(updates) {
             .append('div')
             .attr('class', 'pad1 center clickable')
             .attr('title', function(d) { return d.alt; })
-            .on('click', function(d) {
-                var that = this;
-                $sources.classed('active', function() {
-                    return that === this;
-                });
-                d.action.apply(this, d);
+            .on('click', clickSource);
+
+        function clickSource(d) {
+            var that = this;
+            $sources.classed('active', function() {
+                return that === this;
             });
+            d.action.apply(this, d);
+        }
 
         $sources.append('span')
             .attr('class', function(d) {
@@ -75,21 +79,23 @@ function importPanel(updates) {
             .attr('class', 'col2')
             .append('div')
             .attr('class', 'pad1 center clickable')
-            .on('click', function(d) {
-                selection
-                    .transition()
-                    .duration(500)
-                    .style('top', window.innerHeight + 'px')
-                    .each('end', function() {
-                        d3.select(this)
-                            .html('')
-                            .classed('hide', true);
-                    });
-            })
+            .on('click', hidePanel)
             .append('span')
             .attr('class', function(d) {
                 return 'icon-collapse-top';
             });
+
+        function hidePanel(d) {
+            selection
+                .transition()
+                .duration(500)
+                .style('top', window.innerHeight + 'px')
+                .each('end', function() {
+                    d3.select(this)
+                        .html('')
+                        .classed('hide', true);
+                });
+        }
 
         var $subpane = selection.append('div')
             .attr('class', 'subpane');
@@ -99,7 +105,15 @@ function importPanel(updates) {
                 .html('')
                 .append('div')
                 .attr('class', 'repos')
-                .call(githubBrowser.gitHubBrowse(localStorage.github_token));
+                .call(githubBrowser
+                    .gitHubBrowse(localStorage.github_token)
+                        .on('chosen', gitHubChosen));
+
+            function gitHubChosen(d) {
+                var hash = github.urlHash(d);
+                location.hash = hash.url;
+                hidePanel();
+            }
         }
 
         function clickGist() {
@@ -107,7 +121,15 @@ function importPanel(updates) {
                 .html('')
                 .append('div')
                 .attr('class', 'browser pad1')
-                .call(githubBrowser.gistBrowse(localStorage.github_token));
+                .call(githubBrowser
+                    .gistBrowse(localStorage.github_token)
+                        .on('chosen', gistChosen));
+
+            function gistChosen(d) {
+                var hash = gist.urlHash(d);
+                location.hash = hash.url;
+                hidePanel();
+            }
         }
     }
 
