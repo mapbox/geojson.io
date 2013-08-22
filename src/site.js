@@ -372,7 +372,7 @@ function hashChange() {
     }
 }
 
-},{"./json_panel":9,"./table_panel":10,"./source_panel":11,"./commit_panel":12,"./login_panel":13,"./share_panel":14,"./file_bar":15,"./gist":16,"./github":17,"./map":18,"./source":19,"is-mobile":20,"detect-json-indent":21}],15:[function(require,module,exports){
+},{"./json_panel":9,"./table_panel":10,"./source_panel":11,"./commit_panel":12,"./share_panel":13,"./login_panel":14,"./file_bar":15,"./gist":16,"./github":17,"./map":18,"./source":19,"is-mobile":20,"detect-json-indent":21}],15:[function(require,module,exports){
 module.exports = fileBar;
 
 function fileBar(updates) {
@@ -578,68 +578,6 @@ function commitPanel(container, updates) {
 }
 
 },{"./github":17}],13:[function(require,module,exports){
-'use strict';
-
-var source = require('./source'),
-    config = require('./config')(location.hostname);
-
-module.exports = loginPanel;
-
-function loginPanel(container) {
-}
-
-loginPanel.init = function(container) {
-    var sel = d3.select(container);
-    sel.on('click', login);
-
-    function login() {
-        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
-    }
-
-    function logout() {
-        window.localStorage.removeItem('github_token');
-        sel.classed('logged-in', true)
-            .on('click', login);
-    }
-
-    function killTokenUrl() {
-        if (window.location.href.indexOf('?code') !== -1) {
-            window.location.href = window.location.href.replace(/\?code=.*$/, '');
-        }
-    }
-
-    if (window.location.search && window.location.search.indexOf('?code') === 0) {
-        var code = window.location.search.replace('?code=', '');
-        d3.json(config.gatekeeper_url + '/authenticate/' + code)
-            .on('load', function(l) {
-                if (l.token) window.localStorage.github_token = l.token;
-                killTokenUrl();
-            })
-            .on('error', function() {
-                alert('Authentication with GitHub failed');
-            })
-            .get();
-    }
-
-    if (localStorage.github_token) {
-        d3.json('https://api.github.com/user')
-            .header('Authorization', 'token ' + window.localStorage.github_token)
-            .on('load', function(user) {
-                localStorage.github_user = JSON.stringify(user);
-                sel
-                    .style('background-image', 'url(' + user.avatar_url + ')')
-                    .style('background-size', '40px 40px')
-                    .style('background-repeat', 'no-repeat')
-                    .on('click', logout);
-            })
-            .on('error', function() {
-                window.localStorage.removeItem('github_token');
-            })
-            .get();
-    }
-};
-
-},{"./source":19,"./config":23}],14:[function(require,module,exports){
 var gist = require('./gist');
 module.exports = sharePanel;
 
@@ -718,7 +656,69 @@ function sharePanel(container, updates) {
     }
 }
 
-},{"./gist":16}],16:[function(require,module,exports){
+},{"./gist":16}],14:[function(require,module,exports){
+'use strict';
+
+var source = require('./source'),
+    config = require('./config')(location.hostname);
+
+module.exports = loginPanel;
+
+function loginPanel(container) {
+}
+
+loginPanel.init = function(container) {
+    var sel = d3.select(container);
+    sel.on('click', login);
+
+    function login() {
+        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
+    }
+
+    function logout() {
+        window.localStorage.removeItem('github_token');
+        sel.classed('logged-in', true)
+            .on('click', login);
+    }
+
+    function killTokenUrl() {
+        if (window.location.href.indexOf('?code') !== -1) {
+            window.location.href = window.location.href.replace(/\?code=.*$/, '');
+        }
+    }
+
+    if (window.location.search && window.location.search.indexOf('?code') === 0) {
+        var code = window.location.search.replace('?code=', '');
+        d3.json(config.gatekeeper_url + '/authenticate/' + code)
+            .on('load', function(l) {
+                if (l.token) window.localStorage.github_token = l.token;
+                killTokenUrl();
+            })
+            .on('error', function() {
+                alert('Authentication with GitHub failed');
+            })
+            .get();
+    }
+
+    if (localStorage.github_token) {
+        d3.json('https://api.github.com/user')
+            .header('Authorization', 'token ' + window.localStorage.github_token)
+            .on('load', function(user) {
+                localStorage.github_user = JSON.stringify(user);
+                sel
+                    .style('background-image', 'url(' + user.avatar_url + ')')
+                    .style('background-size', '40px 40px')
+                    .style('background-repeat', 'no-repeat')
+                    .on('click', logout);
+            })
+            .on('error', function() {
+                window.localStorage.removeItem('github_token');
+            })
+            .get();
+    }
+};
+
+},{"./source":19,"./config":23}],16:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
@@ -908,7 +908,52 @@ module.exports = function(_, def) {
     return space[0];
 };
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
+'use strict';
+
+var metatable = require('d3-metatable')(d3);
+
+module.exports = tablePanel;
+
+function tablePanel(container, updates) {
+    container.html('');
+
+    updates.on('update_map.mode', function(data, layers) {
+        function findLayer(p) {
+            var layer;
+            layers.eachLayer(function(l) {
+                if (p == l.feature.properties) layer = l;
+            });
+            return layer;
+        }
+        if (!data.features.length) {
+            container.append('div')
+                .attr('class', 'blank-banner')
+                .text('no features');
+        } else {
+            var props = [];
+            layers.eachLayer(function(p) {
+                props.push(p.feature.properties);
+            });
+            container.html('');
+            container
+                .append('div')
+                .attr('class', 'pad1 scrollable')
+                .data([props])
+                .call(
+                    metatable()
+                        .on('change', function() {
+                            updates.update_refresh();
+                        })
+                        .on('rowfocus', function(d) {
+                            updates.focus_layer(findLayer(d));
+                        })
+                );
+        }
+    });
+}
+
+},{"d3-metatable":24}],11:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     gist = require('./gist'),
     github = require('./github'),
@@ -1060,52 +1105,7 @@ function sourcePanel(updates) {
     return panel;
 }
 
-},{"./vertical_panel":24,"./gist":16,"./github":17,"./import_panel":25,"github-file-browser":26,"detect-json-indent":21}],10:[function(require,module,exports){
-'use strict';
-
-var metatable = require('d3-metatable')(d3);
-
-module.exports = tablePanel;
-
-function tablePanel(container, updates) {
-    container.html('');
-
-    updates.on('update_map.mode', function(data, layers) {
-        function findLayer(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
-        if (!data.features.length) {
-            container.append('div')
-                .attr('class', 'blank-banner')
-                .text('no features');
-        } else {
-            var props = [];
-            layers.eachLayer(function(p) {
-                props.push(p.feature.properties);
-            });
-            container.html('');
-            container
-                .append('div')
-                .attr('class', 'pad1 scrollable')
-                .data([props])
-                .call(
-                    metatable()
-                        .on('change', function() {
-                            updates.update_refresh();
-                        })
-                        .on('rowfocus', function(d) {
-                            updates.focus_layer(findLayer(d));
-                        })
-                );
-        }
-    });
-}
-
-},{"d3-metatable":27}],3:[function(require,module,exports){
+},{"./vertical_panel":25,"./gist":16,"./github":17,"./import_panel":26,"github-file-browser":27,"detect-json-indent":21}],3:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -1579,7 +1579,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./type":30,"./stitch-poles":31,"./hashtable":32,"./coordinate-systems":29}],24:[function(require,module,exports){
+},{"./type":30,"./stitch-poles":31,"./hashtable":32,"./coordinate-systems":29}],25:[function(require,module,exports){
 module.exports = verticalPanel;
 
 function verticalPanel(updates) {
@@ -1700,37 +1700,7 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"./type":30,"./coordinate-systems":29,"../../":"g070js"}],7:[function(require,module,exports){
-var type = require("./type"),
-    topojson = require("../../");
-
-module.exports = function(topology, propertiesById) {
-  var bind = type({
-    geometry: function(geometry) {
-      var properties0 = geometry.properties,
-          properties1 = propertiesById[geometry.id];
-      if (properties1) {
-        if (properties0) for (var k in properties1) properties0[k] = properties1[k];
-        else for (var k in properties1) { geometry.properties = properties1; break; }
-      }
-      this.defaults.geometry.call(this, geometry);
-    },
-    LineString: noop,
-    MultiLineString: noop,
-    Point: noop,
-    MultiPoint: noop,
-    Polygon: noop,
-    MultiPolygon: noop
-  });
-
-  for (var key in topology.objects) {
-    bind.object(topology.objects[key]);
-  }
-};
-
-function noop() {}
-
-},{"./type":30,"../../":"g070js"}],5:[function(require,module,exports){
+},{"./type":30,"./coordinate-systems":29,"../../":"g070js"}],5:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -1859,7 +1829,37 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":30,"../../":"g070js"}],27:[function(require,module,exports){
+},{"./type":30,"../../":"g070js"}],7:[function(require,module,exports){
+var type = require("./type"),
+    topojson = require("../../");
+
+module.exports = function(topology, propertiesById) {
+  var bind = type({
+    geometry: function(geometry) {
+      var properties0 = geometry.properties,
+          properties1 = propertiesById[geometry.id];
+      if (properties1) {
+        if (properties0) for (var k in properties1) properties0[k] = properties1[k];
+        else for (var k in properties1) { geometry.properties = properties1; break; }
+      }
+      this.defaults.geometry.call(this, geometry);
+    },
+    LineString: noop,
+    MultiLineString: noop,
+    Point: noop,
+    MultiPoint: noop,
+    Polygon: noop,
+    MultiPolygon: noop
+  });
+
+  for (var key in topology.objects) {
+    bind.object(topology.objects[key]);
+  }
+};
+
+function noop() {}
+
+},{"./type":30,"../../":"g070js"}],24:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -2033,7 +2033,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":33}],25:[function(require,module,exports){
+},{"geojsonhint":33}],26:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
@@ -2357,7 +2357,7 @@ function runGeocode(container, list, transform, updates) {
     var task = geocode(list, transform, progress, done);
 }
 
-},{"topojson":"g070js","./vertical_panel":24,"./gist":16,"./progress_chart":34,"togeojson":35,"detect-json-indent":21}],26:[function(require,module,exports){
+},{"topojson":"g070js","./vertical_panel":25,"./gist":16,"./progress_chart":34,"togeojson":35,"detect-json-indent":21}],27:[function(require,module,exports){
 module.exports = function(d3) {
     var preview = require('static-map-preview')(d3, 'tmcw.map-dsejpecw');
 
@@ -2586,13 +2586,26 @@ module.exports = function(d3) {
 
     var base = 'https://api.github.com';
 
-    function req(postfix, token, callback) {
-        authorize(d3.json(base + postfix), token)
+    function req(postfix, token, callback, l, url) {
+        l = l || [];
+        authorize(d3.xhr(url || (base + postfix)), token)
             .on('load', function(data) {
-                callback(null, data);
+                l = l.concat(data.list);
+                if (data.next) {
+                    return req(postfix, token, callback, l, data.next);
+                }
+                callback(null, l);
             })
             .on('error', function(error) {
                 callback(error, null);
+            })
+            .response(function(request) {
+                var nextLink = (request.getResponseHeader('Link') || '').match(/\<([^\>]+)\>\; rel="next"/);
+                nextLink = nextLink ? nextLink[1] : null;
+                return {
+                    list: JSON.parse(request.responseText),
+                    next: nextLink
+                };
             })
             .get();
     }
@@ -2827,7 +2840,7 @@ module.exports = {
   spherical: require("./spherical")
 };
 
-},{"./spherical":37,"./cartesian":38}],31:[function(require,module,exports){
+},{"./cartesian":37,"./spherical":38}],31:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -4358,6 +4371,40 @@ exports.relative = function(from, to) {
 
 })(require("__browserify_process"))
 },{"__browserify_process":42}],37:[function(require,module,exports){
+exports.name = "cartesian";
+exports.formatDistance = formatDistance;
+exports.ringArea = ringArea;
+exports.absoluteArea = Math.abs;
+exports.triangleArea = triangleArea;
+exports.distance = distance;
+
+function formatDistance(d) {
+  return d.toString();
+}
+
+function ringArea(ring) {
+  var i = 0,
+      n = ring.length,
+      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
+  while (++i < n) {
+    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
+  }
+  return area * .5;
+}
+
+function triangleArea(triangle) {
+  return Math.abs(
+    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
+    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
+  );
+}
+
+function distance(x0, y0, x1, y1) {
+  var dx = x0 - x1, dy = y0 - y1;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+},{}],38:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -4437,40 +4484,6 @@ function haversinDistance(x0, y0, x1, y1) {
 
 function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
-}
-
-},{}],38:[function(require,module,exports){
-exports.name = "cartesian";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = Math.abs;
-exports.triangleArea = triangleArea;
-exports.distance = distance;
-
-function formatDistance(d) {
-  return d.toString();
-}
-
-function ringArea(ring) {
-  var i = 0,
-      n = ring.length,
-      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
-  while (++i < n) {
-    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
-  }
-  return area * .5;
-}
-
-function triangleArea(triangle) {
-  return Math.abs(
-    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
-    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
-  );
-}
-
-function distance(x0, y0, x1, y1) {
-  var dx = x0 - x1, dy = y0 - y1;
-  return Math.sqrt(dx * dx + dy * dy);
 }
 
 },{}],39:[function(require,module,exports){
