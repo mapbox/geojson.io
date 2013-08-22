@@ -2,6 +2,7 @@ var verticalPanel = require('./vertical_panel'),
     topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     gist = require('./gist'),
+    progressChart = require('./progress_chart'),
     detectIndentationStyle = require('detect-json-indent');
 
 module.exports = importPanel;
@@ -286,24 +287,6 @@ function runGeocode(container, list, transform, updates) {
     var failedDiv = wrap.append('div');
 
     var geocode = geocodemany('tmcw.map-u4ca5hnt');
-
-    function progressChart(elem, w, h) {
-        var c = elem.appendChild(document.createElement('canvas'));
-        c.width = w;
-        c.height = h;
-        var ctx = c.getContext('2d');
-        var gap;
-        var fill = {
-            success: '#e3e4b8',
-            error: '#E0A990'
-        };
-
-        return function(e) {
-            if (!gap) gap = ((e.done) / e.todo * w) - ((e.done - 1) / e.todo * w);
-            ctx.fillStyle = fill[e.status];
-            ctx.fillRect((e.done - 1) / e.todo * w, 0, gap, h);
-        };
-    }
 
     var chart = progressChart(chartDiv.node(), chartDiv.node().offsetWidth, 50);
 
