@@ -9,6 +9,7 @@ lib/d3.min.js: node_modules/d3/*
 		node_modules/d3/src/arrays/entries.js \
 		node_modules/d3/src/arrays/set.js \
 		node_modules/d3/src/arrays/range.js \
+		node_modules/d3/src/behavior/drag.js \
 		node_modules/d3/src/core/rebind.js \
 		node_modules/d3/src/event/dispatch.js \
 		node_modules/d3/src/event/event.js \

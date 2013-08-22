@@ -12,7 +12,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":3,"./lib/topojson/clockwise":5,"./lib/topojson/filter":7,"./lib/topojson/prune":11,"./lib/topojson/simplify":12,"./lib/topojson/topology":16,"fs":1}],3:[function(require,module,exports){
+},{"./lib/topojson/bind":3,"./lib/topojson/clockwise":5,"./lib/topojson/filter":7,"./lib/topojson/prune":11,"./lib/topojson/simplify":12,"./lib/topojson/topology":15,"fs":1}],3:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -42,7 +42,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":17}],4:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":16}],4:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -149,7 +149,7 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":6,"./type":17}],6:[function(require,module,exports){
+},{"../../":"PBmiWO","./coordinate-systems":6,"./type":16}],6:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
@@ -225,7 +225,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":5,"./coordinate-systems":6,"./prune":11,"./type":17}],8:[function(require,module,exports){
+},{"../../":"PBmiWO","./clockwise":5,"./coordinate-systems":6,"./prune":11,"./type":16}],8:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -415,7 +415,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":17}],12:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":16}],12:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -629,9 +629,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -681,7 +679,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":17}],16:[function(require,module,exports){
+},{"./type":16}],15:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -1023,7 +1021,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":6,"./hashtable":9,"./stitch-poles":15,"./type":17}],17:[function(require,module,exports){
+},{"./coordinate-systems":6,"./hashtable":9,"./stitch-poles":14,"./type":16}],16:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -1117,7 +1115,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],18:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
@@ -1200,7 +1198,7 @@ function urlHash(data) {
     }
 }
 
-},{"./source":22}],19:[function(require,module,exports){
+},{"./source":21}],18:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
@@ -1292,7 +1290,7 @@ function loadGitHub(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"./source":22}],20:[function(require,module,exports){
+},{"./source":21}],19:[function(require,module,exports){
 'use strict';
 
 module.exports = function() {
@@ -1342,7 +1340,7 @@ module.exports = function() {
     return map;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var map = require('./map')();
 var gist = require('./gist'),
     source = require('./source'),
@@ -1418,7 +1416,7 @@ function showProperties(l) {
     }, l).setContent('<table class="marker-properties display">' + table + '</table>'));
 }
 
-},{"./gist":18,"./github":19,"./map":20,"./source":22}],22:[function(require,module,exports){
+},{"./gist":17,"./github":18,"./map":19,"./source":21}],21:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -1455,5 +1453,7 @@ module.exports = function source() {
     }
 };
 
-},{}]},{},[21])
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}]},{},[20])
 ;
