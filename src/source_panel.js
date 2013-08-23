@@ -11,6 +11,8 @@ function sourcePanel(updates) {
 
     function panel(selection) {
 
+        if (!selection.classed('hide')) return hidePanel();
+
         var sources = [
             {
                 title: 'Import',
@@ -31,15 +33,6 @@ function sourcePanel(updates) {
                 action: clickGist
             }
         ];
-
-        if (!selection.classed('hide')) {
-            return selection
-                .transition()
-                .style('opacity', 0)
-                .each('end', function() {
-                    d3.select(this).classed('hide', true);
-                });
-        }
 
         selection
             .html('')
@@ -96,7 +89,7 @@ function sourcePanel(updates) {
             selection
                 .transition()
                 .duration(500)
-                .style('top', window.innerHeight + 'px')
+                .style('opacity', 0)
                 .each('end', function() {
                     d3.select(this)
                         .html('')

@@ -75,7 +75,8 @@ var buttonData = [{
 drawButtons(buttonData);
 
 d3.select('.file-bar').call(fileBar(updates)
-    .on('source', clickSource));
+    .on('source', clickSource)
+    .on('save', saveChanges));
 
 function clickSource() {
     if (d3.event) d3.event.preventDefault();
@@ -191,7 +192,7 @@ d3.select(document).call(
         .on('⌘+s', saveChanges)
         .on('⌘+o', clickSource));
 
-function saveChanges(message, callback) {
+function saveChanges() {
     if (d3.event) d3.event.preventDefault();
 
     var features = featuresFromMap();
@@ -210,9 +211,9 @@ function saveChanges(message, callback) {
             if (err) return flash(container, err.message);
             var id = resp.id;
             window.location.hash = gist.urlHash(resp).url;
-            if (callback) callback();
             flash(container,
-                'Changes to this map saved to Gist: <a href="' + resp.html_url + '">' + resp.html_url + '</a>');
+                'Changes to this map saved to Gist: <a href="' + resp.html_url +
+                '">' + resp.html_url + '</a>');
         });
     } else if (!source() || source().type == 'github') {
         buttons.filter(function(d) {

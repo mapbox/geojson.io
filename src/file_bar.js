@@ -1,7 +1,7 @@
 module.exports = fileBar;
 
 function fileBar(updates) {
-    var event = d3.dispatch('source');
+    var event = d3.dispatch('source', 'save');
 
     function bar(selection) {
         var name = selection.append('div')
@@ -48,7 +48,10 @@ function fileBar(updates) {
 
         var actions = [
             {
-                title: 'Save'
+                title: 'Save',
+                action: function() {
+                    event.save();
+                }
             },
             {
                 title: 'Open',
