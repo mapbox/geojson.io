@@ -100,9 +100,6 @@ function sourcePanel(updates) {
         var $subpane = selection.append('div')
             .attr('class', 'subpane');
 
-        // Open import panel by default
-        clickSource(sources[0]);
-
         function clickGitHub() {
             $subpane
                 .html('')
