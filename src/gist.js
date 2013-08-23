@@ -1,8 +1,9 @@
-'use strict';
-
 var source = require('./source');
+var fs = require('fs');
+var tmpl = fs.readFileSync('data/share.html', 'utf8');
 
 module.exports.saveAsGist = saveAsGist;
+module.exports.saveBlocks = saveBlocks;
 module.exports.loadGist = loadGist;
 module.exports.urlHash = urlHash;
 
@@ -14,6 +15,30 @@ function authorize(xhr) {
     return localStorage.github_token ?
         xhr.header('Authorization', 'token ' + localStorage.github_token) :
         xhr;
+}
+
+function saveBlocks(content, callback) {
+    var endpoint = 'https://api.github.com/gists';
+
+    d3.json(endpoint)
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+        })
+        .send('POST', JSON.stringify({
+            description: 'via:geojson.io',
+            public: true,
+            files: {
+                'index.html': {
+                    content: tmpl
+                },
+                'map.geojson': {
+                    content: content
+                }
+            }
+        }));
 }
 
 function saveAsGist(content, callback) {

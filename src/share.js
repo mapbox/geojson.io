@@ -1,62 +1,81 @@
 var gist = require('./gist');
 
-module.exports = sharePanel;
+module.exports = share;
 
-function sharePanel(container, updates) {
+function facebookUrl(_) {
+    return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(_);
+}
+
+function twitterUrl(_) {
+    return 'https://twitter.com/intent/tweet?source=webclient&text=' + encodeURIComponent(_);
+}
+
+function emailUrl(_) {
+    return 'mailto:?subject=' + encodeURIComponent('My Map on geojson.io') +
+        '&body=Here\'s the link: ' + encodeURIComponent(_);
+}
+
+function share(container, features) {
     'use strict';
-    container.html('');
+    container.select('.share').remove();
 
-    updates.on('update_map.mode', onUpdate);
+    var selection = container.append('div')
+        .attr('class', 'share pad1');
 
-    function onUpdate(data) {
-        var id = resp.id;
-        var wrap = container.append('div').attr('class', 'pad share');
-        var thisurl = 'http://geojson.io/#' + id;
-        location.hash = '#' + id;
+    var networks = [
+        {
+            icon: 'icon-facebook',
+            title: 'Facebook',
+            url: facebookUrl(location.href)
+        },
+        {
+            icon: 'icon-twitter',
+            title: 'Twitter',
+            url: twitterUrl(location.href)
+        },
+        {
+            icon: 'icon-envelope-alt',
+            title: 'Email',
+            url: emailUrl(location.href)
+        }
+    ];
 
-        wrap.append('div').append('label').text('Map Embed');
-        wrap.append('textarea')
-            .attr('class', 'full-width')
-            .attr('type', 'text')
-            .property('value', '<script src="https://gist.github.com/' + id + '.js"></script>')
-            .node()
-            .select();
+    var links = selection
+        .selectAll('.network')
+        .data(networks)
+        .enter()
+        .append('a')
+        .attr('target', '_blank')
+        .attr('class', 'network')
+        .attr('href', function(d) { return d.url; });
 
-        var links = wrap.append('div').attr('class', 'footlinks');
+    links.append('span')
+        .attr('class', function(d) { return d.icon + ' pre-icon'; });
 
-        var facebook = links.append('a')
-            .attr('target', '_blank')
-            .attr('href', function() {
-                return 'https://www.facebook.com/sharer/sharer.php?u=' +
-                    encodeURIComponent(thisurl);
-            }).on('click', function() {
-            });
+    links.append('span')
+        .text(function(d) { return d.title; });
 
-        facebook.append('span').attr('class', 'icon-facebook');
-        facebook.append('span').text(' facebook');
+    var embed_html = selection
+        .append('input')
+        .attr('type', 'text')
+        .attr('title', 'Embed HTML');
 
-        var tweet = links.append('a')
-            .attr('target', '_blank')
-            .attr('href', function() {
-                return 'https://twitter.com/intent/tweet?source=webclient&text=' +
-                    encodeURIComponent('my map: ' + thisurl);
-            }).on('click', function() {
-            });
+    selection.append('a')
+        .attr('class', 'icon-remove')
+        .on('click', function() {
+            selection.remove();
+        });
 
-        tweet.append('span').attr('class', 'icon-twitter');
-        tweet.append('span').text(' tweet');
-
-        dl.append('span').attr('class', 'icon-download');
-        dl.append('span').text(' download');
-
-        var gist = links.append('a')
-            .attr('target', '_target')
-            .attr('href', resp.html_url);
-        gist.append('span').attr('class', 'icon-link');
-        gist.append('span').text(' source');
-
-        wrap.append('p')
-            .attr('class', 'intro-hint pad1')
-            .html('<a target="_blank" href="/about.html#what-now">Need help about what to do with the files you download here?</a>');
-    }
+    gist.saveBlocks(JSON.stringify({
+        type: 'FeatureCollection',
+        features: features
+    }), function(err, res) {
+        if (err) return;
+        if (res) {
+            embed_html.property('value',
+                '<iframe frameborder="0" width="100%" height="300" ' + 
+                'src="http://bl.ocks.org/d/' + res.id + '"></iframe>');
+            embed_html.node().select();
+        }
+    });
 }
