@@ -144,6 +144,8 @@ function sourcePanel(updates) {
                 hidePanel();
             }
         }
+
+        $sources.filter(function(d, i) { return !i; }).trigger('click');
     }
 
     return panel;
