@@ -247,8 +247,9 @@ button.positive {
     left:0;
     width:28px;
     height:40px;
-    line-height:40px;
+    line-height:30px;
     text-align:center;
+    border:none;
 }
 
 .top .collapse-button:hover {

@@ -88,7 +88,7 @@ function clickCollapse() {
         !d3.select('.right').classed('hidden'));
     d3.select('#map').classed('fullsize',
         !d3.select('#map').classed('fullsize'));
-    mapUtil.invalidateSize();
+    map.invalidateSize();
 }
 
 function focusLayer(layer) {
