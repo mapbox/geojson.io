@@ -123,6 +123,7 @@ function importPanel(container, updates) {
             if (gj) {
                 updates.update_editor(gj);
                 updates.zoom_extent();
+                updates.update_geojson();
             }
         };
 

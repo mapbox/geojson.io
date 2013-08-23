@@ -46,10 +46,11 @@ map.on('draw:edited', updateFromMap)
 
 d3.select('.collapse-button').on('click', clickCollapse);
 
-var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh',
+var updates = d3.dispatch('update_geojson', 'update_map', 'update_editor', 'update_refresh',
     'focus_layer', 'zoom_extent', 'sourcechange');
 
 updates.on('focus_layer', focusLayer)
+    .on('update_geojson', updateFromMap)
     .on('update_editor', loadToMap)
     .on('update_refresh', refresh)
     .on('zoom_extent', zoomToExtent);
