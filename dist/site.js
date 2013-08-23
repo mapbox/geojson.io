@@ -3966,7 +3966,7 @@ function saveChanges() {
 
     if (!source() || source().type == 'gist') {
         gist.saveAsGist(content, function(err, resp) {
-            if (err) return flash(container, err.message);
+            if (err) return flash(container, err.toString());
             var id = resp.id;
             window.location.hash = gist.urlHash(resp).url;
             flash(container,
@@ -3976,7 +3976,7 @@ function saveChanges() {
     } else if (!source() || source().type == 'github') {
         var wrap = commit(container, content, function(err, resp) {
             wrap.remove();
-            if (err) return flash(container, err.message || err);
+            if (err) return flash(container, err.toString());
             else flash(container, 'Changes committed to GitHub: <a href="' +
                        resp.commit.html_url + '">' + resp.commit.sha.substring(0, 10) + '</a>');
 
