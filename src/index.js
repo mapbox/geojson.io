@@ -315,12 +315,11 @@ function hashChange() {
         try {
             var file = mapFile(json);
             updates.update_editor(mapFile(json));
-            if (first && drawnItems.getBounds().isValid()) {
-                map.fitBounds(drawnItems.getBounds());
-                buttons.filter(function(d, i) { return i == 1; }).trigger('click');
+            if (drawnItems.getBounds().isValid()) map.fitBounds(drawnItems.getBounds());
+            if (gist.urlHash(json).redirect) {
+                silentHash = true;
+                window.location.hash = gist.urlHash(json).url;
             }
-            silentHash = gist.urlHash(json).redirect;
-            window.location.hash = gist.urlHash(json).url;
             updates.sourcechange({
                 type: 'gist',
                 name: '#' + json.id,

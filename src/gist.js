@@ -93,7 +93,7 @@ function loadGist(id, callback) {
 
 function urlHash(data) {
     var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id) {
+    if (source() && source().id == data.id && !source().login) {
         return {
             url: '#gist:' + login + '/' + data.id,
             redirect: true
