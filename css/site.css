@@ -481,3 +481,14 @@ textarea.full-width {
     bottom:0;
     overflow:auto;
 }
+
+/* modal, flash */
+.message {
+    background:#FFFCE4;
+    position:absolute;
+    z-index:9999;
+    right:40%;
+    top:40px;
+    left:0;
+    border-bottom:1px solid #ccc;
+}

@@ -16,11 +16,16 @@ var jsonPanel = require('./json_panel'),
     fileBar = require('./file_bar'),
     gist = require('./gist'),
     github = require('./github'),
+    flash = require('./flash'),
     mapUtil = require('./map'),
     source = require('./source'),
     detectIndentationStyle = require('detect-json-indent'),
     exportIndentationStyle = 4,
     dropSupport = (window.FileReader && 'ondrop' in window);
+
+var container = d3.select('body')
+    .append('div')
+    .attr('class', 'container');
 
 var map = mapUtil.setupMap();
 
@@ -192,14 +197,20 @@ function keydown(e) {
 }
 
 function saveChanges(message, callback) {
+    var features = featuresFromMap();
+
+    if (!features.length) {
+        return flash(container, 'Add a feature to the map to save it');
+    }
+
     var content = JSON.stringify({
         type: 'FeatureCollection',
-        features: featuresFromMap()
+        features: features
     }, null, exportIndentationStyle);
 
     if (!source() || source().type == 'gist') {
         gist.saveAsGist(content, function(err, resp) {
-            if (err) return alert(err);
+            if (err) return flash(container, err.message);
             var id = resp.id;
             window.location.hash = gist.urlHash(resp).url;
             if (callback) callback();
@@ -271,7 +282,7 @@ function hashChange() {
     if (s.type == 'github') github.loadGitHub(s.id, onGitHubLoad);
 
     function onGistLoad(err, json) {
-        if (err) return alert('Gist API limit exceeded, come back in a bit.');
+        if (err) return flash(container, 'Gist API limit exceeded, come back in a bit.');
         var first = !drawnItems.getBounds().isValid();
 
         try {
@@ -289,12 +300,12 @@ function hashChange() {
             });
         } catch(e) {
             console.log(e);
-            alert('Invalid GeoJSON data in this Gist');
+            flash(container, 'Invalid GeoJSON data in this Gist');
         }
     }
 
     function onGitHubLoad(err, file) {
-        if (err) return alert('GitHub API limit exceeded, come back in a bit.');
+        if (err) return flash(container, 'GitHub API limit exceeded, come back in a bit.');
 
         try {
             var json = JSON.parse(file);
@@ -317,7 +328,7 @@ function hashChange() {
                 name: source().id
             });
         } catch(e) {
-            alert('Loading a file from GitHub failed');
+            flash(container, 'Loading a file from GitHub failed');
         }
     }
 }

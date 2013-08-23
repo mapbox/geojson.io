@@ -1,5 +1,3 @@
-'use strict';
-
 var source = require('./source'),
     config = require('./config')(location.hostname);
 
@@ -9,6 +7,7 @@ function loginPanel(container) {
 }
 
 loginPanel.init = function(container) {
+    'use strict';
     var sel = d3.select(container);
     sel.on('click', login);
 

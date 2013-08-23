@@ -9,13 +9,12 @@ module.exports = importPanel;
 
 function importPanel(container, updates) {
     container.html('');
-    var wrap = container.append('div').attr('class', 'pad1');
+
+    var wrap = container
+        .append('div')
+        .attr('class', 'pad1');
 
     var importSupport = !!(window.FileReader);
-
-    wrap.append('p')
-        .attr('class', 'intro')
-        .text('Make a map! To start, draw with the tools on the left or import your own data.');
 
     wrap.append('div')
         .attr('class', 'modal-message')
@@ -64,10 +63,10 @@ function importPanel(container, updates) {
 
         reader.onload = function(e) {
             var gj;
-            
+
             switch (detectType(f)) {
 
-                case 'kml': 
+                case 'kml':
                     var kmldom = toDom(e.target.result);
                     if (!kmldom) {
                         return alert('Invalid KML file: not valid XML');
@@ -180,11 +179,7 @@ function importPanel(container, updates) {
 
     wrap.append('p')
         .attr('class', 'intro center deemphasize')
-        .html('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Submit feedback or get help</a>, and <a target="_blank" href="http://github.com/mapbox/geojson.io"><span class="icon-github"></span> fork on GitHub</a>');
-
-    if (window.chrome) wrap.append('p')
-        .attr('class', 'intro-hint pad1 deemphasize')
-        .html('Use GitHub? The <a target="_blank" href="https://chrome.google.com/webstore/detail/geojsonio/oibjgofbhldcajfamjganpeacipebckp">geojson.io chrome extension</a> lets you edit map data in your repositories!');
+        .html('This is an open source project. <a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Submit feedback or get help</a>, and <a target="_blank" href="http://github.com/mapbox/geojson.io"><span class="icon-github"></span> fork on GitHub</a>');
 
     wrap.append('div')
         .attr('class', 'pad1');
