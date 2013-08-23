@@ -1,7 +1,7 @@
 {
-  "name": "edit-geojson",
+  "name": "geojson.io",
   "version": "0.0.0",
-  "description": "edit-geojson",
+  "description": "create and edit maps, on the internet",
   "main": "index.js",
   "dependencies": {
     "leaflet-draw": "~0.2.0",
@@ -28,9 +28,9 @@
     "type": "git",
     "url": "git://github.com/mapbox/geojson.io.git"
   },
-  "author": "",
+  "author": "MapBox",
   "license": "BSD",
   "bugs": {
-    "url": "https://github.com/tmcw/edit-geojson/issues"
+    "url": "https://github.com/mapbox/geojson.io/issues"
   }
 }
