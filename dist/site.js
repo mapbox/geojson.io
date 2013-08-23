@@ -4073,7 +4073,7 @@ function hashChange() {
                 map.fitBounds(drawnItems.getBounds());
                 buttons.filter(function(d, i) { return i == 1; }).trigger('click');
             }
-            // updates.update_map(json, drawnItems);
+            updates.update_map(json, drawnItems);
             updates.sourcechange({
                 type: 'github',
                 name: source().id,
