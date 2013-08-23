@@ -1,9 +1,15 @@
+var share = require('./share');
+
 module.exports = fileBar;
 
 function fileBar(updates) {
-    var event = d3.dispatch('source', 'save');
+
+    var event = d3.dispatch('source', 'save', 'share', 'download', 'share');
 
     function bar(selection) {
+
+        updates.on('sourcechange', onSource);
+
         var name = selection.append('div')
             .attr('class', 'name');
 
@@ -19,7 +25,56 @@ function fileBar(updates) {
             .attr('class', 'icon-external-link')
             .classed('hide', true);
 
-        updates.on('sourcechange', onSource);
+        var actions = [
+            {
+                title: 'Save',
+                icon: 'icon-save',
+                action: function() {
+                    event.save();
+                }
+            },
+            {
+                title: 'Open',
+                icon: 'icon-folder-open-alt',
+                action: function() {
+                    event.source();
+                }
+            },
+            {
+                title: 'Download',
+                icon: 'icon-download',
+                action: function() {
+                    event.download();
+                }
+            },
+            {
+                title: 'Share',
+                icon: 'icon-share-alt',
+                action: function() {
+                    event.share();
+                }
+            }
+        ];
+
+        var buttons = selection.append('div')
+            .attr('class', 'button-wrap fr')
+            .selectAll('button')
+            .data(actions)
+            .enter()
+            .append('button')
+            .on('click', function(d) {
+                d.action.apply(this, d);
+            });
+
+        buttons.append('span')
+            .attr('class', function(d) {
+                return d.icon + ' icon';
+            });
+
+        buttons.append('span')
+            .text(function(d) {
+                return d.title;
+            });
 
         function sourceUrl(d) {
             switch(d.type) {
@@ -45,34 +100,6 @@ function fileBar(updates) {
                     .classed('hide', true);
             }
         }
-
-        var actions = [
-            {
-                title: 'Save',
-                action: function() {
-                    event.save();
-                }
-            },
-            {
-                title: 'Open',
-                action: function() {
-                    event.source();
-                }
-            }
-        ];
-
-        var buttons = selection.append('div')
-            .attr('class', 'button-wrap')
-            .selectAll('button')
-            .data(actions)
-            .enter()
-            .append('button')
-            .text(function(d) {
-                return d.title;
-            })
-            .on('click', function(d) {
-                d.action.apply(this, d);
-            });
     }
 
     return d3.rebind(bar, event, 'on');

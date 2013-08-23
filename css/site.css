@@ -457,6 +457,7 @@ textarea.full-width {
     padding:5px 0;
     display:inline-block;
     vertical-align:top;
+    margin-right:10px;
 }
 
 .button-wrap button {
@@ -464,8 +465,20 @@ textarea.full-width {
     line-height:28px;
     font-size:12px;
     padding:0px 10px;
-    border-radius:5px;
+    border-right:none;
+}
+
+.button-wrap button .icon {
     margin-right:5px;
+}
+
+.button-wrap button:last-child {
+    border-right:1px solid #ccc;
+    border-radius:0 5px 5px 0;
+}
+
+.button-wrap button:first-child {
+    border-radius:5px 0 0 5px;
 }
 
 .import-sources {

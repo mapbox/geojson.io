@@ -9,7 +9,6 @@ var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
     sourcePanel = require('./source_panel'),
     commitPanel = require('./commit_panel'),
-    sharePanel = require('./share_panel'),
     loginPanel = require('./login_panel'),
     fileBar = require('./file_bar'),
     gist = require('./gist'),
@@ -76,11 +75,27 @@ drawButtons(buttonData);
 
 d3.select('.file-bar').call(fileBar(updates)
     .on('source', clickSource)
-    .on('save', saveChanges));
+    .on('save', saveChanges)
+    .on('download', downloadFile));
 
 function clickSource() {
     if (d3.event) d3.event.preventDefault();
     d3.select('.left-panel').call(sourcePanel(updates));
+}
+
+function downloadFile() {
+    var features = featuresFromMap();
+
+    var content = JSON.stringify({
+        type: 'FeatureCollection',
+        features: features
+    }, null, 4);
+
+    if (content) {
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'map.geojson');
+    }
 }
 
 function clickCollapse() {

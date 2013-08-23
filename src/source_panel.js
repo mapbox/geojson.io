@@ -82,7 +82,7 @@ function sourcePanel(updates) {
             .on('click', hidePanel)
             .append('span')
             .attr('class', function(d) {
-                return 'icon-collapse-top';
+                return 'icon-remove';
             });
 
         function hidePanel(d) {
