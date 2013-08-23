@@ -1,5 +1,3 @@
-'use strict';
-
 var mobile = require('is-mobile');
 
 if (mobile()) {
@@ -20,8 +18,7 @@ var jsonPanel = require('./json_panel'),
     mapUtil = require('./map'),
     source = require('./source'),
     detectIndentationStyle = require('detect-json-indent'),
-    exportIndentationStyle = 4,
-    dropSupport = (window.FileReader && 'ondrop' in window);
+    exportIndentationStyle = 4;
 
 var container = d3.select('body')
     .append('div')
@@ -214,6 +211,8 @@ function saveChanges(message, callback) {
             var id = resp.id;
             window.location.hash = gist.urlHash(resp).url;
             if (callback) callback();
+            flash(container,
+                'Changes to this map saved to Gist: <a href="' + resp.html_url + '">' + resp.html_url + '</a>');
         });
     } else if (!source() || source().type == 'github') {
         buttons.filter(function(d) {

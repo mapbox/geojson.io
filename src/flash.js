@@ -7,14 +7,14 @@ function flash(selection, txt) {
 
     var msg = message(selection);
 
-    if (txt) msg.select('.content').text(txt);
+    if (txt) msg.select('.content').html(txt);
 
     setTimeout(function() {
         msg
             .transition()
             .style('opacity', 0)
             .remove();
-    }, 1500);
+    }, 5000);
 
     return msg;
 }
