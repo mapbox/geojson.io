@@ -11,13 +11,13 @@ module.exports = function(callback) {
         if (err instanceof Error) {
             handleError(err.message);
             return callback({
-                class: 'icon-circle-blank',
+                'class': 'icon-circle-blank',
                 title: 'invalid JSON',
                 message: 'invalid JSON'});
         } else if (err.length) {
             handleErrors(err);
             return callback({
-                class: 'icon-circle-blank',
+                'class': 'icon-circle-blank',
                 title: 'invalid GeoJSON',
                 message: 'invalid GeoJSON'});
         } else {
@@ -26,7 +26,7 @@ module.exports = function(callback) {
                 return callback(null, gj);
             } catch(e) {
                 return callback({
-                    class: 'icon-circle-blank',
+                    'class': 'icon-circle-blank',
                     title: 'invalid GeoJSON',
                     message: 'invalid GeoJSON'});
             }
