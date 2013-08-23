@@ -32,13 +32,20 @@ function sourcePanel(updates) {
             }
         ];
 
+        if (!selection.classed('hide')) {
+            return selection
+                .transition()
+                .style('opacity', 0)
+                .each('end', function() {
+                    d3.select(this).classed('hide', true);
+                });
+        }
+
         selection
             .html('')
-            .style('top', window.innerHeight + 'px')
             .classed('hide', false)
             .transition()
-            .duration(500)
-            .style('top', '40px');
+            .style('opacity', 1);
 
         var $top = selection
             .append('div')

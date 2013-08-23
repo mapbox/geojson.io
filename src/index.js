@@ -81,6 +81,7 @@ d3.select('.file-bar').call(fileBar(updates)
     .on('source', clickSource));
 
 function clickSource() {
+    if (d3.event) d3.event.preventDefault();
     d3.select('.left-panel').call(sourcePanel(updates));
 }
 
@@ -190,7 +191,8 @@ function onPopupOpen(e) {
 
 d3.select(document).call(
     d3.keybinding('global')
-        .on('⌘+s', saveChanges));
+        .on('⌘+s', saveChanges)
+        .on('⌘+o', clickSource));
 
 function saveChanges(message, callback) {
     if (d3.event) d3.event.preventDefault();
