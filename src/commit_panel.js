@@ -1,8 +1,8 @@
 var github = require('./github');
 
-module.exports = commitPanel;
+module.exports = commit;
 
-function commitPanel(container, updates) {
+function commit(container, updates) {
     container.html('');
 
     var wrap = container.append('div')

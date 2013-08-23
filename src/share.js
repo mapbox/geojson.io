@@ -66,7 +66,10 @@ function share(container, features) {
             selection.remove();
         });
 
-    gist.saveBlocks(JSON.stringify(features), function(err, res) {
+    gist.saveBlocks(JSON.stringify({
+        type: 'FeatureCollection',
+        features: features
+    }), function(err, res) {
         if (err) return;
         if (res) {
             embed_html.property('value',
