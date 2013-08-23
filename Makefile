@@ -24,4 +24,4 @@ src/site.mobile.js: src/mobile.js
 	$(BROWSERIFY) -t brfs -r topojson src/mobile.js > src/site.mobile.js
 
 clean:
-	rm -r lib/lib.js
+	rm -r lib/lib.js src/site.js src/site.mobile.js
