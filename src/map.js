@@ -1,10 +1,10 @@
-'use strict';
-
 module.exports.showProperties = showProperties;
 module.exports.setupMap = setupMap;
 module.exports.geoify = geoify;
 
 function setupMap(container) {
+    'use strict';
+
     var mapDiv = container.append('div')
         .attr('id', 'map');
 

@@ -8,12 +8,12 @@ if (mobile()) {
 var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
     sourcePanel = require('./source_panel'),
-    commitPanel = require('./commit_panel'),
     loginPanel = require('./login_panel'),
     fileBar = require('./file_bar'),
     gist = require('./gist'),
     github = require('./github'),
     flash = require('./flash'),
+    commit = require('./commit'),
     share = require('./share'),
     mapUtil = require('./map'),
     source = require('./source'),
@@ -77,10 +77,10 @@ drawButtons(buttonData);
 container.append('div')
     .attr('class', 'file-bar')
     .call(fileBar(updates)
-    .on('source', clickSource)
-    .on('save', saveChanges)
-    .on('download', downloadFile)
-    .on('share', shareMap));
+        .on('source', clickSource)
+        .on('save', saveChanges)
+        .on('download', downloadFile)
+        .on('share', shareMap));
 
 function clickSource() {
     if (d3.event) d3.event.preventDefault();
@@ -238,9 +238,13 @@ function saveChanges() {
                 '">' + resp.html_url + '</a>');
         });
     } else if (!source() || source().type == 'github') {
-        buttons.filter(function(d) {
-            return d.icon === 'save';
-        }).trigger('click');
+        var wrap = commit(container, content, function(err, resp) {
+            wrap.remove();
+            if (err) return flash(container, err.message || err);
+            else flash(container, 'Changes committed to GitHub: <a href="' +
+                       resp.commit.html_url + '">' + resp.commit.sha.substring(0, 10) + '</a>');
+
+        });
     }
 }
 
@@ -301,7 +305,7 @@ function hashChange() {
     }
 
     if (s.type == 'gist') gist.loadGist(s.id, onGistLoad);
-    if (s.type == 'github') github.loadGitHub(s.id, onGitHubLoad);
+    if (s.type == 'github') github.loadGitHubRaw(s.id, onGitHubLoad);
 
     function onGistLoad(err, json) {
         if (err) return flash(container, 'Gist API limit exceeded, come back in a bit.');
@@ -339,13 +343,6 @@ function hashChange() {
                 map.fitBounds(drawnItems.getBounds());
                 buttons.filter(function(d, i) { return i == 1; }).trigger('click');
             }
-            drawButtons(buttonData.concat([{
-                icon: 'save',
-                title: ' Commit',
-                behavior: commitPanel
-            }]).filter(function(d) {
-                return d.icon !== 'share-alt';
-            }));
             updates.sourcechange({
                 type: 'github',
                 name: source().id,

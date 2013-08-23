@@ -1,7 +1,20 @@
 require=(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 // nothing to see here... no file methods for the browser
 
-},{}],2:[function(require,module,exports){
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],"g070js":[function(require,module,exports){
+var fs = require("fs");
+
+var topojson = module.exports = new Function("topojson", "return " + "topojson = (function() {\n\n  function merge(topology, arcs) {\n    var fragmentByStart = {},\n        fragmentByEnd = {};\n\n    arcs.forEach(function(i) {\n      var e = ends(i),\n          start = e[0],\n          end = e[1],\n          f, g;\n\n      if (f = fragmentByEnd[start]) {\n        delete fragmentByEnd[f.end];\n        f.push(i);\n        f.end = end;\n        if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByEnd[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[end]) {\n        delete fragmentByStart[f.start];\n        f.unshift(i);\n        f.start = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[start]) {\n        delete fragmentByStart[f.start];\n        f.unshift(~i);\n        f.start = end;\n        if (g = fragmentByEnd[end]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByEnd[end]) {\n        delete fragmentByEnd[f.end];\n        f.push(~i);\n        f.end = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else {\n        f = [i];\n        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;\n      }\n    });\n\n    function ends(i) {\n      var arc = topology.arcs[i], p0 = arc[0], p1 = [0, 0];\n      arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });\n      return [p0, p1];\n    }\n\n    var fragments = [];\n    for (var k in fragmentByEnd) fragments.push(fragmentByEnd[k]);\n    return fragments;\n  }\n\n  function mesh(topology, o, filter) {\n    var arcs = [];\n\n    if (arguments.length > 1) {\n      var geomsByArc = [],\n          geom;\n\n      function arc(i) {\n        if (i < 0) i = ~i;\n        (geomsByArc[i] || (geomsByArc[i] = [])).push(geom);\n      }\n\n      function line(arcs) {\n        arcs.forEach(arc);\n      }\n\n      function polygon(arcs) {\n        arcs.forEach(line);\n      }\n\n      function geometry(o) {\n        if (o.type === \"GeometryCollection\") o.geometries.forEach(geometry);\n        else if (o.type in geometryType) {\n          geom = o;\n          geometryType[o.type](o.arcs);\n        }\n      }\n\n      var geometryType = {\n        LineString: line,\n        MultiLineString: polygon,\n        Polygon: polygon,\n        MultiPolygon: function(arcs) { arcs.forEach(polygon); }\n      };\n\n      geometry(o);\n\n      geomsByArc.forEach(arguments.length < 3\n          ? function(geoms, i) { arcs.push(i); }\n          : function(geoms, i) { if (filter(geoms[0], geoms[geoms.length - 1])) arcs.push(i); });\n    } else {\n      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);\n    }\n\n    return object(topology, {type: \"MultiLineString\", arcs: merge(topology, arcs)});\n  }\n\n  function featureOrCollection(topology, o) {\n    return o.type === \"GeometryCollection\" ? {\n      type: \"FeatureCollection\",\n      features: o.geometries.map(function(o) { return feature(topology, o); })\n    } : feature(topology, o);\n  }\n\n  function feature(topology, o) {\n    var f = {\n      type: \"Feature\",\n      id: o.id,\n      properties: o.properties || {},\n      geometry: object(topology, o)\n    };\n    if (o.id == null) delete f.id;\n    return f;\n  }\n\n  function object(topology, o) {\n    var tf = topology.transform,\n        kx = tf.scale[0],\n        ky = tf.scale[1],\n        dx = tf.translate[0],\n        dy = tf.translate[1],\n        arcs = topology.arcs;\n\n    function arc(i, points) {\n      if (points.length) points.pop();\n      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, x = 0, y = 0, p; k < n; ++k) points.push([\n        (x += (p = a[k])[0]) * kx + dx,\n        (y += p[1]) * ky + dy\n      ]);\n      if (i < 0) reverse(points, n);\n    }\n\n    function point(coordinates) {\n      return [coordinates[0] * kx + dx, coordinates[1] * ky + dy];\n    }\n\n    function line(arcs) {\n      var points = [];\n      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);\n      if (points.length < 2) points.push(points[0].slice());\n      return points;\n    }\n\n    function ring(arcs) {\n      var points = line(arcs);\n      while (points.length < 4) points.push(points[0].slice());\n      return points;\n    }\n\n    function polygon(arcs) {\n      return arcs.map(ring);\n    }\n\n    function geometry(o) {\n      var t = o.type;\n      return t === \"GeometryCollection\" ? {type: t, geometries: o.geometries.map(geometry)}\n          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}\n          : null;\n    }\n\n    var geometryType = {\n      Point: function(o) { return point(o.coordinates); },\n      MultiPoint: function(o) { return o.coordinates.map(point); },\n      LineString: function(o) { return line(o.arcs); },\n      MultiLineString: function(o) { return o.arcs.map(line); },\n      Polygon: function(o) { return polygon(o.arcs); },\n      MultiPolygon: function(o) { return o.arcs.map(polygon); }\n    };\n\n    return geometry(o);\n  }\n\n  function reverse(array, n) {\n    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;\n  }\n\n  function bisect(a, x) {\n    var lo = 0, hi = a.length;\n    while (lo < hi) {\n      var mid = lo + hi >>> 1;\n      if (a[mid] < x) lo = mid + 1;\n      else hi = mid;\n    }\n    return lo;\n  }\n\n  function neighbors(objects) {\n    var indexesByArc = {}, // arc index -> array of object indexes\n        neighbors = objects.map(function() { return []; });\n\n    function line(arcs, i) {\n      arcs.forEach(function(a) {\n        if (a < 0) a = ~a;\n        var o = indexesByArc[a];\n        if (o) o.push(i);\n        else indexesByArc[a] = [i];\n      });\n    }\n\n    function polygon(arcs, i) {\n      arcs.forEach(function(arc) { line(arc, i); });\n    }\n\n    function geometry(o, i) {\n      if (o.type === \"GeometryCollection\") o.geometries.forEach(function(o) { geometry(o, i); });\n      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);\n    }\n\n    var geometryType = {\n      LineString: line,\n      MultiLineString: polygon,\n      Polygon: polygon,\n      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }\n    };\n\n    objects.forEach(geometry);\n\n    for (var i in indexesByArc) {\n      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {\n        for (var k = j + 1; k < m; ++k) {\n          var ij = indexes[j], ik = indexes[k], n;\n          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);\n          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);\n        }\n      }\n    }\n\n    return neighbors;\n  }\n\n  return {\n    version: \"1.2.3\",\n    mesh: mesh,\n    feature: featureOrCollection,\n    neighbors: neighbors\n  };\n})();\n")();
+topojson.topology = require("./lib/topojson/topology");
+topojson.simplify = require("./lib/topojson/simplify");
+topojson.clockwise = require("./lib/topojson/clockwise");
+topojson.filter = require("./lib/topojson/filter");
+topojson.prune = require("./lib/topojson/prune");
+topojson.bind = require("./lib/topojson/bind");
+
+},{"fs":1,"./lib/topojson/topology":2,"./lib/topojson/simplify":3,"./lib/topojson/clockwise":4,"./lib/topojson/filter":5,"./lib/topojson/prune":6,"./lib/topojson/bind":7}],8:[function(require,module,exports){
 var source = require('./source');
 var fs = require('fs');
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
@@ -109,20 +122,7 @@ function urlHash(data) {
     }
 }
 
-},{"fs":1,"./source":3}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
-},{}],"g070js":[function(require,module,exports){
-var fs = require("fs");
-
-var topojson = module.exports = new Function("topojson", "return " + "topojson = (function() {\n\n  function merge(topology, arcs) {\n    var fragmentByStart = {},\n        fragmentByEnd = {};\n\n    arcs.forEach(function(i) {\n      var e = ends(i),\n          start = e[0],\n          end = e[1],\n          f, g;\n\n      if (f = fragmentByEnd[start]) {\n        delete fragmentByEnd[f.end];\n        f.push(i);\n        f.end = end;\n        if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByEnd[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[end]) {\n        delete fragmentByStart[f.start];\n        f.unshift(i);\n        f.start = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[start]) {\n        delete fragmentByStart[f.start];\n        f.unshift(~i);\n        f.start = end;\n        if (g = fragmentByEnd[end]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByEnd[end]) {\n        delete fragmentByEnd[f.end];\n        f.push(~i);\n        f.end = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else {\n        f = [i];\n        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;\n      }\n    });\n\n    function ends(i) {\n      var arc = topology.arcs[i], p0 = arc[0], p1 = [0, 0];\n      arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });\n      return [p0, p1];\n    }\n\n    var fragments = [];\n    for (var k in fragmentByEnd) fragments.push(fragmentByEnd[k]);\n    return fragments;\n  }\n\n  function mesh(topology, o, filter) {\n    var arcs = [];\n\n    if (arguments.length > 1) {\n      var geomsByArc = [],\n          geom;\n\n      function arc(i) {\n        if (i < 0) i = ~i;\n        (geomsByArc[i] || (geomsByArc[i] = [])).push(geom);\n      }\n\n      function line(arcs) {\n        arcs.forEach(arc);\n      }\n\n      function polygon(arcs) {\n        arcs.forEach(line);\n      }\n\n      function geometry(o) {\n        if (o.type === \"GeometryCollection\") o.geometries.forEach(geometry);\n        else if (o.type in geometryType) {\n          geom = o;\n          geometryType[o.type](o.arcs);\n        }\n      }\n\n      var geometryType = {\n        LineString: line,\n        MultiLineString: polygon,\n        Polygon: polygon,\n        MultiPolygon: function(arcs) { arcs.forEach(polygon); }\n      };\n\n      geometry(o);\n\n      geomsByArc.forEach(arguments.length < 3\n          ? function(geoms, i) { arcs.push(i); }\n          : function(geoms, i) { if (filter(geoms[0], geoms[geoms.length - 1])) arcs.push(i); });\n    } else {\n      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);\n    }\n\n    return object(topology, {type: \"MultiLineString\", arcs: merge(topology, arcs)});\n  }\n\n  function featureOrCollection(topology, o) {\n    return o.type === \"GeometryCollection\" ? {\n      type: \"FeatureCollection\",\n      features: o.geometries.map(function(o) { return feature(topology, o); })\n    } : feature(topology, o);\n  }\n\n  function feature(topology, o) {\n    var f = {\n      type: \"Feature\",\n      id: o.id,\n      properties: o.properties || {},\n      geometry: object(topology, o)\n    };\n    if (o.id == null) delete f.id;\n    return f;\n  }\n\n  function object(topology, o) {\n    var tf = topology.transform,\n        kx = tf.scale[0],\n        ky = tf.scale[1],\n        dx = tf.translate[0],\n        dy = tf.translate[1],\n        arcs = topology.arcs;\n\n    function arc(i, points) {\n      if (points.length) points.pop();\n      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, x = 0, y = 0, p; k < n; ++k) points.push([\n        (x += (p = a[k])[0]) * kx + dx,\n        (y += p[1]) * ky + dy\n      ]);\n      if (i < 0) reverse(points, n);\n    }\n\n    function point(coordinates) {\n      return [coordinates[0] * kx + dx, coordinates[1] * ky + dy];\n    }\n\n    function line(arcs) {\n      var points = [];\n      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);\n      if (points.length < 2) points.push(points[0].slice());\n      return points;\n    }\n\n    function ring(arcs) {\n      var points = line(arcs);\n      while (points.length < 4) points.push(points[0].slice());\n      return points;\n    }\n\n    function polygon(arcs) {\n      return arcs.map(ring);\n    }\n\n    function geometry(o) {\n      var t = o.type;\n      return t === \"GeometryCollection\" ? {type: t, geometries: o.geometries.map(geometry)}\n          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}\n          : null;\n    }\n\n    var geometryType = {\n      Point: function(o) { return point(o.coordinates); },\n      MultiPoint: function(o) { return o.coordinates.map(point); },\n      LineString: function(o) { return line(o.arcs); },\n      MultiLineString: function(o) { return o.arcs.map(line); },\n      Polygon: function(o) { return polygon(o.arcs); },\n      MultiPolygon: function(o) { return o.arcs.map(polygon); }\n    };\n\n    return geometry(o);\n  }\n\n  function reverse(array, n) {\n    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;\n  }\n\n  function bisect(a, x) {\n    var lo = 0, hi = a.length;\n    while (lo < hi) {\n      var mid = lo + hi >>> 1;\n      if (a[mid] < x) lo = mid + 1;\n      else hi = mid;\n    }\n    return lo;\n  }\n\n  function neighbors(objects) {\n    var indexesByArc = {}, // arc index -> array of object indexes\n        neighbors = objects.map(function() { return []; });\n\n    function line(arcs, i) {\n      arcs.forEach(function(a) {\n        if (a < 0) a = ~a;\n        var o = indexesByArc[a];\n        if (o) o.push(i);\n        else indexesByArc[a] = [i];\n      });\n    }\n\n    function polygon(arcs, i) {\n      arcs.forEach(function(arc) { line(arc, i); });\n    }\n\n    function geometry(o, i) {\n      if (o.type === \"GeometryCollection\") o.geometries.forEach(function(o) { geometry(o, i); });\n      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);\n    }\n\n    var geometryType = {\n      LineString: line,\n      MultiLineString: polygon,\n      Polygon: polygon,\n      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }\n    };\n\n    objects.forEach(geometry);\n\n    for (var i in indexesByArc) {\n      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {\n        for (var k = j + 1; k < m; ++k) {\n          var ij = indexes[j], ik = indexes[k], n;\n          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);\n          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);\n        }\n      }\n    }\n\n    return neighbors;\n  }\n\n  return {\n    version: \"1.2.3\",\n    mesh: mesh,\n    feature: featureOrCollection,\n    neighbors: neighbors\n  };\n})();\n")();
-topojson.topology = require("./lib/topojson/topology");
-topojson.simplify = require("./lib/topojson/simplify");
-topojson.clockwise = require("./lib/topojson/clockwise");
-topojson.filter = require("./lib/topojson/filter");
-topojson.prune = require("./lib/topojson/prune");
-topojson.bind = require("./lib/topojson/bind");
-
-},{"fs":1,"./lib/topojson/topology":4,"./lib/topojson/simplify":5,"./lib/topojson/clockwise":6,"./lib/topojson/filter":7,"./lib/topojson/prune":8,"./lib/topojson/bind":9}],10:[function(require,module,exports){
+},{"fs":1,"./source":9}],10:[function(require,module,exports){
 (function(){var mobile = require('is-mobile');
 
 if (mobile()) {
@@ -133,12 +133,12 @@ if (mobile()) {
 var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
     sourcePanel = require('./source_panel'),
-    commitPanel = require('./commit_panel'),
     loginPanel = require('./login_panel'),
     fileBar = require('./file_bar'),
     gist = require('./gist'),
     github = require('./github'),
     flash = require('./flash'),
+    commit = require('./commit'),
     share = require('./share'),
     mapUtil = require('./map'),
     source = require('./source'),
@@ -202,10 +202,10 @@ drawButtons(buttonData);
 container.append('div')
     .attr('class', 'file-bar')
     .call(fileBar(updates)
-    .on('source', clickSource)
-    .on('save', saveChanges)
-    .on('download', downloadFile)
-    .on('share', shareMap));
+        .on('source', clickSource)
+        .on('save', saveChanges)
+        .on('download', downloadFile)
+        .on('share', shareMap));
 
 function clickSource() {
     if (d3.event) d3.event.preventDefault();
@@ -363,9 +363,13 @@ function saveChanges() {
                 '">' + resp.html_url + '</a>');
         });
     } else if (!source() || source().type == 'github') {
-        buttons.filter(function(d) {
-            return d.icon === 'save';
-        }).trigger('click');
+        var wrap = commit(container, content, function(err, resp) {
+            wrap.remove();
+            if (err) return flash(container, err.message || err);
+            else flash(container, 'Changes committed to GitHub: <a href="' +
+                       resp.commit.html_url + '">' + resp.commit.sha.substring(0, 10) + '</a>');
+
+        });
     }
 }
 
@@ -426,7 +430,7 @@ function hashChange() {
     }
 
     if (s.type == 'gist') gist.loadGist(s.id, onGistLoad);
-    if (s.type == 'github') github.loadGitHub(s.id, onGitHubLoad);
+    if (s.type == 'github') github.loadGitHubRaw(s.id, onGitHubLoad);
 
     function onGistLoad(err, json) {
         if (err) return flash(container, 'Gist API limit exceeded, come back in a bit.');
@@ -464,13 +468,6 @@ function hashChange() {
                 map.fitBounds(drawnItems.getBounds());
                 buttons.filter(function(d, i) { return i == 1; }).trigger('click');
             }
-            drawButtons(buttonData.concat([{
-                icon: 'save',
-                title: ' Commit',
-                behavior: commitPanel
-            }]).filter(function(d) {
-                return d.icon !== 'share-alt';
-            }));
             updates.sourcechange({
                 type: 'github',
                 name: source().id,
@@ -483,14 +480,14 @@ function hashChange() {
 }
 
 })()
-},{"./json_panel":11,"./table_panel":12,"./source_panel":13,"./commit_panel":14,"./file_bar":15,"./login_panel":16,"./gist":2,"./github":17,"./flash":18,"./map":19,"./share":20,"./source":3,"is-mobile":21,"detect-json-indent":22}],19:[function(require,module,exports){
-'use strict';
-
+},{"./json_panel":11,"./table_panel":12,"./source_panel":13,"./login_panel":14,"./file_bar":15,"./gist":8,"./github":16,"./flash":17,"./commit":18,"./share":19,"./map":20,"./source":9,"is-mobile":21,"detect-json-indent":22}],20:[function(require,module,exports){
 module.exports.showProperties = showProperties;
 module.exports.setupMap = setupMap;
 module.exports.geoify = geoify;
 
 function setupMap(container) {
+    'use strict';
+
     var mapDiv = container.append('div')
         .attr('id', 'map');
 
@@ -578,7 +575,7 @@ function geoify(layer) {
     });
 }
 
-},{}],3:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -659,43 +656,89 @@ function jsonPanel(container, updates) {
 }
 
 },{"./validate":23}],14:[function(require,module,exports){
-var github = require('./github');
+var source = require('./source'),
+    config = require('./config')(location.hostname);
 
-module.exports = commit;
+module.exports = loginPanel;
 
-function commit(container, updates) {
-    container.html('');
-
-    var wrap = container.append('div')
-        .attr('class', 'pad1 center');
-
-    var message = wrap.append('textarea')
-        .attr('placeholder', 'Commit message')
-        .attr('class', 'full-width');
-
-    var commitButton = wrap.append('button')
-        .text('Commit changes to GitHub')
-        .attr('class', 'semimajor');
-
-    updates.on('update_map.mode', function(data, layer, exportIndentationStyle) {
-        commitButton.on('click', function() {
-            github.saveAsGitHub(
-                JSON.stringify(data, null, exportIndentationStyle),
-                done,
-                message.property('value'));
-
-            function done(err, resp) {
-                if (err) return alert(err);
-                commitButton.text('Changes saved');
-                setTimeout(function() {
-                    commitButton.text('Commit changes to GitHub');
-                }, 1000);
-            }
-        });
-    });
+function loginPanel(container) {
 }
 
-},{"./github":17}],15:[function(require,module,exports){
+loginPanel.init = function(container) {
+    'use strict';
+    var sel = d3.select(container);
+    sel.on('click', login);
+
+    function login() {
+        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
+    }
+
+    function logout() {
+        window.localStorage.removeItem('github_token');
+        sel.classed('logged-in', true)
+            .on('click', login);
+    }
+
+    function killTokenUrl() {
+        if (window.location.href.indexOf('?code') !== -1) {
+            window.location.href = window.location.href.replace(/\?code=.*$/, '');
+        }
+    }
+
+    if (window.location.search && window.location.search.indexOf('?code') === 0) {
+        var code = window.location.search.replace('?code=', '');
+        d3.json(config.gatekeeper_url + '/authenticate/' + code)
+            .on('load', function(l) {
+                if (l.token) window.localStorage.github_token = l.token;
+                killTokenUrl();
+            })
+            .on('error', function() {
+                alert('Authentication with GitHub failed');
+            })
+            .get();
+    }
+
+    if (localStorage.github_token) {
+        d3.json('https://api.github.com/user')
+            .header('Authorization', 'token ' + window.localStorage.github_token)
+            .on('load', function(user) {
+                localStorage.github_user = JSON.stringify(user);
+                sel
+                    .style('background-image', 'url(' + user.avatar_url + ')')
+                    .style('background-size', '40px 40px')
+                    .style('background-repeat', 'no-repeat')
+                    .on('click', logout);
+            })
+            .on('error', function() {
+                window.localStorage.removeItem('github_token');
+            })
+            .get();
+    }
+};
+
+},{"./source":9,"./config":24}],17:[function(require,module,exports){
+var message = require('./message');
+
+module.exports = flash;
+
+function flash(selection, txt) {
+    'use strict';
+
+    var msg = message(selection);
+
+    if (txt) msg.select('.content').html(txt);
+
+    setTimeout(function() {
+        msg
+            .transition()
+            .style('opacity', 0)
+            .remove();
+    }, 5000);
+
+    return msg;
+}
+
+},{"./message":25}],15:[function(require,module,exports){
 var share = require('./share');
 
 module.exports = fileBar;
@@ -770,6 +813,7 @@ function fileBar(updates) {
             });
 
         buttons.append('span')
+            .attr('class', 'title')
             .text(function(d) {
                 return d.title;
             });
@@ -783,12 +827,21 @@ function fileBar(updates) {
             }
         }
 
+        function saveNoun(_) {
+            buttons.filter(function(b) {
+                return b.title === 'Save';
+            }).select('span.title').text(_);
+        }
+
         function onSource(d) {
             filename.text(d.name);
             filetype.attr('class', function() {
                 if (d.type == 'github') return 'icon-github';
                 if (d.type == 'gist') return 'icon-github-alt';
             });
+
+            saveNoun(d.type == 'github' ? 'Commit' : 'Save');
+
             if (sourceUrl(d)) {
                 link
                     .attr('href', sourceUrl(d))
@@ -803,74 +856,46 @@ function fileBar(updates) {
     return d3.rebind(bar, event, 'on');
 }
 
-},{"./share":20}],16:[function(require,module,exports){
-var source = require('./source'),
-    config = require('./config')(location.hostname);
+},{"./share":19}],18:[function(require,module,exports){
+var github = require('./github');
 
-module.exports = loginPanel;
+module.exports = commit;
 
-function loginPanel(container) {
+function commit(container, contents, callback) {
+    container.select('.share').remove();
+
+    var wrap = container.append('div')
+        .attr('class', 'share pad1 center');
+
+    var form = wrap.append('form')
+        .on('submit', function() {
+            d3.event.preventDefault();
+            github.saveAsGitHub(contents,
+                message.property('value'), callback);
+        });
+
+    var message = form.append('input')
+        .attr('placeholder', 'Commit message')
+        .attr('type', 'text');
+
+    var commitButton = form.append('input')
+        .attr('type', 'submit')
+        .property('value', 'Commit Changes')
+        .attr('class', 'semimajor');
+
+    message.node().focus();
+
+    return wrap;
 }
 
-loginPanel.init = function(container) {
-    'use strict';
-    var sel = d3.select(container);
-    sel.on('click', login);
-
-    function login() {
-        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
-    }
-
-    function logout() {
-        window.localStorage.removeItem('github_token');
-        sel.classed('logged-in', true)
-            .on('click', login);
-    }
-
-    function killTokenUrl() {
-        if (window.location.href.indexOf('?code') !== -1) {
-            window.location.href = window.location.href.replace(/\?code=.*$/, '');
-        }
-    }
-
-    if (window.location.search && window.location.search.indexOf('?code') === 0) {
-        var code = window.location.search.replace('?code=', '');
-        d3.json(config.gatekeeper_url + '/authenticate/' + code)
-            .on('load', function(l) {
-                if (l.token) window.localStorage.github_token = l.token;
-                killTokenUrl();
-            })
-            .on('error', function() {
-                alert('Authentication with GitHub failed');
-            })
-            .get();
-    }
-
-    if (localStorage.github_token) {
-        d3.json('https://api.github.com/user')
-            .header('Authorization', 'token ' + window.localStorage.github_token)
-            .on('load', function(user) {
-                localStorage.github_user = JSON.stringify(user);
-                sel
-                    .style('background-image', 'url(' + user.avatar_url + ')')
-                    .style('background-size', '40px 40px')
-                    .style('background-repeat', 'no-repeat')
-                    .on('click', logout);
-            })
-            .on('error', function() {
-                window.localStorage.removeItem('github_token');
-            })
-            .get();
-    }
-};
-
-},{"./source":3,"./config":24}],17:[function(require,module,exports){
+},{"./github":16}],16:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
 
 module.exports.saveAsGitHub = saveAsGitHub;
 module.exports.loadGitHub = loadGitHub;
+module.exports.loadGitHubRaw = loadGitHubRaw;
 module.exports.urlHash = urlHash;
 
 function authorize(xhr) {
@@ -881,12 +906,13 @@ function authorize(xhr) {
 
 function githubFileUrl() {
     var pts = parseGitHubId(source().id);
+    
     return 'https://api.github.com/repos/' + pts.user +
             '/' + pts.repo +
             '/contents/' + pts.file + '?ref=' + pts.branch;
 }
 
-function saveAsGitHub(content, callback, message) {
+function saveAsGitHub(content, message, callback) {
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
             'Please use a modern browser to enjoy the full featureset of geojson.io');
@@ -932,9 +958,24 @@ function parseGitHubId(id) {
 
 function loadGitHub(id, callback) {
     var pts = parseGitHubId(id);
-    d3.text('https://api.github.com/repos/' + pts.user +
+    authorize(d3.json('https://api.github.com/repos/' + pts.user +
         '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch)
+        '/contents/' + pts.file + '?ref=' + pts.branch))
+        .on('load', onLoad)
+        .on('error', onError)
+        .get();
+
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function loadGitHubRaw(id, callback) {
+    var pts = parseGitHubId(id);
+    authorize(d3.text('https://api.github.com/repos/' + pts.user +
+        '/' + pts.repo +
+        '/contents/' + pts.file + '?ref=' + pts.branch))
         .on('load', onLoad)
         .on('error', onError)
         .header('Accept', 'application/vnd.github.raw').get();
@@ -946,34 +987,20 @@ function loadGitHub(id, callback) {
 }
 
 function urlHash(d) {
+    var prefix = '';
+
+    if (d.parents && d.parents.length) {
+        prefix = d.parents.map(function(p) {
+            return p.path;
+        }).join('/') + '/';
+    }
+
     return {
-        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + d.path
+        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + prefix + d.path
     };
 }
 
-},{"./source":3}],18:[function(require,module,exports){
-var message = require('./message');
-
-module.exports = flash;
-
-function flash(selection, txt) {
-    'use strict';
-
-    var msg = message(selection);
-
-    if (txt) msg.select('.content').html(txt);
-
-    setTimeout(function() {
-        msg
-            .transition()
-            .style('opacity', 0)
-            .remove();
-    }, 5000);
-
-    return msg;
-}
-
-},{"./message":25}],20:[function(require,module,exports){
+},{"./source":9}],19:[function(require,module,exports){
 var gist = require('./gist');
 
 module.exports = share;
@@ -1056,7 +1083,7 @@ function share(container, features) {
     });
 }
 
-},{"./gist":2}],21:[function(require,module,exports){
+},{"./gist":8}],21:[function(require,module,exports){
 module.exports = isMobile;
 
 function isMobile (ua) {
@@ -1076,7 +1103,52 @@ module.exports = function(_, def) {
     return space[0];
 };
 
-},{}],13:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
+'use strict';
+
+var metatable = require('d3-metatable')(d3);
+
+module.exports = tablePanel;
+
+function tablePanel(container, updates) {
+    container.html('');
+
+    updates.on('update_map.mode', function(data, layers) {
+        function findLayer(p) {
+            var layer;
+            layers.eachLayer(function(l) {
+                if (p == l.feature.properties) layer = l;
+            });
+            return layer;
+        }
+        if (!data.features.length) {
+            container.append('div')
+                .attr('class', 'blank-banner')
+                .text('no features');
+        } else {
+            var props = [];
+            layers.eachLayer(function(p) {
+                props.push(p.feature.properties);
+            });
+            container.html('');
+            container
+                .append('div')
+                .attr('class', 'pad1 scrollable')
+                .data([props])
+                .call(
+                    metatable()
+                        .on('change', function() {
+                            updates.update_refresh();
+                        })
+                        .on('rowfocus', function(d) {
+                            updates.focus_layer(findLayer(d));
+                        })
+                );
+        }
+    });
+}
+
+},{"d3-metatable":26}],13:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     gist = require('./gist'),
     github = require('./github'),
@@ -1228,52 +1300,7 @@ function sourcePanel(updates) {
     return panel;
 }
 
-},{"./vertical_panel":26,"./github":17,"./gist":2,"./import_panel":27,"detect-json-indent":22,"github-file-browser":28}],12:[function(require,module,exports){
-'use strict';
-
-var metatable = require('d3-metatable')(d3);
-
-module.exports = tablePanel;
-
-function tablePanel(container, updates) {
-    container.html('');
-
-    updates.on('update_map.mode', function(data, layers) {
-        function findLayer(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
-        if (!data.features.length) {
-            container.append('div')
-                .attr('class', 'blank-banner')
-                .text('no features');
-        } else {
-            var props = [];
-            layers.eachLayer(function(p) {
-                props.push(p.feature.properties);
-            });
-            container.html('');
-            container
-                .append('div')
-                .attr('class', 'pad1 scrollable')
-                .data([props])
-                .call(
-                    metatable()
-                        .on('change', function() {
-                            updates.update_refresh();
-                        })
-                        .on('rowfocus', function(d) {
-                            updates.focus_layer(findLayer(d));
-                        })
-                );
-        }
-    });
-}
-
-},{"d3-metatable":29}],4:[function(require,module,exports){
+},{"./vertical_panel":27,"./gist":8,"./github":16,"./import_panel":28,"github-file-browser":29,"detect-json-indent":22}],2:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -1615,7 +1642,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./type":30,"./stitch-poles":31,"./hashtable":32,"./coordinate-systems":33}],5:[function(require,module,exports){
+},{"./type":30,"./stitch-poles":31,"./hashtable":32,"./coordinate-systems":33}],3:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -1747,7 +1774,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./min-heap":34,"./coordinate-systems":33}],26:[function(require,module,exports){
+},{"./min-heap":34,"./coordinate-systems":33}],27:[function(require,module,exports){
 module.exports = verticalPanel;
 
 function verticalPanel(updates) {
@@ -1836,7 +1863,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],7:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -1906,66 +1933,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"./type":30,"./prune":8,"./clockwise":6,"./coordinate-systems":33,"../../":"g070js"}],8:[function(require,module,exports){
-var type = require("./type"),
-    topojson = require("../../");
-
-module.exports = function(topology, options) {
-  var verbose = false,
-      retained = [],
-      j = -1,
-      n = topology.arcs.length;
-
-  if (options)
-    "verbose" in options && (verbose = !!options["verbose"]);
-
-  var prune = type({
-    LineString: function(lineString) {
-      this.line(lineString.arcs);
-    },
-    MultiLineString: function(multiLineString) {
-      var arcs = multiLineString.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    },
-    MultiPoint: noop,
-    MultiPolygon: function(multiPolygon) {
-      var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.polygon(arcs[i]);
-    },
-    Point: noop,
-    Polygon: function(polygon) {
-      this.polygon(polygon.arcs);
-    },
-    line: function(arcs) {
-      var i = -1, n = arcs.length, arc, reversed;
-      while (++i < n) {
-        arc = arcs[i];
-        if (reversed = arc < 0) arc = ~arc;
-        if (retained[arc] == null) retained[arc] = ++j, arc = j;
-        else arc = retained[arc];
-        arcs[i] = reversed ? ~arc : arc;
-      }
-    },
-    polygon: function(arcs) {
-      var i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    }
-  });
-
-  for (var key in topology.objects) {
-    prune.object(topology.objects[key]);
-  }
-
-  if (verbose) console.warn("prune: retained " + (j + 1) + " / " + n + " arcs (" + Math.round((j + 1) / n * 100) + "%)");
-
-  var arcs = [];
-  retained.forEach(function(i, j) { arcs[i] = topology.arcs[j]; });
-  topology.arcs = arcs;
-};
-
-function noop() {}
-
-},{"./type":30,"../../":"g070js"}],6:[function(require,module,exports){
+},{"./type":30,"./prune":6,"./clockwise":4,"./coordinate-systems":33,"../../":"g070js"}],4:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -2038,7 +2006,66 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"./type":30,"./coordinate-systems":33,"../../":"g070js"}],9:[function(require,module,exports){
+},{"./type":30,"./coordinate-systems":33,"../../":"g070js"}],6:[function(require,module,exports){
+var type = require("./type"),
+    topojson = require("../../");
+
+module.exports = function(topology, options) {
+  var verbose = false,
+      retained = [],
+      j = -1,
+      n = topology.arcs.length;
+
+  if (options)
+    "verbose" in options && (verbose = !!options["verbose"]);
+
+  var prune = type({
+    LineString: function(lineString) {
+      this.line(lineString.arcs);
+    },
+    MultiLineString: function(multiLineString) {
+      var arcs = multiLineString.arcs, i = -1, n = arcs.length;
+      while (++i < n) this.line(arcs[i]);
+    },
+    MultiPoint: noop,
+    MultiPolygon: function(multiPolygon) {
+      var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
+      while (++i < n) this.polygon(arcs[i]);
+    },
+    Point: noop,
+    Polygon: function(polygon) {
+      this.polygon(polygon.arcs);
+    },
+    line: function(arcs) {
+      var i = -1, n = arcs.length, arc, reversed;
+      while (++i < n) {
+        arc = arcs[i];
+        if (reversed = arc < 0) arc = ~arc;
+        if (retained[arc] == null) retained[arc] = ++j, arc = j;
+        else arc = retained[arc];
+        arcs[i] = reversed ? ~arc : arc;
+      }
+    },
+    polygon: function(arcs) {
+      var i = -1, n = arcs.length;
+      while (++i < n) this.line(arcs[i]);
+    }
+  });
+
+  for (var key in topology.objects) {
+    prune.object(topology.objects[key]);
+  }
+
+  if (verbose) console.warn("prune: retained " + (j + 1) + " / " + n + " arcs (" + Math.round((j + 1) / n * 100) + "%)");
+
+  var arcs = [];
+  retained.forEach(function(i, j) { arcs[i] = topology.arcs[j]; });
+  topology.arcs = arcs;
+};
+
+function noop() {}
+
+},{"./type":30,"../../":"g070js"}],7:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -2068,7 +2095,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"./type":30,"../../":"g070js"}],29:[function(require,module,exports){
+},{"./type":30,"../../":"g070js"}],26:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -2242,7 +2269,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":35}],27:[function(require,module,exports){
+},{"geojsonhint":35}],28:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
@@ -2561,7 +2588,7 @@ function runGeocode(container, list, transform, updates) {
     var task = geocode(list, transform, progress, done);
 }
 
-},{"topojson":"g070js","./vertical_panel":26,"./gist":2,"./progress_chart":36,"togeojson":37,"detect-json-indent":22}],28:[function(require,module,exports){
+},{"topojson":"g070js","./vertical_panel":27,"./gist":8,"./progress_chart":36,"togeojson":37,"detect-json-indent":22}],29:[function(require,module,exports){
 module.exports = function(d3) {
     var preview = require('static-map-preview')(d3, 'tmcw.map-dsejpecw');
 
@@ -2668,7 +2695,7 @@ module.exports = function(d3) {
                                 columnItems.each(function(d) {
                                     if (d.type == 'tree') {
                                         d3.select(this)
-                                            .on('click', repositoryTree(columnItems, 2));
+                                            .on('click', repositoryTree(columnItems, 2, [d]));
                                     } else {
                                         d3.select(this)
                                             .on('click', event.chosen);
@@ -2680,7 +2707,7 @@ module.exports = function(d3) {
                             };
                         }
 
-                        function repositoryTree(columnItems, level) {
+                        function repositoryTree(columnItems, level, parents) {
                             return function(d) {
                                 var that = this;
 
@@ -2707,6 +2734,7 @@ module.exports = function(d3) {
 
                                         items.tree = items.tree.map(function(t) {
                                             t.parent = parent;
+                                            t.parents = parents;
                                             return t;
                                         });
 
@@ -2721,7 +2749,8 @@ module.exports = function(d3) {
 
                                         columnItems.each(function(d) {
                                             if (d.type == 'tree') {
-                                                d3.select(this).on('click', repositoryTree(columnItems, level + 1));
+                                                d3.select(this).on('click', repositoryTree(columnItems, level + 1,
+                                                    parents.concat([d])));
                                             } else {
                                                 d3.select(this)
                                                     .on('click', event.chosen);
@@ -2746,7 +2775,7 @@ module.exports = function(d3) {
             var event = d3.dispatch('chosen');
             var time_format = d3.time.format('%Y/%m/%d');
             function browse(selection) {
-                req('/gists', token, function(err, gists) {
+                reqList('/gists', token, function(err, gists) {
                     gists = gists.filter(hasMapFile);
                     var item = selection.selectAll('div.item')
                         .data(gists)
@@ -2832,6 +2861,7 @@ module.exports = function(d3) {
                 var sel = d3.select(this);
                 req('/gists/' + d.id, token, function(err, data) {
                     var geojson = mapFile(data);
+                    console.log(geojson);
                     if (geojson) {
                         var previewMap = preview(geojson, [200, 200]);
                         sel.node().appendChild(previewMap.node());
@@ -4586,17 +4616,7 @@ exports.relative = function(from, to) {
 };
 
 })(require("__browserify_process"))
-},{"__browserify_process":44}],39:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
-  };
-};
-
-},{}],40:[function(require,module,exports){
+},{"__browserify_process":44}],40:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -4629,6 +4649,16 @@ function distance(x0, y0, x1, y1) {
   var dx = x0 - x1, dy = y0 - y1;
   return Math.sqrt(dx * dx + dy * dy);
 }
+
+},{}],39:[function(require,module,exports){
+// Note: requires that size is a power of two!
+module.exports = function(size) {
+  var mask = size - 1;
+  return function(point) {
+    var key = (point[0] + 31 * point[1]) | 0;
+    return (key < 0 ? ~key : key) & mask;
+  };
+};
 
 },{}],41:[function(require,module,exports){
 var π = Math.PI,
@@ -4712,5 +4742,5 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}]},{},[2,10])
+},{}]},{},[8,10])
 ;

@@ -72,6 +72,7 @@ function fileBar(updates) {
             });
 
         buttons.append('span')
+            .attr('class', 'title')
             .text(function(d) {
                 return d.title;
             });
@@ -85,12 +86,21 @@ function fileBar(updates) {
             }
         }
 
+        function saveNoun(_) {
+            buttons.filter(function(b) {
+                return b.title === 'Save';
+            }).select('span.title').text(_);
+        }
+
         function onSource(d) {
             filename.text(d.name);
             filetype.attr('class', function() {
                 if (d.type == 'github') return 'icon-github';
                 if (d.type == 'gist') return 'icon-github-alt';
             });
+
+            saveNoun(d.type == 'github' ? 'Commit' : 'Save');
+
             if (sourceUrl(d)) {
                 link
                     .attr('href', sourceUrl(d))
