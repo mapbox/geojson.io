@@ -312,7 +312,8 @@ function hashChange() {
             window.location.hash = gist.urlHash(json).url;
             updates.sourcechange({
                 type: 'gist',
-                name: '#' + json.id
+                name: '#' + json.id,
+                data: json
             });
         } catch(e) {
             console.log(e);
@@ -341,7 +342,8 @@ function hashChange() {
             }));
             updates.sourcechange({
                 type: 'github',
-                name: source().id
+                name: source().id,
+                data: source()
             });
         } catch(e) {
             flash(container, 'Loading a file from GitHub failed');
@@ -350,7 +352,7 @@ function hashChange() {
 }
 
 })()
-},{"./json_panel":9,"./table_panel":10,"./commit_panel":11,"./source_panel":12,"./share_panel":13,"./login_panel":14,"./file_bar":15,"./gist":16,"./github":17,"./flash":18,"./map":19,"./source":20,"is-mobile":21,"detect-json-indent":22}],15:[function(require,module,exports){
+},{"./json_panel":9,"./table_panel":10,"./source_panel":11,"./commit_panel":12,"./share_panel":13,"./login_panel":14,"./file_bar":15,"./gist":16,"./github":17,"./flash":18,"./map":19,"./source":20,"is-mobile":21,"detect-json-indent":22}],15:[function(require,module,exports){
 module.exports = fileBar;
 
 function fileBar(updates) {
@@ -367,7 +369,21 @@ function fileBar(updates) {
             .attr('class', 'filename')
             .text('unsaved');
 
+        var link = name.append('a')
+            .attr('target', '_blank')
+            .attr('class', 'icon-external-link')
+            .classed('hide', true);
+
         updates.on('sourcechange', onSource);
+
+        function sourceUrl(d) {
+            switch(d.type) {
+                case 'gist':
+                    return d.data.html_url;
+                case 'github':
+                    return 'https://github.com/' + d.data.id;
+            }
+        }
 
         function onSource(d) {
             filename.text(d.name);
@@ -375,6 +391,14 @@ function fileBar(updates) {
                 if (d.type == 'github') return 'icon-github';
                 if (d.type == 'gist') return 'icon-github-alt';
             });
+            if (sourceUrl(d)) {
+                link
+                    .attr('href', sourceUrl(d))
+                    .classed('hide', false);
+            } else {
+                link
+                    .classed('hide', true);
+            }
         }
 
         var actions = [
@@ -576,7 +600,7 @@ function jsonPanel(container, updates) {
     });
 }
 
-},{"./validate":23}],11:[function(require,module,exports){
+},{"./validate":23}],12:[function(require,module,exports){
 var github = require('./github');
 
 module.exports = commitPanel;
@@ -1010,7 +1034,7 @@ function tablePanel(container, updates) {
     });
 }
 
-},{"d3-metatable":26}],12:[function(require,module,exports){
+},{"d3-metatable":26}],11:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     gist = require('./gist'),
     github = require('./github'),
@@ -1169,7 +1193,7 @@ function sourcePanel(updates) {
     return panel;
 }
 
-},{"./vertical_panel":27,"./gist":16,"./import_panel":28,"./github":17,"github-file-browser":29,"detect-json-indent":22}],2:[function(require,module,exports){
+},{"./vertical_panel":27,"./gist":16,"./github":17,"./import_panel":28,"github-file-browser":29,"detect-json-indent":22}],2:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -2765,7 +2789,28 @@ function mapFile(data) {
     }
 }
 
-},{"static-map-preview":38}],30:[function(require,module,exports){
+},{"static-map-preview":38}],36:[function(require,module,exports){
+module.exports = function(elem, w, h) {
+    var c = elem.appendChild(document.createElement('canvas'));
+
+    c.width = w;
+    c.height = h;
+
+    var ctx = c.getContext('2d'),
+        gap,
+        fill = {
+            success: '#e3e4b8',
+            error: '#E0A990'
+        };
+
+    return function(e) {
+        if (!gap) gap = ((e.done) / e.todo * w) - ((e.done - 1) / e.todo * w);
+        ctx.fillStyle = fill[e.status];
+        ctx.fillRect((e.done - 1) / e.todo * w, 0, gap, h);
+    };
+};
+
+},{}],30:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -2924,27 +2969,6 @@ module.exports = function() {
 function compare(a, b) {
   return a[1].area - b[1].area;
 }
-
-},{}],36:[function(require,module,exports){
-module.exports = function(elem, w, h) {
-    var c = elem.appendChild(document.createElement('canvas'));
-
-    c.width = w;
-    c.height = h;
-
-    var ctx = c.getContext('2d'),
-        gap,
-        fill = {
-            success: '#e3e4b8',
-            error: '#E0A990'
-        };
-
-    return function(e) {
-        if (!gap) gap = ((e.done) / e.todo * w) - ((e.done - 1) / e.todo * w);
-        ctx.fillStyle = fill[e.status];
-        ctx.fillRect((e.done - 1) / e.todo * w, 0, gap, h);
-    };
-};
 
 },{}],31:[function(require,module,exports){
 var type = require("./type");
@@ -4482,17 +4506,7 @@ exports.relative = function(from, to) {
 };
 
 })(require("__browserify_process"))
-},{"__browserify_process":44}],39:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
-  };
-};
-
-},{}],40:[function(require,module,exports){
+},{"__browserify_process":44}],40:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -4525,6 +4539,16 @@ function distance(x0, y0, x1, y1) {
   var dx = x0 - x1, dy = y0 - y1;
   return Math.sqrt(dx * dx + dy * dy);
 }
+
+},{}],39:[function(require,module,exports){
+// Note: requires that size is a power of two!
+module.exports = function(size) {
+  var mask = size - 1;
+  return function(point) {
+    var key = (point[0] + 31 * point[1]) | 0;
+    return (key < 0 ? ~key : key) & mask;
+  };
+};
 
 },{}],41:[function(require,module,exports){
 var π = Math.PI,

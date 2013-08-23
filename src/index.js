@@ -295,7 +295,8 @@ function hashChange() {
             window.location.hash = gist.urlHash(json).url;
             updates.sourcechange({
                 type: 'gist',
-                name: '#' + json.id
+                name: '#' + json.id,
+                data: json
             });
         } catch(e) {
             console.log(e);
@@ -324,7 +325,8 @@ function hashChange() {
             }));
             updates.sourcechange({
                 type: 'github',
-                name: source().id
+                name: source().id,
+                data: source()
             });
         } catch(e) {
             flash(container, 'Loading a file from GitHub failed');

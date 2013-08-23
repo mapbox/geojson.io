@@ -441,6 +441,17 @@ textarea.full-width {
     margin-left:10px;
 }
 
+.file-bar .icon-external-link {
+    margin-left:10px;
+    font-size:15px;
+    color:#444;
+    transition:all 100ms ease-in;
+}
+
+.file-bar .icon-external-link:hover {
+    color:red;
+}
+
 .button-wrap {
     padding:5px 0;
     display:inline-block;
