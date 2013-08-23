@@ -1,5 +1,3 @@
-'use strict';
-
 var mobile = require('is-mobile');
 
 if (mobile()) {
@@ -9,25 +7,24 @@ if (mobile()) {
 
 var jsonPanel = require('./json_panel'),
     tablePanel = require('./table_panel'),
-    importPanel = require('./import_panel'),
-    commitPanel = require('./commit_panel'),
-    sharePanel = require('./share_panel'),
+    sourcePanel = require('./source_panel'),
     loginPanel = require('./login_panel'),
+    fileBar = require('./file_bar'),
     gist = require('./gist'),
     github = require('./github'),
-    map = require('./map')(),
+    flash = require('./flash'),
+    commit = require('./commit'),
+    share = require('./share'),
+    mapUtil = require('./map'),
     source = require('./source'),
     detectIndentationStyle = require('detect-json-indent'),
-    exportIndentationStyle = 4,
-    dropSupport = (window.FileReader && 'ondrop' in window);
+    exportIndentationStyle = 4;
 
-CodeMirror.keyMap.tabSpace = {
-    Tab: function(cm) {
-        var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
-        cm.replaceSelection(spaces, 'end', '+input');
-    },
-    fallthrough: ['default']
-};
+var container = d3.select('body')
+    .append('div')
+    .attr('class', 'container');
+
+var map = mapUtil.setupMap(container);
 
 L.Polygon.prototype.getCenter = function() {
     var pts = this._latlngs;
@@ -55,8 +52,8 @@ L.Polygon.prototype.getCenter = function() {
 
 var pane = d3.select('.pane');
 
-var editor, buttons;
-var silentHash = false;
+var buttons,
+    silentHash = false;
 
 var drawnItems = new L.FeatureGroup().addTo(map);
 var drawControl = new L.Control.Draw({
@@ -64,7 +61,6 @@ var drawControl = new L.Control.Draw({
     draw: { circle: false }
 }).addTo(map);
 
-d3.select(document).on('keydown', keydown);
 d3.select(window).on('hashchange', hashChange);
 
 map.on('draw:edited', updateFromMap)
@@ -75,10 +71,11 @@ map.on('draw:edited', updateFromMap)
 
 d3.select('.collapse-button').on('click', clickCollapse);
 
-var updates = d3.dispatch('update_map', 'update_editor', 'update_refresh',
-    'focus_layer', 'zoom_extent');
+var updates = d3.dispatch('update_geojson', 'update_map', 'update_editor', 'update_refresh',
+    'focus_layer', 'zoom_extent', 'sourcechange');
 
 updates.on('focus_layer', focusLayer)
+    .on('update_geojson', updateFromMap)
     .on('update_editor', loadToMap)
     .on('update_refresh', refresh)
     .on('zoom_extent', zoomToExtent);
@@ -86,30 +83,53 @@ updates.on('focus_layer', focusLayer)
 if (window.location.hash) hashChange();
 
 var buttonData = [{
-    icon: 'beaker',
-    title: ' Import',
-    behavior: importPanel
-}, {
     icon: 'table',
     title: ' Table',
     alt: 'Edit feature properties in a table',
     behavior: tablePanel
-}, {
-    icon: 'share-alt',
-    title: ' Share',
-    alt: 'Share via Facebook, Twitter, or a map embed',
-    behavior: sharePanel
 }, {
     icon: 'code',
     alt: 'JSON Source',
     behavior: jsonPanel
 }, {
     icon: 'github',
-    alt: 'Log in to GitHub',
+    alt: '',
     behavior: loginPanel
 }];
 
 drawButtons(buttonData);
+
+container.append('div')
+    .attr('class', 'file-bar')
+    .call(fileBar(updates)
+        .on('source', clickSource)
+        .on('save', saveChanges)
+        .on('download', downloadFile)
+        .on('share', shareMap));
+
+function clickSource() {
+    if (d3.event) d3.event.preventDefault();
+    d3.select('.left-panel').call(sourcePanel(updates));
+}
+
+function downloadFile() {
+    var features = featuresFromMap();
+
+    var content = JSON.stringify({
+        type: 'FeatureCollection',
+        features: features
+    }, null, 4);
+
+    if (content) {
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'map.geojson');
+    }
+}
+
+function shareMap() {
+    share(container, featuresFromMap());
+}
 
 function clickCollapse() {
     d3.select('.right').classed('hidden',
@@ -144,21 +164,9 @@ function focusLayer(layer) {
     }
 }
 
-function geoify(layer) {
-    var features = [];
-    layer.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    layer.clearLayers();
-    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
-        l.addTo(layer);
-    });
-}
-
 function drawCreated(e) {
-    // if ('setStyle' in e.layer) e.layer.setStyle(brush);
     drawnItems.addLayer(e.layer);
-    geoify(drawnItems);
+    mapUtil.geoify(drawnItems);
     refresh();
 }
 
@@ -214,6 +222,7 @@ function onPopupOpen(e) {
     function removeFeature() {
         if (e.popup._source && drawnItems.hasLayer(e.popup._source)) {
             drawnItems.removeLayer(e.popup._source);
+            updates.update_geojson();
         }
         updateFromMap();
     }
@@ -231,30 +240,42 @@ function onPopupOpen(e) {
     }
 }
 
-function keydown(e) {
-    if (d3.event.keyCode == 83 && d3.event.metaKey) {
-        d3.event.preventDefault();
-        saveChanges();
-    }
-}
+d3.select(document).call(
+    d3.keybinding('global')
+        .on('⌘+s', saveChanges)
+        .on('⌘+o', clickSource));
 
-function saveChanges(message, callback) {
+function saveChanges() {
+    if (d3.event) d3.event.preventDefault();
+
+    var features = featuresFromMap();
+
+    if (!features.length) {
+        return flash(container, 'Add a feature to the map to save it');
+    }
+
     var content = JSON.stringify({
         type: 'FeatureCollection',
-        features: featuresFromMap()
+        features: features
     }, null, exportIndentationStyle);
 
     if (!source() || source().type == 'gist') {
         gist.saveAsGist(content, function(err, resp) {
-            if (err) return alert(err);
+            if (err) return flash(container, err.toString());
             var id = resp.id;
             window.location.hash = gist.urlHash(resp).url;
-            if (callback) callback();
+            flash(container,
+                'Changes to this map saved to Gist: <a href="' + resp.html_url +
+                '">' + resp.html_url + '</a>');
         });
     } else if (!source() || source().type == 'github') {
-        buttons.filter(function(d) {
-            return d.icon === 'save';
-        }).trigger('click');
+        var wrap = commit(container, content, function(err, resp) {
+            wrap.remove();
+            if (err) return flash(container, err.toString());
+            else flash(container, 'Changes committed to GitHub: <a href="' +
+                       resp.commit.html_url + '">' + resp.commit.sha.substring(0, 10) + '</a>');
+
+        });
     }
 }
 
@@ -275,7 +296,7 @@ function updateFromMap() {
 
 function refresh() {
     drawnItems.eachLayer(function(l) {
-        showProperties(l);
+        mapUtil.showProperties(l);
     });
 }
 
@@ -288,34 +309,9 @@ function zoomToExtent() {
 function loadToMap(gj) {
     drawnItems.clearLayers();
     L.geoJson(gj).eachLayer(function(l) {
-        showProperties(l);
+        mapUtil.showProperties(l);
         l.addTo(drawnItems);
     });
-}
-
-function isEmpty(o) {
-    for (var i in o) { return false; }
-    return true;
-}
-
-function showProperties(l) {
-    var properties = l.toGeoJSON().properties, table = '';
-    if (isEmpty(properties)) properties = { '': '' };
-
-    for (var key in properties) {
-        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
-            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
-    }
-
-    l.bindPopup(L.popup({
-        maxWidth: 500,
-        maxHeight: 400
-    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
-        '<div class="clearfix col12 drop">' +
-            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
-            '<button class="cancel">cancel</button></div>' +
-            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
-        '</div></div>'));
 }
 
 function mapFile(gist) {
@@ -340,47 +336,52 @@ function hashChange() {
     }
 
     if (s.type == 'gist') gist.loadGist(s.id, onGistLoad);
-    if (s.type == 'github') github.loadGitHub(s.id, onGitHubLoad);
+    if (s.type == 'github') github.loadGitHubRaw(s.id, onGitHubLoad);
 
     function onGistLoad(err, json) {
-        if (err) return alert('Gist API limit exceeded, come back in a bit.');
+        if (err) return flash(container, 'Gist API limit exceeded, come back in a bit.');
         var first = !drawnItems.getBounds().isValid();
 
         try {
             var file = mapFile(json);
             updates.update_editor(mapFile(json));
-            if (first && drawnItems.getBounds().isValid()) {
-                map.fitBounds(drawnItems.getBounds());
-                buttons.filter(function(d, i) { return i == 1; }).trigger('click');
+            if (drawnItems.getBounds().isValid()) map.fitBounds(drawnItems.getBounds());
+            if (gist.urlHash(json).redirect) {
+                silentHash = true;
+                window.location.hash = gist.urlHash(json).url;
             }
-            silentHash = gist.urlHash(json).redirect;
-            window.location.hash = gist.urlHash(json).url;
+            updates.update_map(mapFile(json), drawnItems);
+            updates.sourcechange({
+                type: 'gist',
+                name: '#' + json.id,
+                data: json
+            });
         } catch(e) {
-            alert('Invalid GeoJSON data in this Gist');
+            console.log(e);
+            flash(container, 'Invalid GeoJSON data in this Gist');
         }
     }
 
     function onGitHubLoad(err, file) {
-        if (err) return alert('GitHub API limit exceeded, come back in a bit.');
+        if (err) return flash(container, 'GitHub API limit exceeded, come back in a bit.');
 
         try {
-            var json = JSON.parse(Base64.fromBase64(file.content));
-            exportIndentationStyle = detectIndentationStyle(file.content);
+            var json = JSON.parse(file);
+            exportIndentationStyle = detectIndentationStyle(file);
             var first = !drawnItems.getBounds().isValid();
             updates.update_editor(json);
             if (first && drawnItems.getBounds().isValid()) {
                 map.fitBounds(drawnItems.getBounds());
                 buttons.filter(function(d, i) { return i == 1; }).trigger('click');
             }
-            drawButtons(buttonData.concat([{
-                icon: 'save',
-                title: ' Commit',
-                behavior: commitPanel
-            }]).filter(function(d) {
-                return d.icon !== 'share-alt';
-            }));
+            updates.update_map(json, drawnItems);
+            updates.sourcechange({
+                type: 'github',
+                name: source().id,
+                data: source()
+            });
         } catch(e) {
-            alert('Loading a file from GitHub failed');
+            flash(container, 'Loading a file from GitHub failed');
         }
     }
 }

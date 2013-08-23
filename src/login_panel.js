@@ -1,5 +1,3 @@
-'use strict';
-
 var source = require('./source'),
     config = require('./config')(location.hostname);
 
@@ -9,8 +7,8 @@ function loginPanel(container) {
 }
 
 loginPanel.init = function(container) {
+    'use strict';
     var sel = d3.select(container);
-    sel.attr('title', 'login to GitHub');
     sel.on('click', login);
 
     function login() {
@@ -18,10 +16,11 @@ loginPanel.init = function(container) {
     }
 
     function logout() {
-        analytics.track('Logged Out');
         window.localStorage.removeItem('github_token');
-        sel.attr('title', 'login to GitHub')
-            .classed('logged-in', true)
+        sel
+            .classed('logged-in', false)
+            .classed('icon-github', true)
+            .style('background-image', 'none')
             .on('click', login);
     }
 
@@ -39,7 +38,6 @@ loginPanel.init = function(container) {
                 killTokenUrl();
             })
             .on('error', function() {
-                analytics.track('GitHub Account / Fail');
                 alert('Authentication with GitHub failed');
             })
             .get();
@@ -51,12 +49,14 @@ loginPanel.init = function(container) {
             .on('load', function(user) {
                 localStorage.github_user = JSON.stringify(user);
                 sel
+                    .style('background-image', 'url(' + user.avatar_url + ')')
+                    .style('background-size', '40px 40px')
+                    .style('background-repeat', 'no-repeat')
+                    .classed('icon-github', false)
                     .classed('logged-in', true)
-                    .attr('title', 'logout')
                     .on('click', logout);
             })
             .on('error', function() {
-                sel.classed('logged-in', false);
                 window.localStorage.removeItem('github_token');
             })
             .get();
