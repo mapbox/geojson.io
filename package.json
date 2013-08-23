@@ -14,7 +14,7 @@
     "csv2geojson": "~3.3.0",
     "detect-json-indent": "0.0.0",
     "is-mobile": "~0.1.0",
-    "github-file-browser": "0.0.5",
+    "github-file-browser": "0.0.6",
     "browserify": "~2.26.0"
   },
   "devDependencies": {
