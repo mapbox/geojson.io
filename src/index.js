@@ -14,6 +14,7 @@ var jsonPanel = require('./json_panel'),
     gist = require('./gist'),
     github = require('./github'),
     flash = require('./flash'),
+    share = require('./share'),
     mapUtil = require('./map'),
     source = require('./source'),
     detectIndentationStyle = require('detect-json-indent'),
@@ -23,7 +24,7 @@ var container = d3.select('body')
     .append('div')
     .attr('class', 'container');
 
-var map = mapUtil.setupMap();
+var map = mapUtil.setupMap(container);
 
 var pane = d3.select('.pane');
 
@@ -73,10 +74,13 @@ var buttonData = [{
 
 drawButtons(buttonData);
 
-d3.select('.file-bar').call(fileBar(updates)
+container.append('div')
+    .attr('class', 'file-bar')
+    .call(fileBar(updates)
     .on('source', clickSource)
     .on('save', saveChanges)
-    .on('download', downloadFile));
+    .on('download', downloadFile)
+    .on('share', shareMap));
 
 function clickSource() {
     if (d3.event) d3.event.preventDefault();
@@ -96,6 +100,10 @@ function downloadFile() {
             type: 'text/plain;charset=utf-8'
         }), 'map.geojson');
     }
+}
+
+function shareMap() {
+    share(container, featuresFromMap());
 }
 
 function clickCollapse() {
@@ -128,7 +136,6 @@ function focusLayer(layer) {
 }
 
 function drawCreated(e) {
-    // if ('setStyle' in e.layer) e.layer.setStyle(brush);
     drawnItems.addLayer(e.layer);
     mapUtil.geoify(drawnItems);
     refresh();

@@ -4,8 +4,11 @@ module.exports.showProperties = showProperties;
 module.exports.setupMap = setupMap;
 module.exports.geoify = geoify;
 
-function setupMap() {
-    var map = L.mapbox.map('map')
+function setupMap(container) {
+    var mapDiv = container.append('div')
+        .attr('id', 'map');
+
+    var map = L.mapbox.map(mapDiv.node())
         .setView([20, 0], 2);
 
     var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

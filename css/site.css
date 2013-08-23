@@ -319,21 +319,6 @@ button.positive {
     font-size:75%;
 }
 
-.footlinks {
-    padding:5px;
-    margin-top:20px;
-}
-
-.footlinks a {
-    color:#444;
-    cursor:pointer;
-    padding-right:20px;
-}
-
-.footlinks a:hover {
-    color:#000;
-}
-
 .leaflet-container .leaflet-control-attribution {
     background:none;
     box-shadow:none;
@@ -516,4 +501,24 @@ textarea.full-width {
     top:40px;
     left:0;
     border-bottom:1px solid #ccc;
+}
+
+.pre-icon {
+    margin-right:5px;
+}
+
+.share {
+    position:absolute;
+    right:40%;
+    top:40px;
+    background:#fff;
+    font-size:12px;
+}
+
+.share .network {
+    margin-right:10px;
+}
+
+.share .icon-remove {
+    margin-left:10px;
 }
