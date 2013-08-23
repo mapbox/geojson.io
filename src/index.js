@@ -40,7 +40,6 @@ var drawControl = new L.Control.Draw({
     draw: { circle: false }
 }).addTo(map);
 
-d3.select(document).on('keydown', keydown);
 d3.select(window).on('hashchange', hashChange);
 
 map.on('draw:edited', updateFromMap)
@@ -189,14 +188,13 @@ function onPopupOpen(e) {
     }
 }
 
-function keydown(e) {
-    if (d3.event.keyCode == 83 && d3.event.metaKey) {
-        d3.event.preventDefault();
-        saveChanges();
-    }
-}
+d3.select(document).call(
+    d3.keybinding('global')
+        .on('⌘+s', saveChanges));
 
 function saveChanges(message, callback) {
+    if (d3.event) d3.event.preventDefault();
+
     var features = featuresFromMap();
 
     if (!features.length) {
