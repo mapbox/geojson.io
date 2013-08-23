@@ -1901,7 +1901,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":14,"./lib/topojson/clockwise":16,"./lib/topojson/filter":20,"./lib/topojson/prune":24,"./lib/topojson/simplify":25,"./lib/topojson/topology":28,"fs":1}],14:[function(require,module,exports){
+},{"./lib/topojson/bind":14,"./lib/topojson/clockwise":16,"./lib/topojson/filter":18,"./lib/topojson/prune":23,"./lib/topojson/simplify":24,"./lib/topojson/topology":27,"fs":1}],14:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1931,7 +1931,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":17}],15:[function(require,module,exports){
+},{"../../":"g070js","./type":28}],15:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -2038,109 +2038,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":19,"./type":17}],17:[function(require,module,exports){
-module.exports = function(types) {
-  for (var type in typeDefaults) {
-    if (!(type in types)) {
-      types[type] = typeDefaults[type];
-    }
-  }
-  types.defaults = typeDefaults;
-  return types;
-};
-
-var typeDefaults = {
-
-  Feature: function(feature) {
-    if (feature.geometry) this.geometry(feature.geometry);
-  },
-
-  FeatureCollection: function(collection) {
-    var features = collection.features, i = -1, n = features.length;
-    while (++i < n) this.Feature(features[i]);
-  },
-
-  GeometryCollection: function(collection) {
-    var geometries = collection.geometries, i = -1, n = geometries.length;
-    while (++i < n) this.geometry(geometries[i]);
-  },
-
-  LineString: function(lineString) {
-    this.line(lineString.coordinates);
-  },
-
-  MultiLineString: function(multiLineString) {
-    var coordinates = multiLineString.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.line(coordinates[i]);
-  },
-
-  MultiPoint: function(multiPoint) {
-    var coordinates = multiPoint.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.point(coordinates[i]);
-  },
-
-  MultiPolygon: function(multiPolygon) {
-    var coordinates = multiPolygon.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.polygon(coordinates[i]);
-  },
-
-  Point: function(point) {
-    this.point(point.coordinates);
-  },
-
-  Polygon: function(polygon) {
-    this.polygon(polygon.coordinates);
-  },
-
-  object: function(object) {
-    return object == null ? null
-        : typeObjects.hasOwnProperty(object.type) ? this[object.type](object)
-        : this.geometry(object);
-  },
-
-  geometry: function(geometry) {
-    return geometry == null ? null
-        : typeGeometries.hasOwnProperty(geometry.type) ? this[geometry.type](geometry)
-        : null;
-  },
-
-  point: function() {},
-
-  line: function(coordinates) {
-    var i = -1, n = coordinates.length;
-    while (++i < n) this.point(coordinates[i]);
-  },
-
-  polygon: function(coordinates) {
-    var i = -1, n = coordinates.length;
-    while (++i < n) this.line(coordinates[i]);
-  }
-};
-
-var typeGeometries = {
-  LineString: 1,
-  MultiLineString: 1,
-  MultiPoint: 1,
-  MultiPolygon: 1,
-  Point: 1,
-  Polygon: 1,
-  GeometryCollection: 1
-};
-
-var typeObjects = {
-  Feature: 1,
-  FeatureCollection: 1
-};
-
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
-},{}],19:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":17,"./type":28}],17:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":15,"./spherical":26}],20:[function(require,module,exports){
+},{"./cartesian":15,"./spherical":25}],18:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -2210,72 +2114,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":16,"./coordinate-systems":19,"./prune":24,"./type":17}],21:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
-  };
-};
-
-},{}],22:[function(require,module,exports){
-var hasher = require("./hash");
-
-module.exports = function(size) {
-  var hashtable = new Array(size = 1 << Math.ceil(Math.log(size) / Math.LN2)),
-      hash = hasher(size);
-  return {
-    size: size,
-    peek: function(key) {
-      var matches = hashtable[hash(key)];
-
-      if (matches) {
-        var i = -1,
-            n = matches.length,
-            match;
-        while (++i < n) {
-          match = matches[i];
-          if (equal(match.key, key)) {
-            return match.values;
-          }
-        }
-      }
-
-      return null;
-    },
-    get: function(key) {
-      var index = hash(key),
-          matches = hashtable[index];
-
-      if (matches) {
-        var i = -1,
-            n = matches.length,
-            match;
-        while (++i < n) {
-          match = matches[i];
-          if (equal(match.key, key)) {
-            return match.values;
-          }
-        }
-      } else {
-        matches = hashtable[index] = [];
-      }
-
-      var values = [];
-      matches.push({key: key, values: values});
-      return values;
-    }
-  };
-};
-
-function equal(keyA, keyB) {
-  return keyA[0] === keyB[0]
-      && keyA[1] === keyB[1];
-}
-
-},{"./hash":21}],23:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":16,"./coordinate-systems":17,"./prune":23,"./type":28}],19:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -2341,7 +2180,74 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],24:[function(require,module,exports){
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],21:[function(require,module,exports){
+// Note: requires that size is a power of two!
+module.exports = function(size) {
+  var mask = size - 1;
+  return function(point) {
+    var key = (point[0] + 31 * point[1]) | 0;
+    return (key < 0 ? ~key : key) & mask;
+  };
+};
+
+},{}],22:[function(require,module,exports){
+var hasher = require("./hash");
+
+module.exports = function(size) {
+  var hashtable = new Array(size = 1 << Math.ceil(Math.log(size) / Math.LN2)),
+      hash = hasher(size);
+  return {
+    size: size,
+    peek: function(key) {
+      var matches = hashtable[hash(key)];
+
+      if (matches) {
+        var i = -1,
+            n = matches.length,
+            match;
+        while (++i < n) {
+          match = matches[i];
+          if (equal(match.key, key)) {
+            return match.values;
+          }
+        }
+      }
+
+      return null;
+    },
+    get: function(key) {
+      var index = hash(key),
+          matches = hashtable[index];
+
+      if (matches) {
+        var i = -1,
+            n = matches.length,
+            match;
+        while (++i < n) {
+          match = matches[i];
+          if (equal(match.key, key)) {
+            return match.values;
+          }
+        }
+      } else {
+        matches = hashtable[index] = [];
+      }
+
+      var values = [];
+      matches.push({key: key, values: values});
+      return values;
+    }
+  };
+};
+
+function equal(keyA, keyB) {
+  return keyA[0] === keyB[0]
+      && keyA[1] === keyB[1];
+}
+
+},{"./hash":21}],23:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -2400,7 +2306,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":17}],25:[function(require,module,exports){
+},{"../../":"g070js","./type":28}],24:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -2532,7 +2438,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":19,"./min-heap":23}],26:[function(require,module,exports){
+},{"./coordinate-systems":17,"./min-heap":19}],25:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -2614,7 +2520,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -2664,7 +2570,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":17}],28:[function(require,module,exports){
+},{"./type":28}],27:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -3006,7 +2912,101 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":19,"./hashtable":22,"./stitch-poles":27,"./type":17}],29:[function(require,module,exports){
+},{"./coordinate-systems":17,"./hashtable":22,"./stitch-poles":26,"./type":28}],28:[function(require,module,exports){
+module.exports = function(types) {
+  for (var type in typeDefaults) {
+    if (!(type in types)) {
+      types[type] = typeDefaults[type];
+    }
+  }
+  types.defaults = typeDefaults;
+  return types;
+};
+
+var typeDefaults = {
+
+  Feature: function(feature) {
+    if (feature.geometry) this.geometry(feature.geometry);
+  },
+
+  FeatureCollection: function(collection) {
+    var features = collection.features, i = -1, n = features.length;
+    while (++i < n) this.Feature(features[i]);
+  },
+
+  GeometryCollection: function(collection) {
+    var geometries = collection.geometries, i = -1, n = geometries.length;
+    while (++i < n) this.geometry(geometries[i]);
+  },
+
+  LineString: function(lineString) {
+    this.line(lineString.coordinates);
+  },
+
+  MultiLineString: function(multiLineString) {
+    var coordinates = multiLineString.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.line(coordinates[i]);
+  },
+
+  MultiPoint: function(multiPoint) {
+    var coordinates = multiPoint.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.point(coordinates[i]);
+  },
+
+  MultiPolygon: function(multiPolygon) {
+    var coordinates = multiPolygon.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.polygon(coordinates[i]);
+  },
+
+  Point: function(point) {
+    this.point(point.coordinates);
+  },
+
+  Polygon: function(polygon) {
+    this.polygon(polygon.coordinates);
+  },
+
+  object: function(object) {
+    return object == null ? null
+        : typeObjects.hasOwnProperty(object.type) ? this[object.type](object)
+        : this.geometry(object);
+  },
+
+  geometry: function(geometry) {
+    return geometry == null ? null
+        : typeGeometries.hasOwnProperty(geometry.type) ? this[geometry.type](geometry)
+        : null;
+  },
+
+  point: function() {},
+
+  line: function(coordinates) {
+    var i = -1, n = coordinates.length;
+    while (++i < n) this.point(coordinates[i]);
+  },
+
+  polygon: function(coordinates) {
+    var i = -1, n = coordinates.length;
+    while (++i < n) this.line(coordinates[i]);
+  }
+};
+
+var typeGeometries = {
+  LineString: 1,
+  MultiLineString: 1,
+  MultiPoint: 1,
+  MultiPolygon: 1,
+  Point: 1,
+  Polygon: 1,
+  GeometryCollection: 1
+};
+
+var typeObjects = {
+  Feature: 1,
+  FeatureCollection: 1
+};
+
+},{}],29:[function(require,module,exports){
 var github = require('./github');
 
 module.exports = commit;
