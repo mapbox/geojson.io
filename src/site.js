@@ -1931,7 +1931,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":29}],15:[function(require,module,exports){
+},{"../../":"g070js","./type":17}],15:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -2038,119 +2038,101 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":19,"./type":29}],17:[function(require,module,exports){
-'use strict';
-
-var source = require('./source');
-
-module.exports.saveAsGitHub = saveAsGitHub;
-module.exports.loadGitHub = loadGitHub;
-module.exports.loadGitHubRaw = loadGitHubRaw;
-module.exports.urlHash = urlHash;
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
-
-function githubFileUrl() {
-    var pts = parseGitHubId(source().id);
-    
-    return 'https://api.github.com/repos/' + pts.user +
-            '/' + pts.repo +
-            '/contents/' + pts.file + '?ref=' + pts.branch;
-}
-
-function saveAsGitHub(content, message, callback) {
-    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
-        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
+},{"../../":"g070js","./coordinate-systems":19,"./type":17}],17:[function(require,module,exports){
+module.exports = function(types) {
+  for (var type in typeDefaults) {
+    if (!(type in types)) {
+      types[type] = typeDefaults[type];
     }
+  }
+  types.defaults = typeDefaults;
+  return types;
+};
 
-    if (!localStorage.github_token) {
-        return alert('You need to log in with GitHub to commit changes');
-    }
+var typeDefaults = {
 
-    var commitMessage = message || prompt('Commit message:');
-    if (!commitMessage) return;
+  Feature: function(feature) {
+    if (feature.geometry) this.geometry(feature.geometry);
+  },
 
-    loadGitHub(source().id, function(err, file) {
-        if (err) {
-            return alert('Failed to load file before saving');
-        }
-        authorize(d3.json(githubFileUrl()))
-            .on('load', function(data) {
-                callback(null, data);
-            })
-            .on('error', function(err) {
-                callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-            })
-            .send('PUT', JSON.stringify({
-                message: commitMessage,
-                sha: file.sha,
-                branch: file.branch,
-                content: Base64.toBase64(content)
-            }));
-    });
-}
+  FeatureCollection: function(collection) {
+    var features = collection.features, i = -1, n = features.length;
+    while (++i < n) this.Feature(features[i]);
+  },
 
-function parseGitHubId(id) {
-    var parts = id.split('/');
-    return {
-        user: parts[0],
-        repo: parts[1],
-        mode: parts[2],
-        branch: parts[3],
-        file: parts.slice(4).join('/')
-    };
-}
+  GeometryCollection: function(collection) {
+    var geometries = collection.geometries, i = -1, n = geometries.length;
+    while (++i < n) this.geometry(geometries[i]);
+  },
 
-function loadGitHub(id, callback) {
-    var pts = parseGitHubId(id);
-    authorize(d3.json('https://api.github.com/repos/' + pts.user +
-        '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch))
-        .on('load', onLoad)
-        .on('error', onError)
-        .get();
+  LineString: function(lineString) {
+    this.line(lineString.coordinates);
+  },
 
-    function onLoad(file) {
-        callback(null, file);
-    }
-    function onError(err) { callback(err, null); }
-}
+  MultiLineString: function(multiLineString) {
+    var coordinates = multiLineString.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.line(coordinates[i]);
+  },
 
-function loadGitHubRaw(id, callback) {
-    var pts = parseGitHubId(id);
-    authorize(d3.text('https://api.github.com/repos/' + pts.user +
-        '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch))
-        .on('load', onLoad)
-        .on('error', onError)
-        .header('Accept', 'application/vnd.github.raw').get();
+  MultiPoint: function(multiPoint) {
+    var coordinates = multiPoint.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.point(coordinates[i]);
+  },
 
-    function onLoad(file) {
-        callback(null, file);
-    }
-    function onError(err) { callback(err, null); }
-}
+  MultiPolygon: function(multiPolygon) {
+    var coordinates = multiPolygon.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.polygon(coordinates[i]);
+  },
 
-function urlHash(d) {
-    var prefix = '';
+  Point: function(point) {
+    this.point(point.coordinates);
+  },
 
-    if (d.parents && d.parents.length) {
-        prefix = d.parents.map(function(p) {
-            return p.path;
-        }).join('/') + '/';
-    }
+  Polygon: function(polygon) {
+    this.polygon(polygon.coordinates);
+  },
 
-    return {
-        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + prefix + d.path
-    };
-}
+  object: function(object) {
+    return object == null ? null
+        : typeObjects.hasOwnProperty(object.type) ? this[object.type](object)
+        : this.geometry(object);
+  },
 
-},{"./source":43}],"topojson":[function(require,module,exports){
+  geometry: function(geometry) {
+    return geometry == null ? null
+        : typeGeometries.hasOwnProperty(geometry.type) ? this[geometry.type](geometry)
+        : null;
+  },
+
+  point: function() {},
+
+  line: function(coordinates) {
+    var i = -1, n = coordinates.length;
+    while (++i < n) this.point(coordinates[i]);
+  },
+
+  polygon: function(coordinates) {
+    var i = -1, n = coordinates.length;
+    while (++i < n) this.line(coordinates[i]);
+  }
+};
+
+var typeGeometries = {
+  LineString: 1,
+  MultiLineString: 1,
+  MultiPoint: 1,
+  MultiPolygon: 1,
+  Point: 1,
+  Polygon: 1,
+  GeometryCollection: 1
+};
+
+var typeObjects = {
+  Feature: 1,
+  FeatureCollection: 1
+};
+
+},{}],"topojson":[function(require,module,exports){
 module.exports=require('g070js');
 },{}],19:[function(require,module,exports){
 module.exports = {
@@ -2228,7 +2210,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":16,"./coordinate-systems":19,"./prune":24,"./type":29}],21:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":16,"./coordinate-systems":19,"./prune":24,"./type":17}],21:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -2418,7 +2400,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":29}],25:[function(require,module,exports){
+},{"../../":"g070js","./type":17}],25:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -2682,7 +2664,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":29}],28:[function(require,module,exports){
+},{"./type":17}],28:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -3024,101 +3006,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":19,"./hashtable":22,"./stitch-poles":27,"./type":29}],29:[function(require,module,exports){
-module.exports = function(types) {
-  for (var type in typeDefaults) {
-    if (!(type in types)) {
-      types[type] = typeDefaults[type];
-    }
-  }
-  types.defaults = typeDefaults;
-  return types;
-};
-
-var typeDefaults = {
-
-  Feature: function(feature) {
-    if (feature.geometry) this.geometry(feature.geometry);
-  },
-
-  FeatureCollection: function(collection) {
-    var features = collection.features, i = -1, n = features.length;
-    while (++i < n) this.Feature(features[i]);
-  },
-
-  GeometryCollection: function(collection) {
-    var geometries = collection.geometries, i = -1, n = geometries.length;
-    while (++i < n) this.geometry(geometries[i]);
-  },
-
-  LineString: function(lineString) {
-    this.line(lineString.coordinates);
-  },
-
-  MultiLineString: function(multiLineString) {
-    var coordinates = multiLineString.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.line(coordinates[i]);
-  },
-
-  MultiPoint: function(multiPoint) {
-    var coordinates = multiPoint.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.point(coordinates[i]);
-  },
-
-  MultiPolygon: function(multiPolygon) {
-    var coordinates = multiPolygon.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.polygon(coordinates[i]);
-  },
-
-  Point: function(point) {
-    this.point(point.coordinates);
-  },
-
-  Polygon: function(polygon) {
-    this.polygon(polygon.coordinates);
-  },
-
-  object: function(object) {
-    return object == null ? null
-        : typeObjects.hasOwnProperty(object.type) ? this[object.type](object)
-        : this.geometry(object);
-  },
-
-  geometry: function(geometry) {
-    return geometry == null ? null
-        : typeGeometries.hasOwnProperty(geometry.type) ? this[geometry.type](geometry)
-        : null;
-  },
-
-  point: function() {},
-
-  line: function(coordinates) {
-    var i = -1, n = coordinates.length;
-    while (++i < n) this.point(coordinates[i]);
-  },
-
-  polygon: function(coordinates) {
-    var i = -1, n = coordinates.length;
-    while (++i < n) this.line(coordinates[i]);
-  }
-};
-
-var typeGeometries = {
-  LineString: 1,
-  MultiLineString: 1,
-  MultiPoint: 1,
-  MultiPolygon: 1,
-  Point: 1,
-  Polygon: 1,
-  GeometryCollection: 1
-};
-
-var typeObjects = {
-  Feature: 1,
-  FeatureCollection: 1
-};
-
-},{}],30:[function(require,module,exports){
+},{"./coordinate-systems":19,"./hashtable":22,"./stitch-poles":27,"./type":17}],29:[function(require,module,exports){
 var github = require('./github');
 
 module.exports = commit;
@@ -3150,7 +3038,7 @@ function commit(container, contents, callback) {
     return wrap;
 }
 
-},{"./github":17}],31:[function(require,module,exports){
+},{"./github":34}],30:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -3164,7 +3052,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],32:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var share = require('./share');
 
 module.exports = fileBar;
@@ -3282,7 +3170,7 @@ function fileBar(updates) {
     return d3.rebind(bar, event, 'on');
 }
 
-},{"./share":42}],33:[function(require,module,exports){
+},{"./share":42}],32:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -3304,7 +3192,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":40}],34:[function(require,module,exports){
+},{"./message":40}],33:[function(require,module,exports){
 var source = require('./source');
 var fs = require('fs');
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
@@ -3412,7 +3300,119 @@ function urlHash(data) {
     }
 }
 
-},{"./source":43,"fs":1}],35:[function(require,module,exports){
+},{"./source":43,"fs":1}],34:[function(require,module,exports){
+'use strict';
+
+var source = require('./source');
+
+module.exports.saveAsGitHub = saveAsGitHub;
+module.exports.loadGitHub = loadGitHub;
+module.exports.loadGitHubRaw = loadGitHubRaw;
+module.exports.urlHash = urlHash;
+
+function authorize(xhr) {
+    return localStorage.github_token ?
+        xhr.header('Authorization', 'token ' + localStorage.github_token) :
+        xhr;
+}
+
+function githubFileUrl() {
+    var pts = parseGitHubId(source().id);
+    
+    return 'https://api.github.com/repos/' + pts.user +
+            '/' + pts.repo +
+            '/contents/' + pts.file + '?ref=' + pts.branch;
+}
+
+function saveAsGitHub(content, message, callback) {
+    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
+        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
+            'Please use a modern browser to enjoy the full featureset of geojson.io');
+    }
+
+    if (!localStorage.github_token) {
+        return alert('You need to log in with GitHub to commit changes');
+    }
+
+    var commitMessage = message || prompt('Commit message:');
+    if (!commitMessage) return;
+
+    loadGitHub(source().id, function(err, file) {
+        if (err) {
+            return alert('Failed to load file before saving');
+        }
+        authorize(d3.json(githubFileUrl()))
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(err) {
+                callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+            })
+            .send('PUT', JSON.stringify({
+                message: commitMessage,
+                sha: file.sha,
+                branch: file.branch,
+                content: Base64.toBase64(content)
+            }));
+    });
+}
+
+function parseGitHubId(id) {
+    var parts = id.split('/');
+    return {
+        user: parts[0],
+        repo: parts[1],
+        mode: parts[2],
+        branch: parts[3],
+        file: parts.slice(4).join('/')
+    };
+}
+
+function loadGitHub(id, callback) {
+    var pts = parseGitHubId(id);
+    authorize(d3.json('https://api.github.com/repos/' + pts.user +
+        '/' + pts.repo +
+        '/contents/' + pts.file + '?ref=' + pts.branch))
+        .on('load', onLoad)
+        .on('error', onError)
+        .get();
+
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function loadGitHubRaw(id, callback) {
+    var pts = parseGitHubId(id);
+    authorize(d3.text('https://api.github.com/repos/' + pts.user +
+        '/' + pts.repo +
+        '/contents/' + pts.file + '?ref=' + pts.branch))
+        .on('load', onLoad)
+        .on('error', onError)
+        .header('Accept', 'application/vnd.github.raw').get();
+
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function urlHash(d) {
+    var prefix = '';
+
+    if (d.parents && d.parents.length) {
+        prefix = d.parents.map(function(p) {
+            return p.path;
+        }).join('/') + '/';
+    }
+
+    return {
+        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + prefix + d.path
+    };
+}
+
+},{"./source":43}],35:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
@@ -3732,7 +3732,7 @@ function runGeocode(container, list, transform, updates) {
     var task = geocode(list, transform, progress, done);
 }
 
-},{"./gist":34,"./progress_chart":41,"./vertical_panel":47,"detect-json-indent":5,"togeojson":12,"topojson":"g070js"}],36:[function(require,module,exports){
+},{"./gist":33,"./progress_chart":41,"./vertical_panel":47,"detect-json-indent":5,"togeojson":12,"topojson":"g070js"}],36:[function(require,module,exports){
 var mobile = require('is-mobile');
 
 if (mobile()) {
@@ -4055,6 +4055,7 @@ function hashChange() {
                 silentHash = true;
                 window.location.hash = gist.urlHash(json).url;
             }
+            updates.update_map(mapFile(json), drawnItems);
             updates.sourcechange({
                 type: 'gist',
                 name: '#' + json.id,
@@ -4078,6 +4079,7 @@ function hashChange() {
                 map.fitBounds(drawnItems.getBounds());
                 buttons.filter(function(d, i) { return i == 1; }).trigger('click');
             }
+            updates.update_map(mapFile(json), drawnItems);
             updates.sourcechange({
                 type: 'github',
                 name: source().id,
@@ -4089,7 +4091,7 @@ function hashChange() {
     }
 }
 
-},{"./commit":30,"./file_bar":32,"./flash":33,"./gist":34,"./github":17,"./json_panel":37,"./login_panel":38,"./map":39,"./share":42,"./source":43,"./source_panel":44,"./table_panel":45,"detect-json-indent":5,"is-mobile":11}],37:[function(require,module,exports){
+},{"./commit":29,"./file_bar":31,"./flash":32,"./gist":33,"./github":34,"./json_panel":37,"./login_panel":38,"./map":39,"./share":42,"./source":43,"./source_panel":44,"./table_panel":45,"detect-json-indent":5,"is-mobile":11}],37:[function(require,module,exports){
 var validate = require('./validate');
 
 module.exports = jsonPanel;
@@ -4193,7 +4195,7 @@ loginPanel.init = function(container) {
     }
 };
 
-},{"./config":31,"./source":43}],39:[function(require,module,exports){
+},{"./config":30,"./source":43}],39:[function(require,module,exports){
 module.exports.showProperties = showProperties;
 module.exports.setupMap = setupMap;
 module.exports.geoify = geoify;
@@ -4433,7 +4435,7 @@ function share(container, features) {
     });
 }
 
-},{"./gist":34}],43:[function(require,module,exports){
+},{"./gist":33}],43:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -4573,9 +4575,6 @@ function sourcePanel(updates) {
         var $subpane = selection.append('div')
             .attr('class', 'subpane');
 
-        // Open import panel by default
-        clickSource(sources[0]);
-
         function clickGitHub() {
             $subpane
                 .html('')
@@ -4627,7 +4626,7 @@ function sourcePanel(updates) {
     return panel;
 }
 
-},{"./gist":34,"./github":17,"./import_panel":35,"./vertical_panel":47,"detect-json-indent":5,"github-file-browser":8}],45:[function(require,module,exports){
+},{"./gist":33,"./github":34,"./import_panel":35,"./vertical_panel":47,"detect-json-indent":5,"github-file-browser":8}],45:[function(require,module,exports){
 'use strict';
 
 var metatable = require('d3-metatable')(d3);
@@ -4764,5 +4763,5 @@ function verticalPanel(updates) {
     return panel;
 }
 
-},{}]},{},[34,36])
+},{}]},{},[33,36])
 ;

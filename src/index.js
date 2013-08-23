@@ -320,6 +320,7 @@ function hashChange() {
                 silentHash = true;
                 window.location.hash = gist.urlHash(json).url;
             }
+            updates.update_map(mapFile(json), drawnItems);
             updates.sourcechange({
                 type: 'gist',
                 name: '#' + json.id,
@@ -343,6 +344,7 @@ function hashChange() {
                 map.fitBounds(drawnItems.getBounds());
                 buttons.filter(function(d, i) { return i == 1; }).trigger('click');
             }
+            updates.update_map(mapFile(json), drawnItems);
             updates.sourcechange({
                 type: 'github',
                 name: source().id,
