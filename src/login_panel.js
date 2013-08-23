@@ -17,7 +17,10 @@ loginPanel.init = function(container) {
 
     function logout() {
         window.localStorage.removeItem('github_token');
-        sel.classed('logged-in', true)
+        sel
+            .classed('logged-in', false)
+            .classed('icon-github', true)
+            .style('background-image', 'none')
             .on('click', login);
     }
 
@@ -49,6 +52,8 @@ loginPanel.init = function(container) {
                     .style('background-image', 'url(' + user.avatar_url + ')')
                     .style('background-size', '40px 40px')
                     .style('background-repeat', 'no-repeat')
+                    .classed('icon-github', false)
+                    .classed('logged-in', true)
                     .on('click', logout);
             })
             .on('error', function() {

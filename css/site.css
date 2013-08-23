@@ -533,3 +533,7 @@ textarea.full-width {
 .share .icon-remove {
     margin-left:10px;
 }
+
+.logged-in {
+    width:40px;
+}
