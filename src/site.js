@@ -3282,7 +3282,7 @@ function loadGist(id, callback) {
 
 function urlHash(data) {
     var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id) {
+    if (source() && source().id == data.id && !source().login) {
         return {
             url: '#gist:' + login + '/' + data.id,
             redirect: true
@@ -4044,12 +4044,11 @@ function hashChange() {
         try {
             var file = mapFile(json);
             updates.update_editor(mapFile(json));
-            if (first && drawnItems.getBounds().isValid()) {
-                map.fitBounds(drawnItems.getBounds());
-                buttons.filter(function(d, i) { return i == 1; }).trigger('click');
+            if (drawnItems.getBounds().isValid()) map.fitBounds(drawnItems.getBounds());
+            if (gist.urlHash(json).redirect) {
+                silentHash = true;
+                window.location.hash = gist.urlHash(json).url;
             }
-            silentHash = gist.urlHash(json).redirect;
-            window.location.hash = gist.urlHash(json).url;
             updates.sourcechange({
                 type: 'gist',
                 name: '#' + json.id,
@@ -4757,5 +4756,5 @@ function verticalPanel(updates) {
     return panel;
 }
 
-},{}]},{},[36,33])
+},{}]},{},[33,36])
 ;
