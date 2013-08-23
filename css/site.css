@@ -60,10 +60,20 @@ input[type=text] {
 
 #map {
     position:absolute;
-    top:0;
+    top:40px;
     bottom:0;
     left:0;
     right:40%;
+}
+
+.left-panel {
+    background:#fff;
+    position:absolute;
+    top:40px;
+    bottom:0;
+    left:0;
+    right:40%;
+    z-index:9999;
 }
 
 .right {
@@ -138,15 +148,21 @@ p.intro-hint:hover {
     background:#f7f7f7;
 }
 
+.top .info {
+    line-height:40px;
+    text-align:center;
+    width:40px;
+    color:#222;
+}
+
+.top .info:hover {
+    background:#ccc;
+}
+
 .top .buttons {
     margin-left:28px;
     height:40px;
     border-left:1px solid #ddd;
-}
-
-
-.top button.icon-github.logged-in {
-    color:red;
 }
 
 .top button.icon-github:after {
@@ -189,16 +205,16 @@ button.delete-invert {
 button {
     font-family: 'Open Sans', sans-serif;
     cursor:pointer;
-    background:#f7f7f7;
+    background:#fff;
     font:inherit;
     margin:0;
     border:0;
     padding:5px 10px;
     box-sizing:border-box;
-    border:1px solid #f0f0f0;
-    transition:all 200ms ease-in-out;
-    -webkit-transition:all 200ms ease-in-out;
-    border-bottom:2px solid #f0f0f0;
+    border:1px solid #ccc;
+    transition:all 100ms ease-in-out;
+    -webkit-transition:all 100ms ease-in-out;
+    border-bottom:1px solid #ccc;
 }
 
 button span {
@@ -206,7 +222,7 @@ button span {
 }
 
 button:hover {
-    border-bottom:2px solid red;
+    border:1px solid red;
 }
 
 button.major {
@@ -243,8 +259,9 @@ button.positive {
     left:0;
     width:28px;
     height:40px;
-    line-height:40px;
+    line-height:30px;
     text-align:center;
+    border:none;
 }
 
 .top .collapse-button:hover {
@@ -312,21 +329,6 @@ button.positive {
 .right .edit-pane .CodeMirror-linenumber {
     color:#666;
     font-size:75%;
-}
-
-.footlinks {
-    padding:5px;
-    margin-top:20px;
-}
-
-.footlinks a {
-    color:#444;
-    cursor:pointer;
-    padding-right:20px;
-}
-
-.footlinks a:hover {
-    color:#000;
 }
 
 .leaflet-container .leaflet-control-attribution {
@@ -412,4 +414,127 @@ textarea.full-width {
     border:1px solid #ccc;
     border-radius:2px;
     font:inherit;
+}
+
+/* ui rework */
+.file-bar {
+    background:#f7f7f7;
+    position:absolute;
+    top:0;
+    left:0;
+    height:40px;
+    right:40%;
+    border-bottom: 1px solid #d9d9d9;
+    border-color: rgba(102,102,102,0.25);
+    box-sizing:border-box;
+    line-height:40px;
+}
+
+.file-bar .name {
+    padding:0 10px;
+    display:inline-block;
+}
+
+.file-bar .name .filename {
+    margin-left:10px;
+}
+
+.file-bar .icon-external-link {
+    margin-left:10px;
+    font-size:15px;
+    color:#444;
+    transition:all 100ms ease-in;
+}
+
+.file-bar .icon-external-link:hover {
+    color:red;
+}
+
+.button-wrap {
+    padding:5px 0;
+    display:inline-block;
+    vertical-align:top;
+    margin-right:10px;
+}
+
+.button-wrap button {
+    vertical-align:top;
+    line-height:28px;
+    font-size:12px;
+    padding:0px 10px;
+    border-right:none;
+}
+
+.button-wrap button .icon {
+    margin-right:5px;
+}
+
+.button-wrap button:last-child {
+    border-right:1px solid #ccc;
+    border-radius:0 5px 5px 0;
+}
+
+.button-wrap button:first-child {
+    border-radius:5px 0 0 5px;
+}
+
+.import-sources {
+    border-bottom:1px solid #ccc;
+}
+
+.clickable:hover,
+.clickable.active {
+    background:#eee;
+}
+
+.icon-spaced {
+    margin-right:5px;
+}
+
+.clickable {
+    cursor:pointer;
+}
+
+.subpane {
+    position:absolute;
+    left:0;
+    right:0;
+    top:40px;
+    bottom:0;
+    overflow:auto;
+}
+
+/* modal, flash */
+.message {
+    background:#FFFCE4;
+    position:absolute;
+    z-index:9999;
+    right:40%;
+    top:40px;
+    left:0;
+    border-bottom:1px solid #ccc;
+}
+
+.pre-icon {
+    margin-right:5px;
+}
+
+.share {
+    position:absolute;
+    right:40%;
+    top:40px;
+    background:#fff;
+    font-size:12px;
+}
+
+.share .network {
+    margin-right:10px;
+}
+
+.share .icon-remove {
+    margin-left:10px;
+}
+
+.logged-in {
+    width:40px;
 }

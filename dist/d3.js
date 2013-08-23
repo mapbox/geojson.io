@@ -127,6 +127,9 @@ function d3_range_integerScale(x) {
   while (x * k % 1) k *= 10;
   return k;
 }
+var d3_document = document,
+    d3_documentElement = d3_document.documentElement,
+    d3_window = window;
 // Copies a variable number of methods from source to target.
 d3.rebind = function(target, source) {
   var i = 1, n = arguments.length, method;
@@ -143,6 +146,36 @@ function d3_rebind(target, source, method) {
     return value === source ? target : value;
   };
 }
+
+function d3_vendorSymbol(object, name) {
+  if (name in object) return name;
+  name = name.charAt(0).toUpperCase() + name.substring(1);
+  for (var i = 0, n = d3_vendorPrefixes.length; i < n; ++i) {
+    var prefixName = d3_vendorPrefixes[i] + name;
+    if (prefixName in object) return prefixName;
+  }
+}
+
+var d3_vendorPrefixes = ["webkit", "ms", "moz", "Moz", "o", "O"];
+
+var d3_array = d3_arraySlice; // conversion for NodeLists
+
+function d3_arrayCopy(pseudoarray) {
+  var i = pseudoarray.length, array = new Array(i);
+  while (i--) array[i] = pseudoarray[i];
+  return array;
+}
+
+function d3_arraySlice(pseudoarray) {
+  return Array.prototype.slice.call(pseudoarray);
+}
+
+try {
+  d3_array(d3_documentElement.childNodes)[0].nodeType;
+} catch(e) {
+  d3_array = d3_arrayCopy;
+}
+function d3_noop() {}
 
 d3.dispatch = function() {
   var dispatch = new d3_dispatch,
@@ -260,27 +293,11 @@ function d3_eventDispatch(target) {
 
   return dispatch;
 }
-var d3_document = document,
-    d3_documentElement = d3_document.documentElement,
-    d3_window = window;
+d3.requote = function(s) {
+  return s.replace(d3_requote_re, "\\$&");
+};
 
-var d3_array = d3_arraySlice; // conversion for NodeLists
-
-function d3_arrayCopy(pseudoarray) {
-  var i = pseudoarray.length, array = new Array(i);
-  while (i--) array[i] = pseudoarray[i];
-  return array;
-}
-
-function d3_arraySlice(pseudoarray) {
-  return Array.prototype.slice.call(pseudoarray);
-}
-
-try {
-  d3_array(d3_documentElement.childNodes)[0].nodeType;
-} catch(e) {
-  d3_array = d3_arrayCopy;
-}
+var d3_requote_re = /[\\\^\$\*\+\?\|\[\]\(\)\.\{\}]/g;
 var d3_subclass = {}.__proto__?
 
 // Until ECMAScript supports array subclassing, prototype injection works well.
@@ -292,17 +309,6 @@ function(object, prototype) {
 function(object, prototype) {
   for (var property in prototype) object[property] = prototype[property];
 };
-
-function d3_vendorSymbol(object, name) {
-  if (name in object) return name;
-  name = name.charAt(0).toUpperCase() + name.substring(1);
-  for (var i = 0, n = d3_vendorPrefixes.length; i < n; ++i) {
-    var prefixName = d3_vendorPrefixes[i] + name;
-    if (prefixName in object) return prefixName;
-  }
-}
-
-var d3_vendorPrefixes = ["webkit", "ms", "moz", "Moz", "o", "O"];
 
 function d3_selection(groups) {
   d3_subclass(groups, d3_selectionPrototype);
@@ -327,6 +333,37 @@ d3.selection = function() {
 
 var d3_selectionPrototype = d3.selection.prototype = [];
 
+
+d3_selectionPrototype.select = function(selector) {
+  var subgroups = [],
+      subgroup,
+      subnode,
+      group,
+      node;
+
+  selector = d3_selection_selector(selector);
+
+  for (var j = -1, m = this.length; ++j < m;) {
+    subgroups.push(subgroup = []);
+    subgroup.parentNode = (group = this[j]).parentNode;
+    for (var i = -1, n = group.length; ++i < n;) {
+      if (node = group[i]) {
+        subgroup.push(subnode = selector.call(node, node.__data__, i, j));
+        if (subnode && "__data__" in node) subnode.__data__ = node.__data__;
+      } else {
+        subgroup.push(null);
+      }
+    }
+  }
+
+  return d3_selection(subgroups);
+};
+
+function d3_selection_selector(selector) {
+  return typeof selector === "function" ? selector : function() {
+    return d3_select(selector, this);
+  };
+}
 
 d3_selectionPrototype.selectAll = function(selector) {
   var subgroups = [],
@@ -437,11 +474,6 @@ function d3_selection_attr(name, value) {
 function d3_collapse(s) {
   return s.trim().replace(/\s+/g, " ");
 }
-d3.requote = function(s) {
-  return s.replace(d3_requote_re, "\\$&");
-};
-
-var d3_requote_re = /[\\\^\$\*\+\?\|\[\]\(\)\.\{\}]/g;
 
 d3_selectionPrototype.classed = function(name, value) {
   if (arguments.length < 2) {
@@ -833,104 +865,6 @@ function d3_selection_sortComparator(comparator) {
     return a && b ? comparator(a.__data__, b.__data__) : !a - !b;
   };
 }
-function d3_noop() {}
-
-d3_selectionPrototype.on = function(type, listener, capture) {
-  var n = arguments.length;
-  if (n < 3) {
-
-    // For on(object) or on(object, boolean), the object specifies the event
-    // types and listeners to add or remove. The optional boolean specifies
-    // whether the listener captures events.
-    if (typeof type !== "string") {
-      if (n < 2) listener = false;
-      for (capture in type) this.each(d3_selection_on(capture, type[capture], listener));
-      return this;
-    }
-
-    // For on(string), return the listener for the first node.
-    if (n < 2) return (n = this.node()["__on" + type]) && n._;
-
-    // For on(string, function), use the default capture.
-    capture = false;
-  }
-
-  // Otherwise, a type, listener and capture are specified, and handled as below.
-  return this.each(d3_selection_on(type, listener, capture));
-};
-
-function d3_selection_on(type, listener, capture) {
-  var name = "__on" + type,
-      i = type.indexOf("."),
-      wrap = d3_selection_onListener;
-
-  if (i > 0) type = type.substring(0, i);
-  var filter = d3_selection_onFilters.get(type);
-  if (filter) type = filter, wrap = d3_selection_onFilter;
-
-  function onRemove() {
-    var l = this[name];
-    if (l) {
-      this.removeEventListener(type, l, l.$);
-      delete this[name];
-    }
-  }
-
-  function onAdd() {
-    var l = wrap(listener, d3_array(arguments));
-    onRemove.call(this);
-    this.addEventListener(type, this[name] = l, l.$ = capture);
-    l._ = listener;
-  }
-
-  function removeAll() {
-    var re = new RegExp("^__on([^.]+)" + d3.requote(type) + "$"),
-        match;
-    for (var name in this) {
-      if (match = name.match(re)) {
-        var l = this[name];
-        this.removeEventListener(match[1], l, l.$);
-        delete this[name];
-      }
-    }
-  }
-
-  return i
-      ? listener ? onAdd : onRemove
-      : listener ? d3_noop : removeAll;
-}
-
-var d3_selection_onFilters = d3.map({
-  mouseenter: "mouseover",
-  mouseleave: "mouseout"
-});
-
-d3_selection_onFilters.forEach(function(k) {
-  if ("on" + k in d3_document) d3_selection_onFilters.remove(k);
-});
-
-function d3_selection_onListener(listener, argumentz) {
-  return function(e) {
-    var o = d3.event; // Events can be reentrant (e.g., focus).
-    d3.event = e;
-    argumentz[0] = this.__data__;
-    try {
-      listener.apply(this, argumentz);
-    } finally {
-      d3.event = o;
-    }
-  };
-}
-
-function d3_selection_onFilter(listener, argumentz) {
-  var l = d3_selection_onListener(listener, argumentz);
-  return function(e) {
-    var target = this, related = e.relatedTarget;
-    if (!related || (related !== target && !(related.compareDocumentPosition(target) & 8))) {
-      l.call(target, e);
-    }
-  };
-}
 
 d3_selectionPrototype.each = function(callback) {
   return d3_selection_each(this, function(node, i, j) {
@@ -1066,36 +1000,246 @@ d3.selectAll = function(nodes) {
 
 var d3_selectionRoot = d3.select(d3_documentElement);
 
-d3_selectionPrototype.select = function(selector) {
-  var subgroups = [],
-      subgroup,
-      subnode,
-      group,
-      node;
+d3_selectionPrototype.on = function(type, listener, capture) {
+  var n = arguments.length;
+  if (n < 3) {
 
-  selector = d3_selection_selector(selector);
+    // For on(object) or on(object, boolean), the object specifies the event
+    // types and listeners to add or remove. The optional boolean specifies
+    // whether the listener captures events.
+    if (typeof type !== "string") {
+      if (n < 2) listener = false;
+      for (capture in type) this.each(d3_selection_on(capture, type[capture], listener));
+      return this;
+    }
 
-  for (var j = -1, m = this.length; ++j < m;) {
-    subgroups.push(subgroup = []);
-    subgroup.parentNode = (group = this[j]).parentNode;
-    for (var i = -1, n = group.length; ++i < n;) {
-      if (node = group[i]) {
-        subgroup.push(subnode = selector.call(node, node.__data__, i, j));
-        if (subnode && "__data__" in node) subnode.__data__ = node.__data__;
-      } else {
-        subgroup.push(null);
+    // For on(string), return the listener for the first node.
+    if (n < 2) return (n = this.node()["__on" + type]) && n._;
+
+    // For on(string, function), use the default capture.
+    capture = false;
+  }
+
+  // Otherwise, a type, listener and capture are specified, and handled as below.
+  return this.each(d3_selection_on(type, listener, capture));
+};
+
+function d3_selection_on(type, listener, capture) {
+  var name = "__on" + type,
+      i = type.indexOf("."),
+      wrap = d3_selection_onListener;
+
+  if (i > 0) type = type.substring(0, i);
+  var filter = d3_selection_onFilters.get(type);
+  if (filter) type = filter, wrap = d3_selection_onFilter;
+
+  function onRemove() {
+    var l = this[name];
+    if (l) {
+      this.removeEventListener(type, l, l.$);
+      delete this[name];
+    }
+  }
+
+  function onAdd() {
+    var l = wrap(listener, d3_array(arguments));
+    onRemove.call(this);
+    this.addEventListener(type, this[name] = l, l.$ = capture);
+    l._ = listener;
+  }
+
+  function removeAll() {
+    var re = new RegExp("^__on([^.]+)" + d3.requote(type) + "$"),
+        match;
+    for (var name in this) {
+      if (match = name.match(re)) {
+        var l = this[name];
+        this.removeEventListener(match[1], l, l.$);
+        delete this[name];
       }
     }
   }
 
-  return d3_selection(subgroups);
-};
+  return i
+      ? listener ? onAdd : onRemove
+      : listener ? d3_noop : removeAll;
+}
 
-function d3_selection_selector(selector) {
-  return typeof selector === "function" ? selector : function() {
-    return d3_select(selector, this);
+var d3_selection_onFilters = d3.map({
+  mouseenter: "mouseover",
+  mouseleave: "mouseout"
+});
+
+d3_selection_onFilters.forEach(function(k) {
+  if ("on" + k in d3_document) d3_selection_onFilters.remove(k);
+});
+
+function d3_selection_onListener(listener, argumentz) {
+  return function(e) {
+    var o = d3.event; // Events can be reentrant (e.g., focus).
+    d3.event = e;
+    argumentz[0] = this.__data__;
+    try {
+      listener.apply(this, argumentz);
+    } finally {
+      d3.event = o;
+    }
   };
 }
+
+function d3_selection_onFilter(listener, argumentz) {
+  var l = d3_selection_onListener(listener, argumentz);
+  return function(e) {
+    var target = this, related = e.relatedTarget;
+    if (!related || (related !== target && !(related.compareDocumentPosition(target) & 8))) {
+      l.call(target, e);
+    }
+  };
+}
+
+var d3_event_dragSelect = d3_vendorSymbol(d3_documentElement.style, "userSelect"),
+    d3_event_dragId = 0;
+
+function d3_event_dragSuppress() {
+  var name = ".dragsuppress-" + ++d3_event_dragId,
+      touchmove = "touchmove" + name,
+      selectstart = "selectstart" + name,
+      dragstart = "dragstart" + name,
+      click = "click" + name,
+      w = d3.select(d3_window).on(touchmove, d3_eventPreventDefault).on(selectstart, d3_eventPreventDefault).on(dragstart, d3_eventPreventDefault),
+      style = d3_documentElement.style,
+      select = style[d3_event_dragSelect];
+  style[d3_event_dragSelect] = "none";
+  return function(suppressClick) {
+    w.on(name, null);
+    style[d3_event_dragSelect] = select;
+    if (suppressClick) { // suppress the next click, but only if it’s immediate
+      function off() { w.on(click, null); }
+      w.on(click, function() { d3_eventPreventDefault(); off(); }, true);
+      setTimeout(off, 0);
+    }
+  };
+}
+
+d3.mouse = function(container) {
+  return d3_mousePoint(container, d3_eventSource());
+};
+
+// https://bugs.webkit.org/show_bug.cgi?id=44083
+var d3_mouse_bug44083 = /WebKit/.test(d3_window.navigator.userAgent) ? -1 : 0;
+
+function d3_mousePoint(container, e) {
+  var svg = container.ownerSVGElement || container;
+  if (svg.createSVGPoint) {
+    var point = svg.createSVGPoint();
+    if (d3_mouse_bug44083 < 0 && (d3_window.scrollX || d3_window.scrollY)) {
+      svg = d3.select("body").append("svg").style({
+        position: "absolute",
+        top: 0,
+        left: 0,
+        margin: 0,
+        padding: 0,
+        border: "none"
+      }, "important");
+      var ctm = svg[0][0].getScreenCTM();
+      d3_mouse_bug44083 = !(ctm.f || ctm.e);
+      svg.remove();
+    }
+    if (d3_mouse_bug44083) {
+      point.x = e.pageX;
+      point.y = e.pageY;
+    } else {
+      point.x = e.clientX;
+      point.y = e.clientY;
+    }
+    point = point.matrixTransform(container.getScreenCTM().inverse());
+    return [point.x, point.y];
+  }
+  var rect = container.getBoundingClientRect();
+  return [e.clientX - rect.left - container.clientLeft, e.clientY - rect.top - container.clientTop];
+};
+
+d3.touches = function(container, touches) {
+  if (arguments.length < 2) touches = d3_eventSource().touches;
+  return touches ? d3_array(touches).map(function(touch) {
+    var point = d3_mousePoint(container, touch);
+    point.identifier = touch.identifier;
+    return point;
+  }) : [];
+};
+d3.behavior = {};
+
+d3.behavior.drag = function() {
+  var event = d3_eventDispatch(drag, "drag", "dragstart", "dragend"),
+      origin = null,
+      mousedown = dragstart(d3_noop, d3.mouse, "mousemove", "mouseup"),
+      touchstart = dragstart(touchid, touchposition, "touchmove", "touchend");
+
+  function drag() {
+    this.on("mousedown.drag", mousedown)
+        .on("touchstart.drag", touchstart);
+  }
+
+  function touchid() {
+    return d3.event.changedTouches[0].identifier;
+  }
+
+  function touchposition(parent, id) {
+    return d3.touches(parent).filter(function(p) { return p.identifier === id; })[0];
+  }
+
+  function dragstart(id, position, move, end) {
+    return function() {
+      var target = this,
+          parent = target.parentNode,
+          event_ = event.of(target, arguments),
+          eventTarget = d3.event.target,
+          eventId = id(),
+          drag = eventId == null ? "drag" : "drag-" + eventId,
+          origin_ = position(parent, eventId),
+          dragged = 0,
+          offset,
+          w = d3.select(d3_window).on(move + "." + drag, moved).on(end + "." + drag, ended),
+          dragRestore = d3_event_dragSuppress();
+
+      if (origin) {
+        offset = origin.apply(target, arguments);
+        offset = [offset.x - origin_[0], offset.y - origin_[1]];
+      } else {
+        offset = [0, 0];
+      }
+
+      event_({type: "dragstart"});
+
+      function moved() {
+        if (!parent) return ended(); // target removed from DOM
+
+        var p = position(parent, eventId),
+            dx = p[0] - origin_[0],
+            dy = p[1] - origin_[1];
+
+        dragged |= dx | dy;
+        origin_ = p;
+
+        event_({type: "drag", x: p[0] + offset[0], y: p[1] + offset[1], dx: dx, dy: dy});
+      }
+
+      function ended() {
+        w.on(move + "." + drag, null).on(end + "." + drag, null);
+        dragRestore(dragged && d3.event.target === eventTarget);
+        event_({type: "dragend"});
+      }
+    };
+  }
+
+  drag.origin = function(x) {
+    if (!arguments.length) return origin;
+    origin = x;
+    return drag;
+  };
+
+  return d3.rebind(drag, event, "on");
+};
 function d3_identity(d) {
   return d;
 }
@@ -1220,5 +1364,9 @@ d3.json = function(url, callback) {
 function d3_json(request) {
   return JSON.parse(request.responseText);
 }
+
+d3.text = d3_xhrType(function(request) {
+  return request.responseText;
+});
   return d3;
 })();

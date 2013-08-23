@@ -15,6 +15,7 @@
   <link href='lib/bucket.css' rel='stylesheet' />
   <link href='css/base.css' rel='stylesheet' />
   <link href='css/marker.css' rel='stylesheet' />
+  <link href='css/github_browse.css' rel='stylesheet' />
   <link href='css/site.css' rel='stylesheet' />
   <link href='css/theme.css' rel='stylesheet' />
   <link rel='icon' type='image/x-icon' href='/favicon.png' />
@@ -34,14 +35,10 @@
   </script>
 </head>
 <body id='geojsonio-body'>
-<div id='map'></div>
-<div id='layer-switch'>
-    <button class='active' id='mapbox'>MapBox</button><button id='mapbox-satellite'>Satellite</button><button id='osm'>OSM</button>
-</div>
-<div id='brushes'>
-</div>
+<div class='left-panel hide'></div>
 <div class='right'>
     <div class='top'>
+        <a target='_blank' class='info fr' href='./about.html'><span class='icon-info' /></span></a>
         <button title='collapse' class='collapse-button'>
             <span class='icon icon-caret-down'></span>
         </button>
@@ -51,8 +48,8 @@
     <div class='pane'></div>
 </div>
 <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>
-<script src='lib/lib.js'></script>
-<script src='src/site.js'></script>
+<script src='dist/lib.js'></script>
+<script src='dist/site.js'></script>
 <script type="text/javascript">
 var analytics=analytics||[];(function(){var e=["identify","track","trackLink","trackForm","trackClick","trackSubmit","page","pageview","ab","alias","ready","group"],t=function(e){return function(){analytics.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var n=0;n<e.length;n++)analytics[e[n]]=t(e[n])})(),analytics.load=function(e){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=("https:"===document.location.protocol?"https://":"http://")+"d2dq2ahtl5zl1z.cloudfront.net/analytics.js/v1/"+e+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(t,n)};
 analytics.load("xu28n5b6t9");

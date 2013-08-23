@@ -1116,11 +1116,12 @@ var typeObjects = {
 };
 
 },{}],17:[function(require,module,exports){
-'use strict';
-
 var source = require('./source');
+var fs = require('fs');
+var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
 module.exports.saveAsGist = saveAsGist;
+module.exports.saveBlocks = saveBlocks;
 module.exports.loadGist = loadGist;
 module.exports.urlHash = urlHash;
 
@@ -1132,6 +1133,30 @@ function authorize(xhr) {
     return localStorage.github_token ?
         xhr.header('Authorization', 'token ' + localStorage.github_token) :
         xhr;
+}
+
+function saveBlocks(content, callback) {
+    var endpoint = 'https://api.github.com/gists';
+
+    d3.json(endpoint)
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+        })
+        .send('POST', JSON.stringify({
+            description: 'via:geojson.io',
+            public: true,
+            files: {
+                'index.html': {
+                    content: tmpl
+                },
+                'map.geojson': {
+                    content: content
+                }
+            }
+        }));
 }
 
 function saveAsGist(content, callback) {
@@ -1186,7 +1211,7 @@ function loadGist(id, callback) {
 
 function urlHash(data) {
     var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id) {
+    if (source() && source().id == data.id && !source().login) {
         return {
             url: '#gist:' + login + '/' + data.id,
             redirect: true
@@ -1198,13 +1223,15 @@ function urlHash(data) {
     }
 }
 
-},{"./source":21}],18:[function(require,module,exports){
+},{"./source":21,"fs":1}],18:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
 
 module.exports.saveAsGitHub = saveAsGitHub;
 module.exports.loadGitHub = loadGitHub;
+module.exports.loadGitHubRaw = loadGitHubRaw;
+module.exports.urlHash = urlHash;
 
 function authorize(xhr) {
     return localStorage.github_token ?
@@ -1214,12 +1241,13 @@ function authorize(xhr) {
 
 function githubFileUrl() {
     var pts = parseGitHubId(source().id);
+    
     return 'https://api.github.com/repos/' + pts.user +
             '/' + pts.repo +
             '/contents/' + pts.file + '?ref=' + pts.branch;
 }
 
-function saveAsGitHub(content, callback, message) {
+function saveAsGitHub(content, message, callback) {
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
             'Please use a modern browser to enjoy the full featureset of geojson.io');
@@ -1252,18 +1280,6 @@ function saveAsGitHub(content, callback, message) {
     });
 }
 
-function encode(content) {
-  // Encode UTF-8 to Base64
-  // https://developer.mozilla.org/en-US/docs/Web/API/window.btoa#Unicode_Strings
-  return window.btoa(window.encodeURIComponent(content));
-}
-
-function decode(content) {
-  // Decode Base64 to UTF-8
-  // https://developer.mozilla.org/en-US/docs/Web/API/window.btoa#Unicode_Strings
-  return window.decodeURIComponent(window.atob(content));
-}
-
 function parseGitHubId(id) {
     var parts = id.split('/');
     return {
@@ -1277,68 +1293,142 @@ function parseGitHubId(id) {
 
 function loadGitHub(id, callback) {
     var pts = parseGitHubId(id);
-    d3.json('https://api.github.com/repos/' + pts.user +
+    authorize(d3.json('https://api.github.com/repos/' + pts.user +
         '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch)
+        '/contents/' + pts.file + '?ref=' + pts.branch))
         .on('load', onLoad)
-        .on('error', onError).get();
+        .on('error', onError)
+        .get();
 
     function onLoad(file) {
-        if (file.type !== 'file') return;
         callback(null, file);
     }
     function onError(err) { callback(err, null); }
 }
 
-},{"./source":21}],19:[function(require,module,exports){
-'use strict';
+function loadGitHubRaw(id, callback) {
+    var pts = parseGitHubId(id);
+    authorize(d3.text('https://api.github.com/repos/' + pts.user +
+        '/' + pts.repo +
+        '/contents/' + pts.file + '?ref=' + pts.branch))
+        .on('load', onLoad)
+        .on('error', onError)
+        .header('Accept', 'application/vnd.github.raw').get();
 
-module.exports = function() {
-    var map = L.mapbox.map('map')
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function urlHash(d) {
+    var prefix = '';
+
+    if (d.parents && d.parents.length) {
+        prefix = d.parents.map(function(p) {
+            return p.path;
+        }).join('/') + '/';
+    }
+
+    return {
+        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + prefix + d.path
+    };
+}
+
+},{"./source":21}],19:[function(require,module,exports){
+module.exports.showProperties = showProperties;
+module.exports.setupMap = setupMap;
+module.exports.geoify = geoify;
+
+function setupMap(container) {
+    'use strict';
+
+    var mapDiv = container.append('div')
+        .attr('id', 'map');
+
+    var map = L.mapbox.map(mapDiv.node())
         .setView([20, 0], 2);
 
-    var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-    });
+    var layers = [{
+        title: 'MapBox',
+        layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
+            retinaVersion: 'tmcw.map-u4ca5hnt',
+            detectRetina: true
+        })
+    }, {
+        title: 'Satellite',
+        layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
+            retinaVersion: 'tmcw.map-ujx9se0r',
+            detectRetina: true
+        })
+    }, {
+        title: 'OSM',
+        layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        })
+    }];
 
-    var mapboxTiles = L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-        retinaVersion: 'tmcw.map-u4ca5hnt',
-        detectRetina: true
-    }).addTo(map);
-
-    var mapboxSatelliteTiles = L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-        retinaVersion: 'tmcw.map-ujx9se0r',
-        detectRetina: true
-    });
-
-    var layerButtons = d3.select('#layer-switch')
+    var layerButtons = container.append('div')
+        .attr('id', 'layer-switch')
         .selectAll('button')
-        .on('click', function() {
+        .data(layers)
+        .enter()
+        .append('button')
+        .on('click', function(d) {
             var clicked = this;
             layerButtons.classed('active', function() {
                 return clicked === this;
             });
-            if (this.id == 'mapbox' && !map.hasLayer(mapboxTiles)) {
-                map.addLayer(mapboxTiles);
-                if (map.hasLayer(osmTiles)) map.removeLayer(osmTiles);
-                if (map.hasLayer(mapboxSatelliteTiles)) map.removeLayer(mapboxSatelliteTiles);
+            layers.forEach(swap);
+            function swap(l) {
+                if (l.layer == d.layer) map.addLayer(d.layer);
+                else if (map.hasLayer(l.layer)) map.removeLayer(l.layer);
             }
-            if (this.id == 'mapbox-satellite' && !map.hasLayer(mapboxSatelliteTiles)) {
-                map.addLayer(mapboxSatelliteTiles);
-                if (map.hasLayer(osmTiles)) map.removeLayer(osmTiles);
-                if (map.hasLayer(mapboxTiles)) map.removeLayer(mapboxTiles);
-            }
-            if (this.id == 'osm' && !map.hasLayer(osmTiles)) {
-                map.addLayer(osmTiles);
-                if (map.hasLayer(mapboxTiles)) map.removeLayer(mapboxTiles);
-                if (map.hasLayer(mapboxSatelliteTiles)) map.removeLayer(mapboxSatelliteTiles);
-            }
-        });
+        })
+        .text(function(d) { return d.title; });
+
+    layerButtons.filter(function(d, i) { return i === 0; }).trigger('click');
 
     L.mapbox.geocoderControl('tmcw.map-u4ca5hnt').addTo(map);
 
     return map;
-};
+}
+
+function isEmpty(o) {
+    for (var i in o) { return false; }
+    return true;
+}
+
+function showProperties(l) {
+    var properties = l.toGeoJSON().properties, table = '';
+    if (isEmpty(properties)) properties = { '': '' };
+
+    for (var key in properties) {
+        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
+            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
+    }
+
+    l.bindPopup(L.popup({
+        maxWidth: 500,
+        maxHeight: 400
+    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
+        '<div class="clearfix col12 drop">' +
+            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
+            '<button class="cancel">cancel</button></div>' +
+            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
+        '</div></div>'));
+}
+
+function geoify(layer) {
+    var features = [];
+    layer.eachLayer(function(l) {
+        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
+    });
+    layer.clearLayers();
+    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
+        l.addTo(layer);
+    });
+}
 
 },{}],20:[function(require,module,exports){
 var map = require('./map')();
