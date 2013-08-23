@@ -1895,7 +1895,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":14,"./lib/topojson/clockwise":16,"./lib/topojson/filter":20,"./lib/topojson/prune":24,"./lib/topojson/simplify":25,"./lib/topojson/topology":28,"fs":1}],14:[function(require,module,exports){
+},{"./lib/topojson/bind":14,"./lib/topojson/clockwise":16,"./lib/topojson/filter":18,"./lib/topojson/prune":24,"./lib/topojson/simplify":25,"./lib/topojson/topology":28,"fs":1}],14:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1925,7 +1925,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":17}],15:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":29}],15:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -2032,109 +2032,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":19,"./type":17}],17:[function(require,module,exports){
-module.exports = function(types) {
-  for (var type in typeDefaults) {
-    if (!(type in types)) {
-      types[type] = typeDefaults[type];
-    }
-  }
-  types.defaults = typeDefaults;
-  return types;
-};
-
-var typeDefaults = {
-
-  Feature: function(feature) {
-    if (feature.geometry) this.geometry(feature.geometry);
-  },
-
-  FeatureCollection: function(collection) {
-    var features = collection.features, i = -1, n = features.length;
-    while (++i < n) this.Feature(features[i]);
-  },
-
-  GeometryCollection: function(collection) {
-    var geometries = collection.geometries, i = -1, n = geometries.length;
-    while (++i < n) this.geometry(geometries[i]);
-  },
-
-  LineString: function(lineString) {
-    this.line(lineString.coordinates);
-  },
-
-  MultiLineString: function(multiLineString) {
-    var coordinates = multiLineString.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.line(coordinates[i]);
-  },
-
-  MultiPoint: function(multiPoint) {
-    var coordinates = multiPoint.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.point(coordinates[i]);
-  },
-
-  MultiPolygon: function(multiPolygon) {
-    var coordinates = multiPolygon.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.polygon(coordinates[i]);
-  },
-
-  Point: function(point) {
-    this.point(point.coordinates);
-  },
-
-  Polygon: function(polygon) {
-    this.polygon(polygon.coordinates);
-  },
-
-  object: function(object) {
-    return object == null ? null
-        : typeObjects.hasOwnProperty(object.type) ? this[object.type](object)
-        : this.geometry(object);
-  },
-
-  geometry: function(geometry) {
-    return geometry == null ? null
-        : typeGeometries.hasOwnProperty(geometry.type) ? this[geometry.type](geometry)
-        : null;
-  },
-
-  point: function() {},
-
-  line: function(coordinates) {
-    var i = -1, n = coordinates.length;
-    while (++i < n) this.point(coordinates[i]);
-  },
-
-  polygon: function(coordinates) {
-    var i = -1, n = coordinates.length;
-    while (++i < n) this.line(coordinates[i]);
-  }
-};
-
-var typeGeometries = {
-  LineString: 1,
-  MultiLineString: 1,
-  MultiPoint: 1,
-  MultiPolygon: 1,
-  Point: 1,
-  Polygon: 1,
-  GeometryCollection: 1
-};
-
-var typeObjects = {
-  Feature: 1,
-  FeatureCollection: 1
-};
-
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],19:[function(require,module,exports){
+},{"../../":"PBmiWO","./coordinate-systems":17,"./type":29}],17:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":15,"./spherical":26}],20:[function(require,module,exports){
+},{"./cartesian":15,"./spherical":26}],18:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -2204,7 +2108,31 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":16,"./coordinate-systems":19,"./prune":24,"./type":17}],21:[function(require,module,exports){
+},{"../../":"PBmiWO","./clockwise":16,"./coordinate-systems":17,"./prune":24,"./type":29}],19:[function(require,module,exports){
+var message = require('./message');
+
+module.exports = flash;
+
+function flash(selection, txt) {
+    'use strict';
+
+    var msg = message(selection);
+
+    if (txt) msg.select('.content').html(txt);
+
+    setTimeout(function() {
+        msg
+            .transition()
+            .style('opacity', 0)
+            .remove();
+    }, 5000);
+
+    return msg;
+}
+
+},{"./message":40}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}],21:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -2394,7 +2322,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":17}],25:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":29}],25:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -2526,7 +2454,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":19,"./min-heap":23}],26:[function(require,module,exports){
+},{"./coordinate-systems":17,"./min-heap":23}],26:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -2658,7 +2586,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":17}],28:[function(require,module,exports){
+},{"./type":29}],28:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -3000,7 +2928,101 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":19,"./hashtable":22,"./stitch-poles":27,"./type":17}],29:[function(require,module,exports){
+},{"./coordinate-systems":17,"./hashtable":22,"./stitch-poles":27,"./type":29}],29:[function(require,module,exports){
+module.exports = function(types) {
+  for (var type in typeDefaults) {
+    if (!(type in types)) {
+      types[type] = typeDefaults[type];
+    }
+  }
+  types.defaults = typeDefaults;
+  return types;
+};
+
+var typeDefaults = {
+
+  Feature: function(feature) {
+    if (feature.geometry) this.geometry(feature.geometry);
+  },
+
+  FeatureCollection: function(collection) {
+    var features = collection.features, i = -1, n = features.length;
+    while (++i < n) this.Feature(features[i]);
+  },
+
+  GeometryCollection: function(collection) {
+    var geometries = collection.geometries, i = -1, n = geometries.length;
+    while (++i < n) this.geometry(geometries[i]);
+  },
+
+  LineString: function(lineString) {
+    this.line(lineString.coordinates);
+  },
+
+  MultiLineString: function(multiLineString) {
+    var coordinates = multiLineString.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.line(coordinates[i]);
+  },
+
+  MultiPoint: function(multiPoint) {
+    var coordinates = multiPoint.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.point(coordinates[i]);
+  },
+
+  MultiPolygon: function(multiPolygon) {
+    var coordinates = multiPolygon.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.polygon(coordinates[i]);
+  },
+
+  Point: function(point) {
+    this.point(point.coordinates);
+  },
+
+  Polygon: function(polygon) {
+    this.polygon(polygon.coordinates);
+  },
+
+  object: function(object) {
+    return object == null ? null
+        : typeObjects.hasOwnProperty(object.type) ? this[object.type](object)
+        : this.geometry(object);
+  },
+
+  geometry: function(geometry) {
+    return geometry == null ? null
+        : typeGeometries.hasOwnProperty(geometry.type) ? this[geometry.type](geometry)
+        : null;
+  },
+
+  point: function() {},
+
+  line: function(coordinates) {
+    var i = -1, n = coordinates.length;
+    while (++i < n) this.point(coordinates[i]);
+  },
+
+  polygon: function(coordinates) {
+    var i = -1, n = coordinates.length;
+    while (++i < n) this.line(coordinates[i]);
+  }
+};
+
+var typeGeometries = {
+  LineString: 1,
+  MultiLineString: 1,
+  MultiPoint: 1,
+  MultiPolygon: 1,
+  Point: 1,
+  Polygon: 1,
+  GeometryCollection: 1
+};
+
+var typeObjects = {
+  Feature: 1,
+  FeatureCollection: 1
+};
+
+},{}],30:[function(require,module,exports){
 var github = require('./github');
 
 module.exports = commit;
@@ -3032,7 +3054,7 @@ function commit(container, contents, callback) {
     return wrap;
 }
 
-},{"./github":34}],30:[function(require,module,exports){
+},{"./github":34}],31:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -3046,7 +3068,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var share = require('./share');
 
 module.exports = fileBar;
@@ -3164,29 +3186,7 @@ function fileBar(updates) {
     return d3.rebind(bar, event, 'on');
 }
 
-},{"./share":42}],32:[function(require,module,exports){
-var message = require('./message');
-
-module.exports = flash;
-
-function flash(selection, txt) {
-    'use strict';
-
-    var msg = message(selection);
-
-    if (txt) msg.select('.content').html(txt);
-
-    setTimeout(function() {
-        msg
-            .transition()
-            .style('opacity', 0)
-            .remove();
-    }, 5000);
-
-    return msg;
-}
-
-},{"./message":40}],33:[function(require,module,exports){
+},{"./share":42}],33:[function(require,module,exports){
 var source = require('./source');
 var fs = require('fs');
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
@@ -3923,6 +3923,7 @@ function onPopupOpen(e) {
     function removeFeature() {
         if (e.popup._source && drawnItems.hasLayer(e.popup._source)) {
             drawnItems.removeLayer(e.popup._source);
+            updates.update_geojson();
         }
     }
 
@@ -4085,7 +4086,7 @@ function hashChange() {
     }
 }
 
-},{"./commit":29,"./file_bar":31,"./flash":32,"./gist":33,"./github":34,"./json_panel":37,"./login_panel":38,"./map":39,"./share":42,"./source":43,"./source_panel":44,"./table_panel":45,"detect-json-indent":5,"is-mobile":11}],37:[function(require,module,exports){
+},{"./commit":30,"./file_bar":32,"./flash":19,"./gist":33,"./github":34,"./json_panel":37,"./login_panel":38,"./map":39,"./share":42,"./source":43,"./source_panel":44,"./table_panel":45,"detect-json-indent":5,"is-mobile":11}],37:[function(require,module,exports){
 var validate = require('./validate');
 
 module.exports = jsonPanel;
@@ -4189,7 +4190,7 @@ loginPanel.init = function(container) {
     }
 };
 
-},{"./config":30,"./source":43}],39:[function(require,module,exports){
+},{"./config":31,"./source":43}],39:[function(require,module,exports){
 module.exports.showProperties = showProperties;
 module.exports.setupMap = setupMap;
 module.exports.geoify = geoify;

@@ -194,6 +194,7 @@ function onPopupOpen(e) {
     function removeFeature() {
         if (e.popup._source && drawnItems.hasLayer(e.popup._source)) {
             drawnItems.removeLayer(e.popup._source);
+            updates.update_geojson();
         }
     }
 
