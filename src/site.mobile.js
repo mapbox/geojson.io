@@ -1211,7 +1211,7 @@ function loadGist(id, callback) {
 
 function urlHash(data) {
     var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id) {
+    if (source() && source().id == data.id && !source().login) {
         return {
             url: '#gist:' + login + '/' + data.id,
             redirect: true
@@ -1223,13 +1223,14 @@ function urlHash(data) {
     }
 }
 
-},{"./source":21,"fs":1}],18:[function(require,module,exports){
+},{"./source":22,"fs":1}],18:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
 
 module.exports.saveAsGitHub = saveAsGitHub;
 module.exports.loadGitHub = loadGitHub;
+module.exports.loadGitHubRaw = loadGitHubRaw;
 module.exports.urlHash = urlHash;
 
 function authorize(xhr) {
@@ -1240,12 +1241,13 @@ function authorize(xhr) {
 
 function githubFileUrl() {
     var pts = parseGitHubId(source().id);
+    
     return 'https://api.github.com/repos/' + pts.user +
             '/' + pts.repo +
             '/contents/' + pts.file + '?ref=' + pts.branch;
 }
 
-function saveAsGitHub(content, callback, message) {
+function saveAsGitHub(content, message, callback) {
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
             'Please use a modern browser to enjoy the full featureset of geojson.io');
@@ -1291,9 +1293,24 @@ function parseGitHubId(id) {
 
 function loadGitHub(id, callback) {
     var pts = parseGitHubId(id);
-    d3.text('https://api.github.com/repos/' + pts.user +
+    authorize(d3.json('https://api.github.com/repos/' + pts.user +
         '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch)
+        '/contents/' + pts.file + '?ref=' + pts.branch))
+        .on('load', onLoad)
+        .on('error', onError)
+        .get();
+
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function loadGitHubRaw(id, callback) {
+    var pts = parseGitHubId(id);
+    authorize(d3.text('https://api.github.com/repos/' + pts.user +
+        '/' + pts.repo +
+        '/contents/' + pts.file + '?ref=' + pts.branch))
         .on('load', onLoad)
         .on('error', onError)
         .header('Accept', 'application/vnd.github.raw').get();
@@ -1305,19 +1322,27 @@ function loadGitHub(id, callback) {
 }
 
 function urlHash(d) {
+    var prefix = '';
+
+    if (d.parents && d.parents.length) {
+        prefix = d.parents.map(function(p) {
+            return p.path;
+        }).join('/') + '/';
+    }
+
     return {
-        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + d.path
+        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + prefix + d.path
     };
 }
 
-},{"./source":21}],19:[function(require,module,exports){
-'use strict';
-
+},{"./source":22}],19:[function(require,module,exports){
 module.exports.showProperties = showProperties;
 module.exports.setupMap = setupMap;
 module.exports.geoify = geoify;
 
 function setupMap(container) {
+    'use strict';
+
     var mapDiv = container.append('div')
         .attr('id', 'map');
 
@@ -1481,7 +1506,9 @@ function showProperties(l) {
     }, l).setContent('<table class="marker-properties display">' + table + '</table>'));
 }
 
-},{"./gist":17,"./github":18,"./map":19,"./source":21}],21:[function(require,module,exports){
+},{"./gist":17,"./github":18,"./map":19,"./source":22}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}],22:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -1518,7 +1545,5 @@ module.exports = function source() {
     }
 };
 
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
 },{}]},{},[20])
 ;
