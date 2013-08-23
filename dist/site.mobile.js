@@ -1223,7 +1223,7 @@ function urlHash(data) {
     }
 }
 
-},{"./source":22,"fs":1}],18:[function(require,module,exports){
+},{"./source":21,"fs":1}],18:[function(require,module,exports){
 'use strict';
 
 var source = require('./source');
@@ -1335,7 +1335,7 @@ function urlHash(d) {
     };
 }
 
-},{"./source":22}],19:[function(require,module,exports){
+},{"./source":21}],19:[function(require,module,exports){
 module.exports.showProperties = showProperties;
 module.exports.setupMap = setupMap;
 module.exports.geoify = geoify;
@@ -1506,9 +1506,7 @@ function showProperties(l) {
     }, l).setContent('<table class="marker-properties display">' + table + '</table>'));
 }
 
-},{"./gist":17,"./github":18,"./map":19,"./source":22}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],22:[function(require,module,exports){
+},{"./gist":17,"./github":18,"./map":19,"./source":21}],21:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -1545,5 +1543,7 @@ module.exports = function source() {
     }
 };
 
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
 },{}]},{},[20])
 ;
