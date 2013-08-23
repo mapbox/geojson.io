@@ -33,24 +33,18 @@ var jsonPanel = require('./json_panel'),
     fileBar = require('./file_bar'),
     gist = require('./gist'),
     github = require('./github'),
-    map = require('./map')(),
+    mapUtil = require('./map'),
     source = require('./source'),
     detectIndentationStyle = require('detect-json-indent'),
     exportIndentationStyle = 4,
     dropSupport = (window.FileReader && 'ondrop' in window);
 
-CodeMirror.keyMap.tabSpace = {
-    Tab: function(cm) {
-        var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
-        cm.replaceSelection(spaces, 'end', '+input');
-    },
-    fallthrough: ['default']
-};
+var map = mapUtil.setupMap();
 
 var pane = d3.select('.pane');
 
-var editor, buttons;
-var silentHash = false;
+var buttons,
+    silentHash = false;
 
 var drawnItems = new L.FeatureGroup().addTo(map);
 var drawControl = new L.Control.Draw({
@@ -108,7 +102,7 @@ function clickCollapse() {
         !d3.select('.right').classed('hidden'));
     d3.select('#map').classed('fullsize',
         !d3.select('#map').classed('fullsize'));
-    map.invalidateSize();
+    mapUtil.invalidateSize();
 }
 
 function focusLayer(layer) {
@@ -132,21 +126,10 @@ function focusLayer(layer) {
     }
 }
 
-function geoify(layer) {
-    var features = [];
-    layer.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    layer.clearLayers();
-    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
-        l.addTo(layer);
-    });
-}
-
 function drawCreated(e) {
     // if ('setStyle' in e.layer) e.layer.setStyle(brush);
     drawnItems.addLayer(e.layer);
-    geoify(drawnItems);
+    mapUtil.geoify(drawnItems);
     refresh();
 }
 
@@ -262,7 +245,7 @@ function updateFromMap() {
 
 function refresh() {
     drawnItems.eachLayer(function(l) {
-        showProperties(l);
+        mapUtil.showProperties(l);
     });
 }
 
@@ -275,34 +258,9 @@ function zoomToExtent() {
 function loadToMap(gj) {
     drawnItems.clearLayers();
     L.geoJson(gj).eachLayer(function(l) {
-        showProperties(l);
+        mapUtil.showProperties(l);
         l.addTo(drawnItems);
     });
-}
-
-function isEmpty(o) {
-    for (var i in o) { return false; }
-    return true;
-}
-
-function showProperties(l) {
-    var properties = l.toGeoJSON().properties, table = '';
-    if (isEmpty(properties)) properties = { '': '' };
-
-    for (var key in properties) {
-        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
-            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
-    }
-
-    l.bindPopup(L.popup({
-        maxWidth: 500,
-        maxHeight: 400
-    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
-        '<div class="clearfix col12 drop">' +
-            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
-            '<button class="cancel">cancel</button></div>' +
-            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
-        '</div></div>'));
 }
 
 function mapFile(gist) {
@@ -381,7 +339,7 @@ function hashChange() {
     }
 }
 
-},{"./json_panel":9,"./source_panel":10,"./commit_panel":11,"./table_panel":12,"./share_panel":13,"./login_panel":14,"./file_bar":15,"./gist":16,"./github":17,"./map":18,"./source":19,"is-mobile":20,"detect-json-indent":21}],15:[function(require,module,exports){
+},{"./json_panel":9,"./table_panel":10,"./source_panel":11,"./commit_panel":12,"./share_panel":13,"./login_panel":14,"./file_bar":15,"./gist":16,"./github":17,"./map":18,"./source":19,"is-mobile":20,"detect-json-indent":21}],15:[function(require,module,exports){
 module.exports = fileBar;
 
 function fileBar(updates) {
@@ -440,7 +398,11 @@ function fileBar(updates) {
 },{}],18:[function(require,module,exports){
 'use strict';
 
-module.exports = function() {
+module.exports.showProperties = showProperties;
+module.exports.setupMap = setupMap;
+module.exports.geoify = geoify;
+
+function setupMap() {
     var map = L.mapbox.map('map')
         .setView([20, 0], 2);
 
@@ -485,7 +447,43 @@ module.exports = function() {
     L.mapbox.geocoderControl('tmcw.map-u4ca5hnt').addTo(map);
 
     return map;
-};
+}
+
+function isEmpty(o) {
+    for (var i in o) { return false; }
+    return true;
+}
+
+function showProperties(l) {
+    var properties = l.toGeoJSON().properties, table = '';
+    if (isEmpty(properties)) properties = { '': '' };
+
+    for (var key in properties) {
+        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
+            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
+    }
+
+    l.bindPopup(L.popup({
+        maxWidth: 500,
+        maxHeight: 400
+    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
+        '<div class="clearfix col12 drop">' +
+            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
+            '<button class="cancel">cancel</button></div>' +
+            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
+        '</div></div>'));
+}
+
+function geoify(layer) {
+    var features = [];
+    layer.eachLayer(function(l) {
+        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
+    });
+    layer.clearLayers();
+    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
+        l.addTo(layer);
+    });
+}
 
 },{}],19:[function(require,module,exports){
 'use strict';
@@ -529,6 +527,14 @@ var validate = require('./validate');
 
 module.exports = jsonPanel;
 
+CodeMirror.keyMap.tabSpace = {
+    Tab: function(cm) {
+        var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
+        cm.replaceSelection(spaces, 'end', '+input');
+    },
+    fallthrough: ['default']
+};
+
 function jsonPanel(container, updates) {
     container.html('');
 
@@ -559,44 +565,7 @@ function jsonPanel(container, updates) {
     });
 }
 
-},{"./validate":22}],11:[function(require,module,exports){
-var github = require('./github');
-
-module.exports = commitPanel;
-
-function commitPanel(container, updates) {
-    container.html('');
-
-    var wrap = container.append('div')
-        .attr('class', 'pad1 center');
-
-    var message = wrap.append('textarea')
-        .attr('placeholder', 'Commit message')
-        .attr('class', 'full-width');
-
-    var commitButton = wrap.append('button')
-        .text('Commit changes to GitHub')
-        .attr('class', 'semimajor');
-
-    updates.on('update_map.mode', function(data, layer, exportIndentationStyle) {
-        commitButton.on('click', function() {
-            github.saveAsGitHub(
-                JSON.stringify(data, null, exportIndentationStyle),
-                done,
-                message.property('value'));
-
-            function done(err, resp) {
-                if (err) return alert(err);
-                commitButton.text('Changes saved');
-                setTimeout(function() {
-                    commitButton.text('Commit changes to GitHub');
-                }, 1000);
-            }
-        });
-    });
-}
-
-},{"./github":17}],13:[function(require,module,exports){
+},{"./validate":22}],13:[function(require,module,exports){
 var gist = require('./gist');
 module.exports = sharePanel;
 
@@ -675,7 +644,44 @@ function sharePanel(container, updates) {
     }
 }
 
-},{"./gist":16}],14:[function(require,module,exports){
+},{"./gist":16}],12:[function(require,module,exports){
+var github = require('./github');
+
+module.exports = commitPanel;
+
+function commitPanel(container, updates) {
+    container.html('');
+
+    var wrap = container.append('div')
+        .attr('class', 'pad1 center');
+
+    var message = wrap.append('textarea')
+        .attr('placeholder', 'Commit message')
+        .attr('class', 'full-width');
+
+    var commitButton = wrap.append('button')
+        .text('Commit changes to GitHub')
+        .attr('class', 'semimajor');
+
+    updates.on('update_map.mode', function(data, layer, exportIndentationStyle) {
+        commitButton.on('click', function() {
+            github.saveAsGitHub(
+                JSON.stringify(data, null, exportIndentationStyle),
+                done,
+                message.property('value'));
+
+            function done(err, resp) {
+                if (err) return alert(err);
+                commitButton.text('Changes saved');
+                setTimeout(function() {
+                    commitButton.text('Commit changes to GitHub');
+                }, 1000);
+            }
+        });
+    });
+}
+
+},{"./github":17}],14:[function(require,module,exports){
 'use strict';
 
 var source = require('./source'),
@@ -928,6 +934,51 @@ module.exports = function(_, def) {
 };
 
 },{}],10:[function(require,module,exports){
+'use strict';
+
+var metatable = require('d3-metatable')(d3);
+
+module.exports = tablePanel;
+
+function tablePanel(container, updates) {
+    container.html('');
+
+    updates.on('update_map.mode', function(data, layers) {
+        function findLayer(p) {
+            var layer;
+            layers.eachLayer(function(l) {
+                if (p == l.feature.properties) layer = l;
+            });
+            return layer;
+        }
+        if (!data.features.length) {
+            container.append('div')
+                .attr('class', 'blank-banner')
+                .text('no features');
+        } else {
+            var props = [];
+            layers.eachLayer(function(p) {
+                props.push(p.feature.properties);
+            });
+            container.html('');
+            container
+                .append('div')
+                .attr('class', 'pad1 scrollable')
+                .data([props])
+                .call(
+                    metatable()
+                        .on('change', function() {
+                            updates.update_refresh();
+                        })
+                        .on('rowfocus', function(d) {
+                            updates.focus_layer(findLayer(d));
+                        })
+                );
+        }
+    });
+}
+
+},{"d3-metatable":24}],11:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     gist = require('./gist'),
     github = require('./github'),
@@ -1079,52 +1130,7 @@ function sourcePanel(updates) {
     return panel;
 }
 
-},{"./gist":16,"./github":17,"./vertical_panel":24,"./import_panel":25,"github-file-browser":26,"detect-json-indent":21}],12:[function(require,module,exports){
-'use strict';
-
-var metatable = require('d3-metatable')(d3);
-
-module.exports = tablePanel;
-
-function tablePanel(container, updates) {
-    container.html('');
-
-    updates.on('update_map.mode', function(data, layers) {
-        function findLayer(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
-        if (!data.features.length) {
-            container.append('div')
-                .attr('class', 'blank-banner')
-                .text('no features');
-        } else {
-            var props = [];
-            layers.eachLayer(function(p) {
-                props.push(p.feature.properties);
-            });
-            container.html('');
-            container
-                .append('div')
-                .attr('class', 'pad1 scrollable')
-                .data([props])
-                .call(
-                    metatable()
-                        .on('change', function() {
-                            updates.update_refresh();
-                        })
-                        .on('rowfocus', function(d) {
-                            updates.focus_layer(findLayer(d));
-                        })
-                );
-        }
-    });
-}
-
-},{"d3-metatable":27}],2:[function(require,module,exports){
+},{"./vertical_panel":25,"./gist":16,"./github":17,"./import_panel":26,"github-file-browser":27,"detect-json-indent":21}],2:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -1598,7 +1604,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./min-heap":32,"./coordinate-systems":31}],24:[function(require,module,exports){
+},{"./min-heap":32,"./coordinate-systems":31}],25:[function(require,module,exports){
 module.exports = verticalPanel;
 
 function verticalPanel(updates) {
@@ -1646,7 +1652,77 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
+var type = require("./type"),
+    prune = require("./prune"),
+    clockwise = require("./clockwise"),
+    systems = require("./coordinate-systems"),
+    topojson = require("../../");
+
+module.exports = function(topology, options) {
+  var system = null,
+      forceClockwise = true; // force exterior rings to be clockwise?
+
+  if (options)
+    "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
+    "force-clockwise" in options && (forceClockwise = !!options["force-clockwise"]);
+
+  if (forceClockwise) clockwise(topology, options); // deprecated; for backwards-compatibility
+
+  var filter = type({
+    LineString: noop, // TODO remove empty lines
+    MultiLineString: noop,
+    Point: noop,
+    MultiPoint: noop,
+    Polygon: function(polygon) {
+      polygon.arcs = polygon.arcs.filter(ringArea);
+      if (!polygon.arcs.length) {
+        polygon.type = null;
+        delete polygon.arcs;
+      }
+    },
+    MultiPolygon: function(multiPolygon) {
+      multiPolygon.arcs = multiPolygon.arcs.map(function(polygon) {
+        return polygon.filter(ringArea);
+      }).filter(function(polygon) {
+        return polygon.length;
+      });
+      if (!multiPolygon.arcs.length) {
+        multiPolygon.type = null;
+        delete multiPolygon.arcs;
+      }
+    },
+    GeometryCollection: function(collection) {
+      this.defaults.GeometryCollection.call(this, collection);
+      collection.geometries = collection.geometries.filter(function(geometry) { return geometry.type != null; });
+      if (!collection.geometries.length) {
+        collection.type = null;
+        delete collection.geometries;
+      }
+    }
+  });
+
+  for (var key in topology.objects) {
+    filter.object(topology.objects[key]);
+  }
+
+  prune(topology, options);
+
+  function ringArea(ring) {
+    return system.absoluteArea(system.ringArea(topojson.feature(topology, {type: "Polygon", arcs: [ring]}).geometry.coordinates[0]));
+  }
+};
+
+// TODO It might be slightly more compact to reverse the arc.
+function reverse(ring) {
+  var i = -1, n = ring.length;
+  ring.reverse();
+  while (++i < n) ring[i] = ~ring[i];
+}
+
+function noop() {}
+
+},{"./type":28,"./prune":6,"./clockwise":4,"./coordinate-systems":31,"../../":"g070js"}],4:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -1719,77 +1795,7 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"./type":28,"./coordinate-systems":31,"../../":"g070js"}],5:[function(require,module,exports){
-var type = require("./type"),
-    prune = require("./prune"),
-    clockwise = require("./clockwise"),
-    systems = require("./coordinate-systems"),
-    topojson = require("../../");
-
-module.exports = function(topology, options) {
-  var system = null,
-      forceClockwise = true; // force exterior rings to be clockwise?
-
-  if (options)
-    "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
-    "force-clockwise" in options && (forceClockwise = !!options["force-clockwise"]);
-
-  if (forceClockwise) clockwise(topology, options); // deprecated; for backwards-compatibility
-
-  var filter = type({
-    LineString: noop, // TODO remove empty lines
-    MultiLineString: noop,
-    Point: noop,
-    MultiPoint: noop,
-    Polygon: function(polygon) {
-      polygon.arcs = polygon.arcs.filter(ringArea);
-      if (!polygon.arcs.length) {
-        polygon.type = null;
-        delete polygon.arcs;
-      }
-    },
-    MultiPolygon: function(multiPolygon) {
-      multiPolygon.arcs = multiPolygon.arcs.map(function(polygon) {
-        return polygon.filter(ringArea);
-      }).filter(function(polygon) {
-        return polygon.length;
-      });
-      if (!multiPolygon.arcs.length) {
-        multiPolygon.type = null;
-        delete multiPolygon.arcs;
-      }
-    },
-    GeometryCollection: function(collection) {
-      this.defaults.GeometryCollection.call(this, collection);
-      collection.geometries = collection.geometries.filter(function(geometry) { return geometry.type != null; });
-      if (!collection.geometries.length) {
-        collection.type = null;
-        delete collection.geometries;
-      }
-    }
-  });
-
-  for (var key in topology.objects) {
-    filter.object(topology.objects[key]);
-  }
-
-  prune(topology, options);
-
-  function ringArea(ring) {
-    return system.absoluteArea(system.ringArea(topojson.feature(topology, {type: "Polygon", arcs: [ring]}).geometry.coordinates[0]));
-  }
-};
-
-// TODO It might be slightly more compact to reverse the arc.
-function reverse(ring) {
-  var i = -1, n = ring.length;
-  ring.reverse();
-  while (++i < n) ring[i] = ~ring[i];
-}
-
-function noop() {}
-
-},{"./type":28,"./prune":6,"./clockwise":4,"./coordinate-systems":31,"../../":"g070js"}],6:[function(require,module,exports){
+},{"./type":28,"./coordinate-systems":31,"../../":"g070js"}],6:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1878,7 +1884,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"./type":28,"../../":"g070js"}],27:[function(require,module,exports){
+},{"./type":28,"../../":"g070js"}],24:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -2052,7 +2058,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":33}],25:[function(require,module,exports){
+},{"geojsonhint":33}],26:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
@@ -2376,7 +2382,7 @@ function runGeocode(container, list, transform, updates) {
     var task = geocode(list, transform, progress, done);
 }
 
-},{"topojson":"g070js","./vertical_panel":24,"./gist":16,"./progress_chart":34,"togeojson":35,"detect-json-indent":21}],26:[function(require,module,exports){
+},{"topojson":"g070js","./vertical_panel":25,"./gist":16,"./progress_chart":34,"togeojson":35,"detect-json-indent":21}],27:[function(require,module,exports){
 module.exports = function(d3) {
     var preview = require('static-map-preview')(d3, 'tmcw.map-dsejpecw');
 
@@ -2915,7 +2921,13 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":28}],30:[function(require,module,exports){
+},{"./type":28}],31:[function(require,module,exports){
+module.exports = {
+  cartesian: require("./cartesian"),
+  spherical: require("./spherical")
+};
+
+},{"./cartesian":37,"./spherical":38}],30:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -2970,13 +2982,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":37}],31:[function(require,module,exports){
-module.exports = {
-  cartesian: require("./cartesian"),
-  spherical: require("./spherical")
-};
-
-},{"./spherical":38,"./cartesian":39}],35:[function(require,module,exports){
+},{"./hash":39}],35:[function(require,module,exports){
 toGeoJSON = (function() {
     'use strict';
 
@@ -4401,7 +4407,41 @@ exports.relative = function(from, to) {
 };
 
 })(require("__browserify_process"))
-},{"__browserify_process":42}],38:[function(require,module,exports){
+},{"__browserify_process":42}],37:[function(require,module,exports){
+exports.name = "cartesian";
+exports.formatDistance = formatDistance;
+exports.ringArea = ringArea;
+exports.absoluteArea = Math.abs;
+exports.triangleArea = triangleArea;
+exports.distance = distance;
+
+function formatDistance(d) {
+  return d.toString();
+}
+
+function ringArea(ring) {
+  var i = 0,
+      n = ring.length,
+      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
+  while (++i < n) {
+    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
+  }
+  return area * .5;
+}
+
+function triangleArea(triangle) {
+  return Math.abs(
+    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
+    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
+  );
+}
+
+function distance(x0, y0, x1, y1) {
+  var dx = x0 - x1, dy = y0 - y1;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+},{}],38:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -4483,7 +4523,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -4492,40 +4532,6 @@ module.exports = function(size) {
     return (key < 0 ? ~key : key) & mask;
   };
 };
-
-},{}],39:[function(require,module,exports){
-exports.name = "cartesian";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = Math.abs;
-exports.triangleArea = triangleArea;
-exports.distance = distance;
-
-function formatDistance(d) {
-  return d.toString();
-}
-
-function ringArea(ring) {
-  var i = 0,
-      n = ring.length,
-      area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
-  while (++i < n) {
-    area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
-  }
-  return area * .5;
-}
-
-function triangleArea(triangle) {
-  return Math.abs(
-    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
-    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
-  );
-}
-
-function distance(x0, y0, x1, y1) {
-  var dx = x0 - x1, dy = y0 - y1;
-  return Math.sqrt(dx * dx + dy * dy);
-}
 
 },{}]},{},[8])
 ;

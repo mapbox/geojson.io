@@ -16,24 +16,18 @@ var jsonPanel = require('./json_panel'),
     fileBar = require('./file_bar'),
     gist = require('./gist'),
     github = require('./github'),
-    map = require('./map')(),
+    mapUtil = require('./map'),
     source = require('./source'),
     detectIndentationStyle = require('detect-json-indent'),
     exportIndentationStyle = 4,
     dropSupport = (window.FileReader && 'ondrop' in window);
 
-CodeMirror.keyMap.tabSpace = {
-    Tab: function(cm) {
-        var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
-        cm.replaceSelection(spaces, 'end', '+input');
-    },
-    fallthrough: ['default']
-};
+var map = mapUtil.setupMap();
 
 var pane = d3.select('.pane');
 
-var editor, buttons;
-var silentHash = false;
+var buttons,
+    silentHash = false;
 
 var drawnItems = new L.FeatureGroup().addTo(map);
 var drawControl = new L.Control.Draw({
@@ -91,7 +85,7 @@ function clickCollapse() {
         !d3.select('.right').classed('hidden'));
     d3.select('#map').classed('fullsize',
         !d3.select('#map').classed('fullsize'));
-    map.invalidateSize();
+    mapUtil.invalidateSize();
 }
 
 function focusLayer(layer) {
@@ -115,21 +109,10 @@ function focusLayer(layer) {
     }
 }
 
-function geoify(layer) {
-    var features = [];
-    layer.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    layer.clearLayers();
-    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
-        l.addTo(layer);
-    });
-}
-
 function drawCreated(e) {
     // if ('setStyle' in e.layer) e.layer.setStyle(brush);
     drawnItems.addLayer(e.layer);
-    geoify(drawnItems);
+    mapUtil.geoify(drawnItems);
     refresh();
 }
 
@@ -245,7 +228,7 @@ function updateFromMap() {
 
 function refresh() {
     drawnItems.eachLayer(function(l) {
-        showProperties(l);
+        mapUtil.showProperties(l);
     });
 }
 
@@ -258,34 +241,9 @@ function zoomToExtent() {
 function loadToMap(gj) {
     drawnItems.clearLayers();
     L.geoJson(gj).eachLayer(function(l) {
-        showProperties(l);
+        mapUtil.showProperties(l);
         l.addTo(drawnItems);
     });
-}
-
-function isEmpty(o) {
-    for (var i in o) { return false; }
-    return true;
-}
-
-function showProperties(l) {
-    var properties = l.toGeoJSON().properties, table = '';
-    if (isEmpty(properties)) properties = { '': '' };
-
-    for (var key in properties) {
-        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
-            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
-    }
-
-    l.bindPopup(L.popup({
-        maxWidth: 500,
-        maxHeight: 400
-    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
-        '<div class="clearfix col12 drop">' +
-            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
-            '<button class="cancel">cancel</button></div>' +
-            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
-        '</div></div>'));
 }
 
 function mapFile(gist) {
