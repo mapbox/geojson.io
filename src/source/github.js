@@ -1,6 +1,4 @@
-'use strict';
-
-var source = require('./source');
+var source = require('../source.js');
 
 module.exports.saveAsGitHub = saveAsGitHub;
 module.exports.loadGitHub = loadGitHub;
@@ -15,7 +13,7 @@ function authorize(xhr) {
 
 function githubFileUrl() {
     var pts = parseGitHubId(source().id);
-    
+
     return 'https://api.github.com/repos/' + pts.user +
             '/' + pts.repo +
             '/contents/' + pts.file + '?ref=' + pts.branch;

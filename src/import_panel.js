@@ -1,8 +1,8 @@
 var verticalPanel = require('./vertical_panel'),
     topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
-    gist = require('./gist'),
-    progressChart = require('./progress_chart'),
+    gist = require('./source/gist'),
+    progressChart = require('./lib/progress_chart'),
     detectIndentationStyle = require('detect-json-indent'),
     importSupport = !!(window.FileReader);
 

@@ -1,4 +1,4 @@
-var gist = require('./gist');
+var gist = require('./source/gist');
 
 module.exports = share;
 

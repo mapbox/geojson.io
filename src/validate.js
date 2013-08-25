@@ -1,5 +1,3 @@
-'use strict';
-
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {

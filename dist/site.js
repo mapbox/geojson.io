@@ -3005,7 +3005,7 @@ var typeObjects = {
 };
 
 },{}],28:[function(require,module,exports){
-var github = require('./github');
+var github = require('./source/github');
 
 module.exports = commit;
 
@@ -3036,7 +3036,7 @@ function commit(container, contents, callback) {
     return wrap;
 }
 
-},{"./github":33}],29:[function(require,module,exports){
+},{"./source/github":43}],29:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -3168,7 +3168,7 @@ function fileBar(updates) {
     return d3.rebind(bar, event, 'on');
 }
 
-},{"./share":42}],31:[function(require,module,exports){
+},{"./share":40}],31:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -3190,232 +3190,12 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":39}],32:[function(require,module,exports){
-var source = require('./source');
-var fs = require('fs');
-var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
-
-module.exports.saveAsGist = saveAsGist;
-module.exports.saveBlocks = saveBlocks;
-module.exports.loadGist = loadGist;
-module.exports.urlHash = urlHash;
-
-function loggedin() {
-    return !!localStorage.github_token;
-}
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
-
-function saveBlocks(content, callback) {
-    var endpoint = 'https://api.github.com/gists';
-
-    d3.json(endpoint)
-        .on('load', function(data) {
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-        })
-        .send('POST', JSON.stringify({
-            description: 'via:geojson.io',
-            public: true,
-            files: {
-                'index.html': {
-                    content: tmpl
-                },
-                'map.geojson': {
-                    content: content
-                }
-            }
-        }));
-}
-
-function saveAsGist(content, callback) {
-    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
-        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
-    }
-
-    var user = localStorage.github_user ?
-        JSON.parse(localStorage.github_user) : {};
-
-    var endpoint,
-        method = 'POST';
-
-    if (loggedin() && (source() && source().id)) {
-        if (user && source().login == user.login) {
-            endpoint = 'https://api.github.com/gists/' + source().id;
-            method = 'PATCH';
-        } else {
-            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
-        }
-    } else {
-        endpoint = 'https://api.github.com/gists';
-    }
-
-    authorize(d3.json(endpoint))
-        .on('load', function(data) {
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-        })
-        .send(method, JSON.stringify({
-            description: 'via:geojson.io',
-            public: true,
-            files: {
-                'map.geojson': {
-                    content: content
-                }
-            }
-        }));
-}
-
-function loadGist(id, callback) {
-    d3.json('https://api.github.com/gists/' + id)
-        .on('load', onLoad)
-        .on('error', onError).get();
-
-    function onLoad(json) { callback(null, json); }
-    function onError(err) { callback(err, null); }
-}
-
-function urlHash(data) {
-    var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id && !source().login) {
-        return {
-            url: '#gist:' + login + '/' + data.id,
-            redirect: true
-        };
-    } else {
-        return {
-            url: '#gist:' + login + '/' + data.id
-        };
-    }
-}
-
-},{"./source":43,"fs":1}],33:[function(require,module,exports){
-'use strict';
-
-var source = require('./source');
-
-module.exports.saveAsGitHub = saveAsGitHub;
-module.exports.loadGitHub = loadGitHub;
-module.exports.loadGitHubRaw = loadGitHubRaw;
-module.exports.urlHash = urlHash;
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
-
-function githubFileUrl() {
-    var pts = parseGitHubId(source().id);
-    
-    return 'https://api.github.com/repos/' + pts.user +
-            '/' + pts.repo +
-            '/contents/' + pts.file + '?ref=' + pts.branch;
-}
-
-function saveAsGitHub(content, message, callback) {
-    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
-        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
-    }
-
-    if (!localStorage.github_token) {
-        return alert('You need to log in with GitHub to commit changes');
-    }
-
-    var commitMessage = message || prompt('Commit message:');
-    if (!commitMessage) return;
-
-    loadGitHub(source().id, function(err, file) {
-        if (err) {
-            return alert('Failed to load file before saving');
-        }
-        authorize(d3.json(githubFileUrl()))
-            .on('load', function(data) {
-                callback(null, data);
-            })
-            .on('error', function(err) {
-                callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-            })
-            .send('PUT', JSON.stringify({
-                message: commitMessage,
-                sha: file.sha,
-                branch: file.branch,
-                content: Base64.toBase64(content)
-            }));
-    });
-}
-
-function parseGitHubId(id) {
-    var parts = id.split('/');
-    return {
-        user: parts[0],
-        repo: parts[1],
-        mode: parts[2],
-        branch: parts[3],
-        file: parts.slice(4).join('/')
-    };
-}
-
-function loadGitHub(id, callback) {
-    var pts = parseGitHubId(id);
-    authorize(d3.json('https://api.github.com/repos/' + pts.user +
-        '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch))
-        .on('load', onLoad)
-        .on('error', onError)
-        .get();
-
-    function onLoad(file) {
-        callback(null, file);
-    }
-    function onError(err) { callback(err, null); }
-}
-
-function loadGitHubRaw(id, callback) {
-    var pts = parseGitHubId(id);
-    authorize(d3.text('https://api.github.com/repos/' + pts.user +
-        '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch))
-        .on('load', onLoad)
-        .on('error', onError)
-        .header('Accept', 'application/vnd.github.raw').get();
-
-    function onLoad(file) {
-        callback(null, file);
-    }
-    function onError(err) { callback(err, null); }
-}
-
-function urlHash(d) {
-    var prefix = '';
-
-    if (d.parents && d.parents.length) {
-        prefix = d.parents.map(function(p) {
-            return p.path;
-        }).join('/') + '/';
-    }
-
-    return {
-        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + prefix + d.path
-    };
-}
-
-},{"./source":43}],34:[function(require,module,exports){
+},{"./message":38}],32:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
-    gist = require('./gist'),
-    progressChart = require('./progress_chart'),
+    gist = require('./source/gist'),
+    progressChart = require('./lib/progress_chart'),
     detectIndentationStyle = require('detect-json-indent'),
     importSupport = !!(window.FileReader);
 
@@ -3733,7 +3513,7 @@ function runGeocode(container, list, transform, updates) {
     var task = geocode(list, transform, progress, done);
 }
 
-},{"./gist":32,"./progress_chart":41,"./vertical_panel":47,"detect-json-indent":5,"togeojson":12,"topojson":"g070js"}],35:[function(require,module,exports){
+},{"./lib/progress_chart":35,"./source/gist":42,"./vertical_panel":47,"detect-json-indent":5,"togeojson":12,"topojson":"g070js"}],33:[function(require,module,exports){
 var mobile = require('is-mobile');
 
 if (mobile()) {
@@ -3746,13 +3526,13 @@ var jsonPanel = require('./json_panel'),
     sourcePanel = require('./source_panel'),
     loginPanel = require('./login_panel'),
     fileBar = require('./file_bar'),
-    gist = require('./gist'),
-    github = require('./github'),
+    gist = require('./source/gist'),
+    github = require('./source/github'),
     flash = require('./flash'),
     commit = require('./commit'),
     share = require('./share'),
     mapUtil = require('./map'),
-    source = require('./source'),
+    source = require('./source.js'),
     bindBody = require('./import_panel').bindBody,
     detectIndentationStyle = require('detect-json-indent'),
     exportIndentationStyle = 4;
@@ -4122,7 +3902,7 @@ function hashChange() {
     }
 }
 
-},{"./commit":28,"./file_bar":30,"./flash":31,"./gist":32,"./github":33,"./import_panel":34,"./json_panel":36,"./login_panel":37,"./map":38,"./share":42,"./source":43,"./source_panel":44,"./table_panel":45,"detect-json-indent":5,"is-mobile":11}],36:[function(require,module,exports){
+},{"./commit":28,"./file_bar":30,"./flash":31,"./import_panel":32,"./json_panel":34,"./login_panel":36,"./map":37,"./share":40,"./source.js":41,"./source/gist":42,"./source/github":43,"./source_panel":44,"./table_panel":45,"detect-json-indent":5,"is-mobile":11}],34:[function(require,module,exports){
 var validate = require('./validate');
 
 module.exports = jsonPanel;
@@ -4165,8 +3945,29 @@ function jsonPanel(container, updates) {
     });
 }
 
-},{"./validate":46}],37:[function(require,module,exports){
-var source = require('./source'),
+},{"./validate":46}],35:[function(require,module,exports){
+module.exports = function(elem, w, h) {
+    var c = elem.appendChild(document.createElement('canvas'));
+
+    c.width = w;
+    c.height = h;
+
+    var ctx = c.getContext('2d'),
+        gap,
+        fill = {
+            success: '#e3e4b8',
+            error: '#E0A990'
+        };
+
+    return function(e) {
+        if (!gap) gap = ((e.done) / e.todo * w) - ((e.done - 1) / e.todo * w);
+        ctx.fillStyle = fill[e.status];
+        ctx.fillRect((e.done - 1) / e.todo * w, 0, gap, h);
+    };
+};
+
+},{}],36:[function(require,module,exports){
+var source = require('./source.js'),
     config = require('./config')(location.hostname);
 
 module.exports = loginPanel;
@@ -4231,7 +4032,7 @@ loginPanel.init = function(container) {
     }
 };
 
-},{"./config":29,"./source":43}],38:[function(require,module,exports){
+},{"./config":29,"./source.js":41}],37:[function(require,module,exports){
 module.exports.showProperties = showProperties;
 module.exports.setupMap = setupMap;
 module.exports.geoify = geoify;
@@ -4326,7 +4127,7 @@ function geoify(layer) {
     });
 }
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -4369,29 +4170,8 @@ function message(selection) {
 
 },{}],"topojson":[function(require,module,exports){
 module.exports=require('g070js');
-},{}],41:[function(require,module,exports){
-module.exports = function(elem, w, h) {
-    var c = elem.appendChild(document.createElement('canvas'));
-
-    c.width = w;
-    c.height = h;
-
-    var ctx = c.getContext('2d'),
-        gap,
-        fill = {
-            success: '#e3e4b8',
-            error: '#E0A990'
-        };
-
-    return function(e) {
-        if (!gap) gap = ((e.done) / e.todo * w) - ((e.done - 1) / e.todo * w);
-        ctx.fillStyle = fill[e.status];
-        ctx.fillRect((e.done - 1) / e.todo * w, 0, gap, h);
-    };
-};
-
-},{}],42:[function(require,module,exports){
-var gist = require('./gist');
+},{}],40:[function(require,module,exports){
+var gist = require('./source/gist');
 
 module.exports = share;
 
@@ -4473,7 +4253,7 @@ function share(container, features) {
     });
 }
 
-},{"./gist":32}],43:[function(require,module,exports){
+},{"./source/gist":42}],41:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -4510,10 +4290,228 @@ module.exports = function source() {
     }
 };
 
-},{}],44:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
+var source = require('../source.js');
+var fs = require('fs');
+var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
+
+module.exports.saveAsGist = saveAsGist;
+module.exports.saveBlocks = saveBlocks;
+module.exports.loadGist = loadGist;
+module.exports.urlHash = urlHash;
+
+function loggedin() {
+    return !!localStorage.github_token;
+}
+
+function authorize(xhr) {
+    return localStorage.github_token ?
+        xhr.header('Authorization', 'token ' + localStorage.github_token) :
+        xhr;
+}
+
+function saveBlocks(content, callback) {
+    var endpoint = 'https://api.github.com/gists';
+
+    d3.json(endpoint)
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+        })
+        .send('POST', JSON.stringify({
+            description: 'via:geojson.io',
+            public: true,
+            files: {
+                'index.html': {
+                    content: tmpl
+                },
+                'map.geojson': {
+                    content: content
+                }
+            }
+        }));
+}
+
+function saveAsGist(content, callback) {
+    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
+        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
+            'Please use a modern browser to enjoy the full featureset of geojson.io');
+    }
+
+    var user = localStorage.github_user ?
+        JSON.parse(localStorage.github_user) : {};
+
+    var endpoint,
+        method = 'POST';
+
+    if (loggedin() && (source() && source().id)) {
+        if (user && source().login == user.login) {
+            endpoint = 'https://api.github.com/gists/' + source().id;
+            method = 'PATCH';
+        } else {
+            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
+        }
+    } else {
+        endpoint = 'https://api.github.com/gists';
+    }
+
+    authorize(d3.json(endpoint))
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+        })
+        .send(method, JSON.stringify({
+            description: 'via:geojson.io',
+            public: true,
+            files: {
+                'map.geojson': {
+                    content: content
+                }
+            }
+        }));
+}
+
+function loadGist(id, callback) {
+    d3.json('https://api.github.com/gists/' + id)
+        .on('load', onLoad)
+        .on('error', onError).get();
+
+    function onLoad(json) { callback(null, json); }
+    function onError(err) { callback(err, null); }
+}
+
+function urlHash(data) {
+    var login = (data.user && data.user.login) || 'anonymous';
+    if (source() && source().id == data.id && !source().login) {
+        return {
+            url: '#gist:' + login + '/' + data.id,
+            redirect: true
+        };
+    } else {
+        return {
+            url: '#gist:' + login + '/' + data.id
+        };
+    }
+}
+
+},{"../source.js":41,"fs":1}],43:[function(require,module,exports){
+var source = require('../source.js');
+
+module.exports.saveAsGitHub = saveAsGitHub;
+module.exports.loadGitHub = loadGitHub;
+module.exports.loadGitHubRaw = loadGitHubRaw;
+module.exports.urlHash = urlHash;
+
+function authorize(xhr) {
+    return localStorage.github_token ?
+        xhr.header('Authorization', 'token ' + localStorage.github_token) :
+        xhr;
+}
+
+function githubFileUrl() {
+    var pts = parseGitHubId(source().id);
+
+    return 'https://api.github.com/repos/' + pts.user +
+            '/' + pts.repo +
+            '/contents/' + pts.file + '?ref=' + pts.branch;
+}
+
+function saveAsGitHub(content, message, callback) {
+    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
+        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
+            'Please use a modern browser to enjoy the full featureset of geojson.io');
+    }
+
+    if (!localStorage.github_token) {
+        return alert('You need to log in with GitHub to commit changes');
+    }
+
+    var commitMessage = message || prompt('Commit message:');
+    if (!commitMessage) return;
+
+    loadGitHub(source().id, function(err, file) {
+        if (err) {
+            return alert('Failed to load file before saving');
+        }
+        authorize(d3.json(githubFileUrl()))
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(err) {
+                callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+            })
+            .send('PUT', JSON.stringify({
+                message: commitMessage,
+                sha: file.sha,
+                branch: file.branch,
+                content: Base64.toBase64(content)
+            }));
+    });
+}
+
+function parseGitHubId(id) {
+    var parts = id.split('/');
+    return {
+        user: parts[0],
+        repo: parts[1],
+        mode: parts[2],
+        branch: parts[3],
+        file: parts.slice(4).join('/')
+    };
+}
+
+function loadGitHub(id, callback) {
+    var pts = parseGitHubId(id);
+    authorize(d3.json('https://api.github.com/repos/' + pts.user +
+        '/' + pts.repo +
+        '/contents/' + pts.file + '?ref=' + pts.branch))
+        .on('load', onLoad)
+        .on('error', onError)
+        .get();
+
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function loadGitHubRaw(id, callback) {
+    var pts = parseGitHubId(id);
+    authorize(d3.text('https://api.github.com/repos/' + pts.user +
+        '/' + pts.repo +
+        '/contents/' + pts.file + '?ref=' + pts.branch))
+        .on('load', onLoad)
+        .on('error', onError)
+        .header('Accept', 'application/vnd.github.raw').get();
+
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function urlHash(d) {
+    var prefix = '';
+
+    if (d.parents && d.parents.length) {
+        prefix = d.parents.map(function(p) {
+            return p.path;
+        }).join('/') + '/';
+    }
+
+    return {
+        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + prefix + d.path
+    };
+}
+
+},{"../source.js":41}],44:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
-    gist = require('./gist'),
-    github = require('./github'),
+    gist = require('./source/gist'),
+    github = require('./source/github'),
     importPanel = require('./import_panel').importPanel,
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
@@ -4664,9 +4662,7 @@ function sourcePanel(updates) {
     return panel;
 }
 
-},{"./gist":32,"./github":33,"./import_panel":34,"./vertical_panel":47,"detect-json-indent":5,"github-file-browser":8}],45:[function(require,module,exports){
-'use strict';
-
+},{"./import_panel":32,"./source/gist":42,"./source/github":43,"./vertical_panel":47,"detect-json-indent":5,"github-file-browser":8}],45:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3);
 
 module.exports = tablePanel;
@@ -4710,8 +4706,6 @@ function tablePanel(container, updates) {
 }
 
 },{"d3-metatable":4}],46:[function(require,module,exports){
-'use strict';
-
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -4801,5 +4795,5 @@ function verticalPanel(updates) {
     return panel;
 }
 
-},{}]},{},[32,35])
+},{}]},{},[42,33])
 ;

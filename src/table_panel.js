@@ -1,5 +1,3 @@
-'use strict';
-
 var metatable = require('d3-metatable')(d3);
 
 module.exports = tablePanel;

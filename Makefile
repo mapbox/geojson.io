@@ -49,7 +49,7 @@ dist/lib.js: $(LIBS) dist/d3.min.js
 		lib/FileSaver.min.js > dist/lib.js
 
 dist/site.js: src/index.js $(shell $(BROWSERIFY) --list src/index.js)
-	$(BROWSERIFY) -t brfs -r topojson src/gist.js src/index.js > dist/site.js
+	$(BROWSERIFY) -t brfs -r topojson src/source/gist.js src/index.js > dist/site.js
 
 dist/site.mobile.js: src/mobile.js
 	$(BROWSERIFY) -t brfs -r topojson src/mobile.js > dist/site.mobile.js

@@ -1,7 +1,7 @@
 var map = require('./map')();
-var gist = require('./gist'),
-    source = require('./source'),
-    github = require('./github');
+var gist = require('./source/gist'),
+    source = require('./source.js'),
+    github = require('./source/github');
 
 var drawnItems = L.featureGroup().addTo(map);
 

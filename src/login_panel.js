@@ -1,4 +1,4 @@
-var source = require('./source'),
+var source = require('./source.js'),
     config = require('./config')(location.hostname);
 
 module.exports = loginPanel;
