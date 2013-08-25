@@ -17,6 +17,7 @@ var jsonPanel = require('./json_panel'),
     share = require('./share'),
     mapUtil = require('./map'),
     source = require('./source'),
+    bindBody = require('./import_panel').bindBody,
     detectIndentationStyle = require('detect-json-indent'),
     exportIndentationStyle = 4;
 
@@ -48,7 +49,7 @@ L.Polygon.prototype.getCenter = function() {
         x / f + off.lat,
         y / f + off.lng
     );
-}
+};
 
 var pane = d3.select('.pane');
 
@@ -73,6 +74,8 @@ d3.select('.collapse-button').on('click', clickCollapse);
 
 var updates = d3.dispatch('update_geojson', 'update_map', 'update_editor', 'update_refresh',
     'focus_layer', 'zoom_extent', 'sourcechange');
+
+bindBody(updates);
 
 updates.on('focus_layer', focusLayer)
     .on('update_geojson', updateFromMap)
@@ -102,6 +105,7 @@ var buttons = d3.select('.buttons')
     .data(buttonData, function(d) {
         return d.icon;
     });
+
 buttons.enter()
     .append('button')
     .attr('title', function(d) {

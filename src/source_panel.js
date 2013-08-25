@@ -1,7 +1,7 @@
 var verticalPanel = require('./vertical_panel'),
     gist = require('./gist'),
     github = require('./github'),
-    importPanel = require('./import_panel'),
+    importPanel = require('./import_panel').importPanel,
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
 

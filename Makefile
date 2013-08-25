@@ -3,11 +3,10 @@ SMASH = node_modules/.bin/smash
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
 
-all: dist dist/lib.js dist/site.js dist/site.mobile.js
+all: node_modules dist dist/lib.js dist/site.js dist/site.mobile.js
 
 dist:
 	mkdir -p dist
-
 
 dist/d3.min.js: node_modules/d3/*
 	$(SMASH) node_modules/d3/src/start.js \
