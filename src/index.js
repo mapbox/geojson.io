@@ -97,7 +97,36 @@ var buttonData = [{
     behavior: loginPanel
 }];
 
-drawButtons(buttonData);
+var buttons = d3.select('.buttons')
+    .selectAll('button')
+    .data(buttonData, function(d) {
+        return d.icon;
+    });
+buttons.enter()
+    .append('button')
+    .attr('title', function(d) {
+        return d.alt;
+    })
+    .attr('class', function(d) {
+        return 'icon-' + d.icon;
+    })
+    .on('click', buttonClick)
+    .each(function(d) {
+        if (d.behavior.init) d.behavior.init(this);
+    })
+    .append('span')
+    .text(function(d) { return d.title; });
+
+buttons.exit().remove();
+
+d3.select(buttons.node()).trigger('click');
+
+function buttonClick(d) {
+    updates.on('update_map.mode', null);
+    buttons.classed('active', function(_) { return d.icon == _.icon; });
+    pane.call(d.behavior, updates);
+    updateFromMap();
+}
 
 container.append('div')
     .attr('class', 'file-bar')
@@ -168,39 +197,6 @@ function drawCreated(e) {
     drawnItems.addLayer(e.layer);
     mapUtil.geoify(drawnItems);
     refresh();
-}
-
-function drawButtons(data) {
-    buttons = d3.select('.buttons')
-        .selectAll('button')
-        .data(data, function(d) {
-            return d.icon;
-        });
-    buttons.enter()
-        .append('button')
-        .attr('title', function(d) {
-            return d.alt;
-        })
-        .attr('class', function(d) {
-            return 'icon-' + d.icon;
-        })
-        .on('click', buttonClick)
-        .each(function(d) {
-            if (d.behavior.init) d.behavior.init(this);
-        })
-        .append('span')
-        .text(function(d) { return d.title; });
-
-    buttons.exit().remove();
-
-    d3.select(buttons.node()).trigger('click');
-
-    function buttonClick(d) {
-        updates.on('update_map.mode', null);
-        buttons.classed('active', function(_) { return d.icon == _.icon; });
-        pane.call(d.behavior, updates);
-        updateFromMap();
-    }
 }
 
 function onPopupOpen(e) {

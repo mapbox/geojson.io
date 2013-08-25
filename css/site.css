@@ -278,6 +278,7 @@ button.positive {
     height:40px;
     border:0;
     transition:all 200ms ease-in-out;
+    vertical-align:top;
 }
 
 .top .buttons button span.icon {
@@ -537,4 +538,19 @@ textarea.full-width {
 
 .logged-in {
     width:40px;
+}
+
+@media screen and (max-width:1100px) {
+    .file-bar .button-wrap button span.title {
+        display:none;
+    }
+    .left-panel, #map {
+        right:50%;
+    }
+    .right {
+        width:50%;
+    }
+    .file-bar {
+        right:50%;
+    }
 }

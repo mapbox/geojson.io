@@ -8,6 +8,7 @@ all: dist dist/lib.js dist/site.js dist/site.mobile.js
 dist:
 	mkdir -p dist
 
+
 dist/d3.min.js: node_modules/d3/*
 	$(SMASH) node_modules/d3/src/start.js \
 		node_modules/d3/src/arrays/entries.js \
@@ -18,10 +19,20 @@ dist/d3.min.js: node_modules/d3/*
 		node_modules/d3/src/event/dispatch.js \
 		node_modules/d3/src/event/event.js \
 		node_modules/d3/src/selection/select.js \
+		node_modules/d3/src/selection/transition.js \
+		node_modules/d3/src/transition/each.js \
 		node_modules/d3/src/xhr/json.js \
+		node_modules/d3/src/xhr/json.js \
+		node_modules/d3/src/time/time.js \
+		node_modules/d3/src/time/format.js \
 		node_modules/d3/src/xhr/text.js \
+		node_modules/d3/src/geo/mercator.js \
+		node_modules/d3/src/geo/path.js \
 		node_modules/d3/src/end.js > dist/d3.js
 	$(UGLIFY) dist/d3.js > dist/d3.min.js
+
+node_modules/d3:
+	npm install
 
 dist/lib.js: $(LIBS) dist/d3.min.js
 	cat dist/d3.min.js \
