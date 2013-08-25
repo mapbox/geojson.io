@@ -1,8 +1,8 @@
 var metatable = require('d3-metatable')(d3);
 
-module.exports = tablePanel;
+module.exports = table;
 
-function tablePanel(container, updates) {
+function table(container, updates) {
     container.html('');
 
     updates.on('update_map.mode', function(data, layers) {

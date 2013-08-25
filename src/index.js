@@ -5,14 +5,11 @@ if (mobile()) {
     window.location.href = '/mobile.html' + hash;
 }
 
-var jsonPanel = require('./json_panel'),
-    tablePanel = require('./table_panel'),
-    sourcePanel = require('./source_panel'),
-    loginPanel = require('./login_panel'),
+var ui = require('./ui'),
     fileBar = require('./file_bar'),
     gist = require('./source/gist'),
     github = require('./source/github'),
-    flash = require('./flash'),
+    flash = require('./ui/flash'),
     commit = require('./commit'),
     share = require('./share'),
     mapUtil = require('./map'),
@@ -21,11 +18,55 @@ var jsonPanel = require('./json_panel'),
     detectIndentationStyle = require('detect-json-indent'),
     exportIndentationStyle = 4;
 
-var container = d3.select('body')
-    .append('div')
-    .attr('class', 'container');
 
-var map = mapUtil.setupMap(container);
+function geojsonIO() {
+    var dispatch = d3.dispatch(
+        'update_geojson',
+        'update_map',
+        'update_editor',
+        'update_refresh',
+        'focus_layer',
+        'zoom_extent',
+        'sourcechange');
+}
+
+var gjIO = geojsonIO();
+var gjUI = ui(gjIO);
+
+d3.select('.geojsonio').call(gjUI);
+
+
+/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// var map = mapUtil.setupMap(container);
 
 L.Polygon.prototype.getCenter = function() {
     var pts = this._latlngs;
@@ -51,7 +92,6 @@ L.Polygon.prototype.getCenter = function() {
     );
 };
 
-var pane = d3.select('.pane');
 
 var buttons,
     silentHash = false;
@@ -72,9 +112,6 @@ map.on('draw:edited', updateFromMap)
 
 d3.select('.collapse-button').on('click', clickCollapse);
 
-var updates = d3.dispatch('update_geojson', 'update_map', 'update_editor', 'update_refresh',
-    'focus_layer', 'zoom_extent', 'sourcechange');
-
 bindBody(updates);
 
 updates.on('focus_layer', focusLayer)
@@ -84,61 +121,6 @@ updates.on('focus_layer', focusLayer)
     .on('zoom_extent', zoomToExtent);
 
 if (window.location.hash) hashChange();
-
-var buttonData = [{
-    icon: 'table',
-    title: ' Table',
-    alt: 'Edit feature properties in a table',
-    behavior: tablePanel
-}, {
-    icon: 'code',
-    alt: 'JSON Source',
-    behavior: jsonPanel
-}, {
-    icon: 'github',
-    alt: '',
-    behavior: loginPanel
-}];
-
-var buttons = d3.select('.buttons')
-    .selectAll('button')
-    .data(buttonData, function(d) {
-        return d.icon;
-    });
-
-buttons.enter()
-    .append('button')
-    .attr('title', function(d) {
-        return d.alt;
-    })
-    .attr('class', function(d) {
-        return 'icon-' + d.icon;
-    })
-    .on('click', buttonClick)
-    .each(function(d) {
-        if (d.behavior.init) d.behavior.init(this);
-    })
-    .append('span')
-    .text(function(d) { return d.title; });
-
-buttons.exit().remove();
-
-d3.select(buttons.node()).trigger('click');
-
-function buttonClick(d) {
-    updates.on('update_map.mode', null);
-    buttons.classed('active', function(_) { return d.icon == _.icon; });
-    pane.call(d.behavior, updates);
-    updateFromMap();
-}
-
-container.append('div')
-    .attr('class', 'file-bar')
-    .call(fileBar(updates)
-        .on('source', clickSource)
-        .on('save', saveChanges)
-        .on('download', downloadFile)
-        .on('share', shareMap));
 
 function clickSource() {
     if (d3.event) d3.event.preventDefault();
@@ -385,3 +367,4 @@ function hashChange() {
         }
     }
 }
+*/

@@ -1,4 +1,4 @@
-var validate = require('./validate');
+var validate = require('../validate');
 
 module.exports = jsonPanel;
 

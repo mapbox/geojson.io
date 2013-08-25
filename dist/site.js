@@ -1269,393 +1269,6 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 },{"__browserify_process":3,"fs":1,"path":2}],8:[function(require,module,exports){
-module.exports = function(d3) {
-    var preview = require('static-map-preview')(d3, 'tmcw.map-dsejpecw');
-
-    function gitHubBrowse(d3) {
-        return function(token) {
-            var event = d3.dispatch('chosen');
-
-            function browse(selection) {
-                var outer = selection.append('div')
-                    .attr('class', 'miller-outer');
-
-                var wrap = outer.append('div')
-                    .attr('class', 'miller-wrap');
-
-                reqList('/user/repos', token, function(err, repos) {
-
-                    var repocolumn = wrap.append('div')
-                        .attr('class', 'miller-column root')
-                        .attr('data-level', 0);
-
-                     var repoItems = repocolumn.selectAll('div.item')
-                        .data(repos)
-                        .enter()
-                        .append('div')
-                        .attr('class', 'item')
-                        .text(function(d) {
-                            return d.name;
-                        })
-                        .on('click', repositoryRoot);
-
-                    metaResize();
-
-                    function cleanup(level) {
-                        wrap.selectAll('.miller-column').each(function() {
-                            if (+d3.select(this).attr('data-level') >= level) {
-                                d3.select(this).remove();
-                            }
-                        });
-                    }
-
-                    function metaResize() {
-                        wrap.style('width', function() {
-                            return (selection.selectAll('.miller-column')[0].length * 200) + 'px';
-                        });
-                        wrap.selectAll('.miller-column')
-                            .style('height', function() {
-                                var max = 0;
-                                selection.selectAll('.miller-column').each(function() {
-                                    var children = d3.select(this).selectAll('div.item')[0].length;
-                                    if (children > max) max = children;
-                                });
-                                return (max * 35) + 'px';
-                            });
-                    }
-
-                    function repositoryRoot(d) {
-                        var that = this;
-
-                        repoItems.classed('active', function() {
-                            return this == that;
-                        });
-
-                        req('/repos/' + [
-                            d.owner.login,
-                            d.name,
-                            'branches',
-                            d.default_branch
-                        ].join('/'), token, onBranch);
-
-                        function onBranch(err, branch) {
-                            req('/repos/' + [
-                                d.owner.login,
-                                d.name,
-                                'git',
-                                'trees',
-                                branch.commit.sha
-                            ].join('/'), token, onItems(d));
-                        }
-
-                        function onItems(parent) {
-                            return function(err, items) {
-                                cleanup(1);
-
-                                var rootColumn = wrap.append('div')
-                                    .attr('class', 'miller-column repo-root')
-                                    .attr('data-level', 1);
-
-                                items.tree = items.tree.map(function(t) {
-                                    t.parent = parent;
-                                    return t;
-                                });
-
-                                var columnItems = rootColumn.selectAll('div.item')
-                                    .data(items.tree)
-                                    .enter()
-                                    .append('div')
-                                    .attr('class', function(d) {
-                                        return 'item pad1 ' + d.type;
-                                    })
-                                    .text(function(d) {
-                                        return d.path;
-                                    });
-
-                                columnItems.each(function(d) {
-                                    if (d.type == 'tree') {
-                                        d3.select(this)
-                                            .on('click', repositoryTree(columnItems, 2, [d]));
-                                    } else {
-                                        d3.select(this)
-                                            .on('click', event.chosen);
-
-                                    }
-                                });
-
-                                metaResize();
-                            };
-                        }
-
-                        function repositoryTree(columnItems, level, parents) {
-                            return function(d) {
-                                var that = this;
-
-                                columnItems.classed('active', function() {
-                                    return this == that;
-                                });
-
-                                req('/repos/' + [
-                                    d.parent.owner.login,
-                                    d.parent.name,
-                                    'git',
-                                    'trees',
-                                    d.sha
-                                ].join('/'), token, onSubItems(d.parent));
-
-                                function onSubItems(parent) {
-                                    return function(err, items) {
-
-                                        cleanup(level);
-
-                                        var rootColumn = wrap.append('div')
-                                            .attr('class', 'miller-column repo-subcolumn')
-                                            .attr('data-level', level);
-
-                                        items.tree = items.tree.map(function(t) {
-                                            t.parent = parent;
-                                            t.parents = parents;
-                                            return t;
-                                        });
-
-                                        var columnItems = rootColumn.selectAll('div.item')
-                                            .data(items.tree)
-                                            .enter()
-                                            .append('div')
-                                            .attr('class', 'item pad1')
-                                            .text(function(d) {
-                                                return d.path;
-                                            });
-
-                                        columnItems.each(function(d) {
-                                            if (d.type == 'tree') {
-                                                d3.select(this).on('click', repositoryTree(columnItems, level + 1,
-                                                    parents.concat([d])));
-                                            } else {
-                                                d3.select(this)
-                                                    .on('click', event.chosen);
-                                            }
-                                        });
-
-                                        metaResize();
-                                    };
-                                }
-                            };
-                        }
-                    }
-                });
-            }
-
-            return d3.rebind(browse, event, 'on');
-        };
-    }
-
-    function gistBrowse(d3) {
-        return function(token) {
-            var event = d3.dispatch('chosen');
-            var time_format = d3.time.format('%Y/%m/%d');
-            function browse(selection) {
-                reqList('/gists', token, function(err, gists) {
-                    gists = gists.filter(hasMapFile);
-                    var item = selection.selectAll('div.item')
-                        .data(gists)
-                        .enter()
-                        .append('div')
-                        .attr('class', 'fl item')
-                        .on('click', function(d) {
-                            event.chosen(d);
-                        });
-
-                    item.append('div')
-                        .attr('class', 'map-preview')
-                        .call(mapPreview(token));
-
-                    var overlay = item.append('div')
-                        .attr('class', 'overlay')
-                        .text(function(d) {
-                            return d.id + ' / ' + d.description + ' edited at ' + time_format(new Date(d.updated_at));
-                        });
-
-                    overlay.append('div')
-                        .attr('class', 'files')
-                        .selectAll('small')
-                        .data(function(d) {
-                            return d3.entries(d.files);
-                        })
-                        .enter()
-                        .append('small')
-                        .attr('class', 'deemphasize')
-                        .text(function(d) {
-                            return d.key + ' ';
-                        })
-                        .attr('title', function(d) {
-                            return d.value.type + ', ' + d.value.size + ' bytes';
-                        });
-                });
-            }
-            return d3.rebind(browse, event, 'on');
-        };
-    }
-
-    var base = 'https://api.github.com';
-
-    function reqList(postfix, token, callback, l, url, count) {
-        l = l || [];
-        count = count || 0;
-        authorize(d3.xhr(url || (base + postfix)), token)
-            .on('load', function(data) {
-                l = l.concat(data.list);
-                if (data.next && ++count < 8) {
-                    return reqList(postfix, token, callback, l, data.next, count);
-                }
-                callback(null, l);
-            })
-            .on('error', function(error) {
-                callback(error, null);
-            })
-            .response(function(request) {
-                var nextLink = (request.getResponseHeader('Link') || '').match(/\<([^\>]+)\>\; rel="next"/);
-                nextLink = nextLink ? nextLink[1] : null;
-                return {
-                    list: JSON.parse(request.responseText),
-                    next: nextLink
-                };
-            })
-            .get();
-    }
-
-    function req(postfix, token, callback) {
-        authorize(d3.json((base + postfix)), token)
-            .on('load', function(data) {
-                callback(null, data);
-            })
-            .on('error', function(error) {
-                callback(error, null);
-            })
-            .get();
-    }
-
-    function mapPreview(token) {
-        return function(selection) {
-            selection.each(function(d) {
-                var sel = d3.select(this);
-                req('/gists/' + d.id, token, function(err, data) {
-                    var geojson = mapFile(data);
-                    if (geojson) {
-                        var previewMap = preview(geojson, [200, 200]);
-                        sel.node().appendChild(previewMap.node());
-                    }
-                });
-            });
-        };
-    }
-
-    return {
-        gitHubBrowse: gitHubBrowse(d3),
-        gistBrowse: gistBrowse(d3)
-    };
-};
-
-function authorize(xhr, token) {
-    return token ?
-        xhr.header('Authorization', 'token ' + token) :
-        xhr;
-}
-
-function hasMapFile(data) {
-    for (var f in data.files) {
-        if (f.match(/\.geojson$/)) return true;
-    }
-}
-
-function mapFile(data) {
-    try {
-        for (var f in data.files) {
-            if (f.match(/\.geojson$/)) return JSON.parse(data.files[f].content);
-        }
-    } catch(e) {
-        return null;
-    }
-}
-
-},{"static-map-preview":9}],9:[function(require,module,exports){
-var scaleCanvas = require('autoscale-canvas');
-
-module.exports = function(d3, mapid) {
-    var ratio = window.devicePixelRatio || 1,
-        retina = ratio !== 1;
-
-    function staticUrl(cz, wh) {
-        var size = retina ? [wh[0] * 2, wh[1] * 2] : wh;
-        return 'http://a.tiles.mapbox.com/v3/' + [
-            mapid, cz.join(','), size.join('x')].join('/') + '.png';
-    }
-
-    return function(geojson, wh) {
-        var projection = d3.geo.mercator()
-            .precision(0)
-            .translate([wh[0]/2, wh[1]/2]);
-
-        path = d3.geo.path().projection(projection);
-
-        var container = d3.select(document.createElement('div'))
-            .attr('class', 'static-map-preview'),
-        image = container.append('img'),
-        canvas = container.append('canvas'),
-        z = 19;
-
-        canvas.attr('width', wh[0]).attr('height', wh[1]);
-        image.attr('width', wh[0]).attr('height', wh[1]);
-        projection.center(projection.invert(path.centroid(geojson)));
-        projection.scale((1 << z) / 2 / Math.PI);
-
-        var bounds = path.bounds(geojson);
-
-        while (bounds[1][0] - bounds[0][0] > wh[0] ||
-               bounds[1][1] - bounds[0][1] > wh[1]) {
-            projection.scale((1 << z) / 2 / Math.PI);
-            bounds = path.bounds(geojson);
-            z--;
-        }
-        image.attr('src', staticUrl(projection.center().concat([z-6]).map(filterNan), wh));
-
-        var ctx = scaleCanvas(canvas.node()).getContext('2d'),
-        painter = path.context(ctx);
-
-        ctx.strokeStyle = '#E000F5';
-        ctx.lineWidth = 2;
-        painter(geojson);
-        ctx.stroke();
-
-        return container;
-    };
-
-    function filterNan(_) { return isNaN(_) ? 0 : _; }
-};
-
-},{"autoscale-canvas":10}],10:[function(require,module,exports){
-
-/**
- * Retina-enable the given `canvas`.
- *
- * @param {Canvas} canvas
- * @return {Canvas}
- * @api public
- */
-
-module.exports = function(canvas){
-  var ctx = canvas.getContext('2d');
-  var ratio = window.devicePixelRatio || 1;
-  if (1 != ratio) {
-    canvas.style.width = canvas.width + 'px';
-    canvas.style.height = canvas.height + 'px';
-    canvas.width *= ratio;
-    canvas.height *= ratio;
-    ctx.scale(ratio, ratio);
-  }
-  return canvas;
-};
-},{}],11:[function(require,module,exports){
 module.exports = isMobile;
 
 function isMobile (ua) {
@@ -1665,7 +1278,7 @@ function isMobile (ua) {
 }
 
 
-},{}],12:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 toGeoJSON = (function() {
     'use strict';
 
@@ -1901,7 +1514,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":14,"./lib/topojson/clockwise":16,"./lib/topojson/filter":18,"./lib/topojson/prune":22,"./lib/topojson/simplify":23,"./lib/topojson/topology":26,"fs":1}],14:[function(require,module,exports){
+},{"./lib/topojson/bind":11,"./lib/topojson/clockwise":15,"./lib/topojson/filter":17,"./lib/topojson/prune":21,"./lib/topojson/simplify":22,"./lib/topojson/topology":25,"fs":1}],11:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1931,7 +1544,103 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":27}],15:[function(require,module,exports){
+},{"../../":"g070js","./type":12}],12:[function(require,module,exports){
+module.exports = function(types) {
+  for (var type in typeDefaults) {
+    if (!(type in types)) {
+      types[type] = typeDefaults[type];
+    }
+  }
+  types.defaults = typeDefaults;
+  return types;
+};
+
+var typeDefaults = {
+
+  Feature: function(feature) {
+    if (feature.geometry) this.geometry(feature.geometry);
+  },
+
+  FeatureCollection: function(collection) {
+    var features = collection.features, i = -1, n = features.length;
+    while (++i < n) this.Feature(features[i]);
+  },
+
+  GeometryCollection: function(collection) {
+    var geometries = collection.geometries, i = -1, n = geometries.length;
+    while (++i < n) this.geometry(geometries[i]);
+  },
+
+  LineString: function(lineString) {
+    this.line(lineString.coordinates);
+  },
+
+  MultiLineString: function(multiLineString) {
+    var coordinates = multiLineString.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.line(coordinates[i]);
+  },
+
+  MultiPoint: function(multiPoint) {
+    var coordinates = multiPoint.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.point(coordinates[i]);
+  },
+
+  MultiPolygon: function(multiPolygon) {
+    var coordinates = multiPolygon.coordinates, i = -1, n = coordinates.length;
+    while (++i < n) this.polygon(coordinates[i]);
+  },
+
+  Point: function(point) {
+    this.point(point.coordinates);
+  },
+
+  Polygon: function(polygon) {
+    this.polygon(polygon.coordinates);
+  },
+
+  object: function(object) {
+    return object == null ? null
+        : typeObjects.hasOwnProperty(object.type) ? this[object.type](object)
+        : this.geometry(object);
+  },
+
+  geometry: function(geometry) {
+    return geometry == null ? null
+        : typeGeometries.hasOwnProperty(geometry.type) ? this[geometry.type](geometry)
+        : null;
+  },
+
+  point: function() {},
+
+  line: function(coordinates) {
+    var i = -1, n = coordinates.length;
+    while (++i < n) this.point(coordinates[i]);
+  },
+
+  polygon: function(coordinates) {
+    var i = -1, n = coordinates.length;
+    while (++i < n) this.line(coordinates[i]);
+  }
+};
+
+var typeGeometries = {
+  LineString: 1,
+  MultiLineString: 1,
+  MultiPoint: 1,
+  MultiPolygon: 1,
+  Point: 1,
+  Polygon: 1,
+  GeometryCollection: 1
+};
+
+var typeObjects = {
+  Feature: 1,
+  FeatureCollection: 1
+};
+
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],14:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -1965,7 +1674,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -2038,13 +1747,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":17,"./type":27}],17:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":16,"./type":12}],16:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":15,"./spherical":24}],18:[function(require,module,exports){
+},{"./cartesian":14,"./spherical":23}],17:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -2114,7 +1823,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":16,"./coordinate-systems":17,"./prune":22,"./type":27}],19:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":15,"./coordinate-systems":16,"./prune":21,"./type":12}],18:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -2124,7 +1833,7 @@ module.exports = function(size) {
   };
 };
 
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -2179,7 +1888,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":19}],21:[function(require,module,exports){
+},{"./hash":18}],20:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -2245,7 +1954,7 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -2304,7 +2013,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":27}],23:[function(require,module,exports){
+},{"../../":"g070js","./type":12}],22:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -2436,7 +2145,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":17,"./min-heap":21}],24:[function(require,module,exports){
+},{"./coordinate-systems":16,"./min-heap":20}],23:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -2518,7 +2227,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],25:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -2568,7 +2277,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":27}],26:[function(require,module,exports){
+},{"./type":12}],25:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -2910,101 +2619,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":17,"./hashtable":20,"./stitch-poles":25,"./type":27}],27:[function(require,module,exports){
-module.exports = function(types) {
-  for (var type in typeDefaults) {
-    if (!(type in types)) {
-      types[type] = typeDefaults[type];
-    }
-  }
-  types.defaults = typeDefaults;
-  return types;
-};
-
-var typeDefaults = {
-
-  Feature: function(feature) {
-    if (feature.geometry) this.geometry(feature.geometry);
-  },
-
-  FeatureCollection: function(collection) {
-    var features = collection.features, i = -1, n = features.length;
-    while (++i < n) this.Feature(features[i]);
-  },
-
-  GeometryCollection: function(collection) {
-    var geometries = collection.geometries, i = -1, n = geometries.length;
-    while (++i < n) this.geometry(geometries[i]);
-  },
-
-  LineString: function(lineString) {
-    this.line(lineString.coordinates);
-  },
-
-  MultiLineString: function(multiLineString) {
-    var coordinates = multiLineString.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.line(coordinates[i]);
-  },
-
-  MultiPoint: function(multiPoint) {
-    var coordinates = multiPoint.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.point(coordinates[i]);
-  },
-
-  MultiPolygon: function(multiPolygon) {
-    var coordinates = multiPolygon.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.polygon(coordinates[i]);
-  },
-
-  Point: function(point) {
-    this.point(point.coordinates);
-  },
-
-  Polygon: function(polygon) {
-    this.polygon(polygon.coordinates);
-  },
-
-  object: function(object) {
-    return object == null ? null
-        : typeObjects.hasOwnProperty(object.type) ? this[object.type](object)
-        : this.geometry(object);
-  },
-
-  geometry: function(geometry) {
-    return geometry == null ? null
-        : typeGeometries.hasOwnProperty(geometry.type) ? this[geometry.type](geometry)
-        : null;
-  },
-
-  point: function() {},
-
-  line: function(coordinates) {
-    var i = -1, n = coordinates.length;
-    while (++i < n) this.point(coordinates[i]);
-  },
-
-  polygon: function(coordinates) {
-    var i = -1, n = coordinates.length;
-    while (++i < n) this.line(coordinates[i]);
-  }
-};
-
-var typeGeometries = {
-  LineString: 1,
-  MultiLineString: 1,
-  MultiPoint: 1,
-  MultiPolygon: 1,
-  Point: 1,
-  Polygon: 1,
-  GeometryCollection: 1
-};
-
-var typeObjects = {
-  Feature: 1,
-  FeatureCollection: 1
-};
-
-},{}],28:[function(require,module,exports){
+},{"./coordinate-systems":16,"./hashtable":19,"./stitch-poles":24,"./type":12}],26:[function(require,module,exports){
 var github = require('./source/github');
 
 module.exports = commit;
@@ -3036,7 +2651,7 @@ function commit(container, contents, callback) {
     return wrap;
 }
 
-},{"./source/github":43}],29:[function(require,module,exports){
+},{"./source/github":39}],27:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -3050,7 +2665,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],30:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var share = require('./share');
 
 module.exports = fileBar;
@@ -3168,29 +2783,7 @@ function fileBar(updates) {
     return d3.rebind(bar, event, 'on');
 }
 
-},{"./share":40}],31:[function(require,module,exports){
-var message = require('./message');
-
-module.exports = flash;
-
-function flash(selection, txt) {
-    'use strict';
-
-    var msg = message(selection);
-
-    if (txt) msg.select('.content').html(txt);
-
-    setTimeout(function() {
-        msg
-            .transition()
-            .style('opacity', 0)
-            .remove();
-    }, 5000);
-
-    return msg;
-}
-
-},{"./message":38}],32:[function(require,module,exports){
+},{"./share":36}],29:[function(require,module,exports){
 var verticalPanel = require('./vertical_panel'),
     topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
@@ -3513,7 +3106,7 @@ function runGeocode(container, list, transform, updates) {
     var task = geocode(list, transform, progress, done);
 }
 
-},{"./lib/progress_chart":35,"./source/gist":42,"./vertical_panel":47,"detect-json-indent":5,"togeojson":12,"topojson":"g070js"}],33:[function(require,module,exports){
+},{"./lib/progress_chart":31,"./source/gist":38,"./vertical_panel":45,"detect-json-indent":5,"togeojson":9,"topojson":"g070js"}],30:[function(require,module,exports){
 var mobile = require('is-mobile');
 
 if (mobile()) {
@@ -3521,14 +3114,11 @@ if (mobile()) {
     window.location.href = '/mobile.html' + hash;
 }
 
-var jsonPanel = require('./json_panel'),
-    tablePanel = require('./table_panel'),
-    sourcePanel = require('./source_panel'),
-    loginPanel = require('./login_panel'),
+var ui = require('./ui'),
     fileBar = require('./file_bar'),
     gist = require('./source/gist'),
     github = require('./source/github'),
-    flash = require('./flash'),
+    flash = require('./ui/flash'),
     commit = require('./commit'),
     share = require('./share'),
     mapUtil = require('./map'),
@@ -3537,11 +3127,55 @@ var jsonPanel = require('./json_panel'),
     detectIndentationStyle = require('detect-json-indent'),
     exportIndentationStyle = 4;
 
-var container = d3.select('body')
-    .append('div')
-    .attr('class', 'container');
 
-var map = mapUtil.setupMap(container);
+function geojsonIO() {
+    var dispatch = d3.dispatch(
+        'update_geojson',
+        'update_map',
+        'update_editor',
+        'update_refresh',
+        'focus_layer',
+        'zoom_extent',
+        'sourcechange');
+}
+
+var gjIO = geojsonIO();
+var gjUI = ui(gjIO);
+
+d3.select('.geojsonio').call(gjUI);
+
+
+/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// var map = mapUtil.setupMap(container);
 
 L.Polygon.prototype.getCenter = function() {
     var pts = this._latlngs;
@@ -3567,7 +3201,6 @@ L.Polygon.prototype.getCenter = function() {
     );
 };
 
-var pane = d3.select('.pane');
 
 var buttons,
     silentHash = false;
@@ -3588,9 +3221,6 @@ map.on('draw:edited', updateFromMap)
 
 d3.select('.collapse-button').on('click', clickCollapse);
 
-var updates = d3.dispatch('update_geojson', 'update_map', 'update_editor', 'update_refresh',
-    'focus_layer', 'zoom_extent', 'sourcechange');
-
 bindBody(updates);
 
 updates.on('focus_layer', focusLayer)
@@ -3600,61 +3230,6 @@ updates.on('focus_layer', focusLayer)
     .on('zoom_extent', zoomToExtent);
 
 if (window.location.hash) hashChange();
-
-var buttonData = [{
-    icon: 'table',
-    title: ' Table',
-    alt: 'Edit feature properties in a table',
-    behavior: tablePanel
-}, {
-    icon: 'code',
-    alt: 'JSON Source',
-    behavior: jsonPanel
-}, {
-    icon: 'github',
-    alt: '',
-    behavior: loginPanel
-}];
-
-var buttons = d3.select('.buttons')
-    .selectAll('button')
-    .data(buttonData, function(d) {
-        return d.icon;
-    });
-
-buttons.enter()
-    .append('button')
-    .attr('title', function(d) {
-        return d.alt;
-    })
-    .attr('class', function(d) {
-        return 'icon-' + d.icon;
-    })
-    .on('click', buttonClick)
-    .each(function(d) {
-        if (d.behavior.init) d.behavior.init(this);
-    })
-    .append('span')
-    .text(function(d) { return d.title; });
-
-buttons.exit().remove();
-
-d3.select(buttons.node()).trigger('click');
-
-function buttonClick(d) {
-    updates.on('update_map.mode', null);
-    buttons.classed('active', function(_) { return d.icon == _.icon; });
-    pane.call(d.behavior, updates);
-    updateFromMap();
-}
-
-container.append('div')
-    .attr('class', 'file-bar')
-    .call(fileBar(updates)
-        .on('source', clickSource)
-        .on('save', saveChanges)
-        .on('download', downloadFile)
-        .on('share', shareMap));
 
 function clickSource() {
     if (d3.event) d3.event.preventDefault();
@@ -3901,51 +3476,9 @@ function hashChange() {
         }
     }
 }
+*/
 
-},{"./commit":28,"./file_bar":30,"./flash":31,"./import_panel":32,"./json_panel":34,"./login_panel":36,"./map":37,"./share":40,"./source.js":41,"./source/gist":42,"./source/github":43,"./source_panel":44,"./table_panel":45,"detect-json-indent":5,"is-mobile":11}],34:[function(require,module,exports){
-var validate = require('./validate');
-
-module.exports = jsonPanel;
-
-CodeMirror.keyMap.tabSpace = {
-    Tab: function(cm) {
-        var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
-        cm.replaceSelection(spaces, 'end', '+input');
-    },
-    fallthrough: ['default']
-};
-
-function jsonPanel(container, updates) {
-    container.html('');
-
-    var textarea = container.append('textarea');
-    editor = CodeMirror.fromTextArea(textarea.node(), {
-        mode: 'application/json',
-        matchBrackets: true,
-        tabSize: 2,
-        gutters: ['error'],
-        theme: 'eclipse',
-        autofocus: (window === window.top),
-        keyMap: 'tabSpace',
-        lineNumbers: true
-    });
-
-    // shush the callback-back
-    var quiet = false;
-    editor.on('change', validate(changeValidated));
-
-    function changeValidated(err, data) {
-        if (quiet) { quiet = false; return; }
-        if (!err) updates.update_editor(data);
-    }
-
-    updates.on('update_map.mode', function(data) {
-        quiet = true;
-        editor.setValue(JSON.stringify(data, null, 2));
-    });
-}
-
-},{"./validate":46}],35:[function(require,module,exports){
+},{"./commit":26,"./file_bar":28,"./import_panel":29,"./map":32,"./share":36,"./source.js":37,"./source/gist":38,"./source/github":39,"./ui":40,"./ui/flash":41,"detect-json-indent":5,"is-mobile":8}],31:[function(require,module,exports){
 module.exports = function(elem, w, h) {
     var c = elem.appendChild(document.createElement('canvas'));
 
@@ -3966,73 +3499,7 @@ module.exports = function(elem, w, h) {
     };
 };
 
-},{}],36:[function(require,module,exports){
-var source = require('./source.js'),
-    config = require('./config')(location.hostname);
-
-module.exports = loginPanel;
-
-function loginPanel(container) {
-}
-
-loginPanel.init = function(container) {
-    'use strict';
-    var sel = d3.select(container);
-    sel.on('click', login);
-
-    function login() {
-        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
-    }
-
-    function logout() {
-        window.localStorage.removeItem('github_token');
-        sel
-            .classed('logged-in', false)
-            .classed('icon-github', true)
-            .style('background-image', 'none')
-            .on('click', login);
-    }
-
-    function killTokenUrl() {
-        if (window.location.href.indexOf('?code') !== -1) {
-            window.location.href = window.location.href.replace(/\?code=.*$/, '');
-        }
-    }
-
-    if (window.location.search && window.location.search.indexOf('?code') === 0) {
-        var code = window.location.search.replace('?code=', '');
-        d3.json(config.gatekeeper_url + '/authenticate/' + code)
-            .on('load', function(l) {
-                if (l.token) window.localStorage.github_token = l.token;
-                killTokenUrl();
-            })
-            .on('error', function() {
-                alert('Authentication with GitHub failed');
-            })
-            .get();
-    }
-
-    if (localStorage.github_token) {
-        d3.json('https://api.github.com/user')
-            .header('Authorization', 'token ' + window.localStorage.github_token)
-            .on('load', function(user) {
-                localStorage.github_user = JSON.stringify(user);
-                sel
-                    .style('background-image', 'url(' + user.avatar_url + ')')
-                    .style('background-size', '40px 40px')
-                    .style('background-repeat', 'no-repeat')
-                    .classed('icon-github', false)
-                    .classed('logged-in', true)
-                    .on('click', logout);
-            })
-            .on('error', function() {
-                window.localStorage.removeItem('github_token');
-            })
-            .get();
-    }
-};
-
-},{"./config":29,"./source.js":41}],37:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 module.exports.showProperties = showProperties;
 module.exports.setupMap = setupMap;
 module.exports.geoify = geoify;
@@ -4127,50 +3594,158 @@ function geoify(layer) {
     });
 }
 
-},{}],38:[function(require,module,exports){
-module.exports = message;
+},{}],33:[function(require,module,exports){
+var validate = require('../validate');
 
-function message(selection) {
-    'use strict';
+module.exports = jsonPanel;
 
-    selection.select('div.message').remove();
+CodeMirror.keyMap.tabSpace = {
+    Tab: function(cm) {
+        var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
+        cm.replaceSelection(spaces, 'end', '+input');
+    },
+    fallthrough: ['default']
+};
 
-    var sel = selection.append('div')
-        .attr('class', 'message pad1');
+function jsonPanel(container, updates) {
+    container.html('');
 
-    sel.append('a')
-        .attr('class', 'icon-remove fr')
-        .on('click', function() {
-            sel.remove();
-        });
+    var textarea = container.append('textarea');
+    editor = CodeMirror.fromTextArea(textarea.node(), {
+        mode: 'application/json',
+        matchBrackets: true,
+        tabSize: 2,
+        gutters: ['error'],
+        theme: 'eclipse',
+        autofocus: (window === window.top),
+        keyMap: 'tabSpace',
+        lineNumbers: true
+    });
 
-    sel.append('div')
-        .attr('class', 'content');
+    // shush the callback-back
+    var quiet = false;
+    editor.on('change', validate(changeValidated));
 
-    sel
-        .style('opacity', 0)
-        .transition()
-        .duration(200)
-        .style('opacity', 1);
+    function changeValidated(err, data) {
+        if (quiet) { quiet = false; return; }
+        if (!err) updates.update_editor(data);
+    }
 
-    sel.close = function() {
-        sel
-            .transition()
-            .duration(200)
-            .style('opacity', 0)
-            .remove();
-        sel
-            .transition()
-            .duration(200)
-            .style('top', '0px');
-    };
-
-    return sel;
+    updates.on('update_map.mode', function(data) {
+        quiet = true;
+        editor.setValue(JSON.stringify(data, null, 2));
+    });
 }
 
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
-},{}],40:[function(require,module,exports){
+},{"../validate":44}],34:[function(require,module,exports){
+var config = require('../config')(location.hostname);
+
+module.exports = loginPanel;
+
+function loginPanel(container) {
+}
+
+loginPanel.init = function(container) {
+    'use strict';
+    var sel = d3.select(container);
+    sel.on('click', login);
+
+    function login() {
+        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
+    }
+
+    function logout() {
+        window.localStorage.removeItem('github_token');
+        sel
+            .classed('logged-in', false)
+            .classed('icon-github', true)
+            .style('background-image', 'none')
+            .on('click', login);
+    }
+
+    function killTokenUrl() {
+        if (window.location.href.indexOf('?code') !== -1) {
+            window.location.href = window.location.href.replace(/\?code=.*$/, '');
+        }
+    }
+
+    if (window.location.search && window.location.search.indexOf('?code') === 0) {
+        var code = window.location.search.replace('?code=', '');
+        d3.json(config.gatekeeper_url + '/authenticate/' + code)
+            .on('load', function(l) {
+                if (l.token) window.localStorage.github_token = l.token;
+                killTokenUrl();
+            })
+            .on('error', function() {
+                alert('Authentication with GitHub failed');
+            })
+            .get();
+    }
+
+    if (localStorage.github_token) {
+        d3.json('https://api.github.com/user')
+            .header('Authorization', 'token ' + window.localStorage.github_token)
+            .on('load', function(user) {
+                localStorage.github_user = JSON.stringify(user);
+                sel
+                    .style('background-image', 'url(' + user.avatar_url + ')')
+                    .style('background-size', '40px 40px')
+                    .style('background-repeat', 'no-repeat')
+                    .classed('icon-github', false)
+                    .classed('logged-in', true)
+                    .on('click', logout);
+            })
+            .on('error', function() {
+                window.localStorage.removeItem('github_token');
+            })
+            .get();
+    }
+};
+
+},{"../config":27}],35:[function(require,module,exports){
+var metatable = require('d3-metatable')(d3);
+
+module.exports = table;
+
+function table(container, updates) {
+    container.html('');
+
+    updates.on('update_map.mode', function(data, layers) {
+        function findLayer(p) {
+            var layer;
+            layers.eachLayer(function(l) {
+                if (p == l.feature.properties) layer = l;
+            });
+            return layer;
+        }
+        if (!data.features.length) {
+            container.append('div')
+                .attr('class', 'blank-banner')
+                .text('no features');
+        } else {
+            var props = [];
+            layers.eachLayer(function(p) {
+                props.push(p.feature.properties);
+            });
+            container.html('');
+            container
+                .append('div')
+                .attr('class', 'pad1 scrollable')
+                .data([props])
+                .call(
+                    metatable()
+                        .on('change', function() {
+                            updates.update_refresh();
+                        })
+                        .on('rowfocus', function(d) {
+                            updates.focus_layer(findLayer(d));
+                        })
+                );
+        }
+    });
+}
+
+},{"d3-metatable":4}],36:[function(require,module,exports){
 var gist = require('./source/gist');
 
 module.exports = share;
@@ -4253,7 +3828,7 @@ function share(container, features) {
     });
 }
 
-},{"./source/gist":42}],41:[function(require,module,exports){
+},{"./source/gist":38}],37:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -4290,7 +3865,7 @@ module.exports = function source() {
     }
 };
 
-},{}],42:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var source = require('../source.js');
 var fs = require('fs');
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
@@ -4398,7 +3973,7 @@ function urlHash(data) {
     }
 }
 
-},{"../source.js":41,"fs":1}],43:[function(require,module,exports){
+},{"../source.js":37,"fs":1}],39:[function(require,module,exports){
 var source = require('../source.js');
 
 module.exports.saveAsGitHub = saveAsGitHub;
@@ -4508,204 +4083,171 @@ function urlHash(d) {
     };
 }
 
-},{"../source.js":41}],44:[function(require,module,exports){
-var verticalPanel = require('./vertical_panel'),
-    gist = require('./source/gist'),
-    github = require('./source/github'),
-    importPanel = require('./import_panel').importPanel,
-    githubBrowser = require('github-file-browser')(d3),
-    detectIndentationStyle = require('detect-json-indent');
+},{"../source.js":37}],40:[function(require,module,exports){
+var buttons = require('./ui/mode_buttons');
 
-module.exports = sourcePanel;
+module.exports = ui;
 
-function sourcePanel(updates) {
+function ui(context) {
+    function render(selection) {
+        var container = selection
+            .append('div')
+            .attr('class', 'container');
 
-    function panel(selection) {
+        var right = selection
+            .append('div')
+            .attr('class', 'right');
 
-        if (!selection.classed('hide')) return hidePanel();
+        var top = right
+            .append('div')
+            .attr('class', 'top');
 
-        var sources = [
-            {
-                title: 'Import',
-                alt: 'CSV, KML, GPX, and other filetypes',
-                icon: 'icon-cog',
-                action: clickImport
-            },
-            {
-                title: 'GitHub',
-                alt: 'GeoJSON files in GitHub Repositories',
-                icon: 'icon-github',
-                action: clickGitHub
-            },
-            {
-                title: 'Gist',
-                alt: 'GeoJSON files in GitHub Gists',
-                icon: 'icon-github-alt',
-                action: clickGist
-            }
-        ];
+        top
+            .append('a')
+            .attr('href', './about.html')
+            .attr('class', 'info fr')
+            .attr('target', '_blank')
+            .append('class', 'span')
+            .attr('class', 'icon-info');
+
+        top
+            .append('button')
+            .attr('class', 'collapse-button')
+            .attr('title', 'Collapse')
+            .append('class', 'span')
+            .attr('class', 'icon icon-caret-down');
+
+        top
+            .append('div')
+            .attr('class', 'buttons')
+            .call(buttons(context));
+
+        var pane = right
+            .append('div')
+            .attr('class', 'pane');
 
         selection
-            .html('')
-            .classed('hide', false)
-            .transition()
-            .style('opacity', 1);
-
-        var $top = selection
             .append('div')
-            .attr('class', 'import-sources col12 clearfix');
-
-       var $sources = $top.append('div')
-            .attr('class', 'col10')
-            .selectAll('div.import-source')
-            .data(sources)
-            .enter()
-            .append('div')
-            .attr('class', 'import-source col4')
-            .append('div')
-            .attr('class', 'pad1 center clickable')
-            .attr('title', function(d) { return d.alt; })
-            .on('click', clickSource);
-
-        function clickSource(d) {
-            var that = this;
-            $sources.classed('active', function() {
-                return that === this;
-            });
-            d.action.apply(this, d);
-        }
-
-        $sources.append('span')
-            .attr('class', function(d) {
-                return d.icon + ' icon-spaced';
-            });
-
-        $sources.append('span')
-            .attr('class', 'label')
-            .text(function(d) {
-                return d.title;
-            });
-
-        $top.append('div')
-            .attr('class', 'col2')
-            .append('div')
-            .attr('class', 'pad1 center clickable')
-            .on('click', hidePanel)
-            .append('span')
-            .attr('class', function(d) {
-                return 'icon-remove';
-            });
-
-        function hidePanel(d) {
-            selection
-                .transition()
-                .duration(500)
-                .style('opacity', 0)
-                .each('end', function() {
-                    d3.select(this)
-                        .html('')
-                        .classed('hide', true);
-                });
-        }
-
-        var $subpane = selection.append('div')
-            .attr('class', 'subpane');
-
-        function clickGitHub() {
-            $subpane
-                .html('')
-                .append('div')
-                .attr('class', 'repos')
-                .call(githubBrowser
-                    .gitHubBrowse(localStorage.github_token)
-                        .on('chosen', gitHubChosen));
-
-            function gitHubChosen(d) {
-                var hash = github.urlHash(d);
-                location.hash = hash.url;
-                hidePanel();
-            }
-        }
-
-        function clickImport() {
-            $subpane
-                .html('')
-                .append('div')
-                .call(importPanel, updates);
-
-            function gitHubChosen(d) {
-                var hash = github.urlHash(d);
-                location.hash = hash.url;
-                hidePanel();
-            }
-        }
-
-        function clickGist() {
-            $subpane
-                .html('')
-                .append('div')
-                .attr('class', 'browser pad1')
-                .call(githubBrowser
-                    .gistBrowse(localStorage.github_token)
-                        .on('chosen', gistChosen));
-
-            function gistChosen(d) {
-                var hash = gist.urlHash(d);
-                location.hash = hash.url;
-                hidePanel();
-            }
-        }
-
-        $sources.filter(function(d, i) { return !i; }).trigger('click');
+            .attr('class', 'file-bar')
+            .call(fileBar(updates)
+                .on('source', clickSource)
+                .on('save', saveChanges)
+                .on('download', downloadFile)
+                .on('share', shareMap));
     }
 
-    return panel;
+    return render;
 }
 
-},{"./import_panel":32,"./source/gist":42,"./source/github":43,"./vertical_panel":47,"detect-json-indent":5,"github-file-browser":8}],45:[function(require,module,exports){
-var metatable = require('d3-metatable')(d3);
+},{"./ui/mode_buttons":43}],41:[function(require,module,exports){
+var message = require('./message');
 
-module.exports = tablePanel;
+module.exports = flash;
 
-function tablePanel(container, updates) {
-    container.html('');
+function flash(selection, txt) {
+    'use strict';
 
-    updates.on('update_map.mode', function(data, layers) {
-        function findLayer(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
-        if (!data.features.length) {
-            container.append('div')
-                .attr('class', 'blank-banner')
-                .text('no features');
-        } else {
-            var props = [];
-            layers.eachLayer(function(p) {
-                props.push(p.feature.properties);
-            });
-            container.html('');
-            container
-                .append('div')
-                .attr('class', 'pad1 scrollable')
-                .data([props])
-                .call(
-                    metatable()
-                        .on('change', function() {
-                            updates.update_refresh();
-                        })
-                        .on('rowfocus', function(d) {
-                            updates.focus_layer(findLayer(d));
-                        })
-                );
-        }
-    });
+    var msg = message(selection);
+
+    if (txt) msg.select('.content').html(txt);
+
+    setTimeout(function() {
+        msg
+            .transition()
+            .style('opacity', 0)
+            .remove();
+    }, 5000);
+
+    return msg;
 }
 
-},{"d3-metatable":4}],46:[function(require,module,exports){
+},{"./message":42}],42:[function(require,module,exports){
+module.exports = message;
+
+function message(selection) {
+    'use strict';
+
+    selection.select('div.message').remove();
+
+    var sel = selection.append('div')
+        .attr('class', 'message pad1');
+
+    sel.append('a')
+        .attr('class', 'icon-remove fr')
+        .on('click', function() {
+            sel.remove();
+        });
+
+    sel.append('div')
+        .attr('class', 'content');
+
+    sel
+        .style('opacity', 0)
+        .transition()
+        .duration(200)
+        .style('opacity', 1);
+
+    sel.close = function() {
+        sel
+            .transition()
+            .duration(200)
+            .style('opacity', 0)
+            .remove();
+        sel
+            .transition()
+            .duration(200)
+            .style('top', '0px');
+    };
+
+    return sel;
+}
+
+},{}],43:[function(require,module,exports){
+var table = require('../panel/table'),
+    json = require('../panel/json'),
+    login = require('../panel/login');
+
+module.exports = function(context) {
+    return function(selection) {
+        var buttonData = [{
+            icon: 'table',
+            title: ' Table',
+            alt: 'Edit feature properties in a table',
+            behavior: table
+        }, {
+            icon: 'code',
+            alt: 'JSON Source',
+            behavior: json
+        }, {
+            icon: 'github',
+            alt: '',
+            behavior: login
+        }];
+
+        var buttons = selection
+            .selectAll('button')
+            .data(buttonData, function(d) { return d.icon; });
+
+        buttons.enter()
+            .append('button')
+            .attr('title', function(d) { return d.alt; })
+            .attr('class', function(d) { return 'icon-' + d.icon; })
+            .on('click', buttonClick)
+            .append('span')
+            .text(function(d) { return d.title; });
+
+        d3.select(buttons.node()).trigger('click');
+
+        function buttonClick(d) {
+            updates.on('update_map.mode', null);
+            buttons.classed('active', function(_) { return d.icon == _.icon; });
+            pane.call(d.behavior, updates);
+            updateFromMap();
+        }
+    };
+};
+
+},{"../panel/json":33,"../panel/login":34,"../panel/table":35}],44:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -4761,7 +4303,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":6}],47:[function(require,module,exports){
+},{"geojsonhint":6}],45:[function(require,module,exports){
 module.exports = verticalPanel;
 
 function verticalPanel(updates) {
@@ -4795,5 +4337,5 @@ function verticalPanel(updates) {
     return panel;
 }
 
-},{}]},{},[42,33])
+},{}]},{},[38,30])
 ;
