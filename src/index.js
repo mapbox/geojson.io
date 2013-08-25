@@ -6,7 +6,6 @@ if (mobile()) {
 }
 
 var ui = require('./ui'),
-    fileBar = require('./file_bar'),
     gist = require('./source/gist'),
     github = require('./source/github'),
     flash = require('./ui/flash'),
@@ -14,13 +13,12 @@ var ui = require('./ui'),
     share = require('./share'),
     mapUtil = require('./map'),
     source = require('./source.js'),
-    bindBody = require('./import_panel').bindBody,
-    detectIndentationStyle = require('detect-json-indent'),
-    exportIndentationStyle = 4;
-
+    bindBody = require('./import_panel').bindBody;
 
 function geojsonIO() {
-    var dispatch = d3.dispatch(
+    var context = {};
+
+    context.dispatch = d3.dispatch(
         'update_geojson',
         'update_map',
         'update_editor',
@@ -28,6 +26,8 @@ function geojsonIO() {
         'focus_layer',
         'zoom_extent',
         'sourcechange');
+
+    return context;
 }
 
 var gjIO = geojsonIO();
@@ -91,16 +91,6 @@ L.Polygon.prototype.getCenter = function() {
         y / f + off.lng
     );
 };
-
-
-var buttons,
-    silentHash = false;
-
-var drawnItems = new L.FeatureGroup().addTo(map);
-var drawControl = new L.Control.Draw({
-    edit: { featureGroup: drawnItems },
-    draw: { circle: false }
-}).addTo(map);
 
 d3.select(window).on('hashchange', hashChange);
 

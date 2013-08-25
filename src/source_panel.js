@@ -1,5 +1,4 @@
-var verticalPanel = require('./vertical_panel'),
-    gist = require('./source/gist'),
+var gist = require('./source/gist'),
     github = require('./source/github'),
     importPanel = require('./import_panel').importPanel,
     githubBrowser = require('github-file-browser')(d3),

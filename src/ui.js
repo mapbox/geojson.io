@@ -1,4 +1,6 @@
-var buttons = require('./ui/mode_buttons');
+var buttons = require('./ui/mode_buttons'),
+    file_bar = require('./ui/file_bar'),
+    layer_switch = require('./ui/layer_switch');
 
 module.exports = ui;
 
@@ -7,6 +9,23 @@ function ui(context) {
         var container = selection
             .append('div')
             .attr('class', 'container');
+
+        var map = selection
+            .append('div')
+            .attr('class', 'map');
+
+        context.map = L.mapbox.map(map.node())
+            .setView([20, 0], 2)
+            .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt'));
+
+        context.mapLayer = L.featureGroup().addTo(context.map);
+
+        context.drawControl = new L.Control.Draw({
+            edit: { featureGroup: context.mapLayer },
+            draw: { circle: false }
+        }).addTo(context.map);
+
+        map.call(layer_switch(context));
 
         var right = selection
             .append('div')
@@ -43,11 +62,7 @@ function ui(context) {
         selection
             .append('div')
             .attr('class', 'file-bar')
-            .call(fileBar(updates)
-                .on('source', clickSource)
-                .on('save', saveChanges)
-                .on('download', downloadFile)
-                .on('share', shareMap));
+            .call(file_bar(context));
     }
 
     return render;

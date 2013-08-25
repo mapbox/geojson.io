@@ -22,23 +22,19 @@ function share(container, features) {
     var selection = container.append('div')
         .attr('class', 'share pad1');
 
-    var networks = [
-        {
-            icon: 'icon-facebook',
-            title: 'Facebook',
-            url: facebookUrl(location.href)
-        },
-        {
-            icon: 'icon-twitter',
-            title: 'Twitter',
-            url: twitterUrl(location.href)
-        },
-        {
-            icon: 'icon-envelope-alt',
-            title: 'Email',
-            url: emailUrl(location.href)
-        }
-    ];
+    var networks = [{
+        icon: 'icon-facebook',
+        title: 'Facebook',
+        url: facebookUrl(location.href)
+    }, {
+        icon: 'icon-twitter',
+        title: 'Twitter',
+        url: twitterUrl(location.href)
+    }, {
+        icon: 'icon-envelope-alt',
+        title: 'Email',
+        url: emailUrl(location.href)
+    }];
 
     var links = selection
         .selectAll('.network')
@@ -62,9 +58,7 @@ function share(container, features) {
 
     selection.append('a')
         .attr('class', 'icon-remove')
-        .on('click', function() {
-            selection.remove();
-        });
+        .on('click', function() { selection.remove(); });
 
     gist.saveBlocks(JSON.stringify({
         type: 'FeatureCollection',
@@ -73,7 +67,7 @@ function share(container, features) {
         if (err) return;
         if (res) {
             embed_html.property('value',
-                '<iframe frameborder="0" width="100%" height="300" ' + 
+                '<iframe frameborder="0" width="100%" height="300" ' +
                 'src="http://bl.ocks.org/d/' + res.id + '"></iframe>');
             embed_html.node().select();
         }

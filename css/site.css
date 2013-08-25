@@ -58,7 +58,7 @@ input[type=text] {
     float:left;
 }
 
-#map {
+.map {
     position:absolute;
     top:40px;
     bottom:0;
@@ -544,7 +544,7 @@ textarea.full-width {
     .file-bar .button-wrap button span.title {
         display:none;
     }
-    .left-panel, #map {
+    .left-panel, .map {
         right:50%;
     }
     .right {

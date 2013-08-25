@@ -1,5 +1,4 @@
-var verticalPanel = require('./vertical_panel'),
-    topojson = require('topojson'),
+var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     gist = require('./source/gist'),
     progressChart = require('./lib/progress_chart'),

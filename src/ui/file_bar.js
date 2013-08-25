@@ -1,14 +1,10 @@
-var share = require('./share');
-
-module.exports = fileBar;
-
-function fileBar(updates) {
+module.exports = function fileBar(context) {
 
     var event = d3.dispatch('source', 'save', 'share', 'download', 'share');
 
     function bar(selection) {
 
-        updates.on('sourcechange', onSource);
+        // context.on('sourcechange', onSource);
 
         var name = selection.append('div')
             .attr('class', 'name');
@@ -25,36 +21,31 @@ function fileBar(updates) {
             .attr('class', 'icon-external-link')
             .classed('hide', true);
 
-        var actions = [
-            {
+        var actions = [{
                 title: 'Save',
                 icon: 'icon-save',
                 action: function() {
                     event.save();
                 }
-            },
-            {
+            }, {
                 title: 'Open',
                 icon: 'icon-folder-open-alt',
                 action: function() {
                     event.source();
                 }
-            },
-            {
+            }, {
                 title: 'Download',
                 icon: 'icon-download',
                 action: function() {
                     event.download();
                 }
-            },
-            {
+            }, {
                 title: 'Share',
                 icon: 'icon-share-alt',
                 action: function() {
                     event.share();
                 }
-            }
-        ];
+            }];
 
         var buttons = selection.append('div')
             .attr('class', 'button-wrap fr')
