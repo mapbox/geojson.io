@@ -12,20 +12,9 @@ function ui(context) {
 
         var map = selection
             .append('div')
-            .attr('class', 'map');
-
-        context.map = L.mapbox.map(map.node())
-            .setView([20, 0], 2)
-            .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt'));
-
-        context.mapLayer = L.featureGroup().addTo(context.map);
-
-        context.drawControl = new L.Control.Draw({
-            edit: { featureGroup: context.mapLayer },
-            draw: { circle: false }
-        }).addTo(context.map);
-
-        map.call(layer_switch(context));
+            .attr('class', 'map')
+            .call(context.map)
+            .call(layer_switch(context));
 
         var right = selection
             .append('div')

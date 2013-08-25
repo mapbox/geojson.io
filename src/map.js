@@ -1,5 +1,4 @@
 module.exports.showProperties = showProperties;
-module.exports.geoify = geoify;
 
 function isEmpty(o) {
     for (var i in o) { return false; }
@@ -26,13 +25,4 @@ function showProperties(l) {
         '</div></div>'));
 }
 
-function geoify(layer) {
-    var features = [];
-    layer.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    layer.clearLayers();
-    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
-        l.addTo(layer);
-    });
-}
+

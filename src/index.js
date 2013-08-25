@@ -1,31 +1,20 @@
-var mobile = require('is-mobile');
-
-if (mobile()) {
-    var hash = window.location.hash;
-    window.location.href = '/mobile.html' + hash;
-}
-
 var ui = require('./ui'),
-    gist = require('./source/gist'),
-    github = require('./source/github'),
-    flash = require('./ui/flash'),
-    commit = require('./commit'),
-    share = require('./share'),
-    mapUtil = require('./map'),
-    source = require('./source.js'),
-    bindBody = require('./import_panel').bindBody;
+    map = require('./ui/map'),
+    data = require('./core/data'),
+    store = require('store');
 
 function geojsonIO() {
     var context = {};
 
     context.dispatch = d3.dispatch(
-        'update_geojson',
-        'update_map',
-        'update_editor',
-        'update_refresh',
-        'focus_layer',
-        'zoom_extent',
-        'sourcechange');
+        'change'
+    );
+
+    context.storage = store;
+
+    context.map = map(context);
+
+    context.data = data(context);
 
     return context;
 }

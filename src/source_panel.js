@@ -12,26 +12,22 @@ function sourcePanel(updates) {
 
         if (!selection.classed('hide')) return hidePanel();
 
-        var sources = [
-            {
-                title: 'Import',
-                alt: 'CSV, KML, GPX, and other filetypes',
-                icon: 'icon-cog',
-                action: clickImport
-            },
-            {
-                title: 'GitHub',
-                alt: 'GeoJSON files in GitHub Repositories',
-                icon: 'icon-github',
-                action: clickGitHub
-            },
-            {
-                title: 'Gist',
-                alt: 'GeoJSON files in GitHub Gists',
-                icon: 'icon-github-alt',
-                action: clickGist
-            }
-        ];
+        var sources = [{
+            title: 'Import',
+            alt: 'CSV, KML, GPX, and other filetypes',
+            icon: 'icon-cog',
+            action: clickImport
+        }, {
+            title: 'GitHub',
+            alt: 'GeoJSON files in GitHub Repositories',
+            icon: 'icon-github',
+            action: clickGitHub
+        }, {
+            title: 'Gist',
+            alt: 'GeoJSON files in GitHub Gists',
+            icon: 'icon-github-alt',
+            action: clickGist
+        }];
 
         selection
             .html('')
