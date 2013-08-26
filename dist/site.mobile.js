@@ -1115,103 +1115,49 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],17:[function(require,module,exports){
-module.exports.showProperties = showProperties;
-module.exports.setupMap = setupMap;
-module.exports.geoify = geoify;
-
-function setupMap(container) {
-    'use strict';
-
-    var mapDiv = container.append('div')
-        .attr('id', 'map');
-
-    var map = L.mapbox.map(mapDiv.node())
-        .setView([20, 0], 2);
-
-    var layers = [{
-        title: 'MapBox',
-        layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-            retinaVersion: 'tmcw.map-u4ca5hnt',
-            detectRetina: true
-        })
-    }, {
-        title: 'Satellite',
-        layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-            retinaVersion: 'tmcw.map-ujx9se0r',
-            detectRetina: true
-        })
-    }, {
-        title: 'OSM',
-        layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        })
-    }];
-
-    var layerButtons = container.append('div')
-        .attr('id', 'layer-switch')
-        .selectAll('button')
-        .data(layers)
-        .enter()
-        .append('button')
-        .on('click', function(d) {
-            var clicked = this;
-            layerButtons.classed('active', function() {
-                return clicked === this;
-            });
-            layers.forEach(swap);
-            function swap(l) {
-                if (l.layer == d.layer) map.addLayer(d.layer);
-                else if (map.hasLayer(l.layer)) map.removeLayer(l.layer);
-            }
-        })
-        .text(function(d) { return d.title; });
-
-    layerButtons.filter(function(d, i) { return i === 0; }).trigger('click');
-
-    L.mapbox.geocoderControl('tmcw.map-u4ca5hnt').addTo(map);
-
-    return map;
-}
-
-function isEmpty(o) {
-    for (var i in o) { return false; }
-    return true;
-}
-
-function showProperties(l) {
-    var properties = l.toGeoJSON().properties, table = '';
-    if (isEmpty(properties)) properties = { '': '' };
-
-    for (var key in properties) {
-        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
-            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
-    }
-
-    l.bindPopup(L.popup({
-        maxWidth: 500,
-        maxHeight: 400
-    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
-        '<div class="clearfix col12 drop">' +
-            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
-            '<button class="cancel">cancel</button></div>' +
-            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
-        '</div></div>'));
-}
-
-function geoify(layer) {
-    var features = [];
-    layer.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    layer.clearLayers();
-    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
-        l.addTo(layer);
-    });
-}
-
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
 },{}],18:[function(require,module,exports){
-var map = require('./map')();
+module.exports = function(context) {
+    return function(e) {
+        var sel = d3.select(e.popup._contentNode);
+
+        sel.selectAll('.cancel')
+            .on('click', clickClose);
+
+        sel.selectAll('.save')
+            .on('click', saveFeature);
+
+        sel.selectAll('.delete-invert')
+            .on('click', removeFeature);
+
+        function clickClose() {
+            context.map.closePopup(e.popup);
+        }
+
+        function removeFeature() {
+            if (e.popup._source && context.mapLayer.hasLayer(e.popup._source)) {
+                context.mapLayer.removeLayer(e.popup._source);
+                context.data.set('map', context.mapLayer.toGeoJSON(), 'popup');
+            }
+        }
+
+        function saveFeature() {
+            var obj = {};
+            sel.selectAll('tr').each(collectRow);
+            function collectRow() {
+                obj[d3.select(this).selectAll('input')[0][0].value] =
+                    d3.select(this).selectAll('input')[0][1].value;
+            }
+            e.popup._source.feature.properties = obj;
+            context.data.set('map', context.mapLayer.toGeoJSON(), 'popup');
+            context.map.closePopup(e.popup);
+        }
+    };
+};
+
+},{}],19:[function(require,module,exports){
+var map = require('./ui/map')();
 var gist = require('./source/gist'),
     source = require('./source.js'),
     github = require('./source/github');
@@ -1286,7 +1232,7 @@ function showProperties(l) {
     }, l).setContent('<table class="marker-properties display">' + table + '</table>'));
 }
 
-},{"./map":17,"./source.js":19,"./source/gist":20,"./source/github":21}],19:[function(require,module,exports){
+},{"./source.js":20,"./source/gist":21,"./source/github":22,"./ui/map":23}],20:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -1323,7 +1269,7 @@ module.exports = function source() {
     }
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var source = require('../source.js');
 var fs = require('fs');
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
@@ -1431,7 +1377,7 @@ function urlHash(data) {
     }
 }
 
-},{"../source.js":19,"fs":1}],21:[function(require,module,exports){
+},{"../source.js":20,"fs":1}],22:[function(require,module,exports){
 var source = require('../source.js');
 
 module.exports.saveAsGitHub = saveAsGitHub;
@@ -1541,7 +1487,90 @@ function urlHash(d) {
     };
 }
 
-},{"../source.js":19}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}]},{},[18])
+},{"../source.js":20}],23:[function(require,module,exports){
+var popup = require('../lib/popup');
+
+module.exports = function(context) {
+
+    function map(selection) {
+        context.map = L.mapbox.map(selection.node())
+            .setView([20, 0], 2)
+            .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt'));
+
+        context.mapLayer = L.featureGroup().addTo(context.map);
+
+        context.drawControl = new L.Control.Draw({
+            edit: { featureGroup: context.mapLayer },
+            draw: { circle: false }
+        }).addTo(context.map);
+
+        context.map
+            .on('draw:edited', update)
+            .on('draw:deleted', update)
+            .on('draw:created', created)
+            .on('popupopen', popup(context));
+
+        function update() {
+            geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
+            context.data.set('map', layerToGeoJSON(context.mapLayer), 'map');
+        }
+
+        context.dispatch.on('change.map', function(event) {
+            if (event.field === 'map' && event.source !== 'map') {
+                geojsonToLayer(event.value, context.mapLayer);
+            }
+        });
+
+        function created(e) {
+            context.mapLayer.addLayer(e.layer);
+            update();
+        }
+    }
+
+    function layerToGeoJSON(layer) {
+        var features = [];
+        layer.eachLayer(collect);
+        function collect(l) { if ('toGeoJSON' in l) features.push(l.toGeoJSON()); }
+        return {
+            type: 'FeatureCollection',
+            features: features
+        };
+    }
+
+    return map;
+};
+
+function geojsonToLayer(geojson, layer) {
+    layer.clearLayers();
+    L.geoJson(geojson).eachLayer(add);
+    function add(l) {
+        bindPopup(l).addTo(layer);
+    }
+}
+
+function bindPopup(l) {
+
+    var properties = l.toGeoJSON().properties, table = '';
+
+    if (!Object.keys(properties).length) properties = { '': '' };
+
+    for (var key in properties) {
+        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
+            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
+    }
+
+    l.bindPopup(L.popup({
+        maxWidth: 500,
+        maxHeight: 400
+    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
+        '<div class="clearfix col12 drop">' +
+            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
+            '<button class="cancel">cancel</button></div>' +
+            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
+        '</div></div>'));
+
+    return l;
+}
+
+},{"../lib/popup":18}]},{},[19])
 ;

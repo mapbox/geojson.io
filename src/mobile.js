@@ -1,4 +1,4 @@
-var map = require('./map')();
+var map = require('./ui/map')();
 var gist = require('./source/gist'),
     source = require('./source.js'),
     github = require('./source/github');
