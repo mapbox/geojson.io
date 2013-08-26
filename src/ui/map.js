@@ -1,3 +1,5 @@
+var popup = require('../lib/popup');
+
 module.exports = function(context) {
 
     function map(selection) {
@@ -15,11 +17,11 @@ module.exports = function(context) {
         context.map
             .on('draw:edited', update)
             .on('draw:deleted', update)
-            .on('draw:created', created);
-            // .on('popupopen', onPopupOpen);
+            .on('draw:created', created)
+            .on('popupopen', popup(context));
 
         function update() {
-            geoify(context.mapLayer);
+            geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
             context.data.set('map', layerToGeoJSON(context.mapLayer), 'map');
         }
 
@@ -48,21 +50,34 @@ module.exports = function(context) {
     return map;
 };
 
-function geoify(layer) {
-    var features = [];
-    layer.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    layer.clearLayers();
-    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
-        l.addTo(layer);
-    });
-}
-
 function geojsonToLayer(geojson, layer) {
     layer.clearLayers();
     L.geoJson(geojson).eachLayer(add);
     function add(l) {
-        l.addTo(layer);
+        bindPopup(l).addTo(layer);
     }
+}
+
+function bindPopup(l) {
+
+    var properties = l.toGeoJSON().properties, table = '';
+
+    if (!Object.keys(properties).length) properties = { '': '' };
+
+    for (var key in properties) {
+        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
+            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
+    }
+
+    l.bindPopup(L.popup({
+        maxWidth: 500,
+        maxHeight: 400
+    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
+        '<div class="clearfix col12 drop">' +
+            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
+            '<button class="cancel">cancel</button></div>' +
+            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
+        '</div></div>'));
+
+    return l;
 }

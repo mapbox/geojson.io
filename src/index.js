@@ -83,21 +83,7 @@ L.Polygon.prototype.getCenter = function() {
 
 d3.select(window).on('hashchange', hashChange);
 
-map.on('draw:edited', updateFromMap)
-    .on('draw:deleted', updateFromMap)
-    .on('draw:created', drawCreated)
-    .on('draw:created', updateFromMap)
-    .on('popupopen', onPopupOpen);
-
 d3.select('.collapse-button').on('click', clickCollapse);
-
-bindBody(updates);
-
-updates.on('focus_layer', focusLayer)
-    .on('update_geojson', updateFromMap)
-    .on('update_editor', loadToMap)
-    .on('update_refresh', refresh)
-    .on('zoom_extent', zoomToExtent);
 
 if (window.location.hash) hashChange();
 
@@ -106,20 +92,6 @@ function clickSource() {
     d3.select('.left-panel').call(sourcePanel(updates));
 }
 
-function downloadFile() {
-    var features = featuresFromMap();
-
-    var content = JSON.stringify({
-        type: 'FeatureCollection',
-        features: features
-    }, null, 4);
-
-    if (content) {
-        saveAs(new Blob([content], {
-            type: 'text/plain;charset=utf-8'
-        }), 'map.geojson');
-    }
-}
 
 function shareMap() {
     share(container, featuresFromMap());
@@ -164,42 +136,7 @@ function drawCreated(e) {
     refresh();
 }
 
-function onPopupOpen(e) {
-    var sel = d3.select(e.popup._contentNode);
 
-    sel.selectAll('.cancel')
-        .on('click', clickClose);
-
-    sel.selectAll('.save')
-        .on('click', saveFeature);
-
-    sel.selectAll('.delete-invert')
-        .on('click', removeFeature);
-
-    function clickClose() {
-        map.closePopup(e.popup);
-    }
-
-    function removeFeature() {
-        if (e.popup._source && drawnItems.hasLayer(e.popup._source)) {
-            drawnItems.removeLayer(e.popup._source);
-            updates.update_geojson();
-        }
-        updateFromMap();
-    }
-
-    function saveFeature() {
-        var obj = {};
-        sel.selectAll('tr').each(collectRow);
-        function collectRow() {
-            obj[d3.select(this).selectAll('input')[0][0].value] =
-                d3.select(this).selectAll('input')[0][1].value;
-        }
-        e.popup._source.feature.properties = obj;
-        map.closePopup(e.popup);
-        refresh();
-    }
-}
 
 d3.select(document).call(
     d3.keybinding('global')

@@ -2528,65 +2528,6 @@ var typeObjects = {
 };
 
 },{}],23:[function(require,module,exports){
-var metatable = require('d3-metatable')(d3);
-
-module.exports = function(context) {
-    function render(selection) {
-
-        function render() {
-            var geojson = context.data.get('map');
-            if (!geojson || !geojson.features.length) {
-                selection
-                    .html('')
-                    .append('div')
-                    .attr('class', 'blank-banner')
-                    .text('no features');
-            } else {
-                var props = geojson.features.map(getProperties);
-                selection
-                    .html('')
-                    .append('div')
-                    .attr('class', 'pad1 scrollable')
-                    .data([props])
-                    .call(
-                        metatable()
-                            .on('change', function() {
-                                updates.update_refresh();
-                            })
-                            .on('rowfocus', function(d) {
-                                updates.focus_layer(findLayer(d));
-                            })
-                    );
-            }
-        }
-
-        context.dispatch.on('change.table', function(evt) {
-            if (evt.field === 'map') render();
-        });
-
-        render();
-
-        function getProperties(f) { return f.properties; }
-
-        function zoomToMap(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
-    }
-
-    render.off = function() {
-        context.dispatch.on('change.table', null);
-    };
-
-    return render;
-};
-
-},{"d3-metatable":4}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
-},{}],25:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -2600,7 +2541,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],26:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 module.exports = function(context) {
 
     var data = {
@@ -2628,7 +2569,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{}],27:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -2714,21 +2655,7 @@ L.Polygon.prototype.getCenter = function() {
 
 d3.select(window).on('hashchange', hashChange);
 
-map.on('draw:edited', updateFromMap)
-    .on('draw:deleted', updateFromMap)
-    .on('draw:created', drawCreated)
-    .on('draw:created', updateFromMap)
-    .on('popupopen', onPopupOpen);
-
 d3.select('.collapse-button').on('click', clickCollapse);
-
-bindBody(updates);
-
-updates.on('focus_layer', focusLayer)
-    .on('update_geojson', updateFromMap)
-    .on('update_editor', loadToMap)
-    .on('update_refresh', refresh)
-    .on('zoom_extent', zoomToExtent);
 
 if (window.location.hash) hashChange();
 
@@ -2737,20 +2664,6 @@ function clickSource() {
     d3.select('.left-panel').call(sourcePanel(updates));
 }
 
-function downloadFile() {
-    var features = featuresFromMap();
-
-    var content = JSON.stringify({
-        type: 'FeatureCollection',
-        features: features
-    }, null, 4);
-
-    if (content) {
-        saveAs(new Blob([content], {
-            type: 'text/plain;charset=utf-8'
-        }), 'map.geojson');
-    }
-}
 
 function shareMap() {
     share(container, featuresFromMap());
@@ -2795,42 +2708,7 @@ function drawCreated(e) {
     refresh();
 }
 
-function onPopupOpen(e) {
-    var sel = d3.select(e.popup._contentNode);
 
-    sel.selectAll('.cancel')
-        .on('click', clickClose);
-
-    sel.selectAll('.save')
-        .on('click', saveFeature);
-
-    sel.selectAll('.delete-invert')
-        .on('click', removeFeature);
-
-    function clickClose() {
-        map.closePopup(e.popup);
-    }
-
-    function removeFeature() {
-        if (e.popup._source && drawnItems.hasLayer(e.popup._source)) {
-            drawnItems.removeLayer(e.popup._source);
-            updates.update_geojson();
-        }
-        updateFromMap();
-    }
-
-    function saveFeature() {
-        var obj = {};
-        sel.selectAll('tr').each(collectRow);
-        function collectRow() {
-            obj[d3.select(this).selectAll('input')[0][0].value] =
-                d3.select(this).selectAll('input')[0][1].value;
-        }
-        e.popup._source.feature.properties = obj;
-        map.closePopup(e.popup);
-        refresh();
-    }
-}
 
 d3.select(document).call(
     d3.keybinding('global')
@@ -2979,7 +2857,46 @@ function hashChange() {
 }
 */
 
-},{"./core/data":26,"./ui":32,"./ui/map":35,"store":7}],28:[function(require,module,exports){
+},{"./core/data":24,"./ui":32,"./ui/map":36,"store":7}],26:[function(require,module,exports){
+module.exports = function(context) {
+    return function(e) {
+        var sel = d3.select(e.popup._contentNode);
+
+        sel.selectAll('.cancel')
+            .on('click', clickClose);
+
+        sel.selectAll('.save')
+            .on('click', saveFeature);
+
+        sel.selectAll('.delete-invert')
+            .on('click', removeFeature);
+
+        function clickClose() {
+            context.map.closePopup(e.popup);
+        }
+
+        function removeFeature() {
+            if (e.popup._source && context.mapLayer.hasLayer(e.popup._source)) {
+                context.mapLayer.removeLayer(e.popup._source);
+                context.data.set('map', context.mapLayer.toGeoJSON(), 'popup');
+            }
+        }
+
+        function saveFeature() {
+            var obj = {};
+            sel.selectAll('tr').each(collectRow);
+            function collectRow() {
+                obj[d3.select(this).selectAll('input')[0][0].value] =
+                    d3.select(this).selectAll('input')[0][1].value;
+            }
+            e.popup._source.feature.properties = obj;
+            context.data.set('map', context.mapLayer.toGeoJSON(), 'popup');
+            context.map.closePopup(e.popup);
+        }
+    };
+};
+
+},{}],27:[function(require,module,exports){
 var validate = require('../validate');
 
 CodeMirror.keyMap.tabSpace = {
@@ -3031,7 +2948,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../validate":38}],29:[function(require,module,exports){
+},{"../validate":39}],28:[function(require,module,exports){
 var config = require('../config')(location.hostname);
 
 module.exports = loginPanel;
@@ -3096,7 +3013,64 @@ loginPanel.init = function(container) {
     }
 };
 
-},{"../config":25}],30:[function(require,module,exports){
+},{"../config":23}],29:[function(require,module,exports){
+var metatable = require('d3-metatable')(d3);
+
+module.exports = function(context) {
+    function render(selection) {
+
+        function render() {
+            var geojson = context.data.get('map');
+            if (!geojson || !geojson.features.length) {
+                selection
+                    .html('')
+                    .append('div')
+                    .attr('class', 'blank-banner')
+                    .text('no features');
+            } else {
+                var props = geojson.features.map(getProperties);
+                selection
+                    .html('')
+                    .append('div')
+                    .attr('class', 'pad1 scrollable')
+                    .data([props])
+                    .call(
+                        metatable()
+                            .on('change', function() {
+                                updates.update_refresh();
+                            })
+                            .on('rowfocus', function(d) {
+                                updates.focus_layer(findLayer(d));
+                            })
+                    );
+            }
+        }
+
+        context.dispatch.on('change.table', function(evt) {
+            if (evt.field === 'map') render();
+        });
+
+        render();
+
+        function getProperties(f) { return f.properties; }
+
+        function zoomToMap(p) {
+            var layer;
+            layers.eachLayer(function(l) {
+                if (p == l.feature.properties) layer = l;
+            });
+            return layer;
+        }
+    }
+
+    render.off = function() {
+        context.dispatch.on('change.table', null);
+    };
+
+    return render;
+};
+
+},{"d3-metatable":4}],30:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -3304,7 +3278,7 @@ function ui(context) {
     return render;
 }
 
-},{"./ui/file_bar":33,"./ui/layer_switch":34,"./ui/mode_buttons":36}],33:[function(require,module,exports){
+},{"./ui/file_bar":33,"./ui/layer_switch":35,"./ui/mode_buttons":37}],33:[function(require,module,exports){
 var share = require('./share');
 
 module.exports = function fileBar(context) {
@@ -3428,7 +3402,9 @@ module.exports = function fileBar(context) {
     return d3.rebind(bar, event, 'on');
 }
 
-},{"./share":37}],34:[function(require,module,exports){
+},{"./share":38}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],35:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -3477,7 +3453,9 @@ module.exports = function(context) {
 };
 
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
+var popup = require('../lib/popup');
+
 module.exports = function(context) {
 
     function map(selection) {
@@ -3495,11 +3473,11 @@ module.exports = function(context) {
         context.map
             .on('draw:edited', update)
             .on('draw:deleted', update)
-            .on('draw:created', created);
-            // .on('popupopen', onPopupOpen);
+            .on('draw:created', created)
+            .on('popupopen', popup(context));
 
         function update() {
-            geoify(context.mapLayer);
+            geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
             context.data.set('map', layerToGeoJSON(context.mapLayer), 'map');
         }
 
@@ -3528,26 +3506,39 @@ module.exports = function(context) {
     return map;
 };
 
-function geoify(layer) {
-    var features = [];
-    layer.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    layer.clearLayers();
-    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
-        l.addTo(layer);
-    });
-}
-
 function geojsonToLayer(geojson, layer) {
     layer.clearLayers();
     L.geoJson(geojson).eachLayer(add);
     function add(l) {
-        l.addTo(layer);
+        bindPopup(l).addTo(layer);
     }
 }
 
-},{}],36:[function(require,module,exports){
+function bindPopup(l) {
+
+    var properties = l.toGeoJSON().properties, table = '';
+
+    if (!Object.keys(properties).length) properties = { '': '' };
+
+    for (var key in properties) {
+        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
+            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
+    }
+
+    l.bindPopup(L.popup({
+        maxWidth: 500,
+        maxHeight: 400
+    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
+        '<div class="clearfix col12 drop">' +
+            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
+            '<button class="cancel">cancel</button></div>' +
+            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
+        '</div></div>'));
+
+    return l;
+}
+
+},{"../lib/popup":26}],37:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     login = require('../panel/login');
@@ -3592,7 +3583,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":28,"../panel/login":29,"../panel/table":23}],37:[function(require,module,exports){
+},{"../panel/json":27,"../panel/login":28,"../panel/table":29}],38:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -3667,7 +3658,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":31}],38:[function(require,module,exports){
+},{"../source/gist":31}],39:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -3723,5 +3714,5 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":5}]},{},[31,27])
+},{"geojsonhint":5}]},{},[31,25])
 ;
