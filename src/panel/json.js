@@ -10,7 +10,7 @@ CodeMirror.keyMap.tabSpace = {
 
 module.exports = function(context) {
 
-    return function(selection) {
+    function render(selection) {
         var textarea = selection
             .html('')
             .append('textarea');
@@ -40,5 +40,11 @@ module.exports = function(context) {
         });
 
         editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+    }
+
+    render.off = function() {
+        context.dispatch.on('change.json', null);
     };
+
+    return render;
 };

@@ -1,3 +1,5 @@
+var share = require('./share');
+
 module.exports = function fileBar(context) {
 
     var event = d3.dispatch('source', 'save', 'share', 'download', 'share');
@@ -37,15 +39,23 @@ module.exports = function fileBar(context) {
                 title: 'Download',
                 icon: 'icon-download',
                 action: function() {
-                    event.download();
+                    download();
                 }
             }, {
                 title: 'Share',
                 icon: 'icon-share-alt',
                 action: function() {
-                    event.share();
+                    context.container.call(share(context));
                 }
             }];
+
+        function download() {
+            if (d3.event) d3.event.preventDefault();
+            var content = JSON.stringify(context.data.get('map'));
+            saveAs(new Blob([content], {
+                type: 'text/plain;charset=utf-8'
+            }), 'map.geojson');
+        }
 
         var buttons = selection.append('div')
             .attr('class', 'button-wrap fr')
@@ -101,6 +111,11 @@ module.exports = function fileBar(context) {
                     .classed('hide', true);
             }
         }
+
+        d3.select(document).call(
+            d3.keybinding('file_bar')
+                .on('⌘+a', download));
+
     }
 
     return d3.rebind(bar, event, 'on');

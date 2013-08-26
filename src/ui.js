@@ -6,17 +6,18 @@ module.exports = ui;
 
 function ui(context) {
     function render(selection) {
+
         var container = selection
             .append('div')
             .attr('class', 'container');
 
-        var map = selection
+        var map = container
             .append('div')
             .attr('class', 'map')
             .call(context.map)
             .call(layer_switch(context));
 
-        var right = selection
+        var right = container
             .append('div')
             .attr('class', 'right');
 
@@ -48,10 +49,12 @@ function ui(context) {
             .attr('class', 'buttons')
             .call(buttons(context, pane));
 
-        selection
+        container
             .append('div')
             .attr('class', 'file-bar')
             .call(file_bar(context));
+
+        context.container = container;
     }
 
     return render;

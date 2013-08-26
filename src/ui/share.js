@@ -1,4 +1,4 @@
-var gist = require('./source/gist');
+var gist = require('../source/gist');
 
 module.exports = share;
 
@@ -16,8 +16,8 @@ function emailUrl(_) {
 
 function share(context) {
     return function(selection) {
-        'use strict';
-        container.select('.share').remove();
+
+        selection.select('.share').remove();
 
         var sel = selection.append('div')
             .attr('class', 'share pad1');
@@ -58,12 +58,9 @@ function share(context) {
 
         sel.append('a')
             .attr('class', 'icon-remove')
-            .on('click', function() { selection.remove(); });
+            .on('click', function() { sel.remove(); });
 
-        gist.saveBlocks(JSON.stringify({
-            type: 'FeatureCollection',
-            features: features
-        }), function(err, res) {
+        gist.saveBlocks(context.data.get('map'), function(err, res) {
             if (err) return;
             if (res) {
                 embed_html.property('value',
