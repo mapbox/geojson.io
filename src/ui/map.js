@@ -20,15 +20,20 @@ module.exports = function(context) {
 
         function update() {
             geoify(context.mapLayer);
-            context.data.set('map', layerToGeoJSON(context.mapLayer));
+            context.data.set('map', layerToGeoJSON(context.mapLayer), 'map');
         }
+
+        context.dispatch.on('change.map', function(event) {
+            if (event.field === 'map' && event.source !== 'map') {
+                geojsonToLayer(event.value, context.mapLayer);
+            }
+        });
 
         function created(e) {
             context.mapLayer.addLayer(e.layer);
             update();
         }
     }
-
 
     function layerToGeoJSON(layer) {
         var features = [];
@@ -52,4 +57,12 @@ function geoify(layer) {
     L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
         l.addTo(layer);
     });
+}
+
+function geojsonToLayer(geojson, layer) {
+    layer.clearLayers();
+    L.geoJson(geojson).eachLayer(add);
+    function add(l) {
+        l.addTo(layer);
+    }
 }

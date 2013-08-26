@@ -2,8 +2,11 @@ var table = require('../panel/table'),
     json = require('../panel/json'),
     login = require('../panel/login');
 
-module.exports = function(context) {
+module.exports = function(context, pane) {
     return function(selection) {
+
+        var mode = null;
+
         var buttonData = [{
             icon: 'table',
             title: ' Table',
@@ -11,12 +14,9 @@ module.exports = function(context) {
             behavior: table
         }, {
             icon: 'code',
+            title: ' JSON',
             alt: 'JSON Source',
             behavior: json
-        }, {
-            icon: 'github',
-            alt: '',
-            behavior: login
         }];
 
         var buttons = selection
@@ -34,10 +34,10 @@ module.exports = function(context) {
         d3.select(buttons.node()).trigger('click');
 
         function buttonClick(d) {
-            updates.on('update_map.mode', null);
             buttons.classed('active', function(_) { return d.icon == _.icon; });
-            pane.call(d.behavior, updates);
-            updateFromMap();
+            if (mode) mode.off();
+            mode = d.behavior(context);
+            pane.call(mode);
         }
     };
 };

@@ -39,14 +39,14 @@ function ui(context) {
             .append('class', 'span')
             .attr('class', 'icon icon-caret-down');
 
-        top
-            .append('div')
-            .attr('class', 'buttons')
-            .call(buttons(context));
-
         var pane = right
             .append('div')
             .attr('class', 'pane');
+
+        top
+            .append('div')
+            .attr('class', 'buttons')
+            .call(buttons(context, pane));
 
         selection
             .append('div')

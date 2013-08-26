@@ -1,15 +1,20 @@
 module.exports = function(context) {
 
     var data = {
-        map: null,
-        meta: null
+        map: {
+            type: 'FeatureCollection',
+            features: []
+        },
+        meta: null,
+        type: 'local'
     };
 
-    data.set = function(k, v) {
+    data.set = function(k, v, source) {
         data[k] = v;
         context.dispatch.change({
             field: k,
-            value: v
+            value: v,
+            source: source
         });
     };
 

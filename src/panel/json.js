@@ -1,7 +1,5 @@
 var validate = require('../validate');
 
-module.exports = jsonPanel;
-
 CodeMirror.keyMap.tabSpace = {
     Tab: function(cm) {
         var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
@@ -10,32 +8,37 @@ CodeMirror.keyMap.tabSpace = {
     fallthrough: ['default']
 };
 
-function jsonPanel(container, updates) {
-    container.html('');
+module.exports = function(context) {
 
-    var textarea = container.append('textarea');
-    editor = CodeMirror.fromTextArea(textarea.node(), {
-        mode: 'application/json',
-        matchBrackets: true,
-        tabSize: 2,
-        gutters: ['error'],
-        theme: 'eclipse',
-        autofocus: (window === window.top),
-        keyMap: 'tabSpace',
-        lineNumbers: true
-    });
+    return function(selection) {
+        var textarea = selection
+            .html('')
+            .append('textarea');
 
-    // shush the callback-back
-    var quiet = false;
-    editor.on('change', validate(changeValidated));
+        var editor = CodeMirror.fromTextArea(textarea.node(), {
+            mode: 'application/json',
+            matchBrackets: true,
+            tabSize: 2,
+            gutters: ['error'],
+            theme: 'eclipse',
+            autofocus: (window === window.top),
+            keyMap: 'tabSpace',
+            lineNumbers: true
+        });
 
-    function changeValidated(err, data) {
-        if (quiet) { quiet = false; return; }
-        if (!err) updates.update_editor(data);
-    }
+        // shush the callback-back
+        editor.on('change', validate(changeValidated));
 
-    updates.on('update_map.mode', function(data) {
-        quiet = true;
-        editor.setValue(JSON.stringify(data, null, 2));
-    });
-}
+        function changeValidated(err, data) {
+            if (!err) context.data.set('map', data, 'json');
+        }
+
+        context.dispatch.on('change.json', function(event) {
+            if (event.field === 'map' && event.source !== 'json') {
+                editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+            }
+        });
+
+        editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+    };
+};

@@ -2545,15 +2545,20 @@ module.exports = function(hostname) {
 module.exports = function(context) {
 
     var data = {
-        map: null,
-        meta: null
+        map: {
+            type: 'FeatureCollection',
+            features: []
+        },
+        meta: null,
+        type: 'local'
     };
 
-    data.set = function(k, v) {
+    data.set = function(k, v, source) {
         data[k] = v;
         context.dispatch.change({
             field: k,
-            value: v
+            value: v,
+            source: source
         });
     };
 
@@ -2918,8 +2923,6 @@ function hashChange() {
 },{"./core/data":24,"./ui":31,"./ui/map":34,"store":7}],26:[function(require,module,exports){
 var validate = require('../validate');
 
-module.exports = jsonPanel;
-
 CodeMirror.keyMap.tabSpace = {
     Tab: function(cm) {
         var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
@@ -2928,35 +2931,40 @@ CodeMirror.keyMap.tabSpace = {
     fallthrough: ['default']
 };
 
-function jsonPanel(container, updates) {
-    container.html('');
+module.exports = function(context) {
 
-    var textarea = container.append('textarea');
-    editor = CodeMirror.fromTextArea(textarea.node(), {
-        mode: 'application/json',
-        matchBrackets: true,
-        tabSize: 2,
-        gutters: ['error'],
-        theme: 'eclipse',
-        autofocus: (window === window.top),
-        keyMap: 'tabSpace',
-        lineNumbers: true
-    });
+    return function(selection) {
+        var textarea = selection
+            .html('')
+            .append('textarea');
 
-    // shush the callback-back
-    var quiet = false;
-    editor.on('change', validate(changeValidated));
+        var editor = CodeMirror.fromTextArea(textarea.node(), {
+            mode: 'application/json',
+            matchBrackets: true,
+            tabSize: 2,
+            gutters: ['error'],
+            theme: 'eclipse',
+            autofocus: (window === window.top),
+            keyMap: 'tabSpace',
+            lineNumbers: true
+        });
 
-    function changeValidated(err, data) {
-        if (quiet) { quiet = false; return; }
-        if (!err) updates.update_editor(data);
-    }
+        // shush the callback-back
+        editor.on('change', validate(changeValidated));
 
-    updates.on('update_map.mode', function(data) {
-        quiet = true;
-        editor.setValue(JSON.stringify(data, null, 2));
-    });
-}
+        function changeValidated(err, data) {
+            if (!err) context.data.set('map', data, 'json');
+        }
+
+        context.dispatch.on('change.json', function(event) {
+            if (event.field === 'map' && event.source !== 'json') {
+                editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+            }
+        });
+
+        editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+    };
+};
 
 },{"../validate":37}],27:[function(require,module,exports){
 var config = require('../config')(location.hostname);
@@ -3026,45 +3034,59 @@ loginPanel.init = function(container) {
 },{"../config":23}],28:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3);
 
-module.exports = table;
+module.exports = function(context) {
+    function render(selection) {
 
-function table(container, updates) {
-    container.html('');
+        function render() {
+            var geojson = context.data.get('map');
+            if (!geojson || !geojson.features.length) {
+                selection
+                    .html('')
+                    .append('div')
+                    .attr('class', 'blank-banner')
+                    .text('no features');
+            } else {
+                var props = geojson.features.map(getProperties);
+                selection
+                    .html('')
+                    .append('div')
+                    .attr('class', 'pad1 scrollable')
+                    .data([props])
+                    .call(
+                        metatable()
+                            .on('change', function() {
+                                updates.update_refresh();
+                            })
+                            .on('rowfocus', function(d) {
+                                updates.focus_layer(findLayer(d));
+                            })
+                    );
+            }
+        }
 
-    updates.on('update_map.mode', function(data, layers) {
-        function findLayer(p) {
+        context.dispatch.on('change.table', function(evt) {
+            if (evt.field === 'map') render();
+        });
+
+        render();
+
+        function getProperties(f) { return f.properties; }
+
+        function zoomToMap(p) {
             var layer;
             layers.eachLayer(function(l) {
                 if (p == l.feature.properties) layer = l;
             });
             return layer;
         }
-        if (!data.features.length) {
-            container.append('div')
-                .attr('class', 'blank-banner')
-                .text('no features');
-        } else {
-            var props = [];
-            layers.eachLayer(function(p) {
-                props.push(p.feature.properties);
-            });
-            container.html('');
-            container
-                .append('div')
-                .attr('class', 'pad1 scrollable')
-                .data([props])
-                .call(
-                    metatable()
-                        .on('change', function() {
-                            updates.update_refresh();
-                        })
-                        .on('rowfocus', function(d) {
-                            updates.focus_layer(findLayer(d));
-                        })
-                );
-        }
-    });
-}
+    }
+
+    render.off = function() {
+        context.dispatch.on('change.table', null);
+    };
+
+    return render;
+};
 
 },{"d3-metatable":4}],29:[function(require,module,exports){
 'use strict';
@@ -3253,14 +3275,14 @@ function ui(context) {
             .append('class', 'span')
             .attr('class', 'icon icon-caret-down');
 
-        top
-            .append('div')
-            .attr('class', 'buttons')
-            .call(buttons(context));
-
         var pane = right
             .append('div')
             .attr('class', 'pane');
+
+        top
+            .append('div')
+            .attr('class', 'buttons')
+            .call(buttons(context, pane));
 
         selection
             .append('div')
@@ -3428,6 +3450,7 @@ module.exports = function(context) {
     };
 };
 
+
 },{}],34:[function(require,module,exports){
 module.exports = function(context) {
 
@@ -3451,15 +3474,20 @@ module.exports = function(context) {
 
         function update() {
             geoify(context.mapLayer);
-            context.data.set('map', layerToGeoJSON(context.mapLayer));
+            context.data.set('map', layerToGeoJSON(context.mapLayer), 'map');
         }
+
+        context.dispatch.on('change.map', function(event) {
+            if (event.field === 'map' && event.source !== 'map') {
+                geojsonToLayer(event.value, context.mapLayer);
+            }
+        });
 
         function created(e) {
             context.mapLayer.addLayer(e.layer);
             update();
         }
     }
-
 
     function layerToGeoJSON(layer) {
         var features = [];
@@ -3485,13 +3513,24 @@ function geoify(layer) {
     });
 }
 
+function geojsonToLayer(geojson, layer) {
+    layer.clearLayers();
+    L.geoJson(geojson).eachLayer(add);
+    function add(l) {
+        l.addTo(layer);
+    }
+}
+
 },{}],35:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     login = require('../panel/login');
 
-module.exports = function(context) {
+module.exports = function(context, pane) {
     return function(selection) {
+
+        var mode = null;
+
         var buttonData = [{
             icon: 'table',
             title: ' Table',
@@ -3499,12 +3538,9 @@ module.exports = function(context) {
             behavior: table
         }, {
             icon: 'code',
+            title: ' JSON',
             alt: 'JSON Source',
             behavior: json
-        }, {
-            icon: 'github',
-            alt: '',
-            behavior: login
         }];
 
         var buttons = selection
@@ -3522,10 +3558,10 @@ module.exports = function(context) {
         d3.select(buttons.node()).trigger('click');
 
         function buttonClick(d) {
-            updates.on('update_map.mode', null);
             buttons.classed('active', function(_) { return d.icon == _.icon; });
-            pane.call(d.behavior, updates);
-            updateFromMap();
+            if (mode) mode.off();
+            mode = d.behavior(context);
+            pane.call(mode);
         }
     };
 };
