@@ -1,5 +1,3 @@
-var source = require('../source.js');
-
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;

@@ -52,13 +52,16 @@ function geojsonToLayer(geojson, layer) {
     layer.clearLayers();
     L.geoJson(geojson).eachLayer(add);
     function add(l) {
-        bindPopup(l).addTo(layer);
+        bindPopup(l);
+        l.addTo(layer);
     }
 }
 
 function bindPopup(l) {
 
     var properties = l.toGeoJSON().properties, table = '';
+
+    if (!properties) return;
 
     if (!Object.keys(properties).length) properties = { '': '' };
 
@@ -76,6 +79,4 @@ function bindPopup(l) {
             '<button class="cancel">cancel</button></div>' +
             '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
         '</div></div>'));
-
-    return l;
 }

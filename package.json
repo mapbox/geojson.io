@@ -21,7 +21,8 @@
     "d3": "3.2.8",
     "store": "~1.3.8",
     "leaflet-hash": "~0.1.1",
-    "spinner-browserify": "~0.1.0"
+    "spinner-browserify": "~0.1.0",
+    "xtend": "~2.0.6"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",

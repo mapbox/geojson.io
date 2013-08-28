@@ -1,4 +1,3 @@
-var source = require('../source.js');
 var fs = require('fs');
 var tmpl = fs.readFileSync('data/share.html', 'utf8');
 

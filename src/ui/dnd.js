@@ -4,9 +4,10 @@ module.exports = function(context) {
     d3.select('body')
         .attr('dropzone', 'copy')
         .on('drop.import', readDrop(context, function(err, gj) {
-            console.log(arguments);
             if (err) return;
-            context.data.set({map: gj});
+            if (gj && gj.features) {
+                context.data.mergeFeatures(gj.features);
+            }
             d3.select('body').classed('dragover', false);
         }))
         .on('dragenter.import', over)
