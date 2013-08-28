@@ -7,6 +7,10 @@ module.exports = function(context) {
 
     if (location.hash !== '#new') {
         var rec = context.storage.get('recover');
-        if (rec) context.data.set(rec);
+        if (rec && confirm('recover your map from the last time you edited?')) {
+            context.data.set(rec);
+        } else {
+            context.storage.remove('recover');
+        }
     }
 };
