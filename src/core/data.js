@@ -2,7 +2,7 @@ var xtend = require('xtend');
 
 module.exports = function(context) {
 
-    var data = {
+    var _data = {
         map: {
             type: 'FeatureCollection',
             features: []
@@ -13,9 +13,11 @@ module.exports = function(context) {
         type: 'local'
     };
 
+    var data = {};
+
     data.set = function(obj, source) {
         for (var k in obj) {
-            data[k] = (typeof obj[k] === 'object') ? xtend(obj[k]) : obj[k];
+            _data[k] = (typeof obj[k] === 'object') ? xtend(obj[k]) : obj[k];
         }
         if (obj.dirty !== false) data.dirty = true;
         context.dispatch.change({
@@ -26,16 +28,16 @@ module.exports = function(context) {
     };
 
     data.mergeFeatures = function(features, source) {
-        data.map.features = (data.map.features || []).concat(features);
-        return data.set({ map: data.map }, source);
+        _data.map.features = (_data.map.features || []).concat(features);
+        return data.set({ map: _data.map }, source);
     };
 
     data.get = function(k) {
-        return data[k];
+        return _data[k];
     };
 
     data.all = function() {
-        return data;
+        return xtend(_data);
     };
 
     return data;

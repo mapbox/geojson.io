@@ -1,4 +1,4 @@
-var validate = require('../validate');
+var validate = require('../lib/validate');
 
 CodeMirror.keyMap.tabSpace = {
     Tab: function(cm) {

@@ -1,19 +1,9 @@
-var fs = require('fs');
-var tmpl = fs.readFileSync('data/share.html', 'utf8');
+var fs = require('fs'),
+    tmpl = fs.readFileSync('data/share.html', 'utf8');
 
 module.exports.save = save;
 module.exports.saveBlocks = saveBlocks;
 module.exports.load = load;
-
-function loggedin() {
-    return !!localStorage.github_token;
-}
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
 
 function saveBlocks(content, callback) {
     var endpoint = 'https://api.github.com/gists';
@@ -54,16 +44,16 @@ function save(context, callback) {
         var endpoint,
             method = 'POST';
 
-        if (!err && (user.login && d.github && d.github.user.login)) {
+        if (!err && user && user.login && d.github && d.github.user && d.github.user.login == user.login) {
             endpoint = 'https://api.github.com/gists/' + d.github.id;
             method = 'PATCH';
-        } else if (!err && d.github) {
+        } else if (!err && d.github && d.github.id) {
             endpoint = 'https://api.github.com/gists/' + d.github.id + '/forks';
         } else {
             endpoint = 'https://api.github.com/gists';
         }
 
-        authorize(d3.json(endpoint))
+        context.user.signXHR(d3.json(endpoint))
             .on('load', function(data) {
                 callback(null, data);
             })
@@ -82,7 +72,7 @@ function save(context, callback) {
     }
 }
 
-function load(id, callback) {
+function load(id, context, callback) {
     d3.json('https://api.github.com/gists/' + id)
         .on('load', onLoad)
         .on('error', onError)

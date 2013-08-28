@@ -35,6 +35,7 @@ module.exports = function(context) {
 
     function gistSuccess(err, d) {
         context.container.select('.map').classed('loading', false);
+        console.log(arguments);
         if (err) return;
         context.data
             .set({

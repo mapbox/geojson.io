@@ -30,8 +30,8 @@ module.exports = function(context) {
             context.data.set({map: layerToGeoJSON(context.mapLayer)}, 'map');
         }
 
-        context.dispatch.on('change.map', function(event) {
-            geojsonToLayer(context.data.map, context.mapLayer);
+        context.dispatch.on('change.map', function() {
+            geojsonToLayer(context.data.get('map'), context.mapLayer);
         });
 
         function created(e) {

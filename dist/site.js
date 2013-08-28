@@ -1283,138 +1283,132 @@ module.exports = function(d3) {
                 var wrap = outer.append('div')
                     .attr('class', 'miller-wrap');
 
-                reqList('/user/repos', token, function(err, repos) {
+                req('/user', token, function(err, user) {
 
-                    var repocolumn = wrap.append('div')
-                        .attr('class', 'miller-column root')
-                        .attr('data-level', 0);
+                    reqList('/user/orgs', token, function(err, orgs) {
+                        var rootLevel = 0;
 
-                     var repoItems = repocolumn.selectAll('div.item')
-                        .data(repos)
-                        .enter()
-                        .append('div')
-                        .attr('class', 'item')
-                        .text(function(d) {
-                            return d.name;
-                        })
-                        .on('click', repositoryRoot);
+                        var orgColumn = wrap.append('div')
+                            .attr('class', 'miller-column root')
+                            .attr('data-level', rootLevel);
 
-                    metaResize();
+                        var orgItems;
 
-                    function cleanup(level) {
-                        wrap.selectAll('.miller-column').each(function() {
-                            if (+d3.select(this).attr('data-level') >= level) {
-                                d3.select(this).remove();
-                            }
-                        });
-                    }
+                        if (orgs && orgs.length) {
+                            orgs.unshift(user);
 
-                    function metaResize() {
-                        wrap.style('width', function() {
-                            return (selection.selectAll('.miller-column')[0].length * 200) + 'px';
-                        });
-                        wrap.selectAll('.miller-column')
-                            .style('height', function() {
-                                var max = 0;
-                                selection.selectAll('.miller-column').each(function() {
-                                    var children = d3.select(this).selectAll('div.item')[0].length;
-                                    if (children > max) max = children;
-                                });
-                                return (max * 35) + 'px';
+                            orgItems = orgColumn.selectAll('div.item')
+                                .data(orgs)
+                                .enter()
+                                .append('div')
+                                .attr('class', 'item')
+                                .text(function(d) {
+                                    return d.login;
+                                })
+                                .on('click', organizationRoot(
+                                    rootLevel + 1,
+                                    d3.selection()
+                                ));
+
+                            metaResize();
+                        } else {
+                          organizationRoot(rootLevel)(user);
+                        }
+
+                        function cleanup(level) {
+                            wrap.selectAll('.miller-column').each(function() {
+                                if (+d3.select(this).attr('data-level') >= level) {
+                                    d3.select(this).remove();
+                                }
                             });
-                    }
-
-                    function repositoryRoot(d) {
-                        var that = this;
-
-                        repoItems.classed('active', function() {
-                            return this == that;
-                        });
-
-                        req('/repos/' + [
-                            d.owner.login,
-                            d.name,
-                            'branches',
-                            d.default_branch
-                        ].join('/'), token, onBranch);
-
-                        function onBranch(err, branch) {
-                            req('/repos/' + [
-                                d.owner.login,
-                                d.name,
-                                'git',
-                                'trees',
-                                branch.commit.sha
-                            ].join('/'), token, onItems(d));
                         }
 
-                        function onItems(parent) {
-                            return function(err, items) {
-                                cleanup(1);
-
-                                var rootColumn = wrap.append('div')
-                                    .attr('class', 'miller-column repo-root')
-                                    .attr('data-level', 1);
-
-                                items.tree = items.tree.map(function(t) {
-                                    t.parent = parent;
-                                    return t;
-                                });
-
-                                var columnItems = rootColumn.selectAll('div.item')
-                                    .data(items.tree)
-                                    .enter()
-                                    .append('div')
-                                    .attr('class', function(d) {
-                                        return 'item pad1 ' + d.type;
-                                    })
-                                    .text(function(d) {
-                                        return d.path;
+                        function metaResize() {
+                            wrap.style('width', function() {
+                                return (selection.selectAll('.miller-column')[0].length * 200) + 'px';
+                            });
+                            wrap.selectAll('.miller-column')
+                                .style('height', function() {
+                                    var max = 0;
+                                    selection.selectAll('.miller-column').each(function() {
+                                        var children = d3.select(this).selectAll('div.item')[0].length;
+                                        if (children > max) max = children;
                                     });
-
-                                columnItems.each(function(d) {
-                                    if (d.type == 'tree') {
-                                        d3.select(this)
-                                            .on('click', repositoryTree(columnItems, 2, [d]));
-                                    } else {
-                                        d3.select(this)
-                                            .on('click', event.chosen);
-
-                                    }
+                                    return (max * 35) + 'px';
                                 });
-
-                                metaResize();
-                            };
                         }
 
-                        function repositoryTree(columnItems, level, parents) {
+                        function organizationRoot(orgLevel, orgItems) {
+                            return function(d) {
+                                cleanup(orgLevel);
+
+                                var that = this;
+
+                                if (orgItems && orgItems.length) {
+                                  orgItems.classed('active', function() {
+                                      return this == that;
+                                  });
+                                }
+
+                                var url = d.type && d.type === 'User' ?
+                                    '/user/repos' : '/orgs/' + d.login + '/repos';
+
+                                reqList(url, token, function(err, repos) {
+
+                                    var repoColumn = wrap.append('div')
+                                        .attr('class', 'miller-column root')
+                                        .attr('data-level', orgLevel);
+
+                                     var repoItems = repoColumn.selectAll('div.item')
+                                        .data(repos)
+                                        .enter()
+                                        .append('div')
+                                        .attr('class', 'item')
+                                        .text(function(d) {
+                                            return d.name;
+                                        })
+                                        .on('click', repositoryRoot(orgLevel + 1, d3.selection()));
+
+                                    metaResize();
+                                });
+                            }
+                        }
+
+                        function repositoryRoot(repoLevel, repoItems) {
                             return function(d) {
                                 var that = this;
 
-                                columnItems.classed('active', function() {
+                                repoItems.classed('active', function() {
                                     return this == that;
                                 });
 
                                 req('/repos/' + [
-                                    d.parent.owner.login,
-                                    d.parent.name,
-                                    'git',
-                                    'trees',
-                                    d.sha
-                                ].join('/'), token, onSubItems(d.parent));
+                                    d.owner.login,
+                                    d.name,
+                                    'branches',
+                                    d.default_branch
+                                ].join('/'), token, onBranch);
 
-                                function onSubItems(parent) {
+                                function onBranch(err, branch) {
+                                    req('/repos/' + [
+                                        d.owner.login,
+                                        d.name,
+                                        'git',
+                                        'trees',
+                                        branch.commit.sha
+                                    ].join('/'), token, onItems(d));
+                                }
+
+                                function onItems(parent) {
                                     return function(err, items) {
-
-                                        cleanup(level);
+                                        cleanup(repoLevel);
 
                                         var rootColumn = wrap.append('div')
-                                            .attr('class', 'miller-column repo-subcolumn')
-                                            .attr('data-level', level);
+                                            .attr('class', 'miller-column repo-root')
+                                            .attr('data-level', repoLevel);
 
                                         items.tree = items.tree.map(function(t) {
                                             t.parent = parent;
-                                            t.parents = parents;
                                             return t;
                                         });
 
@@ -1422,27 +1416,89 @@ module.exports = function(d3) {
                                             .data(items.tree)
                                             .enter()
                                             .append('div')
-                                            .attr('class', 'item pad1')
+                                            .attr('class', function(d) {
+                                                return 'item pad1 ' + d.type;
+                                            })
                                             .text(function(d) {
                                                 return d.path;
                                             });
 
                                         columnItems.each(function(d) {
                                             if (d.type == 'tree') {
-                                                d3.select(this).on('click', repositoryTree(columnItems, level + 1,
-                                                    parents.concat([d])));
+                                                d3.select(this)
+                                                    .on('click', repositoryTree(columnItems, repoLevel + 1, [d]));
                                             } else {
                                                 d3.select(this)
                                                     .on('click', event.chosen);
+
                                             }
                                         });
 
                                         metaResize();
                                     };
                                 }
-                            };
+
+                                function repositoryTree(columnItems, level, parents) {
+                                    return function(d) {
+                                        var that = this;
+
+                                        columnItems.classed('active', function() {
+                                            return this == that;
+                                        });
+
+                                        req('/repos/' + [
+                                            d.parent.owner.login,
+                                            d.parent.name,
+                                            'git',
+                                            'trees',
+                                            d.sha
+                                        ].join('/'), token, onSubItems(d.parent));
+
+                                        function onSubItems(parent) {
+                                            return function(err, items) {
+
+                                                cleanup(level);
+
+                                                var rootColumn = wrap.append('div')
+                                                    .attr('class', 'miller-column repo-subcolumn')
+                                                    .attr('data-level', level);
+
+                                                items.tree = items.tree.map(function(t) {
+                                                    t.parent = parent;
+                                                    t.parents = parents;
+                                                    return t;
+                                                });
+
+                                                var columnItems = rootColumn.selectAll('div.item')
+                                                    .data(items.tree)
+                                                    .enter()
+                                                    .append('div')
+                                                    .attr('class', 'item pad1')
+                                                    .text(function(d) {
+                                                        return d.path;
+                                                    });
+
+                                                columnItems.each(function(d) {
+                                                    if (d.type == 'tree') {
+                                                        d3.select(this).on('click', repositoryTree(columnItems, level + 1,
+                                                            parents.concat([d])));
+                                                    } else {
+                                                        d3.select(this)
+                                                            .on('click', event.chosen);
+                                                    }
+                                                });
+
+                                                metaResize();
+                                            };
+                                        }
+                                    };
+                                }
+
                         }
-                    }
+
+                        }
+                    });
+
                 });
             }
 
@@ -2463,7 +2519,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":18,"./lib/topojson/clockwise":20,"./lib/topojson/filter":22,"./lib/topojson/prune":26,"./lib/topojson/simplify":27,"./lib/topojson/topology":30,"fs":1}],18:[function(require,module,exports){
+},{"./lib/topojson/bind":18,"./lib/topojson/clockwise":20,"./lib/topojson/filter":22,"./lib/topojson/prune":28,"./lib/topojson/simplify":29,"./lib/topojson/topology":32,"fs":1}],18:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -2493,7 +2549,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":31}],19:[function(require,module,exports){
+},{"../../":"g070js","./type":33}],19:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -2600,13 +2656,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":21,"./type":31}],21:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":21,"./type":33}],21:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":19,"./spherical":28}],22:[function(require,module,exports){
+},{"./cartesian":19,"./spherical":30}],22:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -2676,7 +2732,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":20,"./coordinate-systems":21,"./prune":26,"./type":31}],23:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":20,"./coordinate-systems":21,"./prune":28,"./type":33}],23:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -2742,6 +2798,96 @@ function equal(keyA, keyB) {
 }
 
 },{"./hash":23}],25:[function(require,module,exports){
+var topojson = require('topojson'),
+    toGeoJSON = require('togeojson');
+
+module.exports.readDrop = readDrop;
+
+function readDrop(context, callback) {
+    return function() {
+        if (d3.event.dataTransfer) {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+            var f = d3.event.dataTransfer.files[0];
+            readFile(f, context, callback);
+        }
+    };
+}
+
+function readFile(f, context, callback) {
+
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        var fileType = detectType(f);
+
+        if (!fileType) {
+            return callback('Could not detect file type');
+        } else if (fileType === 'kml') {
+            var kmldom = toDom(e.target.result);
+            if (!kmldom) {
+                return alert('Invalid KML file: not valid XML');
+            }
+            if (kmldom.getElementsByTagName('NetworkLink').length) {
+                alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                      'Please export and upload KML without NetworkLinks for optimal performance');
+            }
+            callback(null, toGeoJSON.kml(kmldom));
+        } else if (fileType === 'gpx') {
+            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
+        } else if (fileType === 'geojson') {
+            try {
+                gj = JSON.parse(e.target.result);
+                if (gj && gj.type === 'Topology' && gj.objects) {
+                    var collection = { type: 'FeatureCollection', features: [] };
+                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
+                    callback(null, collection);
+                } else {
+                    callback(null, gj);
+                }
+            } catch(err) {
+                alert('Invalid JSON file: ' + err);
+                return;
+            }
+        } else if (fileType === 'dsv') {
+            csv2geojson.csv2geojson(e.target.result, {
+                delimiter: 'auto'
+            }, function(err, result) {
+                if (err) {
+                    return handleGeocode(container.append('div'), e.target.result, updates);
+                } else {
+                    return callback(null, result);
+                }
+            });
+        }
+    };
+
+    reader.readAsText(f);
+
+    function toDom(x) {
+        return (new DOMParser()).parseFromString(x, 'text/xml');
+    }
+
+    function detectType(f) {
+        var filename = f.name ? f.name.toLowerCase() : '';
+        function ext(_) {
+            return filename.indexOf(_) !== -1;
+        }
+        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
+            return 'kml';
+        }
+        if (ext('.gpx')) return 'gpx';
+        if (ext('.geojson') || ext('.json')) return 'geojson';
+        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
+            return 'dsv';
+        }
+    }
+}
+
+},{"togeojson":16,"topojson":"g070js"}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],27:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -2807,7 +2953,7 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -2866,7 +3012,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":31}],27:[function(require,module,exports){
+},{"../../":"g070js","./type":33}],29:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -2998,7 +3144,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":21,"./min-heap":25}],28:[function(require,module,exports){
+},{"./coordinate-systems":21,"./min-heap":27}],30:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -3080,7 +3226,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -3130,7 +3276,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":31}],30:[function(require,module,exports){
+},{"./type":33}],32:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -3472,7 +3618,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":21,"./hashtable":24,"./stitch-poles":29,"./type":31}],31:[function(require,module,exports){
+},{"./coordinate-systems":21,"./hashtable":24,"./stitch-poles":31,"./type":33}],33:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -3566,7 +3712,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -3575,7 +3721,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -3602,11 +3748,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":32,"object-keys":34}],34:[function(require,module,exports){
+},{"./has-keys":34,"object-keys":36}],36:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":37}],35:[function(require,module,exports){
+},{"./shim":39}],37:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -3630,7 +3776,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 
 /**!
  * is
@@ -4334,7 +4480,7 @@ is.string = function (value) {
 };
 
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function () {
 	"use strict";
 
@@ -4380,7 +4526,7 @@ is.string = function (value) {
 }());
 
 
-},{"foreach":35,"is":36}],38:[function(require,module,exports){
+},{"foreach":37,"is":38}],40:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -4394,12 +4540,12 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 var xtend = require('xtend');
 
 module.exports = function(context) {
 
-    var data = {
+    var _data = {
         map: {
             type: 'FeatureCollection',
             features: []
@@ -4410,9 +4556,11 @@ module.exports = function(context) {
         type: 'local'
     };
 
+    var data = {};
+
     data.set = function(obj, source) {
         for (var k in obj) {
-            data[k] = (typeof obj[k] === 'object') ? xtend(obj[k]) : obj[k];
+            _data[k] = (typeof obj[k] === 'object') ? xtend(obj[k]) : obj[k];
         }
         if (obj.dirty !== false) data.dirty = true;
         context.dispatch.change({
@@ -4423,22 +4571,22 @@ module.exports = function(context) {
     };
 
     data.mergeFeatures = function(features, source) {
-        data.map.features = (data.map.features || []).concat(features);
-        return data.set({ map: data.map }, source);
+        _data.map.features = (_data.map.features || []).concat(features);
+        return data.set({ map: _data.map }, source);
     };
 
     data.get = function(k) {
-        return data[k];
+        return _data[k];
     };
 
     data.all = function() {
-        return data;
+        return xtend(_data);
     };
 
     return data;
 };
 
-},{"xtend":33}],40:[function(require,module,exports){
+},{"xtend":35}],42:[function(require,module,exports){
 var gist = require('../source/gist.js'),
     github = require('../source/github.js'),
     Spinner = require('spinner-browserify');
@@ -4476,6 +4624,7 @@ module.exports = function(context) {
 
     function gistSuccess(err, d) {
         context.container.select('.map').classed('loading', false);
+        console.log(arguments);
         if (err) return;
         context.data
             .set({
@@ -4524,7 +4673,19 @@ function mapFile(gist) {
     for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
 }
 
-},{"../source/gist.js":52,"../source/github.js":53,"spinner-browserify":12}],41:[function(require,module,exports){
+},{"../source/gist.js":54,"../source/github.js":55,"spinner-browserify":12}],43:[function(require,module,exports){
+module.exports = function(context) {
+    d3.select(window).on('unload', function() {
+        if (context.data.get('type') === 'local') {
+            context.storage.set('recover', context.data.all());
+        }
+    });
+
+    var rec = context.storage.get('recover');
+    if (rec) context.data.set(rec);
+};
+
+},{}],44:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -4575,7 +4736,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":48,"xtend":33}],42:[function(require,module,exports){
+},{"../lib/querystring":50,"xtend":35}],45:[function(require,module,exports){
 var gist = require('../source/gist.js'),
     Spinner = require('spinner-browserify');
 
@@ -4621,7 +4782,7 @@ module.exports = function(context) {
     else save.gist();
 };
 
-},{"../source/gist.js":52,"spinner-browserify":12}],43:[function(require,module,exports){
+},{"../source/gist.js":54,"spinner-browserify":12}],46:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -4704,11 +4865,12 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":38}],44:[function(require,module,exports){
+},{"../config.js":40}],47:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
     router = require('./core/router'),
+    recovery = require('./core/recovery'),
     loader = require('./core/loader'),
     user = require('./core/user'),
     store = require('store');
@@ -4716,8 +4878,10 @@ var ui = require('./ui'),
 var gjIO = geojsonIO(),
     gjUI = ui(gjIO);
 
+
 d3.select('.geojsonio').call(gjUI);
 
+gjIO.recovery = recovery(gjIO);
 gjIO.router.on();
 
 function geojsonIO() {
@@ -4726,10 +4890,9 @@ function geojsonIO() {
     context.storage = store;
     context.map = map(context);
     context.data = data(context);
+    context.dispatch.on('route', loader(context));
     context.router = router(context);
     context.user = user(context);
-    context.dispatch
-        .on('route', loader(context));
     return context;
 }
 
@@ -4872,7 +5035,7 @@ function hashChange() {
 }
 */
 
-},{"./core/data":39,"./core/loader":40,"./core/router":41,"./core/user":43,"./ui":54,"./ui/map":59,"store":15}],45:[function(require,module,exports){
+},{"./core/data":41,"./core/loader":42,"./core/recovery":43,"./core/router":44,"./core/user":46,"./ui":56,"./ui/map":61,"store":15}],48:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -4911,7 +5074,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":48,"leaflet-hash":11}],46:[function(require,module,exports){
+},{"../lib/querystring":50,"leaflet-hash":11}],49:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -4952,9 +5115,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
-},{}],48:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports.stringQs = function(str) {
     return str.split('&').reduce(function(obj, pair){
         var parts = pair.split('=');
@@ -4974,96 +5135,64 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],49:[function(require,module,exports){
-var topojson = require('topojson'),
-    toGeoJSON = require('togeojson');
+},{}],51:[function(require,module,exports){
+var geojsonhint = require('geojsonhint');
 
-module.exports.readDrop = readDrop;
+module.exports = function(callback) {
+    return function(editor) {
 
-function readDrop(context, callback) {
-    return function() {
-        if (d3.event.dataTransfer) {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
-            var f = d3.event.dataTransfer.files[0];
-            readFile(f, context, callback);
-        }
-    };
-}
+        var err = geojsonhint.hint(editor.getValue());
+        editor.clearGutter('error');
 
-function readFile(f, context, callback) {
-
-    var reader = new FileReader();
-
-    reader.onload = function(e) {
-
-        var fileType = detectType(f);
-
-        if (!fileType) {
-            return callback('Could not detect file type');
-        } else if (fileType === 'kml') {
-            var kmldom = toDom(e.target.result);
-            if (!kmldom) {
-                return alert('Invalid KML file: not valid XML');
-            }
-            if (kmldom.getElementsByTagName('NetworkLink').length) {
-                alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                      'Please export and upload KML without NetworkLinks for optimal performance');
-            }
-            callback(null, toGeoJSON.kml(kmldom));
-        } else if (fileType === 'gpx') {
-            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
-        } else if (fileType === 'geojson') {
+        if (err instanceof Error) {
+            handleError(err.message);
+            return callback({
+                'class': 'icon-circle-blank',
+                title: 'invalid JSON',
+                message: 'invalid JSON'});
+        } else if (err.length) {
+            handleErrors(err);
+            return callback({
+                'class': 'icon-circle-blank',
+                title: 'invalid GeoJSON',
+                message: 'invalid GeoJSON'});
+        } else {
+            var gj = JSON.parse(editor.getValue());
             try {
-                gj = JSON.parse(e.target.result);
-                if (gj && gj.type === 'Topology' && gj.objects) {
-                    var collection = { type: 'FeatureCollection', features: [] };
-                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                    callback(null, collection);
-                } else {
-                    callback(null, gj);
-                }
-            } catch(err) {
-                alert('Invalid JSON file: ' + err);
-                return;
+                return callback(null, gj);
+            } catch(e) {
+                return callback({
+                    'class': 'icon-circle-blank',
+                    title: 'invalid GeoJSON',
+                    message: 'invalid GeoJSON'});
             }
-        } else if (fileType === 'dsv') {
-            csv2geojson.csv2geojson(e.target.result, {
-                delimiter: 'auto'
-            }, function(err, result) {
-                if (err) {
-                    return handleGeocode(container.append('div'), e.target.result, updates);
-                } else {
-                    return callback(null, result);
-                }
+        }
+
+        function handleError(msg) {
+            var match = msg.match(/line (\d+)/);
+            if (match && match[1]) {
+                editor.clearGutter('error');
+                editor.setGutterMarker(parseInt(match[1], 10) - 1, 'error', makeMarker(msg));
+            }
+        }
+
+        function handleErrors(errors) {
+            editor.clearGutter('error');
+            errors.forEach(function(e) {
+                editor.setGutterMarker(e.line, 'error', makeMarker(e.message));
             });
         }
+
+        function makeMarker(msg) {
+            return d3.select(document.createElement('div'))
+                .attr('class', 'error-marker')
+                .attr('message', msg).node();
+        }
     };
+};
 
-    reader.readAsText(f);
-
-    function toDom(x) {
-        return (new DOMParser()).parseFromString(x, 'text/xml');
-    }
-
-    function detectType(f) {
-        var filename = f.name ? f.name.toLowerCase() : '';
-        function ext(_) {
-            return filename.indexOf(_) !== -1;
-        }
-        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-            return 'kml';
-        }
-        if (ext('.gpx')) return 'gpx';
-        if (ext('.geojson') || ext('.json')) return 'geojson';
-        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
-            return 'dsv';
-        }
-    }
-}
-
-},{"togeojson":16,"topojson":"g070js"}],50:[function(require,module,exports){
-var validate = require('../validate');
+},{"geojsonhint":6}],52:[function(require,module,exports){
+var validate = require('../lib/validate');
 
 CodeMirror.keyMap.tabSpace = {
     Tab: function(cm) {
@@ -5114,7 +5243,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../validate":64}],51:[function(require,module,exports){
+},{"../lib/validate":51}],53:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3);
 
 module.exports = function(context) {
@@ -5170,23 +5299,13 @@ module.exports = function(context) {
     return render;
 };
 
-},{"d3-metatable":4}],52:[function(require,module,exports){
-var fs = require('fs');
-var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
+},{"d3-metatable":4}],54:[function(require,module,exports){
+var fs = require('fs'),
+    tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
 module.exports.save = save;
 module.exports.saveBlocks = saveBlocks;
 module.exports.load = load;
-
-function loggedin() {
-    return !!localStorage.github_token;
-}
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
 
 function saveBlocks(content, callback) {
     var endpoint = 'https://api.github.com/gists';
@@ -5227,16 +5346,16 @@ function save(context, callback) {
         var endpoint,
             method = 'POST';
 
-        if (!err && (user.login && d.github && d.github.user.login)) {
+        if (!err && user && user.login && d.github && d.github.user && d.github.user.login == user.login) {
             endpoint = 'https://api.github.com/gists/' + d.github.id;
             method = 'PATCH';
-        } else if (!err && d.github) {
+        } else if (!err && d.github && d.github.id) {
             endpoint = 'https://api.github.com/gists/' + d.github.id + '/forks';
         } else {
             endpoint = 'https://api.github.com/gists';
         }
 
-        authorize(d3.json(endpoint))
+        context.user.signXHR(d3.json(endpoint))
             .on('load', function(data) {
                 callback(null, data);
             })
@@ -5255,7 +5374,7 @@ function save(context, callback) {
     }
 }
 
-function load(id, callback) {
+function load(id, context, callback) {
     d3.json('https://api.github.com/gists/' + id)
         .on('load', onLoad)
         .on('error', onError)
@@ -5265,7 +5384,7 @@ function load(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":1}],53:[function(require,module,exports){
+},{"fs":1}],55:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -5348,7 +5467,7 @@ function fileUrl(parts) {
         '?ref=' + parts.branch;
 }
 
-},{}],54:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -5425,7 +5544,7 @@ function ui(context) {
     return render;
 }
 
-},{"./ui/dnd":55,"./ui/file_bar":56,"./ui/layer_switch":58,"./ui/mode_buttons":60,"./ui/user":63}],55:[function(require,module,exports){
+},{"./ui/dnd":57,"./ui/file_bar":58,"./ui/layer_switch":60,"./ui/mode_buttons":62,"./ui/user":65}],57:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop;
 
 module.exports = function(context) {
@@ -5457,7 +5576,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":49}],56:[function(require,module,exports){
+},{"../lib/readfile.js":25}],58:[function(require,module,exports){
 var share = require('./share'),
     sourcepanel = require('./source.js'),
     saver = require('../core/saver.js');
@@ -5599,7 +5718,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../core/saver.js":42,"./share":61,"./source.js":62}],57:[function(require,module,exports){
+},{"../core/saver.js":45,"./share":63,"./source.js":64}],59:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     readFile = require('../lib/readfile.js');
 
@@ -5660,7 +5779,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":49}],58:[function(require,module,exports){
+},{"../lib/readfile.js":25}],60:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -5709,7 +5828,7 @@ module.exports = function(context) {
 };
 
 
-},{}],59:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -5742,8 +5861,8 @@ module.exports = function(context) {
             context.data.set({map: layerToGeoJSON(context.mapLayer)}, 'map');
         }
 
-        context.dispatch.on('change.map', function(event) {
-            geojsonToLayer(context.data.map, context.mapLayer);
+        context.dispatch.on('change.map', function() {
+            geojsonToLayer(context.data.get('map'), context.mapLayer);
         });
 
         function created(e) {
@@ -5798,7 +5917,7 @@ function bindPopup(l) {
         '</div></div>'));
 }
 
-},{"../lib/custom_hash.js":45,"../lib/popup":46,"../lib/querystring.js":48}],60:[function(require,module,exports){
+},{"../lib/custom_hash.js":48,"../lib/popup":49,"../lib/querystring.js":50}],62:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json');
 
@@ -5842,7 +5961,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":50,"../panel/table":51}],61:[function(require,module,exports){
+},{"../panel/json":52,"../panel/table":53}],63:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -5917,7 +6036,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":52}],62:[function(require,module,exports){
+},{"../source/gist":54}],64:[function(require,module,exports){
 var gist = require('../source/gist'),
     github = require('../source/github'),
     importPanel = require('./import'),
@@ -6065,7 +6184,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../source/gist":52,"../source/github":53,"./import":57,"detect-json-indent":5,"github-file-browser":8}],63:[function(require,module,exports){
+},{"../source/gist":54,"../source/github":55,"./import":59,"detect-json-indent":5,"github-file-browser":8}],65:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
@@ -6113,61 +6232,5 @@ module.exports = function(context) {
     };
 };
 
-},{}],64:[function(require,module,exports){
-var geojsonhint = require('geojsonhint');
-
-module.exports = function(callback) {
-    return function(editor) {
-
-        var err = geojsonhint.hint(editor.getValue());
-        editor.clearGutter('error');
-
-        if (err instanceof Error) {
-            handleError(err.message);
-            return callback({
-                'class': 'icon-circle-blank',
-                title: 'invalid JSON',
-                message: 'invalid JSON'});
-        } else if (err.length) {
-            handleErrors(err);
-            return callback({
-                'class': 'icon-circle-blank',
-                title: 'invalid GeoJSON',
-                message: 'invalid GeoJSON'});
-        } else {
-            var gj = JSON.parse(editor.getValue());
-            try {
-                return callback(null, gj);
-            } catch(e) {
-                return callback({
-                    'class': 'icon-circle-blank',
-                    title: 'invalid GeoJSON',
-                    message: 'invalid GeoJSON'});
-            }
-        }
-
-        function handleError(msg) {
-            var match = msg.match(/line (\d+)/);
-            if (match && match[1]) {
-                editor.clearGutter('error');
-                editor.setGutterMarker(parseInt(match[1], 10) - 1, 'error', makeMarker(msg));
-            }
-        }
-
-        function handleErrors(errors) {
-            editor.clearGutter('error');
-            errors.forEach(function(e) {
-                editor.setGutterMarker(e.line, 'error', makeMarker(e.message));
-            });
-        }
-
-        function makeMarker(msg) {
-            return d3.select(document.createElement('div'))
-                .attr('class', 'error-marker')
-                .attr('message', msg).node();
-        }
-    };
-};
-
-},{"geojsonhint":6}]},{},[52,44])
+},{}]},{},[54,47])
 ;
