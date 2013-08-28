@@ -87,22 +87,17 @@ module.exports = function fileBar(context) {
         context.dispatch.on('change.filebar', onchange);
 
         function onchange(d) {
-            if (d.field === 'github' || d.field === 'meta' || d.field === 'type') {
-                var gh = context.data.get('github'),
-                    type = context.data.get('type');
-                filename.text(gh && gh.id);
-                if (type && gh && sourceUrl(type, gh)) {
-                    link.attr('href', sourceUrl(type, gh))
-                        .classed('hide', false);
-                } else {
-                    link.classed('hide', true);
-                }
-                filetype.attr('class', function() {
-                    if (type == 'github') return 'icon-github';
-                    if (type == 'gist') return 'icon-github-alt';
-                });
-                saveNoun(type == 'github' ? 'Commit' : 'Save');
+            var gh = context.data.get('github'),
+                type = context.data.get('type');
+            filename.text(sourceName(type, gh));
+            if (type && gh && sourceUrl(type, gh)) {
+                link.attr('href', sourceUrl(type, gh))
+                    .classed('hide', false);
+            } else {
+                link.classed('hide', true);
             }
+            filetype.attr('class', sourceIcon(type));
+            saveNoun(type == 'github' ? 'Commit' : 'Save');
             filename.classed('dirty', context.data.dirty);
         }
 
@@ -110,7 +105,20 @@ module.exports = function fileBar(context) {
             d3.keybinding('file_bar')
                 .on('⌘+a', download)
                 .on('⌘+s', saveAction));
+    }
 
+    function sourceIcon(type) {
+        if (type == 'github') return 'icon-github';
+        else if (type == 'gist') return 'icon-github-alt';
+        else return 'icon-file-alt';
+    }
+
+    function sourceName(type, gh) {
+        if (gh && gh.id) {
+            return gh.id;
+        } else {
+            return 'unsaved';
+        }
     }
 
     function sourceUrl(type, gh) {

@@ -49,7 +49,6 @@ function save(context, callback) {
             'Please use a modern browser to enjoy the full featureset of geojson.io');
     }
 
-    var tok = context.user.token();
     context.user.details(onuser);
 
     function onuser(err, user) {

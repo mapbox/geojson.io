@@ -3183,19 +3183,32 @@ module.exports = function(context) {
     var user = {};
 
     user.details = function(callback) {
-        if (context.storage.get('github_token')) {
+        if (!context.storage.get('github_token')) return callback('not logged in');
+        var cached = context.store.get('github_user_details');
+        if (cached.when > (+new Date() - 1000 * 60 * 60)) {
+            callback(null, cached.data);
+        } else {
+            context.store.remove('github_user_details');
+
             d3.json('https://api.github.com/user')
                 .header('Authorization', 'token ' + context.storage.get('github_token'))
                 .on('load', onload)
                 .on('error', onerror)
                 .get();
         }
+
         function onload(user) {
+            context.store.set('github_user_details', {
+                when: +new Date(),
+                data: user
+            });
             context.storage.set('github_user', user);
             callback(null, user);
         }
+
         function onerror() {
             user.logout();
+            context.store.remove('github_user_details');
             callback(new Error('not logged in'));
         }
     };
@@ -3754,7 +3767,6 @@ function save(context, callback) {
             'Please use a modern browser to enjoy the full featureset of geojson.io');
     }
 
-    var tok = context.user.token();
     context.user.details(onuser);
 
     function onuser(err, user) {
@@ -3997,22 +4009,17 @@ module.exports = function fileBar(context) {
         context.dispatch.on('change.filebar', onchange);
 
         function onchange(d) {
-            if (d.field === 'github' || d.field === 'meta' || d.field === 'type') {
-                var gh = context.data.get('github'),
-                    type = context.data.get('type');
-                filename.text(gh && gh.id);
-                if (type && gh && sourceUrl(type, gh)) {
-                    link.attr('href', sourceUrl(type, gh))
-                        .classed('hide', false);
-                } else {
-                    link.classed('hide', true);
-                }
-                filetype.attr('class', function() {
-                    if (type == 'github') return 'icon-github';
-                    if (type == 'gist') return 'icon-github-alt';
-                });
-                saveNoun(type == 'github' ? 'Commit' : 'Save');
+            var gh = context.data.get('github'),
+                type = context.data.get('type');
+            filename.text(sourceName(type, gh));
+            if (type && gh && sourceUrl(type, gh)) {
+                link.attr('href', sourceUrl(type, gh))
+                    .classed('hide', false);
+            } else {
+                link.classed('hide', true);
             }
+            filetype.attr('class', sourceIcon(type));
+            saveNoun(type == 'github' ? 'Commit' : 'Save');
             filename.classed('dirty', context.data.dirty);
         }
 
@@ -4020,7 +4027,20 @@ module.exports = function fileBar(context) {
             d3.keybinding('file_bar')
                 .on('⌘+a', download)
                 .on('⌘+s', saveAction));
+    }
 
+    function sourceIcon(type) {
+        if (type == 'github') return 'icon-github';
+        else if (type == 'gist') return 'icon-github-alt';
+        else return 'icon-file-alt';
+    }
+
+    function sourceName(type, gh) {
+        if (gh && gh.id) {
+            return gh.id;
+        } else {
+            return 'unsaved';
+        }
     }
 
     function sourceUrl(type, gh) {
