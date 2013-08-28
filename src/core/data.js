@@ -5,6 +5,7 @@ module.exports = function(context) {
             type: 'FeatureCollection',
             features: []
         },
+        github: null,
         meta: null,
         type: 'local'
     };
@@ -21,6 +22,10 @@ module.exports = function(context) {
 
     data.get = function(k) {
         return data[k];
+    };
+
+    data.all = function() {
+        return data;
     };
 
     return data;

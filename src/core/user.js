@@ -19,7 +19,13 @@ module.exports = function(context) {
         }
     };
 
+    user.token = function(callback) {
+        return context.storage.get('github_user');
+    };
+
     user.logout = function() {
         context.storage.remove('github_token');
     };
+
+    return user;
 };

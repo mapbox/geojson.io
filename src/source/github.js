@@ -1,9 +1,8 @@
 var source = require('../source.js');
 
-module.exports.saveAsGitHub = saveAsGitHub;
-module.exports.loadGitHub = loadGitHub;
-module.exports.loadGitHubRaw = loadGitHubRaw;
-module.exports.urlHash = urlHash;
+module.exports.save = save;
+module.exports.load = load;
+module.exports.loadRaw = loadRaw;
 
 function authorize(xhr) {
     return localStorage.github_token ?
@@ -15,11 +14,10 @@ function githubFileUrl() {
     var pts = parseGitHubId(source().id);
 
     return 'https://api.github.com/repos/' + pts.user +
-            '/' + pts.repo +
-            '/contents/' + pts.file + '?ref=' + pts.branch;
+            '/' + pts.repo + '/contents/' + pts.file + '?ref=' + pts.branch;
 }
 
-function saveAsGitHub(content, message, callback) {
+function save(content, message, callback) {
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
             'Please use a modern browser to enjoy the full featureset of geojson.io');
@@ -91,18 +89,4 @@ function loadGitHubRaw(id, callback) {
         callback(null, file);
     }
     function onError(err) { callback(err, null); }
-}
-
-function urlHash(d) {
-    var prefix = '';
-
-    if (d.parents && d.parents.length) {
-        prefix = d.parents.map(function(p) {
-            return p.path;
-        }).join('/') + '/';
-    }
-
-    return {
-        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + prefix + d.path
-    };
 }

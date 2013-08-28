@@ -1,12 +1,9 @@
-var share = require('./share');
+var share = require('./share'),
+    saver = require('../core/saver.js');
 
 module.exports = function fileBar(context) {
 
-    var event = d3.dispatch('source', 'save', 'share', 'download', 'share');
-
     function bar(selection) {
-
-        // context.on('sourcechange', onSource);
 
         var name = selection.append('div')
             .attr('class', 'name');
@@ -24,30 +21,30 @@ module.exports = function fileBar(context) {
             .classed('hide', true);
 
         var actions = [{
-                title: 'Save',
-                icon: 'icon-save',
-                action: function() {
-                    event.save();
-                }
-            }, {
-                title: 'Open',
-                icon: 'icon-folder-open-alt',
-                action: function() {
-                    event.source();
-                }
-            }, {
-                title: 'Download',
-                icon: 'icon-download',
-                action: function() {
-                    download();
-                }
-            }, {
-                title: 'Share',
-                icon: 'icon-share-alt',
-                action: function() {
-                    context.container.call(share(context));
-                }
-            }];
+            title: 'Save',
+            icon: 'icon-save',
+            action: function() {
+                saver(context);
+            }
+        }, {
+            title: 'Open',
+            icon: 'icon-folder-open-alt',
+            action: function() {
+                open();
+            }
+        }, {
+            title: 'Download',
+            icon: 'icon-download',
+            action: function() {
+                download();
+            }
+        }, {
+            title: 'Share',
+            icon: 'icon-share-alt',
+            action: function() {
+                context.container.call(share(context));
+            }
+        }];
 
         function download() {
             if (d3.event) d3.event.preventDefault();
@@ -78,38 +75,34 @@ module.exports = function fileBar(context) {
                 return d.title;
             });
 
-        function sourceUrl(d) {
-            switch(d.type) {
-                case 'gist':
-                    return d.data.html_url;
-                case 'github':
-                    return 'https://github.com/' + d.data.id;
-            }
-        }
-
         function saveNoun(_) {
             buttons.filter(function(b) {
                 return b.title === 'Save';
             }).select('span.title').text(_);
         }
 
-        function onSource(d) {
-            filename.text(d.name);
-            filetype.attr('class', function() {
-                if (d.type == 'github') return 'icon-github';
-                if (d.type == 'gist') return 'icon-github-alt';
-            });
+        context.dispatch.on('change.filebar', onchange);
 
-            saveNoun(d.type == 'github' ? 'Commit' : 'Save');
-
-            if (sourceUrl(d)) {
-                link
-                    .attr('href', sourceUrl(d))
-                    .classed('hide', false);
-            } else {
-                link
-                    .classed('hide', true);
+        function onchange(d) {
+            if (d.field === 'github' || d.field === 'meta' || d.field === 'type') {
+                var gh = context.data.get('github'),
+                    type = context.data.get('type');
+                filename.text(gh && gh.id);
+                // if (sourceUrl(d)) {
+                //     link
+                //         .attr('href', sourceUrl(d))
+                //         .classed('hide', false);
+                // } else {
+                //     link
+                //         .classed('hide', true);
+                // }
+                filetype.attr('class', function() {
+                    if (type == 'github') return 'icon-github';
+                    if (type == 'gist') return 'icon-github-alt';
+                });
+                saveNoun(type == 'github' ? 'Commit' : 'Save');
             }
+
         }
 
         d3.select(document).call(
@@ -118,5 +111,5 @@ module.exports = function fileBar(context) {
 
     }
 
-    return d3.rebind(bar, event, 'on');
-}
+    return bar;
+};

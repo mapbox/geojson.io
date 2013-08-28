@@ -2,9 +2,9 @@ var source = require('../source.js');
 var fs = require('fs');
 var tmpl = fs.readFileSync('data/share.html', 'utf8');
 
-module.exports.saveAsGist = saveAsGist;
+module.exports.save = save;
 module.exports.saveBlocks = saveBlocks;
-module.exports.loadGist = loadGist;
+module.exports.load = load;
 
 function loggedin() {
     return !!localStorage.github_token;
@@ -40,48 +40,51 @@ function saveBlocks(content, callback) {
         }));
 }
 
-function saveAsGist(content, callback) {
+function save(context, callback) {
+
+    var d = context.data.all();
+
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
             'Please use a modern browser to enjoy the full featureset of geojson.io');
     }
 
-    var user = localStorage.github_user ?
-        JSON.parse(localStorage.github_user) : {};
+    var tok = context.user.token();
+    context.user.details(onuser);
 
-    var endpoint,
-        method = 'POST';
+    function onuser(err, user) {
+        var endpoint,
+            method = 'POST';
 
-    if (loggedin() && (source() && source().id)) {
-        if (user && source().login == user.login) {
-            endpoint = 'https://api.github.com/gists/' + source().id;
+        if (!err && (user.login && d.github.user.login)) {
+            endpoint = 'https://api.github.com/gists/' + d.github.id;
             method = 'PATCH';
+        } else if (!err) {
+            endpoint = 'https://api.github.com/gists/' + d.github.id + '/forks';
         } else {
-            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
+            endpoint = 'https://api.github.com/gists';
         }
-    } else {
-        endpoint = 'https://api.github.com/gists';
-    }
 
-    authorize(d3.json(endpoint))
-        .on('load', function(data) {
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-        })
-        .send(method, JSON.stringify({
-            description: 'via:geojson.io',
-            public: true,
-            files: {
-                'map.geojson': {
-                    content: content
+        authorize(d3.json(endpoint))
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(err) {
+                callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+            })
+            .send(method, JSON.stringify({
+                description: 'via:geojson.io',
+                public: true,
+                files: {
+                    'map.geojson': {
+                        content: JSON.stringify(d.map)
+                    }
                 }
-            }
-        }));
+            }));
+    }
 }
 
-function loadGist(id, callback) {
+function load(id, callback) {
     d3.json('https://api.github.com/gists/' + id)
         .on('load', onLoad)
         .on('error', onError)

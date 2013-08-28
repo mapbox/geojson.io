@@ -3,6 +3,7 @@ var ui = require('./ui'),
     data = require('./core/data'),
     router = require('./core/router'),
     loader = require('./core/loader'),
+    user = require('./core/user'),
     store = require('store');
 
 function geojsonIO() {
@@ -19,6 +20,8 @@ function geojsonIO() {
     context.data = data(context);
 
     context.router = router(context);
+
+    context.user = user(context);
 
     context.dispatch.on('route', loader(context));
 

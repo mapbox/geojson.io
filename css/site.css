@@ -559,12 +559,17 @@ textarea.full-width {
     opacity:0.6;
 }
 
+.map.saving:after,
 .map.loading:after {
-    content: 'loading';
     font-size: 20px;
     position: absolute;
     top: 50%;
     left: 50%;
     text-align: center;
     font-weight: bold;
+    content: 'loading';
+}
+
+.map.saving:after {
+    content: 'saving';
 }

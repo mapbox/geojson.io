@@ -8,15 +8,16 @@ module.exports = function(context) {
     var load = {
         gist: function(q) {
             context.container.select('.map').classed('loading', true);
-            return gist.loadGist(q.id.split('/')[1], gistSuccess);
+            return gist.load(q.id.split('/')[1], gistSuccess);
         }
     };
 
     function gistSuccess(err, d) {
         context.container.select('.map').classed('loading', false);
         if (err) return;
-        context.data.set('meta', d)
+        context.data
             .set('type', 'gist')
+            .set('github', d)
             .set('map', mapFile(d));
     }
 
