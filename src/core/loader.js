@@ -10,7 +10,7 @@ module.exports = function(context) {
         gist: function(q) {
             var id = q.id.split(':')[1];
             context.container.select('.map').classed('loading', true);
-            gist.load(id, function(err, d) {
+            gist.load(id, context, function(err, d) {
                 return gistSuccess(err, d);
             });
         },
@@ -25,8 +25,8 @@ module.exports = function(context) {
 
             context.container.select('.map').classed('loading', true);
 
-            github.load(parts, function(err, meta) {
-                github.loadRaw(parts, function(err, raw) {
+            github.load(parts, context, function(err, meta) {
+                github.loadRaw(parts, context, function(err, raw) {
                     gitHubSuccess(err, meta, raw);
                 });
             });

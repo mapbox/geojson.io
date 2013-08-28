@@ -23,11 +23,13 @@ module.exports = function(context) {
             title: 'GitHub',
             alt: 'GeoJSON files in GitHub Repositories',
             icon: 'icon-github',
+            authenticated: true,
             action: clickGitHub
         }, {
             title: 'Gist',
             alt: 'GeoJSON files in GitHub Gists',
             icon: 'icon-github-alt',
+            authenticated: true,
             action: clickGist
         }];
 
@@ -42,12 +44,20 @@ module.exports = function(context) {
             .enter()
             .append('div')
             .attr('class', 'import-source col4')
+            .classed('deemphasize', function(d) {
+                return d.authenticated && !context.user.token();
+            })
             .append('div')
             .attr('class', 'pad1 center clickable')
             .attr('title', function(d) { return d.alt; })
             .on('click', clickSource);
 
         function clickSource(d) {
+
+            if (d.authenticated && !context.user.token()) {
+                return alert('Log in to load GitHub files and Gists');
+            }
+
             var that = this;
             $sources.classed('active', function() {
                 return that === this;

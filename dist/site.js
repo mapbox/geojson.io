@@ -4451,7 +4451,7 @@ module.exports = function(context) {
         gist: function(q) {
             var id = q.id.split(':')[1];
             context.container.select('.map').classed('loading', true);
-            gist.load(id, function(err, d) {
+            gist.load(id, context, function(err, d) {
                 return gistSuccess(err, d);
             });
         },
@@ -4466,8 +4466,8 @@ module.exports = function(context) {
 
             context.container.select('.map').classed('loading', true);
 
-            github.load(parts, function(err, meta) {
-                github.loadRaw(parts, function(err, raw) {
+            github.load(parts, context, function(err, meta) {
+                github.loadRaw(parts, context, function(err, raw) {
                     gitHubSuccess(err, meta, raw);
                 });
             });
@@ -4587,6 +4587,10 @@ module.exports = function(context) {
         gist: function() {
             context.container.select('.map').classed('saving', true);
             return gist.save(context, gistSuccess);
+        },
+        github: function() {
+            context.container.select('.map').classed('saving', true);
+            return github.save(context, gitHubSuccess);
         }
     };
 
@@ -4596,6 +4600,17 @@ module.exports = function(context) {
         context.data
             .set({
                 type: 'gist',
+                github: d,
+                dirty: false
+            });
+    }
+
+    function gitHubSuccess(err, d) {
+        context.container.select('.map').classed('saving', false);
+        if (err) return;
+        context.data
+            .set({
+                type: 'github',
                 github: d,
                 dirty: false
             });
@@ -4643,12 +4658,17 @@ module.exports = function(context) {
         }
     };
 
+    user.signXHR = function(xhr) {
+        return user.token() ?
+            xhr.header('Authorization', 'token ' + user.token()) : xhr;
+    };
+
     user.authenticate = function() {
         window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
     };
 
     user.token = function(callback) {
-        return context.storage.get('github_user');
+        return context.storage.get('github_token');
     };
 
     user.logout = function() {
@@ -5250,20 +5270,8 @@ module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
 
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
 
-function githubFileUrl() {
-    var pts = parseGitHubId(source().id);
-
-    return 'https://api.github.com/repos/' + pts.user +
-            '/' + pts.repo + '/contents/' + pts.file + '?ref=' + pts.branch;
-}
-
-function save(content, message, callback) {
+function save(content, context, message, callback) {
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
             'Please use a modern browser to enjoy the full featureset of geojson.io');
@@ -5280,7 +5288,7 @@ function save(content, message, callback) {
         if (err) {
             return alert('Failed to load file before saving');
         }
-        authorize(d3.json(githubFileUrl()))
+        context.user.signXHR(d3.json(githubFileUrl()))
             .on('load', function(data) {
                 callback(null, data);
             })
@@ -5307,8 +5315,8 @@ function parseGitHubId(id) {
     };
 }
 
-function load(parts, callback) {
-    authorize(d3.json(fileUrl(parts)))
+function load(parts, context, callback) {
+    context.user.signXHR(d3.json(fileUrl(parts)))
         .on('load', onLoad)
         .on('error', onError)
         .get();
@@ -5319,8 +5327,8 @@ function load(parts, callback) {
     function onError(err) { callback(err, null); }
 }
 
-function loadRaw(parts, callback) {
-    authorize(d3.text(fileUrl(parts)))
+function loadRaw(parts, context, callback) {
+    context.user.signXHR(d3.text(fileUrl(parts)))
         .on('load', onLoad)
         .on('error', onError)
         .header('Accept', 'application/vnd.github.raw')
@@ -5935,11 +5943,13 @@ module.exports = function(context) {
             title: 'GitHub',
             alt: 'GeoJSON files in GitHub Repositories',
             icon: 'icon-github',
+            authenticated: true,
             action: clickGitHub
         }, {
             title: 'Gist',
             alt: 'GeoJSON files in GitHub Gists',
             icon: 'icon-github-alt',
+            authenticated: true,
             action: clickGist
         }];
 
@@ -5954,12 +5964,20 @@ module.exports = function(context) {
             .enter()
             .append('div')
             .attr('class', 'import-source col4')
+            .classed('deemphasize', function(d) {
+                return d.authenticated && !context.user.token();
+            })
             .append('div')
             .attr('class', 'pad1 center clickable')
             .attr('title', function(d) { return d.alt; })
             .on('click', clickSource);
 
         function clickSource(d) {
+
+            if (d.authenticated && !context.user.token()) {
+                return alert('Log in to load GitHub files and Gists');
+            }
+
             var that = this;
             $sources.classed('active', function() {
                 return that === this;

@@ -9,6 +9,10 @@ module.exports = function(context) {
         gist: function() {
             context.container.select('.map').classed('saving', true);
             return gist.save(context, gistSuccess);
+        },
+        github: function() {
+            context.container.select('.map').classed('saving', true);
+            return github.save(context, gitHubSuccess);
         }
     };
 
@@ -18,6 +22,17 @@ module.exports = function(context) {
         context.data
             .set({
                 type: 'gist',
+                github: d,
+                dirty: false
+            });
+    }
+
+    function gitHubSuccess(err, d) {
+        context.container.select('.map').classed('saving', false);
+        if (err) return;
+        context.data
+            .set({
+                type: 'github',
                 github: d,
                 dirty: false
             });

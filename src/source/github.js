@@ -2,20 +2,8 @@ module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
 
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
 
-function githubFileUrl() {
-    var pts = parseGitHubId(source().id);
-
-    return 'https://api.github.com/repos/' + pts.user +
-            '/' + pts.repo + '/contents/' + pts.file + '?ref=' + pts.branch;
-}
-
-function save(content, message, callback) {
+function save(content, context, message, callback) {
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
             'Please use a modern browser to enjoy the full featureset of geojson.io');
@@ -32,7 +20,7 @@ function save(content, message, callback) {
         if (err) {
             return alert('Failed to load file before saving');
         }
-        authorize(d3.json(githubFileUrl()))
+        context.user.signXHR(d3.json(githubFileUrl()))
             .on('load', function(data) {
                 callback(null, data);
             })
@@ -59,8 +47,8 @@ function parseGitHubId(id) {
     };
 }
 
-function load(parts, callback) {
-    authorize(d3.json(fileUrl(parts)))
+function load(parts, context, callback) {
+    context.user.signXHR(d3.json(fileUrl(parts)))
         .on('load', onLoad)
         .on('error', onError)
         .get();
@@ -71,8 +59,8 @@ function load(parts, callback) {
     function onError(err) { callback(err, null); }
 }
 
-function loadRaw(parts, callback) {
-    authorize(d3.text(fileUrl(parts)))
+function loadRaw(parts, context, callback) {
+    context.user.signXHR(d3.text(fileUrl(parts)))
         .on('load', onLoad)
         .on('error', onError)
         .header('Accept', 'application/vnd.github.raw')

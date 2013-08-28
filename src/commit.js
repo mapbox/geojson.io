@@ -11,7 +11,7 @@ function commit(container, contents, callback) {
     var form = wrap.append('form')
         .on('submit', function() {
             d3.event.preventDefault();
-            github.saveAsGitHub(contents,
+            github.save(contents,
                 message.property('value'), callback);
         });
 

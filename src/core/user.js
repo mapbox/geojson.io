@@ -34,12 +34,17 @@ module.exports = function(context) {
         }
     };
 
+    user.signXHR = function(xhr) {
+        return user.token() ?
+            xhr.header('Authorization', 'token ' + user.token()) : xhr;
+    };
+
     user.authenticate = function() {
         window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
     };
 
     user.token = function(callback) {
-        return context.storage.get('github_user');
+        return context.storage.get('github_token');
     };
 
     user.logout = function() {
