@@ -451,6 +451,10 @@ textarea.full-width {
     color:red;
 }
 
+.file-bar .dirty {
+    color:#999;
+}
+
 .button-wrap {
     padding:5px 0;
     display:inline-block;

@@ -5,6 +5,7 @@ module.exports = function(context) {
             type: 'FeatureCollection',
             features: []
         },
+        dirty: false,
         github: null,
         meta: null,
         type: 'local'
@@ -12,6 +13,7 @@ module.exports = function(context) {
 
     data.set = function(k, v, source) {
         data[k] = v;
+        if (k !== 'dirty') data.dirty = true;
         context.dispatch.change({
             field: k,
             value: v,

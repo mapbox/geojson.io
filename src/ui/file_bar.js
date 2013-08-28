@@ -103,6 +103,7 @@ module.exports = function fileBar(context) {
                 });
                 saveNoun(type == 'github' ? 'Commit' : 'Save');
             }
+            filename.classed('dirty', context.data.dirty);
         }
 
         d3.select(document).call(

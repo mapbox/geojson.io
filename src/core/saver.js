@@ -17,7 +17,8 @@ module.exports = function(context) {
         if (err) return;
         context.data
             .set('type', 'gist')
-            .set('github', d);
+            .set('github', d)
+            .set('dirty', false);
     }
 
     var type = context.data.get('type');

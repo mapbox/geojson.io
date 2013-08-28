@@ -18,7 +18,8 @@ module.exports = function(context) {
         context.data
             .set('type', 'gist')
             .set('github', d)
-            .set('map', mapFile(d));
+            .set('map', mapFile(d))
+            .set('dirty', false);
     }
 
     return function(query) {

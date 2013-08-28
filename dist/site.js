@@ -1902,7 +1902,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":13,"./lib/topojson/clockwise":15,"./lib/topojson/filter":17,"./lib/topojson/prune":21,"./lib/topojson/simplify":22,"./lib/topojson/topology":25,"fs":1}],13:[function(require,module,exports){
+},{"./lib/topojson/bind":13,"./lib/topojson/clockwise":15,"./lib/topojson/filter":17,"./lib/topojson/prune":23,"./lib/topojson/simplify":24,"./lib/topojson/topology":27,"fs":1}],13:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1932,7 +1932,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":26}],14:[function(require,module,exports){
+},{"../../":"g070js","./type":28}],14:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -2039,13 +2039,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":16,"./type":26}],16:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":16,"./type":28}],16:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":14,"./spherical":23}],17:[function(require,module,exports){
+},{"./cartesian":14,"./spherical":25}],17:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -2115,7 +2115,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":15,"./coordinate-systems":16,"./prune":21,"./type":26}],18:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":15,"./coordinate-systems":16,"./prune":23,"./type":28}],18:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -2247,6 +2247,60 @@ function compare(a, b) {
 }
 
 },{}],21:[function(require,module,exports){
+var validate = require('../validate');
+
+CodeMirror.keyMap.tabSpace = {
+    Tab: function(cm) {
+        var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
+        cm.replaceSelection(spaces, 'end', '+input');
+    },
+    fallthrough: ['default']
+};
+
+module.exports = function(context) {
+
+    function render(selection) {
+        var textarea = selection
+            .html('')
+            .append('textarea');
+
+        var editor = CodeMirror.fromTextArea(textarea.node(), {
+            mode: 'application/json',
+            matchBrackets: true,
+            tabSize: 2,
+            gutters: ['error'],
+            theme: 'eclipse',
+            autofocus: (window === window.top),
+            keyMap: 'tabSpace',
+            lineNumbers: true
+        });
+
+        // shush the callback-back
+        editor.on('change', validate(changeValidated));
+
+        function changeValidated(err, data) {
+            if (!err) context.data.set('map', data, 'json');
+        }
+
+        context.dispatch.on('change.json', function(event) {
+            if (event.field === 'map' && event.source !== 'json') {
+                editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+            }
+        });
+
+        editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+    }
+
+    render.off = function() {
+        context.dispatch.on('change.json', null);
+    };
+
+    return render;
+};
+
+},{"../validate":50}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],23:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -2305,7 +2359,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":26}],22:[function(require,module,exports){
+},{"../../":"g070js","./type":28}],24:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -2437,7 +2491,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":16,"./min-heap":20}],23:[function(require,module,exports){
+},{"./coordinate-systems":16,"./min-heap":20}],25:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -2519,7 +2573,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -2569,7 +2623,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":26}],25:[function(require,module,exports){
+},{"./type":28}],27:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -2911,7 +2965,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":16,"./hashtable":19,"./stitch-poles":24,"./type":26}],26:[function(require,module,exports){
+},{"./coordinate-systems":16,"./hashtable":19,"./stitch-poles":26,"./type":28}],28:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -3005,93 +3059,6 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],27:[function(require,module,exports){
-var popup = require('../lib/popup');
-
-module.exports = function(context) {
-
-    function map(selection) {
-        context.map = L.mapbox.map(selection.node())
-            .setView([20, 0], 2)
-            .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt'));
-
-        context.mapLayer = L.featureGroup().addTo(context.map);
-
-        context.drawControl = new L.Control.Draw({
-            edit: { featureGroup: context.mapLayer },
-            draw: { circle: false }
-        }).addTo(context.map);
-
-        context.map
-            .on('draw:edited', update)
-            .on('draw:deleted', update)
-            .on('draw:created', created)
-            .on('popupopen', popup(context));
-
-        function update() {
-            geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
-            context.data.set('map', layerToGeoJSON(context.mapLayer), 'map');
-        }
-
-        context.dispatch.on('change.map', function(event) {
-            if (event.field === 'map' && event.source !== 'map') {
-                geojsonToLayer(event.value, context.mapLayer);
-            }
-        });
-
-        function created(e) {
-            context.mapLayer.addLayer(e.layer);
-            update();
-        }
-    }
-
-    function layerToGeoJSON(layer) {
-        var features = [];
-        layer.eachLayer(collect);
-        function collect(l) { if ('toGeoJSON' in l) features.push(l.toGeoJSON()); }
-        return {
-            type: 'FeatureCollection',
-            features: features
-        };
-    }
-
-    return map;
-};
-
-function geojsonToLayer(geojson, layer) {
-    layer.clearLayers();
-    L.geoJson(geojson).eachLayer(add);
-    function add(l) {
-        bindPopup(l).addTo(layer);
-    }
-}
-
-function bindPopup(l) {
-
-    var properties = l.toGeoJSON().properties, table = '';
-
-    if (!Object.keys(properties).length) properties = { '': '' };
-
-    for (var key in properties) {
-        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
-            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
-    }
-
-    l.bindPopup(L.popup({
-        maxWidth: 500,
-        maxHeight: 400
-    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
-        '<div class="clearfix col12 drop">' +
-            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
-            '<button class="cancel">cancel</button></div>' +
-            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
-        '</div></div>'));
-
-    return l;
-}
-
-},{"../lib/popup":36}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
 },{}],29:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
@@ -3114,6 +3081,7 @@ module.exports = function(context) {
             type: 'FeatureCollection',
             features: []
         },
+        dirty: false,
         github: null,
         meta: null,
         type: 'local'
@@ -3121,6 +3089,7 @@ module.exports = function(context) {
 
     data.set = function(k, v, source) {
         data[k] = v;
+        if (k !== 'dirty') data.dirty = true;
         context.dispatch.change({
             field: k,
             value: v,
@@ -3161,7 +3130,8 @@ module.exports = function(context) {
         context.data
             .set('type', 'gist')
             .set('github', d)
-            .set('map', mapFile(d));
+            .set('map', mapFile(d))
+            .set('dirty', false);
     }
 
     return function(query) {
@@ -3177,7 +3147,7 @@ function mapFile(gist) {
     for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
 }
 
-},{"../source/gist.js":43,"spinner-browserify":7}],32:[function(require,module,exports){
+},{"../source/gist.js":42,"spinner-browserify":7}],32:[function(require,module,exports){
 var qs = require('../lib/querystring');
 
 module.exports = function(context) {
@@ -3230,7 +3200,8 @@ module.exports = function(context) {
         if (err) return;
         context.data
             .set('type', 'gist')
-            .set('github', d);
+            .set('github', d)
+            .set('dirty', false);
     }
 
     var type = context.data.get('type');
@@ -3238,7 +3209,7 @@ module.exports = function(context) {
     else save.gist();
 };
 
-},{"../source/gist.js":43,"spinner-browserify":7}],34:[function(require,module,exports){
+},{"../source/gist.js":42,"spinner-browserify":7}],34:[function(require,module,exports){
 module.exports = function(context) {
     var user = {};
 
@@ -3439,7 +3410,7 @@ function hashChange() {
 }
 */
 
-},{"./core/data":30,"./core/loader":31,"./core/router":32,"./core/user":34,"./ui":44,"./ui/map":27,"store":10}],36:[function(require,module,exports){
+},{"./core/data":30,"./core/loader":31,"./core/router":32,"./core/user":34,"./ui":43,"./ui/map":47,"store":10}],36:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -3586,58 +3557,6 @@ function readFile(f, context, callback) {
 }
 
 },{"togeojson":11,"topojson":"g070js"}],39:[function(require,module,exports){
-var validate = require('../validate');
-
-CodeMirror.keyMap.tabSpace = {
-    Tab: function(cm) {
-        var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
-        cm.replaceSelection(spaces, 'end', '+input');
-    },
-    fallthrough: ['default']
-};
-
-module.exports = function(context) {
-
-    function render(selection) {
-        var textarea = selection
-            .html('')
-            .append('textarea');
-
-        var editor = CodeMirror.fromTextArea(textarea.node(), {
-            mode: 'application/json',
-            matchBrackets: true,
-            tabSize: 2,
-            gutters: ['error'],
-            theme: 'eclipse',
-            autofocus: (window === window.top),
-            keyMap: 'tabSpace',
-            lineNumbers: true
-        });
-
-        // shush the callback-back
-        editor.on('change', validate(changeValidated));
-
-        function changeValidated(err, data) {
-            if (!err) context.data.set('map', data, 'json');
-        }
-
-        context.dispatch.on('change.json', function(event) {
-            if (event.field === 'map' && event.source !== 'json') {
-                editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
-            }
-        });
-
-        editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
-    }
-
-    render.off = function() {
-        context.dispatch.on('change.json', null);
-    };
-
-    return render;
-};
-
-},{"../validate":50}],40:[function(require,module,exports){
 var config = require('../config')(location.hostname);
 
 module.exports = loginPanel;
@@ -3702,7 +3621,7 @@ loginPanel.init = function(container) {
     }
 };
 
-},{"../config":29}],41:[function(require,module,exports){
+},{"../config":29}],40:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3);
 
 module.exports = function(context) {
@@ -3759,7 +3678,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"d3-metatable":4}],42:[function(require,module,exports){
+},{"d3-metatable":4}],41:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -3796,7 +3715,7 @@ module.exports = function source() {
     }
 };
 
-},{}],43:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 var source = require('../source.js');
 var fs = require('fs');
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
@@ -3893,7 +3812,7 @@ function load(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"../source.js":42,"fs":1}],44:[function(require,module,exports){
+},{"../source.js":41,"fs":1}],43:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -3964,7 +3883,7 @@ function ui(context) {
     return render;
 }
 
-},{"./ui/dnd":45,"./ui/file_bar":46,"./ui/layer_switch":47,"./ui/mode_buttons":48}],45:[function(require,module,exports){
+},{"./ui/dnd":44,"./ui/file_bar":45,"./ui/layer_switch":46,"./ui/mode_buttons":48}],44:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop;
 
 module.exports = function(context) {
@@ -3995,7 +3914,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":38}],46:[function(require,module,exports){
+},{"../lib/readfile.js":38}],45:[function(require,module,exports){
 var share = require('./share'),
     saver = require('../core/saver.js');
 
@@ -4101,6 +4020,7 @@ module.exports = function fileBar(context) {
                 });
                 saveNoun(type == 'github' ? 'Commit' : 'Save');
             }
+            filename.classed('dirty', context.data.dirty);
         }
 
         d3.select(document).call(
@@ -4119,7 +4039,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../core/saver.js":33,"./share":49}],47:[function(require,module,exports){
+},{"../core/saver.js":33,"./share":49}],46:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -4168,7 +4088,92 @@ module.exports = function(context) {
 };
 
 
-},{}],48:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
+var popup = require('../lib/popup');
+
+module.exports = function(context) {
+
+    function map(selection) {
+        context.map = L.mapbox.map(selection.node())
+            .setView([20, 0], 2)
+            .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt'));
+
+        context.mapLayer = L.featureGroup().addTo(context.map);
+
+        context.drawControl = new L.Control.Draw({
+            edit: { featureGroup: context.mapLayer },
+            draw: { circle: false }
+        }).addTo(context.map);
+
+        context.map
+            .on('draw:edited', update)
+            .on('draw:deleted', update)
+            .on('draw:created', created)
+            .on('popupopen', popup(context));
+
+        function update() {
+            geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
+            context.data.set('map', layerToGeoJSON(context.mapLayer), 'map');
+        }
+
+        context.dispatch.on('change.map', function(event) {
+            if (event.field === 'map' && event.source !== 'map') {
+                geojsonToLayer(event.value, context.mapLayer);
+            }
+        });
+
+        function created(e) {
+            context.mapLayer.addLayer(e.layer);
+            update();
+        }
+    }
+
+    function layerToGeoJSON(layer) {
+        var features = [];
+        layer.eachLayer(collect);
+        function collect(l) { if ('toGeoJSON' in l) features.push(l.toGeoJSON()); }
+        return {
+            type: 'FeatureCollection',
+            features: features
+        };
+    }
+
+    return map;
+};
+
+function geojsonToLayer(geojson, layer) {
+    layer.clearLayers();
+    L.geoJson(geojson).eachLayer(add);
+    function add(l) {
+        bindPopup(l).addTo(layer);
+    }
+}
+
+function bindPopup(l) {
+
+    var properties = l.toGeoJSON().properties, table = '';
+
+    if (!Object.keys(properties).length) properties = { '': '' };
+
+    for (var key in properties) {
+        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
+            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
+    }
+
+    l.bindPopup(L.popup({
+        maxWidth: 500,
+        maxHeight: 400
+    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
+        '<div class="clearfix col12 drop">' +
+            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
+            '<button class="cancel">cancel</button></div>' +
+            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
+        '</div></div>'));
+
+    return l;
+}
+
+},{"../lib/popup":36}],48:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     login = require('../panel/login');
@@ -4213,7 +4218,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":39,"../panel/login":40,"../panel/table":41}],49:[function(require,module,exports){
+},{"../panel/json":21,"../panel/login":39,"../panel/table":40}],49:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -4288,7 +4293,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":43}],50:[function(require,module,exports){
+},{"../source/gist":42}],50:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -4344,5 +4349,5 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":5}]},{},[43,35])
+},{"geojsonhint":5}]},{},[42,35])
 ;

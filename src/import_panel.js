@@ -1,42 +1,6 @@
 var gist = require('./source/gist'),
     progressChart = require('./lib/progress_chart'),
-    detectIndentationStyle = require('detect-json-indent'),
     importSupport = !!(window.FileReader);
-
-module.exports.importPanel = importPanel;
-module.exports.bindBody = bindBody;
-
-function over() {
-    d3.event.stopPropagation();
-    d3.event.preventDefault();
-    d3.event.dataTransfer.dropEffect = 'copy';
-    d3.select('body').classed('dragover', true);
-}
-
-function exit() {
-    d3.event.stopPropagation();
-    d3.event.preventDefault();
-    d3.event.dataTransfer.dropEffect = 'copy';
-    d3.select('body').classed('dragover', false);
-}
-
-function bindBody(updates) {
-    if (importSupport) {
-        d3.select('body')
-            .attr('dropzone', 'copy')
-            .on('drop.localgpx', function() {
-                d3.event.stopPropagation();
-                d3.event.preventDefault();
-                d3.select('body').classed('dragover', false);
-                var f = d3.event.dataTransfer.files[0];
-                readFile(f, 'drag', updates);
-            })
-            .on('dragenter.localgpx', over)
-            .on('dragleave.localgpx', exit)
-            .on('dragover.localgpx', over);
-    }
-}
-
 
 function importPanel(container, updates) {
     container.html('');
