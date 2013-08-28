@@ -27,6 +27,11 @@
 	background-repeat: no-repeat;
 }
 
+.leaflet-retina .leaflet-draw-toolbar a {
+	background-image: url('images/spritesheet-2x.png');
+	background-size: 210px 30px;
+}
+
 .leaflet-draw a {
 	display: block;
 	text-align: center;

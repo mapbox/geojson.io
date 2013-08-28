@@ -1,5 +1,6 @@
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
+    dnd = require('./ui/dnd'),
     layer_switch = require('./ui/layer_switch');
 
 module.exports = ui;
@@ -60,6 +61,8 @@ function ui(context) {
             .call(file_bar(context));
 
         context.container = container;
+
+        dnd(context);
     }
 
     return render;

@@ -560,6 +560,7 @@ textarea.full-width {
 }
 
 .map.saving:after,
+body.dragover:after,
 .map.loading:after {
     font-size: 20px;
     position: absolute;
@@ -572,4 +573,8 @@ textarea.full-width {
 
 .map.saving:after {
     content: 'saving';
+}
+
+body.dragover:after {
+    content: 'drop files to import';
 }

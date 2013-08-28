@@ -15,8 +15,12 @@ module.exports = function(context) {
     function gistSuccess(err, d) {
         context.container.select('.map').classed('saving', false);
         if (err) return;
+        context.data
+            .set('type', 'gist')
+            .set('github', d);
     }
 
     var type = context.data.get('type');
     if (save[type]) save[type]();
+    else save.gist();
 };

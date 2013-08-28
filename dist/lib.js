@@ -1188,6 +1188,7 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 
 	options: {
 		allowIntersection: true,
+		repeatMode: false,
 		drawError: {
 			color: '#b00b00',
 			message: L.drawLocal.draw.handlers.polyline.error,
@@ -1298,6 +1299,9 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 
 		this._fireCreatedEvent();
 		this.disable();
+		if (this.options.repeatMode) {
+			this.enable();
+		}
 	},
 
 	//Called to verify the shape is valid when the user tries to finish it
@@ -1699,6 +1703,14 @@ L.Draw.Polygon = L.Draw.Polyline.extend({
 L.SimpleShape = {};
 
 L.Draw.SimpleShape = L.Draw.Feature.extend({
+	options: {
+		repeatMode: true
+	},
+
+	initialize: function (map, options) {
+		L.Draw.Feature.prototype.initialize.call(this, map, options);
+	},
+
 	addHooks: function () {
 		L.Draw.Feature.prototype.addHooks.call(this);
 		if (this._map) {
@@ -1761,6 +1773,9 @@ L.Draw.SimpleShape = L.Draw.Feature.extend({
 		}
 
 		this.disable();
+		if (this.options.repeatMode) {
+			this.enable();
+		}
 	}
 });
 
@@ -1873,6 +1888,7 @@ L.Draw.Marker = L.Draw.Feature.extend({
 
 	options: {
 		icon: new L.Icon.Default(),
+		repeatMode: false,
 		zIndexOffset: 2000 // This should be > than the highest z-index any markers
 	},
 
@@ -1956,6 +1972,9 @@ L.Draw.Marker = L.Draw.Feature.extend({
 		this._fireCreatedEvent();
 
 		this.disable();
+		if (this.options.repeatMode) {
+			this.enable();
+		}
 	},
 
 	_fireCreatedEvent: function () {
@@ -3333,12 +3352,14 @@ L.EditToolbar.Edit = L.Handler.extend({
 			.on('layerremove', this._disableLayerEdit, this);
 
 		this.fire('enabled', {handler: this.type});
+		this._map.fire('draw:editstart', { handler: this.type });
 	},
 
 	disable: function () {
 		if (!this._enabled) { return; }
 
 		this.fire('disabled', {handler: this.type});
+		this._map.fire('draw:editstop', { handler: this.type });
 
 		this._featureGroup
 			.off('layeradd', this._enableLayerEdit, this)
@@ -3534,6 +3555,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 	}
 });
 
+
 L.EditToolbar.Delete = L.Handler.extend({
 	statics: {
 		TYPE: 'remove' // not delete as delete is reserved in js
@@ -3567,6 +3589,7 @@ L.EditToolbar.Delete = L.Handler.extend({
 			.on('layerremove', this._disableLayerDelete, this);
 
 		this.fire('enabled', { handler: this.type});
+		this._map.fire('draw:editstart', { handler: this.type });
 	},
 
 	disable: function () {
@@ -3579,6 +3602,7 @@ L.EditToolbar.Delete = L.Handler.extend({
 			.off('layerremove', this._disableLayerDelete, this);
 
 		this.fire('disabled', { handler: this.type});
+		this._map.fire('draw:editstop', { handler: this.type });
 	},
 
 	addHooks: function () {

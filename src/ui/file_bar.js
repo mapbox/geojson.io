@@ -23,9 +23,7 @@ module.exports = function fileBar(context) {
         var actions = [{
             title: 'Save',
             icon: 'icon-save',
-            action: function() {
-                saver(context);
-            }
+            action: saveAction
         }, {
             title: 'Open',
             icon: 'icon-folder-open-alt',
@@ -45,6 +43,11 @@ module.exports = function fileBar(context) {
                 context.container.call(share(context));
             }
         }];
+
+        function saveAction() {
+            if (d3.event) d3.event.preventDefault();
+            saver(context);
+        }
 
         function download() {
             if (d3.event) d3.event.preventDefault();
@@ -88,27 +91,31 @@ module.exports = function fileBar(context) {
                 var gh = context.data.get('github'),
                     type = context.data.get('type');
                 filename.text(gh && gh.id);
-                // if (sourceUrl(d)) {
-                //     link
-                //         .attr('href', sourceUrl(d))
-                //         .classed('hide', false);
-                // } else {
-                //     link
-                //         .classed('hide', true);
-                // }
+                if (type && gh && sourceUrl(type, gh)) {
+                    link.attr('href', sourceUrl(type, gh))
+                        .classed('hide', false);
+                } else {
+                    link.classed('hide', true);
+                }
                 filetype.attr('class', function() {
                     if (type == 'github') return 'icon-github';
                     if (type == 'gist') return 'icon-github-alt';
                 });
                 saveNoun(type == 'github' ? 'Commit' : 'Save');
             }
-
         }
 
         d3.select(document).call(
             d3.keybinding('file_bar')
-                .on('⌘+a', download));
+                .on('⌘+a', download)
+                .on('⌘+s', saveAction));
 
+    }
+
+    function sourceUrl(type, gh) {
+        if (type === 'gist') {
+            return gh.html_url;
+        }
     }
 
     return bar;

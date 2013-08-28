@@ -6,72 +6,33 @@ var ui = require('./ui'),
     user = require('./core/user'),
     store = require('store');
 
-function geojsonIO() {
-    var context = {};
-
-    context.dispatch = d3.dispatch(
-        'change', 'route'
-    );
-
-    context.storage = store;
-
-    context.map = map(context);
-
-    context.data = data(context);
-
-    context.router = router(context);
-
-    context.user = user(context);
-
-    context.dispatch.on('route', loader(context));
-
-    return context;
-}
-
-var gjIO = geojsonIO();
-var gjUI = ui(gjIO);
+var gjIO = geojsonIO(),
+    gjUI = ui(gjIO);
 
 d3.select('.geojsonio').call(gjUI);
 
 gjIO.router.on();
 
+function geojsonIO() {
+    var context = {};
+    context.dispatch = d3.dispatch('change', 'route');
+    context.storage = store;
+    context.map = map(context);
+    context.data = data(context);
+    context.router = router(context);
+    context.user = user(context);
+    context.dispatch
+        .on('route', loader(context));
+    return context;
+}
 
 /*
-
-L.Polygon.prototype.getCenter = function() {
-    var pts = this._latlngs;
-    var off = pts[0];
-    var twicearea = 0;
-    var x = 0;
-    var y = 0;
-    var nPts = pts.length;
-    var p1, p2;
-    var f;
-    for (var i = 0, j = nPts - 1; i < nPts; j = i++) {
-        p1 = pts[i];
-        p2 = pts[j];
-        f = (p1.lat - off.lat) * (p2.lng - off.lng) - (p2.lat - off.lat) * (p1.lng - off.lng);
-        twicearea += f;
-        x += (p1.lat + p2.lat - 2 * off.lat) * f;
-        y += (p1.lng + p2.lng - 2 * off.lng) * f;
-    }
-    f = twicearea * 3;
-    return new L.LatLng(
-        x / f + off.lat,
-        y / f + off.lng
-    );
-};
 
 d3.select(window).on('hashchange', hashChange);
 
 d3.select('.collapse-button').on('click', clickCollapse);
 
 if (window.location.hash) hashChange();
-
-function clickSource() {
-    if (d3.event) d3.event.preventDefault();
-    d3.select('.left-panel').call(sourcePanel(updates));
-}
 
 function focusLayer(layer) {
     if (!layer) return;
@@ -97,14 +58,6 @@ function focusLayer(layer) {
         map.setView(layer.getLatLng(), 15);
     }
 }
-
-function drawCreated(e) {
-    drawnItems.addLayer(e.layer);
-    mapUtil.geoify(drawnItems);
-    refresh();
-}
-
-
 
 d3.select(document).call(
     d3.keybinding('global')
@@ -143,13 +96,6 @@ function saveChanges() {
 
         });
     }
-}
-
-
-function mapFile(gist) {
-    var f;
-    for (f in gist.files) if (f.indexOf('.geojson') !== -1) return JSON.parse(gist.files[f].content);
-    for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
 }
 
 function hashChange() {

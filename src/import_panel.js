@@ -1,6 +1,4 @@
-var topojson = require('topojson'),
-    toGeoJSON = require('togeojson'),
-    gist = require('./source/gist'),
+var gist = require('./source/gist'),
     progressChart = require('./lib/progress_chart'),
     detectIndentationStyle = require('detect-json-indent'),
     importSupport = !!(window.FileReader);
@@ -22,86 +20,6 @@ function exit() {
     d3.select('body').classed('dragover', false);
 }
 
-function toDom(x) {
-    return (new DOMParser()).parseFromString(x, 'text/xml');
-}
-
-function trackImport(format, method) {
-    analytics.track('Imported Data / ' + method + ' / ' + format);
-}
-
-function readFile(f, method, updates) {
-    var reader = new FileReader();
-
-    reader.onload = function(e) {
-        var gj;
-
-        switch (detectType(f)) {
-
-            case 'kml':
-                var kmldom = toDom(e.target.result);
-                if (!kmldom) {
-                    return alert('Invalid KML file: not valid XML');
-                }
-                if (kmldom.getElementsByTagName('NetworkLink').length) {
-                    alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                          'Please export and upload KML without NetworkLinks for optimal performance');
-                }
-                gj = toGeoJSON.kml(kmldom);
-                break;
-
-            case 'gpx':
-                gj = toGeoJSON.gpx(toDom(e.target.result));
-                break;
-
-            case 'geojson':
-                try {
-                    gj = JSON.parse(e.target.result);
-                    exportIndentationStyle = detectIndentationStyle(e.target.result);
-                    if (gj && gj.type === 'Topology' && gj.objects) {
-                        var collection = { type: 'FeatureCollection', features: [] };
-                        for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                        gj = collection;
-                    }
-                } catch(err) {
-                    alert('Invalid JSON file: ' + err);
-                    analytics.track('Uploaded invalid JSON', {
-                        snippet: e.target.result.substring(0, 20)
-                    });
-                    return;
-                }
-                break;
-
-            case 'dsv':
-                csv2geojson.csv2geojson(e.target.result, {
-                    delimiter: 'auto'
-                }, function(err, result) {
-                    if (err) {
-                        return handleGeocode(container.append('div'), e.target.result, updates);
-                    } else {
-                        gj = result;
-                    }
-                });
-                break;
-
-            default:
-                analytics.track('Invalid file', {
-                    type: f.type,
-                    snippet: e.target.result.substring(0, 20)
-                });
-                return alert('Sorry, that file type is not supported');
-        }
-
-        if (gj) {
-            updates.update_editor(gj);
-            updates.zoom_extent();
-            updates.update_geojson();
-        }
-    };
-
-    reader.readAsText(f);
-}
-
 function bindBody(updates) {
     if (importSupport) {
         d3.select('body')
@@ -119,20 +37,6 @@ function bindBody(updates) {
     }
 }
 
-function detectType(f) {
-    var filename = f.name ? f.name.toLowerCase() : '';
-    function ext(_) {
-        return filename.indexOf(_) !== -1;
-    }
-    if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-        return 'kml';
-    }
-    if (ext('.gpx')) return 'gpx';
-    if (ext('.geojson') || ext('.json')) return 'geojson';
-    if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
-        return 'dsv';
-    }
-}
 
 function importPanel(container, updates) {
     container.html('');

@@ -56,10 +56,10 @@ function save(context, callback) {
         var endpoint,
             method = 'POST';
 
-        if (!err && (user.login && d.github.user.login)) {
+        if (!err && (user.login && d.github && d.github.user.login)) {
             endpoint = 'https://api.github.com/gists/' + d.github.id;
             method = 'PATCH';
-        } else if (!err) {
+        } else if (!err && d.github) {
             endpoint = 'https://api.github.com/gists/' + d.github.id + '/forks';
         } else {
             endpoint = 'https://api.github.com/gists';
