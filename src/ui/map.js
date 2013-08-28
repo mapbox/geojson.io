@@ -1,11 +1,16 @@
-var popup = require('../lib/popup');
+var popup = require('../lib/popup'),
+    customHash = require('../lib/custom_hash.js'),
+    qs = require('../lib/querystring.js');
 
 module.exports = function(context) {
+
 
     function map(selection) {
         context.map = L.mapbox.map(selection.node())
             .setView([20, 0], 2)
             .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt'));
+
+        L.hash(context.map);
 
         context.mapLayer = L.featureGroup().addTo(context.map);
 

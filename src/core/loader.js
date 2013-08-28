@@ -7,8 +7,10 @@ module.exports = function(context) {
 
     var load = {
         gist: function(q) {
+            var id = q.id.split(':')[1];
+            if ((context.data.get('github') || {}).id === id) return;
             context.container.select('.map').classed('loading', true);
-            return gist.load(q.id.split(':')[1], gistSuccess);
+            return gist.load(id, gistSuccess);
         }
     };
 

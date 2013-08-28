@@ -1,4 +1,5 @@
-var qs = require('../lib/querystring');
+var qs = require('../lib/querystring'),
+    xtend = require('xtend');
 
 module.exports = function(context) {
     var router = {};
@@ -32,12 +33,13 @@ module.exports = function(context) {
     }
 
     function reverseRoute() {
+        var query = getQuery();
         var data = context.data.all();
 
         if (data.type === 'gist') {
-            return {
+            return xtend(query, {
                 id: 'gist:' + data.github.id
-            };
+            });
         }
 
         return false;
