@@ -59,11 +59,8 @@ function parseGitHubId(id) {
     };
 }
 
-function load(id, callback) {
-    var pts = parseGitHubId(id);
-    authorize(d3.json('https://api.github.com/repos/' + pts.user +
-        '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch))
+function load(parts, callback) {
+    authorize(d3.json(fileUrl(parts)))
         .on('load', onLoad)
         .on('error', onError)
         .get();
@@ -74,17 +71,23 @@ function load(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-function loadRaw(id, callback) {
-    var pts = parseGitHubId(id);
-    authorize(d3.text('https://api.github.com/repos/' + pts.user +
-        '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch))
+function loadRaw(parts, callback) {
+    authorize(d3.text(fileUrl(parts)))
         .on('load', onLoad)
         .on('error', onError)
-        .header('Accept', 'application/vnd.github.raw').get();
+        .header('Accept', 'application/vnd.github.raw')
+        .get();
 
     function onLoad(file) {
         callback(null, file);
     }
     function onError(err) { callback(err, null); }
+}
+
+function fileUrl(parts) {
+    return 'https://api.github.com/repos/' +
+        parts.user +
+        '/' + parts.repo +
+        '/contents/' + parts.path +
+        '?ref=' + parts.branch;
 }

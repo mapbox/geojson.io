@@ -3602,59 +3602,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":32,"object-keys":36}],34:[function(require,module,exports){
-(function () {
-	"use strict";
-
-	// modified from https://github.com/kriskowal/es5-shim
-	var has = Object.prototype.hasOwnProperty,
-		is = require('is'),
-		forEach = require('foreach'),
-		hasDontEnumBug = !({'toString': null}).propertyIsEnumerable('toString'),
-		dontEnums = [
-			"toString",
-			"toLocaleString",
-			"valueOf",
-			"hasOwnProperty",
-			"isPrototypeOf",
-			"propertyIsEnumerable",
-			"constructor"
-		],
-		keysShim;
-
-	keysShim = function keys(object) {
-		if (!is.object(object) && !is.array(object)) {
-			throw new TypeError("Object.keys called on a non-object");
-		}
-
-		var name, theKeys = [];
-		for (name in object) {
-			if (has.call(object, name)) {
-				theKeys.push(name);
-			}
-		}
-
-		if (hasDontEnumBug) {
-			forEach(dontEnums, function (dontEnum) {
-				if (has.call(object, dontEnum)) {
-					theKeys.push(dontEnum);
-				}
-			});
-		}
-		return theKeys;
-	};
-
-	module.exports = keysShim;
-}());
-
-
-},{"foreach":37,"is":38}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
-},{}],36:[function(require,module,exports){
+},{"./has-keys":32,"object-keys":34}],34:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":34}],37:[function(require,module,exports){
+},{"./shim":37}],35:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -3678,7 +3630,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],38:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 
 /**!
  * is
@@ -4382,7 +4334,53 @@ is.string = function (value) {
 };
 
 
-},{}],39:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
+(function () {
+	"use strict";
+
+	// modified from https://github.com/kriskowal/es5-shim
+	var has = Object.prototype.hasOwnProperty,
+		is = require('is'),
+		forEach = require('foreach'),
+		hasDontEnumBug = !({'toString': null}).propertyIsEnumerable('toString'),
+		dontEnums = [
+			"toString",
+			"toLocaleString",
+			"valueOf",
+			"hasOwnProperty",
+			"isPrototypeOf",
+			"propertyIsEnumerable",
+			"constructor"
+		],
+		keysShim;
+
+	keysShim = function keys(object) {
+		if (!is.object(object) && !is.array(object)) {
+			throw new TypeError("Object.keys called on a non-object");
+		}
+
+		var name, theKeys = [];
+		for (name in object) {
+			if (has.call(object, name)) {
+				theKeys.push(name);
+			}
+		}
+
+		if (hasDontEnumBug) {
+			forEach(dontEnums, function (dontEnum) {
+				if (has.call(object, dontEnum)) {
+					theKeys.push(dontEnum);
+				}
+			});
+		}
+		return theKeys;
+	};
+
+	module.exports = keysShim;
+}());
+
+
+},{"foreach":35,"is":36}],38:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -4396,7 +4394,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],40:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 var xtend = require('xtend');
 
 module.exports = function(context) {
@@ -4440,8 +4438,9 @@ module.exports = function(context) {
     return data;
 };
 
-},{"xtend":33}],41:[function(require,module,exports){
+},{"xtend":33}],40:[function(require,module,exports){
 var gist = require('../source/gist.js'),
+    github = require('../source/github.js'),
     Spinner = require('spinner-browserify');
 
 module.exports = function(context) {
@@ -4451,9 +4450,27 @@ module.exports = function(context) {
     var load = {
         gist: function(q) {
             var id = q.id.split(':')[1];
-            if ((context.data.get('github') || {}).id === id) return;
             context.container.select('.map').classed('loading', true);
-            return gist.load(id, gistSuccess);
+            gist.load(id, function(err, d) {
+                return gistSuccess(err, d);
+            });
+        },
+        github: function(q) {
+            var url = q.id.split('/');
+            var parts = {
+                user: url[0].split(':')[1],
+                repo: url[1],
+                branch: url[2],
+                path: (url.slice(3) || []).join('/')
+            };
+
+            context.container.select('.map').classed('loading', true);
+
+            github.load(parts, function(err, meta) {
+                github.loadRaw(parts, function(err, raw) {
+                    gitHubSuccess(err, meta, raw);
+                });
+            });
         }
     };
 
@@ -4469,10 +4486,35 @@ module.exports = function(context) {
             });
     }
 
+    function gitHubSuccess(err, meta, raw) {
+        context.container.select('.map').classed('loading', false);
+        if (err) return;
+        context.data
+            .set({
+                type: 'github',
+                github: meta,
+                map: JSON.parse(raw),
+                dirty: false
+            });
+    }
+
+    function dataId(d) {
+        if (d.type === 'gist') return 'gist:' + d.github.id;
+        if (d.type === 'github') {
+            var url = d.github.html_url.split('/'),
+                login = url[3],
+                repo = url[4],
+                branch = url[6];
+            return 'github:' + [login, repo, branch, d.github.path].join('/');
+        }
+    }
+
     return function(query) {
         if (!query.id) return;
         var type = query.id.split(':')[0];
-        if (load[type]) load[type](query);
+        if (query.id !== dataId(context.data)) {
+            if (load[type]) load[type](query);
+        }
     };
 };
 
@@ -4482,7 +4524,7 @@ function mapFile(gist) {
     for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
 }
 
-},{"../source/gist.js":52,"spinner-browserify":12}],42:[function(require,module,exports){
+},{"../source/gist.js":52,"../source/github.js":53,"spinner-browserify":12}],41:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -4533,7 +4575,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":48,"xtend":33}],43:[function(require,module,exports){
+},{"../lib/querystring":48,"xtend":33}],42:[function(require,module,exports){
 var gist = require('../source/gist.js'),
     Spinner = require('spinner-browserify');
 
@@ -4564,7 +4606,7 @@ module.exports = function(context) {
     else save.gist();
 };
 
-},{"../source/gist.js":52,"spinner-browserify":12}],44:[function(require,module,exports){
+},{"../source/gist.js":52,"spinner-browserify":12}],43:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -4642,7 +4684,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":39}],45:[function(require,module,exports){
+},{"../config.js":38}],44:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -4810,7 +4852,7 @@ function hashChange() {
 }
 */
 
-},{"./core/data":40,"./core/loader":41,"./core/router":42,"./core/user":44,"./ui":54,"./ui/map":59,"store":15}],46:[function(require,module,exports){
+},{"./core/data":39,"./core/loader":40,"./core/router":41,"./core/user":43,"./ui":54,"./ui/map":59,"store":15}],45:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -4849,7 +4891,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":48,"leaflet-hash":11}],47:[function(require,module,exports){
+},{"../lib/querystring":48,"leaflet-hash":11}],46:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -4890,6 +4932,8 @@ module.exports = function(context) {
     };
 };
 
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
 },{}],48:[function(require,module,exports){
 module.exports.stringQs = function(str) {
     return str.split('&').reduce(function(obj, pair){
@@ -5263,11 +5307,8 @@ function parseGitHubId(id) {
     };
 }
 
-function load(id, callback) {
-    var pts = parseGitHubId(id);
-    authorize(d3.json('https://api.github.com/repos/' + pts.user +
-        '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch))
+function load(parts, callback) {
+    authorize(d3.json(fileUrl(parts)))
         .on('load', onLoad)
         .on('error', onError)
         .get();
@@ -5278,19 +5319,25 @@ function load(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-function loadRaw(id, callback) {
-    var pts = parseGitHubId(id);
-    authorize(d3.text('https://api.github.com/repos/' + pts.user +
-        '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch))
+function loadRaw(parts, callback) {
+    authorize(d3.text(fileUrl(parts)))
         .on('load', onLoad)
         .on('error', onError)
-        .header('Accept', 'application/vnd.github.raw').get();
+        .header('Accept', 'application/vnd.github.raw')
+        .get();
 
     function onLoad(file) {
         callback(null, file);
     }
     function onError(err) { callback(err, null); }
+}
+
+function fileUrl(parts) {
+    return 'https://api.github.com/repos/' +
+        parts.user +
+        '/' + parts.repo +
+        '/contents/' + parts.path +
+        '?ref=' + parts.branch;
 }
 
 },{}],54:[function(require,module,exports){
@@ -5528,6 +5575,8 @@ module.exports = function fileBar(context) {
     function sourceName(type, gh) {
         if (gh && gh.id) {
             return gh.id;
+        } else if (gh && gh.path) {
+            return gh.path;
         } else {
             return 'unsaved';
         }
@@ -5542,7 +5591,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../core/saver.js":43,"./share":61,"./source.js":62}],57:[function(require,module,exports){
+},{"../core/saver.js":42,"./share":61,"./source.js":62}],57:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     readFile = require('../lib/readfile.js');
 
@@ -5741,7 +5790,7 @@ function bindPopup(l) {
         '</div></div>'));
 }
 
-},{"../lib/custom_hash.js":46,"../lib/popup":47,"../lib/querystring.js":48}],60:[function(require,module,exports){
+},{"../lib/custom_hash.js":45,"../lib/popup":46,"../lib/querystring.js":48}],60:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json');
 
@@ -6102,5 +6151,5 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":6}]},{},[52,45])
+},{"geojsonhint":6}]},{},[52,44])
 ;

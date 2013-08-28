@@ -123,6 +123,8 @@ module.exports = function fileBar(context) {
     function sourceName(type, gh) {
         if (gh && gh.id) {
             return gh.id;
+        } else if (gh && gh.path) {
+            return gh.path;
         } else {
             return 'unsaved';
         }

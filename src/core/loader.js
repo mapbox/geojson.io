@@ -1,4 +1,5 @@
 var gist = require('../source/gist.js'),
+    github = require('../source/github.js'),
     Spinner = require('spinner-browserify');
 
 module.exports = function(context) {
@@ -8,9 +9,27 @@ module.exports = function(context) {
     var load = {
         gist: function(q) {
             var id = q.id.split(':')[1];
-            if ((context.data.get('github') || {}).id === id) return;
             context.container.select('.map').classed('loading', true);
-            return gist.load(id, gistSuccess);
+            gist.load(id, function(err, d) {
+                return gistSuccess(err, d);
+            });
+        },
+        github: function(q) {
+            var url = q.id.split('/');
+            var parts = {
+                user: url[0].split(':')[1],
+                repo: url[1],
+                branch: url[2],
+                path: (url.slice(3) || []).join('/')
+            };
+
+            context.container.select('.map').classed('loading', true);
+
+            github.load(parts, function(err, meta) {
+                github.loadRaw(parts, function(err, raw) {
+                    gitHubSuccess(err, meta, raw);
+                });
+            });
         }
     };
 
@@ -26,10 +45,35 @@ module.exports = function(context) {
             });
     }
 
+    function gitHubSuccess(err, meta, raw) {
+        context.container.select('.map').classed('loading', false);
+        if (err) return;
+        context.data
+            .set({
+                type: 'github',
+                github: meta,
+                map: JSON.parse(raw),
+                dirty: false
+            });
+    }
+
+    function dataId(d) {
+        if (d.type === 'gist') return 'gist:' + d.github.id;
+        if (d.type === 'github') {
+            var url = d.github.html_url.split('/'),
+                login = url[3],
+                repo = url[4],
+                branch = url[6];
+            return 'github:' + [login, repo, branch, d.github.path].join('/');
+        }
+    }
+
     return function(query) {
         if (!query.id) return;
         var type = query.id.split(':')[0];
-        if (load[type]) load[type](query);
+        if (query.id !== dataId(context.data)) {
+            if (load[type]) load[type](query);
+        }
     };
 };
 
