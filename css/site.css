@@ -165,13 +165,6 @@ p.intro-hint:hover {
     border-left:1px solid #ddd;
 }
 
-.top button.icon-github:after {
-    font-size:11px;
-    margin-left:5px;
-    content:attr(title);
-    font-family: 'Open Sans', sans-serif;
-}
-
 .buttons-joined button {
     border-right:0;
 }
@@ -356,12 +349,6 @@ button.positive {
 
 .controls button:hover {
     background:#fff;
-}
-
-.fillL {
-    background:#fff;
-    margin:10px;
-    border-radius:3px;
 }
 
 body.dragover {
@@ -581,4 +568,17 @@ body.dragover:after,
 
 body.dragover:after {
     content: 'drop files to import';
+}
+
+.bottom-right {
+    position:absolute;
+    bottom:0;
+    right:0;
+    width:20px;
+    height:20px;
+    display:block;
+}
+
+.pad0 {
+    padding:5px;
 }

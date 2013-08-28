@@ -1,6 +1,7 @@
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
+    userUi = require('./ui/user'),
     layer_switch = require('./ui/layer_switch');
 
 module.exports = ui;
@@ -26,10 +27,10 @@ function ui(context) {
             .append('div')
             .attr('class', 'top');
 
-        top
+        container
             .append('a')
             .attr('href', './about.html')
-            .attr('class', 'info fr')
+            .attr('class', 'info bottom-right')
             .attr('target', '_blank')
             .append('class', 'span')
             .attr('class', 'icon-info');
@@ -49,6 +50,11 @@ function ui(context) {
         var pane = right
             .append('div')
             .attr('class', 'pane');
+
+        top
+            .append('div')
+            .attr('class', 'user fr pad1')
+            .call(userUi(context));
 
         top
             .append('div')
