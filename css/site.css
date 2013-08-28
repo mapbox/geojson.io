@@ -64,8 +64,6 @@ input[type=text] {
     bottom:0;
     left:0;
     right:40%;
-    transition:all 200ms;
-    -webkit-transition:all 200ms;
 }
 
 .left-panel {

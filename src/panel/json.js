@@ -34,7 +34,7 @@ module.exports = function(context) {
         }
 
         context.dispatch.on('change.json', function(event) {
-            if (event.field === 'map' && event.source !== 'json') {
+            if (event.source !== 'json') {
                 editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
             }
         });

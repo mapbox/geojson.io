@@ -26,8 +26,10 @@ module.exports = function(context) {
             var obj = {};
             sel.selectAll('tr').each(collectRow);
             function collectRow() {
-                obj[d3.select(this).selectAll('input')[0][0].value] =
-                    d3.select(this).selectAll('input')[0][1].value;
+                if (d3.select(this).selectAll('input')[0][0].value) {
+                    obj[d3.select(this).selectAll('input')[0][0].value] =
+                        d3.select(this).selectAll('input')[0][1].value;
+                }
             }
             e.popup._source.feature.properties = obj;
             context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');

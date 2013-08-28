@@ -4763,8 +4763,10 @@ module.exports = function(context) {
             var obj = {};
             sel.selectAll('tr').each(collectRow);
             function collectRow() {
-                obj[d3.select(this).selectAll('input')[0][0].value] =
-                    d3.select(this).selectAll('input')[0][1].value;
+                if (d3.select(this).selectAll('input')[0][0].value) {
+                    obj[d3.select(this).selectAll('input')[0][0].value] =
+                        d3.select(this).selectAll('input')[0][1].value;
+                }
             }
             e.popup._source.feature.properties = obj;
             context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
@@ -4918,7 +4920,7 @@ module.exports = function(context) {
         }
 
         context.dispatch.on('change.json', function(event) {
-            if (event.field === 'map' && event.source !== 'json') {
+            if (event.source !== 'json') {
                 editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
             }
         });
@@ -4939,7 +4941,7 @@ var metatable = require('d3-metatable')(d3);
 module.exports = function(context) {
     function render(selection) {
 
-        function render() {
+        function rerender() {
             var geojson = context.data.get('map');
             if (!geojson || !geojson.features.length) {
                 selection
@@ -4956,21 +4958,20 @@ module.exports = function(context) {
                     .data([props])
                     .call(
                         metatable()
-                            .on('change', function() {
-                                updates.update_refresh();
+                            .on('change', function(row, i) {
                             })
-                            .on('rowfocus', function(d) {
-                                updates.focus_layer(findLayer(d));
+                            .on('rowfocus', function(row, i) {
+                                // console.log(arguments);
                             })
                     );
             }
         }
 
         context.dispatch.on('change.table', function(evt) {
-            if (evt.field === 'map') render();
+            rerender();
         });
 
-        render();
+        rerender();
 
         function getProperties(f) { return f.properties; }
 
@@ -5206,13 +5207,6 @@ module.exports = function fileBar(context) {
         var name = selection.append('div')
             .attr('class', 'name');
 
-        var opener = name.append('span')
-            .attr('class', 'icon-folder-open-alt')
-            .text('  ')
-            .on('click', function() {
-                context.container.call(sourcepanel(context));
-            });
-
         var filetype = name.append('span')
             .attr('class', 'icon-file-alt');
 
@@ -5229,6 +5223,18 @@ module.exports = function fileBar(context) {
             title: 'Save',
             icon: 'icon-save',
             action: saveAction
+        }, {
+            title: 'Open',
+            icon: 'icon-folder-open-alt',
+            action: function() {
+                context.container.call(sourcepanel(context));
+            }
+        }, {
+            title: 'New',
+            icon: 'icon-plus',
+            action: function() {
+                window.open('/');
+            }
         }, {
             title: 'Download',
             icon: 'icon-download',
@@ -5884,5 +5890,5 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":6}]},{},[45,51])
+},{"geojsonhint":6}]},{},[51,45])
 ;

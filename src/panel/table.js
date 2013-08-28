@@ -3,7 +3,7 @@ var metatable = require('d3-metatable')(d3);
 module.exports = function(context) {
     function render(selection) {
 
-        function render() {
+        function rerender() {
             var geojson = context.data.get('map');
             if (!geojson || !geojson.features.length) {
                 selection
@@ -20,21 +20,20 @@ module.exports = function(context) {
                     .data([props])
                     .call(
                         metatable()
-                            .on('change', function() {
-                                updates.update_refresh();
+                            .on('change', function(row, i) {
                             })
-                            .on('rowfocus', function(d) {
-                                updates.focus_layer(findLayer(d));
+                            .on('rowfocus', function(row, i) {
+                                // console.log(arguments);
                             })
                     );
             }
         }
 
         context.dispatch.on('change.table', function(evt) {
-            if (evt.field === 'map') render();
+            rerender();
         });
 
-        render();
+        rerender();
 
         function getProperties(f) { return f.properties; }
 
