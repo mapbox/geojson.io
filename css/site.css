@@ -64,6 +64,8 @@ input[type=text] {
     bottom:0;
     left:0;
     right:40%;
+    transition:all 200ms;
+    -webkit-transition:all 200ms;
 }
 
 .left-panel {
@@ -91,6 +93,33 @@ input[type=text] {
     -webkit-transition:all 200ms;
     border-left: 1px solid #d9d9d9;
     border-color: rgba(102,102,102,0.25);
+}
+
+.left {
+    overflow-x:hidden;
+    position:absolute;
+    bottom:0;
+    top:40px;
+    left:0;
+    width:40%;
+    min-width:400px;
+    box-sizing:border-box;
+    font-size:14px;
+    background:#f1f1f1;
+    transition:all 200ms;
+    -webkit-transition:all 200ms;
+    border-right: 1px solid #d9d9d9;
+    border-color: rgba(102,102,102,0.25);
+    z-index:9999;
+}
+
+body.has-left .right {
+    right:-40%;
+}
+
+body.has-left .map {
+    left:40%;
+    right:0;
 }
 
 body.fullscreen .map {

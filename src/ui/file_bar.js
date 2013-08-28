@@ -1,4 +1,5 @@
 var share = require('./share'),
+    sourcepanel = require('./source.js'),
     saver = require('../core/saver.js');
 
 module.exports = function fileBar(context) {
@@ -7,6 +8,13 @@ module.exports = function fileBar(context) {
 
         var name = selection.append('div')
             .attr('class', 'name');
+
+        var opener = name.append('span')
+            .attr('class', 'icon-folder-open-alt')
+            .text('  ')
+            .on('click', function() {
+                context.container.call(sourcepanel(context));
+            });
 
         var filetype = name.append('span')
             .attr('class', 'icon-file-alt');
@@ -24,12 +32,6 @@ module.exports = function fileBar(context) {
             title: 'Save',
             icon: 'icon-save',
             action: saveAction
-        }, {
-            title: 'Open',
-            icon: 'icon-folder-open-alt',
-            action: function() {
-                open();
-            }
         }, {
             title: 'Download',
             icon: 'icon-download',

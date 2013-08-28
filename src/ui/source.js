@@ -1,16 +1,18 @@
-var gist = require('./source/gist'),
-    github = require('./source/github'),
-    importPanel = require('./import_panel').importPanel,
+var gist = require('../source/gist'),
+    github = require('../source/github'),
+    importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
 
-module.exports = sourcePanel;
+module.exports = function(context) {
 
-function sourcePanel(updates) {
+    function render(selection) {
 
-    function panel(selection) {
+        d3.select('body').classed('has-left', true);
+        selection.select('.panel').remove();
 
-        if (!selection.classed('hide')) return hidePanel();
+        var panel = selection.append('div')
+            .attr('class', 'panel left');
 
         var sources = [{
             title: 'Import',
@@ -29,13 +31,7 @@ function sourcePanel(updates) {
             action: clickGist
         }];
 
-        selection
-            .html('')
-            .classed('hide', false)
-            .transition()
-            .style('opacity', 1);
-
-        var $top = selection
+        var $top = panel
             .append('div')
             .attr('class', 'import-sources col12 clearfix');
 
@@ -81,18 +77,11 @@ function sourcePanel(updates) {
             });
 
         function hidePanel(d) {
-            selection
-                .transition()
-                .duration(500)
-                .style('opacity', 0)
-                .each('end', function() {
-                    d3.select(this)
-                        .html('')
-                        .classed('hide', true);
-                });
+            d3.select('body').classed('has-left', false);
+            panel.remove();
         }
 
-        var $subpane = selection.append('div')
+        var $subpane = panel.append('div')
             .attr('class', 'subpane');
 
         function clickGitHub() {
@@ -101,7 +90,7 @@ function sourcePanel(updates) {
                 .append('div')
                 .attr('class', 'repos')
                 .call(githubBrowser
-                    .gitHubBrowse(localStorage.github_token)
+                    .gitHubBrowse(context.user.token())
                         .on('chosen', gitHubChosen));
 
             function gitHubChosen(d) {
@@ -115,7 +104,7 @@ function sourcePanel(updates) {
             $subpane
                 .html('')
                 .append('div')
-                .call(importPanel, updates);
+                .call(importPanel(context));
 
             function gitHubChosen(d) {
                 var hash = github.urlHash(d);
@@ -130,7 +119,7 @@ function sourcePanel(updates) {
                 .append('div')
                 .attr('class', 'browser pad1')
                 .call(githubBrowser
-                    .gistBrowse(localStorage.github_token)
+                    .gistBrowse(context.user.token())
                         .on('chosen', gistChosen));
 
             function gistChosen(d) {
@@ -143,5 +132,5 @@ function sourcePanel(updates) {
         $sources.filter(function(d, i) { return !i; }).trigger('click');
     }
 
-    return panel;
-}
+    return render;
+};

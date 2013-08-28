@@ -61,7 +61,7 @@ function parseGitHubId(id) {
     };
 }
 
-function loadGitHub(id, callback) {
+function load(id, callback) {
     var pts = parseGitHubId(id);
     authorize(d3.json('https://api.github.com/repos/' + pts.user +
         '/' + pts.repo +
@@ -76,7 +76,7 @@ function loadGitHub(id, callback) {
     function onError(err) { callback(err, null); }
 }
 
-function loadGitHubRaw(id, callback) {
+function loadRaw(id, callback) {
     var pts = parseGitHubId(id);
     authorize(d3.text('https://api.github.com/repos/' + pts.user +
         '/' + pts.repo +
