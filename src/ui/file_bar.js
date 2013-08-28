@@ -35,7 +35,7 @@ module.exports = function fileBar(context) {
             title: 'New',
             icon: 'icon-plus',
             action: function() {
-                window.open('/');
+                window.open('/#new');
             }
         }, {
             title: 'Download',

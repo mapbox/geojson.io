@@ -5,6 +5,8 @@ module.exports = function(context) {
         }
     });
 
-    var rec = context.storage.get('recover');
-    if (rec) context.data.set(rec);
+    if (location.hash !== '#new') {
+        var rec = context.storage.get('recover');
+        if (rec) context.data.set(rec);
+    }
 };
