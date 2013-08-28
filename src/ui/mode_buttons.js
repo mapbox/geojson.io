@@ -1,6 +1,5 @@
 var table = require('../panel/table'),
-    json = require('../panel/json'),
-    login = require('../panel/login');
+    json = require('../panel/json');
 
 module.exports = function(context, pane) {
     return function(selection) {

@@ -30,7 +30,7 @@ module.exports = function(context) {
         editor.on('change', validate(changeValidated));
 
         function changeValidated(err, data) {
-            if (!err) context.data.set('map', data, 'json');
+            if (!err) context.data.set({map: data}, 'json');
         }
 
         context.dispatch.on('change.json', function(event) {

@@ -9,6 +9,7 @@ module.exports.stringQs = function(str) {
 };
 
 module.exports.qsString = function(obj, noencode) {
+    noencode = true;
     function softEncode(s) { return s.replace('&', '%26'); }
     return Object.keys(obj).sort().map(function(key) {
         return encodeURIComponent(key) + '=' + (

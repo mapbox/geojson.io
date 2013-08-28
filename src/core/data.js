@@ -11,12 +11,13 @@ module.exports = function(context) {
         type: 'local'
     };
 
-    data.set = function(k, v, source) {
-        data[k] = v;
-        if (k !== 'dirty') data.dirty = true;
+    data.set = function(obj, source) {
+        for (var k in obj) {
+            data[k] = obj[k];
+        }
+        if (obj.dirty !== false) data.dirty = true;
         context.dispatch.change({
-            field: k,
-            value: v,
+            obj: obj,
             source: source
         });
         return data;

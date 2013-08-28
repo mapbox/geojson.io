@@ -18,7 +18,7 @@ module.exports = function(context) {
         function removeFeature() {
             if (e.popup._source && context.mapLayer.hasLayer(e.popup._source)) {
                 context.mapLayer.removeLayer(e.popup._source);
-                context.data.set('map', context.mapLayer.toGeoJSON(), 'popup');
+                context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
             }
         }
 
@@ -30,7 +30,7 @@ module.exports = function(context) {
                     d3.select(this).selectAll('input')[0][1].value;
             }
             e.popup._source.feature.properties = obj;
-            context.data.set('map', context.mapLayer.toGeoJSON(), 'popup');
+            context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
             context.map.closePopup(e.popup);
         }
     };

@@ -16,9 +16,11 @@ module.exports = function(context) {
         context.container.select('.map').classed('saving', false);
         if (err) return;
         context.data
-            .set('type', 'gist')
-            .set('github', d)
-            .set('dirty', false);
+            .set({
+                type: 'gist',
+                github: d,
+                dirty: false
+            });
     }
 
     var type = context.data.get('type');

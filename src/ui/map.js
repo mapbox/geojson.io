@@ -22,13 +22,11 @@ module.exports = function(context) {
 
         function update() {
             geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
-            context.data.set('map', layerToGeoJSON(context.mapLayer), 'map');
+            context.data.set({map: layerToGeoJSON(context.mapLayer)}, 'map');
         }
 
         context.dispatch.on('change.map', function(event) {
-            if (event.field === 'map' && event.source !== 'map') {
-                geojsonToLayer(event.value, context.mapLayer);
-            }
+            geojsonToLayer(context.data.map, context.mapLayer);
         });
 
         function created(e) {

@@ -8,7 +8,7 @@ module.exports = function(context) {
     var load = {
         gist: function(q) {
             context.container.select('.map').classed('loading', true);
-            return gist.load(q.id.split('/')[1], gistSuccess);
+            return gist.load(q.id.split(':')[1], gistSuccess);
         }
     };
 
@@ -16,16 +16,18 @@ module.exports = function(context) {
         context.container.select('.map').classed('loading', false);
         if (err) return;
         context.data
-            .set('type', 'gist')
-            .set('github', d)
-            .set('map', mapFile(d))
-            .set('dirty', false);
+            .set({
+                type: 'gist',
+                github: d,
+                map: mapFile(d),
+                dirty: false
+            });
     }
 
     return function(query) {
         if (!query.id) return;
         var type = query.id.split(':')[0];
-        load[type](query);
+        if (load[type]) load[type](query);
     };
 };
 

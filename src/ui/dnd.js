@@ -6,7 +6,7 @@ module.exports = function(context) {
         .on('drop.import', readDrop(context, function(err, gj) {
             console.log(arguments);
             if (err) return;
-            context.data.set('map', gj);
+            context.data.set({map: gj});
             d3.select('body').classed('dragover', false);
         }))
         .on('dragenter.import', over)
