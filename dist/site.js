@@ -1259,6 +1259,259 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 },{"__browserify_process":3,"fs":1,"path":2}],7:[function(require,module,exports){
+/**
+ * Module dependencies.
+ */
+
+var autoscale = require('autoscale-canvas');
+var raf = require('raf-component');
+
+/**
+ * Expose `Spinner`.
+ */
+
+module.exports = Spinner;
+
+/**
+ * Initialize a new `Spinner`.
+ */
+
+function Spinner() {
+  var self = this;
+  this.percent = 0;
+  this.el = document.createElement('canvas');
+  this.ctx = this.el.getContext('2d');
+  this.size(50);
+  this.fontSize(11);
+  this.speed(60);
+  this.font('helvetica, arial, sans-serif');
+  this.stopped = false;
+
+  (function animate() {
+    if (self.stopped) return;
+    raf(animate);
+    self.percent = (self.percent + self._speed / 36) % 100;
+    self.draw(self.ctx);
+  })();
+}
+
+/**
+ * Stop the animation.
+ *
+ * @api public
+ */
+
+Spinner.prototype.stop = function(){
+  this.stopped = true;
+};
+
+/**
+ * Set spinner size to `n`.
+ *
+ * @param {Number} n
+ * @return {Spinner}
+ * @api public
+ */
+
+Spinner.prototype.size = function(n){
+  this.el.width = n;
+  this.el.height = n;
+  autoscale(this.el);
+  return this;
+};
+
+/**
+ * Set text to `str`.
+ *
+ * @param {String} str
+ * @return {Spinner}
+ * @api public
+ */
+
+Spinner.prototype.text = function(str){
+  this._text = str;
+  return this;
+};
+
+/**
+ * Set font size to `n`.
+ *
+ * @param {Number} n
+ * @return {Spinner}
+ * @api public
+ */
+
+Spinner.prototype.fontSize = function(n){
+  this._fontSize = n;
+  return this;
+};
+
+/**
+ * Set font `family`.
+ *
+ * @param {String} family
+ * @return {Spinner}
+ * @api public
+ */
+
+Spinner.prototype.font = function(family){
+  this._font = family;
+  return this;
+};
+
+/**
+ * Set speed to `n` rpm.
+ *
+ * @param {Number} n
+ * @return {Spinner}
+ * @api public
+ */
+
+Spinner.prototype.speed = function(n) {
+  this._speed = n;
+  return this;
+};
+
+/**
+ * Make the spinner light colored.
+ *
+ * @return {Spinner}
+ * @api public
+ */
+
+Spinner.prototype.light = function(){
+  this._light = true;
+  return this;
+};
+
+/**
+ * Draw on `ctx`.
+ *
+ * @param {CanvasRenderingContext2d} ctx
+ * @return {Spinner}
+ * @api private
+ */
+
+Spinner.prototype.draw = function(ctx){
+  var percent = Math.min(this.percent, 100)
+    , ratio = window.devicePixelRatio || 1
+    , size = this.el.width / ratio
+    , half = size / 2
+    , x = half
+    , y = half
+    , rad = half - 1
+    , fontSize = this._fontSize
+    , light = this._light;
+
+  ctx.font = fontSize + 'px ' + this._font;
+
+  var angle = Math.PI * 2 * (percent / 100);
+  ctx.clearRect(0, 0, size, size);
+
+  // outer circle
+  var grad = ctx.createLinearGradient(
+    half + Math.sin(Math.PI * 1.5 - angle) * half,
+    half + Math.cos(Math.PI * 1.5 - angle) * half,
+    half + Math.sin(Math.PI * 0.5 - angle) * half,
+    half + Math.cos(Math.PI * 0.5 - angle) * half
+  );
+
+  // color
+  if (light) {
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    grad.addColorStop(1, 'rgba(255, 255, 255, 1)');
+  } else {
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 1)');
+  }
+
+  ctx.strokeStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, rad, angle - Math.PI, angle, false);
+  ctx.stroke();
+
+  // inner circle
+  ctx.strokeStyle = light ? 'rgba(255, 255, 255, .4)' : '#eee';
+  ctx.beginPath();
+  ctx.arc(x, y, rad - 1, 0, Math.PI * 2, true);
+  ctx.stroke();
+
+  // text
+  var text = this._text || ''
+    , w = ctx.measureText(text).width;
+
+  if (light) ctx.fillStyle = 'rgba(255, 255, 255, .9)';
+  ctx.fillText(
+      text
+    , x - w / 2 + 1
+    , y + fontSize / 2 - 1);
+
+  return this;
+};
+
+
+},{"autoscale-canvas":8,"raf-component":9}],8:[function(require,module,exports){
+
+/**
+ * Retina-enable the given `canvas`.
+ *
+ * @param {Canvas} canvas
+ * @return {Canvas}
+ * @api public
+ */
+
+module.exports = function(canvas){
+  var ctx = canvas.getContext('2d');
+  var ratio = window.devicePixelRatio || 1;
+  if (1 != ratio) {
+    canvas.style.width = canvas.width + 'px';
+    canvas.style.height = canvas.height + 'px';
+    canvas.width *= ratio;
+    canvas.height *= ratio;
+    ctx.scale(ratio, ratio);
+  }
+  return canvas;
+};
+},{}],9:[function(require,module,exports){
+
+/**
+ * Expose `requestAnimationFrame()`.
+ */
+
+exports = module.exports = window.requestAnimationFrame
+  || window.webkitRequestAnimationFrame
+  || window.mozRequestAnimationFrame
+  || window.oRequestAnimationFrame
+  || window.msRequestAnimationFrame
+  || fallback;
+
+/**
+ * Fallback implementation.
+ */
+
+var prev = new Date().getTime();
+function fallback(fn) {
+  var curr = new Date().getTime();
+  var ms = Math.max(0, 16 - (curr - prev));
+  setTimeout(fn, ms);
+  prev = curr;
+}
+
+/**
+ * Cancel.
+ */
+
+var cancel = window.cancelAnimationFrame
+  || window.webkitCancelAnimationFrame
+  || window.mozCancelAnimationFrame
+  || window.oCancelAnimationFrame
+  || window.msCancelAnimationFrame;
+
+exports.cancel = function(id){
+  cancel.call(window, id);
+};
+
+},{}],10:[function(require,module,exports){
 ;(function(){
 	var store = {},
 		win = window,
@@ -1413,7 +1666,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 	else { this.store = store }
 })();
 
-},{}],"PBmiWO":[function(require,module,exports){
+},{}],"g070js":[function(require,module,exports){
 var fs = require("fs");
 
 var topojson = module.exports = new Function("topojson", "return " + "topojson = (function() {\n\n  function merge(topology, arcs) {\n    var fragmentByStart = {},\n        fragmentByEnd = {};\n\n    arcs.forEach(function(i) {\n      var e = ends(i),\n          start = e[0],\n          end = e[1],\n          f, g;\n\n      if (f = fragmentByEnd[start]) {\n        delete fragmentByEnd[f.end];\n        f.push(i);\n        f.end = end;\n        if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByEnd[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[end]) {\n        delete fragmentByStart[f.start];\n        f.unshift(i);\n        f.start = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[start]) {\n        delete fragmentByStart[f.start];\n        f.unshift(~i);\n        f.start = end;\n        if (g = fragmentByEnd[end]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByEnd[end]) {\n        delete fragmentByEnd[f.end];\n        f.push(~i);\n        f.end = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else {\n        f = [i];\n        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;\n      }\n    });\n\n    function ends(i) {\n      var arc = topology.arcs[i], p0 = arc[0], p1 = [0, 0];\n      arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });\n      return [p0, p1];\n    }\n\n    var fragments = [];\n    for (var k in fragmentByEnd) fragments.push(fragmentByEnd[k]);\n    return fragments;\n  }\n\n  function mesh(topology, o, filter) {\n    var arcs = [];\n\n    if (arguments.length > 1) {\n      var geomsByArc = [],\n          geom;\n\n      function arc(i) {\n        if (i < 0) i = ~i;\n        (geomsByArc[i] || (geomsByArc[i] = [])).push(geom);\n      }\n\n      function line(arcs) {\n        arcs.forEach(arc);\n      }\n\n      function polygon(arcs) {\n        arcs.forEach(line);\n      }\n\n      function geometry(o) {\n        if (o.type === \"GeometryCollection\") o.geometries.forEach(geometry);\n        else if (o.type in geometryType) {\n          geom = o;\n          geometryType[o.type](o.arcs);\n        }\n      }\n\n      var geometryType = {\n        LineString: line,\n        MultiLineString: polygon,\n        Polygon: polygon,\n        MultiPolygon: function(arcs) { arcs.forEach(polygon); }\n      };\n\n      geometry(o);\n\n      geomsByArc.forEach(arguments.length < 3\n          ? function(geoms, i) { arcs.push(i); }\n          : function(geoms, i) { if (filter(geoms[0], geoms[geoms.length - 1])) arcs.push(i); });\n    } else {\n      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);\n    }\n\n    return object(topology, {type: \"MultiLineString\", arcs: merge(topology, arcs)});\n  }\n\n  function featureOrCollection(topology, o) {\n    return o.type === \"GeometryCollection\" ? {\n      type: \"FeatureCollection\",\n      features: o.geometries.map(function(o) { return feature(topology, o); })\n    } : feature(topology, o);\n  }\n\n  function feature(topology, o) {\n    var f = {\n      type: \"Feature\",\n      id: o.id,\n      properties: o.properties || {},\n      geometry: object(topology, o)\n    };\n    if (o.id == null) delete f.id;\n    return f;\n  }\n\n  function object(topology, o) {\n    var tf = topology.transform,\n        kx = tf.scale[0],\n        ky = tf.scale[1],\n        dx = tf.translate[0],\n        dy = tf.translate[1],\n        arcs = topology.arcs;\n\n    function arc(i, points) {\n      if (points.length) points.pop();\n      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, x = 0, y = 0, p; k < n; ++k) points.push([\n        (x += (p = a[k])[0]) * kx + dx,\n        (y += p[1]) * ky + dy\n      ]);\n      if (i < 0) reverse(points, n);\n    }\n\n    function point(coordinates) {\n      return [coordinates[0] * kx + dx, coordinates[1] * ky + dy];\n    }\n\n    function line(arcs) {\n      var points = [];\n      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);\n      if (points.length < 2) points.push(points[0].slice());\n      return points;\n    }\n\n    function ring(arcs) {\n      var points = line(arcs);\n      while (points.length < 4) points.push(points[0].slice());\n      return points;\n    }\n\n    function polygon(arcs) {\n      return arcs.map(ring);\n    }\n\n    function geometry(o) {\n      var t = o.type;\n      return t === \"GeometryCollection\" ? {type: t, geometries: o.geometries.map(geometry)}\n          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}\n          : null;\n    }\n\n    var geometryType = {\n      Point: function(o) { return point(o.coordinates); },\n      MultiPoint: function(o) { return o.coordinates.map(point); },\n      LineString: function(o) { return line(o.arcs); },\n      MultiLineString: function(o) { return o.arcs.map(line); },\n      Polygon: function(o) { return polygon(o.arcs); },\n      MultiPolygon: function(o) { return o.arcs.map(polygon); }\n    };\n\n    return geometry(o);\n  }\n\n  function reverse(array, n) {\n    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;\n  }\n\n  function bisect(a, x) {\n    var lo = 0, hi = a.length;\n    while (lo < hi) {\n      var mid = lo + hi >>> 1;\n      if (a[mid] < x) lo = mid + 1;\n      else hi = mid;\n    }\n    return lo;\n  }\n\n  function neighbors(objects) {\n    var indexesByArc = {}, // arc index -> array of object indexes\n        neighbors = objects.map(function() { return []; });\n\n    function line(arcs, i) {\n      arcs.forEach(function(a) {\n        if (a < 0) a = ~a;\n        var o = indexesByArc[a];\n        if (o) o.push(i);\n        else indexesByArc[a] = [i];\n      });\n    }\n\n    function polygon(arcs, i) {\n      arcs.forEach(function(arc) { line(arc, i); });\n    }\n\n    function geometry(o, i) {\n      if (o.type === \"GeometryCollection\") o.geometries.forEach(function(o) { geometry(o, i); });\n      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);\n    }\n\n    var geometryType = {\n      LineString: line,\n      MultiLineString: polygon,\n      Polygon: polygon,\n      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }\n    };\n\n    objects.forEach(geometry);\n\n    for (var i in indexesByArc) {\n      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {\n        for (var k = j + 1; k < m; ++k) {\n          var ij = indexes[j], ik = indexes[k], n;\n          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);\n          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);\n        }\n      }\n    }\n\n    return neighbors;\n  }\n\n  return {\n    version: \"1.2.3\",\n    mesh: mesh,\n    feature: featureOrCollection,\n    neighbors: neighbors\n  };\n})();\n")();
@@ -1424,7 +1677,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":9,"./lib/topojson/clockwise":11,"./lib/topojson/filter":13,"./lib/topojson/prune":17,"./lib/topojson/simplify":18,"./lib/topojson/topology":21,"fs":1}],9:[function(require,module,exports){
+},{"./lib/topojson/bind":12,"./lib/topojson/clockwise":14,"./lib/topojson/filter":16,"./lib/topojson/prune":20,"./lib/topojson/simplify":21,"./lib/topojson/topology":24,"fs":1}],12:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1454,7 +1707,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":22}],10:[function(require,module,exports){
+},{"../../":"g070js","./type":25}],13:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -1488,7 +1741,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],11:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -1561,13 +1814,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":12,"./type":22}],12:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":15,"./type":25}],15:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":10,"./spherical":19}],13:[function(require,module,exports){
+},{"./cartesian":13,"./spherical":22}],16:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -1637,7 +1890,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":11,"./coordinate-systems":12,"./prune":17,"./type":22}],14:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":14,"./coordinate-systems":15,"./prune":20,"./type":25}],17:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -1647,7 +1900,7 @@ module.exports = function(size) {
   };
 };
 
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -1702,7 +1955,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":14}],16:[function(require,module,exports){
+},{"./hash":17}],19:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -1768,7 +2021,7 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1827,7 +2080,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":22}],18:[function(require,module,exports){
+},{"../../":"g070js","./type":25}],21:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -1959,7 +2212,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":12,"./min-heap":16}],19:[function(require,module,exports){
+},{"./coordinate-systems":15,"./min-heap":19}],22:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -2041,7 +2294,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],20:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -2091,7 +2344,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":22}],21:[function(require,module,exports){
+},{"./type":25}],24:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -2433,7 +2686,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":12,"./hashtable":15,"./stitch-poles":20,"./type":22}],22:[function(require,module,exports){
+},{"./coordinate-systems":15,"./hashtable":18,"./stitch-poles":23,"./type":25}],25:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -2527,7 +2780,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],23:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -2541,7 +2794,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],24:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 module.exports = function(context) {
 
     var data = {
@@ -2560,6 +2813,7 @@ module.exports = function(context) {
             value: v,
             source: source
         });
+        return data;
     };
 
     data.get = function(k) {
@@ -2569,17 +2823,88 @@ module.exports = function(context) {
     return data;
 };
 
-},{}],25:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
+var gist = require('../source/gist.js'),
+    Spinner = require('spinner-browserify');
+
+module.exports = function(context) {
+
+    var indication = new Spinner();
+
+    var load = {
+        gist: function(q) {
+            context.container.select('.map').classed('loading', true);
+            return gist.loadGist(q.id.split('/')[1], gistSuccess);
+        }
+    };
+
+    function gistSuccess(err, d) {
+        context.container.select('.map').classed('loading', false);
+        if (err) return;
+        context.data.set('meta', d)
+            .set('type', 'gist')
+            .set('map', mapFile(d));
+    }
+
+    return function(query) {
+        if (!query.id) return;
+        var type = query.id.split(':')[0];
+        load[type](query);
+    };
+};
+
+function mapFile(gist) {
+    var f;
+    for (f in gist.files) if (f.indexOf('.geojson') !== -1) return JSON.parse(gist.files[f].content);
+    for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
+}
+
+},{"../source/gist.js":37,"spinner-browserify":7}],29:[function(require,module,exports){
+var qs = require('../lib/querystring');
+
+module.exports = function(context) {
+    var router = {};
+
+    router.on = function() {
+        d3.select(window).on('hashchange.router', route);
+        context.dispatch.on('change', unroute);
+        route();
+        return router;
+    };
+
+    router.off = function() {
+        d3.select(window).on('hashchange.router', null);
+        return router;
+    };
+
+    function route() {
+        context.dispatch.route(getQuery());
+    }
+
+    function unroute() {
+        var query = getQuery();
+    }
+
+    function getQuery() {
+        return qs.stringQs(window.location.hash.substring(1));
+    }
+
+    return router;
+};
+
+},{"../lib/querystring":32}],30:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
+    router = require('./core/router'),
+    loader = require('./core/loader'),
     store = require('store');
 
 function geojsonIO() {
     var context = {};
 
     context.dispatch = d3.dispatch(
-        'change'
+        'change', 'route'
     );
 
     context.storage = store;
@@ -2587,6 +2912,10 @@ function geojsonIO() {
     context.map = map(context);
 
     context.data = data(context);
+
+    context.router = router(context);
+
+    context.dispatch.on('route', loader(context));
 
     return context;
 }
@@ -2596,38 +2925,10 @@ var gjUI = ui(gjIO);
 
 d3.select('.geojsonio').call(gjUI);
 
+gjIO.router.on();
+
 
 /*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// var map = mapUtil.setupMap(container);
 
 L.Polygon.prototype.getCenter = function() {
     var pts = this._latlngs;
@@ -2662,19 +2963,6 @@ if (window.location.hash) hashChange();
 function clickSource() {
     if (d3.event) d3.event.preventDefault();
     d3.select('.left-panel').call(sourcePanel(updates));
-}
-
-
-function shareMap() {
-    share(container, featuresFromMap());
-}
-
-function clickCollapse() {
-    d3.select('.right').classed('hidden',
-        !d3.select('.right').classed('hidden'));
-    d3.select('#map').classed('fullsize',
-        !d3.select('#map').classed('fullsize'));
-    map.invalidateSize();
 }
 
 function focusLayer(layer) {
@@ -2749,40 +3037,6 @@ function saveChanges() {
     }
 }
 
-function featuresFromMap() {
-    var features = [];
-    drawnItems.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    return features;
-}
-
-function updateFromMap() {
-    updates.update_map({
-        type: 'FeatureCollection',
-        features: featuresFromMap()
-    }, drawnItems, exportIndentationStyle);
-}
-
-function refresh() {
-    drawnItems.eachLayer(function(l) {
-        mapUtil.showProperties(l);
-    });
-}
-
-function zoomToExtent() {
-    if (drawnItems.getBounds().isValid()) {
-        map.fitBounds(drawnItems.getBounds());
-    }
-}
-
-function loadToMap(gj) {
-    drawnItems.clearLayers();
-    L.geoJson(gj).eachLayer(function(l) {
-        mapUtil.showProperties(l);
-        l.addTo(drawnItems);
-    });
-}
 
 function mapFile(gist) {
     var f;
@@ -2857,7 +3111,7 @@ function hashChange() {
 }
 */
 
-},{"./core/data":24,"./ui":32,"./ui/map":36,"store":7}],26:[function(require,module,exports){
+},{"./core/data":27,"./core/loader":28,"./core/router":29,"./ui":38,"./ui/map":42,"store":10}],31:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -2896,7 +3150,26 @@ module.exports = function(context) {
     };
 };
 
-},{}],27:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
+module.exports.stringQs = function(str) {
+    return str.split('&').reduce(function(obj, pair){
+        var parts = pair.split('=');
+        if (parts.length === 2) {
+            obj[parts[0]] = (null === parts[1]) ? '' : decodeURIComponent(parts[1]);
+        }
+        return obj;
+    }, {});
+};
+
+module.exports.qsString = function(obj, noencode) {
+    function softEncode(s) { return s.replace('&', '%26'); }
+    return Object.keys(obj).sort().map(function(key) {
+        return encodeURIComponent(key) + '=' + (
+            noencode ? softEncode(obj[key]) : encodeURIComponent(obj[key]));
+    }).join('&');
+};
+
+},{}],33:[function(require,module,exports){
 var validate = require('../validate');
 
 CodeMirror.keyMap.tabSpace = {
@@ -2948,7 +3221,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../validate":39}],28:[function(require,module,exports){
+},{"../validate":45}],34:[function(require,module,exports){
 var config = require('../config')(location.hostname);
 
 module.exports = loginPanel;
@@ -3013,7 +3286,7 @@ loginPanel.init = function(container) {
     }
 };
 
-},{"../config":23}],29:[function(require,module,exports){
+},{"../config":26}],35:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3);
 
 module.exports = function(context) {
@@ -3070,7 +3343,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"d3-metatable":4}],30:[function(require,module,exports){
+},{"d3-metatable":4}],36:[function(require,module,exports){
 'use strict';
 
 module.exports = function source() {
@@ -3107,7 +3380,7 @@ module.exports = function source() {
     }
 };
 
-},{}],31:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var source = require('../source.js');
 var fs = require('fs');
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
@@ -3115,7 +3388,6 @@ var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='wi
 module.exports.saveAsGist = saveAsGist;
 module.exports.saveBlocks = saveBlocks;
 module.exports.loadGist = loadGist;
-module.exports.urlHash = urlHash;
 
 function loggedin() {
     return !!localStorage.github_token;
@@ -3195,27 +3467,14 @@ function saveAsGist(content, callback) {
 function loadGist(id, callback) {
     d3.json('https://api.github.com/gists/' + id)
         .on('load', onLoad)
-        .on('error', onError).get();
+        .on('error', onError)
+        .get();
 
     function onLoad(json) { callback(null, json); }
     function onError(err) { callback(err, null); }
 }
 
-function urlHash(data) {
-    var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id && !source().login) {
-        return {
-            url: '#gist:' + login + '/' + data.id,
-            redirect: true
-        };
-    } else {
-        return {
-            url: '#gist:' + login + '/' + data.id
-        };
-    }
-}
-
-},{"../source.js":30,"fs":1}],32:[function(require,module,exports){
+},{"../source.js":36,"fs":1}],38:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     layer_switch = require('./ui/layer_switch');
@@ -3255,6 +3514,11 @@ function ui(context) {
             .append('button')
             .attr('class', 'collapse-button')
             .attr('title', 'Collapse')
+            .on('click', function collapse() {
+                d3.select('body').classed('fullscreen',
+                    !d3.select('body').classed('fullscreen'));
+                context.map.invalidateSize();
+            })
             .append('class', 'span')
             .attr('class', 'icon icon-caret-down');
 
@@ -3278,7 +3542,7 @@ function ui(context) {
     return render;
 }
 
-},{"./ui/file_bar":33,"./ui/layer_switch":35,"./ui/mode_buttons":37}],33:[function(require,module,exports){
+},{"./ui/file_bar":39,"./ui/layer_switch":41,"./ui/mode_buttons":43}],39:[function(require,module,exports){
 var share = require('./share');
 
 module.exports = function fileBar(context) {
@@ -3402,9 +3666,9 @@ module.exports = function fileBar(context) {
     return d3.rebind(bar, event, 'on');
 }
 
-},{"./share":38}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],35:[function(require,module,exports){
+},{"./share":44}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],41:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -3453,7 +3717,7 @@ module.exports = function(context) {
 };
 
 
-},{}],36:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 var popup = require('../lib/popup');
 
 module.exports = function(context) {
@@ -3538,7 +3802,7 @@ function bindPopup(l) {
     return l;
 }
 
-},{"../lib/popup":26}],37:[function(require,module,exports){
+},{"../lib/popup":31}],43:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     login = require('../panel/login');
@@ -3583,7 +3847,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":27,"../panel/login":28,"../panel/table":29}],38:[function(require,module,exports){
+},{"../panel/json":33,"../panel/login":34,"../panel/table":35}],44:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -3658,7 +3922,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":31}],39:[function(require,module,exports){
+},{"../source/gist":37}],45:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -3714,5 +3978,5 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":5}]},{},[31,25])
+},{"geojsonhint":5}]},{},[37,30])
 ;

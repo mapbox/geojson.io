@@ -93,11 +93,11 @@ input[type=text] {
     border-color: rgba(102,102,102,0.25);
 }
 
-#map.fullsize {
+body.fullscreen .map {
     right:0;
 }
 
-.right.hidden {
+body.fullscreen .right {
     height:40px;
     bottom:auto;
     border-bottom: 1px solid #d9d9d9;
@@ -553,4 +553,18 @@ textarea.full-width {
     .file-bar {
         right:50%;
     }
+}
+
+.map.loading {
+    opacity:0.6;
+}
+
+.map.loading:after {
+    content: 'loading';
+    font-size: 20px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    text-align: center;
+    font-weight: bold;
 }

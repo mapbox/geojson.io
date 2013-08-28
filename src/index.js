@@ -1,13 +1,15 @@
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
+    router = require('./core/router'),
+    loader = require('./core/loader'),
     store = require('store');
 
 function geojsonIO() {
     var context = {};
 
     context.dispatch = d3.dispatch(
-        'change'
+        'change', 'route'
     );
 
     context.storage = store;
@@ -15,6 +17,10 @@ function geojsonIO() {
     context.map = map(context);
 
     context.data = data(context);
+
+    context.router = router(context);
+
+    context.dispatch.on('route', loader(context));
 
     return context;
 }
@@ -24,38 +30,10 @@ var gjUI = ui(gjIO);
 
 d3.select('.geojsonio').call(gjUI);
 
+gjIO.router.on();
+
 
 /*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// var map = mapUtil.setupMap(container);
 
 L.Polygon.prototype.getCenter = function() {
     var pts = this._latlngs;
@@ -90,19 +68,6 @@ if (window.location.hash) hashChange();
 function clickSource() {
     if (d3.event) d3.event.preventDefault();
     d3.select('.left-panel').call(sourcePanel(updates));
-}
-
-
-function shareMap() {
-    share(container, featuresFromMap());
-}
-
-function clickCollapse() {
-    d3.select('.right').classed('hidden',
-        !d3.select('.right').classed('hidden'));
-    d3.select('#map').classed('fullsize',
-        !d3.select('#map').classed('fullsize'));
-    map.invalidateSize();
 }
 
 function focusLayer(layer) {
@@ -177,40 +142,6 @@ function saveChanges() {
     }
 }
 
-function featuresFromMap() {
-    var features = [];
-    drawnItems.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    return features;
-}
-
-function updateFromMap() {
-    updates.update_map({
-        type: 'FeatureCollection',
-        features: featuresFromMap()
-    }, drawnItems, exportIndentationStyle);
-}
-
-function refresh() {
-    drawnItems.eachLayer(function(l) {
-        mapUtil.showProperties(l);
-    });
-}
-
-function zoomToExtent() {
-    if (drawnItems.getBounds().isValid()) {
-        map.fitBounds(drawnItems.getBounds());
-    }
-}
-
-function loadToMap(gj) {
-    drawnItems.clearLayers();
-    L.geoJson(gj).eachLayer(function(l) {
-        mapUtil.showProperties(l);
-        l.addTo(drawnItems);
-    });
-}
 
 function mapFile(gist) {
     var f;

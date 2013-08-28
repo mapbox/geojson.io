@@ -16,6 +16,7 @@ module.exports = function(context) {
             value: v,
             source: source
         });
+        return data;
     };
 
     data.get = function(k) {

@@ -5,7 +5,6 @@ var tmpl = fs.readFileSync('data/share.html', 'utf8');
 module.exports.saveAsGist = saveAsGist;
 module.exports.saveBlocks = saveBlocks;
 module.exports.loadGist = loadGist;
-module.exports.urlHash = urlHash;
 
 function loggedin() {
     return !!localStorage.github_token;
@@ -85,22 +84,9 @@ function saveAsGist(content, callback) {
 function loadGist(id, callback) {
     d3.json('https://api.github.com/gists/' + id)
         .on('load', onLoad)
-        .on('error', onError).get();
+        .on('error', onError)
+        .get();
 
     function onLoad(json) { callback(null, json); }
     function onError(err) { callback(err, null); }
-}
-
-function urlHash(data) {
-    var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id && !source().login) {
-        return {
-            url: '#gist:' + login + '/' + data.id,
-            redirect: true
-        };
-    } else {
-        return {
-            url: '#gist:' + login + '/' + data.id
-        };
-    }
 }

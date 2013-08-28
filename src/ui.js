@@ -37,6 +37,11 @@ function ui(context) {
             .append('button')
             .attr('class', 'collapse-button')
             .attr('title', 'Collapse')
+            .on('click', function collapse() {
+                d3.select('body').classed('fullscreen',
+                    !d3.select('body').classed('fullscreen'));
+                context.map.invalidateSize();
+            })
             .append('class', 'span')
             .attr('class', 'icon icon-caret-down');
 
