@@ -19,12 +19,8 @@ function saveBlocks(content, callback) {
             description: 'via:geojson.io',
             public: true,
             files: {
-                'index.html': {
-                    content: tmpl
-                },
-                'map.geojson': {
-                    content: content
-                }
+                'index.html': { content: tmpl },
+                'map.geojson': { content: content }
             }
         }));
 }
@@ -32,11 +28,6 @@ function saveBlocks(content, callback) {
 function save(context, callback) {
 
     var d = context.data.all();
-
-    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
-        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
-    }
 
     context.user.details(onuser);
 

@@ -104,9 +104,26 @@ module.exports = function(context) {
                         .on('chosen', gitHubChosen));
 
             function gitHubChosen(d) {
-                var hash = github.urlHash(d);
-                location.hash = hash.url;
-                hidePanel();
+                var path = d.path, branch, repo, login;
+
+                if (d.parents) {
+                    for (var i = 0; i < d.parents.length; i++) {
+                        if (!d.parents[i].default_branch) {
+                            path += '/' + d.parents[i].path;
+                        }
+                    }
+                }
+
+                if (d.parent) {
+                    repo = d.parent.name;
+                    branch = d.parent.default_branch;
+                    login = d.parent.full_name.split('/')[0];
+                }
+
+                context.data.set({
+                    type: 'github',
+                    github: d
+                });
             }
         }
 
@@ -115,12 +132,6 @@ module.exports = function(context) {
                 .html('')
                 .append('div')
                 .call(importPanel(context));
-
-            function gitHubChosen(d) {
-                var hash = github.urlHash(d);
-                location.hash = hash.url;
-                hidePanel();
-            }
         }
 
         function clickGist() {
@@ -133,9 +144,10 @@ module.exports = function(context) {
                         .on('chosen', gistChosen));
 
             function gistChosen(d) {
-                var hash = gist.urlHash(d);
-                location.hash = hash.url;
-                hidePanel();
+                context.data.set({
+                    type: 'gist',
+                    github: d
+                });
             }
         }
 

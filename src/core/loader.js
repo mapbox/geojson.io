@@ -35,7 +35,6 @@ module.exports = function(context) {
 
     function gistSuccess(err, d) {
         context.container.select('.map').classed('loading', false);
-        console.log(arguments);
         if (err) return;
         context.data
             .set({
@@ -72,7 +71,7 @@ module.exports = function(context) {
     return function(query) {
         if (!query.id) return;
         var type = query.id.split(':')[0];
-        if (query.id !== dataId(context.data)) {
+        if (query.id !== dataId(context.data.all())) {
             if (load[type]) load[type](query);
         }
     };

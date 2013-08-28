@@ -23,7 +23,7 @@ module.exports = function(context) {
     function unroute() {
         var query = getQuery();
         var rev = reverseRoute();
-        if (rev && query !== rev) {
+        if (rev.id && query.id !== rev.id) {
             location.hash = '#' + qs.qsString(rev);
         }
     }
@@ -39,6 +39,16 @@ module.exports = function(context) {
         if (data.type === 'gist') {
             return xtend(query, {
                 id: 'gist:' + data.github.id
+            });
+        } else if (data.type === 'github') {
+            var url = data.github.html_url.split('/'),
+                login = url[3],
+                repo = url[4],
+                branch = url[6];
+            var id = 'github:' + [login, repo, branch, d.github.path].join('/');
+
+            return xtend(query, {
+                id: id
             });
         }
 
