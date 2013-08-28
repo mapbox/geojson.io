@@ -5,11 +5,11 @@ module.exports = function(context) {
 
     user.details = function(callback) {
         if (!context.storage.get('github_token')) return callback('not logged in');
-        var cached = context.store.get('github_user_details');
-        if (cached.when > (+new Date() - 1000 * 60 * 60)) {
+        var cached = context.storage.get('github_user_details');
+        if (cached && cached.when > (+new Date() - 1000 * 60 * 60)) {
             callback(null, cached.data);
         } else {
-            context.store.remove('github_user_details');
+            context.storage.remove('github_user_details');
 
             d3.json('https://api.github.com/user')
                 .header('Authorization', 'token ' + context.storage.get('github_token'))
@@ -19,7 +19,7 @@ module.exports = function(context) {
         }
 
         function onload(user) {
-            context.store.set('github_user_details', {
+            context.storage.set('github_user_details', {
                 when: +new Date(),
                 data: user
             });
@@ -29,7 +29,7 @@ module.exports = function(context) {
 
         function onerror() {
             user.logout();
-            context.store.remove('github_user_details');
+            context.storage.remove('github_user_details');
             callback(new Error('not logged in'));
         }
     };
