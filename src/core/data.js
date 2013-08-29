@@ -1,4 +1,4 @@
-var xtend = require('xtend');
+var clone = require('clone');
 
 module.exports = function(context) {
 
@@ -17,7 +17,7 @@ module.exports = function(context) {
 
     data.set = function(obj, source) {
         for (var k in obj) {
-            _data[k] = (typeof obj[k] === 'object') ? xtend(obj[k]) : obj[k];
+            _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
         }
         if (obj.dirty !== false) data.dirty = true;
         context.dispatch.change({
@@ -37,7 +37,7 @@ module.exports = function(context) {
     };
 
     data.all = function() {
-        return xtend(_data);
+        return clone(_data, false);
     };
 
     return data;

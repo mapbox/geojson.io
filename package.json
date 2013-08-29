@@ -22,7 +22,8 @@
     "store": "~1.3.8",
     "leaflet-hash": "https://github.com/mlevans/leaflet-hash/archive/master.tar.gz",
     "spinner-browserify": "~0.1.0",
-    "xtend": "~2.0.6"
+    "xtend": "~2.0.6",
+    "clone": "~0.1.10"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",
