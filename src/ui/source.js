@@ -100,19 +100,7 @@ module.exports = function(context) {
                 .attr('class', 'repos')
                 .call(githubBrowser
                     .gitHubBrowse(context.user.token())
-                        .on('chosen', gitHubChosen));
-
-            function gitHubChosen(d, path) {
-                context.data.set({
-                    type: 'github',
-                    github: d,
-                    meta: {
-                        login: path[1].login,
-                        repo: path[2].name,
-                        branch: path[3].name
-                    }
-                });
-            }
+                        .on('chosen', context.data.load));
         }
 
         function clickImport() {
@@ -129,14 +117,7 @@ module.exports = function(context) {
                 .attr('class', 'browser pad1')
                 .call(githubBrowser
                     .gistBrowse(context.user.token())
-                        .on('chosen', gistChosen));
-
-            function gistChosen(d) {
-                context.data.set({
-                    type: 'gist',
-                    github: d
-                });
-            }
+                        .on('chosen', context.data.load));
         }
 
         $sources.filter(function(d, i) { return !i; }).trigger('click');

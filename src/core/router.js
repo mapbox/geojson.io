@@ -38,14 +38,19 @@ module.exports = function(context) {
 
         if (data.type === 'gist') {
             return xtend(query, {
-                id: 'gist:' + data.github.id
+                id: 'gist:' + [
+                    data.meta.login,
+                    data.source.id
+                ].join('/')
             });
         } else if (data.type === 'github') {
-            var url = data.github.html_url.split('/'),
-                login = url[3],
-                repo = url[4],
-                branch = url[6];
-            var id = 'github:' + [login, repo, branch, d.github.path].join('/');
+            var id = 'github:' + [
+              data.meta.login,
+              data.meta.repo,
+              'blob',
+              data.meta.branch,
+              data.source.path
+            ].join('/');
 
             return xtend(query, {
                 id: id

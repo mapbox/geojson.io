@@ -1,5 +1,6 @@
 var gist = require('../source/gist.js'),
     github = require('../source/github.js'),
+    xtend = require('xtend');
     Spinner = require('spinner-browserify');
 
 module.exports = function(context) {
@@ -19,8 +20,8 @@ module.exports = function(context) {
             var parts = {
                 user: url[0].split(':')[1],
                 repo: url[1],
-                branch: url[2],
-                path: (url.slice(3) || []).join('/')
+                branch: url[3],
+                path: (url.slice(4) || []).join('/')
             };
 
             context.container.select('.map').classed('loading', true);
@@ -36,35 +37,23 @@ module.exports = function(context) {
     function gistSuccess(err, d) {
         context.container.select('.map').classed('loading', false);
         if (err) return;
-        context.data
-            .set({
-                type: 'gist',
-                github: d,
-                map: mapFile(d),
-                dirty: false
-            });
+        context.data.load(d);
     }
 
     function gitHubSuccess(err, meta, raw) {
         context.container.select('.map').classed('loading', false);
         if (err) return;
-        context.data
-            .set({
-                type: 'github',
-                github: meta,
-                map: JSON.parse(raw),
-                dirty: false
-            });
+        context.data.load(xtend(meta, { content: JSON.parse(raw) }));
     }
 
     function dataId(d) {
-        if (d.type === 'gist') return 'gist:' + d.github.id;
+        if (d.type === 'gist') return 'gist:' + d.source.id;
         if (d.type === 'github') {
-            var url = d.github.html_url.split('/'),
+            var url = d.source.html_url.split('/'),
                 login = url[3],
                 repo = url[4],
                 branch = url[6];
-            return 'github:' + [login, repo, branch, d.github.path].join('/');
+            return 'github:' + [login, repo, branch, d.source.path].join('/');
         }
     }
 
@@ -76,9 +65,3 @@ module.exports = function(context) {
         }
     };
 };
-
-function mapFile(gist) {
-    var f;
-    for (f in gist.files) if (f.indexOf('.geojson') !== -1) return JSON.parse(gist.files[f].content);
-    for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
-}
