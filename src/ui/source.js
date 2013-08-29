@@ -34,25 +34,29 @@ module.exports = function(context) {
 
         var $top = panel
             .append('div')
-            .attr('class', 'import-sources col12 clearfix');
+            .attr('class', 'top');
 
-       var $sources = $top.append('div')
-            .attr('class', 'col10')
-            .selectAll('div.import-source')
+       var $buttons = $top.append('div')
+            .attr('class', 'buttons');
+
+       var $sources = $buttons
+           .selectAll('button.source')
             .data(sources)
             .enter()
-            .append('div')
-            .attr('class', 'import-source col4')
+            .append('button')
             .classed('deemphasize', function(d) {
                 return d.authenticated && !context.user.token();
             })
-            .append('div')
-            .attr('class', 'pad1 center clickable')
+            .attr('class', function(d) {
+                return d.icon + ' icon-spaced pad1 source';
+            })
+            .text(function(d) {
+                return ' ' + d.title;
+            })
             .attr('title', function(d) { return d.alt; })
             .on('click', clickSource);
 
         function clickSource(d) {
-
             if (d.authenticated && !context.user.token()) {
                 return alert('Log in to load GitHub files and Gists');
             }
@@ -65,23 +69,8 @@ module.exports = function(context) {
             d.action.apply(this, d);
         }
 
-        $sources.append('span')
-            .attr('class', function(d) {
-                return d.icon + ' icon-spaced';
-            });
-
-        $sources.append('span')
-            .attr('class', 'label')
-            .text(function(d) {
-                return d.title;
-            });
-
-        $top.append('div')
-            .attr('class', 'col2')
-            .append('div')
-            .attr('class', 'pad1 center clickable')
+        $buttons.append('button')
             .on('click', hidePanel)
-            .append('span')
             .attr('class', function(d) {
                 return 'icon-remove';
             });

@@ -55,7 +55,7 @@ table {
 
 body#geojsonio-body {
     margin:0; padding:0;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Open Sans', 'Helvetica Neue', sans-serif;
     color:#222;
     -webkit-font-smoothing:antialiased;
 }
