@@ -234,7 +234,7 @@ button {
     top:0;
     height:auto !important;
     background:#f1f1f1;
-    font-family: 'Droid Sans Mono', sans-serif;
+    font-family: 'm_1regular', monospace;
     line-height:1.5em;
 }
 
