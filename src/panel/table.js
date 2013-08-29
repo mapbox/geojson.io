@@ -1,7 +1,10 @@
-var metatable = require('d3-metatable')(d3);
+var metatable = require('d3-metatable')(d3),
+    smartZoom = require('../lib/smartzoom.js');
 
 module.exports = function(context) {
     function render(selection) {
+
+        selection.html('');
 
         function rerender() {
             var geojson = context.data.get('map');
@@ -13,18 +16,21 @@ module.exports = function(context) {
                     .text('no features');
             } else {
                 var props = geojson.features.map(getProperties);
+                selection.select('.blank-banner').remove();
                 selection
-                    .html('')
-                    .append('div')
-                    .attr('class', 'pad1 scrollable')
                     .data([props])
-                    .call(
-                        metatable()
-                            .on('change', function(row, i) {
-                            })
-                            .on('rowfocus', function(row, i) {
-                                // console.log(arguments);
-                            })
+                    .call(metatable()
+                        .on('change', function(row, i) {
+                            var geojson = context.data.get('map');
+                            geojson.features[i].properties = row;
+                            context.data.set('map', geojson);
+                        })
+                        .on('rowfocus', function(row, i) {
+                            var j = 0;
+                            context.mapLayer.eachLayer(function(l) {
+                                if (i === j++) smartZoom(context.map, l);
+                            });
+                        })
                     );
             }
         }
