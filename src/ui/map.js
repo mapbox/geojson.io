@@ -16,7 +16,11 @@ module.exports = function(context) {
 
         context.drawControl = new L.Control.Draw({
             edit: { featureGroup: context.mapLayer },
-            draw: { circle: false }
+            draw: {
+                circle: false,
+                polyline: { metric: navigator.language !== 'en-US' },
+                polygon: { metric: navigator.language !== 'en-US' }
+            }
         }).addTo(context.map);
 
         context.map
