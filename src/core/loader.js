@@ -9,7 +9,7 @@ module.exports = function(context) {
 
     var load = {
         gist: function(q) {
-            var id = q.id.split(':')[1];
+            var id = q.id.split(':')[1].split('/')[1];
             context.container.select('.map').classed('loading', true);
             gist.load(id, context, function(err, d) {
                 return gistSuccess(err, d);
@@ -49,11 +49,12 @@ module.exports = function(context) {
     function dataId(d) {
         if (d.type === 'gist') return 'gist:' + d.source.id;
         if (d.type === 'github') {
-            var url = d.source.html_url.split('/'),
-                login = url[3],
-                repo = url[4],
-                branch = url[6];
-            return 'github:' + [login, repo, branch, d.source.path].join('/');
+            return 'github:' + [
+                d.meta.login,
+                d.meta.repo,
+                d.meta.branch,
+                d.source.path
+            ].join('/');
         }
     }
 

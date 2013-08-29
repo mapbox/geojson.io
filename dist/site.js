@@ -8578,8 +8578,21 @@ module.exports = function(context) {
 
     function mapFile(gist) {
         var f;
-        for (f in gist.files) if (f.indexOf('.geojson') !== -1) return JSON.parse(gist.files[f].content);
-        for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
+        var content;
+
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.geojson') !== -1 && content) {
+                return JSON.parse(content);
+            }
+        }
+
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.json') !== -1 && content) {
+                return JSON.parse(content);
+            }
+        }
     }
 
     var data = {};
@@ -8614,6 +8627,8 @@ module.exports = function(context) {
         var meta = {};
         var url;
 
+        if (d.files) d.type = 'gist';
+
         switch(d.type) {
           case 'blob':
               github = true;
@@ -8629,7 +8644,7 @@ module.exports = function(context) {
               meta.branch = url[6];
               break;
           case 'gist':
-              d.user.login;
+              meta.login = d.user.login;
               break;
         }
 
@@ -8656,7 +8671,7 @@ module.exports = function(context) {
 
     var load = {
         gist: function(q) {
-            var id = q.id.split(':')[1];
+            var id = q.id.split(':')[1].split('/')[1];
             context.container.select('.map').classed('loading', true);
             gist.load(id, context, function(err, d) {
                 return gistSuccess(err, d);
@@ -8696,11 +8711,12 @@ module.exports = function(context) {
     function dataId(d) {
         if (d.type === 'gist') return 'gist:' + d.source.id;
         if (d.type === 'github') {
-            var url = d.source.html_url.split('/'),
-                login = url[3],
-                repo = url[4],
-                branch = url[6];
-            return 'github:' + [login, repo, branch, d.source.path].join('/');
+            return 'github:' + [
+                d.meta.login,
+                d.meta.repo,
+                d.meta.branch,
+                d.source.path
+            ].join('/');
         }
     }
 

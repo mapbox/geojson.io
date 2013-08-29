@@ -15,8 +15,21 @@ module.exports = function(context) {
 
     function mapFile(gist) {
         var f;
-        for (f in gist.files) if (f.indexOf('.geojson') !== -1) return JSON.parse(gist.files[f].content);
-        for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
+        var content;
+
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.geojson') !== -1 && content) {
+                return JSON.parse(content);
+            }
+        }
+
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.json') !== -1 && content) {
+                return JSON.parse(content);
+            }
+        }
     }
 
     var data = {};
@@ -51,6 +64,8 @@ module.exports = function(context) {
         var meta = {};
         var url;
 
+        if (d.files) d.type = 'gist';
+
         switch(d.type) {
           case 'blob':
               github = true;
@@ -66,7 +81,7 @@ module.exports = function(context) {
               meta.branch = url[6];
               break;
           case 'gist':
-              d.user.login;
+              meta.login = d.user.login;
               break;
         }
 
