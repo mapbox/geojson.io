@@ -66,16 +66,6 @@ input[type=text] {
     right:40%;
 }
 
-.left-panel {
-    background:#fff;
-    position:absolute;
-    top:40px;
-    bottom:0;
-    left:0;
-    right:40%;
-    z-index:9999;
-}
-
 .right {
     overflow-x:hidden;
     position:absolute;
@@ -91,33 +81,6 @@ input[type=text] {
     -webkit-transition:all 200ms;
     border-left: 1px solid #d9d9d9;
     border-color: rgba(102,102,102,0.25);
-}
-
-.left {
-    overflow-x:hidden;
-    position:absolute;
-    bottom:0;
-    top:40px;
-    left:0;
-    width:40%;
-    min-width:400px;
-    box-sizing:border-box;
-    font-size:14px;
-    background:#f1f1f1;
-    transition:all 200ms;
-    -webkit-transition:all 200ms;
-    border-right: 1px solid #d9d9d9;
-    border-color: rgba(102,102,102,0.25);
-    z-index:9999;
-}
-
-body.has-left .right {
-    right:-40%;
-}
-
-body.has-left .map {
-    left:40%;
-    right:0;
 }
 
 body.fullscreen .map {
@@ -150,18 +113,6 @@ p.intro-hint {
 
 p.intro-hint:hover {
     opacity:1;
-}
-
-.right .CodeMirror {
-    position:absolute;
-    bottom:0;
-    right:0;
-    left:0;
-    top:0;
-    height:auto !important;
-    background:#f1f1f1;
-    font-family: 'Droid Sans Mono', sans-serif;
-    line-height:1.5em;
 }
 
 .right .pane {
@@ -210,66 +161,23 @@ button.delete-invert {
 }
 
 .clear-buttons button {
-    background:transparent;
-    padding:0;
-    margin:0;
-    border:0;
     opacity:0.6;
 }
 
 .clear-buttons button:hover {
     opacity:1;
-    border:0;
 }
 
 button {
-    font-family: 'Open Sans', sans-serif;
+    font: inherit;
     cursor:pointer;
-    background:#fff;
-    font:inherit;
+    background:transparent;
     margin:0;
-    border:0;
-    padding:5px 10px;
+    padding:0;
+    border:none;
     box-sizing:border-box;
-    border:1px solid #ccc;
     transition:all 100ms ease-in-out;
     -webkit-transition:all 100ms ease-in-out;
-    border-bottom:1px solid #ccc;
-}
-
-button span {
-    font-family: 'Open Sans', sans-serif;
-}
-
-button:hover {
-    border:1px solid red;
-}
-
-button.major {
-    font-size: large;
-    border: 1px solid #aaa;
-    border-bottom: 2px solid #aaa;
-    padding: 10px;
-}
-
-button.major:hover {
-    border-bottom:2px solid red;
-}
-
-button.semimajor {
-    font-size: 15px;
-    border: 1px solid #aaa;
-    border-bottom: 2px solid #aaa;
-    padding: 10px;
-}
-
-button.semimajor:hover {
-    border-bottom:2px solid red;
-}
-
-/* http://www.mollietaylor.com/2012/10/color-blindness-and-palette-choice.html */
-button.positive {
-    background:#a6d854;
 }
 
 .top .collapse-button {
@@ -312,6 +220,22 @@ button.positive {
     background:#f1f1f1;
     color:#000;
     border-bottom:2px solid red;
+}
+
+/*
+ * CodeMirror & Markers -------------------------------------------------------
+ */
+
+.right .CodeMirror {
+    position:absolute;
+    bottom:0;
+    right:0;
+    left:0;
+    top:0;
+    height:auto !important;
+    background:#f1f1f1;
+    font-family: 'Droid Sans Mono', sans-serif;
+    line-height:1.5em;
 }
 
 .error-marker {
@@ -393,18 +317,22 @@ body.dragover .modal-message {
     text-align:center;
 }
 
-#layer-switch {
+/*
+ * layer_switch ---------------------------------------------------------------
+ */
+
+.layer-switch {
     position:absolute;
     bottom:10px;
-    font-size:small;
     left:10px;
 }
 
-#layer-switch button {
+.layer-switch button {
     opacity:0.5;
+    background:#fff;
 }
 
-#layer-switch button.active {
+.layer-switch button.active {
     opacity:1;
     background:#f7f7f7;
 }
@@ -452,49 +380,6 @@ textarea.full-width {
 
 .file-bar .name .filename {
     margin-left:10px;
-}
-
-.file-bar .icon-external-link {
-    margin-left:10px;
-    font-size:15px;
-    color:#444;
-    transition:all 100ms ease-in;
-}
-
-.file-bar .icon-external-link:hover {
-    color:red;
-}
-
-.file-bar .dirty {
-    color:#999;
-}
-
-.button-wrap {
-    padding:5px 0;
-    display:inline-block;
-    vertical-align:top;
-    margin-right:10px;
-}
-
-.button-wrap button {
-    vertical-align:top;
-    line-height:28px;
-    font-size:12px;
-    padding:0px 10px;
-    border-right:none;
-}
-
-.button-wrap button .icon {
-    margin-right:5px;
-}
-
-.button-wrap button:last-child {
-    border-right:1px solid #ccc;
-    border-radius:0 5px 5px 0;
-}
-
-.button-wrap button:first-child {
-    border-radius:5px 0 0 5px;
 }
 
 .import-sources {
@@ -562,7 +447,7 @@ textarea.full-width {
     .file-bar .button-wrap button span.title {
         display:none;
     }
-    .left-panel, .map {
+    .map {
         right:50%;
     }
     .right {
@@ -607,5 +492,190 @@ body.dragover:after {
 }
 
 .pad0 {
+    padding:5px;
+}
+
+.sq40 {
+    height:40px;
+    width:40px;
+    text-align:center;
+}
+
+/*
+ * Tooltips -------------------------------------------------------------------
+ */
+
+.tooltip {
+    position: absolute;
+    display: none;
+    color:#333;
+    text-align: left;
+    font-size: 12px;
+}
+
+.tooltip.in {
+    opacity: 0.8;
+    z-index: 1030;
+    height: auto;
+    display: block;
+}
+
+.tooltip.top {
+    margin-top: -20px;
+    text-align: center;
+}
+
+.tooltip.right {
+    margin-left: 20px;
+}
+
+.tooltip.bottom {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.tooltip.left {
+    margin-left: -20px;
+    text-align: right;
+}
+
+.tooltip-inner {
+    display: inline-block;
+    max-width: 200px;
+    min-width: 80px;
+    padding: 10px;
+    font-weight: normal;
+    background-color: white;
+}
+
+.tail {
+    width: 200px;
+    height: 400px;
+    pointer-events: none;
+    opacity: .8;
+    margin-top: -200px;
+    position: absolute;
+    background: transparent;
+}
+
+.tail::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-color: transparent;
+    border-style: solid;
+    top: 50%;
+    right: -5px;
+    margin-top: -5px;
+    border-left-color: white;
+    border-width: 5px 0 5px 5px;
+}
+
+.tail div {
+    padding: 10px;
+    background: white;
+    position: absolute;
+    top: 180px;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
+
+.left.tail::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-color: transparent;
+    border-style: solid;
+    top: 50%;
+    left: -5px;
+    margin-top: -5px;
+    border-right-color: white;
+    border-width: 5px 5px 5px 0;
+}
+
+.tooltip-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-color: transparent;
+    border-style: solid;
+}
+
+.tooltip.top .tooltip-arrow {
+    bottom: -5px;
+    left: 50%;
+    margin-left: -5px;
+    border-top-color: white;
+    border-width: 5px 5px 0;
+}
+
+.tooltip.right .tooltip-arrow {
+    top: 50%;
+    left: -5px;
+    margin-top: -5px;
+    border-right-color: white;
+    border-width: 5px 5px 5px 0;
+}
+
+.tooltip.left .tooltip-arrow {
+    top: 50%;
+    right: -5px;
+    margin-top: -5px;
+    border-left-color: white;
+    border-width: 5px 0 5px 5px;
+}
+
+.tooltip.bottom .tooltip-arrow {
+    top: -5px;
+    left: 50%;
+    margin-left: -5px;
+    border-bottom-color: white;
+    border-width: 0 5px 5px;
+}
+
+.keyhint-wrap {
+    background: #F6F6F6;
+    padding: 10px;
+    margin: 10px -10px -10px;
+}
+
+.tooltip-inner .keyhint {
+    font-size: 10px;
+    padding: 0 7px;
+    font-weight: bold;
+    display: inline-block;
+    border-radius: 2px;
+    border: 1px solid #CCC;
+    position: relative;
+    z-index: 1;
+    text-align: left;
+}
+
+.tooltip-inner .keyhint::after {
+    content: "";
+    position: absolute;
+    border-radius: 2px;
+    height: 10px;
+    width: 100%;
+    z-index: 0;
+    bottom: -4px;
+    left: -1px;
+    border: 1px solid #CCC;
+    border-top: 0;
+}
+
+/*
+ * GitHub Browser -------------------------------------------------------------
+ */
+.repos a {
+    color:#222;
+}
+
+.repos .item button {
+    font-size:12px;
+    background:#eee;
     padding:5px;
 }

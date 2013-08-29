@@ -1240,6 +1240,11 @@ d3.behavior.drag = function() {
 
   return d3.rebind(drag, event, "on");
 };
+function d3_functor(v) {
+  return typeof v === "function" ? v : function() { return v; };
+}
+
+d3.functor = d3_functor;
 
 var d3_timer_queueHead,
     d3_timer_queueTail,

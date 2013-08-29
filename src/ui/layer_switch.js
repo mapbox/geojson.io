@@ -22,11 +22,12 @@ module.exports = function(context) {
         }];
 
         var layerButtons = selection.append('div')
-            .attr('id', 'layer-switch')
+            .attr('class', 'layer-switch')
             .selectAll('button')
             .data(layers)
             .enter()
             .append('button')
+            .attr('class', 'pad0')
             .on('click', function(d) {
                 var clicked = this;
                 layerButtons.classed('active', function() {

@@ -5,8 +5,6 @@ var gist = require('./source/gist'),
 
 var drawnItems = L.featureGroup().addTo(map);
 
-var s = source();
-
 if (!s) { window.location.hash = ''; }
 else if (s.type == 'gist') gist.loadGist(s.id, onGistLoad);
 else if (s.type == 'github') github.loadGitHub(s.id, onGitHubLoad);

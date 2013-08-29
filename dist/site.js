@@ -1281,230 +1281,173 @@ module.exports = function(d3) {
         return function(token) {
             var event = d3.dispatch('chosen');
 
+            function filter(d) {
+                if (d.type === 'blob') {
+                    return d.path.match(/json$/);
+                }
+                return true;
+            }
+
             function browse(selection) {
-                var outer = selection.append('div')
-                    .attr('class', 'miller-outer');
+                req('/user', token, onuser);
 
-                var wrap = outer.append('div')
-                    .attr('class', 'miller-wrap');
-
-                req('/user', token, function(err, user) {
-
+                function onuser(err, user) {
                     reqList('/user/orgs', token, function(err, orgs) {
-                        var rootLevel = 0;
-
-                        var orgColumn = wrap.append('div')
-                            .attr('class', 'miller-column root')
-                            .attr('data-level', rootLevel);
-
-                        var orgItems;
-
+                        var base = [user];
                         if (orgs && orgs.length) {
-                            orgs.unshift(user);
-
-                            orgItems = orgColumn.selectAll('div.item')
-                                .data(orgs)
-                                .enter()
-                                .append('div')
-                                .attr('class', 'item')
-                                .text(function(d) {
-                                    return d.login;
-                                })
-                                .on('click', organizationRoot(
-                                    rootLevel + 1,
-                                    d3.selection()
-                                ));
-
-                            metaResize();
-                        } else {
-                          organizationRoot(rootLevel)(user);
+                            base = base.concat(orgs);
                         }
+                        render({
+                            columns: [base],
+                            path: [{name:'Users & Organizations'}]
+                        });
+                    });
+                }
 
-                        function cleanup(level) {
-                            wrap.selectAll('.miller-column').each(function() {
-                                if (+d3.select(this).attr('data-level') >= level) {
-                                    d3.select(this).remove();
-                                }
-                            });
+                function navigateTo(d, data) {
+                    var url;
+                    if (d.type && d.type === 'User') {
+                        // user
+                        url = '/user/repos';
+                    } else if (d.login) {
+                        // organization
+                        url = '/orgs/' + d.login + '/repos';
+                    } else if (d.forks !== undefined) {
+                        // repository
+                        url = '/repos/' + d.full_name + '/branches';
+                    } else if (d.type ===  'tree') {
+                        url = '/repos/' + data.path[2].full_name + '/git/trees/' + d.sha;
+                    } else if (d.name && d.commit) {
+                        // branch
+                        url = '/repos/' + data.path[2].full_name + '/git/trees/' + d.commit.sha;
+                    }
+                    reqList(url, token, onlist);
+                    function onlist(err, repos) {
+                        if (repos.length === 1 && repos[0].tree) {
+                            repos = repos[0].tree.filter(filter);
                         }
+                        data.path.push(d);
+                        data.columns = data.columns.concat([repos]);
+                        render(data);
+                    }
+                }
 
-                        function metaResize() {
-                            wrap.style('width', function() {
-                                return (selection.selectAll('.miller-column')[0].length * 200) + 'px';
-                            });
-                            wrap.selectAll('.miller-column')
-                                .style('height', function() {
-                                    var max = 0;
-                                    selection.selectAll('.miller-column').each(function() {
-                                        var children = d3.select(this).selectAll('div.item')[0].length;
-                                        if (children > max) max = children;
-                                    });
-                                    return (max * 35) + 'px';
-                                });
-                        }
+                var header = selection.append('div')
+                    .attr('class', 'header');
 
-                        function organizationRoot(orgLevel, orgItems) {
-                            return function(d) {
-                                cleanup(orgLevel);
+                var back = header.append('a')
+                    .attr('class', 'back')
+                    .text('<');
 
-                                var that = this;
+                var breadcrumbs = header.append('div')
+                    .attr('class', 'breadcrumbs');
 
-                                if (orgItems && orgItems.length) {
-                                  orgItems.classed('active', function() {
-                                      return this == that;
-                                  });
-                                }
+                function render(data) {
 
-                                var url = d.type && d.type === 'User' ?
-                                    '/user/repos' : '/orgs/' + d.login + '/repos';
-
-                                reqList(url, token, function(err, repos) {
-
-                                    var repoColumn = wrap.append('div')
-                                        .attr('class', 'miller-column root')
-                                        .attr('data-level', orgLevel);
-
-                                     var repoItems = repoColumn.selectAll('div.item')
-                                        .data(repos)
-                                        .enter()
-                                        .append('div')
-                                        .attr('class', 'item')
-                                        .text(function(d) {
-                                            return d.name;
-                                        })
-                                        .on('click', repositoryRoot(orgLevel + 1, d3.selection()));
-
-                                    metaResize();
-                                });
-                            }
-                        }
-
-                        function repositoryRoot(repoLevel, repoItems) {
-                            return function(d) {
-                                var that = this;
-
-                                repoItems.classed('active', function() {
-                                    return this == that;
-                                });
-
-                                req('/repos/' + [
-                                    d.owner.login,
-                                    d.name,
-                                    'branches',
-                                    d.default_branch
-                                ].join('/'), token, onBranch);
-
-                                function onBranch(err, branch) {
-                                    req('/repos/' + [
-                                        d.owner.login,
-                                        d.name,
-                                        'git',
-                                        'trees',
-                                        branch.commit.sha
-                                    ].join('/'), token, onItems(d));
-                                }
-
-                                function onItems(parent) {
-                                    return function(err, items) {
-                                        cleanup(repoLevel);
-
-                                        var rootColumn = wrap.append('div')
-                                            .attr('class', 'miller-column repo-root')
-                                            .attr('data-level', repoLevel);
-
-                                        items.tree = items.tree.map(function(t) {
-                                            t.parent = parent;
-                                            return t;
-                                        });
-
-                                        var columnItems = rootColumn.selectAll('div.item')
-                                            .data(items.tree)
-                                            .enter()
-                                            .append('div')
-                                            .attr('class', function(d) {
-                                                return 'item pad1 ' + d.type;
-                                            })
-                                            .text(function(d) {
-                                                return d.path;
-                                            });
-
-                                        columnItems.each(function(d) {
-                                            if (d.type == 'tree') {
-                                                d3.select(this)
-                                                    .on('click', repositoryTree(columnItems, repoLevel + 1, [d]));
-                                            } else {
-                                                d3.select(this)
-                                                    .on('click', event.chosen);
-
-                                            }
-                                        });
-
-                                        metaResize();
-                                    };
-                                }
-
-                                function repositoryTree(columnItems, level, parents) {
-                                    return function(d) {
-                                        var that = this;
-
-                                        columnItems.classed('active', function() {
-                                            return this == that;
-                                        });
-
-                                        req('/repos/' + [
-                                            d.parent.owner.login,
-                                            d.parent.name,
-                                            'git',
-                                            'trees',
-                                            d.sha
-                                        ].join('/'), token, onSubItems(d.parent));
-
-                                        function onSubItems(parent) {
-                                            return function(err, items) {
-
-                                                cleanup(level);
-
-                                                var rootColumn = wrap.append('div')
-                                                    .attr('class', 'miller-column repo-subcolumn')
-                                                    .attr('data-level', level);
-
-                                                items.tree = items.tree.map(function(t) {
-                                                    t.parent = parent;
-                                                    t.parents = parents;
-                                                    return t;
-                                                });
-
-                                                var columnItems = rootColumn.selectAll('div.item')
-                                                    .data(items.tree)
-                                                    .enter()
-                                                    .append('div')
-                                                    .attr('class', 'item pad1')
-                                                    .text(function(d) {
-                                                        return d.path;
-                                                    });
-
-                                                columnItems.each(function(d) {
-                                                    if (d.type == 'tree') {
-                                                        d3.select(this).on('click', repositoryTree(columnItems, level + 1,
-                                                            parents.concat([d])));
-                                                    } else {
-                                                        d3.select(this)
-                                                            .on('click', event.chosen);
-                                                    }
-                                                });
-
-                                                metaResize();
-                                            };
-                                        }
-                                    };
-                                }
-
-                        }
-
+                    back.on('click', function(d, i) {
+                        if (data.path.length > 1) {
+                            data.path.pop();
+                            data.columns.pop();
+                            render(data);
                         }
                     });
 
-                });
+                    var crumbs = breadcrumbs
+                        .selectAll('a')
+                        .data(data.path);
+
+                    crumbs.exit().remove();
+
+                    crumbs.enter()
+                        .append('a')
+                        .text(name);
+
+                    var columns = selection
+                        .selectAll('div.column')
+                        .data(data.columns);
+
+                    columns.exit().remove();
+                    columns
+                        .enter()
+                        .append('div')
+                        .attr('class', 'column');
+
+                    columns
+                        .style('transform', transformX)
+                        .style('-webkit-transform', transformX);
+
+                    function transformX(d, i) {
+                        return 'translateX(' + (i - data.columns.length + 1) * this.offsetWidth + 'px)';
+                    }
+
+                    var items = columns
+                        .selectAll('a.item')
+                        .filter(filter)
+                        .data(function(d) { return d; });
+                    items.exit().remove();
+                    var newitems = items.enter()
+                        .append('a')
+                        .attr('class', 'item')
+                        .text(name)
+                        .on('click', function(d) {
+                            if (d.type !== 'blob') navigateTo(d, data);
+                        });
+
+                    newitems
+                        .filter(function(d) {
+                            return d.type === 'blob';
+                        })
+                        .each(function(d) {
+                            var parent = d3.select(this);
+                            d3.select(this).append('div')
+                                .attr('class', 'fr')
+                                .each(function(d) {
+                                    var sel = d3.select(this);
+                                    sel.selectAll('button')
+                                        .data([{
+                                            title: 'Preview',
+                                            action: quickpreview(d, parent)
+                                        }, {
+                                            title: 'Open',
+                                            action: choose(d)
+                                        }])
+                                        .enter()
+                                        .append('button')
+                                        .text(function(d) { return d.title; })
+                                        .on('click', function(d) { return d.action(); });
+                                });
+                        });
+
+                    function quickpreview(d, sel) {
+                        return function() {
+                            if (!sel.select('.preview').empty()) {
+                                return sel.select('.preview').remove();
+                            }
+                            var mapcontainer = sel.append('div').attr('class', 'preview');
+                            reqRaw('/repos/' + data.path[2].full_name + '/git/blobs/' + d.sha, token, onfile);
+                            function onfile(err, res) {
+                                preview(res, [mapcontainer.node().offsetWidth, 150], function(err, uri) {
+                                    console.log(arguments);
+                                    if (err) return;
+                                    mapcontainer.append('img')
+                                        .attr('width', mapcontainer.node().offsetWidth + 'px')
+                                        .attr('height', '150px')
+                                        .attr('src', uri);
+                                });
+                            }
+                        };
+                    }
+
+                    function choose(d) {
+                        return function() {
+                            event.chosen(d, data);
+                        };
+                    }
+                }
+
+                function name(d) {
+                    return d.login || d.name || d.path;
+                }
             }
 
             return d3.rebind(browse, event, 'on');
@@ -1516,28 +1459,29 @@ module.exports = function(d3) {
             var event = d3.dispatch('chosen');
             var time_format = d3.time.format('%Y/%m/%d');
             function browse(selection) {
-                reqList('/gists', token, function(err, gists) {
+                var width = Math.min(640, selection.node().offsetWidth);
+                req('/gists', token, function(err, gists) {
                     gists = gists.filter(hasMapFile);
                     var item = selection.selectAll('div.item')
                         .data(gists)
                         .enter()
                         .append('div')
                         .attr('class', 'fl item')
+                        .style('width', width + 'px')
+                        .style('height', 200 + 'px')
                         .on('click', function(d) {
                             event.chosen(d);
-                        });
-
-                    item.append('div')
-                        .attr('class', 'map-preview')
-                        .call(mapPreview(token));
+                        })
+                        .call(mapPreview(token, width));
 
                     var overlay = item.append('div')
                         .attr('class', 'overlay')
                         .text(function(d) {
-                            return d.id + ' / ' + d.description + ' edited at ' + time_format(new Date(d.updated_at));
+                            return d.id + ' | ' + d.description +
+                                ' | ' + time_format(new Date(d.updated_at));
                         });
 
-                    overlay.append('div')
+                    overlay.append('span')
                         .attr('class', 'files')
                         .selectAll('small')
                         .data(function(d) {
@@ -1596,15 +1540,31 @@ module.exports = function(d3) {
             .get();
     }
 
-    function mapPreview(token) {
+    function reqRaw(postfix, token, callback) {
+        authorize(d3.json((base + postfix)), token)
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(error) {
+                callback(error, null);
+            })
+            .header('Accept', 'application/vnd.github.raw')
+            .get();
+    }
+
+    function mapPreview(token, width) {
         return function(selection) {
             selection.each(function(d) {
                 var sel = d3.select(this);
                 req('/gists/' + d.id, token, function(err, data) {
                     var geojson = mapFile(data);
                     if (geojson) {
-                        var previewMap = preview(geojson, [200, 200]);
-                        sel.node().appendChild(previewMap.node());
+                        preview(geojson, [width, 200], function(err, res) {
+                            if (err) return;
+                            sel
+                                .style('background-image', 'url(' + res + ')')
+                                .style('background-size', width + 'px 200px');
+                        });
                     }
                 });
             });
@@ -1652,21 +1612,18 @@ module.exports = function(d3, mapid) {
             mapid, cz.join(','), size.join('x')].join('/') + '.png';
     }
 
-    return function(geojson, wh) {
+    return function(geojson, wh, callback) {
         var projection = d3.geo.mercator()
             .precision(0)
             .translate([wh[0]/2, wh[1]/2]);
 
         path = d3.geo.path().projection(projection);
 
-        var container = d3.select(document.createElement('div'))
-            .attr('class', 'static-map-preview'),
-        image = container.append('img'),
-        canvas = container.append('canvas'),
-        z = 19;
+        var image = d3.select(document.createElement('img')),
+            canvas = d3.select(document.createElement('canvas')),
+            z = 19;
 
         canvas.attr('width', wh[0]).attr('height', wh[1]);
-        image.attr('width', wh[0]).attr('height', wh[1]);
         projection.center(projection.invert(path.centroid(geojson)));
         projection.scale((1 << z) / 2 / Math.PI);
 
@@ -1678,17 +1635,29 @@ module.exports = function(d3, mapid) {
             bounds = path.bounds(geojson);
             z--;
         }
-        image.attr('src', staticUrl(projection.center().concat([z-6]).map(filterNan), wh));
 
         var ctx = scaleCanvas(canvas.node()).getContext('2d'),
         painter = path.context(ctx);
 
         ctx.strokeStyle = '#E000F5';
         ctx.lineWidth = 2;
-        painter(geojson);
-        ctx.stroke();
 
-        return container;
+        image.node().crossOrigin = '*';
+        image
+            .on('load', imageload)
+            .on('error', imageerror)
+            .attr('src', staticUrl(projection.center().concat([z-6]).map(filterNan), wh));
+
+        function imageload() {
+            ctx.drawImage(this, 0, 0);
+            painter(geojson);
+            ctx.stroke();
+            callback(null, canvas.node().toDataURL());
+        }
+
+        function imageerror(err) {
+            callback(err);
+        }
     };
 
     function filterNan(_) { return isNaN(_) ? 0 : _; }
@@ -2678,11 +2647,10 @@ module.exports = function(context) {
 
     function render(selection) {
 
-        d3.select('body').classed('has-left', true);
-        selection.select('.panel').remove();
+        selection.select('.right.overlay').remove();
 
         var panel = selection.append('div')
-            .attr('class', 'panel left');
+            .attr('class', 'right overlay');
 
         var sources = [{
             title: 'Import',
@@ -2732,6 +2700,7 @@ module.exports = function(context) {
             $sources.classed('active', function() {
                 return that === this;
             });
+
             d.action.apply(this, d);
         }
 
@@ -2757,7 +2726,6 @@ module.exports = function(context) {
             });
 
         function hidePanel(d) {
-            d3.select('body').classed('has-left', false);
             panel.remove();
         }
 
@@ -2773,26 +2741,15 @@ module.exports = function(context) {
                     .gitHubBrowse(context.user.token())
                         .on('chosen', gitHubChosen));
 
-            function gitHubChosen(d) {
-                var path = d.path, branch, repo, login;
-
-                if (d.parents) {
-                    for (var i = 0; i < d.parents.length; i++) {
-                        if (!d.parents[i].default_branch) {
-                            path += '/' + d.parents[i].path;
-                        }
-                    }
-                }
-
-                if (d.parent) {
-                    repo = d.parent.name;
-                    branch = d.parent.default_branch;
-                    login = d.parent.full_name.split('/')[0];
-                }
-
+            function gitHubChosen(d, path) {
                 context.data.set({
                     type: 'github',
-                    github: d
+                    github: d,
+                    meta: {
+                        login: path[1].login,
+                        repo: path[2].name,
+                        branch: path[3].name
+                    }
                 });
             }
         }
@@ -4988,145 +4945,6 @@ function geojsonIO() {
     return context;
 }
 
-/*
-
-d3.select(window).on('hashchange', hashChange);
-
-d3.select('.collapse-button').on('click', clickCollapse);
-
-if (window.location.hash) hashChange();
-
-function focusLayer(layer) {
-    if (!layer) return;
-    // geometrycollections
-    if ('eachLayer' in layer) {
-        var first = null;
-        layer.eachLayer(function(l) {
-            if (!first && 'openPopup' in l) first = l;
-        });
-        if (first) {
-            first.openPopup();
-            map.fitBounds(first.getBounds());
-        }
-    } else if ('getBounds' in layer && layer.getBounds().isValid()) {
-        if ('getCenter' in layer) {
-          layer.openPopup(layer.getCenter());
-        } else {
-          layer.openPopup();
-        }
-        map.fitBounds(layer.getBounds());
-    } else if ('getLatLng' in layer) {
-        layer.openPopup();
-        map.setView(layer.getLatLng(), 15);
-    }
-}
-
-d3.select(document).call(
-    d3.keybinding('global')
-        .on('⌘+s', saveChanges)
-        .on('⌘+o', clickSource));
-
-function saveChanges() {
-    if (d3.event) d3.event.preventDefault();
-
-    var features = featuresFromMap();
-
-    if (!features.length) {
-        return flash(container, 'Add a feature to the map to save it');
-    }
-
-    var content = JSON.stringify({
-        type: 'FeatureCollection',
-        features: features
-    }, null, exportIndentationStyle);
-
-    if (!source() || source().type == 'gist') {
-        gist.saveAsGist(content, function(err, resp) {
-            if (err) return flash(container, err.toString());
-            var id = resp.id;
-            window.location.hash = gist.urlHash(resp).url;
-            flash(container,
-                'Changes to this map saved to Gist: <a href="' + resp.html_url +
-                '">' + resp.html_url + '</a>');
-        });
-    } else if (!source() || source().type == 'github') {
-        var wrap = commit(container, content, function(err, resp) {
-            wrap.remove();
-            if (err) return flash(container, err.toString());
-            else flash(container, 'Changes committed to GitHub: <a href="' +
-                       resp.commit.html_url + '">' + resp.commit.sha.substring(0, 10) + '</a>');
-
-        });
-    }
-}
-
-function hashChange() {
-
-    // quiet a hashchange for one step
-    if (silentHash) {
-        silentHash = false;
-        return;
-    }
-
-    var s = source();
-
-    if (!s) {
-        window.location.hash = '';
-        return;
-    }
-
-    if (s.type == 'gist') gist.loadGist(s.id, onGistLoad);
-    if (s.type == 'github') github.loadGitHubRaw(s.id, onGitHubLoad);
-
-    function onGistLoad(err, json) {
-        if (err) return flash(container, 'Gist API limit exceeded, come back in a bit.');
-        var first = !drawnItems.getBounds().isValid();
-
-        try {
-            var file = mapFile(json);
-            updates.update_editor(mapFile(json));
-            if (drawnItems.getBounds().isValid()) map.fitBounds(drawnItems.getBounds());
-            if (gist.urlHash(json).redirect) {
-                silentHash = true;
-                window.location.hash = gist.urlHash(json).url;
-            }
-            updates.update_map(mapFile(json), drawnItems);
-            updates.sourcechange({
-                type: 'gist',
-                name: '#' + json.id,
-                data: json
-            });
-        } catch(e) {
-            console.log(e);
-            flash(container, 'Invalid GeoJSON data in this Gist');
-        }
-    }
-
-    function onGitHubLoad(err, file) {
-        if (err) return flash(container, 'GitHub API limit exceeded, come back in a bit.');
-
-        try {
-            var json = JSON.parse(file);
-            exportIndentationStyle = detectIndentationStyle(file);
-            var first = !drawnItems.getBounds().isValid();
-            updates.update_editor(json);
-            if (first && drawnItems.getBounds().isValid()) {
-                map.fitBounds(drawnItems.getBounds());
-                buttons.filter(function(d, i) { return i == 1; }).trigger('click');
-            }
-            updates.update_map(json, drawnItems);
-            updates.sourcechange({
-                type: 'github',
-                name: source().id,
-                data: source()
-            });
-        } catch(e) {
-            flash(container, 'Loading a file from GitHub failed');
-        }
-    }
-}
-*/
-
 },{"./core/data":41,"./core/loader":42,"./core/recovery":43,"./core/router":44,"./core/user":46,"./ui":57,"./ui/map":62,"store":15}],48:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
@@ -5560,7 +5378,6 @@ module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
 
-
 function save(content, context, message, callback) {
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
@@ -5759,17 +5576,13 @@ module.exports = function fileBar(context) {
         var name = selection.append('div')
             .attr('class', 'name');
 
-        var filetype = name.append('span')
+        var filetype = name.append('a')
+            .attr('target', '_blank')
             .attr('class', 'icon-file-alt');
 
         var filename = name.append('span')
             .attr('class', 'filename')
             .text('unsaved');
-
-        var link = name.append('a')
-            .attr('target', '_blank')
-            .attr('class', 'icon-external-link')
-            .classed('hide', true);
 
         var actions = [{
             title: 'Save',
@@ -5815,25 +5628,21 @@ module.exports = function fileBar(context) {
         }
 
         var buttons = selection.append('div')
-            .attr('class', 'button-wrap fr')
+            .attr('class', 'fr')
             .selectAll('button')
             .data(actions)
             .enter()
             .append('button')
             .on('click', function(d) {
                 d.action.apply(this, d);
-            });
-
-        buttons.append('span')
-            .attr('class', function(d) {
-                return d.icon + ' icon';
-            });
-
-        buttons.append('span')
-            .attr('class', 'title')
-            .text(function(d) {
+            })
+            .attr('data-original-title', function(d) {
                 return d.title;
-            });
+            })
+            .attr('class', function(d) {
+                return d.icon + ' icon sq40';
+            })
+            .call(bootstrap.tooltip().placement('bottom'));
 
         function saveNoun(_) {
             buttons.filter(function(b) {
@@ -5846,16 +5655,13 @@ module.exports = function fileBar(context) {
         function onchange(d) {
             var gh = context.data.get('github'),
                 type = context.data.get('type');
-            filename.text(sourceName(type, gh));
-            if (type && gh && sourceUrl(type, gh)) {
-                link.attr('href', sourceUrl(type, gh))
-                    .classed('hide', false);
-            } else {
-                link.classed('hide', true);
-            }
-            filetype.attr('class', sourceIcon(type));
+            filename
+                .text(sourceName(type, gh))
+                .classed('deemphasize', context.data.dirty);
+            filetype
+                .attr('href', type && gh && sourceUrl(type, gh))
+                .attr('class', sourceIcon(type));
             saveNoun(type == 'github' ? 'Commit' : 'Save');
-            filename.classed('dirty', context.data.dirty);
         }
 
         d3.select(document).call(
@@ -5975,11 +5781,12 @@ module.exports = function(context) {
         }];
 
         var layerButtons = selection.append('div')
-            .attr('id', 'layer-switch')
+            .attr('class', 'layer-switch')
             .selectAll('button')
             .data(layers)
             .enter()
             .append('button')
+            .attr('class', 'pad0')
             .on('click', function(d) {
                 var clicked = this;
                 layerButtons.classed('active', function() {

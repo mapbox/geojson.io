@@ -9,17 +9,13 @@ module.exports = function fileBar(context) {
         var name = selection.append('div')
             .attr('class', 'name');
 
-        var filetype = name.append('span')
+        var filetype = name.append('a')
+            .attr('target', '_blank')
             .attr('class', 'icon-file-alt');
 
         var filename = name.append('span')
             .attr('class', 'filename')
             .text('unsaved');
-
-        var link = name.append('a')
-            .attr('target', '_blank')
-            .attr('class', 'icon-external-link')
-            .classed('hide', true);
 
         var actions = [{
             title: 'Save',
@@ -65,25 +61,21 @@ module.exports = function fileBar(context) {
         }
 
         var buttons = selection.append('div')
-            .attr('class', 'button-wrap fr')
+            .attr('class', 'fr')
             .selectAll('button')
             .data(actions)
             .enter()
             .append('button')
             .on('click', function(d) {
                 d.action.apply(this, d);
-            });
-
-        buttons.append('span')
-            .attr('class', function(d) {
-                return d.icon + ' icon';
-            });
-
-        buttons.append('span')
-            .attr('class', 'title')
-            .text(function(d) {
+            })
+            .attr('data-original-title', function(d) {
                 return d.title;
-            });
+            })
+            .attr('class', function(d) {
+                return d.icon + ' icon sq40';
+            })
+            .call(bootstrap.tooltip().placement('bottom'));
 
         function saveNoun(_) {
             buttons.filter(function(b) {
@@ -96,16 +88,13 @@ module.exports = function fileBar(context) {
         function onchange(d) {
             var gh = context.data.get('github'),
                 type = context.data.get('type');
-            filename.text(sourceName(type, gh));
-            if (type && gh && sourceUrl(type, gh)) {
-                link.attr('href', sourceUrl(type, gh))
-                    .classed('hide', false);
-            } else {
-                link.classed('hide', true);
-            }
-            filetype.attr('class', sourceIcon(type));
+            filename
+                .text(sourceName(type, gh))
+                .classed('deemphasize', context.data.dirty);
+            filetype
+                .attr('href', type && gh && sourceUrl(type, gh))
+                .attr('class', sourceIcon(type));
             saveNoun(type == 'github' ? 'Commit' : 'Save');
-            filename.classed('dirty', context.data.dirty);
         }
 
         d3.select(document).call(

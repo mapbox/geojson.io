@@ -8,11 +8,10 @@ module.exports = function(context) {
 
     function render(selection) {
 
-        d3.select('body').classed('has-left', true);
-        selection.select('.panel').remove();
+        selection.select('.right.overlay').remove();
 
         var panel = selection.append('div')
-            .attr('class', 'panel left');
+            .attr('class', 'right overlay');
 
         var sources = [{
             title: 'Import',
@@ -62,6 +61,7 @@ module.exports = function(context) {
             $sources.classed('active', function() {
                 return that === this;
             });
+
             d.action.apply(this, d);
         }
 
@@ -87,7 +87,6 @@ module.exports = function(context) {
             });
 
         function hidePanel(d) {
-            d3.select('body').classed('has-left', false);
             panel.remove();
         }
 
@@ -103,26 +102,15 @@ module.exports = function(context) {
                     .gitHubBrowse(context.user.token())
                         .on('chosen', gitHubChosen));
 
-            function gitHubChosen(d) {
-                var path = d.path, branch, repo, login;
-
-                if (d.parents) {
-                    for (var i = 0; i < d.parents.length; i++) {
-                        if (!d.parents[i].default_branch) {
-                            path += '/' + d.parents[i].path;
-                        }
-                    }
-                }
-
-                if (d.parent) {
-                    repo = d.parent.name;
-                    branch = d.parent.default_branch;
-                    login = d.parent.full_name.split('/')[0];
-                }
-
+            function gitHubChosen(d, path) {
                 context.data.set({
                     type: 'github',
-                    github: d
+                    github: d,
+                    meta: {
+                        login: path[1].login,
+                        repo: path[2].name,
+                        branch: path[3].name
+                    }
                 });
             }
         }
