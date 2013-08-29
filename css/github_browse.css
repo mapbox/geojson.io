@@ -29,7 +29,7 @@
 }
 
 .repos {
-    width:300px;
+    width:100%;
     overflow:hidden;
 }
 
@@ -63,7 +63,7 @@
     background:#fff;
     transition:all 300ms ease-in;
     position:absolute;
-    width:300px;
+    width:100%;
 }
 
 .breadcrumbs {
@@ -83,8 +83,10 @@
 
 .column a.item {
     border-bottom:1px solid #ccc;
-    padding:5px;
+    padding:10px;
     display:block;
+    -webkit-transition:all 300ms ease-in;
+    transition:all 300ms ease-in;
 }
 
 .column a.item:hover {

@@ -675,7 +675,17 @@ body.dragover:after {
 }
 
 .repos .item button {
-    font-size:12px;
-    background:#eee;
-    padding:5px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+/* loading */
+.loading .mask {
+    background:rgba(255, 255, 255, 0.7);
+    position:absolute;
+    left:0px;
+    top:0px;
+    bottom:0px;
+    right:0px;
+    display:block;
 }
