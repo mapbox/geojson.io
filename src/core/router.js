@@ -7,7 +7,7 @@ module.exports = function(context) {
     router.on = function() {
         d3.select(window).on('hashchange.router', route);
         context.dispatch.on('change.route', unroute);
-        route();
+        context.dispatch.route(getQuery());
         return router;
     };
 
@@ -17,7 +17,13 @@ module.exports = function(context) {
     };
 
     function route() {
-        context.dispatch.route(getQuery());
+        var oldHash = d3.event.oldURL.split('#')[1];
+        var newHash = d3.event.newURL.split('#')[1];
+
+        var oldSource = qs.stringQs(oldHash).id;
+        var newSource = qs.stringQs(newHash).id;
+
+        if (newSource !== oldSource) context.dispatch.route(newHash);
     }
 
     function unroute() {

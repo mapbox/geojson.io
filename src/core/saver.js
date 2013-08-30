@@ -19,23 +19,13 @@ module.exports = function(context) {
     function gistSuccess(err, d) {
         context.container.select('.map').classed('saving', false);
         if (err) return;
-        context.data
-            .set({
-                type: 'gist',
-                github: d,
-                dirty: false
-            });
+        context.data.load(d);
     }
 
     function gitHubSuccess(err, d) {
         context.container.select('.map').classed('saving', false);
         if (err) return;
-        context.data
-            .set({
-                type: 'github',
-                github: d,
-                dirty: false
-            });
+        context.data.load(d);
     }
 
     var type = context.data.get('type');
