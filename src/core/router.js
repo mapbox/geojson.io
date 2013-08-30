@@ -20,10 +20,10 @@ module.exports = function(context) {
         var oldHash = d3.event.oldURL.split('#')[1];
         var newHash = d3.event.newURL.split('#')[1];
 
-        var oldSource = qs.stringQs(oldHash).id;
-        var newSource = qs.stringQs(newHash).id;
+        var oldQuery = qs.stringQs(oldHash);
+        var newQuery = qs.stringQs(newHash);
 
-        if (newSource !== oldSource) context.dispatch.route(newHash);
+        if (newQuery.id !== oldQuery.id) context.dispatch.route(newQuery);
     }
 
     function unroute() {

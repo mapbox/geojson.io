@@ -60,28 +60,35 @@ module.exports = function(context) {
     };
 
     data.load = function(d, browser) {
-        var chunked;
+        var login,
+            repo,
+            branch,
+            chunked;
 
         if (d.files) d.type = 'gist';
 
         switch(d.type) {
           case 'blob':
+              login = browser.path[1].login;
+              repo = browser.path[2].name;
+              branch = browser.path[3].name;
+
               data.set({
                   type: 'github',
                   source: d,
                   meta: {
-                      login: browser.path[1].login,
-                      repo: browser.path[2].name,
-                      branch: browser.path[3].name
+                      login: login,
+                      repo: repo,
+                      branch: branch
                   },
                   map: d.content,
                   path: d.path,
                   url: [
                     'https://github.com',
-                    meta.login,
-                    meta.repo,
+                    login,
+                    repo,
                     'blob',
-                    meta.branch,
+                    branch,
                     d.path
                   ].join('/')
               });
