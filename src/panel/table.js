@@ -26,9 +26,10 @@ module.exports = function(context) {
                             context.data.set('map', geojson);
                         })
                         .on('rowfocus', function(row, i) {
+                            var bounds = context.mapLayer.getBounds();
                             var j = 0;
                             context.mapLayer.eachLayer(function(l) {
-                                if (i === j++) smartZoom(context.map, l);
+                                if (i === j++) smartZoom(context.map, l, bounds);
                             });
                         })
                     );
