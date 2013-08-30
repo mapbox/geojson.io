@@ -16,8 +16,7 @@ function ui(context) {
         var map = container
             .append('div')
             .attr('class', 'map')
-            .call(context.map)
-            .call(layer_switch(context));
+            .call(context.map);
 
         var right = container
             .append('div')
@@ -33,7 +32,8 @@ function ui(context) {
             .attr('class', 'info bottom-right')
             .attr('target', '_blank')
             .append('class', 'span')
-            .attr('class', 'icon-info');
+            .attr('class', 'icon-info')
+            .call(layer_switch(context));
 
         top
             .append('button')
