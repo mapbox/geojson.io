@@ -8574,46 +8574,61 @@ module.exports = function(context) {
     };
 
     data.load = function(d, browser) {
-        var github = false;
-        var meta = {};
-        var url;
+        var chunked;
 
         if (d.files) d.type = 'gist';
 
         switch(d.type) {
           case 'blob':
-              github = true;
-              meta.login = browser.path[1].login;
-              meta.repo = browser.path[2].name;
-              meta.branch = browser.path[3].name;
+              data.set({
+                  type: 'github',
+                  source: d,
+                  meta: {
+                      login: browser.path[1].login,
+                      repo: browser.path[2].name,
+                      branch: browser.path[3].name
+                  },
+                  map: d.content,
+                  path: d.path,
+                  url: [
+                    'https://github.com',
+                    meta.login,
+                    meta.repo,
+                    'blob',
+                    meta.branch,
+                    d.path
+                  ].join('/')
+              });
               break;
           case 'file':
-              github = true;
-              url = d.html_url.split('/');
-              meta.login = url[3];
-              meta.repo = url[4];
-              meta.branch = url[6];
+              chunked = d.html_url.split('/');
+
+              data.set({
+                  type: 'github',
+                  source: d,
+                  meta: {
+                      login: chunked[3],
+                      repo: chunked[4],
+                      branch: chunked[6]
+                  },
+                  map: d.content,
+                  path: d.path,
+                  url: d.html_url
+              });
               break;
           case 'gist':
-              meta.login = d.user.login;
+              data.set({
+                  type: 'gist',
+                  source: d,
+                  meta: {
+                      login: d.user.login
+                  },
+                  map: mapFile(d),
+                  path: [d.user.login, d.id].join('/'),
+                  url: d.html_url
+              });
               break;
         }
-
-        data.set({
-            type: github ? 'github' :  'gist',
-            source: d,
-            meta: meta,
-            map: github ? d.content : mapFile(d),
-            path: github ? d.path : [meta.login, d.id].join('/'),
-            url: github ? [
-              'https://github.com',
-              meta.login,
-              meta.repo,
-              'blob',
-              meta.branch,
-              d.path
-            ].join('/') : d.html_url
-        });
     };
 
     return data;
