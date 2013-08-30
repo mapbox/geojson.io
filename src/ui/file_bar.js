@@ -55,9 +55,21 @@ module.exports = function fileBar(context) {
         function download() {
             if (d3.event) d3.event.preventDefault();
             var content = JSON.stringify(context.data.get('map'));
-            saveAs(new Blob([content], {
+            window.saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
             }), 'map.geojson');
+        }
+
+        function sourceIcon(type) {
+            if (type == 'github') return 'icon-github';
+            else if (type == 'gist') return 'icon-github-alt';
+            else return 'icon-file-alt';
+        }
+
+        function saveNoun(_) {
+            buttons.filter(function(b) {
+                return b.title === 'Save';
+            }).select('span.title').text(_);
         }
 
         var buttons = selection.append('div')
@@ -76,12 +88,6 @@ module.exports = function fileBar(context) {
                 return d.icon + ' icon sq40';
             })
             .call(bootstrap.tooltip().placement('bottom'));
-
-        function saveNoun(_) {
-            buttons.filter(function(b) {
-                return b.title === 'Save';
-            }).select('span.title').text(_);
-        }
 
         context.dispatch.on('change.filebar', onchange);
 
@@ -102,12 +108,6 @@ module.exports = function fileBar(context) {
             d3.keybinding('file_bar')
                 .on('⌘+a', download)
                 .on('⌘+s', saveAction));
-    }
-
-    function sourceIcon(type) {
-        if (type == 'github') return 'icon-github';
-        else if (type == 'gist') return 'icon-github-alt';
-        else return 'icon-file-alt';
     }
 
     return bar;
