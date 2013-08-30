@@ -38,12 +38,14 @@ module.exports = function(context) {
         context.container.select('.map').classed('loading', false);
         if (err) return;
         context.data.load(d);
+        zoomExtent();
     }
 
     function gitHubSuccess(err, meta, raw) {
         context.container.select('.map').classed('loading', false);
         if (err) return;
         context.data.load(xtend(meta, { content: JSON.parse(raw) }));
+        zoomExtent();
     }
 
     function dataId(d) {
@@ -56,6 +58,11 @@ module.exports = function(context) {
                 d.source.path
             ].join('/');
         }
+    }
+
+    function zoomExtent() {
+        var bounds = context.mapLayer.getBounds();
+        if (bounds.isValid()) context.map.fitBounds(bounds);
     }
 
     return function(query) {

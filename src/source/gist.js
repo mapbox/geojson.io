@@ -64,7 +64,7 @@ function save(context, callback) {
 }
 
 function load(id, context, callback) {
-    d3.json('https://api.github.com/gists/' + id)
+    context.user.signXHR(d3.json('https://api.github.com/gists/' + id))
         .on('load', onLoad)
         .on('error', onError)
         .get();
