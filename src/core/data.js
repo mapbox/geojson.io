@@ -89,7 +89,16 @@ module.exports = function(context) {
             type: github ? 'github' :  'gist',
             source: d,
             meta: meta,
-            map: github ? d.content : mapFile(d)
+            map: github ? d.content : mapFile(d),
+            path: github ? d.path : [meta.login, d.id].join('/'),
+            url: github ? [
+              'https://github.com',
+              meta.login,
+              meta.repo,
+              'blob',
+              meta.branch,
+              d.path
+            ].join('/') : d.html_url
         });
     };
 

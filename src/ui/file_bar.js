@@ -86,13 +86,14 @@ module.exports = function fileBar(context) {
         context.dispatch.on('change.filebar', onchange);
 
         function onchange(d) {
-            var gh = context.data.get('github'),
-                type = context.data.get('type');
+            var data = d.obj,
+                type = data.type,
+                path = data.path;
             filename
-                .text(sourceName(type, gh))
+                .text(path ? path : 'unsaved')
                 .classed('deemphasize', context.data.dirty);
             filetype
-                .attr('href', type && gh && sourceUrl(type, gh))
+                .attr('href', data.url)
                 .attr('class', sourceIcon(type));
             saveNoun(type == 'github' ? 'Commit' : 'Save');
         }
@@ -107,22 +108,6 @@ module.exports = function fileBar(context) {
         if (type == 'github') return 'icon-github';
         else if (type == 'gist') return 'icon-github-alt';
         else return 'icon-file-alt';
-    }
-
-    function sourceName(type, gh) {
-        if (gh && gh.id) {
-            return gh.id;
-        } else if (gh && gh.path) {
-            return gh.path;
-        } else {
-            return 'unsaved';
-        }
-    }
-
-    function sourceUrl(type, gh) {
-        if (type === 'gist') {
-            return gh.html_url;
-        }
     }
 
     return bar;
