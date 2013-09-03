@@ -27,7 +27,9 @@ function saveBlocks(content, callback) {
 
 function save(context, callback) {
 
-    var d = context.data.all();
+    var source = context.data.get('source');
+    var meta = context.data.get('meta');
+    var map = context.data.get('map');
 
     context.user.details(onuser);
 
@@ -37,17 +39,17 @@ function save(context, callback) {
             source = context.data.get('source'),
             files = {};
 
-        if (!err && user && user.login && d.source && d.source.user && d.source.user.login == user.login) {
-            endpoint = 'https://api.github.com/gists/' + d.source.id;
+        if (!err && user && user.login && meta && meta.login) {
+            endpoint = 'https://api.github.com/gists/' + source.id;
             method = 'PATCH';
-        } else if (!err && d.source && d.source.id) {
-            endpoint = 'https://api.github.com/gists/' + d.source.id + '/forks';
+        } else if (!err && source && source.id) {
+            endpoint = 'https://api.github.com/gists/' + source.id + '/forks';
         } else {
             endpoint = 'https://api.github.com/gists';
         }
 
         files[d.name] = {
-            content: JSON.stringify(d.map)
+            content: JSON.stringify(map)
         };
 
         context.user.signXHR(d3.json(endpoint))
