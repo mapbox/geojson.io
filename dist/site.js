@@ -8723,8 +8723,8 @@ module.exports = function(context) {
     };
 
     function route() {
-        var oldHash = d3.event.oldURL.split('#')[1],
-            newHash = d3.event.newURL.split('#')[1],
+        var oldHash = d3.event.oldURL.split('#')[1] || '',
+            newHash = d3.event.newURL.split('#')[1] || '',
             oldQuery = qs.stringQs(oldHash),
             newQuery = qs.stringQs(newHash);
 
@@ -8897,7 +8897,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":41,"./core/loader":42,"./core/recovery":43,"./core/router":44,"./core/user":45,"./ui":60,"./ui/map":67,"store":17}],47:[function(require,module,exports){
+},{"./core/data":41,"./core/loader":42,"./core/recovery":43,"./core/router":44,"./core/user":45,"./ui":60,"./ui/map":66,"store":17}],47:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -8937,50 +8937,122 @@ L.Hash.prototype.formatHash = function(map) {
 };
 
 },{"../lib/querystring":52,"leaflet-hash":13}],48:[function(require,module,exports){
-var table = require('../panel/table'),
-    json = require('../panel/json');
+var share = require('./share'),
+    sourcepanel = require('./source.js'),
+    saver = require('../ui/saver.js');
 
-module.exports = function(context, pane) {
-    return function(selection) {
+module.exports = function fileBar(context) {
 
-        var mode = null;
+    function bar(selection) {
 
-        var buttonData = [{
-            icon: 'table',
-            title: ' Table',
-            alt: 'Edit feature properties in a table',
-            behavior: table
+        var name = selection.append('div')
+            .attr('class', 'name');
+
+        var filetype = name.append('a')
+            .attr('target', '_blank')
+            .attr('class', 'icon-file-alt');
+
+        var filename = name.append('span')
+            .attr('class', 'filename')
+            .text('unsaved');
+
+        var actions = [{
+            title: 'Save',
+            icon: 'icon-save',
+            action: saveAction
         }, {
-            icon: 'code',
-            title: ' JSON',
-            alt: 'JSON Source',
-            behavior: json
+            title: 'Open',
+            icon: 'icon-folder-open-alt',
+            action: function() {
+                context.container.call(sourcepanel(context));
+            }
+        }, {
+            title: 'New',
+            icon: 'icon-plus',
+            action: function() {
+                window.open('/#new');
+            }
+        }, {
+            title: 'Download',
+            icon: 'icon-download',
+            action: function() {
+                download();
+            }
+        }, {
+            title: 'Share',
+            icon: 'icon-share-alt',
+            action: function() {
+                context.container.call(share(context));
+            }
         }];
 
-        var buttons = selection
-            .selectAll('button')
-            .data(buttonData, function(d) { return d.icon; });
-
-        buttons.enter()
-            .append('button')
-            .attr('title', function(d) { return d.alt; })
-            .attr('class', function(d) { return 'icon-' + d.icon; })
-            .on('click', buttonClick)
-            .append('span')
-            .text(function(d) { return d.title; });
-
-        d3.select(buttons.node()).trigger('click');
-
-        function buttonClick(d) {
-            buttons.classed('active', function(_) { return d.icon == _.icon; });
-            if (mode) mode.off();
-            mode = d.behavior(context);
-            pane.call(mode);
+        function saveAction() {
+            if (d3.event) d3.event.preventDefault();
+            saver(context);
         }
-    };
+
+        function download() {
+            if (d3.event) d3.event.preventDefault();
+            var content = JSON.stringify(context.data.get('map'));
+            window.saveAs(new Blob([content], {
+                type: 'text/plain;charset=utf-8'
+            }), 'map.geojson');
+        }
+
+        function sourceIcon(type) {
+            if (type == 'github') return 'icon-github';
+            else if (type == 'gist') return 'icon-github-alt';
+            else return 'icon-file-alt';
+        }
+
+        function saveNoun(_) {
+            buttons.filter(function(b) {
+                return b.title === 'Save';
+            }).select('span.title').text(_);
+        }
+
+        var buttons = selection.append('div')
+            .attr('class', 'fr')
+            .selectAll('button')
+            .data(actions)
+            .enter()
+            .append('button')
+            .on('click', function(d) {
+                d.action.apply(this, d);
+            })
+            .attr('data-original-title', function(d) {
+                return d.title;
+            })
+            .attr('class', function(d) {
+                return d.icon + ' icon sq40';
+            })
+            .call(bootstrap.tooltip().placement('bottom'));
+
+        context.dispatch.on('change.filebar', onchange);
+
+        function onchange(d) {
+            var data = d.obj,
+                type = data.type,
+                path = data.path;
+            filename
+                .text(path ? path : 'unsaved')
+                .classed('deemphasize', context.data.dirty);
+            filetype
+                .attr('href', data.url)
+                .attr('class', sourceIcon(type));
+            saveNoun(type == 'github' ? 'Commit' : 'Save');
+        }
+
+        d3.select(document).call(
+            d3.keybinding('file_bar')
+                .on('⌘+a', download)
+                .on('⌘+s', saveAction));
+    }
+
+    return bar;
 };
 
-},{"../panel/json":56,"../panel/table":57}],"topojson":[function(require,module,exports){
+},{"../ui/saver.js":69,"./share":70,"./source.js":71}],"topojson":[function(require,module,exports){
 module.exports=require('g070js');
 },{}],50:[function(require,module,exports){
 module.exports = function(context) {
@@ -9593,7 +9665,7 @@ function ui(context) {
     return render;
 }
 
-},{"./ui/dnd":61,"./ui/file_bar":62,"./ui/layer_switch":66,"./ui/mode_buttons":48,"./ui/user":72}],61:[function(require,module,exports){
+},{"./ui/dnd":61,"./ui/file_bar":48,"./ui/layer_switch":65,"./ui/mode_buttons":68,"./ui/user":72}],61:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
     flash = require('./flash.js');
@@ -9642,123 +9714,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":53,"./flash.js":63,"./geocode.js":64}],62:[function(require,module,exports){
-var share = require('./share'),
-    sourcepanel = require('./source.js'),
-    saver = require('../ui/saver.js');
-
-module.exports = function fileBar(context) {
-
-    function bar(selection) {
-
-        var name = selection.append('div')
-            .attr('class', 'name');
-
-        var filetype = name.append('a')
-            .attr('target', '_blank')
-            .attr('class', 'icon-file-alt');
-
-        var filename = name.append('span')
-            .attr('class', 'filename')
-            .text('unsaved');
-
-        var actions = [{
-            title: 'Save',
-            icon: 'icon-save',
-            action: saveAction
-        }, {
-            title: 'Open',
-            icon: 'icon-folder-open-alt',
-            action: function() {
-                context.container.call(sourcepanel(context));
-            }
-        }, {
-            title: 'New',
-            icon: 'icon-plus',
-            action: function() {
-                window.open('/#new');
-            }
-        }, {
-            title: 'Download',
-            icon: 'icon-download',
-            action: function() {
-                download();
-            }
-        }, {
-            title: 'Share',
-            icon: 'icon-share-alt',
-            action: function() {
-                context.container.call(share(context));
-            }
-        }];
-
-        function saveAction() {
-            if (d3.event) d3.event.preventDefault();
-            saver(context);
-        }
-
-        function download() {
-            if (d3.event) d3.event.preventDefault();
-            var content = JSON.stringify(context.data.get('map'));
-            window.saveAs(new Blob([content], {
-                type: 'text/plain;charset=utf-8'
-            }), 'map.geojson');
-        }
-
-        function sourceIcon(type) {
-            if (type == 'github') return 'icon-github';
-            else if (type == 'gist') return 'icon-github-alt';
-            else return 'icon-file-alt';
-        }
-
-        function saveNoun(_) {
-            buttons.filter(function(b) {
-                return b.title === 'Save';
-            }).select('span.title').text(_);
-        }
-
-        var buttons = selection.append('div')
-            .attr('class', 'fr')
-            .selectAll('button')
-            .data(actions)
-            .enter()
-            .append('button')
-            .on('click', function(d) {
-                d.action.apply(this, d);
-            })
-            .attr('data-original-title', function(d) {
-                return d.title;
-            })
-            .attr('class', function(d) {
-                return d.icon + ' icon sq40';
-            })
-            .call(bootstrap.tooltip().placement('bottom'));
-
-        context.dispatch.on('change.filebar', onchange);
-
-        function onchange(d) {
-            var data = d.obj,
-                type = data.type,
-                path = data.path;
-            filename
-                .text(path ? path : 'unsaved')
-                .classed('deemphasize', context.data.dirty);
-            filetype
-                .attr('href', data.url)
-                .attr('class', sourceIcon(type));
-            saveNoun(type == 'github' ? 'Commit' : 'Save');
-        }
-
-        d3.select(document).call(
-            d3.keybinding('file_bar')
-                .on('⌘+a', download)
-                .on('⌘+s', saveAction));
-    }
-
-    return bar;
-};
-
-},{"../ui/saver.js":69,"./share":70,"./source.js":71}],63:[function(require,module,exports){
+},{"../lib/readfile.js":53,"./flash.js":62,"./geocode.js":63}],62:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -9780,7 +9736,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":68}],64:[function(require,module,exports){
+},{"./message":67}],63:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart');
 
 module.exports = function(context) {
@@ -9918,7 +9874,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":51}],65:[function(require,module,exports){
+},{"../lib/progress_chart":51}],64:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -10000,7 +9956,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":53,"./flash.js":63,"./geocode.js":64}],66:[function(require,module,exports){
+},{"../lib/readfile.js":53,"./flash.js":62,"./geocode.js":63}],65:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -10053,7 +10009,7 @@ module.exports = function(context) {
 };
 
 
-},{}],67:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -10146,7 +10102,7 @@ function bindPopup(l) {
         '</div></div>'));
 }
 
-},{"../lib/custom_hash.js":47,"../lib/popup":50,"../lib/querystring.js":52}],68:[function(require,module,exports){
+},{"../lib/custom_hash.js":47,"../lib/popup":50,"../lib/querystring.js":52}],67:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -10187,7 +10143,51 @@ function message(selection) {
     return sel;
 }
 
-},{}],69:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
+var table = require('../panel/table'),
+    json = require('../panel/json');
+
+module.exports = function(context, pane) {
+    return function(selection) {
+
+        var mode = null;
+
+        var buttonData = [{
+            icon: 'table',
+            title: ' Table',
+            alt: 'Edit feature properties in a table',
+            behavior: table
+        }, {
+            icon: 'code',
+            title: ' JSON',
+            alt: 'JSON Source',
+            behavior: json
+        }];
+
+        var buttons = selection
+            .selectAll('button')
+            .data(buttonData, function(d) { return d.icon; });
+
+        buttons.enter()
+            .append('button')
+            .attr('title', function(d) { return d.alt; })
+            .attr('class', function(d) { return 'icon-' + d.icon; })
+            .on('click', buttonClick)
+            .append('span')
+            .text(function(d) { return d.title; });
+
+        d3.select(buttons.node()).trigger('click');
+
+        function buttonClick(d) {
+            buttons.classed('active', function(_) { return d.icon == _.icon; });
+            if (mode) mode.off();
+            mode = d.behavior(context);
+            pane.call(mode);
+        }
+    };
+};
+
+},{"../panel/json":56,"../panel/table":57}],69:[function(require,module,exports){
 module.exports = function(context) {
     function success(err, d) {
         context.container.select('.map').classed('saving', false);
@@ -10390,7 +10390,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":65,"detect-json-indent":7,"github-file-browser":10}],72:[function(require,module,exports){
+},{"./import":64,"detect-json-indent":7,"github-file-browser":10}],72:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')

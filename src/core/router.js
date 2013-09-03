@@ -17,8 +17,8 @@ module.exports = function(context) {
     };
 
     function route() {
-        var oldHash = d3.event.oldURL.split('#')[1],
-            newHash = d3.event.newURL.split('#')[1],
+        var oldHash = d3.event.oldURL.split('#')[1] || '',
+            newHash = d3.event.newURL.split('#')[1] || '',
             oldQuery = qs.stringQs(oldHash),
             newQuery = qs.stringQs(newHash);
 
