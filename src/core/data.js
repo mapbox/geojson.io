@@ -166,7 +166,7 @@ module.exports = function(context) {
 
     data.save = function(cb) {
         var type = context.data.get('type');
-        if (source[type].save) source[type].save(context, cb);
+        if (source[type] && source[type].save) source[type].save(context, cb);
         else source.gist.save(context, cb);
     };
 
