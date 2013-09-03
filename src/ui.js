@@ -29,10 +29,11 @@ function ui(context) {
         container
             .append('a')
             .attr('href', './about.html')
-            .attr('class', 'info bottom-right')
-            .attr('target', '_blank')
-            .append('class', 'span')
-            .attr('class', 'icon-info')
+            .attr('class', 'info bottom-right icon-info')
+            .attr('target', '_blank');
+
+        map
+            .append('div')
             .call(layer_switch(context));
 
         top
