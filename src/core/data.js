@@ -96,7 +96,7 @@ module.exports = function(context) {
                 };
 
                 source.github.load(parts, context, function(err, meta) {
-                    return github.loadRaw(parts, context, function(err, raw) {
+                    return source.github.loadRaw(parts, context, function(err, raw) {
                         return cb(err, xtend(meta, { content: JSON.parse(raw) }));
                     });
                 });
