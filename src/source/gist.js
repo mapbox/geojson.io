@@ -30,6 +30,7 @@ function save(context, callback) {
     var source = context.data.get('source');
     var meta = context.data.get('meta');
     var map = context.data.get('map');
+    var name = context.data.get('name');
 
     context.user.details(onuser);
 
@@ -48,7 +49,7 @@ function save(context, callback) {
             endpoint = 'https://api.github.com/gists';
         }
 
-        files[d.name] = {
+        files[name] = {
             content: JSON.stringify(map)
         };
 
