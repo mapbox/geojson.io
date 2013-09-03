@@ -27,7 +27,9 @@ function saveBlocks(content, callback) {
 
 function save(context, callback) {
 
-    var d = context.data.all();
+    var source = context.data.get('source');
+    var meta = context.data.get('meta');
+    var map = context.data.get('map');
 
     context.user.details(onuser);
 
@@ -35,11 +37,11 @@ function save(context, callback) {
         var endpoint,
             method = 'POST';
 
-        if (!err && user && user.login && d.github && d.github.user && d.github.user.login == user.login) {
-            endpoint = 'https://api.github.com/gists/' + d.github.id;
+        if (!err && user && user.login && meta && meta.login) {
+            endpoint = 'https://api.github.com/gists/' + source.id;
             method = 'PATCH';
-        } else if (!err && d.github && d.github.id) {
-            endpoint = 'https://api.github.com/gists/' + d.github.id + '/forks';
+        } else if (!err && source && source.id) {
+            endpoint = 'https://api.github.com/gists/' + source.id + '/forks';
         } else {
             endpoint = 'https://api.github.com/gists';
         }
@@ -56,7 +58,7 @@ function save(context, callback) {
                 public: false,
                 files: {
                     'map.geojson': {
-                        content: JSON.stringify(d.map)
+                        content: JSON.stringify(map)
                     }
                 }
             }));
