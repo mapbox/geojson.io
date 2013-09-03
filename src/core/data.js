@@ -92,12 +92,12 @@ module.exports = function(context) {
                   map: d.content,
                   path: d.path,
                   url: [
-                    'https://github.com',
-                    login,
-                    repo,
-                    'blob',
-                    branch,
-                    d.path
+                      'https://github.com',
+                      login,
+                      repo,
+                      'blob',
+                      branch,
+                      d.path
                   ].join('/')
               });
               break;
@@ -122,10 +122,10 @@ module.exports = function(context) {
                   type: 'gist',
                   source: d,
                   meta: {
-                      login: d.user.login
+                      login: d.user && d.user.login
                   },
                   map: mapFile(d),
-                  path: [d.user.login, d.id].join('/'),
+                  path: [(d.user && d.user.login) || 'anonymous', d.id].join('/'),
                   url: d.html_url
               });
               break;
