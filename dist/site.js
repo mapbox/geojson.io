@@ -8605,14 +8605,20 @@ module.exports = function(context) {
         for (f in gist.files) {
             content = gist.files[f].content;
             if (f.indexOf('.geojson') !== -1 && content) {
-                return JSON.parse(content);
+                return {
+                    name: f,
+                    content: JSON.parse(content)
+                };
             }
         }
 
         for (f in gist.files) {
             content = gist.files[f].content;
             if (f.indexOf('.json') !== -1 && content) {
-                return JSON.parse(content);
+                return {
+                    name: f,
+                    file: JSON.parse(content)
+                };
             }
         }
     }
@@ -8683,7 +8689,8 @@ module.exports = function(context) {
         var login,
             repo,
             branch,
-            chunked;
+            chunked,
+            file;
 
         if (d.files) d.type = 'gist';
 
@@ -8730,13 +8737,16 @@ module.exports = function(context) {
               });
               break;
           case 'gist':
+              file = mapFile(d);
+
               data.set({
                   type: 'gist',
                   source: d,
                   meta: {
                       login: d.user && d.user.login
                   },
-                  map: mapFile(d),
+                  map: file.content,
+                  name: file.name,
                   path: [(d.user && d.user.login) || 'anonymous', d.id].join('/'),
                   url: d.html_url
               });
@@ -9409,6 +9419,7 @@ function save(context, callback) {
 
     var source = context.data.get('source'),
         meta = context.data.get('meta'),
+        name = context.data.get('name'),
         map = context.data.get('map');
 
     var description = (source && source.description) || 'via:geojson.io',
@@ -9418,7 +9429,9 @@ function save(context, callback) {
 
     function onuser(err, user) {
         var endpoint,
-            method = 'POST';
+            method = 'POST',
+            source = context.data.get('source'),
+            files = {};
 
         if (!err && user && user.login && meta && meta.login) {
             endpoint = 'https://api.github.com/gists/' + source.id;
@@ -9429,6 +9442,10 @@ function save(context, callback) {
             endpoint = 'https://api.github.com/gists';
         }
 
+        files[name] = {
+            content: JSON.stringify(map)
+        };
+
         context.user.signXHR(d3.json(endpoint))
             .on('load', function(data) {
                 callback(null, data);
@@ -9437,13 +9454,7 @@ function save(context, callback) {
                 callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
             })
             .send(method, JSON.stringify({
-                description: description,
-                public: public,
-                files: {
-                    'map.geojson': {
-                        content: JSON.stringify(map)
-                    }
-                }
+                files: files
             }));
     }
 }

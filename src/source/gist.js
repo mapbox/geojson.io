@@ -29,6 +29,7 @@ function save(context, callback) {
 
     var source = context.data.get('source'),
         meta = context.data.get('meta'),
+        name = context.data.get('name'),
         map = context.data.get('map');
 
     var description = (source && source.description) || 'via:geojson.io',
@@ -38,7 +39,9 @@ function save(context, callback) {
 
     function onuser(err, user) {
         var endpoint,
-            method = 'POST';
+            method = 'POST',
+            source = context.data.get('source'),
+            files = {};
 
         if (!err && user && user.login && meta && meta.login) {
             endpoint = 'https://api.github.com/gists/' + source.id;
@@ -49,6 +52,10 @@ function save(context, callback) {
             endpoint = 'https://api.github.com/gists';
         }
 
+        files[name] = {
+            content: JSON.stringify(map)
+        };
+
         context.user.signXHR(d3.json(endpoint))
             .on('load', function(data) {
                 callback(null, data);
@@ -57,13 +64,7 @@ function save(context, callback) {
                 callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
             })
             .send(method, JSON.stringify({
-                description: description,
-                public: public,
-                files: {
-                    'map.geojson': {
-                        content: JSON.stringify(map)
-                    }
-                }
+                files: files
             }));
     }
 }
