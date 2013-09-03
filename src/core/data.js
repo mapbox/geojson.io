@@ -1,4 +1,8 @@
 var clone = require('clone');
+var save = {
+  gist: require('../source/gist').save,
+  github: require('../source/github').save
+};
 
 module.exports = function(context) {
 
@@ -34,21 +38,21 @@ module.exports = function(context) {
 
     var data = {};
 
-    data.set = function(obj, source) {
+    data.set = function(obj, src) {
         for (var k in obj) {
             _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
         }
         if (obj.dirty !== false) data.dirty = true;
         context.dispatch.change({
             obj: obj,
-            source: source
+            source: src
         });
         return data;
     };
 
-    data.mergeFeatures = function(features, source) {
+    data.mergeFeatures = function(features, src) {
         _data.map.features = (_data.map.features || []).concat(features);
-        return data.set({ map: _data.map }, source);
+        return data.set({ map: _data.map }, src);
     };
 
     data.get = function(k) {
@@ -122,6 +126,12 @@ module.exports = function(context) {
               });
               break;
         }
+    };
+
+    data.save = function(cb) {
+        var type = context.data.get('type');
+        if (save[type]) save[type](context, cb);
+        else save.gist(context, cb);
     };
 
     return data;

@@ -1,6 +1,6 @@
 var share = require('./share'),
     sourcepanel = require('./source.js'),
-    saver = require('../core/saver.js');
+    saver = require('../ui/saver.js');
 
 module.exports = function fileBar(context) {
 

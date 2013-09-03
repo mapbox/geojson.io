@@ -6672,9 +6672,7 @@ module.exports = {
 };
 
 },{"./cartesian":21,"./spherical":32}],24:[function(require,module,exports){
-var gist = require('../source/gist'),
-    github = require('../source/github'),
-    importPanel = require('./import'),
+var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
 
@@ -6789,7 +6787,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../source/gist":58,"../source/github":59,"./import":63,"detect-json-indent":7,"github-file-browser":10}],"topojson":[function(require,module,exports){
+},{"./import":62,"detect-json-indent":7,"github-file-browser":10}],"topojson":[function(require,module,exports){
 module.exports=require('PBmiWO');
 },{}],26:[function(require,module,exports){
 var type = require("./type"),
@@ -8581,6 +8579,10 @@ module.exports = function(hostname) {
 
 },{}],43:[function(require,module,exports){
 var clone = require('clone');
+var save = {
+  gist: require('../source/gist').save,
+  github: require('../source/github').save
+};
 
 module.exports = function(context) {
 
@@ -8616,21 +8618,21 @@ module.exports = function(context) {
 
     var data = {};
 
-    data.set = function(obj, source) {
+    data.set = function(obj, src) {
         for (var k in obj) {
             _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
         }
         if (obj.dirty !== false) data.dirty = true;
         context.dispatch.change({
             obj: obj,
-            source: source
+            source: src
         });
         return data;
     };
 
-    data.mergeFeatures = function(features, source) {
+    data.mergeFeatures = function(features, src) {
         _data.map.features = (_data.map.features || []).concat(features);
-        return data.set({ map: _data.map }, source);
+        return data.set({ map: _data.map }, src);
     };
 
     data.get = function(k) {
@@ -8706,10 +8708,16 @@ module.exports = function(context) {
         }
     };
 
+    data.save = function(cb) {
+        var type = context.data.get('type');
+        if (save[type]) save[type](context, cb);
+        else save.gist(context, cb);
+    };
+
     return data;
 };
 
-},{"clone":5}],44:[function(require,module,exports){
+},{"../source/gist":57,"../source/github":58,"clone":5}],44:[function(require,module,exports){
 var gist = require('../source/gist.js'),
     github = require('../source/github.js'),
     xtend = require('xtend');
@@ -8786,7 +8794,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../source/gist.js":58,"../source/github.js":59,"spinner-browserify":14,"xtend":37}],45:[function(require,module,exports){
+},{"../source/gist.js":57,"../source/github.js":58,"spinner-browserify":14,"xtend":37}],45:[function(require,module,exports){
 module.exports = function(context) {
     d3.select(window).on('unload', function() {
         if (context.data.get('type') === 'local') {
@@ -8876,43 +8884,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":52,"xtend":37}],47:[function(require,module,exports){
-var gist = require('../source/gist.js'),
-    Spinner = require('spinner-browserify');
-
-module.exports = function(context) {
-
-    var indication = new Spinner();
-
-    var save = {
-        gist: function() {
-            context.container.select('.map').classed('saving', true);
-            return gist.save(context, gistSuccess);
-        },
-        github: function() {
-            context.container.select('.map').classed('saving', true);
-            return github.save(context, gitHubSuccess);
-        }
-    };
-
-    function gistSuccess(err, d) {
-        context.container.select('.map').classed('saving', false);
-        if (err) return;
-        context.data.load(d);
-    }
-
-    function gitHubSuccess(err, d) {
-        context.container.select('.map').classed('saving', false);
-        if (err) return;
-        context.data.load(d);
-    }
-
-    var type = context.data.get('type');
-    if (save[type]) save[type]();
-    else save.gist();
-};
-
-},{"../source/gist.js":58,"spinner-browserify":14}],48:[function(require,module,exports){
+},{"../lib/querystring":51,"xtend":37}],47:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -8995,7 +8967,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":42}],49:[function(require,module,exports){
+},{"../config.js":42}],48:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -9026,7 +8998,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":43,"./core/loader":44,"./core/recovery":45,"./core/router":46,"./core/user":48,"./ui":60,"./ui/map":65,"store":17}],50:[function(require,module,exports){
+},{"./core/data":43,"./core/loader":44,"./core/recovery":45,"./core/router":46,"./core/user":47,"./ui":59,"./ui/map":64,"store":17}],49:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -9065,7 +9037,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":52,"leaflet-hash":13}],51:[function(require,module,exports){
+},{"../lib/querystring":51,"leaflet-hash":13}],50:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -9106,7 +9078,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],52:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 module.exports.stringQs = function(str) {
     return str.split('&').reduce(function(obj, pair){
         var parts = pair.split('=');
@@ -9126,7 +9098,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],53:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson');
 
@@ -9214,7 +9186,7 @@ function readFile(f, context, callback) {
     }
 }
 
-},{"togeojson":18,"topojson":"PBmiWO"}],54:[function(require,module,exports){
+},{"togeojson":18,"topojson":"PBmiWO"}],53:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -9226,7 +9198,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],55:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -9282,7 +9254,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":8}],56:[function(require,module,exports){
+},{"geojsonhint":8}],55:[function(require,module,exports){
 var validate = require('../lib/validate');
 
 CodeMirror.keyMap.tabSpace = {
@@ -9334,7 +9306,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":55}],57:[function(require,module,exports){
+},{"../lib/validate":54}],56:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -9397,7 +9369,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":54,"d3-metatable":6}],58:[function(require,module,exports){
+},{"../lib/smartzoom.js":53,"d3-metatable":6}],57:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -9473,7 +9445,7 @@ function load(id, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":1}],59:[function(require,module,exports){
+},{"fs":1}],58:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -9555,7 +9527,7 @@ function fileUrl(parts) {
         '?ref=' + parts.branch;
 }
 
-},{}],60:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -9632,7 +9604,7 @@ function ui(context) {
     return render;
 }
 
-},{"./ui/dnd":61,"./ui/file_bar":62,"./ui/layer_switch":64,"./ui/mode_buttons":66,"./ui/user":68}],61:[function(require,module,exports){
+},{"./ui/dnd":60,"./ui/file_bar":61,"./ui/layer_switch":63,"./ui/mode_buttons":65,"./ui/user":68}],60:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop;
 
 module.exports = function(context) {
@@ -9664,10 +9636,10 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":53}],62:[function(require,module,exports){
+},{"../lib/readfile.js":52}],61:[function(require,module,exports){
 var share = require('./share'),
     sourcepanel = require('./source.js'),
-    saver = require('../core/saver.js');
+    saver = require('../ui/saver.js');
 
 module.exports = function fileBar(context) {
 
@@ -9780,7 +9752,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../core/saver.js":47,"./share":67,"./source.js":24}],63:[function(require,module,exports){
+},{"../ui/saver.js":66,"./share":67,"./source.js":24}],62:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     readFile = require('../lib/readfile.js');
 
@@ -9841,7 +9813,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":53}],64:[function(require,module,exports){
+},{"../lib/readfile.js":52}],63:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -9891,7 +9863,7 @@ module.exports = function(context) {
 };
 
 
-},{}],65:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -9984,7 +9956,7 @@ function bindPopup(l) {
         '</div></div>'));
 }
 
-},{"../lib/custom_hash.js":50,"../lib/popup":51,"../lib/querystring.js":52}],66:[function(require,module,exports){
+},{"../lib/custom_hash.js":49,"../lib/popup":50,"../lib/querystring.js":51}],65:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json');
 
@@ -10028,7 +10000,24 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":56,"../panel/table":57}],67:[function(require,module,exports){
+},{"../panel/json":55,"../panel/table":56}],66:[function(require,module,exports){
+var Spinner = require('spinner-browserify');
+
+module.exports = function(context) {
+
+    var indication = new Spinner();
+
+    function success(err, d) {
+        context.container.select('.map').classed('saving', false);
+        if (err) return;
+        context.data.load(d);
+    }
+
+    context.container.select('.map').classed('saving', true);
+    context.data.save(success);
+};
+
+},{"spinner-browserify":14}],67:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -10103,7 +10092,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":58}],68:[function(require,module,exports){
+},{"../source/gist":57}],68:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
@@ -10151,5 +10140,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[58,49])
+},{}]},{},[57,48])
 ;
