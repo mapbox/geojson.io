@@ -1,5 +1,6 @@
-var readDrop = require('../lib/readfile.js').readDrop;
-var flash = require('./flash.js');
+var readDrop = require('../lib/readfile.js').readDrop,
+    geocoder = require('./geocode.js'),
+    flash = require('./flash.js');
 
 module.exports = function(context) {
     d3.select('body')
@@ -7,6 +8,10 @@ module.exports = function(context) {
         .on('drop.import', readDrop(function(err, gj, warning) {
             if (err) {
                 if (err.type === 'geocode') {
+                    context.container.select('.icon-folder-open-alt')
+                        .trigger('click');
+                    flash(context.container, 'This file requires geocoding. Click Import to geocode it')
+                        .classed('error', 'true');
                 } else if (err.message) {
                     flash(context.container, err.message)
                         .classed('error', 'true');

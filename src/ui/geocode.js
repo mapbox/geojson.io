@@ -1,87 +1,82 @@
-var progressChart = require('./lib/progress_chart');
+var progressChart = require('../lib/progress_chart');
 
-function handleGeocode(container, text, updates) {
+module.exports = function(context) {
+    return function(container, text) {
 
-    var list = csv2geojson.auto(text);
+        var list = csv2geojson.auto(text);
 
-    var button = container.append('div')
-        .attr('class', 'bucket-actions')
-        .append('button')
-        .attr('class', 'major')
-        .attr('disabled', true)
-        .text('At least one field required to geocode');
+        var button = container.append('div')
+            .attr('class', 'bucket-actions')
+            .append('button')
+            .attr('class', 'major')
+            .attr('disabled', true)
+            .text('At least one field required to geocode');
 
-    var join = container.append('div')
-        .attr('class', 'bucket-deposit')
-        .append('div')
-        .attr('class', 'bucket-join');
+        var join = container.append('div')
+            .attr('class', 'bucket-deposit')
+            .append('div')
+            .attr('class', 'bucket-join');
 
-    var buckets = join.selectAll('.bucket')
-        .data(['City', 'State', 'ZIP', 'Country'])
-        .enter()
-        .append('div')
-        .attr('class', 'bucket')
-        .text(String);
+        var buckets = join.selectAll('.bucket')
+            .data(['City', 'State', 'ZIP', 'Country'])
+            .enter()
+            .append('div')
+            .attr('class', 'bucket')
+            .text(String);
 
-    var example = container.append('div')
-        .attr('class', 'example');
+        var example = container.append('div')
+            .attr('class', 'example');
 
-    var store = container.append('div')
-       .attr('class', 'bucket-store');
+        var store = container.append('div')
+           .attr('class', 'bucket-store');
 
-    var sources = store.selectAll('bucket-source')
-       .data(Object.keys(list[0]))
-       .enter()
-       .append('div')
-       .attr('class', 'bucket-source')
-       .text(String);
+        var sources = store.selectAll('bucket-source')
+           .data(Object.keys(list[0]))
+           .enter()
+           .append('div')
+           .attr('class', 'bucket-source')
+           .text(String);
 
-    function transformRow(fields) {
-        return function(obj) {
-           return d3.entries(obj)
-               .filter(function(e) { return fields.indexOf(e.key) !== -1; })
-               .map(function(e) { return e.value; })
-               .join(', ');
-        };
-    }
+        function showExample(fields) {
+            var i = 0;
+            return function() {
+                if (++i > list.length) i = 0;
+                example.html('');
+                example.text(transformRow(fields)(list[i]));
+            };
+        }
 
-    function showExample(fields) {
-        var i = 0;
-        return function() {
-            if (++i > list.length) i = 0;
-            example.html('');
-            example.text(transformRow(fields)(list[i]));
-        };
-    }
+        var ti;
+        var broker = bucket();
+        buckets.call(broker.deposit());
+        sources.call(broker.store().on('chosen', onChosen));
 
-    var ti;
-    var broker = bucket();
-    buckets.call(broker.deposit());
-    sources.call(broker.store().on('chosen', onChosen));
-
-    function onChosen(fields) {
-         if (ti) window.clearInterval(ti);
-         if (fields.length) {
-             button.attr('disabled', null)
-                .text('Geocode');
-             button.on('click', function() {
-                 runGeocode(container, list, transformRow(fields), updates);
-             });
-             var se = showExample(fields);
-             se();
-             ti = window.setInterval(se, 2000);
-         } else {
-             button.attr('disabled', true)
-                .text('At least one field required to geocode');
-             example.text('');
+        function onChosen(fields) {
+             if (ti) window.clearInterval(ti);
+             if (fields.length) {
+                 button.attr('disabled', null)
+                    .text('Geocode');
+                 button.on('click', function() {
+                     runGeocode(container, list, transformRow(fields), context);
+                 });
+                 var se = showExample(fields);
+                 se();
+                 ti = window.setInterval(se, 2000);
+             } else {
+                 button.attr('disabled', true)
+                    .text('At least one field required to geocode');
+                 example.text('');
+             }
          }
-     }
-}
+    };
+};
 
-function runGeocode(container, list, transform, updates) {
+function runGeocode(container, list, transform, context) {
     container.html('');
 
-    var wrap = container.append('div').attr('class', 'pad1');
+    var wrap = container
+        .append('div')
+        .attr('class', 'pad1');
 
     var doneBtn = wrap.append('div')
         .attr('class', 'pad1 center')
@@ -93,22 +88,15 @@ function runGeocode(container, list, transform, updates) {
             if (task) task();
         });
 
-    var chartDiv = wrap.append('div');
-    var failedDiv = wrap.append('div');
+    var chartDiv = wrap.append('div'),
+        failedDiv = wrap.append('div'),
+        geocode = geocodemany('tmcw.map-u4ca5hnt');
 
-    var geocode = geocodemany('tmcw.map-u4ca5hnt');
-
-    var chart = progressChart(chartDiv.node(), chartDiv.node().offsetWidth, 50);
+    var chart = progressChart(chartDiv.node(), chartDiv.node().offsetWidth, 50),
+        task = geocode(list, transform, progress, done);
 
     function progress(e) {
         chart(e);
-    }
-
-    function printObj(o) {
-        return '(' + d3.entries(o)
-            .map(function(_) {
-                return _.key + ': ' + _.value;
-            }).join(',') + ')';
     }
 
     function done(failed, completed) {
@@ -119,14 +107,30 @@ function runGeocode(container, list, transform, updates) {
             .enter()
             .append('div')
             .attr('class', 'fail')
-            .text(function(d) {
-                return 'failed: ' + transform(d.data) + ' / ' + printObj(d.data);
-            });
+            .text(failedMessage);
+
+        function failedMessage(d) {
+            return 'failed: ' + transform(d.data) + ' / ' + printObj(d.data);
+        }
 
         csv2geojson.csv2geojson(completed, function(err, result) {
-            updates.update_editor(result);
+            if (result.features) {
+                context.data.mergeFeatures(result.features);
+            }
         });
     }
+}
 
-    var task = geocode(list, transform, progress, done);
+function transformRow(fields) {
+    return function(obj) {
+       return d3.entries(obj)
+           .filter(function(_) { return fields.indexOf(_.key) !== -1; })
+           .map(function(_) { return _.value; })
+           .join(', ');
+    };
+}
+
+function printObj(o) {
+    return '(' + d3.entries(o)
+        .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }

@@ -30,7 +30,9 @@ function readFile(f, callback) {
         } else if (fileType === 'kml') {
             var kmldom = toDom(e.target.result);
             if (!kmldom) {
-                return alert('Invalid KML file: not valid XML');
+                return callback({
+                    message: 'Invalid KML file: not valid XML'
+                });
             }
             var warning;
             if (kmldom.getElementsByTagName('NetworkLink').length) {

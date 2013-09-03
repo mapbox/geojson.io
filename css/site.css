@@ -180,6 +180,11 @@ button {
     -webkit-transition:all 100ms ease-in-out;
 }
 
+button.major {
+    border:1px solid #aaa;
+    padding:5px;
+}
+
 .top .collapse-button {
     position:absolute;
     background:#f7f7f7;
@@ -286,20 +291,12 @@ button {
     background:transparent;
 }
 
-.scrollable {
-    overflow:auto;
-}
+/*
+ * table ----------------------------------------------------------------------
+ */
 
 .controls {
-    padding-bottom:20px;
-}
-
-.controls button {
-    border:1px solid #ccc;
-}
-
-.controls button:hover {
-    background:#fff;
+    padding:10px;
 }
 
 body.dragover {

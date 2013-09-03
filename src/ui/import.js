@@ -1,4 +1,6 @@
 var importSupport = !!(window.FileReader),
+    flash = require('./flash.js'),
+    geocode = require('./geocode.js'),
     readFile = require('../lib/readfile.js');
 
 module.exports = function(context) {
@@ -49,10 +51,22 @@ module.exports = function(context) {
                       'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
         }
 
-        function onImport(err, gj) {
-            if (err) return;
-            if (gj && gj.features) {
+        function onImport(err, gj, warning) {
+            if (err) {
+                if (err.type === 'geocode') {
+                    wrap.call(geocode(context), err.raw);
+                } else if (err.message) {
+                    flash(context.container, err.message)
+                        .classed('error', 'true');
+                }
+            } else if (gj && gj.features) {
                 context.data.mergeFeatures(gj.features);
+                if (warning) {
+                    flash(context.container, warning.message);
+                } else {
+                    flash(context.container, 'Imported ' + gj.features.length + ' features.')
+                        .classed('success', 'true');
+                }
             }
         }
 
