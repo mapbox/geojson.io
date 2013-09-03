@@ -1,6 +1,6 @@
 module.exports = function(context) {
     d3.select(window).on('unload', function() {
-        if (context.data.get('type') === 'local') {
+        if (context.data.get('type') === 'local' && context.data.hasFeatures()) {
             context.storage.set('recover', context.data.all());
         }
     });
