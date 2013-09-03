@@ -1,6 +1,4 @@
-var gist = require('../source/gist'),
-    github = require('../source/github'),
-    importPanel = require('./import'),
+var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
 
