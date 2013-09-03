@@ -17,7 +17,7 @@ function saveBlocks(content, callback) {
         })
         .send('POST', JSON.stringify({
             description: 'via:geojson.io',
-            public: true,
+            public: false,
             files: {
                 'index.html': { content: tmpl },
                 'map.geojson': { content: content }
@@ -53,7 +53,7 @@ function save(context, callback) {
             })
             .send(method, JSON.stringify({
                 description: 'via:geojson.io',
-                public: true,
+                public: false,
                 files: {
                     'map.geojson': {
                         content: JSON.stringify(d.map)
