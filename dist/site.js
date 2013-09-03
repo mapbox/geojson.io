@@ -8556,6 +8556,10 @@ module.exports = function(context) {
 
     var data = {};
 
+    data.hasFeatures = function() {
+        return !!(_data.map && _data.map.features && _data.map.features.length);
+    };
+
     data.set = function(obj, src) {
         for (var k in obj) {
             _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
@@ -8729,7 +8733,7 @@ module.exports = function(context) {
 },{"spinner-browserify":14}],45:[function(require,module,exports){
 module.exports = function(context) {
     d3.select(window).on('unload', function() {
-        if (context.data.get('type') === 'local') {
+        if (context.data.get('type') === 'local' && context.data.hasFeatures()) {
             context.storage.set('recover', context.data.all());
         }
     });
@@ -8764,13 +8768,21 @@ module.exports = function(context) {
     };
 
     function route() {
-        var oldHash = d3.event.oldURL.split('#')[1];
-        var newHash = d3.event.newURL.split('#')[1];
+        var oldHash = d3.event.oldURL.split('#')[1],
+            newHash = d3.event.newURL.split('#')[1],
+            oldQuery = qs.stringQs(oldHash),
+            newQuery = qs.stringQs(newHash);
 
-        var oldQuery = qs.stringQs(oldHash);
-        var newQuery = qs.stringQs(newHash);
-
+        if (isOld(oldHash)) return upgrade(oldHash);
         if (newQuery.id !== oldQuery.id) context.dispatch.route(newQuery);
+    }
+
+    function isOld(id) {
+        return (id.indexOf('gist') === 0 || id.indexOf('github') === 0 || !isNaN(parseInt(id, 10)));
+    }
+
+    function upgrade(id) {
+        location.hash = '#id=' + id;
     }
 
     function unroute() {
@@ -9035,19 +9047,20 @@ var topojson = require('topojson'),
     toGeoJSON = require('togeojson');
 
 module.exports.readDrop = readDrop;
+module.exports.readFile = readFile;
 
-function readDrop(context, callback) {
+function readDrop(callback) {
     return function() {
         if (d3.event.dataTransfer) {
             d3.event.stopPropagation();
             d3.event.preventDefault();
             var f = d3.event.dataTransfer.files[0];
-            readFile(f, context, callback);
+            readFile(f, callback);
         }
     };
 }
 
-function readFile(f, context, callback) {
+function readFile(f, callback) {
 
     var reader = new FileReader();
 
@@ -9504,10 +9517,15 @@ function ui(context) {
             .on('click', function collapse() {
                 d3.select('body').classed('fullscreen',
                     !d3.select('body').classed('fullscreen'));
+                var full = d3.select('body').classed('fullscreen');
+                d3.select(this)
+                    .select('.icon')
+                    .classed('icon-caret-up', !full)
+                    .classed('icon-caret-down', full);
                 context.map.invalidateSize();
             })
             .append('class', 'span')
-            .attr('class', 'icon icon-caret-down');
+            .attr('class', 'icon icon-caret-up');
 
         var pane = right
             .append('div')
@@ -9542,7 +9560,7 @@ var readDrop = require('../lib/readfile.js').readDrop;
 module.exports = function(context) {
     d3.select('body')
         .attr('dropzone', 'copy')
-        .on('drop.import', readDrop(context, function(err, gj) {
+        .on('drop.import', readDrop(function(err, gj) {
             if (err) return;
             if (gj && gj.features) {
                 context.data.mergeFeatures(gj.features);
@@ -9727,13 +9745,20 @@ module.exports = function(context) {
                 .style('position', 'absolute')
                 .style('height', '0')
                 .on('change', function() {
-                    if (this.files && this.files[0]) readFile(this.files[0], 'click');
+                    if (this.files && this.files[0]) readFile.readFile(this.files[0], onImport);
                 });
         } else {
             wrap.append('p')
                 .attr('class', 'blank-banner')
                 .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
                       'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
+        }
+
+        function onImport(err, gj) {
+            if (err) return;
+            if (gj && gj.features) {
+                context.data.mergeFeatures(gj.features);
+            }
         }
 
         wrap.append('p')

@@ -3,7 +3,7 @@ var readDrop = require('../lib/readfile.js').readDrop;
 module.exports = function(context) {
     d3.select('body')
         .attr('dropzone', 'copy')
-        .on('drop.import', readDrop(context, function(err, gj) {
+        .on('drop.import', readDrop(function(err, gj) {
             if (err) return;
             if (gj && gj.features) {
                 context.data.mergeFeatures(gj.features);

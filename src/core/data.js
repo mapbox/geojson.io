@@ -39,6 +39,10 @@ module.exports = function(context) {
 
     var data = {};
 
+    data.hasFeatures = function() {
+        return !!(_data.map && _data.map.features && _data.map.features.length);
+    };
+
     data.set = function(obj, src) {
         for (var k in obj) {
             _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];

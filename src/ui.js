@@ -42,10 +42,15 @@ function ui(context) {
             .on('click', function collapse() {
                 d3.select('body').classed('fullscreen',
                     !d3.select('body').classed('fullscreen'));
+                var full = d3.select('body').classed('fullscreen');
+                d3.select(this)
+                    .select('.icon')
+                    .classed('icon-caret-up', !full)
+                    .classed('icon-caret-down', full);
                 context.map.invalidateSize();
             })
             .append('class', 'span')
-            .attr('class', 'icon icon-caret-down');
+            .attr('class', 'icon icon-caret-up');
 
         var pane = right
             .append('div')

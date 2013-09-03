@@ -2,19 +2,20 @@ var topojson = require('topojson'),
     toGeoJSON = require('togeojson');
 
 module.exports.readDrop = readDrop;
+module.exports.readFile = readFile;
 
-function readDrop(context, callback) {
+function readDrop(callback) {
     return function() {
         if (d3.event.dataTransfer) {
             d3.event.stopPropagation();
             d3.event.preventDefault();
             var f = d3.event.dataTransfer.files[0];
-            readFile(f, context, callback);
+            readFile(f, callback);
         }
     };
 }
 
-function readFile(f, context, callback) {
+function readFile(f, callback) {
 
     var reader = new FileReader();
 

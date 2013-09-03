@@ -17,13 +17,21 @@ module.exports = function(context) {
     };
 
     function route() {
-        var oldHash = d3.event.oldURL.split('#')[1];
-        var newHash = d3.event.newURL.split('#')[1];
+        var oldHash = d3.event.oldURL.split('#')[1],
+            newHash = d3.event.newURL.split('#')[1],
+            oldQuery = qs.stringQs(oldHash),
+            newQuery = qs.stringQs(newHash);
 
-        var oldQuery = qs.stringQs(oldHash);
-        var newQuery = qs.stringQs(newHash);
-
+        if (isOld(oldHash)) return upgrade(oldHash);
         if (newQuery.id !== oldQuery.id) context.dispatch.route(newQuery);
+    }
+
+    function isOld(id) {
+        return (id.indexOf('gist') === 0 || id.indexOf('github') === 0 || !isNaN(parseInt(id, 10)));
+    }
+
+    function upgrade(id) {
+        location.hash = '#id=' + id;
     }
 
     function unroute() {
