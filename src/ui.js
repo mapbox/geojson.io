@@ -33,7 +33,6 @@ function ui(context) {
             .attr('target', '_blank');
 
         map
-            .append('div')
             .call(layer_switch(context));
 
         top

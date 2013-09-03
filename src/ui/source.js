@@ -87,7 +87,7 @@ module.exports = function(context) {
                 .attr('class', 'repos')
                 .call(githubBrowser
                     .gitHubBrowse(context.user.token())
-                        .on('chosen', context.data.load));
+                        .on('chosen', context.data.parse));
         }
 
         function clickImport() {
@@ -104,7 +104,7 @@ module.exports = function(context) {
                 .attr('class', 'browser pad1')
                 .call(githubBrowser
                     .gistBrowse(context.user.token())
-                        .on('chosen', context.data.load));
+                        .on('chosen', context.data.parse));
         }
 
         $sources.filter(function(d, i) { return !i; }).trigger('click');

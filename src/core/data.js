@@ -1,8 +1,9 @@
 var clone = require('clone');
-var save = {
-  gist: require('../source/gist').save,
-  github: require('../source/github').save
-};
+    xtend = require('xtend');
+    source = {
+        gist: require('../source/gist'),
+        github: require('../source/github')
+    };
 
 module.exports = function(context) {
 
@@ -67,7 +68,38 @@ module.exports = function(context) {
         return clone(_data, false);
     };
 
-    data.load = function(d, browser) {
+    data.fetch = function(q, cb) {
+        var type = q.id.split(':')[0];
+
+        switch(type) {
+            case 'gist':
+                var id = q.id.split(':')[1].split('/')[1];
+
+                source.gist.load(id, context, function(err, d) {
+                    return cb(err, d);
+                });
+
+                break;
+            case 'github':
+                var url = q.id.split('/');
+                var parts = {
+                    user: url[0].split(':')[1],
+                    repo: url[1],
+                    branch: url[3],
+                    path: (url.slice(4) || []).join('/')
+                };
+
+                source.github.load(parts, context, function(err, meta) {
+                    return github.loadRaw(parts, context, function(err, raw) {
+                        return cb(err, xtend(meta, { content: JSON.parse(raw) }));
+                    });
+                });
+
+                break;
+        }
+    };
+
+    data.parse = function(d, browser) {
         var login,
             repo,
             branch,
@@ -134,8 +166,8 @@ module.exports = function(context) {
 
     data.save = function(cb) {
         var type = context.data.get('type');
-        if (save[type]) save[type](context, cb);
-        else save.gist(context, cb);
+        if (source[type].save) source[type].save(context, cb);
+        else source.gist.save(context, cb);
     };
 
     return data;
