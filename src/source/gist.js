@@ -27,9 +27,12 @@ function saveBlocks(content, callback) {
 
 function save(context, callback) {
 
-    var source = context.data.get('source');
-    var meta = context.data.get('meta');
-    var map = context.data.get('map');
+    var source = context.data.get('source'),
+        meta = context.data.get('meta'),
+        map = context.data.get('map');
+
+    var description = (source && source.description) || 'via:geojson.io',
+        public = (source !== undefined) ? !!source.public : false;
 
     context.user.details(onuser);
 
@@ -54,8 +57,8 @@ function save(context, callback) {
                 callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
             })
             .send(method, JSON.stringify({
-                description: 'via:geojson.io',
-                public: false,
+                description: description,
+                public: public,
                 files: {
                     'map.geojson': {
                         content: JSON.stringify(map)
