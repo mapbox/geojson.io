@@ -6528,7 +6528,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":20,"./lib/topojson/clockwise":22,"./lib/topojson/filter":24,"./lib/topojson/prune":30,"./lib/topojson/simplify":31,"./lib/topojson/topology":34,"fs":1}],20:[function(require,module,exports){
+},{"./lib/topojson/bind":20,"./lib/topojson/clockwise":22,"./lib/topojson/filter":26,"./lib/topojson/prune":30,"./lib/topojson/simplify":31,"./lib/topojson/topology":34,"fs":1}],20:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6672,6 +6672,124 @@ module.exports = {
 };
 
 },{"./cartesian":21,"./spherical":32}],24:[function(require,module,exports){
+var importPanel = require('./import'),
+    githubBrowser = require('github-file-browser')(d3),
+    detectIndentationStyle = require('detect-json-indent');
+
+module.exports = function(context) {
+
+    function render(selection) {
+
+        selection.select('.right.overlay').remove();
+
+        var panel = selection.append('div')
+            .attr('class', 'right overlay');
+
+        var sources = [{
+            title: 'Import',
+            alt: 'CSV, KML, GPX, and other filetypes',
+            icon: 'icon-cog',
+            action: clickImport
+        }, {
+            title: 'GitHub',
+            alt: 'GeoJSON files in GitHub Repositories',
+            icon: 'icon-github',
+            authenticated: true,
+            action: clickGitHub
+        }, {
+            title: 'Gist',
+            alt: 'GeoJSON files in GitHub Gists',
+            icon: 'icon-github-alt',
+            authenticated: true,
+            action: clickGist
+        }];
+
+        var $top = panel
+            .append('div')
+            .attr('class', 'top');
+
+       var $buttons = $top.append('div')
+            .attr('class', 'buttons');
+
+       var $sources = $buttons
+           .selectAll('button.source')
+            .data(sources)
+            .enter()
+            .append('button')
+            .classed('deemphasize', function(d) {
+                return d.authenticated && !context.user.token();
+            })
+            .attr('class', function(d) {
+                return d.icon + ' icon-spaced pad1 source';
+            })
+            .text(function(d) {
+                return ' ' + d.title;
+            })
+            .attr('title', function(d) { return d.alt; })
+            .on('click', clickSource);
+
+        function clickSource(d) {
+            if (d.authenticated && !context.user.token()) {
+                return alert('Log in to load GitHub files and Gists');
+            }
+
+            var that = this;
+            $sources.classed('active', function() {
+                return that === this;
+            });
+
+            d.action.apply(this, d);
+        }
+
+        $buttons.append('button')
+            .on('click', hidePanel)
+            .attr('class', function(d) {
+                return 'icon-remove';
+            });
+
+        function hidePanel(d) {
+            panel.remove();
+        }
+
+        var $subpane = panel.append('div')
+            .attr('class', 'subpane');
+
+        function clickGitHub() {
+            $subpane
+                .html('')
+                .append('div')
+                .attr('class', 'repos')
+                .call(githubBrowser
+                    .gitHubBrowse(context.user.token())
+                        .on('chosen', context.data.parse));
+        }
+
+        function clickImport() {
+            $subpane
+                .html('')
+                .append('div')
+                .call(importPanel(context));
+        }
+
+        function clickGist() {
+            $subpane
+                .html('')
+                .append('div')
+                .attr('class', 'browser pad1')
+                .call(githubBrowser
+                    .gistBrowse(context.user.token())
+                        .on('chosen', context.data.parse));
+        }
+
+        $sources.filter(function(d, i) { return !i; }).trigger('click');
+    }
+
+    return render;
+};
+
+},{"./import":62,"detect-json-indent":7,"github-file-browser":10}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}],26:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -6741,7 +6859,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":22,"./coordinate-systems":23,"./prune":30,"./type":35}],25:[function(require,module,exports){
+},{"../../":"PBmiWO","./clockwise":22,"./coordinate-systems":23,"./prune":30,"./type":35}],27:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -6751,7 +6869,7 @@ module.exports = function(size) {
   };
 };
 
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -6806,62 +6924,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":25}],27:[function(require,module,exports){
-module.exports = function(context) {
-
-    return function(selection) {
-
-        var layers = [{
-            title: 'MapBox',
-            layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-                retinaVersion: 'tmcw.map-u4ca5hnt',
-                detectRetina: true
-            })
-        }, {
-            title: 'Satellite',
-            layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-                retinaVersion: 'tmcw.map-ujx9se0r',
-                detectRetina: true
-            })
-        }, {
-            title: 'OSM',
-            layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-            })
-        }];
-
-        var layerSwap = function(d) {
-            var clicked = this instanceof d3.selection ? this.node() : this;
-            layerButtons.classed('active', function() {
-                return clicked === this;
-            });
-            layers.forEach(swap);
-            function swap(l) {
-                var datum = d instanceof d3.selection ? d.datum() : d;
-                if (l.layer == datum.layer) context.map.addLayer(datum.layer);
-                else if (context.map.hasLayer(l.layer)) context.map.removeLayer(l.layer);
-            }
-        };
-        
-        var layerButtons = selection.append('div')
-            .attr('class', 'layer-switch')
-            .selectAll('button')
-            .data(layers)
-            .enter()
-            .append('button')
-            .attr('class', 'pad0')
-            .on('click', layerSwap)
-            .text(function(d) { return d.title; });
-
-        layerButtons.filter(function(d, i) { return i === 0; }).call(layerSwap);
-
-    };
-};
-
-
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],29:[function(require,module,exports){
+},{"./hash":27}],29:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -7592,7 +7655,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":23,"./hashtable":26,"./stitch-poles":33,"./type":35}],35:[function(require,module,exports){
+},{"./coordinate-systems":23,"./hashtable":28,"./stitch-poles":33,"./type":35}],35:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -8542,14 +8605,20 @@ module.exports = function(context) {
         for (f in gist.files) {
             content = gist.files[f].content;
             if (f.indexOf('.geojson') !== -1 && content) {
-                return JSON.parse(content);
+                return {
+                    name: f,
+                    content: JSON.parse(content)
+                };
             }
         }
 
         for (f in gist.files) {
             content = gist.files[f].content;
             if (f.indexOf('.json') !== -1 && content) {
-                return JSON.parse(content);
+                return {
+                    name: f,
+                    file: JSON.parse(content)
+                };
             }
         }
     }
@@ -8620,7 +8689,8 @@ module.exports = function(context) {
         var login,
             repo,
             branch,
-            chunked;
+            chunked,
+            file;
 
         if (d.files) d.type = 'gist';
 
@@ -8667,13 +8737,16 @@ module.exports = function(context) {
               });
               break;
           case 'gist':
+              file = mapFile(d);
+
               data.set({
                   type: 'gist',
                   source: d,
                   meta: {
                       login: d.user.login
                   },
-                  map: mapFile(d),
+                  map: file.content,
+                  name: file.name,
                   path: [d.user.login, d.id].join('/'),
                   url: d.html_url
               });
@@ -8942,7 +9015,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":43,"./core/loader":44,"./core/recovery":45,"./core/router":46,"./core/user":47,"./ui":59,"./ui/map":63,"store":17}],49:[function(require,module,exports){
+},{"./core/data":43,"./core/loader":44,"./core/recovery":45,"./core/router":46,"./core/user":47,"./ui":59,"./ui/map":64,"store":17}],49:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -9350,16 +9423,22 @@ function save(context, callback) {
 
     function onuser(err, user) {
         var endpoint,
-            method = 'POST';
+            method = 'POST',
+            source = context.data.get('source'),
+            files = {};
 
-        if (!err && user && user.login && d.github && d.github.user && d.github.user.login == user.login) {
-            endpoint = 'https://api.github.com/gists/' + d.github.id;
+        if (!err && user && user.login && d.source && d.source.user && d.source.user.login == user.login) {
+            endpoint = 'https://api.github.com/gists/' + d.source.id;
             method = 'PATCH';
-        } else if (!err && d.github && d.github.id) {
-            endpoint = 'https://api.github.com/gists/' + d.github.id + '/forks';
+        } else if (!err && d.source && d.source.id) {
+            endpoint = 'https://api.github.com/gists/' + d.source.id + '/forks';
         } else {
             endpoint = 'https://api.github.com/gists';
         }
+
+        files[d.name] = {
+            content: JSON.stringify(d.map)
+        };
 
         context.user.signXHR(d3.json(endpoint))
             .on('load', function(data) {
@@ -9371,11 +9450,7 @@ function save(context, callback) {
             .send(method, JSON.stringify({
                 description: 'via:geojson.io',
                 public: false,
-                files: {
-                    'map.geojson': {
-                        content: JSON.stringify(d.map)
-                    }
-                }
+                files: files
             }));
     }
 }
@@ -9554,7 +9629,7 @@ function ui(context) {
     return render;
 }
 
-},{"./ui/dnd":60,"./ui/file_bar":61,"./ui/layer_switch":27,"./ui/mode_buttons":64,"./ui/user":68}],60:[function(require,module,exports){
+},{"./ui/dnd":60,"./ui/file_bar":61,"./ui/layer_switch":63,"./ui/mode_buttons":65,"./ui/user":68}],60:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop;
 
 module.exports = function(context) {
@@ -9702,7 +9777,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":65,"./share":66,"./source.js":67}],62:[function(require,module,exports){
+},{"../ui/saver.js":66,"./share":67,"./source.js":24}],62:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     readFile = require('../lib/readfile.js');
 
@@ -9771,6 +9846,59 @@ module.exports = function(context) {
 };
 
 },{"../lib/readfile.js":52}],63:[function(require,module,exports){
+module.exports = function(context) {
+
+    return function(selection) {
+
+        var layers = [{
+            title: 'MapBox',
+            layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
+                retinaVersion: 'tmcw.map-u4ca5hnt',
+                detectRetina: true
+            })
+        }, {
+            title: 'Satellite',
+            layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
+                retinaVersion: 'tmcw.map-ujx9se0r',
+                detectRetina: true
+            })
+        }, {
+            title: 'OSM',
+            layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            })
+        }];
+
+        var layerSwap = function(d) {
+            var clicked = this instanceof d3.selection ? this.node() : this;
+            layerButtons.classed('active', function() {
+                return clicked === this;
+            });
+            layers.forEach(swap);
+            function swap(l) {
+                var datum = d instanceof d3.selection ? d.datum() : d;
+                if (l.layer == datum.layer) context.map.addLayer(datum.layer);
+                else if (context.map.hasLayer(l.layer)) context.map.removeLayer(l.layer);
+            }
+        };
+        
+        var layerButtons = selection.append('div')
+            .attr('class', 'layer-switch')
+            .selectAll('button')
+            .data(layers)
+            .enter()
+            .append('button')
+            .attr('class', 'pad0')
+            .on('click', layerSwap)
+            .text(function(d) { return d.title; });
+
+        layerButtons.filter(function(d, i) { return i === 0; }).call(layerSwap);
+
+    };
+};
+
+
+},{}],64:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -9863,7 +9991,7 @@ function bindPopup(l) {
         '</div></div>'));
 }
 
-},{"../lib/custom_hash.js":49,"../lib/popup":50,"../lib/querystring.js":51}],64:[function(require,module,exports){
+},{"../lib/custom_hash.js":49,"../lib/popup":50,"../lib/querystring.js":51}],65:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json');
 
@@ -9907,7 +10035,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":55,"../panel/table":56}],65:[function(require,module,exports){
+},{"../panel/json":55,"../panel/table":56}],66:[function(require,module,exports){
 var Spinner = require('spinner-browserify');
 
 module.exports = function(context) {
@@ -9924,7 +10052,7 @@ module.exports = function(context) {
     context.data.save(success);
 };
 
-},{"spinner-browserify":14}],66:[function(require,module,exports){
+},{"spinner-browserify":14}],67:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -9999,123 +10127,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":57}],67:[function(require,module,exports){
-var importPanel = require('./import'),
-    githubBrowser = require('github-file-browser')(d3),
-    detectIndentationStyle = require('detect-json-indent');
-
-module.exports = function(context) {
-
-    function render(selection) {
-
-        selection.select('.right.overlay').remove();
-
-        var panel = selection.append('div')
-            .attr('class', 'right overlay');
-
-        var sources = [{
-            title: 'Import',
-            alt: 'CSV, KML, GPX, and other filetypes',
-            icon: 'icon-cog',
-            action: clickImport
-        }, {
-            title: 'GitHub',
-            alt: 'GeoJSON files in GitHub Repositories',
-            icon: 'icon-github',
-            authenticated: true,
-            action: clickGitHub
-        }, {
-            title: 'Gist',
-            alt: 'GeoJSON files in GitHub Gists',
-            icon: 'icon-github-alt',
-            authenticated: true,
-            action: clickGist
-        }];
-
-        var $top = panel
-            .append('div')
-            .attr('class', 'top');
-
-       var $buttons = $top.append('div')
-            .attr('class', 'buttons');
-
-       var $sources = $buttons
-           .selectAll('button.source')
-            .data(sources)
-            .enter()
-            .append('button')
-            .classed('deemphasize', function(d) {
-                return d.authenticated && !context.user.token();
-            })
-            .attr('class', function(d) {
-                return d.icon + ' icon-spaced pad1 source';
-            })
-            .text(function(d) {
-                return ' ' + d.title;
-            })
-            .attr('title', function(d) { return d.alt; })
-            .on('click', clickSource);
-
-        function clickSource(d) {
-            if (d.authenticated && !context.user.token()) {
-                return alert('Log in to load GitHub files and Gists');
-            }
-
-            var that = this;
-            $sources.classed('active', function() {
-                return that === this;
-            });
-
-            d.action.apply(this, d);
-        }
-
-        $buttons.append('button')
-            .on('click', hidePanel)
-            .attr('class', function(d) {
-                return 'icon-remove';
-            });
-
-        function hidePanel(d) {
-            panel.remove();
-        }
-
-        var $subpane = panel.append('div')
-            .attr('class', 'subpane');
-
-        function clickGitHub() {
-            $subpane
-                .html('')
-                .append('div')
-                .attr('class', 'repos')
-                .call(githubBrowser
-                    .gitHubBrowse(context.user.token())
-                        .on('chosen', context.data.parse));
-        }
-
-        function clickImport() {
-            $subpane
-                .html('')
-                .append('div')
-                .call(importPanel(context));
-        }
-
-        function clickGist() {
-            $subpane
-                .html('')
-                .append('div')
-                .attr('class', 'browser pad1')
-                .call(githubBrowser
-                    .gistBrowse(context.user.token())
-                        .on('chosen', context.data.parse));
-        }
-
-        $sources.filter(function(d, i) { return !i; }).trigger('click');
-    }
-
-    return render;
-};
-
-},{"./import":62,"detect-json-indent":7,"github-file-browser":10}],68:[function(require,module,exports){
+},{"../source/gist":57}],68:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')

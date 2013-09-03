@@ -25,14 +25,20 @@ module.exports = function(context) {
         for (f in gist.files) {
             content = gist.files[f].content;
             if (f.indexOf('.geojson') !== -1 && content) {
-                return JSON.parse(content);
+                return {
+                    name: f,
+                    content: JSON.parse(content)
+                };
             }
         }
 
         for (f in gist.files) {
             content = gist.files[f].content;
             if (f.indexOf('.json') !== -1 && content) {
-                return JSON.parse(content);
+                return {
+                    name: f,
+                    file: JSON.parse(content)
+                };
             }
         }
     }
@@ -103,7 +109,8 @@ module.exports = function(context) {
         var login,
             repo,
             branch,
-            chunked;
+            chunked,
+            file;
 
         if (d.files) d.type = 'gist';
 
@@ -150,13 +157,16 @@ module.exports = function(context) {
               });
               break;
           case 'gist':
+              file = mapFile(d);
+
               data.set({
                   type: 'gist',
                   source: d,
                   meta: {
                       login: d.user.login
                   },
-                  map: mapFile(d),
+                  map: file.content,
+                  name: file.name,
                   path: [d.user.login, d.id].join('/'),
                   url: d.html_url
               });

@@ -33,16 +33,22 @@ function save(context, callback) {
 
     function onuser(err, user) {
         var endpoint,
-            method = 'POST';
+            method = 'POST',
+            source = context.data.get('source'),
+            files = {};
 
-        if (!err && user && user.login && d.github && d.github.user && d.github.user.login == user.login) {
-            endpoint = 'https://api.github.com/gists/' + d.github.id;
+        if (!err && user && user.login && d.source && d.source.user && d.source.user.login == user.login) {
+            endpoint = 'https://api.github.com/gists/' + d.source.id;
             method = 'PATCH';
-        } else if (!err && d.github && d.github.id) {
-            endpoint = 'https://api.github.com/gists/' + d.github.id + '/forks';
+        } else if (!err && d.source && d.source.id) {
+            endpoint = 'https://api.github.com/gists/' + d.source.id + '/forks';
         } else {
             endpoint = 'https://api.github.com/gists';
         }
+
+        files[d.name] = {
+            content: JSON.stringify(d.map)
+        };
 
         context.user.signXHR(d3.json(endpoint))
             .on('load', function(data) {
@@ -54,11 +60,7 @@ function save(context, callback) {
             .send(method, JSON.stringify({
                 description: 'via:geojson.io',
                 public: false,
-                files: {
-                    'map.geojson': {
-                        content: JSON.stringify(d.map)
-                    }
-                }
+                files: files
             }));
     }
 }
