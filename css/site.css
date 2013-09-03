@@ -94,6 +94,11 @@ body.fullscreen .right {
     overflow-y: hidden;
 }
 
+body.fullscreen .right .top .buttons,
+body.fullscreen .file-bar .fr {
+    display:none;
+}
+
 p.intro {
     margin:10px;
     padding:0;
