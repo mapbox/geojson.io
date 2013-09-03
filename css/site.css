@@ -419,6 +419,14 @@ textarea.full-width {
     border-bottom:1px solid #ccc;
 }
 
+.message.error {
+    background:#FFE3E3;
+}
+
+.message.success {
+    background:#E3FFE9;
+}
+
 .pre-icon {
     margin-right:5px;
 }

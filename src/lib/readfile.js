@@ -24,17 +24,22 @@ function readFile(f, callback) {
         var fileType = detectType(f);
 
         if (!fileType) {
-            return callback('Could not detect file type');
+            return callback({
+                message: 'Could not detect file type'
+            });
         } else if (fileType === 'kml') {
             var kmldom = toDom(e.target.result);
             if (!kmldom) {
                 return alert('Invalid KML file: not valid XML');
             }
+            var warning;
             if (kmldom.getElementsByTagName('NetworkLink').length) {
-                alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                      'Please export and upload KML without NetworkLinks for optimal performance');
+                warning = {
+                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                      'Please export and upload KML without NetworkLinks for optimal performance'
+                };
             }
-            callback(null, toGeoJSON.kml(kmldom));
+            callback(null, toGeoJSON.kml(kmldom), warning);
         } else if (fileType === 'gpx') {
             callback(null, toGeoJSON.gpx(toDom(e.target.result)));
         } else if (fileType === 'geojson') {
@@ -56,7 +61,11 @@ function readFile(f, callback) {
                 delimiter: 'auto'
             }, function(err, result) {
                 if (err) {
-                    return handleGeocode(container.append('div'), e.target.result, updates);
+                    return callback({
+                        type: 'geocode',
+                        result: result,
+                        raw: e.target.result
+                    });
                 } else {
                     return callback(null, result);
                 }
