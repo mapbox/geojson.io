@@ -40,13 +40,20 @@ module.exports = function(context) {
                 .style('position', 'absolute')
                 .style('height', '0')
                 .on('change', function() {
-                    if (this.files && this.files[0]) readFile(this.files[0], 'click');
+                    if (this.files && this.files[0]) readFile.readFile(this.files[0], onImport);
                 });
         } else {
             wrap.append('p')
                 .attr('class', 'blank-banner')
                 .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
                       'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
+        }
+
+        function onImport(err, gj) {
+            if (err) return;
+            if (gj && gj.features) {
+                context.data.mergeFeatures(gj.features);
+            }
         }
 
         wrap.append('p')

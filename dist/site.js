@@ -6528,7 +6528,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":20,"./lib/topojson/clockwise":22,"./lib/topojson/filter":26,"./lib/topojson/prune":29,"./lib/topojson/simplify":30,"./lib/topojson/topology":33,"fs":1}],20:[function(require,module,exports){
+},{"./lib/topojson/bind":20,"./lib/topojson/clockwise":22,"./lib/topojson/filter":26,"./lib/topojson/prune":30,"./lib/topojson/simplify":31,"./lib/topojson/topology":34,"fs":1}],20:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6558,7 +6558,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":34}],21:[function(require,module,exports){
+},{"../../":"g070js","./type":35}],21:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6665,23 +6665,102 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":23,"./type":34}],23:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":23,"./type":35}],23:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":21,"./spherical":31}],24:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
-  };
-};
+},{"./cartesian":21,"./spherical":32}],24:[function(require,module,exports){
+var topojson = require('topojson'),
+    toGeoJSON = require('togeojson');
 
-},{}],"topojson":[function(require,module,exports){
+module.exports.readDrop = readDrop;
+module.exports.readFile = readFile;
+
+function readDrop(callback) {
+    return function() {
+        if (d3.event.dataTransfer) {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+            var f = d3.event.dataTransfer.files[0];
+            readFile(f, callback);
+        }
+    };
+}
+
+function readFile(f, callback) {
+
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        var fileType = detectType(f);
+
+        if (!fileType) {
+            return callback('Could not detect file type');
+        } else if (fileType === 'kml') {
+            var kmldom = toDom(e.target.result);
+            if (!kmldom) {
+                return alert('Invalid KML file: not valid XML');
+            }
+            if (kmldom.getElementsByTagName('NetworkLink').length) {
+                alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                      'Please export and upload KML without NetworkLinks for optimal performance');
+            }
+            callback(null, toGeoJSON.kml(kmldom));
+        } else if (fileType === 'gpx') {
+            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
+        } else if (fileType === 'geojson') {
+            try {
+                gj = JSON.parse(e.target.result);
+                if (gj && gj.type === 'Topology' && gj.objects) {
+                    var collection = { type: 'FeatureCollection', features: [] };
+                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
+                    callback(null, collection);
+                } else {
+                    callback(null, gj);
+                }
+            } catch(err) {
+                alert('Invalid JSON file: ' + err);
+                return;
+            }
+        } else if (fileType === 'dsv') {
+            csv2geojson.csv2geojson(e.target.result, {
+                delimiter: 'auto'
+            }, function(err, result) {
+                if (err) {
+                    return handleGeocode(container.append('div'), e.target.result, updates);
+                } else {
+                    return callback(null, result);
+                }
+            });
+        }
+    };
+
+    reader.readAsText(f);
+
+    function toDom(x) {
+        return (new DOMParser()).parseFromString(x, 'text/xml');
+    }
+
+    function detectType(f) {
+        var filename = f.name ? f.name.toLowerCase() : '';
+        function ext(_) {
+            return filename.indexOf(_) !== -1;
+        }
+        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
+            return 'kml';
+        }
+        if (ext('.gpx')) return 'gpx';
+        if (ext('.geojson') || ext('.json')) return 'geojson';
+        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
+            return 'dsv';
+        }
+    }
+}
+
+},{"togeojson":18,"topojson":"g070js"}],"topojson":[function(require,module,exports){
 module.exports=require('g070js');
 },{}],26:[function(require,module,exports){
 var type = require("./type"),
@@ -6753,7 +6832,17 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":22,"./coordinate-systems":23,"./prune":29,"./type":34}],27:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":22,"./coordinate-systems":23,"./prune":30,"./type":35}],27:[function(require,module,exports){
+// Note: requires that size is a power of two!
+module.exports = function(size) {
+  var mask = size - 1;
+  return function(point) {
+    var key = (point[0] + 31 * point[1]) | 0;
+    return (key < 0 ? ~key : key) & mask;
+  };
+};
+
+},{}],28:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -6808,7 +6897,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":24}],28:[function(require,module,exports){
+},{"./hash":27}],29:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -6874,7 +6963,7 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6933,7 +7022,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":34}],30:[function(require,module,exports){
+},{"../../":"g070js","./type":35}],31:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -7065,7 +7154,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":23,"./min-heap":28}],31:[function(require,module,exports){
+},{"./coordinate-systems":23,"./min-heap":29}],32:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -7147,7 +7236,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -7197,7 +7286,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":34}],33:[function(require,module,exports){
+},{"./type":35}],34:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -7539,7 +7628,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":23,"./hashtable":27,"./stitch-poles":32,"./type":34}],34:[function(require,module,exports){
+},{"./coordinate-systems":23,"./hashtable":28,"./stitch-poles":33,"./type":35}],35:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -7633,7 +7722,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -7642,7 +7731,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -7669,11 +7758,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":35,"object-keys":37}],37:[function(require,module,exports){
+},{"./has-keys":36,"object-keys":38}],38:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":40}],38:[function(require,module,exports){
+},{"./shim":41}],39:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -7697,7 +7786,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 
 /**!
  * is
@@ -8401,7 +8490,7 @@ is.string = function (value) {
 };
 
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 (function () {
 	"use strict";
 
@@ -8447,7 +8536,7 @@ is.string = function (value) {
 }());
 
 
-},{"foreach":38,"is":39}],41:[function(require,module,exports){
+},{"foreach":39,"is":40}],42:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -8461,7 +8550,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 var clone = require('clone');
 var save = {
   gist: require('../source/gist').save,
@@ -8605,7 +8694,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":56,"../source/github":57,"clone":5}],43:[function(require,module,exports){
+},{"../source/gist":56,"../source/github":57,"clone":5}],44:[function(require,module,exports){
 var gist = require('../source/gist.js'),
     github = require('../source/github.js'),
     xtend = require('xtend');
@@ -8682,7 +8771,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../source/gist.js":56,"../source/github.js":57,"spinner-browserify":14,"xtend":36}],44:[function(require,module,exports){
+},{"../source/gist.js":56,"../source/github.js":57,"spinner-browserify":14,"xtend":37}],45:[function(require,module,exports){
 module.exports = function(context) {
     d3.select(window).on('unload', function() {
         if (context.data.get('type') === 'local' && context.data.hasFeatures()) {
@@ -8700,7 +8789,7 @@ module.exports = function(context) {
     }
 };
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -8772,7 +8861,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":50,"xtend":36}],46:[function(require,module,exports){
+},{"../lib/querystring":51,"xtend":37}],47:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -8855,7 +8944,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":41}],47:[function(require,module,exports){
+},{"../config.js":42}],48:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -8886,7 +8975,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":42,"./core/loader":43,"./core/recovery":44,"./core/router":45,"./core/user":46,"./ui":58,"./ui/map":63,"store":17}],48:[function(require,module,exports){
+},{"./core/data":43,"./core/loader":44,"./core/recovery":45,"./core/router":46,"./core/user":47,"./ui":58,"./ui/map":63,"store":17}],49:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -8925,7 +9014,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":50,"leaflet-hash":13}],49:[function(require,module,exports){
+},{"../lib/querystring":51,"leaflet-hash":13}],50:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -8966,7 +9055,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 module.exports.stringQs = function(str) {
     return str.split('&').reduce(function(obj, pair){
         var parts = pair.split('=');
@@ -8986,95 +9075,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],51:[function(require,module,exports){
-var topojson = require('topojson'),
-    toGeoJSON = require('togeojson');
-
-module.exports.readDrop = readDrop;
-
-function readDrop(context, callback) {
-    return function() {
-        if (d3.event.dataTransfer) {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
-            var f = d3.event.dataTransfer.files[0];
-            readFile(f, context, callback);
-        }
-    };
-}
-
-function readFile(f, context, callback) {
-
-    var reader = new FileReader();
-
-    reader.onload = function(e) {
-
-        var fileType = detectType(f);
-
-        if (!fileType) {
-            return callback('Could not detect file type');
-        } else if (fileType === 'kml') {
-            var kmldom = toDom(e.target.result);
-            if (!kmldom) {
-                return alert('Invalid KML file: not valid XML');
-            }
-            if (kmldom.getElementsByTagName('NetworkLink').length) {
-                alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                      'Please export and upload KML without NetworkLinks for optimal performance');
-            }
-            callback(null, toGeoJSON.kml(kmldom));
-        } else if (fileType === 'gpx') {
-            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
-        } else if (fileType === 'geojson') {
-            try {
-                gj = JSON.parse(e.target.result);
-                if (gj && gj.type === 'Topology' && gj.objects) {
-                    var collection = { type: 'FeatureCollection', features: [] };
-                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                    callback(null, collection);
-                } else {
-                    callback(null, gj);
-                }
-            } catch(err) {
-                alert('Invalid JSON file: ' + err);
-                return;
-            }
-        } else if (fileType === 'dsv') {
-            csv2geojson.csv2geojson(e.target.result, {
-                delimiter: 'auto'
-            }, function(err, result) {
-                if (err) {
-                    return handleGeocode(container.append('div'), e.target.result, updates);
-                } else {
-                    return callback(null, result);
-                }
-            });
-        }
-    };
-
-    reader.readAsText(f);
-
-    function toDom(x) {
-        return (new DOMParser()).parseFromString(x, 'text/xml');
-    }
-
-    function detectType(f) {
-        var filename = f.name ? f.name.toLowerCase() : '';
-        function ext(_) {
-            return filename.indexOf(_) !== -1;
-        }
-        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-            return 'kml';
-        }
-        if (ext('.gpx')) return 'gpx';
-        if (ext('.geojson') || ext('.json')) return 'geojson';
-        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
-            return 'dsv';
-        }
-    }
-}
-
-},{"togeojson":18,"topojson":"g070js"}],52:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -9504,7 +9505,7 @@ var readDrop = require('../lib/readfile.js').readDrop;
 module.exports = function(context) {
     d3.select('body')
         .attr('dropzone', 'copy')
-        .on('drop.import', readDrop(context, function(err, gj) {
+        .on('drop.import', readDrop(function(err, gj) {
             if (err) return;
             if (gj && gj.features) {
                 context.data.mergeFeatures(gj.features);
@@ -9530,7 +9531,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":51}],60:[function(require,module,exports){
+},{"../lib/readfile.js":24}],60:[function(require,module,exports){
 var share = require('./share'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
@@ -9689,13 +9690,20 @@ module.exports = function(context) {
                 .style('position', 'absolute')
                 .style('height', '0')
                 .on('change', function() {
-                    if (this.files && this.files[0]) readFile(this.files[0], 'click');
+                    if (this.files && this.files[0]) readFile.readFile(this.files[0], onImport);
                 });
         } else {
             wrap.append('p')
                 .attr('class', 'blank-banner')
                 .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
                       'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
+        }
+
+        function onImport(err, gj) {
+            if (err) return;
+            if (gj && gj.features) {
+                context.data.mergeFeatures(gj.features);
+            }
         }
 
         wrap.append('p')
@@ -9707,7 +9715,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":51}],62:[function(require,module,exports){
+},{"../lib/readfile.js":24}],62:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -9850,7 +9858,7 @@ function bindPopup(l) {
         '</div></div>'));
 }
 
-},{"../lib/custom_hash.js":48,"../lib/popup":49,"../lib/querystring.js":50}],64:[function(require,module,exports){
+},{"../lib/custom_hash.js":49,"../lib/popup":50,"../lib/querystring.js":51}],64:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json');
 
@@ -10150,5 +10158,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[56,47])
+},{}]},{},[56,48])
 ;
