@@ -246,6 +246,22 @@ body.dragover .modal-message {
     text-align:center;
 }
 
+.right table {
+    margin:10px;
+}
+
+th button {
+    font-size:12px;
+    background:#fff;
+    float:right;
+    padding:4px;
+    color:#999;
+}
+
+th button:hover {
+    color:#222;
+}
+
 /*
  * layer_switch ---------------------------------------------------------------
  */
