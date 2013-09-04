@@ -52,28 +52,10 @@ module.exports = function(context) {
 
     function reverseRoute() {
         var query = getQuery();
-        var data = context.data.all();
 
-        if (data.type === 'gist') {
-            return xtend(query, {
-                id: 'gist:' + [
-                    data.meta.login,
-                    data.source.id
-                ].join('/')
-            });
-        } else if (data.type === 'github') {
-            var id = 'github:' + [
-              data.meta.login,
-              data.meta.repo,
-              'blob',
-              data.meta.branch,
-              data.source.path
-            ].join('/');
-
-            return xtend(query, {
-                id: id
-            });
-        }
+        return xtend(query, {
+            id: context.data.get('route')
+        });
 
         return false;
     }

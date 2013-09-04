@@ -8347,6 +8347,7 @@ module.exports = function(context) {
         var login,
             repo,
             branch,
+            path,
             chunked,
             file;
 
@@ -8357,6 +8358,7 @@ module.exports = function(context) {
                 login = browser.path[1].login;
                 repo = browser.path[2].name;
                 branch = browser.path[3].name;
+                path = [browser.path[4].path, d.path].join('/');
 
                 data.set({
                     type: 'github',
@@ -8364,49 +8366,70 @@ module.exports = function(context) {
                     meta: {
                         login: login,
                         repo: repo,
-                        branch: branch
+                        branch: branch,
+                        name: d.path
                     },
                     map: d.content,
-                    path: d.path,
+                    path: path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        path
+                    ].join('/'),
                     url: [
                         'https://github.com',
                         login,
                         repo,
                         'blob',
                         branch,
-                        d.path
+                        [path, d.path].join('/')
                     ].join('/')
                 });
                 break;
             case 'file':
                 chunked = d.html_url.split('/');
+                login = chunked[3];
+                repo = chunked[4];
+                branch = chunked[6];
 
                 data.set({
                     type: 'github',
                     source: d,
                     meta: {
-                        login: chunked[3],
-                        repo: chunked[4],
-                        branch: chunked[6],
+                        login: login,
+                        repo: repo,
+                        branch: branch,
                         name: d.name
                     },
                     map: d.content,
                     path: d.path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        d.path
+                    ].join('/'),
                     url: d.html_url
                 });
                 break;
             case 'gist':
+                login = (d.user && d.user.login) || 'anonymous';
+                path = [login, d.id].join('/');
                 file = mapFile(d);
 
                 data.set({
                     type: 'gist',
                     source: d,
                     meta: {
-                        login: (d.user && d.user.login) || 'anonymous',
+                        login: login,
                         name: file && file.name
                     },
                     map: file && file.content,
-                    path: [(d.user && d.user.login) || 'anonymous', d.id].join('/'),
+                    path: path,
+                    route: 'gist:' + path,
                     url: d.html_url
                 });
                 break;
@@ -8423,6 +8446,8 @@ module.exports = function(context) {
 };
 
 },{"../source/gist":53,"../source/github":54,"clone":5,"xtend":32}],39:[function(require,module,exports){
+var qs = require('../lib/querystring');
+
 module.exports = function(context) {
 
     function success(err, d) {
@@ -8437,28 +8462,20 @@ module.exports = function(context) {
         if (bounds.isValid()) context.map.fitBounds(bounds);
     }
 
-    function dataId(d) {
-        if (d.type === 'gist') return 'gist:' + d.source.id;
-        if (d.type === 'github') {
-            return 'github:' + [
-                d.meta.login,
-                d.meta.repo,
-                d.meta.branch,
-                d.source.path
-            ].join('/');
-        }
-    }
-
     return function(query) {
         if (!query.id) return;
-        if (query.id !== dataId(context.data.all())) {
+
+        var oldRoute = d3.event ? qs.stringQs(d3.event.oldURL.split('#')[1]).id :
+            context.data.get('route');
+
+        if (query.id !== oldRoute) {
             context.container.select('.map').classed('loading', true);
             context.data.fetch(query, success);
         }
     };
 };
 
-},{}],40:[function(require,module,exports){
+},{"../lib/querystring":47}],40:[function(require,module,exports){
 module.exports = function(context) {
 
     d3.select(window).on('unload', onunload);
@@ -8543,28 +8560,10 @@ module.exports = function(context) {
 
     function reverseRoute() {
         var query = getQuery();
-        var data = context.data.all();
 
-        if (data.type === 'gist') {
-            return xtend(query, {
-                id: 'gist:' + [
-                    data.meta.login,
-                    data.source.id
-                ].join('/')
-            });
-        } else if (data.type === 'github') {
-            var id = 'github:' + [
-              data.meta.login,
-              data.meta.repo,
-              'blob',
-              data.meta.branch,
-              data.source.path
-            ].join('/');
-
-            return xtend(query, {
-                id: id
-            });
-        }
+        return xtend(query, {
+            id: context.data.get('route')
+        });
 
         return false;
     }
@@ -8688,7 +8687,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":38,"./core/loader":39,"./core/recovery":40,"./core/router":41,"./core/user":42,"./ui":55,"./ui/map":64,"store":14}],44:[function(require,module,exports){
+},{"./core/data":38,"./core/loader":39,"./core/recovery":40,"./core/router":41,"./core/user":42,"./ui":55,"./ui/map":63,"store":14}],44:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -9036,7 +9035,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":50,"../ui/saver.js":67}],52:[function(require,module,exports){
+},{"../lib/validate":50,"../ui/saver.js":66}],52:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -9342,7 +9341,7 @@ function ui(context) {
     return render;
 }
 
-},{"./ui/dnd":57,"./ui/file_bar":58,"./ui/layer_switch":62,"./ui/mode_buttons":66,"./ui/user":70}],56:[function(require,module,exports){
+},{"./ui/dnd":57,"./ui/file_bar":58,"./ui/layer_switch":62,"./ui/mode_buttons":65,"./ui/user":69}],56:[function(require,module,exports){
 var github = require('../source/github');
 
 module.exports = commit;
@@ -9542,7 +9541,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":67,"./share":68,"./source.js":69}],59:[function(require,module,exports){
+},{"../ui/saver.js":66,"./share":67,"./source.js":68}],59:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -9564,7 +9563,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":65}],60:[function(require,module,exports){
+},{"./message":64}],60:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart');
 
 module.exports = function(context) {
@@ -9836,9 +9835,7 @@ module.exports = function(context) {
 };
 
 
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],64:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -9931,7 +9928,7 @@ function bindPopup(l) {
         '</div></div>'));
 }
 
-},{"../lib/custom_hash.js":44,"../lib/popup":45,"../lib/querystring.js":47}],65:[function(require,module,exports){
+},{"../lib/custom_hash.js":44,"../lib/popup":45,"../lib/querystring.js":47}],64:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -9972,7 +9969,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],66:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json');
 
@@ -10016,7 +10013,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":51,"../panel/table":52}],67:[function(require,module,exports){
+},{"../panel/json":51,"../panel/table":52}],66:[function(require,module,exports){
 var commit = require('./commit');
 var flash = require('./flash');
 
@@ -10077,7 +10074,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":56,"./flash":59}],68:[function(require,module,exports){
+},{"./commit":56,"./flash":59}],67:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -10154,7 +10151,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":53}],69:[function(require,module,exports){
+},{"../source/gist":53}],68:[function(require,module,exports){
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
@@ -10270,7 +10267,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":61,"detect-json-indent":7,"github-file-browser":10}],70:[function(require,module,exports){
+},{"./import":61,"detect-json-indent":7,"github-file-browser":10}],69:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
@@ -10318,5 +10315,7 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[53,43])
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}]},{},[43,53])
 ;

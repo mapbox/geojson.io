@@ -109,6 +109,7 @@ module.exports = function(context) {
         var login,
             repo,
             branch,
+            path,
             chunked,
             file;
 
@@ -119,6 +120,7 @@ module.exports = function(context) {
                 login = browser.path[1].login;
                 repo = browser.path[2].name;
                 branch = browser.path[3].name;
+                path = [browser.path[4].path, d.path].join('/');
 
                 data.set({
                     type: 'github',
@@ -126,49 +128,70 @@ module.exports = function(context) {
                     meta: {
                         login: login,
                         repo: repo,
-                        branch: branch
+                        branch: branch,
+                        name: d.path
                     },
                     map: d.content,
-                    path: d.path,
+                    path: path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        path
+                    ].join('/'),
                     url: [
                         'https://github.com',
                         login,
                         repo,
                         'blob',
                         branch,
-                        d.path
+                        [path, d.path].join('/')
                     ].join('/')
                 });
                 break;
             case 'file':
                 chunked = d.html_url.split('/');
+                login = chunked[3];
+                repo = chunked[4];
+                branch = chunked[6];
 
                 data.set({
                     type: 'github',
                     source: d,
                     meta: {
-                        login: chunked[3],
-                        repo: chunked[4],
-                        branch: chunked[6],
+                        login: login,
+                        repo: repo,
+                        branch: branch,
                         name: d.name
                     },
                     map: d.content,
                     path: d.path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        d.path
+                    ].join('/'),
                     url: d.html_url
                 });
                 break;
             case 'gist':
+                login = (d.user && d.user.login) || 'anonymous';
+                path = [login, d.id].join('/');
                 file = mapFile(d);
 
                 data.set({
                     type: 'gist',
                     source: d,
                     meta: {
-                        login: (d.user && d.user.login) || 'anonymous',
+                        login: login,
                         name: file && file.name
                     },
                     map: file && file.content,
-                    path: [(d.user && d.user.login) || 'anonymous', d.id].join('/'),
+                    path: path,
+                    route: 'gist:' + path,
                     url: d.html_url
                 });
                 break;
