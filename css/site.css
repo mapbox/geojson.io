@@ -1,79 +1,10 @@
-/* Elements */
-table tr td input,
-table tr th input {
-    border:none;
-}
-
-table thead {
-    background:#f7f7f7;
-    border:1px solid #ccc;
-}
-
-table td {
-    border:1px solid #ccc;
-}
-
-table thead tr th {
-    font-weight:bold;
-}
-
-table thead tr th,
-table tr th input,
-table tbody tr td input {
-    text-align:left;
-    font:inherit;
-    padding:5px;
-    width:150px;
-    box-sizing:border-box;
-    margin:0;
-}
-
-input[type=text] {
-    font:inherit;
-}
-
 /* Utility classes */
-
-.pad1 {
-    padding:10px;
-}
-
-.pad {
-    padding:20px;
-}
-
-.center {
-    text-align:center;
-}
-
-.fr {
-    float:right;
-}
-
-.drop {
-    margin-top:10px;
-}
-
-.fl {
-    float:left;
-}
-
-#map {
+.map {
     position:absolute;
     top:40px;
     bottom:0;
     left:0;
     right:40%;
-}
-
-.left-panel {
-    background:#fff;
-    position:absolute;
-    top:40px;
-    bottom:0;
-    left:0;
-    right:40%;
-    z-index:9999;
 }
 
 .right {
@@ -93,15 +24,20 @@ input[type=text] {
     border-color: rgba(102,102,102,0.25);
 }
 
-#map.fullsize {
+body.fullscreen .map {
     right:0;
 }
 
-.right.hidden {
+body.fullscreen .right {
     height:40px;
     bottom:auto;
     border-bottom: 1px solid #d9d9d9;
     overflow-y: hidden;
+}
+
+body.fullscreen .right .top .buttons,
+body.fullscreen .file-bar .fr {
+    display:none;
 }
 
 p.intro {
@@ -125,24 +61,17 @@ p.intro-hint:hover {
     opacity:1;
 }
 
-.right .CodeMirror {
-    position:absolute;
-    bottom:0;
-    right:0;
-    left:0;
-    top:0;
-    height:auto !important;
-    background:#f1f1f1;
-    font-family: 'Droid Sans Mono', sans-serif;
-    line-height:1.5em;
-}
-
 .right .pane {
     position:absolute;
     top:40px;
     bottom:0;
     width:100%;
+    overflow:auto;
 }
+
+/*
+ * .right ---------------------------------------------------------------------
+ */
 
 .top {
     background:#f7f7f7;
@@ -162,94 +91,31 @@ p.intro-hint:hover {
 .top .buttons {
     margin-left:28px;
     height:40px;
-    border-left:1px solid #ddd;
 }
 
-.top button.icon-github:after {
-    font-size:11px;
-    margin-left:5px;
-    content:attr(title);
-    font-family: 'Open Sans', sans-serif;
-}
-
-.buttons-joined button {
-    border-right:0;
-}
-
-.buttons-joined button:first-child {
-    border-radius:3px 0 0 3px;
-}
-
-.buttons-joined button:last-child {
-    border-radius:0 3px 3px 0;
-    border-right:1px solid #f0f0f0;
-}
+/*
+ * buttons --------------------------------------------------------------------
+ */
 
 button.delete-invert {
     color:#882255;
 }
 
-.clear-buttons button {
-    background:transparent;
-    padding:0;
-    margin:0;
-    border:0;
-    opacity:0.6;
-}
-
-.clear-buttons button:hover {
-    opacity:1;
-    border:0;
-}
-
 button {
-    font-family: 'Open Sans', sans-serif;
+    font: inherit;
     cursor:pointer;
-    background:#fff;
-    font:inherit;
+    background:transparent;
     margin:0;
-    border:0;
-    padding:5px 10px;
+    padding:0;
+    border:none;
     box-sizing:border-box;
-    border:1px solid #ccc;
     transition:all 100ms ease-in-out;
     -webkit-transition:all 100ms ease-in-out;
-    border-bottom:1px solid #ccc;
-}
-
-button span {
-    font-family: 'Open Sans', sans-serif;
-}
-
-button:hover {
-    border:1px solid red;
 }
 
 button.major {
-    font-size: large;
-    border: 1px solid #aaa;
-    border-bottom: 2px solid #aaa;
-    padding: 10px;
-}
-
-button.major:hover {
-    border-bottom:2px solid red;
-}
-
-button.semimajor {
-    font-size: 15px;
-    border: 1px solid #aaa;
-    border-bottom: 2px solid #aaa;
-    padding: 10px;
-}
-
-button.semimajor:hover {
-    border-bottom:2px solid red;
-}
-
-/* http://www.mollietaylor.com/2012/10/color-blindness-and-palette-choice.html */
-button.positive {
-    background:#a6d854;
+    border:1px solid #aaa;
+    padding:5px;
 }
 
 .top .collapse-button {
@@ -292,6 +158,22 @@ button.positive {
     background:#f1f1f1;
     color:#000;
     border-bottom:2px solid red;
+}
+
+/*
+ * CodeMirror & Markers -------------------------------------------------------
+ */
+
+.right .CodeMirror {
+    position:absolute;
+    bottom:0;
+    right:0;
+    left:0;
+    top:0;
+    height:auto !important;
+    background:#f1f1f1;
+    font-family: 'm_1regular', monospace;
+    line-height:1.5em;
 }
 
 .error-marker {
@@ -342,26 +224,12 @@ button.positive {
     background:transparent;
 }
 
-.scrollable {
-    overflow:auto;
-}
+/*
+ * table ----------------------------------------------------------------------
+ */
 
 .controls {
-    padding-bottom:20px;
-}
-
-.controls button {
-    border:1px solid #ccc;
-}
-
-.controls button:hover {
-    background:#fff;
-}
-
-.fillL {
-    background:#fff;
-    margin:10px;
-    border-radius:3px;
+    padding:10px;
 }
 
 body.dragover {
@@ -379,29 +247,43 @@ body.dragover .modal-message {
     text-align:center;
 }
 
-#layer-switch {
+.right table {
+    margin:10px;
+}
+
+th button {
+    font-size:12px;
+    background:#fff;
+    float:right;
+    padding:4px;
+    color:#999;
+}
+
+th button:hover {
+    color:#222;
+}
+
+/*
+ * layer_switch ---------------------------------------------------------------
+ */
+
+.layer-switch {
     position:absolute;
     bottom:10px;
-    font-size:small;
     left:10px;
 }
 
-#layer-switch button {
+.layer-switch button {
     opacity:0.5;
+    background:#fff;
 }
 
-#layer-switch button.active {
+.layer-switch button.active {
     opacity:1;
     background:#f7f7f7;
 }
 
-.fail {
-    font-size:11px;
-    padding:5px;
-}
-
 .blank-banner {
-    text-align:center;
     font-size:20px;
     padding:80px 20px;
     color:#888;
@@ -440,45 +322,6 @@ textarea.full-width {
     margin-left:10px;
 }
 
-.file-bar .icon-external-link {
-    margin-left:10px;
-    font-size:15px;
-    color:#444;
-    transition:all 100ms ease-in;
-}
-
-.file-bar .icon-external-link:hover {
-    color:red;
-}
-
-.button-wrap {
-    padding:5px 0;
-    display:inline-block;
-    vertical-align:top;
-    margin-right:10px;
-}
-
-.button-wrap button {
-    vertical-align:top;
-    line-height:28px;
-    font-size:12px;
-    padding:0px 10px;
-    border-right:none;
-}
-
-.button-wrap button .icon {
-    margin-right:5px;
-}
-
-.button-wrap button:last-child {
-    border-right:1px solid #ccc;
-    border-radius:0 5px 5px 0;
-}
-
-.button-wrap button:first-child {
-    border-radius:5px 0 0 5px;
-}
-
 .import-sources {
     border-bottom:1px solid #ccc;
 }
@@ -490,10 +333,6 @@ textarea.full-width {
 
 .icon-spaced {
     margin-right:5px;
-}
-
-.clickable {
-    cursor:pointer;
 }
 
 .subpane {
@@ -516,6 +355,14 @@ textarea.full-width {
     border-bottom:1px solid #ccc;
 }
 
+.message.error {
+    background:#FFE3E3;
+}
+
+.message.success {
+    background:#E3FFE9;
+}
+
 .pre-icon {
     margin-right:5px;
 }
@@ -536,15 +383,11 @@ textarea.full-width {
     margin-left:10px;
 }
 
-.logged-in {
-    width:40px;
-}
-
 @media screen and (max-width:1100px) {
     .file-bar .button-wrap button span.title {
         display:none;
     }
-    .left-panel, #map {
+    .map {
         right:50%;
     }
     .right {
@@ -553,4 +396,39 @@ textarea.full-width {
     .file-bar {
         right:50%;
     }
+}
+
+body.dragover:after {
+    content: 'drop files to import';
+}
+
+.bottom-right {
+    position:absolute;
+    bottom:0;
+    right:0;
+    width:20px;
+    height:20px;
+    display:block;
+}
+
+.pad0 {
+    padding:5px;
+}
+
+.sq40 {
+    height:40px;
+    width:40px;
+    text-align:center;
+}
+
+/*
+ * GitHub Browser -------------------------------------------------------------
+ */
+.repos a {
+    color:#222;
+}
+
+.repos .item button {
+    font-weight: bold;
+    margin-left: 10px;
 }

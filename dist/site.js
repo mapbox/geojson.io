@@ -180,7 +180,763 @@ exports.relative = function(from, to) {
 
 exports.sep = '/';
 
-},{"__browserify_process":3}],3:[function(require,module,exports){
+},{"__browserify_process":4}],3:[function(require,module,exports){
+require=(function(e,t,n,r){function i(r){if(!n[r]){if(!t[r]){if(e)return e(r);throw new Error("Cannot find module '"+r+"'")}var s=n[r]={exports:{}};t[r][0](function(e){var n=t[r][1][e];return i(n?n:e)},s,s.exports)}return n[r].exports}for(var s=0;s<r.length;s++)i(r[s]);return i})(typeof require!=="undefined"&&require,{1:[function(require,module,exports){
+// UTILITY
+var util = require('util');
+var Buffer = require("buffer").Buffer;
+var pSlice = Array.prototype.slice;
+
+function objectKeys(object) {
+  if (Object.keys) return Object.keys(object);
+  var result = [];
+  for (var name in object) {
+    if (Object.prototype.hasOwnProperty.call(object, name)) {
+      result.push(name);
+    }
+  }
+  return result;
+}
+
+// 1. The assert module provides functions that throw
+// AssertionError's when particular conditions are not met. The
+// assert module must conform to the following interface.
+
+var assert = module.exports = ok;
+
+// 2. The AssertionError is defined in assert.
+// new assert.AssertionError({ message: message,
+//                             actual: actual,
+//                             expected: expected })
+
+assert.AssertionError = function AssertionError(options) {
+  this.name = 'AssertionError';
+  this.message = options.message;
+  this.actual = options.actual;
+  this.expected = options.expected;
+  this.operator = options.operator;
+  var stackStartFunction = options.stackStartFunction || fail;
+
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, stackStartFunction);
+  }
+};
+util.inherits(assert.AssertionError, Error);
+
+function replacer(key, value) {
+  if (value === undefined) {
+    return '' + value;
+  }
+  if (typeof value === 'number' && (isNaN(value) || !isFinite(value))) {
+    return value.toString();
+  }
+  if (typeof value === 'function' || value instanceof RegExp) {
+    return value.toString();
+  }
+  return value;
+}
+
+function truncate(s, n) {
+  if (typeof s == 'string') {
+    return s.length < n ? s : s.slice(0, n);
+  } else {
+    return s;
+  }
+}
+
+assert.AssertionError.prototype.toString = function() {
+  if (this.message) {
+    return [this.name + ':', this.message].join(' ');
+  } else {
+    return [
+      this.name + ':',
+      truncate(JSON.stringify(this.actual, replacer), 128),
+      this.operator,
+      truncate(JSON.stringify(this.expected, replacer), 128)
+    ].join(' ');
+  }
+};
+
+// assert.AssertionError instanceof Error
+
+assert.AssertionError.__proto__ = Error.prototype;
+
+// At present only the three keys mentioned above are used and
+// understood by the spec. Implementations or sub modules can pass
+// other keys to the AssertionError's constructor - they will be
+// ignored.
+
+// 3. All of the following functions must throw an AssertionError
+// when a corresponding condition is not met, with a message that
+// may be undefined if not provided.  All assertion methods provide
+// both the actual and expected values to the assertion error for
+// display purposes.
+
+function fail(actual, expected, message, operator, stackStartFunction) {
+  throw new assert.AssertionError({
+    message: message,
+    actual: actual,
+    expected: expected,
+    operator: operator,
+    stackStartFunction: stackStartFunction
+  });
+}
+
+// EXTENSION! allows for well behaved errors defined elsewhere.
+assert.fail = fail;
+
+// 4. Pure assertion tests whether a value is truthy, as determined
+// by !!guard.
+// assert.ok(guard, message_opt);
+// This statement is equivalent to assert.equal(true, guard,
+// message_opt);. To test strictly for the value true, use
+// assert.strictEqual(true, guard, message_opt);.
+
+function ok(value, message) {
+  if (!!!value) fail(value, true, message, '==', assert.ok);
+}
+assert.ok = ok;
+
+// 5. The equality assertion tests shallow, coercive equality with
+// ==.
+// assert.equal(actual, expected, message_opt);
+
+assert.equal = function equal(actual, expected, message) {
+  if (actual != expected) fail(actual, expected, message, '==', assert.equal);
+};
+
+// 6. The non-equality assertion tests for whether two objects are not equal
+// with != assert.notEqual(actual, expected, message_opt);
+
+assert.notEqual = function notEqual(actual, expected, message) {
+  if (actual == expected) {
+    fail(actual, expected, message, '!=', assert.notEqual);
+  }
+};
+
+// 7. The equivalence assertion tests a deep equality relation.
+// assert.deepEqual(actual, expected, message_opt);
+
+assert.deepEqual = function deepEqual(actual, expected, message) {
+  if (!_deepEqual(actual, expected)) {
+    fail(actual, expected, message, 'deepEqual', assert.deepEqual);
+  }
+};
+
+function _deepEqual(actual, expected) {
+  // 7.1. All identical values are equivalent, as determined by ===.
+  if (actual === expected) {
+    return true;
+
+  } else if (Buffer.isBuffer(actual) && Buffer.isBuffer(expected)) {
+    if (actual.length != expected.length) return false;
+
+    for (var i = 0; i < actual.length; i++) {
+      if (actual[i] !== expected[i]) return false;
+    }
+
+    return true;
+
+  // 7.2. If the expected value is a Date object, the actual value is
+  // equivalent if it is also a Date object that refers to the same time.
+  } else if (actual instanceof Date && expected instanceof Date) {
+    return actual.getTime() === expected.getTime();
+
+  // 7.3. Other pairs that do not both pass typeof value == 'object',
+  // equivalence is determined by ==.
+  } else if (typeof actual != 'object' && typeof expected != 'object') {
+    return actual == expected;
+
+  // 7.4. For all other Object pairs, including Array objects, equivalence is
+  // determined by having the same number of owned properties (as verified
+  // with Object.prototype.hasOwnProperty.call), the same set of keys
+  // (although not necessarily the same order), equivalent values for every
+  // corresponding key, and an identical 'prototype' property. Note: this
+  // accounts for both named and indexed properties on Arrays.
+  } else {
+    return objEquiv(actual, expected);
+  }
+}
+
+function isUndefinedOrNull(value) {
+  return value === null || value === undefined;
+}
+
+function isArguments(object) {
+  return Object.prototype.toString.call(object) == '[object Arguments]';
+}
+
+function objEquiv(a, b) {
+  if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
+    return false;
+  // an identical 'prototype' property.
+  if (a.prototype !== b.prototype) return false;
+  //~~~I've managed to break Object.keys through screwy arguments passing.
+  //   Converting to array solves the problem.
+  if (isArguments(a)) {
+    if (!isArguments(b)) {
+      return false;
+    }
+    a = pSlice.call(a);
+    b = pSlice.call(b);
+    return _deepEqual(a, b);
+  }
+  try {
+    var ka = objectKeys(a),
+        kb = objectKeys(b),
+        key, i;
+  } catch (e) {//happens when one is a string literal and the other isn't
+    return false;
+  }
+  // having the same number of owned properties (keys incorporates
+  // hasOwnProperty)
+  if (ka.length != kb.length)
+    return false;
+  //the same set of keys (although not necessarily the same order),
+  ka.sort();
+  kb.sort();
+  //~~~cheap key test
+  for (i = ka.length - 1; i >= 0; i--) {
+    if (ka[i] != kb[i])
+      return false;
+  }
+  //equivalent values for every corresponding key, and
+  //~~~possibly expensive deep test
+  for (i = ka.length - 1; i >= 0; i--) {
+    key = ka[i];
+    if (!_deepEqual(a[key], b[key])) return false;
+  }
+  return true;
+}
+
+// 8. The non-equivalence assertion tests for any deep inequality.
+// assert.notDeepEqual(actual, expected, message_opt);
+
+assert.notDeepEqual = function notDeepEqual(actual, expected, message) {
+  if (_deepEqual(actual, expected)) {
+    fail(actual, expected, message, 'notDeepEqual', assert.notDeepEqual);
+  }
+};
+
+// 9. The strict equality assertion tests strict equality, as determined by ===.
+// assert.strictEqual(actual, expected, message_opt);
+
+assert.strictEqual = function strictEqual(actual, expected, message) {
+  if (actual !== expected) {
+    fail(actual, expected, message, '===', assert.strictEqual);
+  }
+};
+
+// 10. The strict non-equality assertion tests for strict inequality, as
+// determined by !==.  assert.notStrictEqual(actual, expected, message_opt);
+
+assert.notStrictEqual = function notStrictEqual(actual, expected, message) {
+  if (actual === expected) {
+    fail(actual, expected, message, '!==', assert.notStrictEqual);
+  }
+};
+
+function expectedException(actual, expected) {
+  if (!actual || !expected) {
+    return false;
+  }
+
+  if (expected instanceof RegExp) {
+    return expected.test(actual);
+  } else if (actual instanceof expected) {
+    return true;
+  } else if (expected.call({}, actual) === true) {
+    return true;
+  }
+
+  return false;
+}
+
+function _throws(shouldThrow, block, expected, message) {
+  var actual;
+
+  if (typeof expected === 'string') {
+    message = expected;
+    expected = null;
+  }
+
+  try {
+    block();
+  } catch (e) {
+    actual = e;
+  }
+
+  message = (expected && expected.name ? ' (' + expected.name + ').' : '.') +
+            (message ? ' ' + message : '.');
+
+  if (shouldThrow && !actual) {
+    fail('Missing expected exception' + message);
+  }
+
+  if (!shouldThrow && expectedException(actual, expected)) {
+    fail('Got unwanted exception' + message);
+  }
+
+  if ((shouldThrow && actual && expected &&
+      !expectedException(actual, expected)) || (!shouldThrow && actual)) {
+    throw actual;
+  }
+}
+
+// 11. Expected to throw an error:
+// assert.throws(block, Error_opt, message_opt);
+
+assert.throws = function(block, /*optional*/error, /*optional*/message) {
+  _throws.apply(this, [true].concat(pSlice.call(arguments)));
+};
+
+// EXTENSION! This is annoying to write outside this module.
+assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
+  _throws.apply(this, [false].concat(pSlice.call(arguments)));
+};
+
+assert.ifError = function(err) { if (err) {throw err;}};
+
+},{"util":2,"buffer":3}],2:[function(require,module,exports){
+var events = require('events');
+
+exports.isArray = isArray;
+exports.isDate = function(obj){return Object.prototype.toString.call(obj) === '[object Date]'};
+exports.isRegExp = function(obj){return Object.prototype.toString.call(obj) === '[object RegExp]'};
+
+
+exports.print = function () {};
+exports.puts = function () {};
+exports.debug = function() {};
+
+exports.inspect = function(obj, showHidden, depth, colors) {
+  var seen = [];
+
+  var stylize = function(str, styleType) {
+    // http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+    var styles =
+        { 'bold' : [1, 22],
+          'italic' : [3, 23],
+          'underline' : [4, 24],
+          'inverse' : [7, 27],
+          'white' : [37, 39],
+          'grey' : [90, 39],
+          'black' : [30, 39],
+          'blue' : [34, 39],
+          'cyan' : [36, 39],
+          'green' : [32, 39],
+          'magenta' : [35, 39],
+          'red' : [31, 39],
+          'yellow' : [33, 39] };
+
+    var style =
+        { 'special': 'cyan',
+          'number': 'blue',
+          'boolean': 'yellow',
+          'undefined': 'grey',
+          'null': 'bold',
+          'string': 'green',
+          'date': 'magenta',
+          // "name": intentionally not styling
+          'regexp': 'red' }[styleType];
+
+    if (style) {
+      return '\033[' + styles[style][0] + 'm' + str +
+             '\033[' + styles[style][1] + 'm';
+    } else {
+      return str;
+    }
+  };
+  if (! colors) {
+    stylize = function(str, styleType) { return str; };
+  }
+
+  function format(value, recurseTimes) {
+    // Provide a hook for user-specified inspect functions.
+    // Check that value is an object with an inspect function on it
+    if (value && typeof value.inspect === 'function' &&
+        // Filter out the util module, it's inspect function is special
+        value !== exports &&
+        // Also filter out any prototype objects using the circular check.
+        !(value.constructor && value.constructor.prototype === value)) {
+      return value.inspect(recurseTimes);
+    }
+
+    // Primitive types cannot have properties
+    switch (typeof value) {
+      case 'undefined':
+        return stylize('undefined', 'undefined');
+
+      case 'string':
+        var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+                                                 .replace(/'/g, "\\'")
+                                                 .replace(/\\"/g, '"') + '\'';
+        return stylize(simple, 'string');
+
+      case 'number':
+        return stylize('' + value, 'number');
+
+      case 'boolean':
+        return stylize('' + value, 'boolean');
+    }
+    // For some reason typeof null is "object", so special case here.
+    if (value === null) {
+      return stylize('null', 'null');
+    }
+
+    // Look up the keys of the object.
+    var visible_keys = Object_keys(value);
+    var keys = showHidden ? Object_getOwnPropertyNames(value) : visible_keys;
+
+    // Functions without properties can be shortcutted.
+    if (typeof value === 'function' && keys.length === 0) {
+      if (isRegExp(value)) {
+        return stylize('' + value, 'regexp');
+      } else {
+        var name = value.name ? ': ' + value.name : '';
+        return stylize('[Function' + name + ']', 'special');
+      }
+    }
+
+    // Dates without properties can be shortcutted
+    if (isDate(value) && keys.length === 0) {
+      return stylize(value.toUTCString(), 'date');
+    }
+
+    var base, type, braces;
+    // Determine the object type
+    if (isArray(value)) {
+      type = 'Array';
+      braces = ['[', ']'];
+    } else {
+      type = 'Object';
+      braces = ['{', '}'];
+    }
+
+    // Make functions say that they are functions
+    if (typeof value === 'function') {
+      var n = value.name ? ': ' + value.name : '';
+      base = (isRegExp(value)) ? ' ' + value : ' [Function' + n + ']';
+    } else {
+      base = '';
+    }
+
+    // Make dates with properties first say the date
+    if (isDate(value)) {
+      base = ' ' + value.toUTCString();
+    }
+
+    if (keys.length === 0) {
+      return braces[0] + base + braces[1];
+    }
+
+    if (recurseTimes < 0) {
+      if (isRegExp(value)) {
+        return stylize('' + value, 'regexp');
+      } else {
+        return stylize('[Object]', 'special');
+      }
+    }
+
+    seen.push(value);
+
+    var output = keys.map(function(key) {
+      var name, str;
+      if (value.__lookupGetter__) {
+        if (value.__lookupGetter__(key)) {
+          if (value.__lookupSetter__(key)) {
+            str = stylize('[Getter/Setter]', 'special');
+          } else {
+            str = stylize('[Getter]', 'special');
+          }
+        } else {
+          if (value.__lookupSetter__(key)) {
+            str = stylize('[Setter]', 'special');
+          }
+        }
+      }
+      if (visible_keys.indexOf(key) < 0) {
+        name = '[' + key + ']';
+      }
+      if (!str) {
+        if (seen.indexOf(value[key]) < 0) {
+          if (recurseTimes === null) {
+            str = format(value[key]);
+          } else {
+            str = format(value[key], recurseTimes - 1);
+          }
+          if (str.indexOf('\n') > -1) {
+            if (isArray(value)) {
+              str = str.split('\n').map(function(line) {
+                return '  ' + line;
+              }).join('\n').substr(2);
+            } else {
+              str = '\n' + str.split('\n').map(function(line) {
+                return '   ' + line;
+              }).join('\n');
+            }
+          }
+        } else {
+          str = stylize('[Circular]', 'special');
+        }
+      }
+      if (typeof name === 'undefined') {
+        if (type === 'Array' && key.match(/^\d+$/)) {
+          return str;
+        }
+        name = JSON.stringify('' + key);
+        if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+          name = name.substr(1, name.length - 2);
+          name = stylize(name, 'name');
+        } else {
+          name = name.replace(/'/g, "\\'")
+                     .replace(/\\"/g, '"')
+                     .replace(/(^"|"$)/g, "'");
+          name = stylize(name, 'string');
+        }
+      }
+
+      return name + ': ' + str;
+    });
+
+    seen.pop();
+
+    var numLinesEst = 0;
+    var length = output.reduce(function(prev, cur) {
+      numLinesEst++;
+      if (cur.indexOf('\n') >= 0) numLinesEst++;
+      return prev + cur.length + 1;
+    }, 0);
+
+    if (length > 50) {
+      output = braces[0] +
+               (base === '' ? '' : base + '\n ') +
+               ' ' +
+               output.join(',\n  ') +
+               ' ' +
+               braces[1];
+
+    } else {
+      output = braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+    }
+
+    return output;
+  }
+  return format(obj, (typeof depth === 'undefined' ? 2 : depth));
+};
+
+
+function isArray(ar) {
+  return ar instanceof Array ||
+         Array.isArray(ar) ||
+         (ar && ar !== Object.prototype && isArray(ar.__proto__));
+}
+
+
+function isRegExp(re) {
+  return re instanceof RegExp ||
+    (typeof re === 'object' && Object.prototype.toString.call(re) === '[object RegExp]');
+}
+
+
+function isDate(d) {
+  if (d instanceof Date) return true;
+  if (typeof d !== 'object') return false;
+  var properties = Date.prototype && Object_getOwnPropertyNames(Date.prototype);
+  var proto = d.__proto__ && Object_getOwnPropertyNames(d.__proto__);
+  return JSON.stringify(proto) === JSON.stringify(properties);
+}
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+              'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()),
+              pad(d.getMinutes()),
+              pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
+
+exports.log = function (msg) {};
+
+exports.pump = null;
+
+var Object_keys = Object.keys || function (obj) {
+    var res = [];
+    for (var key in obj) res.push(key);
+    return res;
+};
+
+var Object_getOwnPropertyNames = Object.getOwnPropertyNames || function (obj) {
+    var res = [];
+    for (var key in obj) {
+        if (Object.hasOwnProperty.call(obj, key)) res.push(key);
+    }
+    return res;
+};
+
+var Object_create = Object.create || function (prototype, properties) {
+    // from es5-shim
+    var object;
+    if (prototype === null) {
+        object = { '__proto__' : null };
+    }
+    else {
+        if (typeof prototype !== 'object') {
+            throw new TypeError(
+                'typeof prototype[' + (typeof prototype) + '] != \'object\''
+            );
+        }
+        var Type = function () {};
+        Type.prototype = prototype;
+        object = new Type();
+        object.__proto__ = prototype;
+    }
+    if (typeof properties !== 'undefined' && Object.defineProperties) {
+        Object.defineProperties(object, properties);
+    }
+    return object;
+};
+
+exports.inherits = function(ctor, superCtor) {
+  ctor.super_ = superCtor;
+  ctor.prototype = Object_create(superCtor.prototype, {
+    constructor: {
+      value: ctor,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+};
+
+var formatRegExp = /%[sdj%]/g;
+exports.format = function(f) {
+  if (typeof f !== 'string') {
+    var objects = [];
+    for (var i = 0; i < arguments.length; i++) {
+      objects.push(exports.inspect(arguments[i]));
+    }
+    return objects.join(' ');
+  }
+
+  var i = 1;
+  var args = arguments;
+  var len = args.length;
+  var str = String(f).replace(formatRegExp, function(x) {
+    if (x === '%%') return '%';
+    if (i >= len) return x;
+    switch (x) {
+      case '%s': return String(args[i++]);
+      case '%d': return Number(args[i++]);
+      case '%j': return JSON.stringify(args[i++]);
+      default:
+        return x;
+    }
+  });
+  for(var x = args[i]; i < len; x = args[++i]){
+    if (x === null || typeof x !== 'object') {
+      str += ' ' + x;
+    } else {
+      str += ' ' + exports.inspect(x);
+    }
+  }
+  return str;
+};
+
+},{"events":4}],5:[function(require,module,exports){
+exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
+  var e, m,
+      eLen = nBytes * 8 - mLen - 1,
+      eMax = (1 << eLen) - 1,
+      eBias = eMax >> 1,
+      nBits = -7,
+      i = isBE ? 0 : (nBytes - 1),
+      d = isBE ? 1 : -1,
+      s = buffer[offset + i];
+
+  i += d;
+
+  e = s & ((1 << (-nBits)) - 1);
+  s >>= (-nBits);
+  nBits += eLen;
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8);
+
+  m = e & ((1 << (-nBits)) - 1);
+  e >>= (-nBits);
+  nBits += mLen;
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8);
+
+  if (e === 0) {
+    e = 1 - eBias;
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity);
+  } else {
+    m = m + Math.pow(2, mLen);
+    e = e - eBias;
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen);
+};
+
+exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
+  var e, m, c,
+      eLen = nBytes * 8 - mLen - 1,
+      eMax = (1 << eLen) - 1,
+      eBias = eMax >> 1,
+      rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0),
+      i = isBE ? (nBytes - 1) : 0,
+      d = isBE ? -1 : 1,
+      s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0;
+
+  value = Math.abs(value);
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0;
+    e = eMax;
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2);
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--;
+      c *= 2;
+    }
+    if (e + eBias >= 1) {
+      value += rt / c;
+    } else {
+      value += rt * Math.pow(2, 1 - eBias);
+    }
+    if (value * c >= 2) {
+      e++;
+      c /= 2;
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0;
+      e = eMax;
+    } else if (e + eBias >= 1) {
+      m = (value * c - 1) * Math.pow(2, mLen);
+      e = e + eBias;
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
+      e = 0;
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8);
+
+  e = (e << mLen) | m;
+  eLen += mLen;
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
+
+  buffer[offset + i - d] |= s * 128;
+};
+
+},{}],6:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -235,6 +991,3271 @@ process.chdir = function (dir) {
 };
 
 },{}],4:[function(require,module,exports){
+(function(process){if (!process.EventEmitter) process.EventEmitter = function () {};
+
+var EventEmitter = exports.EventEmitter = process.EventEmitter;
+var isArray = typeof Array.isArray === 'function'
+    ? Array.isArray
+    : function (xs) {
+        return Object.prototype.toString.call(xs) === '[object Array]'
+    }
+;
+function indexOf (xs, x) {
+    if (xs.indexOf) return xs.indexOf(x);
+    for (var i = 0; i < xs.length; i++) {
+        if (x === xs[i]) return i;
+    }
+    return -1;
+}
+
+// By default EventEmitters will print a warning if more than
+// 10 listeners are added to it. This is a useful default which
+// helps finding memory leaks.
+//
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+var defaultMaxListeners = 10;
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!this._events) this._events = {};
+  this._events.maxListeners = n;
+};
+
+
+EventEmitter.prototype.emit = function(type) {
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events || !this._events.error ||
+        (isArray(this._events.error) && !this._events.error.length))
+    {
+      if (arguments[1] instanceof Error) {
+        throw arguments[1]; // Unhandled 'error' event
+      } else {
+        throw new Error("Uncaught, unspecified 'error' event.");
+      }
+      return false;
+    }
+  }
+
+  if (!this._events) return false;
+  var handler = this._events[type];
+  if (!handler) return false;
+
+  if (typeof handler == 'function') {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        var args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+    return true;
+
+  } else if (isArray(handler)) {
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    var listeners = handler.slice();
+    for (var i = 0, l = listeners.length; i < l; i++) {
+      listeners[i].apply(this, args);
+    }
+    return true;
+
+  } else {
+    return false;
+  }
+};
+
+// EventEmitter is defined in src/node_events.cc
+// EventEmitter.prototype.emit() is also defined there.
+EventEmitter.prototype.addListener = function(type, listener) {
+  if ('function' !== typeof listener) {
+    throw new Error('addListener only takes instances of Function');
+  }
+
+  if (!this._events) this._events = {};
+
+  // To avoid recursion in the case that type == "newListeners"! Before
+  // adding it to the listeners, first emit "newListeners".
+  this.emit('newListener', type, listener);
+
+  if (!this._events[type]) {
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  } else if (isArray(this._events[type])) {
+
+    // Check for listener leak
+    if (!this._events[type].warned) {
+      var m;
+      if (this._events.maxListeners !== undefined) {
+        m = this._events.maxListeners;
+      } else {
+        m = defaultMaxListeners;
+      }
+
+      if (m && m > 0 && this._events[type].length > m) {
+        this._events[type].warned = true;
+        console.error('(node) warning: possible EventEmitter memory ' +
+                      'leak detected. %d listeners added. ' +
+                      'Use emitter.setMaxListeners() to increase limit.',
+                      this._events[type].length);
+        console.trace();
+      }
+    }
+
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  } else {
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  var self = this;
+  self.on(type, function g() {
+    self.removeListener(type, g);
+    listener.apply(this, arguments);
+  });
+
+  return this;
+};
+
+EventEmitter.prototype.removeListener = function(type, listener) {
+  if ('function' !== typeof listener) {
+    throw new Error('removeListener only takes instances of Function');
+  }
+
+  // does not use listeners(), so no side effect of creating _events[type]
+  if (!this._events || !this._events[type]) return this;
+
+  var list = this._events[type];
+
+  if (isArray(list)) {
+    var i = indexOf(list, listener);
+    if (i < 0) return this;
+    list.splice(i, 1);
+    if (list.length == 0)
+      delete this._events[type];
+  } else if (this._events[type] === listener) {
+    delete this._events[type];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  if (arguments.length === 0) {
+    this._events = {};
+    return this;
+  }
+
+  // does not use listeners(), so no side effect of creating _events[type]
+  if (type && this._events && this._events[type]) this._events[type] = null;
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  if (!this._events) this._events = {};
+  if (!this._events[type]) this._events[type] = [];
+  if (!isArray(this._events[type])) {
+    this._events[type] = [this._events[type]];
+  }
+  return this._events[type];
+};
+
+})(require("__browserify_process"))
+},{"__browserify_process":6}],"buffer-browserify":[function(require,module,exports){
+module.exports=require('q9TxCC');
+},{}],"q9TxCC":[function(require,module,exports){
+function SlowBuffer (size) {
+    this.length = size;
+};
+
+var assert = require('assert');
+
+exports.INSPECT_MAX_BYTES = 50;
+
+
+function toHex(n) {
+  if (n < 16) return '0' + n.toString(16);
+  return n.toString(16);
+}
+
+function utf8ToBytes(str) {
+  var byteArray = [];
+  for (var i = 0; i < str.length; i++)
+    if (str.charCodeAt(i) <= 0x7F)
+      byteArray.push(str.charCodeAt(i));
+    else {
+      var h = encodeURIComponent(str.charAt(i)).substr(1).split('%');
+      for (var j = 0; j < h.length; j++)
+        byteArray.push(parseInt(h[j], 16));
+    }
+
+  return byteArray;
+}
+
+function asciiToBytes(str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; i++ )
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push( str.charCodeAt(i) & 0xFF );
+
+  return byteArray;
+}
+
+function base64ToBytes(str) {
+  return require("base64-js").toByteArray(str);
+}
+
+SlowBuffer.byteLength = function (str, encoding) {
+  switch (encoding || "utf8") {
+    case 'hex':
+      return str.length / 2;
+
+    case 'utf8':
+    case 'utf-8':
+      return utf8ToBytes(str).length;
+
+    case 'ascii':
+    case 'binary':
+      return str.length;
+
+    case 'base64':
+      return base64ToBytes(str).length;
+
+    default:
+      throw new Error('Unknown encoding');
+  }
+};
+
+function blitBuffer(src, dst, offset, length) {
+  var pos, i = 0;
+  while (i < length) {
+    if ((i+offset >= dst.length) || (i >= src.length))
+      break;
+
+    dst[i + offset] = src[i];
+    i++;
+  }
+  return i;
+}
+
+SlowBuffer.prototype.utf8Write = function (string, offset, length) {
+  var bytes, pos;
+  return SlowBuffer._charsWritten =  blitBuffer(utf8ToBytes(string), this, offset, length);
+};
+
+SlowBuffer.prototype.asciiWrite = function (string, offset, length) {
+  var bytes, pos;
+  return SlowBuffer._charsWritten =  blitBuffer(asciiToBytes(string), this, offset, length);
+};
+
+SlowBuffer.prototype.binaryWrite = SlowBuffer.prototype.asciiWrite;
+
+SlowBuffer.prototype.base64Write = function (string, offset, length) {
+  var bytes, pos;
+  return SlowBuffer._charsWritten = blitBuffer(base64ToBytes(string), this, offset, length);
+};
+
+SlowBuffer.prototype.base64Slice = function (start, end) {
+  var bytes = Array.prototype.slice.apply(this, arguments)
+  return require("base64-js").fromByteArray(bytes);
+}
+
+function decodeUtf8Char(str) {
+  try {
+    return decodeURIComponent(str);
+  } catch (err) {
+    return String.fromCharCode(0xFFFD); // UTF 8 invalid char
+  }
+}
+
+SlowBuffer.prototype.utf8Slice = function () {
+  var bytes = Array.prototype.slice.apply(this, arguments);
+  var res = "";
+  var tmp = "";
+  var i = 0;
+  while (i < bytes.length) {
+    if (bytes[i] <= 0x7F) {
+      res += decodeUtf8Char(tmp) + String.fromCharCode(bytes[i]);
+      tmp = "";
+    } else
+      tmp += "%" + bytes[i].toString(16);
+
+    i++;
+  }
+
+  return res + decodeUtf8Char(tmp);
+}
+
+SlowBuffer.prototype.asciiSlice = function () {
+  var bytes = Array.prototype.slice.apply(this, arguments);
+  var ret = "";
+  for (var i = 0; i < bytes.length; i++)
+    ret += String.fromCharCode(bytes[i]);
+  return ret;
+}
+
+SlowBuffer.prototype.binarySlice = SlowBuffer.prototype.asciiSlice;
+
+SlowBuffer.prototype.inspect = function() {
+  var out = [],
+      len = this.length;
+  for (var i = 0; i < len; i++) {
+    out[i] = toHex(this[i]);
+    if (i == exports.INSPECT_MAX_BYTES) {
+      out[i + 1] = '...';
+      break;
+    }
+  }
+  return '<SlowBuffer ' + out.join(' ') + '>';
+};
+
+
+SlowBuffer.prototype.hexSlice = function(start, end) {
+  var len = this.length;
+
+  if (!start || start < 0) start = 0;
+  if (!end || end < 0 || end > len) end = len;
+
+  var out = '';
+  for (var i = start; i < end; i++) {
+    out += toHex(this[i]);
+  }
+  return out;
+};
+
+
+SlowBuffer.prototype.toString = function(encoding, start, end) {
+  encoding = String(encoding || 'utf8').toLowerCase();
+  start = +start || 0;
+  if (typeof end == 'undefined') end = this.length;
+
+  // Fastpath empty strings
+  if (+end == start) {
+    return '';
+  }
+
+  switch (encoding) {
+    case 'hex':
+      return this.hexSlice(start, end);
+
+    case 'utf8':
+    case 'utf-8':
+      return this.utf8Slice(start, end);
+
+    case 'ascii':
+      return this.asciiSlice(start, end);
+
+    case 'binary':
+      return this.binarySlice(start, end);
+
+    case 'base64':
+      return this.base64Slice(start, end);
+
+    case 'ucs2':
+    case 'ucs-2':
+      return this.ucs2Slice(start, end);
+
+    default:
+      throw new Error('Unknown encoding');
+  }
+};
+
+
+SlowBuffer.prototype.hexWrite = function(string, offset, length) {
+  offset = +offset || 0;
+  var remaining = this.length - offset;
+  if (!length) {
+    length = remaining;
+  } else {
+    length = +length;
+    if (length > remaining) {
+      length = remaining;
+    }
+  }
+
+  // must be an even number of digits
+  var strLen = string.length;
+  if (strLen % 2) {
+    throw new Error('Invalid hex string');
+  }
+  if (length > strLen / 2) {
+    length = strLen / 2;
+  }
+  for (var i = 0; i < length; i++) {
+    var byte = parseInt(string.substr(i * 2, 2), 16);
+    if (isNaN(byte)) throw new Error('Invalid hex string');
+    this[offset + i] = byte;
+  }
+  SlowBuffer._charsWritten = i * 2;
+  return i;
+};
+
+
+SlowBuffer.prototype.write = function(string, offset, length, encoding) {
+  // Support both (string, offset, length, encoding)
+  // and the legacy (string, encoding, offset, length)
+  if (isFinite(offset)) {
+    if (!isFinite(length)) {
+      encoding = length;
+      length = undefined;
+    }
+  } else {  // legacy
+    var swap = encoding;
+    encoding = offset;
+    offset = length;
+    length = swap;
+  }
+
+  offset = +offset || 0;
+  var remaining = this.length - offset;
+  if (!length) {
+    length = remaining;
+  } else {
+    length = +length;
+    if (length > remaining) {
+      length = remaining;
+    }
+  }
+  encoding = String(encoding || 'utf8').toLowerCase();
+
+  switch (encoding) {
+    case 'hex':
+      return this.hexWrite(string, offset, length);
+
+    case 'utf8':
+    case 'utf-8':
+      return this.utf8Write(string, offset, length);
+
+    case 'ascii':
+      return this.asciiWrite(string, offset, length);
+
+    case 'binary':
+      return this.binaryWrite(string, offset, length);
+
+    case 'base64':
+      return this.base64Write(string, offset, length);
+
+    case 'ucs2':
+    case 'ucs-2':
+      return this.ucs2Write(string, offset, length);
+
+    default:
+      throw new Error('Unknown encoding');
+  }
+};
+
+
+// slice(start, end)
+SlowBuffer.prototype.slice = function(start, end) {
+  if (end === undefined) end = this.length;
+
+  if (end > this.length) {
+    throw new Error('oob');
+  }
+  if (start > end) {
+    throw new Error('oob');
+  }
+
+  return new Buffer(this, end - start, +start);
+};
+
+SlowBuffer.prototype.copy = function(target, targetstart, sourcestart, sourceend) {
+  var temp = [];
+  for (var i=sourcestart; i<sourceend; i++) {
+    assert.ok(typeof this[i] !== 'undefined', "copying undefined buffer bytes!");
+    temp.push(this[i]);
+  }
+
+  for (var i=targetstart; i<targetstart+temp.length; i++) {
+    target[i] = temp[i-targetstart];
+  }
+};
+
+SlowBuffer.prototype.fill = function(value, start, end) {
+  if (end > this.length) {
+    throw new Error('oob');
+  }
+  if (start > end) {
+    throw new Error('oob');
+  }
+
+  for (var i = start; i < end; i++) {
+    this[i] = value;
+  }
+}
+
+function coerce(length) {
+  // Coerce length to a number (possibly NaN), round up
+  // in case it's fractional (e.g. 123.456) then do a
+  // double negate to coerce a NaN to 0. Easy, right?
+  length = ~~Math.ceil(+length);
+  return length < 0 ? 0 : length;
+}
+
+
+// Buffer
+
+function Buffer(subject, encoding, offset) {
+  if (!(this instanceof Buffer)) {
+    return new Buffer(subject, encoding, offset);
+  }
+
+  var type;
+
+  // Are we slicing?
+  if (typeof offset === 'number') {
+    this.length = coerce(encoding);
+    this.parent = subject;
+    this.offset = offset;
+  } else {
+    // Find the length
+    switch (type = typeof subject) {
+      case 'number':
+        this.length = coerce(subject);
+        break;
+
+      case 'string':
+        this.length = Buffer.byteLength(subject, encoding);
+        break;
+
+      case 'object': // Assume object is an array
+        this.length = coerce(subject.length);
+        break;
+
+      default:
+        throw new Error('First argument needs to be a number, ' +
+                        'array or string.');
+    }
+
+    if (this.length > Buffer.poolSize) {
+      // Big buffer, just alloc one.
+      this.parent = new SlowBuffer(this.length);
+      this.offset = 0;
+
+    } else {
+      // Small buffer.
+      if (!pool || pool.length - pool.used < this.length) allocPool();
+      this.parent = pool;
+      this.offset = pool.used;
+      pool.used += this.length;
+    }
+
+    // Treat array-ish objects as a byte array.
+    if (isArrayIsh(subject)) {
+      for (var i = 0; i < this.length; i++) {
+        if (subject instanceof Buffer) {
+          this.parent[i + this.offset] = subject.readUInt8(i);
+        }
+        else {
+          this.parent[i + this.offset] = subject[i];
+        }
+      }
+    } else if (type == 'string') {
+      // We are a string
+      this.length = this.write(subject, 0, encoding);
+    }
+  }
+
+}
+
+function isArrayIsh(subject) {
+  return Array.isArray(subject) || Buffer.isBuffer(subject) ||
+         subject && typeof subject === 'object' &&
+         typeof subject.length === 'number';
+}
+
+exports.SlowBuffer = SlowBuffer;
+exports.Buffer = Buffer;
+
+Buffer.poolSize = 8 * 1024;
+var pool;
+
+function allocPool() {
+  pool = new SlowBuffer(Buffer.poolSize);
+  pool.used = 0;
+}
+
+
+// Static methods
+Buffer.isBuffer = function isBuffer(b) {
+  return b instanceof Buffer || b instanceof SlowBuffer;
+};
+
+Buffer.concat = function (list, totalLength) {
+  if (!Array.isArray(list)) {
+    throw new Error("Usage: Buffer.concat(list, [totalLength])\n \
+      list should be an Array.");
+  }
+
+  if (list.length === 0) {
+    return new Buffer(0);
+  } else if (list.length === 1) {
+    return list[0];
+  }
+
+  if (typeof totalLength !== 'number') {
+    totalLength = 0;
+    for (var i = 0; i < list.length; i++) {
+      var buf = list[i];
+      totalLength += buf.length;
+    }
+  }
+
+  var buffer = new Buffer(totalLength);
+  var pos = 0;
+  for (var i = 0; i < list.length; i++) {
+    var buf = list[i];
+    buf.copy(buffer, pos);
+    pos += buf.length;
+  }
+  return buffer;
+};
+
+// Inspect
+Buffer.prototype.inspect = function inspect() {
+  var out = [],
+      len = this.length;
+
+  for (var i = 0; i < len; i++) {
+    out[i] = toHex(this.parent[i + this.offset]);
+    if (i == exports.INSPECT_MAX_BYTES) {
+      out[i + 1] = '...';
+      break;
+    }
+  }
+
+  return '<Buffer ' + out.join(' ') + '>';
+};
+
+
+Buffer.prototype.get = function get(i) {
+  if (i < 0 || i >= this.length) throw new Error('oob');
+  return this.parent[this.offset + i];
+};
+
+
+Buffer.prototype.set = function set(i, v) {
+  if (i < 0 || i >= this.length) throw new Error('oob');
+  return this.parent[this.offset + i] = v;
+};
+
+
+// write(string, offset = 0, length = buffer.length-offset, encoding = 'utf8')
+Buffer.prototype.write = function(string, offset, length, encoding) {
+  // Support both (string, offset, length, encoding)
+  // and the legacy (string, encoding, offset, length)
+  if (isFinite(offset)) {
+    if (!isFinite(length)) {
+      encoding = length;
+      length = undefined;
+    }
+  } else {  // legacy
+    var swap = encoding;
+    encoding = offset;
+    offset = length;
+    length = swap;
+  }
+
+  offset = +offset || 0;
+  var remaining = this.length - offset;
+  if (!length) {
+    length = remaining;
+  } else {
+    length = +length;
+    if (length > remaining) {
+      length = remaining;
+    }
+  }
+  encoding = String(encoding || 'utf8').toLowerCase();
+
+  var ret;
+  switch (encoding) {
+    case 'hex':
+      ret = this.parent.hexWrite(string, this.offset + offset, length);
+      break;
+
+    case 'utf8':
+    case 'utf-8':
+      ret = this.parent.utf8Write(string, this.offset + offset, length);
+      break;
+
+    case 'ascii':
+      ret = this.parent.asciiWrite(string, this.offset + offset, length);
+      break;
+
+    case 'binary':
+      ret = this.parent.binaryWrite(string, this.offset + offset, length);
+      break;
+
+    case 'base64':
+      // Warning: maxLength not taken into account in base64Write
+      ret = this.parent.base64Write(string, this.offset + offset, length);
+      break;
+
+    case 'ucs2':
+    case 'ucs-2':
+      ret = this.parent.ucs2Write(string, this.offset + offset, length);
+      break;
+
+    default:
+      throw new Error('Unknown encoding');
+  }
+
+  Buffer._charsWritten = SlowBuffer._charsWritten;
+
+  return ret;
+};
+
+
+// toString(encoding, start=0, end=buffer.length)
+Buffer.prototype.toString = function(encoding, start, end) {
+  encoding = String(encoding || 'utf8').toLowerCase();
+
+  if (typeof start == 'undefined' || start < 0) {
+    start = 0;
+  } else if (start > this.length) {
+    start = this.length;
+  }
+
+  if (typeof end == 'undefined' || end > this.length) {
+    end = this.length;
+  } else if (end < 0) {
+    end = 0;
+  }
+
+  start = start + this.offset;
+  end = end + this.offset;
+
+  switch (encoding) {
+    case 'hex':
+      return this.parent.hexSlice(start, end);
+
+    case 'utf8':
+    case 'utf-8':
+      return this.parent.utf8Slice(start, end);
+
+    case 'ascii':
+      return this.parent.asciiSlice(start, end);
+
+    case 'binary':
+      return this.parent.binarySlice(start, end);
+
+    case 'base64':
+      return this.parent.base64Slice(start, end);
+
+    case 'ucs2':
+    case 'ucs-2':
+      return this.parent.ucs2Slice(start, end);
+
+    default:
+      throw new Error('Unknown encoding');
+  }
+};
+
+
+// byteLength
+Buffer.byteLength = SlowBuffer.byteLength;
+
+
+// fill(value, start=0, end=buffer.length)
+Buffer.prototype.fill = function fill(value, start, end) {
+  value || (value = 0);
+  start || (start = 0);
+  end || (end = this.length);
+
+  if (typeof value === 'string') {
+    value = value.charCodeAt(0);
+  }
+  if (!(typeof value === 'number') || isNaN(value)) {
+    throw new Error('value is not a number');
+  }
+
+  if (end < start) throw new Error('end < start');
+
+  // Fill 0 bytes; we're done
+  if (end === start) return 0;
+  if (this.length == 0) return 0;
+
+  if (start < 0 || start >= this.length) {
+    throw new Error('start out of bounds');
+  }
+
+  if (end < 0 || end > this.length) {
+    throw new Error('end out of bounds');
+  }
+
+  return this.parent.fill(value,
+                          start + this.offset,
+                          end + this.offset);
+};
+
+
+// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+Buffer.prototype.copy = function(target, target_start, start, end) {
+  var source = this;
+  start || (start = 0);
+  end || (end = this.length);
+  target_start || (target_start = 0);
+
+  if (end < start) throw new Error('sourceEnd < sourceStart');
+
+  // Copy 0 bytes; we're done
+  if (end === start) return 0;
+  if (target.length == 0 || source.length == 0) return 0;
+
+  if (target_start < 0 || target_start >= target.length) {
+    throw new Error('targetStart out of bounds');
+  }
+
+  if (start < 0 || start >= source.length) {
+    throw new Error('sourceStart out of bounds');
+  }
+
+  if (end < 0 || end > source.length) {
+    throw new Error('sourceEnd out of bounds');
+  }
+
+  // Are we oob?
+  if (end > this.length) {
+    end = this.length;
+  }
+
+  if (target.length - target_start < end - start) {
+    end = target.length - target_start + start;
+  }
+
+  return this.parent.copy(target.parent,
+                          target_start + target.offset,
+                          start + this.offset,
+                          end + this.offset);
+};
+
+
+// slice(start, end)
+Buffer.prototype.slice = function(start, end) {
+  if (end === undefined) end = this.length;
+  if (end > this.length) throw new Error('oob');
+  if (start > end) throw new Error('oob');
+
+  return new Buffer(this.parent, end - start, +start + this.offset);
+};
+
+
+// Legacy methods for backwards compatibility.
+
+Buffer.prototype.utf8Slice = function(start, end) {
+  return this.toString('utf8', start, end);
+};
+
+Buffer.prototype.binarySlice = function(start, end) {
+  return this.toString('binary', start, end);
+};
+
+Buffer.prototype.asciiSlice = function(start, end) {
+  return this.toString('ascii', start, end);
+};
+
+Buffer.prototype.utf8Write = function(string, offset) {
+  return this.write(string, offset, 'utf8');
+};
+
+Buffer.prototype.binaryWrite = function(string, offset) {
+  return this.write(string, offset, 'binary');
+};
+
+Buffer.prototype.asciiWrite = function(string, offset) {
+  return this.write(string, offset, 'ascii');
+};
+
+Buffer.prototype.readUInt8 = function(offset, noAssert) {
+  var buffer = this;
+
+  if (!noAssert) {
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  if (offset >= buffer.length) return;
+
+  return buffer.parent[buffer.offset + offset];
+};
+
+function readUInt16(buffer, offset, isBigEndian, noAssert) {
+  var val = 0;
+
+
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 1 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  if (offset >= buffer.length) return 0;
+
+  if (isBigEndian) {
+    val = buffer.parent[buffer.offset + offset] << 8;
+    if (offset + 1 < buffer.length) {
+      val |= buffer.parent[buffer.offset + offset + 1];
+    }
+  } else {
+    val = buffer.parent[buffer.offset + offset];
+    if (offset + 1 < buffer.length) {
+      val |= buffer.parent[buffer.offset + offset + 1] << 8;
+    }
+  }
+
+  return val;
+}
+
+Buffer.prototype.readUInt16LE = function(offset, noAssert) {
+  return readUInt16(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readUInt16BE = function(offset, noAssert) {
+  return readUInt16(this, offset, true, noAssert);
+};
+
+function readUInt32(buffer, offset, isBigEndian, noAssert) {
+  var val = 0;
+
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 3 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  if (offset >= buffer.length) return 0;
+
+  if (isBigEndian) {
+    if (offset + 1 < buffer.length)
+      val = buffer.parent[buffer.offset + offset + 1] << 16;
+    if (offset + 2 < buffer.length)
+      val |= buffer.parent[buffer.offset + offset + 2] << 8;
+    if (offset + 3 < buffer.length)
+      val |= buffer.parent[buffer.offset + offset + 3];
+    val = val + (buffer.parent[buffer.offset + offset] << 24 >>> 0);
+  } else {
+    if (offset + 2 < buffer.length)
+      val = buffer.parent[buffer.offset + offset + 2] << 16;
+    if (offset + 1 < buffer.length)
+      val |= buffer.parent[buffer.offset + offset + 1] << 8;
+    val |= buffer.parent[buffer.offset + offset];
+    if (offset + 3 < buffer.length)
+      val = val + (buffer.parent[buffer.offset + offset + 3] << 24 >>> 0);
+  }
+
+  return val;
+}
+
+Buffer.prototype.readUInt32LE = function(offset, noAssert) {
+  return readUInt32(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readUInt32BE = function(offset, noAssert) {
+  return readUInt32(this, offset, true, noAssert);
+};
+
+
+/*
+ * Signed integer types, yay team! A reminder on how two's complement actually
+ * works. The first bit is the signed bit, i.e. tells us whether or not the
+ * number should be positive or negative. If the two's complement value is
+ * positive, then we're done, as it's equivalent to the unsigned representation.
+ *
+ * Now if the number is positive, you're pretty much done, you can just leverage
+ * the unsigned translations and return those. Unfortunately, negative numbers
+ * aren't quite that straightforward.
+ *
+ * At first glance, one might be inclined to use the traditional formula to
+ * translate binary numbers between the positive and negative values in two's
+ * complement. (Though it doesn't quite work for the most negative value)
+ * Mainly:
+ *  - invert all the bits
+ *  - add one to the result
+ *
+ * Of course, this doesn't quite work in Javascript. Take for example the value
+ * of -128. This could be represented in 16 bits (big-endian) as 0xff80. But of
+ * course, Javascript will do the following:
+ *
+ * > ~0xff80
+ * -65409
+ *
+ * Whoh there, Javascript, that's not quite right. But wait, according to
+ * Javascript that's perfectly correct. When Javascript ends up seeing the
+ * constant 0xff80, it has no notion that it is actually a signed number. It
+ * assumes that we've input the unsigned value 0xff80. Thus, when it does the
+ * binary negation, it casts it into a signed value, (positive 0xff80). Then
+ * when you perform binary negation on that, it turns it into a negative number.
+ *
+ * Instead, we're going to have to use the following general formula, that works
+ * in a rather Javascript friendly way. I'm glad we don't support this kind of
+ * weird numbering scheme in the kernel.
+ *
+ * (BIT-MAX - (unsigned)val + 1) * -1
+ *
+ * The astute observer, may think that this doesn't make sense for 8-bit numbers
+ * (really it isn't necessary for them). However, when you get 16-bit numbers,
+ * you do. Let's go back to our prior example and see how this will look:
+ *
+ * (0xffff - 0xff80 + 1) * -1
+ * (0x007f + 1) * -1
+ * (0x0080) * -1
+ */
+Buffer.prototype.readInt8 = function(offset, noAssert) {
+  var buffer = this;
+  var neg;
+
+  if (!noAssert) {
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  if (offset >= buffer.length) return;
+
+  neg = buffer.parent[buffer.offset + offset] & 0x80;
+  if (!neg) {
+    return (buffer.parent[buffer.offset + offset]);
+  }
+
+  return ((0xff - buffer.parent[buffer.offset + offset] + 1) * -1);
+};
+
+function readInt16(buffer, offset, isBigEndian, noAssert) {
+  var neg, val;
+
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 1 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  val = readUInt16(buffer, offset, isBigEndian, noAssert);
+  neg = val & 0x8000;
+  if (!neg) {
+    return val;
+  }
+
+  return (0xffff - val + 1) * -1;
+}
+
+Buffer.prototype.readInt16LE = function(offset, noAssert) {
+  return readInt16(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readInt16BE = function(offset, noAssert) {
+  return readInt16(this, offset, true, noAssert);
+};
+
+function readInt32(buffer, offset, isBigEndian, noAssert) {
+  var neg, val;
+
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 3 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  val = readUInt32(buffer, offset, isBigEndian, noAssert);
+  neg = val & 0x80000000;
+  if (!neg) {
+    return (val);
+  }
+
+  return (0xffffffff - val + 1) * -1;
+}
+
+Buffer.prototype.readInt32LE = function(offset, noAssert) {
+  return readInt32(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readInt32BE = function(offset, noAssert) {
+  return readInt32(this, offset, true, noAssert);
+};
+
+function readFloat(buffer, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset + 3 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  return require('./buffer_ieee754').readIEEE754(buffer, offset, isBigEndian,
+      23, 4);
+}
+
+Buffer.prototype.readFloatLE = function(offset, noAssert) {
+  return readFloat(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readFloatBE = function(offset, noAssert) {
+  return readFloat(this, offset, true, noAssert);
+};
+
+function readDouble(buffer, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset + 7 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  return require('./buffer_ieee754').readIEEE754(buffer, offset, isBigEndian,
+      52, 8);
+}
+
+Buffer.prototype.readDoubleLE = function(offset, noAssert) {
+  return readDouble(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readDoubleBE = function(offset, noAssert) {
+  return readDouble(this, offset, true, noAssert);
+};
+
+
+/*
+ * We have to make sure that the value is a valid integer. This means that it is
+ * non-negative. It has no fractional component and that it does not exceed the
+ * maximum allowed value.
+ *
+ *      value           The number to check for validity
+ *
+ *      max             The maximum value
+ */
+function verifuint(value, max) {
+  assert.ok(typeof (value) == 'number',
+      'cannot write a non-number as a number');
+
+  assert.ok(value >= 0,
+      'specified a negative value for writing an unsigned value');
+
+  assert.ok(value <= max, 'value is larger than maximum value for type');
+
+  assert.ok(Math.floor(value) === value, 'value has a fractional component');
+}
+
+Buffer.prototype.writeUInt8 = function(value, offset, noAssert) {
+  var buffer = this;
+
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset < buffer.length,
+        'trying to write beyond buffer length');
+
+    verifuint(value, 0xff);
+  }
+
+  if (offset < buffer.length) {
+    buffer.parent[buffer.offset + offset] = value;
+  }
+};
+
+function writeUInt16(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 1 < buffer.length,
+        'trying to write beyond buffer length');
+
+    verifuint(value, 0xffff);
+  }
+
+  for (var i = 0; i < Math.min(buffer.length - offset, 2); i++) {
+    buffer.parent[buffer.offset + offset + i] =
+        (value & (0xff << (8 * (isBigEndian ? 1 - i : i)))) >>>
+            (isBigEndian ? 1 - i : i) * 8;
+  }
+
+}
+
+Buffer.prototype.writeUInt16LE = function(value, offset, noAssert) {
+  writeUInt16(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeUInt16BE = function(value, offset, noAssert) {
+  writeUInt16(this, value, offset, true, noAssert);
+};
+
+function writeUInt32(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 3 < buffer.length,
+        'trying to write beyond buffer length');
+
+    verifuint(value, 0xffffffff);
+  }
+
+  for (var i = 0; i < Math.min(buffer.length - offset, 4); i++) {
+    buffer.parent[buffer.offset + offset + i] =
+        (value >>> (isBigEndian ? 3 - i : i) * 8) & 0xff;
+  }
+}
+
+Buffer.prototype.writeUInt32LE = function(value, offset, noAssert) {
+  writeUInt32(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeUInt32BE = function(value, offset, noAssert) {
+  writeUInt32(this, value, offset, true, noAssert);
+};
+
+
+/*
+ * We now move onto our friends in the signed number category. Unlike unsigned
+ * numbers, we're going to have to worry a bit more about how we put values into
+ * arrays. Since we are only worrying about signed 32-bit values, we're in
+ * slightly better shape. Unfortunately, we really can't do our favorite binary
+ * & in this system. It really seems to do the wrong thing. For example:
+ *
+ * > -32 & 0xff
+ * 224
+ *
+ * What's happening above is really: 0xe0 & 0xff = 0xe0. However, the results of
+ * this aren't treated as a signed number. Ultimately a bad thing.
+ *
+ * What we're going to want to do is basically create the unsigned equivalent of
+ * our representation and pass that off to the wuint* functions. To do that
+ * we're going to do the following:
+ *
+ *  - if the value is positive
+ *      we can pass it directly off to the equivalent wuint
+ *  - if the value is negative
+ *      we do the following computation:
+ *         mb + val + 1, where
+ *         mb   is the maximum unsigned value in that byte size
+ *         val  is the Javascript negative integer
+ *
+ *
+ * As a concrete value, take -128. In signed 16 bits this would be 0xff80. If
+ * you do out the computations:
+ *
+ * 0xffff - 128 + 1
+ * 0xffff - 127
+ * 0xff80
+ *
+ * You can then encode this value as the signed version. This is really rather
+ * hacky, but it should work and get the job done which is our goal here.
+ */
+
+/*
+ * A series of checks to make sure we actually have a signed 32-bit number
+ */
+function verifsint(value, max, min) {
+  assert.ok(typeof (value) == 'number',
+      'cannot write a non-number as a number');
+
+  assert.ok(value <= max, 'value larger than maximum allowed value');
+
+  assert.ok(value >= min, 'value smaller than minimum allowed value');
+
+  assert.ok(Math.floor(value) === value, 'value has a fractional component');
+}
+
+function verifIEEE754(value, max, min) {
+  assert.ok(typeof (value) == 'number',
+      'cannot write a non-number as a number');
+
+  assert.ok(value <= max, 'value larger than maximum allowed value');
+
+  assert.ok(value >= min, 'value smaller than minimum allowed value');
+}
+
+Buffer.prototype.writeInt8 = function(value, offset, noAssert) {
+  var buffer = this;
+
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset < buffer.length,
+        'Trying to write beyond buffer length');
+
+    verifsint(value, 0x7f, -0x80);
+  }
+
+  if (value >= 0) {
+    buffer.writeUInt8(value, offset, noAssert);
+  } else {
+    buffer.writeUInt8(0xff + value + 1, offset, noAssert);
+  }
+};
+
+function writeInt16(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 1 < buffer.length,
+        'Trying to write beyond buffer length');
+
+    verifsint(value, 0x7fff, -0x8000);
+  }
+
+  if (value >= 0) {
+    writeUInt16(buffer, value, offset, isBigEndian, noAssert);
+  } else {
+    writeUInt16(buffer, 0xffff + value + 1, offset, isBigEndian, noAssert);
+  }
+}
+
+Buffer.prototype.writeInt16LE = function(value, offset, noAssert) {
+  writeInt16(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeInt16BE = function(value, offset, noAssert) {
+  writeInt16(this, value, offset, true, noAssert);
+};
+
+function writeInt32(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 3 < buffer.length,
+        'Trying to write beyond buffer length');
+
+    verifsint(value, 0x7fffffff, -0x80000000);
+  }
+
+  if (value >= 0) {
+    writeUInt32(buffer, value, offset, isBigEndian, noAssert);
+  } else {
+    writeUInt32(buffer, 0xffffffff + value + 1, offset, isBigEndian, noAssert);
+  }
+}
+
+Buffer.prototype.writeInt32LE = function(value, offset, noAssert) {
+  writeInt32(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeInt32BE = function(value, offset, noAssert) {
+  writeInt32(this, value, offset, true, noAssert);
+};
+
+function writeFloat(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 3 < buffer.length,
+        'Trying to write beyond buffer length');
+
+    verifIEEE754(value, 3.4028234663852886e+38, -3.4028234663852886e+38);
+  }
+
+  require('./buffer_ieee754').writeIEEE754(buffer, value, offset, isBigEndian,
+      23, 4);
+}
+
+Buffer.prototype.writeFloatLE = function(value, offset, noAssert) {
+  writeFloat(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeFloatBE = function(value, offset, noAssert) {
+  writeFloat(this, value, offset, true, noAssert);
+};
+
+function writeDouble(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 7 < buffer.length,
+        'Trying to write beyond buffer length');
+
+    verifIEEE754(value, 1.7976931348623157E+308, -1.7976931348623157E+308);
+  }
+
+  require('./buffer_ieee754').writeIEEE754(buffer, value, offset, isBigEndian,
+      52, 8);
+}
+
+Buffer.prototype.writeDoubleLE = function(value, offset, noAssert) {
+  writeDouble(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
+  writeDouble(this, value, offset, true, noAssert);
+};
+
+SlowBuffer.prototype.readUInt8 = Buffer.prototype.readUInt8;
+SlowBuffer.prototype.readUInt16LE = Buffer.prototype.readUInt16LE;
+SlowBuffer.prototype.readUInt16BE = Buffer.prototype.readUInt16BE;
+SlowBuffer.prototype.readUInt32LE = Buffer.prototype.readUInt32LE;
+SlowBuffer.prototype.readUInt32BE = Buffer.prototype.readUInt32BE;
+SlowBuffer.prototype.readInt8 = Buffer.prototype.readInt8;
+SlowBuffer.prototype.readInt16LE = Buffer.prototype.readInt16LE;
+SlowBuffer.prototype.readInt16BE = Buffer.prototype.readInt16BE;
+SlowBuffer.prototype.readInt32LE = Buffer.prototype.readInt32LE;
+SlowBuffer.prototype.readInt32BE = Buffer.prototype.readInt32BE;
+SlowBuffer.prototype.readFloatLE = Buffer.prototype.readFloatLE;
+SlowBuffer.prototype.readFloatBE = Buffer.prototype.readFloatBE;
+SlowBuffer.prototype.readDoubleLE = Buffer.prototype.readDoubleLE;
+SlowBuffer.prototype.readDoubleBE = Buffer.prototype.readDoubleBE;
+SlowBuffer.prototype.writeUInt8 = Buffer.prototype.writeUInt8;
+SlowBuffer.prototype.writeUInt16LE = Buffer.prototype.writeUInt16LE;
+SlowBuffer.prototype.writeUInt16BE = Buffer.prototype.writeUInt16BE;
+SlowBuffer.prototype.writeUInt32LE = Buffer.prototype.writeUInt32LE;
+SlowBuffer.prototype.writeUInt32BE = Buffer.prototype.writeUInt32BE;
+SlowBuffer.prototype.writeInt8 = Buffer.prototype.writeInt8;
+SlowBuffer.prototype.writeInt16LE = Buffer.prototype.writeInt16LE;
+SlowBuffer.prototype.writeInt16BE = Buffer.prototype.writeInt16BE;
+SlowBuffer.prototype.writeInt32LE = Buffer.prototype.writeInt32LE;
+SlowBuffer.prototype.writeInt32BE = Buffer.prototype.writeInt32BE;
+SlowBuffer.prototype.writeFloatLE = Buffer.prototype.writeFloatLE;
+SlowBuffer.prototype.writeFloatBE = Buffer.prototype.writeFloatBE;
+SlowBuffer.prototype.writeDoubleLE = Buffer.prototype.writeDoubleLE;
+SlowBuffer.prototype.writeDoubleBE = Buffer.prototype.writeDoubleBE;
+
+},{"assert":1,"./buffer_ieee754":5,"base64-js":7}],7:[function(require,module,exports){
+(function (exports) {
+	'use strict';
+
+	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+	function b64ToByteArray(b64) {
+		var i, j, l, tmp, placeHolders, arr;
+	
+		if (b64.length % 4 > 0) {
+			throw 'Invalid string. Length must be a multiple of 4';
+		}
+
+		// the number of equal signs (place holders)
+		// if there are two placeholders, than the two characters before it
+		// represent one byte
+		// if there is only one, then the three characters before it represent 2 bytes
+		// this is just a cheap hack to not do indexOf twice
+		placeHolders = b64.indexOf('=');
+		placeHolders = placeHolders > 0 ? b64.length - placeHolders : 0;
+
+		// base64 is 4/3 + up to two characters of the original data
+		arr = [];//new Uint8Array(b64.length * 3 / 4 - placeHolders);
+
+		// if there are placeholders, only get up to the last complete 4 chars
+		l = placeHolders > 0 ? b64.length - 4 : b64.length;
+
+		for (i = 0, j = 0; i < l; i += 4, j += 3) {
+			tmp = (lookup.indexOf(b64[i]) << 18) | (lookup.indexOf(b64[i + 1]) << 12) | (lookup.indexOf(b64[i + 2]) << 6) | lookup.indexOf(b64[i + 3]);
+			arr.push((tmp & 0xFF0000) >> 16);
+			arr.push((tmp & 0xFF00) >> 8);
+			arr.push(tmp & 0xFF);
+		}
+
+		if (placeHolders === 2) {
+			tmp = (lookup.indexOf(b64[i]) << 2) | (lookup.indexOf(b64[i + 1]) >> 4);
+			arr.push(tmp & 0xFF);
+		} else if (placeHolders === 1) {
+			tmp = (lookup.indexOf(b64[i]) << 10) | (lookup.indexOf(b64[i + 1]) << 4) | (lookup.indexOf(b64[i + 2]) >> 2);
+			arr.push((tmp >> 8) & 0xFF);
+			arr.push(tmp & 0xFF);
+		}
+
+		return arr;
+	}
+
+	function uint8ToBase64(uint8) {
+		var i,
+			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
+			output = "",
+			temp, length;
+
+		function tripletToBase64 (num) {
+			return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F];
+		};
+
+		// go through the array every three bytes, we'll deal with trailing stuff later
+		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
+			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2]);
+			output += tripletToBase64(temp);
+		}
+
+		// pad the end with zeros, but make sure to not forget the extra bytes
+		switch (extraBytes) {
+			case 1:
+				temp = uint8[uint8.length - 1];
+				output += lookup[temp >> 2];
+				output += lookup[(temp << 4) & 0x3F];
+				output += '==';
+				break;
+			case 2:
+				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1]);
+				output += lookup[temp >> 10];
+				output += lookup[(temp >> 4) & 0x3F];
+				output += lookup[(temp << 2) & 0x3F];
+				output += '=';
+				break;
+		}
+
+		return output;
+	}
+
+	module.exports.toByteArray = b64ToByteArray;
+	module.exports.fromByteArray = uint8ToBase64;
+}());
+
+},{}],8:[function(require,module,exports){
+exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
+  var e, m,
+      eLen = nBytes * 8 - mLen - 1,
+      eMax = (1 << eLen) - 1,
+      eBias = eMax >> 1,
+      nBits = -7,
+      i = isBE ? 0 : (nBytes - 1),
+      d = isBE ? 1 : -1,
+      s = buffer[offset + i];
+
+  i += d;
+
+  e = s & ((1 << (-nBits)) - 1);
+  s >>= (-nBits);
+  nBits += eLen;
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8);
+
+  m = e & ((1 << (-nBits)) - 1);
+  e >>= (-nBits);
+  nBits += mLen;
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8);
+
+  if (e === 0) {
+    e = 1 - eBias;
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity);
+  } else {
+    m = m + Math.pow(2, mLen);
+    e = e - eBias;
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen);
+};
+
+exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
+  var e, m, c,
+      eLen = nBytes * 8 - mLen - 1,
+      eMax = (1 << eLen) - 1,
+      eBias = eMax >> 1,
+      rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0),
+      i = isBE ? (nBytes - 1) : 0,
+      d = isBE ? -1 : 1,
+      s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0;
+
+  value = Math.abs(value);
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0;
+    e = eMax;
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2);
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--;
+      c *= 2;
+    }
+    if (e + eBias >= 1) {
+      value += rt / c;
+    } else {
+      value += rt * Math.pow(2, 1 - eBias);
+    }
+    if (value * c >= 2) {
+      e++;
+      c /= 2;
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0;
+      e = eMax;
+    } else if (e + eBias >= 1) {
+      m = (value * c - 1) * Math.pow(2, mLen);
+      e = e + eBias;
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
+      e = 0;
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8);
+
+  e = (e << mLen) | m;
+  eLen += mLen;
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
+
+  buffer[offset + i - d] |= s * 128;
+};
+
+},{}],3:[function(require,module,exports){
+function SlowBuffer (size) {
+    this.length = size;
+};
+
+var assert = require('assert');
+
+exports.INSPECT_MAX_BYTES = 50;
+
+
+function toHex(n) {
+  if (n < 16) return '0' + n.toString(16);
+  return n.toString(16);
+}
+
+function utf8ToBytes(str) {
+  var byteArray = [];
+  for (var i = 0; i < str.length; i++)
+    if (str.charCodeAt(i) <= 0x7F)
+      byteArray.push(str.charCodeAt(i));
+    else {
+      var h = encodeURIComponent(str.charAt(i)).substr(1).split('%');
+      for (var j = 0; j < h.length; j++)
+        byteArray.push(parseInt(h[j], 16));
+    }
+
+  return byteArray;
+}
+
+function asciiToBytes(str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; i++ )
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push( str.charCodeAt(i) & 0xFF );
+
+  return byteArray;
+}
+
+function base64ToBytes(str) {
+  return require("base64-js").toByteArray(str);
+}
+
+SlowBuffer.byteLength = function (str, encoding) {
+  switch (encoding || "utf8") {
+    case 'hex':
+      return str.length / 2;
+
+    case 'utf8':
+    case 'utf-8':
+      return utf8ToBytes(str).length;
+
+    case 'ascii':
+      return str.length;
+
+    case 'base64':
+      return base64ToBytes(str).length;
+
+    default:
+      throw new Error('Unknown encoding');
+  }
+};
+
+function blitBuffer(src, dst, offset, length) {
+  var pos, i = 0;
+  while (i < length) {
+    if ((i+offset >= dst.length) || (i >= src.length))
+      break;
+
+    dst[i + offset] = src[i];
+    i++;
+  }
+  return i;
+}
+
+SlowBuffer.prototype.utf8Write = function (string, offset, length) {
+  var bytes, pos;
+  return SlowBuffer._charsWritten =  blitBuffer(utf8ToBytes(string), this, offset, length);
+};
+
+SlowBuffer.prototype.asciiWrite = function (string, offset, length) {
+  var bytes, pos;
+  return SlowBuffer._charsWritten =  blitBuffer(asciiToBytes(string), this, offset, length);
+};
+
+SlowBuffer.prototype.base64Write = function (string, offset, length) {
+  var bytes, pos;
+  return SlowBuffer._charsWritten = blitBuffer(base64ToBytes(string), this, offset, length);
+};
+
+SlowBuffer.prototype.base64Slice = function (start, end) {
+  var bytes = Array.prototype.slice.apply(this, arguments)
+  return require("base64-js").fromByteArray(bytes);
+}
+
+function decodeUtf8Char(str) {
+  try {
+    return decodeURIComponent(str);
+  } catch (err) {
+    return String.fromCharCode(0xFFFD); // UTF 8 invalid char
+  }
+}
+
+SlowBuffer.prototype.utf8Slice = function () {
+  var bytes = Array.prototype.slice.apply(this, arguments);
+  var res = "";
+  var tmp = "";
+  var i = 0;
+  while (i < bytes.length) {
+    if (bytes[i] <= 0x7F) {
+      res += decodeUtf8Char(tmp) + String.fromCharCode(bytes[i]);
+      tmp = "";
+    } else
+      tmp += "%" + bytes[i].toString(16);
+
+    i++;
+  }
+
+  return res + decodeUtf8Char(tmp);
+}
+
+SlowBuffer.prototype.asciiSlice = function () {
+  var bytes = Array.prototype.slice.apply(this, arguments);
+  var ret = "";
+  for (var i = 0; i < bytes.length; i++)
+    ret += String.fromCharCode(bytes[i]);
+  return ret;
+}
+
+SlowBuffer.prototype.inspect = function() {
+  var out = [],
+      len = this.length;
+  for (var i = 0; i < len; i++) {
+    out[i] = toHex(this[i]);
+    if (i == exports.INSPECT_MAX_BYTES) {
+      out[i + 1] = '...';
+      break;
+    }
+  }
+  return '<SlowBuffer ' + out.join(' ') + '>';
+};
+
+
+SlowBuffer.prototype.hexSlice = function(start, end) {
+  var len = this.length;
+
+  if (!start || start < 0) start = 0;
+  if (!end || end < 0 || end > len) end = len;
+
+  var out = '';
+  for (var i = start; i < end; i++) {
+    out += toHex(this[i]);
+  }
+  return out;
+};
+
+
+SlowBuffer.prototype.toString = function(encoding, start, end) {
+  encoding = String(encoding || 'utf8').toLowerCase();
+  start = +start || 0;
+  if (typeof end == 'undefined') end = this.length;
+
+  // Fastpath empty strings
+  if (+end == start) {
+    return '';
+  }
+
+  switch (encoding) {
+    case 'hex':
+      return this.hexSlice(start, end);
+
+    case 'utf8':
+    case 'utf-8':
+      return this.utf8Slice(start, end);
+
+    case 'ascii':
+      return this.asciiSlice(start, end);
+
+    case 'binary':
+      return this.binarySlice(start, end);
+
+    case 'base64':
+      return this.base64Slice(start, end);
+
+    case 'ucs2':
+    case 'ucs-2':
+      return this.ucs2Slice(start, end);
+
+    default:
+      throw new Error('Unknown encoding');
+  }
+};
+
+
+SlowBuffer.prototype.hexWrite = function(string, offset, length) {
+  offset = +offset || 0;
+  var remaining = this.length - offset;
+  if (!length) {
+    length = remaining;
+  } else {
+    length = +length;
+    if (length > remaining) {
+      length = remaining;
+    }
+  }
+
+  // must be an even number of digits
+  var strLen = string.length;
+  if (strLen % 2) {
+    throw new Error('Invalid hex string');
+  }
+  if (length > strLen / 2) {
+    length = strLen / 2;
+  }
+  for (var i = 0; i < length; i++) {
+    var byte = parseInt(string.substr(i * 2, 2), 16);
+    if (isNaN(byte)) throw new Error('Invalid hex string');
+    this[offset + i] = byte;
+  }
+  SlowBuffer._charsWritten = i * 2;
+  return i;
+};
+
+
+SlowBuffer.prototype.write = function(string, offset, length, encoding) {
+  // Support both (string, offset, length, encoding)
+  // and the legacy (string, encoding, offset, length)
+  if (isFinite(offset)) {
+    if (!isFinite(length)) {
+      encoding = length;
+      length = undefined;
+    }
+  } else {  // legacy
+    var swap = encoding;
+    encoding = offset;
+    offset = length;
+    length = swap;
+  }
+
+  offset = +offset || 0;
+  var remaining = this.length - offset;
+  if (!length) {
+    length = remaining;
+  } else {
+    length = +length;
+    if (length > remaining) {
+      length = remaining;
+    }
+  }
+  encoding = String(encoding || 'utf8').toLowerCase();
+
+  switch (encoding) {
+    case 'hex':
+      return this.hexWrite(string, offset, length);
+
+    case 'utf8':
+    case 'utf-8':
+      return this.utf8Write(string, offset, length);
+
+    case 'ascii':
+      return this.asciiWrite(string, offset, length);
+
+    case 'binary':
+      return this.binaryWrite(string, offset, length);
+
+    case 'base64':
+      return this.base64Write(string, offset, length);
+
+    case 'ucs2':
+    case 'ucs-2':
+      return this.ucs2Write(string, offset, length);
+
+    default:
+      throw new Error('Unknown encoding');
+  }
+};
+
+
+// slice(start, end)
+SlowBuffer.prototype.slice = function(start, end) {
+  if (end === undefined) end = this.length;
+
+  if (end > this.length) {
+    throw new Error('oob');
+  }
+  if (start > end) {
+    throw new Error('oob');
+  }
+
+  return new Buffer(this, end - start, +start);
+};
+
+SlowBuffer.prototype.copy = function(target, targetstart, sourcestart, sourceend) {
+  var temp = [];
+  for (var i=sourcestart; i<sourceend; i++) {
+    assert.ok(typeof this[i] !== 'undefined', "copying undefined buffer bytes!");
+    temp.push(this[i]);
+  }
+
+  for (var i=targetstart; i<targetstart+temp.length; i++) {
+    target[i] = temp[i-targetstart];
+  }
+};
+
+function coerce(length) {
+  // Coerce length to a number (possibly NaN), round up
+  // in case it's fractional (e.g. 123.456) then do a
+  // double negate to coerce a NaN to 0. Easy, right?
+  length = ~~Math.ceil(+length);
+  return length < 0 ? 0 : length;
+}
+
+
+// Buffer
+
+function Buffer(subject, encoding, offset) {
+  if (!(this instanceof Buffer)) {
+    return new Buffer(subject, encoding, offset);
+  }
+
+  var type;
+
+  // Are we slicing?
+  if (typeof offset === 'number') {
+    this.length = coerce(encoding);
+    this.parent = subject;
+    this.offset = offset;
+  } else {
+    // Find the length
+    switch (type = typeof subject) {
+      case 'number':
+        this.length = coerce(subject);
+        break;
+
+      case 'string':
+        this.length = Buffer.byteLength(subject, encoding);
+        break;
+
+      case 'object': // Assume object is an array
+        this.length = coerce(subject.length);
+        break;
+
+      default:
+        throw new Error('First argument needs to be a number, ' +
+                        'array or string.');
+    }
+
+    if (this.length > Buffer.poolSize) {
+      // Big buffer, just alloc one.
+      this.parent = new SlowBuffer(this.length);
+      this.offset = 0;
+
+    } else {
+      // Small buffer.
+      if (!pool || pool.length - pool.used < this.length) allocPool();
+      this.parent = pool;
+      this.offset = pool.used;
+      pool.used += this.length;
+    }
+
+    // Treat array-ish objects as a byte array.
+    if (isArrayIsh(subject)) {
+      for (var i = 0; i < this.length; i++) {
+        this.parent[i + this.offset] = subject[i];
+      }
+    } else if (type == 'string') {
+      // We are a string
+      this.length = this.write(subject, 0, encoding);
+    }
+  }
+
+}
+
+function isArrayIsh(subject) {
+  return Array.isArray(subject) || Buffer.isBuffer(subject) ||
+         subject && typeof subject === 'object' &&
+         typeof subject.length === 'number';
+}
+
+exports.SlowBuffer = SlowBuffer;
+exports.Buffer = Buffer;
+
+Buffer.poolSize = 8 * 1024;
+var pool;
+
+function allocPool() {
+  pool = new SlowBuffer(Buffer.poolSize);
+  pool.used = 0;
+}
+
+
+// Static methods
+Buffer.isBuffer = function isBuffer(b) {
+  return b instanceof Buffer || b instanceof SlowBuffer;
+};
+
+Buffer.concat = function (list, totalLength) {
+  if (!Array.isArray(list)) {
+    throw new Error("Usage: Buffer.concat(list, [totalLength])\n \
+      list should be an Array.");
+  }
+
+  if (list.length === 0) {
+    return new Buffer(0);
+  } else if (list.length === 1) {
+    return list[0];
+  }
+
+  if (typeof totalLength !== 'number') {
+    totalLength = 0;
+    for (var i = 0; i < list.length; i++) {
+      var buf = list[i];
+      totalLength += buf.length;
+    }
+  }
+
+  var buffer = new Buffer(totalLength);
+  var pos = 0;
+  for (var i = 0; i < list.length; i++) {
+    var buf = list[i];
+    buf.copy(buffer, pos);
+    pos += buf.length;
+  }
+  return buffer;
+};
+
+// Inspect
+Buffer.prototype.inspect = function inspect() {
+  var out = [],
+      len = this.length;
+
+  for (var i = 0; i < len; i++) {
+    out[i] = toHex(this.parent[i + this.offset]);
+    if (i == exports.INSPECT_MAX_BYTES) {
+      out[i + 1] = '...';
+      break;
+    }
+  }
+
+  return '<Buffer ' + out.join(' ') + '>';
+};
+
+
+Buffer.prototype.get = function get(i) {
+  if (i < 0 || i >= this.length) throw new Error('oob');
+  return this.parent[this.offset + i];
+};
+
+
+Buffer.prototype.set = function set(i, v) {
+  if (i < 0 || i >= this.length) throw new Error('oob');
+  return this.parent[this.offset + i] = v;
+};
+
+
+// write(string, offset = 0, length = buffer.length-offset, encoding = 'utf8')
+Buffer.prototype.write = function(string, offset, length, encoding) {
+  // Support both (string, offset, length, encoding)
+  // and the legacy (string, encoding, offset, length)
+  if (isFinite(offset)) {
+    if (!isFinite(length)) {
+      encoding = length;
+      length = undefined;
+    }
+  } else {  // legacy
+    var swap = encoding;
+    encoding = offset;
+    offset = length;
+    length = swap;
+  }
+
+  offset = +offset || 0;
+  var remaining = this.length - offset;
+  if (!length) {
+    length = remaining;
+  } else {
+    length = +length;
+    if (length > remaining) {
+      length = remaining;
+    }
+  }
+  encoding = String(encoding || 'utf8').toLowerCase();
+
+  var ret;
+  switch (encoding) {
+    case 'hex':
+      ret = this.parent.hexWrite(string, this.offset + offset, length);
+      break;
+
+    case 'utf8':
+    case 'utf-8':
+      ret = this.parent.utf8Write(string, this.offset + offset, length);
+      break;
+
+    case 'ascii':
+      ret = this.parent.asciiWrite(string, this.offset + offset, length);
+      break;
+
+    case 'binary':
+      ret = this.parent.binaryWrite(string, this.offset + offset, length);
+      break;
+
+    case 'base64':
+      // Warning: maxLength not taken into account in base64Write
+      ret = this.parent.base64Write(string, this.offset + offset, length);
+      break;
+
+    case 'ucs2':
+    case 'ucs-2':
+      ret = this.parent.ucs2Write(string, this.offset + offset, length);
+      break;
+
+    default:
+      throw new Error('Unknown encoding');
+  }
+
+  Buffer._charsWritten = SlowBuffer._charsWritten;
+
+  return ret;
+};
+
+
+// toString(encoding, start=0, end=buffer.length)
+Buffer.prototype.toString = function(encoding, start, end) {
+  encoding = String(encoding || 'utf8').toLowerCase();
+
+  if (typeof start == 'undefined' || start < 0) {
+    start = 0;
+  } else if (start > this.length) {
+    start = this.length;
+  }
+
+  if (typeof end == 'undefined' || end > this.length) {
+    end = this.length;
+  } else if (end < 0) {
+    end = 0;
+  }
+
+  start = start + this.offset;
+  end = end + this.offset;
+
+  switch (encoding) {
+    case 'hex':
+      return this.parent.hexSlice(start, end);
+
+    case 'utf8':
+    case 'utf-8':
+      return this.parent.utf8Slice(start, end);
+
+    case 'ascii':
+      return this.parent.asciiSlice(start, end);
+
+    case 'binary':
+      return this.parent.binarySlice(start, end);
+
+    case 'base64':
+      return this.parent.base64Slice(start, end);
+
+    case 'ucs2':
+    case 'ucs-2':
+      return this.parent.ucs2Slice(start, end);
+
+    default:
+      throw new Error('Unknown encoding');
+  }
+};
+
+
+// byteLength
+Buffer.byteLength = SlowBuffer.byteLength;
+
+
+// fill(value, start=0, end=buffer.length)
+Buffer.prototype.fill = function fill(value, start, end) {
+  value || (value = 0);
+  start || (start = 0);
+  end || (end = this.length);
+
+  if (typeof value === 'string') {
+    value = value.charCodeAt(0);
+  }
+  if (!(typeof value === 'number') || isNaN(value)) {
+    throw new Error('value is not a number');
+  }
+
+  if (end < start) throw new Error('end < start');
+
+  // Fill 0 bytes; we're done
+  if (end === start) return 0;
+  if (this.length == 0) return 0;
+
+  if (start < 0 || start >= this.length) {
+    throw new Error('start out of bounds');
+  }
+
+  if (end < 0 || end > this.length) {
+    throw new Error('end out of bounds');
+  }
+
+  return this.parent.fill(value,
+                          start + this.offset,
+                          end + this.offset);
+};
+
+
+// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+Buffer.prototype.copy = function(target, target_start, start, end) {
+  var source = this;
+  start || (start = 0);
+  end || (end = this.length);
+  target_start || (target_start = 0);
+
+  if (end < start) throw new Error('sourceEnd < sourceStart');
+
+  // Copy 0 bytes; we're done
+  if (end === start) return 0;
+  if (target.length == 0 || source.length == 0) return 0;
+
+  if (target_start < 0 || target_start >= target.length) {
+    throw new Error('targetStart out of bounds');
+  }
+
+  if (start < 0 || start >= source.length) {
+    throw new Error('sourceStart out of bounds');
+  }
+
+  if (end < 0 || end > source.length) {
+    throw new Error('sourceEnd out of bounds');
+  }
+
+  // Are we oob?
+  if (end > this.length) {
+    end = this.length;
+  }
+
+  if (target.length - target_start < end - start) {
+    end = target.length - target_start + start;
+  }
+
+  return this.parent.copy(target.parent,
+                          target_start + target.offset,
+                          start + this.offset,
+                          end + this.offset);
+};
+
+
+// slice(start, end)
+Buffer.prototype.slice = function(start, end) {
+  if (end === undefined) end = this.length;
+  if (end > this.length) throw new Error('oob');
+  if (start > end) throw new Error('oob');
+
+  return new Buffer(this.parent, end - start, +start + this.offset);
+};
+
+
+// Legacy methods for backwards compatibility.
+
+Buffer.prototype.utf8Slice = function(start, end) {
+  return this.toString('utf8', start, end);
+};
+
+Buffer.prototype.binarySlice = function(start, end) {
+  return this.toString('binary', start, end);
+};
+
+Buffer.prototype.asciiSlice = function(start, end) {
+  return this.toString('ascii', start, end);
+};
+
+Buffer.prototype.utf8Write = function(string, offset) {
+  return this.write(string, offset, 'utf8');
+};
+
+Buffer.prototype.binaryWrite = function(string, offset) {
+  return this.write(string, offset, 'binary');
+};
+
+Buffer.prototype.asciiWrite = function(string, offset) {
+  return this.write(string, offset, 'ascii');
+};
+
+Buffer.prototype.readUInt8 = function(offset, noAssert) {
+  var buffer = this;
+
+  if (!noAssert) {
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  return buffer.parent[buffer.offset + offset];
+};
+
+function readUInt16(buffer, offset, isBigEndian, noAssert) {
+  var val = 0;
+
+
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 1 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  if (isBigEndian) {
+    val = buffer.parent[buffer.offset + offset] << 8;
+    val |= buffer.parent[buffer.offset + offset + 1];
+  } else {
+    val = buffer.parent[buffer.offset + offset];
+    val |= buffer.parent[buffer.offset + offset + 1] << 8;
+  }
+
+  return val;
+}
+
+Buffer.prototype.readUInt16LE = function(offset, noAssert) {
+  return readUInt16(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readUInt16BE = function(offset, noAssert) {
+  return readUInt16(this, offset, true, noAssert);
+};
+
+function readUInt32(buffer, offset, isBigEndian, noAssert) {
+  var val = 0;
+
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 3 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  if (isBigEndian) {
+    val = buffer.parent[buffer.offset + offset + 1] << 16;
+    val |= buffer.parent[buffer.offset + offset + 2] << 8;
+    val |= buffer.parent[buffer.offset + offset + 3];
+    val = val + (buffer.parent[buffer.offset + offset] << 24 >>> 0);
+  } else {
+    val = buffer.parent[buffer.offset + offset + 2] << 16;
+    val |= buffer.parent[buffer.offset + offset + 1] << 8;
+    val |= buffer.parent[buffer.offset + offset];
+    val = val + (buffer.parent[buffer.offset + offset + 3] << 24 >>> 0);
+  }
+
+  return val;
+}
+
+Buffer.prototype.readUInt32LE = function(offset, noAssert) {
+  return readUInt32(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readUInt32BE = function(offset, noAssert) {
+  return readUInt32(this, offset, true, noAssert);
+};
+
+
+/*
+ * Signed integer types, yay team! A reminder on how two's complement actually
+ * works. The first bit is the signed bit, i.e. tells us whether or not the
+ * number should be positive or negative. If the two's complement value is
+ * positive, then we're done, as it's equivalent to the unsigned representation.
+ *
+ * Now if the number is positive, you're pretty much done, you can just leverage
+ * the unsigned translations and return those. Unfortunately, negative numbers
+ * aren't quite that straightforward.
+ *
+ * At first glance, one might be inclined to use the traditional formula to
+ * translate binary numbers between the positive and negative values in two's
+ * complement. (Though it doesn't quite work for the most negative value)
+ * Mainly:
+ *  - invert all the bits
+ *  - add one to the result
+ *
+ * Of course, this doesn't quite work in Javascript. Take for example the value
+ * of -128. This could be represented in 16 bits (big-endian) as 0xff80. But of
+ * course, Javascript will do the following:
+ *
+ * > ~0xff80
+ * -65409
+ *
+ * Whoh there, Javascript, that's not quite right. But wait, according to
+ * Javascript that's perfectly correct. When Javascript ends up seeing the
+ * constant 0xff80, it has no notion that it is actually a signed number. It
+ * assumes that we've input the unsigned value 0xff80. Thus, when it does the
+ * binary negation, it casts it into a signed value, (positive 0xff80). Then
+ * when you perform binary negation on that, it turns it into a negative number.
+ *
+ * Instead, we're going to have to use the following general formula, that works
+ * in a rather Javascript friendly way. I'm glad we don't support this kind of
+ * weird numbering scheme in the kernel.
+ *
+ * (BIT-MAX - (unsigned)val + 1) * -1
+ *
+ * The astute observer, may think that this doesn't make sense for 8-bit numbers
+ * (really it isn't necessary for them). However, when you get 16-bit numbers,
+ * you do. Let's go back to our prior example and see how this will look:
+ *
+ * (0xffff - 0xff80 + 1) * -1
+ * (0x007f + 1) * -1
+ * (0x0080) * -1
+ */
+Buffer.prototype.readInt8 = function(offset, noAssert) {
+  var buffer = this;
+  var neg;
+
+  if (!noAssert) {
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  neg = buffer.parent[buffer.offset + offset] & 0x80;
+  if (!neg) {
+    return (buffer.parent[buffer.offset + offset]);
+  }
+
+  return ((0xff - buffer.parent[buffer.offset + offset] + 1) * -1);
+};
+
+function readInt16(buffer, offset, isBigEndian, noAssert) {
+  var neg, val;
+
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 1 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  val = readUInt16(buffer, offset, isBigEndian, noAssert);
+  neg = val & 0x8000;
+  if (!neg) {
+    return val;
+  }
+
+  return (0xffff - val + 1) * -1;
+}
+
+Buffer.prototype.readInt16LE = function(offset, noAssert) {
+  return readInt16(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readInt16BE = function(offset, noAssert) {
+  return readInt16(this, offset, true, noAssert);
+};
+
+function readInt32(buffer, offset, isBigEndian, noAssert) {
+  var neg, val;
+
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 3 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  val = readUInt32(buffer, offset, isBigEndian, noAssert);
+  neg = val & 0x80000000;
+  if (!neg) {
+    return (val);
+  }
+
+  return (0xffffffff - val + 1) * -1;
+}
+
+Buffer.prototype.readInt32LE = function(offset, noAssert) {
+  return readInt32(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readInt32BE = function(offset, noAssert) {
+  return readInt32(this, offset, true, noAssert);
+};
+
+function readFloat(buffer, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset + 3 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  return require('./buffer_ieee754').readIEEE754(buffer, offset, isBigEndian,
+      23, 4);
+}
+
+Buffer.prototype.readFloatLE = function(offset, noAssert) {
+  return readFloat(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readFloatBE = function(offset, noAssert) {
+  return readFloat(this, offset, true, noAssert);
+};
+
+function readDouble(buffer, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset + 7 < buffer.length,
+        'Trying to read beyond buffer length');
+  }
+
+  return require('./buffer_ieee754').readIEEE754(buffer, offset, isBigEndian,
+      52, 8);
+}
+
+Buffer.prototype.readDoubleLE = function(offset, noAssert) {
+  return readDouble(this, offset, false, noAssert);
+};
+
+Buffer.prototype.readDoubleBE = function(offset, noAssert) {
+  return readDouble(this, offset, true, noAssert);
+};
+
+
+/*
+ * We have to make sure that the value is a valid integer. This means that it is
+ * non-negative. It has no fractional component and that it does not exceed the
+ * maximum allowed value.
+ *
+ *      value           The number to check for validity
+ *
+ *      max             The maximum value
+ */
+function verifuint(value, max) {
+  assert.ok(typeof (value) == 'number',
+      'cannot write a non-number as a number');
+
+  assert.ok(value >= 0,
+      'specified a negative value for writing an unsigned value');
+
+  assert.ok(value <= max, 'value is larger than maximum value for type');
+
+  assert.ok(Math.floor(value) === value, 'value has a fractional component');
+}
+
+Buffer.prototype.writeUInt8 = function(value, offset, noAssert) {
+  var buffer = this;
+
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset < buffer.length,
+        'trying to write beyond buffer length');
+
+    verifuint(value, 0xff);
+  }
+
+  buffer.parent[buffer.offset + offset] = value;
+};
+
+function writeUInt16(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 1 < buffer.length,
+        'trying to write beyond buffer length');
+
+    verifuint(value, 0xffff);
+  }
+
+  if (isBigEndian) {
+    buffer.parent[buffer.offset + offset] = (value & 0xff00) >>> 8;
+    buffer.parent[buffer.offset + offset + 1] = value & 0x00ff;
+  } else {
+    buffer.parent[buffer.offset + offset + 1] = (value & 0xff00) >>> 8;
+    buffer.parent[buffer.offset + offset] = value & 0x00ff;
+  }
+}
+
+Buffer.prototype.writeUInt16LE = function(value, offset, noAssert) {
+  writeUInt16(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeUInt16BE = function(value, offset, noAssert) {
+  writeUInt16(this, value, offset, true, noAssert);
+};
+
+function writeUInt32(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 3 < buffer.length,
+        'trying to write beyond buffer length');
+
+    verifuint(value, 0xffffffff);
+  }
+
+  if (isBigEndian) {
+    buffer.parent[buffer.offset + offset] = (value >>> 24) & 0xff;
+    buffer.parent[buffer.offset + offset + 1] = (value >>> 16) & 0xff;
+    buffer.parent[buffer.offset + offset + 2] = (value >>> 8) & 0xff;
+    buffer.parent[buffer.offset + offset + 3] = value & 0xff;
+  } else {
+    buffer.parent[buffer.offset + offset + 3] = (value >>> 24) & 0xff;
+    buffer.parent[buffer.offset + offset + 2] = (value >>> 16) & 0xff;
+    buffer.parent[buffer.offset + offset + 1] = (value >>> 8) & 0xff;
+    buffer.parent[buffer.offset + offset] = value & 0xff;
+  }
+}
+
+Buffer.prototype.writeUInt32LE = function(value, offset, noAssert) {
+  writeUInt32(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeUInt32BE = function(value, offset, noAssert) {
+  writeUInt32(this, value, offset, true, noAssert);
+};
+
+
+/*
+ * We now move onto our friends in the signed number category. Unlike unsigned
+ * numbers, we're going to have to worry a bit more about how we put values into
+ * arrays. Since we are only worrying about signed 32-bit values, we're in
+ * slightly better shape. Unfortunately, we really can't do our favorite binary
+ * & in this system. It really seems to do the wrong thing. For example:
+ *
+ * > -32 & 0xff
+ * 224
+ *
+ * What's happening above is really: 0xe0 & 0xff = 0xe0. However, the results of
+ * this aren't treated as a signed number. Ultimately a bad thing.
+ *
+ * What we're going to want to do is basically create the unsigned equivalent of
+ * our representation and pass that off to the wuint* functions. To do that
+ * we're going to do the following:
+ *
+ *  - if the value is positive
+ *      we can pass it directly off to the equivalent wuint
+ *  - if the value is negative
+ *      we do the following computation:
+ *         mb + val + 1, where
+ *         mb   is the maximum unsigned value in that byte size
+ *         val  is the Javascript negative integer
+ *
+ *
+ * As a concrete value, take -128. In signed 16 bits this would be 0xff80. If
+ * you do out the computations:
+ *
+ * 0xffff - 128 + 1
+ * 0xffff - 127
+ * 0xff80
+ *
+ * You can then encode this value as the signed version. This is really rather
+ * hacky, but it should work and get the job done which is our goal here.
+ */
+
+/*
+ * A series of checks to make sure we actually have a signed 32-bit number
+ */
+function verifsint(value, max, min) {
+  assert.ok(typeof (value) == 'number',
+      'cannot write a non-number as a number');
+
+  assert.ok(value <= max, 'value larger than maximum allowed value');
+
+  assert.ok(value >= min, 'value smaller than minimum allowed value');
+
+  assert.ok(Math.floor(value) === value, 'value has a fractional component');
+}
+
+function verifIEEE754(value, max, min) {
+  assert.ok(typeof (value) == 'number',
+      'cannot write a non-number as a number');
+
+  assert.ok(value <= max, 'value larger than maximum allowed value');
+
+  assert.ok(value >= min, 'value smaller than minimum allowed value');
+}
+
+Buffer.prototype.writeInt8 = function(value, offset, noAssert) {
+  var buffer = this;
+
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset < buffer.length,
+        'Trying to write beyond buffer length');
+
+    verifsint(value, 0x7f, -0x80);
+  }
+
+  if (value >= 0) {
+    buffer.writeUInt8(value, offset, noAssert);
+  } else {
+    buffer.writeUInt8(0xff + value + 1, offset, noAssert);
+  }
+};
+
+function writeInt16(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 1 < buffer.length,
+        'Trying to write beyond buffer length');
+
+    verifsint(value, 0x7fff, -0x8000);
+  }
+
+  if (value >= 0) {
+    writeUInt16(buffer, value, offset, isBigEndian, noAssert);
+  } else {
+    writeUInt16(buffer, 0xffff + value + 1, offset, isBigEndian, noAssert);
+  }
+}
+
+Buffer.prototype.writeInt16LE = function(value, offset, noAssert) {
+  writeInt16(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeInt16BE = function(value, offset, noAssert) {
+  writeInt16(this, value, offset, true, noAssert);
+};
+
+function writeInt32(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 3 < buffer.length,
+        'Trying to write beyond buffer length');
+
+    verifsint(value, 0x7fffffff, -0x80000000);
+  }
+
+  if (value >= 0) {
+    writeUInt32(buffer, value, offset, isBigEndian, noAssert);
+  } else {
+    writeUInt32(buffer, 0xffffffff + value + 1, offset, isBigEndian, noAssert);
+  }
+}
+
+Buffer.prototype.writeInt32LE = function(value, offset, noAssert) {
+  writeInt32(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeInt32BE = function(value, offset, noAssert) {
+  writeInt32(this, value, offset, true, noAssert);
+};
+
+function writeFloat(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 3 < buffer.length,
+        'Trying to write beyond buffer length');
+
+    verifIEEE754(value, 3.4028234663852886e+38, -3.4028234663852886e+38);
+  }
+
+  require('./buffer_ieee754').writeIEEE754(buffer, value, offset, isBigEndian,
+      23, 4);
+}
+
+Buffer.prototype.writeFloatLE = function(value, offset, noAssert) {
+  writeFloat(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeFloatBE = function(value, offset, noAssert) {
+  writeFloat(this, value, offset, true, noAssert);
+};
+
+function writeDouble(buffer, value, offset, isBigEndian, noAssert) {
+  if (!noAssert) {
+    assert.ok(value !== undefined && value !== null,
+        'missing value');
+
+    assert.ok(typeof (isBigEndian) === 'boolean',
+        'missing or invalid endian');
+
+    assert.ok(offset !== undefined && offset !== null,
+        'missing offset');
+
+    assert.ok(offset + 7 < buffer.length,
+        'Trying to write beyond buffer length');
+
+    verifIEEE754(value, 1.7976931348623157E+308, -1.7976931348623157E+308);
+  }
+
+  require('./buffer_ieee754').writeIEEE754(buffer, value, offset, isBigEndian,
+      52, 8);
+}
+
+Buffer.prototype.writeDoubleLE = function(value, offset, noAssert) {
+  writeDouble(this, value, offset, false, noAssert);
+};
+
+Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
+  writeDouble(this, value, offset, true, noAssert);
+};
+
+SlowBuffer.prototype.readUInt8 = Buffer.prototype.readUInt8;
+SlowBuffer.prototype.readUInt16LE = Buffer.prototype.readUInt16LE;
+SlowBuffer.prototype.readUInt16BE = Buffer.prototype.readUInt16BE;
+SlowBuffer.prototype.readUInt32LE = Buffer.prototype.readUInt32LE;
+SlowBuffer.prototype.readUInt32BE = Buffer.prototype.readUInt32BE;
+SlowBuffer.prototype.readInt8 = Buffer.prototype.readInt8;
+SlowBuffer.prototype.readInt16LE = Buffer.prototype.readInt16LE;
+SlowBuffer.prototype.readInt16BE = Buffer.prototype.readInt16BE;
+SlowBuffer.prototype.readInt32LE = Buffer.prototype.readInt32LE;
+SlowBuffer.prototype.readInt32BE = Buffer.prototype.readInt32BE;
+SlowBuffer.prototype.readFloatLE = Buffer.prototype.readFloatLE;
+SlowBuffer.prototype.readFloatBE = Buffer.prototype.readFloatBE;
+SlowBuffer.prototype.readDoubleLE = Buffer.prototype.readDoubleLE;
+SlowBuffer.prototype.readDoubleBE = Buffer.prototype.readDoubleBE;
+SlowBuffer.prototype.writeUInt8 = Buffer.prototype.writeUInt8;
+SlowBuffer.prototype.writeUInt16LE = Buffer.prototype.writeUInt16LE;
+SlowBuffer.prototype.writeUInt16BE = Buffer.prototype.writeUInt16BE;
+SlowBuffer.prototype.writeUInt32LE = Buffer.prototype.writeUInt32LE;
+SlowBuffer.prototype.writeUInt32BE = Buffer.prototype.writeUInt32BE;
+SlowBuffer.prototype.writeInt8 = Buffer.prototype.writeInt8;
+SlowBuffer.prototype.writeInt16LE = Buffer.prototype.writeInt16LE;
+SlowBuffer.prototype.writeInt16BE = Buffer.prototype.writeInt16BE;
+SlowBuffer.prototype.writeInt32LE = Buffer.prototype.writeInt32LE;
+SlowBuffer.prototype.writeInt32BE = Buffer.prototype.writeInt32BE;
+SlowBuffer.prototype.writeFloatLE = Buffer.prototype.writeFloatLE;
+SlowBuffer.prototype.writeFloatBE = Buffer.prototype.writeFloatBE;
+SlowBuffer.prototype.writeDoubleLE = Buffer.prototype.writeDoubleLE;
+SlowBuffer.prototype.writeDoubleBE = Buffer.prototype.writeDoubleBE;
+
+},{"assert":1,"./buffer_ieee754":8,"base64-js":9}],9:[function(require,module,exports){
+(function (exports) {
+	'use strict';
+
+	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+	function b64ToByteArray(b64) {
+		var i, j, l, tmp, placeHolders, arr;
+	
+		if (b64.length % 4 > 0) {
+			throw 'Invalid string. Length must be a multiple of 4';
+		}
+
+		// the number of equal signs (place holders)
+		// if there are two placeholders, than the two characters before it
+		// represent one byte
+		// if there is only one, then the three characters before it represent 2 bytes
+		// this is just a cheap hack to not do indexOf twice
+		placeHolders = b64.indexOf('=');
+		placeHolders = placeHolders > 0 ? b64.length - placeHolders : 0;
+
+		// base64 is 4/3 + up to two characters of the original data
+		arr = [];//new Uint8Array(b64.length * 3 / 4 - placeHolders);
+
+		// if there are placeholders, only get up to the last complete 4 chars
+		l = placeHolders > 0 ? b64.length - 4 : b64.length;
+
+		for (i = 0, j = 0; i < l; i += 4, j += 3) {
+			tmp = (lookup.indexOf(b64[i]) << 18) | (lookup.indexOf(b64[i + 1]) << 12) | (lookup.indexOf(b64[i + 2]) << 6) | lookup.indexOf(b64[i + 3]);
+			arr.push((tmp & 0xFF0000) >> 16);
+			arr.push((tmp & 0xFF00) >> 8);
+			arr.push(tmp & 0xFF);
+		}
+
+		if (placeHolders === 2) {
+			tmp = (lookup.indexOf(b64[i]) << 2) | (lookup.indexOf(b64[i + 1]) >> 4);
+			arr.push(tmp & 0xFF);
+		} else if (placeHolders === 1) {
+			tmp = (lookup.indexOf(b64[i]) << 10) | (lookup.indexOf(b64[i + 1]) << 4) | (lookup.indexOf(b64[i + 2]) >> 2);
+			arr.push((tmp >> 8) & 0xFF);
+			arr.push(tmp & 0xFF);
+		}
+
+		return arr;
+	}
+
+	function uint8ToBase64(uint8) {
+		var i,
+			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
+			output = "",
+			temp, length;
+
+		function tripletToBase64 (num) {
+			return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F];
+		};
+
+		// go through the array every three bytes, we'll deal with trailing stuff later
+		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
+			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2]);
+			output += tripletToBase64(temp);
+		}
+
+		// pad the end with zeros, but make sure to not forget the extra bytes
+		switch (extraBytes) {
+			case 1:
+				temp = uint8[uint8.length - 1];
+				output += lookup[temp >> 2];
+				output += lookup[(temp << 4) & 0x3F];
+				output += '==';
+				break;
+			case 2:
+				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1]);
+				output += lookup[temp >> 10];
+				output += lookup[(temp >> 4) & 0x3F];
+				output += lookup[(temp << 2) & 0x3F];
+				output += '=';
+				break;
+		}
+
+		return output;
+	}
+
+	module.exports.toByteArray = b64ToByteArray;
+	module.exports.fromByteArray = uint8ToBase64;
+}());
+
+},{}]},{},[])
+;;module.exports=require("buffer-browserify")
+
+},{}],4:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            if (ev.source === window && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}],5:[function(require,module,exports){
+var Buffer=require("__browserify_Buffer").Buffer;"use strict";
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+var util = {
+  isArray: function (ar) {
+    return Array.isArray(ar) || (typeof ar === 'object' && objectToString(ar) === '[object Array]');
+  },
+  isDate: function (d) {
+    return typeof d === 'object' && objectToString(d) === '[object Date]';
+  },
+  isRegExp: function (re) {
+    return typeof re === 'object' && objectToString(re) === '[object RegExp]';
+  },
+  getRegExpFlags: function (re) {
+    var flags = '';
+    re.global && (flags += 'g');
+    re.ignoreCase && (flags += 'i');
+    re.multiline && (flags += 'm');
+    return flags;
+  }
+};
+
+module.exports = clone;
+
+/**
+ * Clones (copies) an Object using deep copying.
+ *
+ * This function supports circular references by default, but if you are certain
+ * there are no circular references in your object, you can save some CPU time
+ * by calling clone(obj, false).
+ *
+ * Caution: if `circular` is false and `parent` contains circular references,
+ * your program may enter an infinite loop and crash.
+ *
+ * @param `parent` - the object to be cloned
+ * @param `circular` - set to true if the object to be cloned may contain
+ *    circular references. (optional - true by default)
+*/
+function clone(parent, circular) {
+  if (typeof circular == 'undefined')
+    circular = true;
+
+  var useBuffer = typeof Buffer != 'undefined';
+
+  var circularParent = {};
+  var circularResolved = {};
+  var circularReplace = [];
+
+  function _clone(parent, context, child, cIndex) {
+    var i; // Use local context within this function
+    // Deep clone all properties of parent into child
+    if (typeof parent == 'object') {
+      if (parent == null)
+        return parent;
+      // Check for circular references
+      for(i in circularParent)
+        if (circularParent[i] === parent) {
+          // We found a circular reference
+          circularReplace.push({'resolveTo': i, 'child': child, 'i': cIndex});
+          return null; //Just return null for now...
+          // we will resolve circular references later
+        }
+
+      // Add to list of all parent objects
+      circularParent[context] = parent;
+      // Now continue cloning...
+      if (util.isArray(parent)) {
+        child = [];
+        for(i in parent)
+          child[i] = _clone(parent[i], context + '[' + i + ']', child, i);
+      }
+      else if (util.isDate(parent))
+        child = new Date(parent.getTime());
+      else if (util.isRegExp(parent)) {
+        child = new RegExp(parent.source, util.getRegExpFlags(parent));
+        if (parent.lastIndex) child.lastIndex = parent.lastIndex;
+      } else if (useBuffer && Buffer.isBuffer(parent))
+      {
+        child = new Buffer(parent.length);
+        parent.copy(child);
+      }
+      else {
+        child = {};
+
+        // Also copy prototype over to new cloned object
+        child.__proto__ = parent.__proto__;
+        for(i in parent)
+          child[i] = _clone(parent[i], context + '[' + i + ']', child, i);
+      }
+
+      // Add to list of all cloned objects
+      circularResolved[context] = child;
+    }
+    else
+      child = parent; //Just a simple shallow copy will do
+    return child;
+  }
+
+  var i;
+  if (circular) {
+    var cloned = _clone(parent, '*');
+
+    // Now this object has been cloned. Let's check to see if there are any
+    // circular references for it
+    for(i in circularReplace) {
+      var c = circularReplace[i];
+      if (c && c.child && c.i in c.child) {
+        c.child[c.i] = circularResolved[c.resolveTo];
+      }
+    }
+    return cloned;
+  } else {
+    // Deep clone all properties of parent into child
+    var child;
+    if (typeof parent == 'object') {
+      if (parent == null)
+        return parent;
+      if (parent.constructor.name === 'Array') {
+        child = [];
+        for(i in parent)
+          child[i] = clone(parent[i], circular);
+      }
+      else if (util.isDate(parent))
+        child = new Date(parent.getTime() );
+      else if (util.isRegExp(parent)) {
+        child = new RegExp(parent.source, util.getRegExpFlags(parent));
+        if (parent.lastIndex) child.lastIndex = parent.lastIndex;
+      } else {
+        child = {};
+        child.__proto__ = parent.__proto__;
+        for(i in parent)
+          child[i] = clone(parent[i], circular);
+      }
+    }
+    else
+      child = parent; // Just a simple shallow clone will do
+    return child;
+  }
+}
+
+/**
+ * Simple flat clone using prototype, accepts only objects, usefull for property
+ * override on FLAT configuration object (no nested props).
+ *
+ * USE WITH CAUTION! This may not behave as you wish if you do not know how this
+ * works.
+ */
+clone.clonePrototype = function(parent) {
+  if (parent === null)
+    return null;
+
+  var c = function () {};
+  c.prototype = parent;
+  return new c();
+};
+
+},{"__browserify_Buffer":3}],6:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -256,8 +4277,6 @@ function metatable() {
                 });
             });
 
-            var keys = keyset.values();
-
             bootstrap();
             paint();
 
@@ -273,12 +4292,13 @@ function metatable() {
                     .on('click', function() {
                         var name = prompt('column name');
                         if (name) {
-                            keys.push(name);
+                            keyset.add(name);
                             paint();
                         }
                     });
                 colbutton.append('span').attr('class', 'icon-plus');
                 colbutton.append('span').text(' new column');
+
                 var enter = sel.selectAll('table').data([d]).enter().append('table');
                 var thead = enter.append('thead');
                 var tbody = enter.append('tbody');
@@ -289,15 +4309,18 @@ function metatable() {
 
             function paint() {
 
+                var keys = keyset.values();
+
                 var th = table
                     .select('thead')
                     .select('tr')
                     .selectAll('th')
-                    .data(keys);
+                    .data(keys, function(d) { return d; });
 
-                th.enter()
-                    .append('th')
-                    .text(String);
+                var delbutton = th.enter().append('th')
+                    .append('span')
+                    .text(String)
+                    .append('button');
 
                 th.exit().remove();
 
@@ -310,38 +4333,70 @@ function metatable() {
                 tr.exit().remove();
 
                 var td = tr.selectAll('td')
-                    .data(keys);
+                    .data(keys, function(d) { return d; });
 
                 td.enter()
                     .append('td')
                     .append('input')
                     .attr('field', String);
 
+                td.exit().remove();
+
+                delbutton.on('click', function(d) {
+                        var name = d;
+                        if (confirm('Delete column ' + name + '?')) {
+                            keyset.remove(name);
+                            tr.selectAll('input')
+                                .data(function(d, i) {
+                                    var map = d3.map(d);
+                                    map.remove(name);
+                                    var reduced = map.entries()
+                                        .reduce(function(memo, d) {
+                                            memo[d.key] = d.value;
+                                            return memo;
+                                        }, {});
+                                    event.change(reduced, i);
+                                    return {
+                                        data: reduced,
+                                        index: i
+                                    };
+                                });
+                            paint();
+                        }
+                    });
+                delbutton.append('span').attr('class', 'icon-minus');
+                delbutton.append('span').text(' delete');
+
                 function write(d) {
-                    d[d3.select(this).attr('field')] = this.value;
-                    event.change();
+                    d.data[d3.select(this).attr('field')] = this.value;
+                    event.change(d.data, d.index);
                 }
 
                 tr.selectAll('input')
-                    .data(function(d) {
-                        return d3.range(keys.length).map(function() { return d; });
+                    .data(function(d, i) {
+                        return d3.range(keys.length).map(function() {
+                            return {
+                                data: d,
+                                index: i
+                            };
+                        });
                     })
                     .classed('disabled', function(d) {
-                        return d[d3.select(this).attr('field')] === undefined;
+                        return d.data[d3.select(this).attr('field')] === undefined;
                     })
                     .property('value', function(d) {
-                        return d[d3.select(this).attr('field')] || '';
+                        return d.data[d3.select(this).attr('field')] || '';
                     })
                     .on('keyup', write)
                     .on('change', write)
                     .on('click', function(d) {
-                        if (d[d3.select(this).attr('field')] === undefined) {
-                            d[d3.select(this).attr('field')] = '';
+                        if (d.data[d3.select(this).attr('field')] === undefined) {
+                            d.data[d3.select(this).attr('field')] = '';
                             paint();
                         }
                     })
                     .on('focus', function(d) {
-                        event.rowfocus(d);
+                        event.rowfocus(d.data, d.index);
                     });
             }
         });
@@ -350,7 +4405,7 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports = function(_, def) {
     def = def === undefined ? 4 : def;
     if (_ === '{}') return '    ';
@@ -360,7 +4415,7 @@ module.exports = function(_, def) {
     return space[0];
 };
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -613,7 +4668,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":7}],7:[function(require,module,exports){
+},{"jsonlint-lines":9}],9:[function(require,module,exports){
 var process=require("__browserify_process");/* parser generated by jison 0.4.6 */
 /*
   Returns a Parser object of the following structure:
@@ -1268,182 +5323,195 @@ if (typeof module !== 'undefined' && require.main === module) {
   exports.main(process.argv.slice(1));
 }
 }
-},{"__browserify_process":3,"fs":1,"path":2}],8:[function(require,module,exports){
+},{"__browserify_process":4,"fs":1,"path":2}],10:[function(require,module,exports){
 module.exports = function(d3) {
     var preview = require('static-map-preview')(d3, 'tmcw.map-dsejpecw');
 
     function gitHubBrowse(d3) {
+
         return function(token) {
             var event = d3.dispatch('chosen');
 
+            function filter(d) {
+                if (d.type === 'blob') {
+                    return d.path.match(/json$/);
+                }
+                return true;
+            }
+
             function browse(selection) {
-                var outer = selection.append('div')
-                    .attr('class', 'miller-outer');
+                req('/user', token, onuser);
 
-                var wrap = outer.append('div')
-                    .attr('class', 'miller-wrap');
+                function onuser(err, user) {
+                    reqList('/user/orgs', token, function(err, orgs) {
+                        var base = [user];
+                        if (orgs && orgs.length) {
+                            base = base.concat(orgs);
+                        }
+                        render({
+                            columns: [base],
+                            path: [{name:'home'}]
+                        });
+                    });
+                }
 
-                reqList('/user/repos', token, function(err, repos) {
+                function navigateTo(d, data) {
+                    var url;
+                    if (d.type && d.type === 'User') {
+                        // user
+                        url = '/user/repos';
+                    } else if (d.login) {
+                        // organization
+                        url = '/orgs/' + d.login + '/repos';
+                    } else if (d.forks !== undefined) {
+                        // repository
+                        url = '/repos/' + d.full_name + '/branches';
+                    } else if (d.type ===  'tree') {
+                        url = '/repos/' + data.path[2].full_name + '/git/trees/' + d.sha;
+                    } else if (d.name && d.commit) {
+                        // branch
+                        url = '/repos/' + data.path[2].full_name + '/git/trees/' + d.commit.sha;
+                    }
+                    selection.classed('loading', true);
+                    reqList(url, token, onlist);
+                    function onlist(err, repos) {
+                        selection.classed('loading', false);
+                        if (repos.length === 1 && repos[0].tree) {
+                            repos = repos[0].tree.filter(filter);
+                        }
+                        data.path.push(d);
+                        data.columns = data.columns.concat([repos]);
+                        render(data);
+                    }
+                }
 
-                    var repocolumn = wrap.append('div')
-                        .attr('class', 'miller-column root')
-                        .attr('data-level', 0);
+                var header = selection.append('div')
+                    .attr('class', 'header');
 
-                     var repoItems = repocolumn.selectAll('div.item')
-                        .data(repos)
+                var back = header.append('a')
+                    .attr('class', 'back')
+                    .text('<');
+
+                var breadcrumbs = header.append('div')
+                    .attr('class', 'breadcrumbs');
+
+                var columnsel = selection.append('div')
+                    .attr('class', 'column-wrap');
+
+                var mask = selection.append('div')
+                    .attr('class', 'mask');
+
+                function render(data) {
+
+                    back.on('click', function(d, i) {
+                        if (data.path.length > 1) {
+                            data.path.pop();
+                            data.columns.pop();
+                            render(data);
+                        }
+                    });
+
+                    var crumbs = breadcrumbs
+                        .selectAll('a')
+                        .data(data.path);
+
+                    crumbs.exit().remove();
+
+                    crumbs.enter()
+                        .append('a')
+                        .text(name);
+
+                    var columns = columnsel
+                        .selectAll('div.column')
+                        .data(data.columns, function(d, i) {
+                            return i;
+                        });
+
+                    columns.exit().remove();
+
+                    columns
                         .enter()
                         .append('div')
+                        .attr('class', 'column');
+
+                    columns
+                        .style('transform', transformX)
+                        .style('-webkit-transform', transformX);
+
+                    function transformX(d, i) {
+                        return 'translateX(' + (i - data.columns.length + 1) * this.offsetWidth + 'px)';
+                    }
+
+                    var items = columns
+                        .selectAll('a.item')
+                        .filter(filter)
+                        .data(function(d) { return d; });
+                    items.exit().remove();
+                    var newitems = items.enter()
+                        .append('a')
                         .attr('class', 'item')
-                        .text(function(d) {
-                            return d.name;
+                        .text(name)
+                        .on('click', function(d) {
+                            if (d.type !== 'blob') navigateTo(d, data);
+                            else choose(d)();
+                        });
+
+                    newitems
+                        .filter(function(d) {
+                            return d.type === 'blob';
                         })
-                        .on('click', repositoryRoot);
+                        .each(function(d) {
+                            var parent = d3.select(this);
+                            d3.select(this).append('div')
+                                .attr('class', 'fr')
+                                .each(function(d) {
+                                    var sel = d3.select(this);
+                                    sel.selectAll('button')
+                                        .data([{
+                                            title: 'Preview',
+                                            action: quickpreview(d, parent)
+                                        }, {
+                                            title: 'Open',
+                                            action: choose(d)
+                                        }])
+                                        .enter()
+                                        .append('button')
+                                        .text(function(d) { return d.title; })
+                                        .on('click', function(d) { return d.action(); });
+                                });
+                        });
 
-                    metaResize();
-
-                    function cleanup(level) {
-                        wrap.selectAll('.miller-column').each(function() {
-                            if (+d3.select(this).attr('data-level') >= level) {
-                                d3.select(this).remove();
+                    function quickpreview(d, sel) {
+                        return function() {
+                            if (!sel.select('.preview').empty()) {
+                                return sel.select('.preview').remove();
                             }
-                        });
+                            var mapcontainer = sel.append('div').attr('class', 'preview');
+                            reqRaw('/repos/' + data.path[2].full_name + '/git/blobs/' + d.sha, token, onfile);
+                            function onfile(err, res) {
+                                preview(res, [mapcontainer.node().offsetWidth, 150], function(err, uri) {
+                                    if (err) return;
+                                    mapcontainer.append('img')
+                                        .attr('width', mapcontainer.node().offsetWidth + 'px')
+                                        .attr('height', '150px')
+                                        .attr('src', uri);
+                                });
+                            }
+                        };
                     }
 
-                    function metaResize() {
-                        wrap.style('width', function() {
-                            return (selection.selectAll('.miller-column')[0].length * 200) + 'px';
-                        });
-                        wrap.selectAll('.miller-column')
-                            .style('height', function() {
-                                var max = 0;
-                                selection.selectAll('.miller-column').each(function() {
-                                    var children = d3.select(this).selectAll('div.item')[0].length;
-                                    if (children > max) max = children;
-                                });
-                                return (max * 35) + 'px';
-                            });
+                    function choose(d) {
+                        return function() {
+                            event.chosen(d, data);
+                        };
                     }
 
-                    function repositoryRoot(d) {
-                        var that = this;
+                    (selection.node().parentNode || {}).scrollTop = 0;
+                }
 
-                        repoItems.classed('active', function() {
-                            return this == that;
-                        });
-
-                        req('/repos/' + [
-                            d.owner.login,
-                            d.name,
-                            'branches',
-                            d.default_branch
-                        ].join('/'), token, onBranch);
-
-                        function onBranch(err, branch) {
-                            req('/repos/' + [
-                                d.owner.login,
-                                d.name,
-                                'git',
-                                'trees',
-                                branch.commit.sha
-                            ].join('/'), token, onItems(d));
-                        }
-
-                        function onItems(parent) {
-                            return function(err, items) {
-                                cleanup(1);
-
-                                var rootColumn = wrap.append('div')
-                                    .attr('class', 'miller-column repo-root')
-                                    .attr('data-level', 1);
-
-                                items.tree = items.tree.map(function(t) {
-                                    t.parent = parent;
-                                    return t;
-                                });
-
-                                var columnItems = rootColumn.selectAll('div.item')
-                                    .data(items.tree)
-                                    .enter()
-                                    .append('div')
-                                    .attr('class', function(d) {
-                                        return 'item pad1 ' + d.type;
-                                    })
-                                    .text(function(d) {
-                                        return d.path;
-                                    });
-
-                                columnItems.each(function(d) {
-                                    if (d.type == 'tree') {
-                                        d3.select(this)
-                                            .on('click', repositoryTree(columnItems, 2, [d]));
-                                    } else {
-                                        d3.select(this)
-                                            .on('click', event.chosen);
-
-                                    }
-                                });
-
-                                metaResize();
-                            };
-                        }
-
-                        function repositoryTree(columnItems, level, parents) {
-                            return function(d) {
-                                var that = this;
-
-                                columnItems.classed('active', function() {
-                                    return this == that;
-                                });
-
-                                req('/repos/' + [
-                                    d.parent.owner.login,
-                                    d.parent.name,
-                                    'git',
-                                    'trees',
-                                    d.sha
-                                ].join('/'), token, onSubItems(d.parent));
-
-                                function onSubItems(parent) {
-                                    return function(err, items) {
-
-                                        cleanup(level);
-
-                                        var rootColumn = wrap.append('div')
-                                            .attr('class', 'miller-column repo-subcolumn')
-                                            .attr('data-level', level);
-
-                                        items.tree = items.tree.map(function(t) {
-                                            t.parent = parent;
-                                            t.parents = parents;
-                                            return t;
-                                        });
-
-                                        var columnItems = rootColumn.selectAll('div.item')
-                                            .data(items.tree)
-                                            .enter()
-                                            .append('div')
-                                            .attr('class', 'item pad1')
-                                            .text(function(d) {
-                                                return d.path;
-                                            });
-
-                                        columnItems.each(function(d) {
-                                            if (d.type == 'tree') {
-                                                d3.select(this).on('click', repositoryTree(columnItems, level + 1,
-                                                    parents.concat([d])));
-                                            } else {
-                                                d3.select(this)
-                                                    .on('click', event.chosen);
-                                            }
-                                        });
-
-                                        metaResize();
-                                    };
-                                }
-                            };
-                        }
-                    }
-                });
+                function name(d) {
+                    return d.login || d.name || d.path;
+                }
             }
 
             return d3.rebind(browse, event, 'on');
@@ -1455,28 +5523,29 @@ module.exports = function(d3) {
             var event = d3.dispatch('chosen');
             var time_format = d3.time.format('%Y/%m/%d');
             function browse(selection) {
-                reqList('/gists', token, function(err, gists) {
+                var width = Math.min(640, selection.node().offsetWidth);
+                req('/gists', token, function(err, gists) {
                     gists = gists.filter(hasMapFile);
                     var item = selection.selectAll('div.item')
                         .data(gists)
                         .enter()
                         .append('div')
                         .attr('class', 'fl item')
+                        .style('width', width + 'px')
+                        .style('height', 200 + 'px')
                         .on('click', function(d) {
                             event.chosen(d);
-                        });
-
-                    item.append('div')
-                        .attr('class', 'map-preview')
-                        .call(mapPreview(token));
+                        })
+                        .call(mapPreview(token, width));
 
                     var overlay = item.append('div')
                         .attr('class', 'overlay')
                         .text(function(d) {
-                            return d.id + ' / ' + d.description + ' edited at ' + time_format(new Date(d.updated_at));
+                            return d.id + ' | ' + d.description +
+                                ' | ' + time_format(new Date(d.updated_at));
                         });
 
-                    overlay.append('div')
+                    overlay.append('span')
                         .attr('class', 'files')
                         .selectAll('small')
                         .data(function(d) {
@@ -1535,15 +5604,31 @@ module.exports = function(d3) {
             .get();
     }
 
-    function mapPreview(token) {
+    function reqRaw(postfix, token, callback) {
+        authorize(d3.json((base + postfix)), token)
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(error) {
+                callback(error, null);
+            })
+            .header('Accept', 'application/vnd.github.raw')
+            .get();
+    }
+
+    function mapPreview(token, width) {
         return function(selection) {
             selection.each(function(d) {
                 var sel = d3.select(this);
                 req('/gists/' + d.id, token, function(err, data) {
                     var geojson = mapFile(data);
                     if (geojson) {
-                        var previewMap = preview(geojson, [200, 200]);
-                        sel.node().appendChild(previewMap.node());
+                        preview(geojson, [width, 200], function(err, res) {
+                            if (err) return;
+                            sel
+                                .style('background-image', 'url(' + res + ')')
+                                .style('background-size', width + 'px 200px');
+                        });
                     }
                 });
             });
@@ -1578,7 +5663,7 @@ function mapFile(data) {
     }
 }
 
-},{"static-map-preview":9}],9:[function(require,module,exports){
+},{"static-map-preview":11}],11:[function(require,module,exports){
 var scaleCanvas = require('autoscale-canvas');
 
 module.exports = function(d3, mapid) {
@@ -1591,21 +5676,18 @@ module.exports = function(d3, mapid) {
             mapid, cz.join(','), size.join('x')].join('/') + '.png';
     }
 
-    return function(geojson, wh) {
+    return function(geojson, wh, callback) {
         var projection = d3.geo.mercator()
             .precision(0)
             .translate([wh[0]/2, wh[1]/2]);
 
         path = d3.geo.path().projection(projection);
 
-        var container = d3.select(document.createElement('div'))
-            .attr('class', 'static-map-preview'),
-        image = container.append('img'),
-        canvas = container.append('canvas'),
-        z = 19;
+        var image = d3.select(document.createElement('img')),
+            canvas = d3.select(document.createElement('canvas')),
+            z = 19;
 
         canvas.attr('width', wh[0]).attr('height', wh[1]);
-        image.attr('width', wh[0]).attr('height', wh[1]);
         projection.center(projection.invert(path.centroid(geojson)));
         projection.scale((1 << z) / 2 / Math.PI);
 
@@ -1617,23 +5699,35 @@ module.exports = function(d3, mapid) {
             bounds = path.bounds(geojson);
             z--;
         }
-        image.attr('src', staticUrl(projection.center().concat([z-6]).map(filterNan), wh));
 
         var ctx = scaleCanvas(canvas.node()).getContext('2d'),
         painter = path.context(ctx);
 
         ctx.strokeStyle = '#E000F5';
         ctx.lineWidth = 2;
-        painter(geojson);
-        ctx.stroke();
 
-        return container;
+        image.node().crossOrigin = '*';
+        image
+            .on('load', imageload)
+            .on('error', imageerror)
+            .attr('src', staticUrl(projection.center().concat([z-6]).map(filterNan), wh));
+
+        function imageload() {
+            ctx.drawImage(this, 0, 0);
+            painter(geojson);
+            ctx.stroke();
+            callback(null, canvas.node().toDataURL());
+        }
+
+        function imageerror(err) {
+            callback(err);
+        }
     };
 
     function filterNan(_) { return isNaN(_) ? 0 : _; }
 };
 
-},{"autoscale-canvas":10}],10:[function(require,module,exports){
+},{"autoscale-canvas":12}],12:[function(require,module,exports){
 
 /**
  * Retina-enable the given `canvas`.
@@ -1655,17 +5749,326 @@ module.exports = function(canvas){
   }
   return canvas;
 };
-},{}],11:[function(require,module,exports){
-module.exports = isMobile;
+},{}],13:[function(require,module,exports){
+(function(window) {
+	var HAS_HASHCHANGE = (function() {
+		var doc_mode = window.documentMode;
+		return ('onhashchange' in window) &&
+			(doc_mode === undefined || doc_mode > 7);
+	})();
 
-function isMobile (ua) {
-  if (!ua && typeof navigator != 'undefined') ua = navigator.userAgent;
+	L.Hash = function(map) {
+		this.onHashChange = L.Util.bind(this.onHashChange, this);
 
-  return /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(ua) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(ua.substr(0,4));
-}
+		if (map) {
+			this.init(map);
+		}
+	};
 
+	L.Hash.parseHash = function(hash) {
+		if(hash.indexOf('#') === 0) {
+			hash = hash.substr(1);
+		}
+		var args = hash.split("/");
+		if (args.length == 3) {
+			var zoom = parseInt(args[0], 10),
+			lat = parseFloat(args[1]),
+			lon = parseFloat(args[2]);
+			if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
+				return false;
+			} else {
+				return {
+					center: new L.LatLng(lat, lon),
+					zoom: zoom
+				};
+			}
+		} else {
+			return false;
+		}
+	};
 
-},{}],12:[function(require,module,exports){
+	L.Hash.formatHash = function(map) {
+		var center = map.getCenter(),
+		    zoom = map.getZoom(),
+		    precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
+
+		return "#" + [zoom,
+			center.lat.toFixed(precision),
+			center.lng.toFixed(precision)
+		].join("/");
+	},
+
+	L.Hash.prototype = {
+		map: null,
+		lastHash: null,
+
+		parseHash: L.Hash.parseHash,
+		formatHash: L.Hash.formatHash,
+
+		init: function(map) {
+			this.map = map;
+
+			// reset the hash
+			this.lastHash = null;
+			this.onHashChange();
+
+			if (!this.isListening) {
+				this.startListening();
+			}
+		},
+
+		remove: function() {
+			if (this.changeTimeout) {
+				clearTimeout(this.changeTimeout);
+			}
+
+			if (this.isListening) {
+				this.stopListening();
+			}
+
+			this.map = null;
+		},
+
+		onMapMove: function() {
+			// bail if we're moving the map (updating from a hash),
+			// or if the map is not yet loaded
+
+			if (this.movingMap || !this.map._loaded) {
+				return false;
+			}
+
+			var hash = this.formatHash(this.map);
+			if (this.lastHash != hash) {
+				location.replace(hash);
+				this.lastHash = hash;
+			}
+		},
+
+		movingMap: false,
+		update: function() {
+			var hash = location.hash;
+			if (hash === this.lastHash) {
+				return;
+			}
+			var parsed = this.parseHash(hash);
+			if (parsed) {
+				this.movingMap = true;
+
+				this.map.setView(parsed.center, parsed.zoom);
+
+				this.movingMap = false;
+			} else {
+				this.onMapMove(this.map);
+			}
+		},
+
+		// defer hash change updates every 100ms
+		changeDefer: 100,
+		changeTimeout: null,
+		onHashChange: function() {
+			// throttle calls to update() so that they only happen every
+			// `changeDefer` ms
+			if (!this.changeTimeout) {
+				var that = this;
+				this.changeTimeout = setTimeout(function() {
+					that.update();
+					that.changeTimeout = null;
+				}, this.changeDefer);
+			}
+		},
+
+		isListening: false,
+		hashChangeInterval: null,
+		startListening: function() {
+			this.map.on("moveend", this.onMapMove, this);
+
+			if (HAS_HASHCHANGE) {
+				L.DomEvent.addListener(window, "hashchange", this.onHashChange);
+			} else {
+				clearInterval(this.hashChangeInterval);
+				this.hashChangeInterval = setInterval(this.onHashChange, 50);
+			}
+			this.isListening = true;
+		},
+
+		stopListening: function() {
+			this.map.off("moveend", this.onMapMove, this);
+
+			if (HAS_HASHCHANGE) {
+				L.DomEvent.removeListener(window, "hashchange", this.onHashChange);
+			} else {
+				clearInterval(this.hashChangeInterval);
+			}
+			this.isListening = false;
+		}
+	};
+	L.hash = function(map) {
+		return new L.Hash(map);
+	};
+	L.Map.prototype.addHash = function() {
+		this._hash = L.hash(this);
+	};
+	L.Map.prototype.removeHash = function() {
+		this._hash.remove();
+	};
+})(window);
+
+},{}],14:[function(require,module,exports){
+;(function(){
+	var store = {},
+		win = window,
+		doc = win.document,
+		localStorageName = 'localStorage',
+		namespace = '__storejs__',
+		storage
+
+	store.disabled = false
+	store.set = function(key, value) {}
+	store.get = function(key) {}
+	store.remove = function(key) {}
+	store.clear = function() {}
+	store.transact = function(key, defaultVal, transactionFn) {
+		var val = store.get(key)
+		if (transactionFn == null) {
+			transactionFn = defaultVal
+			defaultVal = null
+		}
+		if (typeof val == 'undefined') { val = defaultVal || {} }
+		transactionFn(val)
+		store.set(key, val)
+	}
+	store.getAll = function() {}
+
+	store.serialize = function(value) {
+		return JSON.stringify(value)
+	}
+	store.deserialize = function(value) {
+		if (typeof value != 'string') { return undefined }
+		try { return JSON.parse(value) }
+		catch(e) { return value || undefined }
+	}
+
+	// Functions to encapsulate questionable FireFox 3.6.13 behavior
+	// when about.config::dom.storage.enabled === false
+	// See https://github.com/marcuswestin/store.js/issues#issue/13
+	function isLocalStorageNameSupported() {
+		try { return (localStorageName in win && win[localStorageName]) }
+		catch(err) { return false }
+	}
+
+	if (isLocalStorageNameSupported()) {
+		storage = win[localStorageName]
+		store.set = function(key, val) {
+			if (val === undefined) { return store.remove(key) }
+			storage.setItem(key, store.serialize(val))
+			return val
+		}
+		store.get = function(key) { return store.deserialize(storage.getItem(key)) }
+		store.remove = function(key) { storage.removeItem(key) }
+		store.clear = function() { storage.clear() }
+		store.getAll = function() {
+			var ret = {}
+			for (var i=0; i<storage.length; ++i) {
+				var key = storage.key(i)
+				ret[key] = store.get(key)
+			}
+			return ret
+		}
+	} else if (doc.documentElement.addBehavior) {
+		var storageOwner,
+			storageContainer
+		// Since #userData storage applies only to specific paths, we need to
+		// somehow link our data to a specific path.  We choose /favicon.ico
+		// as a pretty safe option, since all browsers already make a request to
+		// this URL anyway and being a 404 will not hurt us here.  We wrap an
+		// iframe pointing to the favicon in an ActiveXObject(htmlfile) object
+		// (see: http://msdn.microsoft.com/en-us/library/aa752574(v=VS.85).aspx)
+		// since the iframe access rules appear to allow direct access and
+		// manipulation of the document element, even for a 404 page.  This
+		// document can be used instead of the current document (which would
+		// have been limited to the current path) to perform #userData storage.
+		try {
+			storageContainer = new ActiveXObject('htmlfile')
+			storageContainer.open()
+			storageContainer.write('<s' + 'cript>document.w=window</s' + 'cript><iframe src="/favicon.ico"></iframe>')
+			storageContainer.close()
+			storageOwner = storageContainer.w.frames[0].document
+			storage = storageOwner.createElement('div')
+		} catch(e) {
+			// somehow ActiveXObject instantiation failed (perhaps some special
+			// security settings or otherwse), fall back to per-path storage
+			storage = doc.createElement('div')
+			storageOwner = doc.body
+		}
+		function withIEStorage(storeFunction) {
+			return function() {
+				var args = Array.prototype.slice.call(arguments, 0)
+				args.unshift(storage)
+				// See http://msdn.microsoft.com/en-us/library/ms531081(v=VS.85).aspx
+				// and http://msdn.microsoft.com/en-us/library/ms531424(v=VS.85).aspx
+				storageOwner.appendChild(storage)
+				storage.addBehavior('#default#userData')
+				storage.load(localStorageName)
+				var result = storeFunction.apply(store, args)
+				storageOwner.removeChild(storage)
+				return result
+			}
+		}
+
+		// In IE7, keys may not contain special chars. See all of https://github.com/marcuswestin/store.js/issues/40
+		var forbiddenCharsRegex = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g")
+		function ieKeyFix(key) {
+			return key.replace(forbiddenCharsRegex, '___')
+		}
+		store.set = withIEStorage(function(storage, key, val) {
+			key = ieKeyFix(key)
+			if (val === undefined) { return store.remove(key) }
+			storage.setAttribute(key, store.serialize(val))
+			storage.save(localStorageName)
+			return val
+		})
+		store.get = withIEStorage(function(storage, key) {
+			key = ieKeyFix(key)
+			return store.deserialize(storage.getAttribute(key))
+		})
+		store.remove = withIEStorage(function(storage, key) {
+			key = ieKeyFix(key)
+			storage.removeAttribute(key)
+			storage.save(localStorageName)
+		})
+		store.clear = withIEStorage(function(storage) {
+			var attributes = storage.XMLDocument.documentElement.attributes
+			storage.load(localStorageName)
+			for (var i=0, attr; attr=attributes[i]; i++) {
+				storage.removeAttribute(attr.name)
+			}
+			storage.save(localStorageName)
+		})
+		store.getAll = withIEStorage(function(storage) {
+			var attributes = storage.XMLDocument.documentElement.attributes
+			var ret = {}
+			for (var i=0, attr; attr=attributes[i]; ++i) {
+				var key = ieKeyFix(attr.name)
+				ret[attr.name] = store.deserialize(storage.getAttribute(key))
+			}
+			return ret
+		})
+	}
+
+	try {
+		store.set(namespace, namespace)
+		if (store.get(namespace) != namespace) { store.disabled = true }
+		store.remove(namespace)
+	} catch(e) {
+		store.disabled = true
+	}
+	store.enabled = !store.disabled
+	if (typeof module != 'undefined' && module.exports) { module.exports = store }
+	else if (typeof define === 'function' && define.amd) { define(store) }
+	else { this.store = store }
+})();
+
+},{}],15:[function(require,module,exports){
 toGeoJSON = (function() {
     'use strict';
 
@@ -1890,7 +6293,7 @@ toGeoJSON = (function() {
 
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
-},{}],"g070js":[function(require,module,exports){
+},{}],"PBmiWO":[function(require,module,exports){
 var fs = require("fs");
 
 var topojson = module.exports = new Function("topojson", "return " + "topojson = (function() {\n\n  function merge(topology, arcs) {\n    var fragmentByStart = {},\n        fragmentByEnd = {};\n\n    arcs.forEach(function(i) {\n      var e = ends(i),\n          start = e[0],\n          end = e[1],\n          f, g;\n\n      if (f = fragmentByEnd[start]) {\n        delete fragmentByEnd[f.end];\n        f.push(i);\n        f.end = end;\n        if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByEnd[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[end]) {\n        delete fragmentByStart[f.start];\n        f.unshift(i);\n        f.start = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[start]) {\n        delete fragmentByStart[f.start];\n        f.unshift(~i);\n        f.start = end;\n        if (g = fragmentByEnd[end]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByEnd[end]) {\n        delete fragmentByEnd[f.end];\n        f.push(~i);\n        f.end = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else {\n        f = [i];\n        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;\n      }\n    });\n\n    function ends(i) {\n      var arc = topology.arcs[i], p0 = arc[0], p1 = [0, 0];\n      arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });\n      return [p0, p1];\n    }\n\n    var fragments = [];\n    for (var k in fragmentByEnd) fragments.push(fragmentByEnd[k]);\n    return fragments;\n  }\n\n  function mesh(topology, o, filter) {\n    var arcs = [];\n\n    if (arguments.length > 1) {\n      var geomsByArc = [],\n          geom;\n\n      function arc(i) {\n        if (i < 0) i = ~i;\n        (geomsByArc[i] || (geomsByArc[i] = [])).push(geom);\n      }\n\n      function line(arcs) {\n        arcs.forEach(arc);\n      }\n\n      function polygon(arcs) {\n        arcs.forEach(line);\n      }\n\n      function geometry(o) {\n        if (o.type === \"GeometryCollection\") o.geometries.forEach(geometry);\n        else if (o.type in geometryType) {\n          geom = o;\n          geometryType[o.type](o.arcs);\n        }\n      }\n\n      var geometryType = {\n        LineString: line,\n        MultiLineString: polygon,\n        Polygon: polygon,\n        MultiPolygon: function(arcs) { arcs.forEach(polygon); }\n      };\n\n      geometry(o);\n\n      geomsByArc.forEach(arguments.length < 3\n          ? function(geoms, i) { arcs.push(i); }\n          : function(geoms, i) { if (filter(geoms[0], geoms[geoms.length - 1])) arcs.push(i); });\n    } else {\n      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);\n    }\n\n    return object(topology, {type: \"MultiLineString\", arcs: merge(topology, arcs)});\n  }\n\n  function featureOrCollection(topology, o) {\n    return o.type === \"GeometryCollection\" ? {\n      type: \"FeatureCollection\",\n      features: o.geometries.map(function(o) { return feature(topology, o); })\n    } : feature(topology, o);\n  }\n\n  function feature(topology, o) {\n    var f = {\n      type: \"Feature\",\n      id: o.id,\n      properties: o.properties || {},\n      geometry: object(topology, o)\n    };\n    if (o.id == null) delete f.id;\n    return f;\n  }\n\n  function object(topology, o) {\n    var tf = topology.transform,\n        kx = tf.scale[0],\n        ky = tf.scale[1],\n        dx = tf.translate[0],\n        dy = tf.translate[1],\n        arcs = topology.arcs;\n\n    function arc(i, points) {\n      if (points.length) points.pop();\n      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, x = 0, y = 0, p; k < n; ++k) points.push([\n        (x += (p = a[k])[0]) * kx + dx,\n        (y += p[1]) * ky + dy\n      ]);\n      if (i < 0) reverse(points, n);\n    }\n\n    function point(coordinates) {\n      return [coordinates[0] * kx + dx, coordinates[1] * ky + dy];\n    }\n\n    function line(arcs) {\n      var points = [];\n      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);\n      if (points.length < 2) points.push(points[0].slice());\n      return points;\n    }\n\n    function ring(arcs) {\n      var points = line(arcs);\n      while (points.length < 4) points.push(points[0].slice());\n      return points;\n    }\n\n    function polygon(arcs) {\n      return arcs.map(ring);\n    }\n\n    function geometry(o) {\n      var t = o.type;\n      return t === \"GeometryCollection\" ? {type: t, geometries: o.geometries.map(geometry)}\n          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}\n          : null;\n    }\n\n    var geometryType = {\n      Point: function(o) { return point(o.coordinates); },\n      MultiPoint: function(o) { return o.coordinates.map(point); },\n      LineString: function(o) { return line(o.arcs); },\n      MultiLineString: function(o) { return o.arcs.map(line); },\n      Polygon: function(o) { return polygon(o.arcs); },\n      MultiPolygon: function(o) { return o.arcs.map(polygon); }\n    };\n\n    return geometry(o);\n  }\n\n  function reverse(array, n) {\n    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;\n  }\n\n  function bisect(a, x) {\n    var lo = 0, hi = a.length;\n    while (lo < hi) {\n      var mid = lo + hi >>> 1;\n      if (a[mid] < x) lo = mid + 1;\n      else hi = mid;\n    }\n    return lo;\n  }\n\n  function neighbors(objects) {\n    var indexesByArc = {}, // arc index -> array of object indexes\n        neighbors = objects.map(function() { return []; });\n\n    function line(arcs, i) {\n      arcs.forEach(function(a) {\n        if (a < 0) a = ~a;\n        var o = indexesByArc[a];\n        if (o) o.push(i);\n        else indexesByArc[a] = [i];\n      });\n    }\n\n    function polygon(arcs, i) {\n      arcs.forEach(function(arc) { line(arc, i); });\n    }\n\n    function geometry(o, i) {\n      if (o.type === \"GeometryCollection\") o.geometries.forEach(function(o) { geometry(o, i); });\n      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);\n    }\n\n    var geometryType = {\n      LineString: line,\n      MultiLineString: polygon,\n      Polygon: polygon,\n      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }\n    };\n\n    objects.forEach(geometry);\n\n    for (var i in indexesByArc) {\n      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {\n        for (var k = j + 1; k < m; ++k) {\n          var ij = indexes[j], ik = indexes[k], n;\n          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);\n          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);\n        }\n      }\n    }\n\n    return neighbors;\n  }\n\n  return {\n    version: \"1.2.3\",\n    mesh: mesh,\n    feature: featureOrCollection,\n    neighbors: neighbors\n  };\n})();\n")();
@@ -1901,7 +6304,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":14,"./lib/topojson/clockwise":16,"./lib/topojson/filter":18,"./lib/topojson/prune":22,"./lib/topojson/simplify":23,"./lib/topojson/topology":26,"fs":1}],14:[function(require,module,exports){
+},{"./lib/topojson/bind":17,"./lib/topojson/clockwise":19,"./lib/topojson/filter":21,"./lib/topojson/prune":25,"./lib/topojson/simplify":26,"./lib/topojson/topology":29,"fs":1}],17:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -1931,7 +6334,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":27}],15:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":30}],18:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -1965,7 +6368,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -2038,13 +6441,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":17,"./type":27}],17:[function(require,module,exports){
+},{"../../":"PBmiWO","./coordinate-systems":20,"./type":30}],20:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":15,"./spherical":24}],18:[function(require,module,exports){
+},{"./cartesian":18,"./spherical":27}],21:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -2114,7 +6517,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":16,"./coordinate-systems":17,"./prune":22,"./type":27}],19:[function(require,module,exports){
+},{"../../":"PBmiWO","./clockwise":19,"./coordinate-systems":20,"./prune":25,"./type":30}],22:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -2124,7 +6527,7 @@ module.exports = function(size) {
   };
 };
 
-},{}],20:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -2179,7 +6582,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":19}],21:[function(require,module,exports){
+},{"./hash":22}],24:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -2245,7 +6648,7 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],22:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -2304,7 +6707,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":27}],23:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":30}],26:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -2436,7 +6839,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":17,"./min-heap":21}],24:[function(require,module,exports){
+},{"./coordinate-systems":20,"./min-heap":24}],27:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -2518,7 +6921,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],25:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -2568,7 +6971,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":27}],26:[function(require,module,exports){
+},{"./type":30}],29:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -2910,7 +7313,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":17,"./hashtable":20,"./stitch-poles":25,"./type":27}],27:[function(require,module,exports){
+},{"./coordinate-systems":20,"./hashtable":23,"./stitch-poles":28,"./type":30}],30:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -3004,39 +7407,821 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],28:[function(require,module,exports){
-var github = require('./source/github');
+},{}],31:[function(require,module,exports){
+module.exports = hasKeys
 
-module.exports = commit;
-
-function commit(container, contents, callback) {
-    container.select('.share').remove();
-
-    var wrap = container.append('div')
-        .attr('class', 'share pad1 center');
-
-    var form = wrap.append('form')
-        .on('submit', function() {
-            d3.event.preventDefault();
-            github.saveAsGitHub(contents,
-                message.property('value'), callback);
-        });
-
-    var message = form.append('input')
-        .attr('placeholder', 'Commit message')
-        .attr('type', 'text');
-
-    var commitButton = form.append('input')
-        .attr('type', 'submit')
-        .property('value', 'Commit Changes')
-        .attr('class', 'semimajor');
-
-    message.node().focus();
-
-    return wrap;
+function hasKeys(source) {
+    return source !== null &&
+        (typeof source === "object" ||
+        typeof source === "function")
 }
 
-},{"./source/github":43}],29:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
+var Keys = require("object-keys")
+var hasKeys = require("./has-keys")
+
+module.exports = extend
+
+function extend() {
+    var target = {}
+
+    for (var i = 0; i < arguments.length; i++) {
+        var source = arguments[i]
+
+        if (!hasKeys(source)) {
+            continue
+        }
+
+        var keys = Keys(source)
+
+        for (var j = 0; j < keys.length; j++) {
+            var name = keys[j]
+            target[name] = source[name]
+        }
+    }
+
+    return target
+}
+
+},{"./has-keys":31,"object-keys":33}],33:[function(require,module,exports){
+module.exports = Object.keys || require('./shim');
+
+
+},{"./shim":36}],34:[function(require,module,exports){
+
+var hasOwn = Object.prototype.hasOwnProperty;
+var toString = Object.prototype.toString;
+
+module.exports = function forEach (obj, fn, ctx) {
+    if (toString.call(fn) !== '[object Function]') {
+        throw new TypeError('iterator must be a function');
+    }
+    var l = obj.length;
+    if (l === +l) {
+        for (var i = 0; i < l; i++) {
+            fn.call(ctx, obj[i], i, obj);
+        }
+    } else {
+        for (var k in obj) {
+            if (hasOwn.call(obj, k)) {
+                fn.call(ctx, obj[k], k, obj);
+            }
+        }
+    }
+};
+
+
+},{}],35:[function(require,module,exports){
+
+/**!
+ * is
+ * the definitive JavaScript type testing library
+ * 
+ * @copyright 2013 Enrico Marino
+ * @license MIT
+ */
+
+var objProto = Object.prototype;
+var owns = objProto.hasOwnProperty;
+var toString = objProto.toString;
+var isActualNaN = function (value) {
+  return value !== value;
+};
+var NON_HOST_TYPES = {
+  "boolean": 1,
+  "number": 1,
+  "string": 1,
+  "undefined": 1
+};
+
+/**
+ * Expose `is`
+ */
+
+var is = module.exports = {};
+
+/**
+ * Test general.
+ */
+
+/**
+ * is.type
+ * Test if `value` is a type of `type`.
+ *
+ * @param {Mixed} value value to test
+ * @param {String} type type
+ * @return {Boolean} true if `value` is a type of `type`, false otherwise
+ * @api public
+ */
+
+is.a =
+is.type = function (value, type) {
+  return typeof value === type;
+};
+
+/**
+ * is.defined
+ * Test if `value` is defined.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if 'value' is defined, false otherwise
+ * @api public
+ */
+
+is.defined = function (value) {
+  return value !== undefined;
+};
+
+/**
+ * is.empty
+ * Test if `value` is empty.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is empty, false otherwise
+ * @api public
+ */
+
+is.empty = function (value) {
+  var type = toString.call(value);
+  var key;
+
+  if ('[object Array]' === type || '[object Arguments]' === type) {
+    return value.length === 0;
+  }
+
+  if ('[object Object]' === type) {
+    for (key in value) if (owns.call(value, key)) return false;
+    return true;
+  }
+
+  if ('[object String]' === type) {
+    return '' === value;
+  }
+
+  return false;
+};
+
+/**
+ * is.equal
+ * Test if `value` is equal to `other`.
+ *
+ * @param {Mixed} value value to test
+ * @param {Mixed} other value to compare with
+ * @return {Boolean} true if `value` is equal to `other`, false otherwise
+ */
+
+is.equal = function (value, other) {
+  var type = toString.call(value)
+  var key;
+
+  if (type !== toString.call(other)) {
+    return false;
+  }
+
+  if ('[object Object]' === type) {
+    for (key in value) {
+      if (!is.equal(value[key], other[key])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  if ('[object Array]' === type) {
+    key = value.length;
+    if (key !== other.length) {
+      return false;
+    }
+    while (--key) {
+      if (!is.equal(value[key], other[key])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  if ('[object Function]' === type) {
+    return value.prototype === other.prototype;
+  }
+
+  if ('[object Date]' === type) {
+    return value.getTime() === other.getTime();
+  }
+
+  return value === other;
+};
+
+/**
+ * is.hosted
+ * Test if `value` is hosted by `host`.
+ *
+ * @param {Mixed} value to test
+ * @param {Mixed} host host to test with
+ * @return {Boolean} true if `value` is hosted by `host`, false otherwise
+ * @api public
+ */
+
+is.hosted = function (value, host) {
+  var type = typeof host[value];
+  return type === 'object' ? !!host[value] : !NON_HOST_TYPES[type];
+};
+
+/**
+ * is.instance
+ * Test if `value` is an instance of `constructor`.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is an instance of `constructor`
+ * @api public
+ */
+
+is.instance = is['instanceof'] = function (value, constructor) {
+  return value instanceof constructor;
+};
+
+/**
+ * is.null
+ * Test if `value` is null.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is null, false otherwise
+ * @api public
+ */
+
+is['null'] = function (value) {
+  return value === null;
+};
+
+/**
+ * is.undefined
+ * Test if `value` is undefined.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is undefined, false otherwise
+ * @api public
+ */
+
+is.undefined = function (value) {
+  return value === undefined;
+};
+
+/**
+ * Test arguments.
+ */
+
+/**
+ * is.arguments
+ * Test if `value` is an arguments object.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is an arguments object, false otherwise
+ * @api public
+ */
+
+is.arguments = function (value) {
+  var isStandardArguments = '[object Arguments]' === toString.call(value);
+  var isOldArguments = !is.array(value) && is.arraylike(value) && is.object(value) && is.fn(value.callee);
+  return isStandardArguments || isOldArguments;
+};
+
+/**
+ * Test array.
+ */
+
+/**
+ * is.array
+ * Test if 'value' is an array.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is an array, false otherwise
+ * @api public
+ */
+
+is.array = function (value) {
+  return '[object Array]' === toString.call(value);
+};
+
+/**
+ * is.arguments.empty
+ * Test if `value` is an empty arguments object.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is an empty arguments object, false otherwise
+ * @api public
+ */
+is.arguments.empty = function (value) {
+  return is.arguments(value) && value.length === 0;
+};
+
+/**
+ * is.array.empty
+ * Test if `value` is an empty array.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is an empty array, false otherwise
+ * @api public
+ */
+is.array.empty = function (value) {
+  return is.array(value) && value.length === 0;
+};
+
+/**
+ * is.arraylike
+ * Test if `value` is an arraylike object.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is an arguments object, false otherwise
+ * @api public
+ */
+
+is.arraylike = function (value) {
+  return !!value && !is.boolean(value)
+    && owns.call(value, 'length')
+    && isFinite(value.length)
+    && is.number(value.length)
+    && value.length >= 0;
+};
+
+/**
+ * Test boolean.
+ */
+
+/**
+ * is.boolean
+ * Test if `value` is a boolean.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is a boolean, false otherwise
+ * @api public
+ */
+
+is.boolean = function (value) {
+  return '[object Boolean]' === toString.call(value);
+};
+
+/**
+ * is.false
+ * Test if `value` is false.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is false, false otherwise
+ * @api public
+ */
+
+is['false'] = function (value) {
+  return is.boolean(value) && (value === false || value.valueOf() === false);
+};
+
+/**
+ * is.true
+ * Test if `value` is true.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is true, false otherwise
+ * @api public
+ */
+
+is['true'] = function (value) {
+  return is.boolean(value) && (value === true || value.valueOf() === true);
+};
+
+/**
+ * Test date.
+ */
+
+/**
+ * is.date
+ * Test if `value` is a date.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is a date, false otherwise
+ * @api public
+ */
+
+is.date = function (value) {
+  return '[object Date]' === toString.call(value);
+};
+
+/**
+ * Test element.
+ */
+
+/**
+ * is.element
+ * Test if `value` is an html element.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is an HTML Element, false otherwise
+ * @api public
+ */
+
+is.element = function (value) {
+  return value !== undefined
+    && typeof HTMLElement !== 'undefined'
+    && value instanceof HTMLElement
+    && value.nodeType === 1;
+};
+
+/**
+ * Test error.
+ */
+
+/**
+ * is.error
+ * Test if `value` is an error object.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is an error object, false otherwise
+ * @api public
+ */
+
+is.error = function (value) {
+  return '[object Error]' === toString.call(value);
+};
+
+/**
+ * Test function.
+ */
+
+/**
+ * is.fn / is.function (deprecated)
+ * Test if `value` is a function.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is a function, false otherwise
+ * @api public
+ */
+
+is.fn = is['function'] = function (value) {
+  var isAlert = typeof window !== 'undefined' && value === window.alert;
+  return isAlert || '[object Function]' === toString.call(value);
+};
+
+/**
+ * Test number.
+ */
+
+/**
+ * is.number
+ * Test if `value` is a number.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is a number, false otherwise
+ * @api public
+ */
+
+is.number = function (value) {
+  return '[object Number]' === toString.call(value);
+};
+
+/**
+ * is.infinite
+ * Test if `value` is positive or negative infinity.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is positive or negative Infinity, false otherwise
+ * @api public
+ */
+is.infinite = function (value) {
+  return value === Infinity || value === -Infinity;
+};
+
+/**
+ * is.decimal
+ * Test if `value` is a decimal number.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is a decimal number, false otherwise
+ * @api public
+ */
+
+is.decimal = function (value) {
+  return is.number(value) && !isActualNaN(value) && value % 1 !== 0;
+};
+
+/**
+ * is.divisibleBy
+ * Test if `value` is divisible by `n`.
+ *
+ * @param {Number} value value to test
+ * @param {Number} n dividend
+ * @return {Boolean} true if `value` is divisible by `n`, false otherwise
+ * @api public
+ */
+
+is.divisibleBy = function (value, n) {
+  var isDividendInfinite = is.infinite(value);
+  var isDivisorInfinite = is.infinite(n);
+  var isNonZeroNumber = is.number(value) && !isActualNaN(value) && is.number(n) && !isActualNaN(n) && n !== 0;
+  return isDividendInfinite || isDivisorInfinite || (isNonZeroNumber && value % n === 0);
+};
+
+/**
+ * is.int
+ * Test if `value` is an integer.
+ *
+ * @param value to test
+ * @return {Boolean} true if `value` is an integer, false otherwise
+ * @api public
+ */
+
+is.int = function (value) {
+  return is.number(value) && !isActualNaN(value) && value % 1 === 0;
+};
+
+/**
+ * is.maximum
+ * Test if `value` is greater than 'others' values.
+ *
+ * @param {Number} value value to test
+ * @param {Array} others values to compare with
+ * @return {Boolean} true if `value` is greater than `others` values
+ * @api public
+ */
+
+is.maximum = function (value, others) {
+  if (isActualNaN(value)) {
+    throw new TypeError('NaN is not a valid value');
+  } else if (!is.arraylike(others)) {
+    throw new TypeError('second argument must be array-like');
+  }
+  var len = others.length;
+
+  while (--len >= 0) {
+    if (value < others[len]) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+/**
+ * is.minimum
+ * Test if `value` is less than `others` values.
+ *
+ * @param {Number} value value to test
+ * @param {Array} others values to compare with
+ * @return {Boolean} true if `value` is less than `others` values
+ * @api public
+ */
+
+is.minimum = function (value, others) {
+  if (isActualNaN(value)) {
+    throw new TypeError('NaN is not a valid value');
+  } else if (!is.arraylike(others)) {
+    throw new TypeError('second argument must be array-like');
+  }
+  var len = others.length;
+
+  while (--len >= 0) {
+    if (value > others[len]) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+/**
+ * is.nan
+ * Test if `value` is not a number.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is not a number, false otherwise
+ * @api public
+ */
+
+is.nan = function (value) {
+  return !is.number(value) || value !== value;
+};
+
+/**
+ * is.even
+ * Test if `value` is an even number.
+ *
+ * @param {Number} value value to test
+ * @return {Boolean} true if `value` is an even number, false otherwise
+ * @api public
+ */
+
+is.even = function (value) {
+  return is.infinite(value) || (is.number(value) && value === value && value % 2 === 0);
+};
+
+/**
+ * is.odd
+ * Test if `value` is an odd number.
+ *
+ * @param {Number} value value to test
+ * @return {Boolean} true if `value` is an odd number, false otherwise
+ * @api public
+ */
+
+is.odd = function (value) {
+  return is.infinite(value) || (is.number(value) && value === value && value % 2 !== 0);
+};
+
+/**
+ * is.ge
+ * Test if `value` is greater than or equal to `other`.
+ *
+ * @param {Number} value value to test
+ * @param {Number} other value to compare with
+ * @return {Boolean}
+ * @api public
+ */
+
+is.ge = function (value, other) {
+  if (isActualNaN(value) || isActualNaN(other)) {
+    throw new TypeError('NaN is not a valid value');
+  }
+  return !is.infinite(value) && !is.infinite(other) && value >= other;
+};
+
+/**
+ * is.gt
+ * Test if `value` is greater than `other`.
+ *
+ * @param {Number} value value to test
+ * @param {Number} other value to compare with
+ * @return {Boolean}
+ * @api public
+ */
+
+is.gt = function (value, other) {
+  if (isActualNaN(value) || isActualNaN(other)) {
+    throw new TypeError('NaN is not a valid value');
+  }
+  return !is.infinite(value) && !is.infinite(other) && value > other;
+};
+
+/**
+ * is.le
+ * Test if `value` is less than or equal to `other`.
+ *
+ * @param {Number} value value to test
+ * @param {Number} other value to compare with
+ * @return {Boolean} if 'value' is less than or equal to 'other'
+ * @api public
+ */
+
+is.le = function (value, other) {
+  if (isActualNaN(value) || isActualNaN(other)) {
+    throw new TypeError('NaN is not a valid value');
+  }
+  return !is.infinite(value) && !is.infinite(other) && value <= other;
+};
+
+/**
+ * is.lt
+ * Test if `value` is less than `other`.
+ *
+ * @param {Number} value value to test
+ * @param {Number} other value to compare with
+ * @return {Boolean} if `value` is less than `other`
+ * @api public
+ */
+
+is.lt = function (value, other) {
+  if (isActualNaN(value) || isActualNaN(other)) {
+    throw new TypeError('NaN is not a valid value');
+  }
+  return !is.infinite(value) && !is.infinite(other) && value < other;
+};
+
+/**
+ * is.within
+ * Test if `value` is within `start` and `finish`.
+ *
+ * @param {Number} value value to test
+ * @param {Number} start lower bound
+ * @param {Number} finish upper bound
+ * @return {Boolean} true if 'value' is is within 'start' and 'finish'
+ * @api public
+ */
+is.within = function (value, start, finish) {
+  if (isActualNaN(value) || isActualNaN(start) || isActualNaN(finish)) {
+    throw new TypeError('NaN is not a valid value');
+  } else if (!is.number(value) || !is.number(start) || !is.number(finish)) {
+    throw new TypeError('all arguments must be numbers');
+  }
+  var isAnyInfinite = is.infinite(value) || is.infinite(start) || is.infinite(finish);
+  return isAnyInfinite || (value >= start && value <= finish);
+};
+
+/**
+ * Test object.
+ */
+
+/**
+ * is.object
+ * Test if `value` is an object.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is an object, false otherwise
+ * @api public
+ */
+
+is.object = function (value) {
+  return value && '[object Object]' === toString.call(value);
+};
+
+/**
+ * is.hash
+ * Test if `value` is a hash - a plain object literal.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is a hash, false otherwise
+ * @api public
+ */
+
+is.hash = function (value) {
+  return is.object(value) && value.constructor === Object && !value.nodeType && !value.setInterval;
+};
+
+/**
+ * Test regexp.
+ */
+
+/**
+ * is.regexp
+ * Test if `value` is a regular expression.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is a regexp, false otherwise
+ * @api public
+ */
+
+is.regexp = function (value) {
+  return '[object RegExp]' === toString.call(value);
+};
+
+/**
+ * Test string.
+ */
+
+/**
+ * is.string
+ * Test if `value` is a string.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if 'value' is a string, false otherwise
+ * @api public
+ */
+
+is.string = function (value) {
+  return '[object String]' === toString.call(value);
+};
+
+
+},{}],36:[function(require,module,exports){
+(function () {
+	"use strict";
+
+	// modified from https://github.com/kriskowal/es5-shim
+	var has = Object.prototype.hasOwnProperty,
+		is = require('is'),
+		forEach = require('foreach'),
+		hasDontEnumBug = !({'toString': null}).propertyIsEnumerable('toString'),
+		dontEnums = [
+			"toString",
+			"toLocaleString",
+			"valueOf",
+			"hasOwnProperty",
+			"isPrototypeOf",
+			"propertyIsEnumerable",
+			"constructor"
+		],
+		keysShim;
+
+	keysShim = function keys(object) {
+		if (!is.object(object) && !is.array(object)) {
+			throw new TypeError("Object.keys called on a non-object");
+		}
+
+		var name, theKeys = [];
+		for (name in object) {
+			if (has.call(object, name)) {
+				theKeys.push(name);
+			}
+		}
+
+		if (hasDontEnumBug) {
+			forEach(dontEnums, function (dontEnum) {
+				if (has.call(object, dontEnum)) {
+					theKeys.push(dontEnum);
+				}
+			});
+		}
+		return theKeys;
+	};
+
+	module.exports = keysShim;
+}());
+
+
+},{"foreach":34,"is":35}],37:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -3050,902 +8235,626 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],30:[function(require,module,exports){
-var share = require('./share');
+},{}],38:[function(require,module,exports){
+var clone = require('clone');
+    xtend = require('xtend');
+    source = {
+        gist: require('../source/gist'),
+        github: require('../source/github')
+    };
 
-module.exports = fileBar;
+module.exports = function(context) {
 
-function fileBar(updates) {
+    var _data = {
+        map: {
+            type: 'FeatureCollection',
+            features: []
+        },
+        dirty: false,
+        source: null,
+        meta: null,
+        type: 'local'
+    };
 
-    var event = d3.dispatch('source', 'save', 'share', 'download', 'share');
+    function mapFile(gist) {
+        var f;
+        var content;
 
-    function bar(selection) {
-
-        updates.on('sourcechange', onSource);
-
-        var name = selection.append('div')
-            .attr('class', 'name');
-
-        var filetype = name.append('span')
-            .attr('class', 'icon-file-alt');
-
-        var filename = name.append('span')
-            .attr('class', 'filename')
-            .text('unsaved');
-
-        var link = name.append('a')
-            .attr('target', '_blank')
-            .attr('class', 'icon-external-link')
-            .classed('hide', true);
-
-        var actions = [
-            {
-                title: 'Save',
-                icon: 'icon-save',
-                action: function() {
-                    event.save();
-                }
-            },
-            {
-                title: 'Open',
-                icon: 'icon-folder-open-alt',
-                action: function() {
-                    event.source();
-                }
-            },
-            {
-                title: 'Download',
-                icon: 'icon-download',
-                action: function() {
-                    event.download();
-                }
-            },
-            {
-                title: 'Share',
-                icon: 'icon-share-alt',
-                action: function() {
-                    event.share();
-                }
-            }
-        ];
-
-        var buttons = selection.append('div')
-            .attr('class', 'button-wrap fr')
-            .selectAll('button')
-            .data(actions)
-            .enter()
-            .append('button')
-            .on('click', function(d) {
-                d.action.apply(this, d);
-            });
-
-        buttons.append('span')
-            .attr('class', function(d) {
-                return d.icon + ' icon';
-            });
-
-        buttons.append('span')
-            .attr('class', 'title')
-            .text(function(d) {
-                return d.title;
-            });
-
-        function sourceUrl(d) {
-            switch(d.type) {
-                case 'gist':
-                    return d.data.html_url;
-                case 'github':
-                    return 'https://github.com/' + d.data.id;
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.geojson') !== -1 && content) {
+                return {
+                    name: f,
+                    content: JSON.parse(content)
+                };
             }
         }
 
-        function saveNoun(_) {
-            buttons.filter(function(b) {
-                return b.title === 'Save';
-            }).select('span.title').text(_);
-        }
-
-        function onSource(d) {
-            filename.text(d.name);
-            filetype.attr('class', function() {
-                if (d.type == 'github') return 'icon-github';
-                if (d.type == 'gist') return 'icon-github-alt';
-            });
-
-            saveNoun(d.type == 'github' ? 'Commit' : 'Save');
-
-            if (sourceUrl(d)) {
-                link
-                    .attr('href', sourceUrl(d))
-                    .classed('hide', false);
-            } else {
-                link
-                    .classed('hide', true);
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.json') !== -1 && content) {
+                return {
+                    name: f,
+                    file: JSON.parse(content)
+                };
             }
         }
     }
 
-    return d3.rebind(bar, event, 'on');
-}
+    var data = {};
 
-},{"./share":40}],31:[function(require,module,exports){
-var message = require('./message');
+    data.hasFeatures = function() {
+        return !!(_data.map && _data.map.features && _data.map.features.length);
+    };
 
-module.exports = flash;
-
-function flash(selection, txt) {
-    'use strict';
-
-    var msg = message(selection);
-
-    if (txt) msg.select('.content').html(txt);
-
-    setTimeout(function() {
-        msg
-            .transition()
-            .style('opacity', 0)
-            .remove();
-    }, 5000);
-
-    return msg;
-}
-
-},{"./message":38}],32:[function(require,module,exports){
-var verticalPanel = require('./vertical_panel'),
-    topojson = require('topojson'),
-    toGeoJSON = require('togeojson'),
-    gist = require('./source/gist'),
-    progressChart = require('./lib/progress_chart'),
-    detectIndentationStyle = require('detect-json-indent'),
-    importSupport = !!(window.FileReader);
-
-module.exports.importPanel = importPanel;
-module.exports.bindBody = bindBody;
-
-function over() {
-    d3.event.stopPropagation();
-    d3.event.preventDefault();
-    d3.event.dataTransfer.dropEffect = 'copy';
-    d3.select('body').classed('dragover', true);
-}
-
-function exit() {
-    d3.event.stopPropagation();
-    d3.event.preventDefault();
-    d3.event.dataTransfer.dropEffect = 'copy';
-    d3.select('body').classed('dragover', false);
-}
-
-function toDom(x) {
-    return (new DOMParser()).parseFromString(x, 'text/xml');
-}
-
-function trackImport(format, method) {
-    analytics.track('Imported Data / ' + method + ' / ' + format);
-}
-
-function readFile(f, method, updates) {
-    var reader = new FileReader();
-
-    reader.onload = function(e) {
-        var gj;
-
-        switch (detectType(f)) {
-
-            case 'kml':
-                var kmldom = toDom(e.target.result);
-                if (!kmldom) {
-                    return alert('Invalid KML file: not valid XML');
-                }
-                if (kmldom.getElementsByTagName('NetworkLink').length) {
-                    alert('The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                          'Please export and upload KML without NetworkLinks for optimal performance');
-                }
-                gj = toGeoJSON.kml(kmldom);
-                break;
-
-            case 'gpx':
-                gj = toGeoJSON.gpx(toDom(e.target.result));
-                break;
-
-            case 'geojson':
-                try {
-                    gj = JSON.parse(e.target.result);
-                    exportIndentationStyle = detectIndentationStyle(e.target.result);
-                    if (gj && gj.type === 'Topology' && gj.objects) {
-                        var collection = { type: 'FeatureCollection', features: [] };
-                        for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                        gj = collection;
-                    }
-                } catch(err) {
-                    alert('Invalid JSON file: ' + err);
-                    analytics.track('Uploaded invalid JSON', {
-                        snippet: e.target.result.substring(0, 20)
-                    });
-                    return;
-                }
-                break;
-
-            case 'dsv':
-                csv2geojson.csv2geojson(e.target.result, {
-                    delimiter: 'auto'
-                }, function(err, result) {
-                    if (err) {
-                        return handleGeocode(container.append('div'), e.target.result, updates);
-                    } else {
-                        gj = result;
-                    }
-                });
-                break;
-
-            default:
-                analytics.track('Invalid file', {
-                    type: f.type,
-                    snippet: e.target.result.substring(0, 20)
-                });
-                return alert('Sorry, that file type is not supported');
+    data.set = function(obj, src) {
+        for (var k in obj) {
+            _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
         }
+        if (obj.dirty !== false) data.dirty = true;
+        context.dispatch.change({
+            obj: obj,
+            source: src
+        });
+        return data;
+    };
 
-        if (gj) {
-            updates.update_editor(gj);
-            updates.zoom_extent();
-            updates.update_geojson();
+    data.mergeFeatures = function(features, src) {
+        _data.map.features = (_data.map.features || []).concat(features);
+        return data.set({ map: _data.map }, src);
+    };
+
+    data.get = function(k) {
+        return _data[k];
+    };
+
+    data.all = function() {
+        return clone(_data, false);
+    };
+
+    data.fetch = function(q, cb) {
+        var type = q.id.split(':')[0];
+
+        switch(type) {
+            case 'gist':
+                var id = q.id.split(':')[1].split('/')[1];
+
+                source.gist.load(id, context, function(err, d) {
+                    return cb(err, d);
+                });
+
+                break;
+            case 'github':
+                var url = q.id.split('/');
+                var parts = {
+                    user: url[0].split(':')[1],
+                    repo: url[1],
+                    branch: url[3],
+                    path: (url.slice(4) || []).join('/')
+                };
+
+                source.github.load(parts, context, function(err, meta) {
+                    return source.github.loadRaw(parts, context, function(err, raw) {
+                        return cb(err, xtend(meta, { content: JSON.parse(raw) }));
+                    });
+                });
+
+                break;
         }
     };
 
-    reader.readAsText(f);
-}
+    data.parse = function(d, browser) {
+        var login,
+            repo,
+            branch,
+            path,
+            chunked,
+            file;
 
-function bindBody(updates) {
-    if (importSupport) {
-        d3.select('body')
-            .attr('dropzone', 'copy')
-            .on('drop.localgpx', function() {
-                d3.event.stopPropagation();
-                d3.event.preventDefault();
-                d3.select('body').classed('dragover', false);
-                var f = d3.event.dataTransfer.files[0];
-                readFile(f, 'drag', updates);
-            })
-            .on('dragenter.localgpx', over)
-            .on('dragleave.localgpx', exit)
-            .on('dragover.localgpx', over);
-    }
-}
+        if (d.files) d.type = 'gist';
 
-function detectType(f) {
-    var filename = f.name ? f.name.toLowerCase() : '';
-    function ext(_) {
-        return filename.indexOf(_) !== -1;
-    }
-    if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-        return 'kml';
-    }
-    if (ext('.gpx')) return 'gpx';
-    if (ext('.geojson') || ext('.json')) return 'geojson';
-    if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
-        return 'dsv';
-    }
-}
+        switch(d.type) {
+            case 'blob':
+                login = browser.path[1].login;
+                repo = browser.path[2].name;
+                branch = browser.path[3].name;
+                path = [browser.path[4].path, d.path].join('/');
 
-function importPanel(container, updates) {
-    container.html('');
+                data.set({
+                    type: 'github',
+                    source: d,
+                    meta: {
+                        login: login,
+                        repo: repo,
+                        branch: branch,
+                        name: d.path
+                    },
+                    map: d.content,
+                    path: path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        path
+                    ].join('/'),
+                    url: [
+                        'https://github.com',
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        [path, d.path].join('/')
+                    ].join('/')
+                });
+                break;
+            case 'file':
+                chunked = d.html_url.split('/');
+                login = chunked[3];
+                repo = chunked[4];
+                branch = chunked[6];
 
-    var wrap = container
-        .append('div')
-        .attr('class', 'pad1');
+                data.set({
+                    type: 'github',
+                    source: d,
+                    meta: {
+                        login: login,
+                        repo: repo,
+                        branch: branch,
+                        name: d.name
+                    },
+                    map: d.content,
+                    path: d.path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        d.path
+                    ].join('/'),
+                    url: d.html_url
+                });
+                break;
+            case 'gist':
+                login = (d.user && d.user.login) || 'anonymous';
+                path = [login, d.id].join('/');
+                file = mapFile(d);
 
-    wrap.append('div')
-        .attr('class', 'modal-message')
-        .text('Drop files to map!');
+                data.set({
+                    type: 'gist',
+                    source: d,
+                    meta: {
+                        login: login,
+                        name: file && file.name
+                    },
+                    map: file && file.content,
+                    path: path,
+                    route: 'gist:' + path,
+                    url: d.html_url
+                });
+                break;
+        }
+    };
 
-    if (importSupport) {
+    data.save = function(cb) {
+        var type = context.data.get('type');
+        if (source[type] && source[type].save) source[type].save(context, cb);
+        else source.gist.save(context, cb);
+    };
 
-        var import_landing = wrap.append('div')
-            .attr('class', 'pad fillL');
-
-        var message = import_landing
-            .append('div')
-            .attr('class', 'center');
-
-        var button = message.append('button')
-            .on('click', function() {
-                fileInput.node().click();
-            });
-        button.append('span').attr('class', 'icon-arrow-down');
-        button.append('span').text(' Import');
-        message.append('p')
-            .attr('class', 'deemphasize')
-            .append('small')
-            .text('GeoJSON, TopoJSON, KML, CSV, GPX supported. You can also drag & drop files.');
-        var fileInput = message
-            .append('input')
-            .attr('type', 'file')
-            .style('visibility', 'hidden')
-            .style('position', 'absolute')
-            .style('height', '0')
-            .on('change', function() {
-                if (this.files && this.files[0]) readFile(this.files[0], 'click');
-            });
-    } else {
-        wrap.append('p')
-            .attr('class', 'blank-banner')
-            .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
-                  'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
-    }
-
-    wrap.append('p')
-        .attr('class', 'intro center deemphasize')
-        .html('This is an open source project. <a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Submit feedback or get help</a>, and <a target="_blank" href="http://github.com/mapbox/geojson.io"><span class="icon-github"></span> fork on GitHub</a>');
-
-    wrap.append('div')
-        .attr('class', 'pad1');
-}
-
-function handleGeocode(container, text, updates) {
-
-    var list = csv2geojson.auto(text);
-
-    var button = container.append('div')
-        .attr('class', 'bucket-actions')
-        .append('button')
-        .attr('class', 'major')
-        .attr('disabled', true)
-        .text('At least one field required to geocode');
-
-    var join = container.append('div')
-        .attr('class', 'bucket-deposit')
-        .append('div')
-        .attr('class', 'bucket-join');
-
-    var buckets = join.selectAll('.bucket')
-        .data(['City', 'State', 'ZIP', 'Country'])
-        .enter()
-        .append('div')
-        .attr('class', 'bucket')
-        .text(String);
-
-    var example = container.append('div')
-        .attr('class', 'example');
-
-    var store = container.append('div')
-       .attr('class', 'bucket-store');
-
-    var sources = store.selectAll('bucket-source')
-       .data(Object.keys(list[0]))
-       .enter()
-       .append('div')
-       .attr('class', 'bucket-source')
-       .text(String);
-
-    function transformRow(fields) {
-        return function(obj) {
-           return d3.entries(obj)
-               .filter(function(e) { return fields.indexOf(e.key) !== -1; })
-               .map(function(e) { return e.value; })
-               .join(', ');
-        };
-    }
-
-    function showExample(fields) {
-        var i = 0;
-        return function() {
-            if (++i > list.length) i = 0;
-            example.html('');
-            example.text(transformRow(fields)(list[i]));
-        };
-    }
-
-    var ti;
-    var broker = bucket();
-    buckets.call(broker.deposit());
-    sources.call(broker.store().on('chosen', onChosen));
-
-    function onChosen(fields) {
-         if (ti) window.clearInterval(ti);
-         if (fields.length) {
-             button.attr('disabled', null)
-                .text('Geocode');
-             button.on('click', function() {
-                 runGeocode(container, list, transformRow(fields), updates);
-             });
-             var se = showExample(fields);
-             se();
-             ti = window.setInterval(se, 2000);
-         } else {
-             button.attr('disabled', true)
-                .text('At least one field required to geocode');
-             example.text('');
-         }
-     }
-}
-
-function runGeocode(container, list, transform, updates) {
-    container.html('');
-
-    var wrap = container.append('div').attr('class', 'pad1');
-
-    var doneBtn = wrap.append('div')
-        .attr('class', 'pad1 center')
-        .append('button')
-        .attr('class', 'major')
-        .text('Close')
-        .on('click', function() {
-            container.html('');
-            if (task) task();
-        });
-
-    var chartDiv = wrap.append('div');
-    var failedDiv = wrap.append('div');
-
-    var geocode = geocodemany('tmcw.map-u4ca5hnt');
-
-    var chart = progressChart(chartDiv.node(), chartDiv.node().offsetWidth, 50);
-
-    function progress(e) {
-        chart(e);
-    }
-
-    function printObj(o) {
-        return '(' + d3.entries(o)
-            .map(function(_) {
-                return _.key + ': ' + _.value;
-            }).join(',') + ')';
-    }
-
-    function done(failed, completed) {
-
-        failedDiv
-            .selectAll('.fail')
-            .data(failed)
-            .enter()
-            .append('div')
-            .attr('class', 'fail')
-            .text(function(d) {
-                return 'failed: ' + transform(d.data) + ' / ' + printObj(d.data);
-            });
-
-        csv2geojson.csv2geojson(completed, function(err, result) {
-            updates.update_editor(result);
-        });
-    }
-
-    var task = geocode(list, transform, progress, done);
-}
-
-},{"./lib/progress_chart":35,"./source/gist":42,"./vertical_panel":47,"detect-json-indent":5,"togeojson":12,"topojson":"g070js"}],33:[function(require,module,exports){
-var mobile = require('is-mobile');
-
-if (mobile()) {
-    var hash = window.location.hash;
-    window.location.href = '/mobile.html' + hash;
-}
-
-var jsonPanel = require('./json_panel'),
-    tablePanel = require('./table_panel'),
-    sourcePanel = require('./source_panel'),
-    loginPanel = require('./login_panel'),
-    fileBar = require('./file_bar'),
-    gist = require('./source/gist'),
-    github = require('./source/github'),
-    flash = require('./flash'),
-    commit = require('./commit'),
-    share = require('./share'),
-    mapUtil = require('./map'),
-    source = require('./source.js'),
-    bindBody = require('./import_panel').bindBody,
-    detectIndentationStyle = require('detect-json-indent'),
-    exportIndentationStyle = 4;
-
-var container = d3.select('body')
-    .append('div')
-    .attr('class', 'container');
-
-var map = mapUtil.setupMap(container);
-
-L.Polygon.prototype.getCenter = function() {
-    var pts = this._latlngs;
-    var off = pts[0];
-    var twicearea = 0;
-    var x = 0;
-    var y = 0;
-    var nPts = pts.length;
-    var p1, p2;
-    var f;
-    for (var i = 0, j = nPts - 1; i < nPts; j = i++) {
-        p1 = pts[i];
-        p2 = pts[j];
-        f = (p1.lat - off.lat) * (p2.lng - off.lng) - (p2.lat - off.lat) * (p1.lng - off.lng);
-        twicearea += f;
-        x += (p1.lat + p2.lat - 2 * off.lat) * f;
-        y += (p1.lng + p2.lng - 2 * off.lng) * f;
-    }
-    f = twicearea * 3;
-    return new L.LatLng(
-        x / f + off.lat,
-        y / f + off.lng
-    );
+    return data;
 };
 
-var pane = d3.select('.pane');
+},{"../source/gist":55,"../source/github":56,"clone":5,"xtend":32}],39:[function(require,module,exports){
+var qs = require('../lib/querystring');
 
-var buttons,
-    silentHash = false;
+module.exports = function(context) {
 
-var drawnItems = new L.FeatureGroup().addTo(map);
-var drawControl = new L.Control.Draw({
-    edit: { featureGroup: drawnItems },
-    draw: { circle: false }
-}).addTo(map);
-
-d3.select(window).on('hashchange', hashChange);
-
-map.on('draw:edited', updateFromMap)
-    .on('draw:deleted', updateFromMap)
-    .on('draw:created', drawCreated)
-    .on('draw:created', updateFromMap)
-    .on('popupopen', onPopupOpen);
-
-d3.select('.collapse-button').on('click', clickCollapse);
-
-var updates = d3.dispatch('update_geojson', 'update_map', 'update_editor', 'update_refresh',
-    'focus_layer', 'zoom_extent', 'sourcechange');
-
-bindBody(updates);
-
-updates.on('focus_layer', focusLayer)
-    .on('update_geojson', updateFromMap)
-    .on('update_editor', loadToMap)
-    .on('update_refresh', refresh)
-    .on('zoom_extent', zoomToExtent);
-
-if (window.location.hash) hashChange();
-
-var buttonData = [{
-    icon: 'table',
-    title: ' Table',
-    alt: 'Edit feature properties in a table',
-    behavior: tablePanel
-}, {
-    icon: 'code',
-    alt: 'JSON Source',
-    behavior: jsonPanel
-}, {
-    icon: 'github',
-    alt: '',
-    behavior: loginPanel
-}];
-
-var buttons = d3.select('.buttons')
-    .selectAll('button')
-    .data(buttonData, function(d) {
-        return d.icon;
-    });
-
-buttons.enter()
-    .append('button')
-    .attr('title', function(d) {
-        return d.alt;
-    })
-    .attr('class', function(d) {
-        return 'icon-' + d.icon;
-    })
-    .on('click', buttonClick)
-    .each(function(d) {
-        if (d.behavior.init) d.behavior.init(this);
-    })
-    .append('span')
-    .text(function(d) { return d.title; });
-
-buttons.exit().remove();
-
-d3.select(buttons.node()).trigger('click');
-
-function buttonClick(d) {
-    updates.on('update_map.mode', null);
-    buttons.classed('active', function(_) { return d.icon == _.icon; });
-    pane.call(d.behavior, updates);
-    updateFromMap();
-}
-
-container.append('div')
-    .attr('class', 'file-bar')
-    .call(fileBar(updates)
-        .on('source', clickSource)
-        .on('save', saveChanges)
-        .on('download', downloadFile)
-        .on('share', shareMap));
-
-function clickSource() {
-    if (d3.event) d3.event.preventDefault();
-    d3.select('.left-panel').call(sourcePanel(updates));
-}
-
-function downloadFile() {
-    var features = featuresFromMap();
-
-    var content = JSON.stringify({
-        type: 'FeatureCollection',
-        features: features
-    }, null, 4);
-
-    if (content) {
-        saveAs(new Blob([content], {
-            type: 'text/plain;charset=utf-8'
-        }), 'map.geojson');
+    function success(err, d) {
+        context.container.select('.map').classed('loading', false);
+        if (err) return;
+        context.data.parse(d);
+        zoomExtent();
     }
-}
 
-function shareMap() {
-    share(container, featuresFromMap());
-}
+    function zoomExtent() {
+        var bounds = context.mapLayer.getBounds();
+        if (bounds.isValid()) context.map.fitBounds(bounds);
+    }
 
-function clickCollapse() {
-    d3.select('.right').classed('hidden',
-        !d3.select('.right').classed('hidden'));
-    d3.select('#map').classed('fullsize',
-        !d3.select('#map').classed('fullsize'));
-    map.invalidateSize();
-}
+    return function(query) {
+        if (!query.id) return;
 
-function focusLayer(layer) {
-    if (!layer) return;
-    // geometrycollections
-    if ('eachLayer' in layer) {
-        var first = null;
-        layer.eachLayer(function(l) {
-            if (!first && 'openPopup' in l) first = l;
-        });
-        if (first) {
-            first.openPopup();
-            map.fitBounds(first.getBounds());
+        var oldRoute = d3.event ? qs.stringQs(d3.event.oldURL.split('#')[1]).id :
+            context.data.get('route');
+
+        if (query.id !== oldRoute) {
+            context.container.select('.map').classed('loading', true);
+            context.data.fetch(query, success);
         }
-    } else if ('getBounds' in layer && layer.getBounds().isValid()) {
-        if ('getCenter' in layer) {
-          layer.openPopup(layer.getCenter());
+    };
+};
+
+},{"../lib/querystring":49}],40:[function(require,module,exports){
+module.exports = function(context) {
+
+    d3.select(window).on('unload', onunload);
+    context.dispatch.on('change', onchange);
+
+    if (location.hash !== '#new') {
+        var rec = context.storage.get('recover');
+        if (rec && confirm('recover your map from the last time you edited?')) {
+            context.data.set(rec);
         } else {
-          layer.openPopup();
-        }
-        map.fitBounds(layer.getBounds());
-    } else if ('getLatLng' in layer) {
-        layer.openPopup();
-        map.setView(layer.getLatLng(), 15);
-    }
-}
-
-function drawCreated(e) {
-    drawnItems.addLayer(e.layer);
-    mapUtil.geoify(drawnItems);
-    refresh();
-}
-
-function onPopupOpen(e) {
-    var sel = d3.select(e.popup._contentNode);
-
-    sel.selectAll('.cancel')
-        .on('click', clickClose);
-
-    sel.selectAll('.save')
-        .on('click', saveFeature);
-
-    sel.selectAll('.delete-invert')
-        .on('click', removeFeature);
-
-    function clickClose() {
-        map.closePopup(e.popup);
-    }
-
-    function removeFeature() {
-        if (e.popup._source && drawnItems.hasLayer(e.popup._source)) {
-            drawnItems.removeLayer(e.popup._source);
-            updates.update_geojson();
-        }
-        updateFromMap();
-    }
-
-    function saveFeature() {
-        var obj = {};
-        sel.selectAll('tr').each(collectRow);
-        function collectRow() {
-            obj[d3.select(this).selectAll('input')[0][0].value] =
-                d3.select(this).selectAll('input')[0][1].value;
-        }
-        e.popup._source.feature.properties = obj;
-        map.closePopup(e.popup);
-        refresh();
-    }
-}
-
-d3.select(document).call(
-    d3.keybinding('global')
-        .on('⌘+s', saveChanges)
-        .on('⌘+o', clickSource));
-
-function saveChanges() {
-    if (d3.event) d3.event.preventDefault();
-
-    var features = featuresFromMap();
-
-    if (!features.length) {
-        return flash(container, 'Add a feature to the map to save it');
-    }
-
-    var content = JSON.stringify({
-        type: 'FeatureCollection',
-        features: features
-    }, null, exportIndentationStyle);
-
-    if (!source() || source().type == 'gist') {
-        gist.saveAsGist(content, function(err, resp) {
-            if (err) return flash(container, err.toString());
-            var id = resp.id;
-            window.location.hash = gist.urlHash(resp).url;
-            flash(container,
-                'Changes to this map saved to Gist: <a href="' + resp.html_url +
-                '">' + resp.html_url + '</a>');
-        });
-    } else if (!source() || source().type == 'github') {
-        var wrap = commit(container, content, function(err, resp) {
-            wrap.remove();
-            if (err) return flash(container, err.toString());
-            else flash(container, 'Changes committed to GitHub: <a href="' +
-                       resp.commit.html_url + '">' + resp.commit.sha.substring(0, 10) + '</a>');
-
-        });
-    }
-}
-
-function featuresFromMap() {
-    var features = [];
-    drawnItems.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    return features;
-}
-
-function updateFromMap() {
-    updates.update_map({
-        type: 'FeatureCollection',
-        features: featuresFromMap()
-    }, drawnItems, exportIndentationStyle);
-}
-
-function refresh() {
-    drawnItems.eachLayer(function(l) {
-        mapUtil.showProperties(l);
-    });
-}
-
-function zoomToExtent() {
-    if (drawnItems.getBounds().isValid()) {
-        map.fitBounds(drawnItems.getBounds());
-    }
-}
-
-function loadToMap(gj) {
-    drawnItems.clearLayers();
-    L.geoJson(gj).eachLayer(function(l) {
-        mapUtil.showProperties(l);
-        l.addTo(drawnItems);
-    });
-}
-
-function mapFile(gist) {
-    var f;
-    for (f in gist.files) if (f.indexOf('.geojson') !== -1) return JSON.parse(gist.files[f].content);
-    for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
-}
-
-function hashChange() {
-
-    // quiet a hashchange for one step
-    if (silentHash) {
-        silentHash = false;
-        return;
-    }
-
-    var s = source();
-
-    if (!s) {
-        window.location.hash = '';
-        return;
-    }
-
-    if (s.type == 'gist') gist.loadGist(s.id, onGistLoad);
-    if (s.type == 'github') github.loadGitHubRaw(s.id, onGitHubLoad);
-
-    function onGistLoad(err, json) {
-        if (err) return flash(container, 'Gist API limit exceeded, come back in a bit.');
-        var first = !drawnItems.getBounds().isValid();
-
-        try {
-            var file = mapFile(json);
-            updates.update_editor(mapFile(json));
-            if (drawnItems.getBounds().isValid()) map.fitBounds(drawnItems.getBounds());
-            if (gist.urlHash(json).redirect) {
-                silentHash = true;
-                window.location.hash = gist.urlHash(json).url;
-            }
-            updates.update_map(mapFile(json), drawnItems);
-            updates.sourcechange({
-                type: 'gist',
-                name: '#' + json.id,
-                data: json
-            });
-        } catch(e) {
-            console.log(e);
-            flash(container, 'Invalid GeoJSON data in this Gist');
+            context.storage.remove('recover');
         }
     }
 
-    function onGitHubLoad(err, file) {
-        if (err) return flash(container, 'GitHub API limit exceeded, come back in a bit.');
-
-        try {
-            var json = JSON.parse(file);
-            exportIndentationStyle = detectIndentationStyle(file);
-            var first = !drawnItems.getBounds().isValid();
-            updates.update_editor(json);
-            if (first && drawnItems.getBounds().isValid()) {
-                map.fitBounds(drawnItems.getBounds());
-                buttons.filter(function(d, i) { return i == 1; }).trigger('click');
-            }
-            updates.update_map(json, drawnItems);
-            updates.sourcechange({
-                type: 'github',
-                name: source().id,
-                data: source()
-            });
-        } catch(e) {
-            flash(container, 'Loading a file from GitHub failed');
+    function onunload() {
+        if (context.data.get('type') === 'local' && context.data.hasFeatures()) {
+            context.storage.set('recover', context.data.all());
+        } else {
+            context.storage.remove('recover');
         }
     }
-}
 
-},{"./commit":28,"./file_bar":30,"./flash":31,"./import_panel":32,"./json_panel":34,"./login_panel":36,"./map":37,"./share":40,"./source.js":41,"./source/gist":42,"./source/github":43,"./source_panel":44,"./table_panel":45,"detect-json-indent":5,"is-mobile":11}],34:[function(require,module,exports){
-var validate = require('./validate');
-
-module.exports = jsonPanel;
-
-CodeMirror.keyMap.tabSpace = {
-    Tab: function(cm) {
-        var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
-        cm.replaceSelection(spaces, 'end', '+input');
-    },
-    fallthrough: ['default']
+    function onchange() {
+        if (context.data.get('type') !== 'local') {
+            context.storage.remove('recover');
+        }
+    }
 };
 
-function jsonPanel(container, updates) {
-    container.html('');
+},{}],41:[function(require,module,exports){
+var qs = require('../lib/querystring'),
+    xtend = require('xtend');
 
-    var textarea = container.append('textarea');
-    editor = CodeMirror.fromTextArea(textarea.node(), {
-        mode: 'application/json',
-        matchBrackets: true,
-        tabSize: 2,
-        gutters: ['error'],
-        theme: 'eclipse',
-        autofocus: (window === window.top),
-        keyMap: 'tabSpace',
-        lineNumbers: true
-    });
+module.exports = function(context) {
+    var router = {};
 
-    // shush the callback-back
-    var quiet = false;
-    editor.on('change', validate(changeValidated));
+    router.on = function() {
+        d3.select(window).on('hashchange.router', route);
+        context.dispatch.on('change.route', unroute);
+        context.dispatch.route(getQuery());
+        return router;
+    };
 
-    function changeValidated(err, data) {
-        if (quiet) { quiet = false; return; }
-        if (!err) updates.update_editor(data);
+    router.off = function() {
+        d3.select(window).on('hashchange.router', null);
+        return router;
+    };
+
+    function route() {
+        var oldHash = d3.event.oldURL.split('#')[1] || '',
+            newHash = d3.event.newURL.split('#')[1] || '',
+            oldQuery = qs.stringQs(oldHash),
+            newQuery = qs.stringQs(newHash);
+
+        if (isOld(oldHash)) return upgrade(oldHash);
+        if (newQuery.id !== oldQuery.id) context.dispatch.route(newQuery);
     }
 
-    updates.on('update_map.mode', function(data) {
-        quiet = true;
-        editor.setValue(JSON.stringify(data, null, 2));
-    });
+    function isOld(id) {
+        return (id.indexOf('gist') === 0 || id.indexOf('github') === 0 || !isNaN(parseInt(id, 10)));
+    }
+
+    function upgrade(id) {
+        var split;
+        if (isNaN(parseInt(id))) {
+            split = id.split(':');
+            location.hash = '#id=' + (split[1].indexOf('/') === 0 ?
+                [split[0], split[1].substring(1)].join(':') : id);
+        } else {
+            location.hash = '#id=gist:/' + id;
+        }
+    }
+
+    function unroute() {
+        var query = getQuery();
+        var rev = reverseRoute();
+        if (rev.id && query.id !== rev.id) {
+            location.hash = '#' + qs.qsString(rev);
+        }
+    }
+
+    function getQuery() {
+        return qs.stringQs(window.location.hash.substring(1));
+    }
+
+    function reverseRoute() {
+        var query = getQuery();
+
+        return xtend(query, {
+            id: context.data.get('route')
+        });
+
+        return false;
+    }
+
+    return router;
+};
+
+},{"../lib/querystring":49,"xtend":32}],42:[function(require,module,exports){
+var config = require('../config.js')(location.hostname);
+
+module.exports = function(context) {
+    var user = {};
+
+    user.details = function(callback) {
+        if (!context.storage.get('github_token')) return callback('not logged in');
+
+        var cached = context.storage.get('github_user_details');
+
+        if (cached && cached.when > (+new Date() - 1000 * 60 * 60)) {
+            callback(null, cached.data);
+        } else {
+            context.storage.remove('github_user_details');
+
+            d3.json('https://api.github.com/user')
+                .header('Authorization', 'token ' + context.storage.get('github_token'))
+                .on('load', onload)
+                .on('error', onerror)
+                .get();
+        }
+
+        function onload(user) {
+            context.storage.set('github_user_details', {
+                when: +new Date(),
+                data: user
+            });
+            context.storage.set('github_user', user);
+            callback(null, user);
+        }
+
+        function onerror() {
+            user.logout();
+            context.storage.remove('github_user_details');
+            callback(new Error('not logged in'));
+        }
+    };
+
+    user.signXHR = function(xhr) {
+        return user.token() ?
+            xhr.header('Authorization', 'token ' + user.token()) : xhr;
+    };
+
+    user.authenticate = function() {
+        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
+    };
+
+    user.token = function(callback) {
+        return context.storage.get('github_token');
+    };
+
+    user.logout = function() {
+        context.storage.remove('github_token');
+    };
+
+    user.login = function() {
+        context.storage.remove('github_token');
+    };
+
+    function killTokenUrl() {
+        if (window.location.href.indexOf('?code') !== -1) {
+            window.location.href = window.location.href.replace(/\?code=.*$/, '');
+        }
+    }
+
+    if (window.location.search && window.location.search.indexOf('?code') === 0) {
+        var code = window.location.search.replace('?code=', '');
+        d3.select('.map').classed('loading', true);
+        d3.json(config.gatekeeper_url + '/authenticate/' + code)
+            .on('load', function(l) {
+                d3.select('.map').classed('loading', false);
+                if (l.token) window.localStorage.github_token = l.token;
+                killTokenUrl();
+            })
+            .on('error', function() {
+                d3.select('.map').classed('loading', false);
+                alert('Authentication with GitHub failed');
+            })
+            .get();
+    }
+
+    return user;
+};
+
+},{"../config.js":37}],43:[function(require,module,exports){
+var ui = require('./ui'),
+    map = require('./ui/map'),
+    data = require('./core/data'),
+    router = require('./core/router'),
+    recovery = require('./core/recovery'),
+    loader = require('./core/loader'),
+    user = require('./core/user'),
+    store = require('store');
+
+var gjIO = geojsonIO(),
+    gjUI = ui(gjIO);
+
+
+d3.select('.geojsonio').call(gjUI);
+
+gjIO.recovery = recovery(gjIO);
+gjIO.router.on();
+
+function geojsonIO() {
+    var context = {};
+    context.dispatch = d3.dispatch('change', 'route');
+    context.storage = store;
+    context.map = map(context);
+    context.data = data(context);
+    context.dispatch.on('route', loader(context));
+    context.router = router(context);
+    context.user = user(context);
+    return context;
 }
 
-},{"./validate":46}],35:[function(require,module,exports){
+},{"./core/data":38,"./core/loader":39,"./core/recovery":40,"./core/router":41,"./core/user":42,"./ui":57,"./ui/map":64,"store":14}],44:[function(require,module,exports){
+var qs = require('../lib/querystring');
+require('leaflet-hash');
+
+L.Hash.prototype.parseHash = function(hash) {
+    var query = qs.stringQs(hash.substring(1));
+    var map = query.map || '';
+    var args = map.split('/');
+	if (args.length == 3) {
+		var zoom = parseInt(args[0], 10),
+            lat = parseFloat(args[1]),
+            lon = parseFloat(args[2]);
+		if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
+			return false;
+		} else {
+			return {
+				center: new L.LatLng(lat, lon),
+				zoom: zoom
+			};
+		}
+	} else {
+		return false;
+	}
+};
+
+L.Hash.prototype.formatHash = function(map) {
+    var query = qs.stringQs(location.hash.substring(1)),
+	    center = map.getCenter(),
+	    zoom = map.getZoom(),
+	    precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
+
+    query.map = [zoom,
+		center.lat.toFixed(precision),
+		center.lng.toFixed(precision)
+	].join('/');
+
+	return "#" + qs.qsString(query);
+};
+
+},{"../lib/querystring":49,"leaflet-hash":13}],45:[function(require,module,exports){
+var importSupport = !!(window.FileReader),
+    flash = require('./flash.js'),
+    geocode = require('./geocode.js'),
+    readFile = require('../lib/readfile.js');
+
+module.exports = function(context) {
+    return function(selection) {
+        selection.html('');
+
+        var wrap = selection
+            .append('div')
+            .attr('class', 'pad1');
+
+        wrap.append('div')
+            .attr('class', 'modal-message')
+            .text('Drop files to map!');
+
+        if (importSupport) {
+
+            var import_landing = wrap.append('div')
+                .attr('class', 'pad fillL');
+
+            var message = import_landing
+                .append('div')
+                .attr('class', 'center');
+
+            var button = message.append('button')
+                .on('click', function() {
+                    fileInput.node().click();
+                });
+            button.append('span').attr('class', 'icon-arrow-down');
+            button.append('span').text(' Import');
+            message.append('p')
+                .attr('class', 'deemphasize')
+                .append('small')
+                .text('GeoJSON, TopoJSON, KML, CSV, GPX supported. You can also drag & drop files.');
+
+            var fileInput = message
+                .append('input')
+                .attr('type', 'file')
+                .style('visibility', 'hidden')
+                .style('position', 'absolute')
+                .style('height', '0')
+                .on('change', function() {
+                    if (this.files && this.files[0]) readFile.readFile(this.files[0], onImport);
+                });
+        } else {
+            wrap.append('p')
+                .attr('class', 'blank-banner center')
+                .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
+                      'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
+        }
+
+        function onImport(err, gj, warning) {
+            if (err) {
+                if (err.type === 'geocode') {
+                    wrap.call(geocode(context), err.raw);
+                } else if (err.message) {
+                    flash(context.container, err.message)
+                        .classed('error', 'true');
+                }
+            } else if (gj && gj.features) {
+                context.data.mergeFeatures(gj.features);
+                if (warning) {
+                    flash(context.container, warning.message);
+                } else {
+                    flash(context.container, 'Imported ' + gj.features.length + ' features.')
+                        .classed('success', 'true');
+                }
+            }
+        }
+
+        wrap.append('p')
+            .attr('class', 'intro center deemphasize')
+            .html('This is an open source project. <a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Submit feedback or get help</a>, and <a target="_blank" href="http://github.com/mapbox/geojson.io"><span class="icon-github"></span> fork on GitHub</a>');
+
+        wrap.append('div')
+            .attr('class', 'pad1');
+    };
+};
+
+},{"../lib/readfile.js":50,"./flash.js":61,"./geocode.js":62}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}],47:[function(require,module,exports){
+module.exports = function(context) {
+    return function(e) {
+        var sel = d3.select(e.popup._contentNode);
+
+        sel.selectAll('.cancel')
+            .on('click', clickClose);
+
+        sel.selectAll('.save')
+            .on('click', saveFeature);
+
+        sel.selectAll('.delete-invert')
+            .on('click', removeFeature);
+
+        function clickClose() {
+            context.map.closePopup(e.popup);
+        }
+
+        function removeFeature() {
+            if (e.popup._source && context.mapLayer.hasLayer(e.popup._source)) {
+                context.mapLayer.removeLayer(e.popup._source);
+                context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
+            }
+        }
+
+        function saveFeature() {
+            var obj = {};
+            sel.selectAll('tr').each(collectRow);
+            function collectRow() {
+                if (d3.select(this).selectAll('input')[0][0].value) {
+                    obj[d3.select(this).selectAll('input')[0][0].value] =
+                        d3.select(this).selectAll('input')[0][1].value;
+                }
+            }
+            e.popup._source.feature.properties = obj;
+            context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
+            context.map.closePopup(e.popup);
+        }
+    };
+};
+
+},{}],48:[function(require,module,exports){
 module.exports = function(elem, w, h) {
     var c = elem.appendChild(document.createElement('canvas'));
 
@@ -3966,746 +8875,139 @@ module.exports = function(elem, w, h) {
     };
 };
 
-},{}],36:[function(require,module,exports){
-var source = require('./source.js'),
-    config = require('./config')(location.hostname);
-
-module.exports = loginPanel;
-
-function loginPanel(container) {
-}
-
-loginPanel.init = function(container) {
-    'use strict';
-    var sel = d3.select(container);
-    sel.on('click', login);
-
-    function login() {
-        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
-    }
-
-    function logout() {
-        window.localStorage.removeItem('github_token');
-        sel
-            .classed('logged-in', false)
-            .classed('icon-github', true)
-            .style('background-image', 'none')
-            .on('click', login);
-    }
-
-    function killTokenUrl() {
-        if (window.location.href.indexOf('?code') !== -1) {
-            window.location.href = window.location.href.replace(/\?code=.*$/, '');
+},{}],49:[function(require,module,exports){
+module.exports.stringQs = function(str) {
+    return str.split('&').reduce(function(obj, pair){
+        var parts = pair.split('=');
+        if (parts.length === 2) {
+            obj[parts[0]] = (null === parts[1]) ? '' : decodeURIComponent(parts[1]);
         }
-    }
-
-    if (window.location.search && window.location.search.indexOf('?code') === 0) {
-        var code = window.location.search.replace('?code=', '');
-        d3.json(config.gatekeeper_url + '/authenticate/' + code)
-            .on('load', function(l) {
-                if (l.token) window.localStorage.github_token = l.token;
-                killTokenUrl();
-            })
-            .on('error', function() {
-                alert('Authentication with GitHub failed');
-            })
-            .get();
-    }
-
-    if (localStorage.github_token) {
-        d3.json('https://api.github.com/user')
-            .header('Authorization', 'token ' + window.localStorage.github_token)
-            .on('load', function(user) {
-                localStorage.github_user = JSON.stringify(user);
-                sel
-                    .style('background-image', 'url(' + user.avatar_url + ')')
-                    .style('background-size', '40px 40px')
-                    .style('background-repeat', 'no-repeat')
-                    .classed('icon-github', false)
-                    .classed('logged-in', true)
-                    .on('click', logout);
-            })
-            .on('error', function() {
-                window.localStorage.removeItem('github_token');
-            })
-            .get();
-    }
+        return obj;
+    }, {});
 };
 
-},{"./config":29,"./source.js":41}],37:[function(require,module,exports){
-module.exports.showProperties = showProperties;
-module.exports.setupMap = setupMap;
-module.exports.geoify = geoify;
-
-function setupMap(container) {
-    'use strict';
-
-    var mapDiv = container.append('div')
-        .attr('id', 'map');
-
-    var map = L.mapbox.map(mapDiv.node())
-        .setView([20, 0], 2);
-
-    var layers = [{
-        title: 'MapBox',
-        layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-            retinaVersion: 'tmcw.map-u4ca5hnt',
-            detectRetina: true
-        })
-    }, {
-        title: 'Satellite',
-        layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-            retinaVersion: 'tmcw.map-ujx9se0r',
-            detectRetina: true
-        })
-    }, {
-        title: 'OSM',
-        layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        })
-    }];
-
-    var layerButtons = container.append('div')
-        .attr('id', 'layer-switch')
-        .selectAll('button')
-        .data(layers)
-        .enter()
-        .append('button')
-        .on('click', function(d) {
-            var clicked = this;
-            layerButtons.classed('active', function() {
-                return clicked === this;
-            });
-            layers.forEach(swap);
-            function swap(l) {
-                if (l.layer == d.layer) map.addLayer(d.layer);
-                else if (map.hasLayer(l.layer)) map.removeLayer(l.layer);
-            }
-        })
-        .text(function(d) { return d.title; });
-
-    layerButtons.filter(function(d, i) { return i === 0; }).trigger('click');
-
-    L.mapbox.geocoderControl('tmcw.map-u4ca5hnt').addTo(map);
-
-    return map;
-}
-
-function isEmpty(o) {
-    for (var i in o) { return false; }
-    return true;
-}
-
-function showProperties(l) {
-    var properties = l.toGeoJSON().properties, table = '';
-    if (isEmpty(properties)) properties = { '': '' };
-
-    for (var key in properties) {
-        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
-            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
-    }
-
-    l.bindPopup(L.popup({
-        maxWidth: 500,
-        maxHeight: 400
-    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
-        '<div class="clearfix col12 drop">' +
-            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
-            '<button class="cancel">cancel</button></div>' +
-            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
-        '</div></div>'));
-}
-
-function geoify(layer) {
-    var features = [];
-    layer.eachLayer(function(l) {
-        if ('toGeoJSON' in l) features.push(l.toGeoJSON());
-    });
-    layer.clearLayers();
-    L.geoJson({ type: 'FeatureCollection', features: features }).eachLayer(function(l) {
-        l.addTo(layer);
-    });
-}
-
-},{}],38:[function(require,module,exports){
-module.exports = message;
-
-function message(selection) {
-    'use strict';
-
-    selection.select('div.message').remove();
-
-    var sel = selection.append('div')
-        .attr('class', 'message pad1');
-
-    sel.append('a')
-        .attr('class', 'icon-remove fr')
-        .on('click', function() {
-            sel.remove();
-        });
-
-    sel.append('div')
-        .attr('class', 'content');
-
-    sel
-        .style('opacity', 0)
-        .transition()
-        .duration(200)
-        .style('opacity', 1);
-
-    sel.close = function() {
-        sel
-            .transition()
-            .duration(200)
-            .style('opacity', 0)
-            .remove();
-        sel
-            .transition()
-            .duration(200)
-            .style('top', '0px');
-    };
-
-    return sel;
-}
-
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
-},{}],40:[function(require,module,exports){
-var gist = require('./source/gist');
-
-module.exports = share;
-
-function facebookUrl(_) {
-    return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(_);
-}
-
-function twitterUrl(_) {
-    return 'https://twitter.com/intent/tweet?source=webclient&text=' + encodeURIComponent(_);
-}
-
-function emailUrl(_) {
-    return 'mailto:?subject=' + encodeURIComponent('My Map on geojson.io') +
-        '&body=Here\'s the link: ' + encodeURIComponent(_);
-}
-
-function share(container, features) {
-    'use strict';
-    container.select('.share').remove();
-
-    var selection = container.append('div')
-        .attr('class', 'share pad1');
-
-    var networks = [
-        {
-            icon: 'icon-facebook',
-            title: 'Facebook',
-            url: facebookUrl(location.href)
-        },
-        {
-            icon: 'icon-twitter',
-            title: 'Twitter',
-            url: twitterUrl(location.href)
-        },
-        {
-            icon: 'icon-envelope-alt',
-            title: 'Email',
-            url: emailUrl(location.href)
-        }
-    ];
-
-    var links = selection
-        .selectAll('.network')
-        .data(networks)
-        .enter()
-        .append('a')
-        .attr('target', '_blank')
-        .attr('class', 'network')
-        .attr('href', function(d) { return d.url; });
-
-    links.append('span')
-        .attr('class', function(d) { return d.icon + ' pre-icon'; });
-
-    links.append('span')
-        .text(function(d) { return d.title; });
-
-    var embed_html = selection
-        .append('input')
-        .attr('type', 'text')
-        .attr('title', 'Embed HTML');
-
-    selection.append('a')
-        .attr('class', 'icon-remove')
-        .on('click', function() {
-            selection.remove();
-        });
-
-    gist.saveBlocks(JSON.stringify({
-        type: 'FeatureCollection',
-        features: features
-    }), function(err, res) {
-        if (err) return;
-        if (res) {
-            embed_html.property('value',
-                '<iframe frameborder="0" width="100%" height="300" ' + 
-                'src="http://bl.ocks.org/d/' + res.id + '"></iframe>');
-            embed_html.node().select();
-        }
-    });
-}
-
-},{"./source/gist":42}],41:[function(require,module,exports){
-'use strict';
-
-module.exports = function source() {
-
-    if (!window.location.hash) return null;
-
-    var txt = window.location.hash.substring(1);
-
-    if (!isNaN(parseInt(txt, 10))) {
-        // legacy gist
-        return {
-            type: 'gist',
-            id: parseInt(txt, 10)
-        };
-    } else if (txt.indexOf('gist:') === 0) {
-        var clean = txt.replace(/^gist:/, '');
-        if (clean.indexOf('/') !== -1) {
-            return {
-                type: 'gist',
-                login: clean.split('/')[0],
-                id: parseInt(clean.split('/')[1], 10)
-            };
-        } else {
-            return {
-                type: 'gist',
-                id: parseInt(clean, 10)
-            };
-        }
-    } else if (txt.indexOf('github:') === 0) {
-        return {
-            type: 'github',
-            id: txt.replace(/^github:\/?/, '')
-        };
-    }
+module.exports.qsString = function(obj, noencode) {
+    noencode = true;
+    function softEncode(s) { return s.replace('&', '%26'); }
+    return Object.keys(obj).sort().map(function(key) {
+        return encodeURIComponent(key) + '=' + (
+            noencode ? softEncode(obj[key]) : encodeURIComponent(obj[key]));
+    }).join('&');
 };
 
-},{}],42:[function(require,module,exports){
-var source = require('../source.js');
-var fs = require('fs');
-var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
+},{}],50:[function(require,module,exports){
+var topojson = require('topojson'),
+    toGeoJSON = require('togeojson');
 
-module.exports.saveAsGist = saveAsGist;
-module.exports.saveBlocks = saveBlocks;
-module.exports.loadGist = loadGist;
-module.exports.urlHash = urlHash;
+module.exports.readDrop = readDrop;
+module.exports.readFile = readFile;
 
-function loggedin() {
-    return !!localStorage.github_token;
-}
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
-
-function saveBlocks(content, callback) {
-    var endpoint = 'https://api.github.com/gists';
-
-    d3.json(endpoint)
-        .on('load', function(data) {
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-        })
-        .send('POST', JSON.stringify({
-            description: 'via:geojson.io',
-            public: true,
-            files: {
-                'index.html': {
-                    content: tmpl
-                },
-                'map.geojson': {
-                    content: content
-                }
-            }
-        }));
-}
-
-function saveAsGist(content, callback) {
-    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
-        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
-    }
-
-    var user = localStorage.github_user ?
-        JSON.parse(localStorage.github_user) : {};
-
-    var endpoint,
-        method = 'POST';
-
-    if (loggedin() && (source() && source().id)) {
-        if (user && source().login == user.login) {
-            endpoint = 'https://api.github.com/gists/' + source().id;
-            method = 'PATCH';
-        } else {
-            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
+function readDrop(callback) {
+    return function() {
+        if (d3.event.dataTransfer) {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+            var f = d3.event.dataTransfer.files[0];
+            readFile(f, callback);
         }
-    } else {
-        endpoint = 'https://api.github.com/gists';
-    }
-
-    authorize(d3.json(endpoint))
-        .on('load', function(data) {
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-        })
-        .send(method, JSON.stringify({
-            description: 'via:geojson.io',
-            public: true,
-            files: {
-                'map.geojson': {
-                    content: content
-                }
-            }
-        }));
-}
-
-function loadGist(id, callback) {
-    d3.json('https://api.github.com/gists/' + id)
-        .on('load', onLoad)
-        .on('error', onError).get();
-
-    function onLoad(json) { callback(null, json); }
-    function onError(err) { callback(err, null); }
-}
-
-function urlHash(data) {
-    var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id && !source().login) {
-        return {
-            url: '#gist:' + login + '/' + data.id,
-            redirect: true
-        };
-    } else {
-        return {
-            url: '#gist:' + login + '/' + data.id
-        };
-    }
-}
-
-},{"../source.js":41,"fs":1}],43:[function(require,module,exports){
-var source = require('../source.js');
-
-module.exports.saveAsGitHub = saveAsGitHub;
-module.exports.loadGitHub = loadGitHub;
-module.exports.loadGitHubRaw = loadGitHubRaw;
-module.exports.urlHash = urlHash;
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
-
-function githubFileUrl() {
-    var pts = parseGitHubId(source().id);
-
-    return 'https://api.github.com/repos/' + pts.user +
-            '/' + pts.repo +
-            '/contents/' + pts.file + '?ref=' + pts.branch;
-}
-
-function saveAsGitHub(content, message, callback) {
-    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
-        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
-    }
-
-    if (!localStorage.github_token) {
-        return alert('You need to log in with GitHub to commit changes');
-    }
-
-    var commitMessage = message || prompt('Commit message:');
-    if (!commitMessage) return;
-
-    loadGitHub(source().id, function(err, file) {
-        if (err) {
-            return alert('Failed to load file before saving');
-        }
-        authorize(d3.json(githubFileUrl()))
-            .on('load', function(data) {
-                callback(null, data);
-            })
-            .on('error', function(err) {
-                callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-            })
-            .send('PUT', JSON.stringify({
-                message: commitMessage,
-                sha: file.sha,
-                branch: file.branch,
-                content: Base64.toBase64(content)
-            }));
-    });
-}
-
-function parseGitHubId(id) {
-    var parts = id.split('/');
-    return {
-        user: parts[0],
-        repo: parts[1],
-        mode: parts[2],
-        branch: parts[3],
-        file: parts.slice(4).join('/')
     };
 }
 
-function loadGitHub(id, callback) {
-    var pts = parseGitHubId(id);
-    authorize(d3.json('https://api.github.com/repos/' + pts.user +
-        '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch))
-        .on('load', onLoad)
-        .on('error', onError)
-        .get();
+function readFile(f, callback) {
 
-    function onLoad(file) {
-        callback(null, file);
-    }
-    function onError(err) { callback(err, null); }
-}
+    var reader = new FileReader();
 
-function loadGitHubRaw(id, callback) {
-    var pts = parseGitHubId(id);
-    authorize(d3.text('https://api.github.com/repos/' + pts.user +
-        '/' + pts.repo +
-        '/contents/' + pts.file + '?ref=' + pts.branch))
-        .on('load', onLoad)
-        .on('error', onError)
-        .header('Accept', 'application/vnd.github.raw').get();
+    reader.onload = function(e) {
 
-    function onLoad(file) {
-        callback(null, file);
-    }
-    function onError(err) { callback(err, null); }
-}
+        var fileType = detectType(f);
 
-function urlHash(d) {
-    var prefix = '';
-
-    if (d.parents && d.parents.length) {
-        prefix = d.parents.map(function(p) {
-            return p.path;
-        }).join('/') + '/';
-    }
-
-    return {
-        url: 'github:/' + d.parent.full_name + '/' + d.type + '/' + d.parent.default_branch + '/' + prefix + d.path
-    };
-}
-
-},{"../source.js":41}],44:[function(require,module,exports){
-var verticalPanel = require('./vertical_panel'),
-    gist = require('./source/gist'),
-    github = require('./source/github'),
-    importPanel = require('./import_panel').importPanel,
-    githubBrowser = require('github-file-browser')(d3),
-    detectIndentationStyle = require('detect-json-indent');
-
-module.exports = sourcePanel;
-
-function sourcePanel(updates) {
-
-    function panel(selection) {
-
-        if (!selection.classed('hide')) return hidePanel();
-
-        var sources = [
-            {
-                title: 'Import',
-                alt: 'CSV, KML, GPX, and other filetypes',
-                icon: 'icon-cog',
-                action: clickImport
-            },
-            {
-                title: 'GitHub',
-                alt: 'GeoJSON files in GitHub Repositories',
-                icon: 'icon-github',
-                action: clickGitHub
-            },
-            {
-                title: 'Gist',
-                alt: 'GeoJSON files in GitHub Gists',
-                icon: 'icon-github-alt',
-                action: clickGist
-            }
-        ];
-
-        selection
-            .html('')
-            .classed('hide', false)
-            .transition()
-            .style('opacity', 1);
-
-        var $top = selection
-            .append('div')
-            .attr('class', 'import-sources col12 clearfix');
-
-       var $sources = $top.append('div')
-            .attr('class', 'col10')
-            .selectAll('div.import-source')
-            .data(sources)
-            .enter()
-            .append('div')
-            .attr('class', 'import-source col4')
-            .append('div')
-            .attr('class', 'pad1 center clickable')
-            .attr('title', function(d) { return d.alt; })
-            .on('click', clickSource);
-
-        function clickSource(d) {
-            var that = this;
-            $sources.classed('active', function() {
-                return that === this;
+        if (!fileType) {
+            return callback({
+                message: 'Could not detect file type'
             });
-            d.action.apply(this, d);
-        }
-
-        $sources.append('span')
-            .attr('class', function(d) {
-                return d.icon + ' icon-spaced';
-            });
-
-        $sources.append('span')
-            .attr('class', 'label')
-            .text(function(d) {
-                return d.title;
-            });
-
-        $top.append('div')
-            .attr('class', 'col2')
-            .append('div')
-            .attr('class', 'pad1 center clickable')
-            .on('click', hidePanel)
-            .append('span')
-            .attr('class', function(d) {
-                return 'icon-remove';
-            });
-
-        function hidePanel(d) {
-            selection
-                .transition()
-                .duration(500)
-                .style('opacity', 0)
-                .each('end', function() {
-                    d3.select(this)
-                        .html('')
-                        .classed('hide', true);
+        } else if (fileType === 'kml') {
+            var kmldom = toDom(e.target.result);
+            if (!kmldom) {
+                return callback({
+                    message: 'Invalid KML file: not valid XML'
                 });
-        }
-
-        var $subpane = selection.append('div')
-            .attr('class', 'subpane');
-
-        function clickGitHub() {
-            $subpane
-                .html('')
-                .append('div')
-                .attr('class', 'repos')
-                .call(githubBrowser
-                    .gitHubBrowse(localStorage.github_token)
-                        .on('chosen', gitHubChosen));
-
-            function gitHubChosen(d) {
-                var hash = github.urlHash(d);
-                location.hash = hash.url;
-                hidePanel();
             }
-        }
-
-        function clickImport() {
-            $subpane
-                .html('')
-                .append('div')
-                .call(importPanel, updates);
-
-            function gitHubChosen(d) {
-                var hash = github.urlHash(d);
-                location.hash = hash.url;
-                hidePanel();
+            var warning;
+            if (kmldom.getElementsByTagName('NetworkLink').length) {
+                warning = {
+                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                      'Please export and upload KML without NetworkLinks for optimal performance'
+                };
             }
-        }
-
-        function clickGist() {
-            $subpane
-                .html('')
-                .append('div')
-                .attr('class', 'browser pad1')
-                .call(githubBrowser
-                    .gistBrowse(localStorage.github_token)
-                        .on('chosen', gistChosen));
-
-            function gistChosen(d) {
-                var hash = gist.urlHash(d);
-                location.hash = hash.url;
-                hidePanel();
+            callback(null, toGeoJSON.kml(kmldom), warning);
+        } else if (fileType === 'gpx') {
+            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
+        } else if (fileType === 'geojson') {
+            try {
+                gj = JSON.parse(e.target.result);
+                if (gj && gj.type === 'Topology' && gj.objects) {
+                    var collection = { type: 'FeatureCollection', features: [] };
+                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
+                    callback(null, collection);
+                } else {
+                    callback(null, gj);
+                }
+            } catch(err) {
+                alert('Invalid JSON file: ' + err);
+                return;
             }
+        } else if (fileType === 'dsv') {
+            csv2geojson.csv2geojson(e.target.result, {
+                delimiter: 'auto'
+            }, function(err, result) {
+                if (err) {
+                    return callback({
+                        type: 'geocode',
+                        result: result,
+                        raw: e.target.result
+                    });
+                } else {
+                    return callback(null, result);
+                }
+            });
         }
+    };
 
-        $sources.filter(function(d, i) { return !i; }).trigger('click');
+    reader.readAsText(f);
+
+    function toDom(x) {
+        return (new DOMParser()).parseFromString(x, 'text/xml');
     }
 
-    return panel;
+    function detectType(f) {
+        var filename = f.name ? f.name.toLowerCase() : '';
+        function ext(_) {
+            return filename.indexOf(_) !== -1;
+        }
+        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
+            return 'kml';
+        }
+        if (ext('.gpx')) return 'gpx';
+        if (ext('.geojson') || ext('.json')) return 'geojson';
+        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
+            return 'dsv';
+        }
+    }
 }
 
-},{"./import_panel":32,"./source/gist":42,"./source/github":43,"./vertical_panel":47,"detect-json-indent":5,"github-file-browser":8}],45:[function(require,module,exports){
-var metatable = require('d3-metatable')(d3);
+},{"togeojson":15,"topojson":"PBmiWO"}],51:[function(require,module,exports){
+module.exports = function(map, feature, bounds) {
+    var zoomLevel;
 
-module.exports = tablePanel;
+    if (feature instanceof L.Marker) {
+        zoomLevel = bounds.isValid() ? map.getBoundsZoom(bounds) + 2 : 10;
+        map.setView(feature.getLatLng(), zoomLevel);
+    } else if ('getBounds' in feature && feature.getBounds().isValid()) {
+        map.fitBounds(feature.getBounds());
+    }
+};
 
-function tablePanel(container, updates) {
-    container.html('');
-
-    updates.on('update_map.mode', function(data, layers) {
-        function findLayer(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
-        if (!data.features.length) {
-            container.append('div')
-                .attr('class', 'blank-banner')
-                .text('no features');
-        } else {
-            var props = [];
-            layers.eachLayer(function(p) {
-                props.push(p.feature.properties);
-            });
-            container.html('');
-            container
-                .append('div')
-                .attr('class', 'pad1 scrollable')
-                .data([props])
-                .call(
-                    metatable()
-                        .on('change', function() {
-                            updates.update_refresh();
-                        })
-                        .on('rowfocus', function(d) {
-                            updates.focus_layer(findLayer(d));
-                        })
-                );
-        }
-    });
-}
-
-},{"d3-metatable":4}],46:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -4761,39 +9063,1264 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":6}],47:[function(require,module,exports){
-module.exports = verticalPanel;
+},{"geojsonhint":8}],53:[function(require,module,exports){
+var validate = require('../lib/validate'),
+    saver = require('../ui/saver.js');
 
-function verticalPanel(updates) {
+module.exports = function(context) {
 
-    var sources = [
-        {
-            title: 'Import'
-        }
-    ];
+    CodeMirror.keyMap.tabSpace = {
+        Tab: function(cm) {
+            var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
+            cm.replaceSelection(spaces, 'end', '+input');
+        },
+        'Ctrl-S': saveAction,
+        'Cmd-S': saveAction,
+        fallthrough: ['default']
+    };
 
-    function panel(selection) {
-
-        selection
-            .classed('hide', false)
-            .html('');
-
-        selection
-            .append('div')
-            .attr('class', 'import-sources')
-            .selectAll('div.import-source')
-            .data(sources)
-            .enter()
-            .append('div')
-            .attr('class', 'import-source')
-            .text(function(d) {
-                return d.name;
-            });
-        console.log(selection);
+    function saveAction() {
+        saver(context);
+        return false;
     }
 
-    return panel;
+    function render(selection) {
+        var textarea = selection
+            .html('')
+            .append('textarea');
+
+        var editor = CodeMirror.fromTextArea(textarea.node(), {
+            mode: 'application/json',
+            matchBrackets: true,
+            tabSize: 2,
+            gutters: ['error'],
+            theme: 'eclipse',
+            autofocus: (window === window.top),
+            keyMap: 'tabSpace',
+            lineNumbers: true
+        });
+
+        editor.on('change', validate(changeValidated));
+
+        function changeValidated(err, data) {
+            if (!err) context.data.set({map: data}, 'json');
+        }
+
+        context.dispatch.on('change.json', function(event) {
+            if (event.source !== 'json') {
+                editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+            }
+        });
+
+        editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+    }
+
+    render.off = function() {
+        context.dispatch.on('change.json', null);
+    };
+
+    return render;
+};
+
+},{"../lib/validate":52,"../ui/saver.js":67}],54:[function(require,module,exports){
+var metatable = require('d3-metatable')(d3),
+    smartZoom = require('../lib/smartzoom.js');
+
+module.exports = function(context) {
+    function render(selection) {
+
+        selection.html('');
+
+        function rerender() {
+            var geojson = context.data.get('map');
+            if (!geojson || !geojson.features.length) {
+                selection
+                    .html('')
+                    .append('div')
+                    .attr('class', 'blank-banner center')
+                    .text('no features');
+            } else {
+                var props = geojson.features.map(getProperties);
+                selection.select('.blank-banner').remove();
+                selection
+                    .data([props])
+                    .call(metatable()
+                        .on('change', function(row, i) {
+                            var geojson = context.data.get('map');
+                            geojson.features[i].properties = row;
+                            context.data.set('map', geojson);
+                        })
+                        .on('rowfocus', function(row, i) {
+                            var bounds = context.mapLayer.getBounds();
+                            var j = 0;
+                            context.mapLayer.eachLayer(function(l) {
+                                if (i === j++) smartZoom(context.map, l, bounds);
+                            });
+                        })
+                    );
+            }
+        }
+
+        context.dispatch.on('change.table', function(evt) {
+            rerender();
+        });
+
+        rerender();
+
+        function getProperties(f) { return f.properties; }
+
+        function zoomToMap(p) {
+            var layer;
+            layers.eachLayer(function(l) {
+                if (p == l.feature.properties) layer = l;
+            });
+            return layer;
+        }
+    }
+
+    render.off = function() {
+        context.dispatch.on('change.table', null);
+    };
+
+    return render;
+};
+
+},{"../lib/smartzoom.js":51,"d3-metatable":6}],55:[function(require,module,exports){
+var fs = require('fs'),
+    tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
+
+module.exports.save = save;
+module.exports.saveBlocks = saveBlocks;
+module.exports.load = load;
+
+function saveBlocks(content, callback) {
+    var endpoint = 'https://api.github.com/gists';
+
+    d3.json(endpoint)
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+        })
+        .send('POST', JSON.stringify({
+            description: 'via:geojson.io',
+            public: false,
+            files: {
+                'index.html': { content: tmpl },
+                'map.geojson': { content: content }
+            }
+        }));
 }
 
-},{}]},{},[42,33])
+function save(context, callback) {
+
+    var source = context.data.get('source'),
+        meta = context.data.get('meta'),
+        name = (meta && meta.name) || 'map.geojson',
+        map = context.data.get('map');
+
+    var description = (source && source.description) || 'via:geojson.io',
+        public = source ? !!source.public : false;
+
+    context.user.details(onuser);
+
+    function onuser(err, user) {
+        var endpoint,
+            method = 'POST',
+            source = context.data.get('source'),
+            files = {};
+
+        if (!err && user && user.login && meta && meta.login && user.login === meta.login) {
+            endpoint = 'https://api.github.com/gists/' + source.id;
+            method = 'PATCH';
+        } else if (!err && source && source.id) {
+            endpoint = 'https://api.github.com/gists/' + source.id + '/forks';
+        } else {
+            endpoint = 'https://api.github.com/gists';
+        }
+
+        files[name] = {
+            content: JSON.stringify(map)
+        };
+
+        context.user.signXHR(d3.json(endpoint))
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(err) {
+                callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+            })
+            .send(method, JSON.stringify({
+                files: files
+            }));
+    }
+}
+
+function load(id, context, callback) {
+    context.user.signXHR(d3.json('https://api.github.com/gists/' + id))
+        .on('load', onLoad)
+        .on('error', onError)
+        .get();
+
+    function onLoad(json) { callback(null, json); }
+    function onError(err) { callback(err, null); }
+}
+
+},{"fs":1}],56:[function(require,module,exports){
+module.exports.save = save;
+module.exports.load = load;
+module.exports.loadRaw = loadRaw;
+
+function save(context, callback) {
+    var source = context.data.get('source');
+
+    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
+        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
+            'Please use a modern browser to enjoy the full featureset of geojson.io');
+    }
+
+    if (!localStorage.github_token) {
+        return alert('You need to log in with GitHub to commit changes');
+    }
+
+    var commitMessage = context.commitMessage || prompt('Commit message:');
+    if (!commitMessage) return;
+
+    context.user.signXHR(d3.json(source.url))
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+        })
+        .send('PUT', JSON.stringify({
+            message: commitMessage,
+            sha: source.sha,
+            branch: context.data.get('meta').branch,
+            content: Base64.toBase64(JSON.stringify(context.data.get('map')))
+        }));
+}
+
+function parseGitHubId(id) {
+    var parts = id.split('/');
+    return {
+        user: parts[0],
+        repo: parts[1],
+        mode: parts[2],
+        branch: parts[3],
+        file: parts.slice(4).join('/')
+    };
+}
+
+function load(parts, context, callback) {
+    context.user.signXHR(d3.json(fileUrl(parts)))
+        .on('load', onLoad)
+        .on('error', onError)
+        .get();
+
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function loadRaw(parts, context, callback) {
+    context.user.signXHR(d3.text(fileUrl(parts)))
+        .on('load', onLoad)
+        .on('error', onError)
+        .header('Accept', 'application/vnd.github.raw')
+        .get();
+
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function fileUrl(parts) {
+    return 'https://api.github.com/repos/' +
+        parts.user +
+        '/' + parts.repo +
+        '/contents/' + parts.path +
+        '?ref=' + parts.branch;
+}
+
+},{}],57:[function(require,module,exports){
+var buttons = require('./ui/mode_buttons'),
+    file_bar = require('./ui/file_bar'),
+    dnd = require('./ui/dnd'),
+    userUi = require('./ui/user'),
+    layer_switch = require('./ui/layer_switch');
+
+module.exports = ui;
+
+function ui(context) {
+    function render(selection) {
+
+        var container = selection
+            .append('div')
+            .attr('class', 'container');
+
+        var map = container
+            .append('div')
+            .attr('class', 'map')
+            .call(context.map);
+
+        var right = container
+            .append('div')
+            .attr('class', 'right');
+
+        var top = right
+            .append('div')
+            .attr('class', 'top');
+
+        container
+            .append('a')
+            .attr('href', './about.html')
+            .attr('class', 'info bottom-right icon-info')
+            .attr('target', '_blank');
+
+        map
+            .call(layer_switch(context));
+
+        top
+            .append('button')
+            .attr('class', 'collapse-button')
+            .attr('title', 'Collapse')
+            .on('click', function collapse() {
+                d3.select('body').classed('fullscreen',
+                    !d3.select('body').classed('fullscreen'));
+                var full = d3.select('body').classed('fullscreen');
+                d3.select(this)
+                    .select('.icon')
+                    .classed('icon-caret-up', !full)
+                    .classed('icon-caret-down', full);
+                context.map.invalidateSize();
+            })
+            .append('class', 'span')
+            .attr('class', 'icon icon-caret-up');
+
+        var pane = right
+            .append('div')
+            .attr('class', 'pane');
+
+        top
+            .append('div')
+            .attr('class', 'user fr pad1 deemphasize')
+            .call(userUi(context));
+
+        top
+            .append('div')
+            .attr('class', 'buttons')
+            .call(buttons(context, pane));
+
+        container
+            .append('div')
+            .attr('class', 'file-bar')
+            .call(file_bar(context));
+
+        context.container = container;
+
+        dnd(context);
+    }
+
+    return render;
+}
+
+},{"./ui/dnd":59,"./ui/file_bar":60,"./ui/layer_switch":63,"./ui/mode_buttons":66,"./ui/user":70}],58:[function(require,module,exports){
+var github = require('../source/github');
+
+module.exports = commit;
+
+function commit(context, callback) {
+    context.container.select('.share').remove();
+    context.container.select('.tooltip.in')
+      .classed('in', false);
+
+    var wrap = context.container.append('div')
+        .attr('class', 'share pad1 center')
+        .style('z-index', 10);
+
+    var form = wrap.append('form')
+        .on('submit', function() {
+            d3.event.preventDefault();
+            context.commitMessage = message.property('value');
+            if (typeof callback === 'function') callback();
+        });
+
+    var message = form.append('input')
+        .attr('placeholder', 'Commit message')
+        .attr('type', 'text');
+
+    var commitButton = form.append('input')
+        .attr('type', 'submit')
+        .property('value', 'Commit Changes')
+        .attr('class', 'semimajor');
+
+    message.node().focus();
+
+    return wrap;
+}
+
+},{"../source/github":56}],59:[function(require,module,exports){
+var readDrop = require('../lib/readfile.js').readDrop,
+    geocoder = require('./geocode.js'),
+    flash = require('./flash.js');
+
+module.exports = function(context) {
+    d3.select('body')
+        .attr('dropzone', 'copy')
+        .on('drop.import', readDrop(function(err, gj, warning) {
+            if (err) {
+                if (err.type === 'geocode') {
+                    context.container.select('.icon-folder-open-alt')
+                        .trigger('click');
+                    flash(context.container, 'This file requires geocoding. Click Import to geocode it')
+                        .classed('error', 'true');
+                } else if (err.message) {
+                    flash(context.container, err.message)
+                        .classed('error', 'true');
+                }
+            } else if (gj && gj.features) {
+                context.data.mergeFeatures(gj.features);
+                if (warning) {
+                    flash(context.container, warning.message);
+                } else {
+                    flash(context.container, 'Imported ' + gj.features.length + ' features.')
+                        .classed('success', 'true');
+                }
+            }
+            d3.select('body').classed('dragover', false);
+        }))
+        .on('dragenter.import', over)
+        .on('dragleave.import', exit)
+        .on('dragover.import', over);
+
+   function over() {
+        d3.event.stopPropagation();
+        d3.event.preventDefault();
+        d3.event.dataTransfer.dropEffect = 'copy';
+        d3.select('body').classed('dragover', true);
+    }
+
+    function exit() {
+        d3.event.stopPropagation();
+        d3.event.preventDefault();
+        d3.event.dataTransfer.dropEffect = 'copy';
+        d3.select('body').classed('dragover', false);
+    }
+};
+
+},{"../lib/readfile.js":50,"./flash.js":61,"./geocode.js":62}],60:[function(require,module,exports){
+var share = require('./share'),
+    sourcepanel = require('./source.js'),
+    saver = require('../ui/saver.js');
+
+module.exports = function fileBar(context) {
+
+    function bar(selection) {
+
+        var name = selection.append('div')
+            .attr('class', 'name');
+
+        var filetype = name.append('a')
+            .attr('target', '_blank')
+            .attr('class', 'icon-file-alt');
+
+        var filename = name.append('span')
+            .attr('class', 'filename')
+            .text('unsaved');
+
+        var actions = [{
+            title: 'Save',
+            icon: 'icon-save',
+            action: saveAction
+        }, {
+            title: 'Open',
+            icon: 'icon-folder-open-alt',
+            action: function() {
+                context.container.call(sourcepanel(context));
+            }
+        }, {
+            title: 'New',
+            icon: 'icon-plus',
+            action: function() {
+                window.open('/#new');
+            }
+        }, {
+            title: 'Download',
+            icon: 'icon-download',
+            action: function() {
+                download();
+            }
+        }, {
+            title: 'Share',
+            icon: 'icon-share-alt',
+            action: function() {
+                context.container.call(share(context));
+            }
+        }];
+
+        function saveAction() {
+            if (d3.event) d3.event.preventDefault();
+            saver(context);
+        }
+
+        function download() {
+            if (d3.event) d3.event.preventDefault();
+            var content = JSON.stringify(context.data.get('map'));
+            window.saveAs(new Blob([content], {
+                type: 'text/plain;charset=utf-8'
+            }), context.data.get('meta').name || 'map.geojson');
+        }
+
+        function sourceIcon(type) {
+            if (type == 'github') return 'icon-github';
+            else if (type == 'gist') return 'icon-github-alt';
+            else return 'icon-file-alt';
+        }
+
+        function saveNoun(_) {
+            buttons.filter(function(b) {
+                return b.title === 'Save';
+            }).select('span.title').text(_);
+        }
+
+        var buttons = selection.append('div')
+            .attr('class', 'fr')
+            .selectAll('button')
+            .data(actions)
+            .enter()
+            .append('button')
+            .on('click', function(d) {
+                d.action.apply(this, d);
+            })
+            .attr('data-original-title', function(d) {
+                return d.title;
+            })
+            .attr('class', function(d) {
+                return d.icon + ' icon sq40';
+            })
+            .call(bootstrap.tooltip().placement('bottom'));
+
+        context.dispatch.on('change.filebar', onchange);
+
+        function onchange(d) {
+            var data = d.obj,
+                type = data.type,
+                path = data.path;
+            filename
+                .text(path ? path : 'unsaved')
+                .classed('deemphasize', context.data.dirty);
+            filetype
+                .attr('href', data.url)
+                .attr('class', sourceIcon(type));
+            saveNoun(type == 'github' ? 'Commit' : 'Save');
+        }
+
+        d3.select(document).call(
+            d3.keybinding('file_bar')
+                .on('⌘+a', download)
+                .on('⌘+s', saveAction));
+    }
+
+    return bar;
+};
+
+},{"../ui/saver.js":67,"./share":68,"./source.js":69}],61:[function(require,module,exports){
+var message = require('./message');
+
+module.exports = flash;
+
+function flash(selection, txt) {
+    'use strict';
+
+    var msg = message(selection);
+
+    if (txt) msg.select('.content').html(txt);
+
+    setTimeout(function() {
+        msg
+            .transition()
+            .style('opacity', 0)
+            .remove();
+    }, 5000);
+
+    return msg;
+}
+
+},{"./message":65}],62:[function(require,module,exports){
+var progressChart = require('../lib/progress_chart');
+
+module.exports = function(context) {
+    return function(container, text) {
+
+        var list = csv2geojson.auto(text);
+
+        var button = container.append('div')
+            .attr('class', 'bucket-actions')
+            .append('button')
+            .attr('class', 'major')
+            .attr('disabled', true)
+            .text('At least one field required to geocode');
+
+        var join = container.append('div')
+            .attr('class', 'bucket-deposit')
+            .append('div')
+            .attr('class', 'bucket-join');
+
+        var buckets = join.selectAll('.bucket')
+            .data(['City', 'State', 'ZIP', 'Country'])
+            .enter()
+            .append('div')
+            .attr('class', 'bucket')
+            .text(String);
+
+        var example = container.append('div')
+            .attr('class', 'example');
+
+        var store = container.append('div')
+           .attr('class', 'bucket-store');
+
+        var sources = store.selectAll('bucket-source')
+           .data(Object.keys(list[0]))
+           .enter()
+           .append('div')
+           .attr('class', 'bucket-source')
+           .text(String);
+
+        function showExample(fields) {
+            var i = 0;
+            return function() {
+                if (++i > list.length) i = 0;
+                example.html('');
+                example.text(transformRow(fields)(list[i]));
+            };
+        }
+
+        var ti;
+        var broker = bucket();
+        buckets.call(broker.deposit());
+        sources.call(broker.store().on('chosen', onChosen));
+
+        function onChosen(fields) {
+             if (ti) window.clearInterval(ti);
+             if (fields.length) {
+                 button.attr('disabled', null)
+                    .text('Geocode');
+                 button.on('click', function() {
+                     runGeocode(container, list, transformRow(fields), context);
+                 });
+                 var se = showExample(fields);
+                 se();
+                 ti = window.setInterval(se, 2000);
+             } else {
+                 button.attr('disabled', true)
+                    .text('At least one field required to geocode');
+                 example.text('');
+             }
+         }
+    };
+};
+
+function runGeocode(container, list, transform, context) {
+    container.html('');
+
+    var wrap = container
+        .append('div')
+        .attr('class', 'pad1');
+
+    var doneBtn = wrap.append('div')
+        .attr('class', 'pad1 center')
+        .append('button')
+        .attr('class', 'major')
+        .text('Close')
+        .on('click', function() {
+            container.html('');
+            if (task) task();
+        });
+
+    var chartDiv = wrap.append('div'),
+        failedDiv = wrap.append('div'),
+        geocode = geocodemany('tmcw.map-u4ca5hnt');
+
+    var chart = progressChart(chartDiv.node(), chartDiv.node().offsetWidth, 50),
+        task = geocode(list, transform, progress, done);
+
+    function progress(e) {
+        chart(e);
+    }
+
+    function done(failed, completed) {
+
+        failedDiv
+            .selectAll('pre')
+            .data(failed)
+            .enter()
+            .append('pre')
+            .text(failedMessage);
+
+        function failedMessage(d) {
+            return 'failed: ' + transform(d.data) + ' / ' + printObj(d.data);
+        }
+
+        csv2geojson.csv2geojson(completed, function(err, result) {
+            if (result.features) {
+                context.data.mergeFeatures(result.features);
+            }
+        });
+    }
+}
+
+function transformRow(fields) {
+    return function(obj) {
+       return d3.entries(obj)
+           .filter(function(_) { return fields.indexOf(_.key) !== -1; })
+           .map(function(_) { return _.value; })
+           .join(', ');
+    };
+}
+
+function printObj(o) {
+    return '(' + d3.entries(o)
+        .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
+}
+
+},{"../lib/progress_chart":48}],63:[function(require,module,exports){
+module.exports = function(context) {
+
+    return function(selection) {
+
+        var layers = [{
+            title: 'MapBox',
+            layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
+                retinaVersion: 'tmcw.map-u4ca5hnt',
+                detectRetina: true
+            })
+        }, {
+            title: 'Satellite',
+            layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
+                retinaVersion: 'tmcw.map-ujx9se0r',
+                detectRetina: true
+            })
+        }, {
+            title: 'OSM',
+            layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            })
+        }];
+
+        var layerSwap = function(d) {
+            var clicked = this instanceof d3.selection ? this.node() : this;
+            layerButtons.classed('active', function() {
+                return clicked === this;
+            });
+            layers.forEach(swap);
+            function swap(l) {
+                var datum = d instanceof d3.selection ? d.datum() : d;
+                if (l.layer == datum.layer) context.map.addLayer(datum.layer);
+                else if (context.map.hasLayer(l.layer)) context.map.removeLayer(l.layer);
+            }
+        };
+        
+        var layerButtons = selection.append('div')
+            .attr('class', 'layer-switch')
+            .selectAll('button')
+            .data(layers)
+            .enter()
+            .append('button')
+            .attr('class', 'pad0')
+            .on('click', layerSwap)
+            .text(function(d) { return d.title; });
+
+        layerButtons.filter(function(d, i) { return i === 0; }).call(layerSwap);
+
+    };
+};
+
+
+},{}],64:[function(require,module,exports){
+var popup = require('../lib/popup'),
+    customHash = require('../lib/custom_hash.js'),
+    qs = require('../lib/querystring.js');
+
+module.exports = function(context) {
+
+
+    function map(selection) {
+        context.map = L.mapbox.map(selection.node())
+            .setView([20, 0], 2)
+            .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt'));
+
+        L.hash(context.map);
+
+        context.mapLayer = L.featureGroup().addTo(context.map);
+
+        context.drawControl = new L.Control.Draw({
+            edit: { featureGroup: context.mapLayer },
+            draw: {
+                circle: false,
+                polyline: { metric: navigator.language !== 'en-US' },
+                polygon: { metric: navigator.language !== 'en-US' }
+            }
+        }).addTo(context.map);
+
+        context.map
+            .on('draw:edited', update)
+            .on('draw:deleted', update)
+            .on('draw:created', created)
+            .on('popupopen', popup(context));
+
+        function update() {
+            geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
+            context.data.set({map: layerToGeoJSON(context.mapLayer)}, 'map');
+        }
+
+        context.dispatch.on('change.map', function() {
+            geojsonToLayer(context.data.get('map'), context.mapLayer);
+        });
+
+        function created(e) {
+            context.mapLayer.addLayer(e.layer);
+            update();
+        }
+    }
+
+    function layerToGeoJSON(layer) {
+        var features = [];
+        layer.eachLayer(collect);
+        function collect(l) { if ('toGeoJSON' in l) features.push(l.toGeoJSON()); }
+        return {
+            type: 'FeatureCollection',
+            features: features
+        };
+    }
+
+    return map;
+};
+
+function geojsonToLayer(geojson, layer) {
+    layer.clearLayers();
+    L.geoJson(geojson).eachLayer(add);
+    function add(l) {
+        bindPopup(l);
+        l.addTo(layer);
+    }
+}
+
+function bindPopup(l) {
+
+    var properties = l.toGeoJSON().properties, table = '';
+
+    if (!properties) return;
+
+    if (!Object.keys(properties).length) properties = { '': '' };
+
+    for (var key in properties) {
+        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
+            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
+    }
+
+    l.bindPopup(L.popup({
+        maxWidth: 500,
+        maxHeight: 400
+    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
+        '<br /><div class="clearfix col12">' +
+            '<div class="buttons-joined fl"><button class="save major">save</button> ' +
+            '<button class="major cancel">cancel</button></div>' +
+            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
+        '</div></div>'));
+}
+
+},{"../lib/custom_hash.js":44,"../lib/popup":47,"../lib/querystring.js":49}],65:[function(require,module,exports){
+module.exports = message;
+
+function message(selection) {
+    'use strict';
+
+    selection.select('div.message').remove();
+
+    var sel = selection.append('div')
+        .attr('class', 'message pad1');
+
+    sel.append('a')
+        .attr('class', 'icon-remove fr')
+        .on('click', function() {
+            sel.remove();
+        });
+
+    sel.append('div')
+        .attr('class', 'content');
+
+    sel
+        .style('opacity', 0)
+        .transition()
+        .duration(200)
+        .style('opacity', 1);
+
+    sel.close = function() {
+        sel
+            .transition()
+            .duration(200)
+            .style('opacity', 0)
+            .remove();
+        sel
+            .transition()
+            .duration(200)
+            .style('top', '0px');
+    };
+
+    return sel;
+}
+
+},{}],66:[function(require,module,exports){
+var table = require('../panel/table'),
+    json = require('../panel/json');
+
+module.exports = function(context, pane) {
+    return function(selection) {
+
+        var mode = null;
+
+        var buttonData = [{
+            icon: 'table',
+            title: ' Table',
+            alt: 'Edit feature properties in a table',
+            behavior: table
+        }, {
+            icon: 'code',
+            title: ' JSON',
+            alt: 'JSON Source',
+            behavior: json
+        }];
+
+        var buttons = selection
+            .selectAll('button')
+            .data(buttonData, function(d) { return d.icon; });
+
+        var enter = buttons.enter()
+            .append('button')
+            .attr('title', function(d) { return d.alt; })
+            .on('click', buttonClick);
+        enter.append('span')
+            .attr('class', function(d) { return 'icon-' + d.icon; });
+        enter
+            .append('span')
+            .text(function(d) { return d.title; });
+
+        d3.select(buttons.node()).trigger('click');
+
+        function buttonClick(d) {
+            buttons.classed('active', function(_) { return d.icon == _.icon; });
+            if (mode) mode.off();
+            mode = d.behavior(context);
+            pane.call(mode);
+        }
+    };
+};
+
+},{"../panel/json":53,"../panel/table":54}],67:[function(require,module,exports){
+var commit = require('./commit');
+var flash = require('./flash');
+
+module.exports = function(context) {
+    if (d3.event) d3.event.preventDefault();
+
+    var type = context.data.get('type');
+
+    function success(err, res) {
+        if (err) return flash(context.container, err.toString());
+
+        var message,
+          url,
+          path,
+          commitMessage;
+
+        switch (type) {
+            case 'github':
+                message = 'Changes committed to GitHub: ';
+                url = res.commit.html_url;
+                path = res.commit.sha.substring(0,10);
+                break;
+            case 'gist':
+            case 'local':
+                message = 'Changes to this map saved to Gist: ';
+                url = res.html_url;
+                path = res.id;
+                break;
+        }
+
+        flash(context.container, message + '<a href="' + url + '">' + path + '</a>');
+
+        context.container.select('.map').classed('loading', false);
+        context.data.parse(res);
+    }
+
+    var map = context.data.get('map');
+    var features = map && map.features && map.features.length;
+
+    if (!features) {
+        return flash(context.container, 'Add a feature to the map to save it');
+    }
+
+    context.container.select('.map').classed('loading', true);
+
+    switch(type) {
+        case 'github':
+            var wrap = commit(context, function() {
+                wrap.remove();
+                context.data.save(success);
+            });
+            break;
+        case 'local':
+        case 'gist':
+            context.data.save(success);
+            break;
+
+    }
+};
+
+},{"./commit":58,"./flash":61}],68:[function(require,module,exports){
+var gist = require('../source/gist');
+
+module.exports = share;
+
+function facebookUrl(_) {
+    return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(_);
+}
+
+function twitterUrl(_) {
+    return 'https://twitter.com/intent/tweet?source=webclient&text=' + encodeURIComponent(_);
+}
+
+function emailUrl(_) {
+    return 'mailto:?subject=' + encodeURIComponent('My Map on geojson.io') + '&body=Here\'s the link: ' + encodeURIComponent(_);
+}
+
+function share(context) {
+    return function(selection) {
+
+        selection.select('.share').remove();
+        selection.select('.tooltip.in')
+          .classed('in', false);
+
+        var sel = selection.append('div')
+            .attr('class', 'share pad1');
+
+        var networks = [{
+            icon: 'icon-facebook',
+            title: 'Facebook',
+            url: facebookUrl(location.href)
+        }, {
+            icon: 'icon-twitter',
+            title: 'Twitter',
+            url: twitterUrl(location.href)
+        }, {
+            icon: 'icon-envelope-alt',
+            title: 'Email',
+            url: emailUrl(location.href)
+        }];
+
+        var links = sel
+            .selectAll('.network')
+            .data(networks)
+            .enter()
+            .append('a')
+            .attr('target', '_blank')
+            .attr('class', 'network')
+            .attr('href', function(d) { return d.url; });
+
+        links.append('span')
+            .attr('class', function(d) { return d.icon + ' pre-icon'; });
+
+        links.append('span')
+            .text(function(d) { return d.title; });
+
+        var embed_html = sel
+            .append('input')
+            .attr('type', 'text')
+            .attr('title', 'Embed HTML');
+
+        sel.append('a')
+            .attr('class', 'icon-remove')
+            .on('click', function() { sel.remove(); });
+
+        gist.saveBlocks(context.data.get('map'), function(err, res) {
+            if (err) return;
+            if (res) {
+                embed_html.property('value',
+                    '<iframe frameborder="0" width="100%" height="300" ' +
+                    'src="http://bl.ocks.org/d/' + res.id + '"></iframe>');
+                embed_html.node().select();
+            }
+        });
+    };
+}
+
+},{"../source/gist":55}],69:[function(require,module,exports){
+var importPanel = require('./import'),
+    githubBrowser = require('github-file-browser')(d3),
+    detectIndentationStyle = require('detect-json-indent');
+
+module.exports = function(context) {
+
+    function render(selection) {
+
+        selection.select('.right.overlay').remove();
+
+        var panel = selection.append('div')
+            .attr('class', 'right overlay');
+
+        var sources = [{
+            title: 'Import',
+            alt: 'CSV, KML, GPX, and other filetypes',
+            icon: 'icon-cog',
+            action: clickImport
+        }, {
+            title: 'GitHub',
+            alt: 'GeoJSON files in GitHub Repositories',
+            icon: 'icon-github',
+            authenticated: true,
+            action: clickGitHub
+        }, {
+            title: 'Gist',
+            alt: 'GeoJSON files in GitHub Gists',
+            icon: 'icon-github-alt',
+            authenticated: true,
+            action: clickGist
+        }];
+
+        var $top = panel
+            .append('div')
+            .attr('class', 'top');
+
+       var $buttons = $top.append('div')
+            .attr('class', 'buttons');
+
+       var $sources = $buttons
+           .selectAll('button.source')
+            .data(sources)
+            .enter()
+            .append('button')
+            .classed('deemphasize', function(d) {
+                return d.authenticated && !context.user.token();
+            })
+            .attr('class', function(d) {
+                return d.icon + ' icon-spaced pad1 source';
+            })
+            .text(function(d) {
+                return ' ' + d.title;
+            })
+            .attr('title', function(d) { return d.alt; })
+            .on('click', clickSource);
+
+        function clickSource(d) {
+            if (d.authenticated && !context.user.token()) {
+                return alert('Log in to load GitHub files and Gists');
+            }
+
+            var that = this;
+            $sources.classed('active', function() {
+                return that === this;
+            });
+
+            d.action.apply(this, d);
+        }
+
+        $buttons.append('button')
+            .on('click', hidePanel)
+            .attr('class', function(d) {
+                return 'icon-remove';
+            });
+
+        function hidePanel(d) {
+            panel.remove();
+        }
+
+        var $subpane = panel.append('div')
+            .attr('class', 'subpane');
+
+        function clickGitHub() {
+            $subpane
+                .html('')
+                .append('div')
+                .attr('class', 'repos')
+                .call(githubBrowser
+                    .gitHubBrowse(context.user.token())
+                        .on('chosen', context.data.parse));
+        }
+
+        function clickImport() {
+            $subpane
+                .html('')
+                .append('div')
+                .call(importPanel(context));
+        }
+
+        function clickGist() {
+            $subpane
+                .html('')
+                .append('div')
+                .attr('class', 'browser pad1')
+                .call(githubBrowser
+                    .gistBrowse(context.user.token())
+                        .on('chosen', context.data.parse));
+        }
+
+        $sources.filter(function(d, i) { return !i; }).trigger('click');
+    }
+
+    return render;
+};
+
+},{"./import":45,"detect-json-indent":7,"github-file-browser":10}],70:[function(require,module,exports){
+module.exports = function(context) {
+    return function(selection) {
+        var name = selection.append('a')
+            .attr('target', '_blank');
+
+        selection.append('span').text(' | ');
+
+        var action = selection.append('a')
+            .attr('href', '#');
+
+        function nextLogin() {
+            action.text('login').on('click', login);
+            name
+                .text('anon')
+                .attr('href', '#')
+                .on('click', function() { d3.event.preventDefault(); });
+        }
+
+        function nextLogout() {
+            name.on('click', null);
+            action.text('logout').on('click', logout);
+        }
+
+        function login() {
+            d3.event.preventDefault();
+            context.user.authenticate();
+        }
+
+        function logout() {
+            d3.event.preventDefault();
+            context.user.logout();
+            nextLogin();
+        }
+
+        nextLogin();
+
+        if (context.user.token()) {
+            context.user.details(function(err, d) {
+                if (err) return;
+                name.text(d.login);
+                name.attr('href', d.html_url);
+                nextLogout();
+            });
+        }
+    };
+};
+
+},{}]},{},[55,43])
 ;

@@ -1,0 +1,12 @@
+@font-face {
+    font-family: 'm_1mregular';
+    src: url('mplus/mplus-1m-regular-webfont.eot');
+    src: url('mplus/mplus-1m-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('mplus/mplus-1m-regular-webfont.woff') format('woff'),
+         url('mplus/mplus-1m-regular-webfont.ttf') format('truetype'),
+         url('mplus/mplus-1m-regular-webfont.svg#m_1mregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
