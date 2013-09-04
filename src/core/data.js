@@ -164,7 +164,7 @@ module.exports = function(context) {
                     type: 'gist',
                     source: d,
                     meta: {
-                        login: d.user && d.user.login,
+                        login: (d.user && d.user.login) || 'anonymous',
                         name: file && file.name
                     },
                     map: file && file.content,

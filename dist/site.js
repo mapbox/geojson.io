@@ -8402,7 +8402,7 @@ module.exports = function(context) {
                     type: 'gist',
                     source: d,
                     meta: {
-                        login: d.user && d.user.login,
+                        login: (d.user && d.user.login) || 'anonymous',
                         name: file && file.name
                     },
                     map: file && file.content,
@@ -10059,7 +10059,7 @@ module.exports = function(context) {
     var features = map && map.features && map.features.length;
 
     if (!features) {
-        return flash(container, 'Add a feature to the map to save it');
+        return flash(context.container, 'Add a feature to the map to save it');
     }
 
     context.container.select('.map').classed('loading', true);
