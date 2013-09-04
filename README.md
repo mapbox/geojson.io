@@ -12,7 +12,7 @@ a fast, simple editor for map data.
 
 ## development
 
-Libraries are concatenated into `lib/lib.js` by running `make`.
+Libraries are concatenated into `dist/lib.js` by running `make`.
 
 Run a local server with [visionmedia/serve](https://github.com/visionmedia/serve):
 

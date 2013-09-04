@@ -15,6 +15,7 @@ dist/d3.min.js: node_modules/d3/*
 		node_modules/d3/src/arrays/range.js \
 		node_modules/d3/src/behavior/drag.js \
 		node_modules/d3/src/core/rebind.js \
+		node_modules/d3/src/core/functor.js \
 		node_modules/d3/src/event/dispatch.js \
 		node_modules/d3/src/event/event.js \
 		node_modules/d3/src/selection/select.js \
@@ -43,6 +44,8 @@ dist/lib.js: $(LIBS) dist/d3.min.js
 		lib/queue.js \
 		lib/d3.keybinding.js \
 		lib/d3.trigger.js \
+		lib/d3-compat.js \
+		lib/d3-tooltip.js \
 		lib/draw/leaflet.draw-src.js \
 		lib/codemirror/lib/codemirror.js \
 		lib/codemirror/mode/javascript/javascript.js \

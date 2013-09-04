@@ -7,13 +7,14 @@
   <!--[if lte IE 8]>
     <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' />
   <![endif]-->
-  <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono|Open+Sans:400,600,700,300' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="css/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="css/fonts/mplus.css">
   <title>geojson.io: Edit GeoJSON</title>
   <link href='lib/draw/leaflet.draw.css' rel='stylesheet' />
   <link href='lib/codemirror/lib/codemirror.css' rel='stylesheet' />
   <link href='lib/bucket.css' rel='stylesheet' />
   <link href='css/base.css' rel='stylesheet' />
+  <link href='css/tooltip.css' rel='stylesheet' />
   <link href='css/marker.css' rel='stylesheet' />
   <link href='css/github_browse.css' rel='stylesheet' />
   <link href='css/site.css' rel='stylesheet' />
@@ -38,19 +39,10 @@
   </script>
 </head>
 <body id='geojsonio-body'>
-<div class='left-panel hide'></div>
-<div class='right'>
-    <div class='top'>
-        <a target='_blank' class='info fr' href='./about.html'><span class='icon-info' /></span></a>
-        <button title='collapse' class='collapse-button'>
-            <span class='icon icon-caret-down'></span>
-        </button>
-        <div class='buttons'>
-        </div>
-    </div>
-    <div class='pane'></div>
-</div>
-<script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>
+
+<div class='geojsonio'></div>
+
+<script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.uncompressed.js'></script>
 <script src='dist/lib.js'></script>
 <script src='dist/site.js'></script>
 <script type="text/javascript">

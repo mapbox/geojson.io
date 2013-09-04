@@ -1,21 +1,9 @@
-var source = require('../source.js');
-var fs = require('fs');
-var tmpl = fs.readFileSync('data/share.html', 'utf8');
+var fs = require('fs'),
+    tmpl = fs.readFileSync('data/share.html', 'utf8');
 
-module.exports.saveAsGist = saveAsGist;
+module.exports.save = save;
 module.exports.saveBlocks = saveBlocks;
-module.exports.loadGist = loadGist;
-module.exports.urlHash = urlHash;
-
-function loggedin() {
-    return !!localStorage.github_token;
-}
-
-function authorize(xhr) {
-    return localStorage.github_token ?
-        xhr.header('Authorization', 'token ' + localStorage.github_token) :
-        xhr;
-}
+module.exports.load = load;
 
 function saveBlocks(content, callback) {
     var endpoint = 'https://api.github.com/gists';
@@ -29,78 +17,64 @@ function saveBlocks(content, callback) {
         })
         .send('POST', JSON.stringify({
             description: 'via:geojson.io',
-            public: true,
+            public: false,
             files: {
-                'index.html': {
-                    content: tmpl
-                },
-                'map.geojson': {
-                    content: content
-                }
+                'index.html': { content: tmpl },
+                'map.geojson': { content: content }
             }
         }));
 }
 
-function saveAsGist(content, callback) {
-    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
-        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
-    }
+function save(context, callback) {
 
-    var user = localStorage.github_user ?
-        JSON.parse(localStorage.github_user) : {};
+    var source = context.data.get('source'),
+        meta = context.data.get('meta'),
+        name = (meta && meta.name) || 'map.geojson',
+        map = context.data.get('map');
 
-    var endpoint,
-        method = 'POST';
+    var description = (source && source.description) || 'via:geojson.io',
+        public = source ? !!source.public : false;
 
-    if (loggedin() && (source() && source().id)) {
-        if (user && source().login == user.login) {
-            endpoint = 'https://api.github.com/gists/' + source().id;
+    context.user.details(onuser);
+
+    function onuser(err, user) {
+        var endpoint,
+            method = 'POST',
+            source = context.data.get('source'),
+            files = {};
+
+        if (!err && user && user.login && meta && meta.login && user.login === meta.login) {
+            endpoint = 'https://api.github.com/gists/' + source.id;
             method = 'PATCH';
+        } else if (!err && source && source.id) {
+            endpoint = 'https://api.github.com/gists/' + source.id + '/forks';
         } else {
-            endpoint = 'https://api.github.com/gists/' + source().id + '/forks';
+            endpoint = 'https://api.github.com/gists';
         }
-    } else {
-        endpoint = 'https://api.github.com/gists';
-    }
 
-    authorize(d3.json(endpoint))
-        .on('load', function(data) {
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-        })
-        .send(method, JSON.stringify({
-            description: 'via:geojson.io',
-            public: true,
-            files: {
-                'map.geojson': {
-                    content: content
-                }
-            }
-        }));
+        files[name] = {
+            content: JSON.stringify(map)
+        };
+
+        context.user.signXHR(d3.json(endpoint))
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(err) {
+                callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+            })
+            .send(method, JSON.stringify({
+                files: files
+            }));
+    }
 }
 
-function loadGist(id, callback) {
-    d3.json('https://api.github.com/gists/' + id)
+function load(id, context, callback) {
+    context.user.signXHR(d3.json('https://api.github.com/gists/' + id))
         .on('load', onLoad)
-        .on('error', onError).get();
+        .on('error', onError)
+        .get();
 
     function onLoad(json) { callback(null, json); }
     function onError(err) { callback(err, null); }
-}
-
-function urlHash(data) {
-    var login = (data.user && data.user.login) || 'anonymous';
-    if (source() && source().id == data.id && !source().login) {
-        return {
-            url: '#gist:' + login + '/' + data.id,
-            redirect: true
-        };
-    } else {
-        return {
-            url: '#gist:' + login + '/' + data.id
-        };
-    }
 }
