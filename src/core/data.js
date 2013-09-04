@@ -165,8 +165,8 @@ module.exports = function(context) {
                     meta: {
                         login: d.user && d.user.login
                     },
-                    map: file.content,
-                    name: file.name,
+                    map: file && file.content,
+                    name: file && file.name,
                     path: [(d.user && d.user.login) || 'anonymous', d.id].join('/'),
                     url: d.html_url
                 });
