@@ -34,7 +34,7 @@ module.exports = function(context) {
         if (isNaN(parseInt(id))) {
             location.hash = '#id=' + id;
         } else {
-            location.hash = '#id=gist:' + id;
+            location.hash = '#id=gist:/' + id;
         }
     }
 
