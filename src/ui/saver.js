@@ -1,8 +1,40 @@
+var flash = require('./flash');
+
 module.exports = function(context) {
-    function success(err, d) {
+    if (d3.event) d3.event.preventDefault();
+
+    function success(err, res) {
+        if (err) return flash(context.container, err.toString());
+
+        var type = context.data.get('type'),
+          message,
+          url,
+          path;
+
+        switch(type) {
+            case 'gist':
+                message = 'Changes to this map saved to Gist: ';
+                url = res.html_url;
+                path = context.data.get('path');
+                break;
+            case 'github':
+                message = 'Changes committed to GitHub: ';
+                url = res.commit.html_url;
+                path = res.commit.sha.substring(0,10);
+                break;
+        }
+
+        flash(context.container, message + '<a href="' + url + '">' + path + '</a>');
+
         context.container.select('.map').classed('loading', false);
-        if (err) return;
-        context.data.parse(d);
+        context.data.parse(res);
+    }
+
+    var map = context.data.get('map');
+    var features = map && map.features && map.features.length;
+
+    if (!features) {
+        return flash(context.container, 'Add a feature to the map to save it.');
     }
 
     context.container.select('.map').classed('loading', true);
