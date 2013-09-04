@@ -2,7 +2,9 @@ module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
 
-function save(content, context, message, callback) {
+function save(context, callback) {
+    var source = context.data.get('source');
+
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
             'Please use a modern browser to enjoy the full featureset of geojson.io');
@@ -12,27 +14,22 @@ function save(content, context, message, callback) {
         return alert('You need to log in with GitHub to commit changes');
     }
 
-    var commitMessage = message || prompt('Commit message:');
+    var commitMessage = context.commitMessage || prompt('Commit message:');
     if (!commitMessage) return;
 
-    loadGitHub(source().id, function(err, file) {
-        if (err) {
-            return alert('Failed to load file before saving');
-        }
-        context.user.signXHR(d3.json(githubFileUrl()))
-            .on('load', function(data) {
-                callback(null, data);
-            })
-            .on('error', function(err) {
-                callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-            })
-            .send('PUT', JSON.stringify({
-                message: commitMessage,
-                sha: file.sha,
-                branch: file.branch,
-                content: Base64.toBase64(content)
-            }));
-    });
+    context.user.signXHR(d3.json(source.url))
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+        })
+        .send('PUT', JSON.stringify({
+            message: commitMessage,
+            sha: source.sha,
+            branch: context.data.get('meta').branch,
+            content: Base64.toBase64(JSON.stringify(context.data.get('map')))
+        }));
 }
 
 function parseGitHubId(id) {

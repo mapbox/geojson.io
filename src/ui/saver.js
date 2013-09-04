@@ -1,15 +1,18 @@
+var commit = require('../commit');
 var flash = require('./flash');
 
 module.exports = function(context) {
     if (d3.event) d3.event.preventDefault();
 
+    var type = context.data.get('type');
+
     function success(err, res) {
         if (err) return flash(context.container, err.toString());
 
-        var type = context.data.get('type'),
-          message,
+        var message,
           url,
-          path;
+          path,
+          commitMessage;
 
         switch(type) {
             case 'gist':
@@ -34,9 +37,20 @@ module.exports = function(context) {
     var features = map && map.features && map.features.length;
 
     if (!features) {
-        return flash(context.container, 'Add a feature to the map to save it.');
+        return flash(container, 'Add a feature to the map to save it');
     }
 
     context.container.select('.map').classed('loading', true);
-    context.data.save(success);
+
+    switch(type) {
+        case 'gist':
+            context.data.save(success);
+            break;
+        case 'github':
+            var wrap = commit(context, function() {
+                wrap.remove();
+                context.data.save(success);
+            });
+            break;
+    }
 };
