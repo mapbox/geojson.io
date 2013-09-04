@@ -1,10 +1,10 @@
 module.exports = function(context) {
     function success(err, d) {
-        context.container.select('.map').classed('saving', false);
+        context.container.select('.map').classed('loading', false);
         if (err) return;
         context.data.parse(d);
     }
 
-    context.container.select('.map').classed('saving', true);
+    context.container.select('.map').classed('loading', true);
     context.data.save(success);
 };
