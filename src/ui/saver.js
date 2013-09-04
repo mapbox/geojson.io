@@ -38,7 +38,7 @@ module.exports = function(context) {
     var features = map && map.features && map.features.length;
 
     if (!features) {
-        return flash(container, 'Add a feature to the map to save it');
+        return flash(context.container, 'Add a feature to the map to save it');
     }
 
     context.container.select('.map').classed('loading', true);
