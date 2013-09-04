@@ -5477,7 +5477,7 @@ module.exports = function(d3) {
                         };
                     }
 
-                    selection.node().scrollTop = 0;
+                    (selection.node().parentNode || {}).scrollTop = 0;
                 }
 
                 function name(d) {
@@ -6275,7 +6275,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":17,"./lib/topojson/clockwise":19,"./lib/topojson/filter":23,"./lib/topojson/prune":21,"./lib/topojson/simplify":27,"./lib/topojson/topology":30,"fs":1}],17:[function(require,module,exports){
+},{"./lib/topojson/bind":17,"./lib/topojson/clockwise":19,"./lib/topojson/filter":21,"./lib/topojson/prune":25,"./lib/topojson/simplify":26,"./lib/topojson/topology":31,"fs":1}],17:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6305,7 +6305,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":31}],18:[function(require,module,exports){
+},{"../../":"g070js","./type":32}],18:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6412,74 +6412,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":20,"./type":31}],20:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":20,"./type":32}],20:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":18,"./spherical":28}],21:[function(require,module,exports){
-var type = require("./type"),
-    topojson = require("../../");
-
-module.exports = function(topology, options) {
-  var verbose = false,
-      retained = [],
-      j = -1,
-      n = topology.arcs.length;
-
-  if (options)
-    "verbose" in options && (verbose = !!options["verbose"]);
-
-  var prune = type({
-    LineString: function(lineString) {
-      this.line(lineString.arcs);
-    },
-    MultiLineString: function(multiLineString) {
-      var arcs = multiLineString.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    },
-    MultiPoint: noop,
-    MultiPolygon: function(multiPolygon) {
-      var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.polygon(arcs[i]);
-    },
-    Point: noop,
-    Polygon: function(polygon) {
-      this.polygon(polygon.arcs);
-    },
-    line: function(arcs) {
-      var i = -1, n = arcs.length, arc, reversed;
-      while (++i < n) {
-        arc = arcs[i];
-        if (reversed = arc < 0) arc = ~arc;
-        if (retained[arc] == null) retained[arc] = ++j, arc = j;
-        else arc = retained[arc];
-        arcs[i] = reversed ? ~arc : arc;
-      }
-    },
-    polygon: function(arcs) {
-      var i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    }
-  });
-
-  for (var key in topology.objects) {
-    prune.object(topology.objects[key]);
-  }
-
-  if (verbose) console.warn("prune: retained " + (j + 1) + " / " + n + " arcs (" + Math.round((j + 1) / n * 100) + "%)");
-
-  var arcs = [];
-  retained.forEach(function(i, j) { arcs[i] = topology.arcs[j]; });
-  topology.arcs = arcs;
-};
-
-function noop() {}
-
-},{"../../":"g070js","./type":31}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
-},{}],23:[function(require,module,exports){
+},{"./cartesian":18,"./spherical":27}],21:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -6549,7 +6488,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":19,"./coordinate-systems":20,"./prune":21,"./type":31}],24:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":19,"./coordinate-systems":20,"./prune":25,"./type":32}],22:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -6559,7 +6498,7 @@ module.exports = function(size) {
   };
 };
 
-},{}],25:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -6614,7 +6553,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":24}],26:[function(require,module,exports){
+},{"./hash":22}],24:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -6680,7 +6619,66 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],27:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
+var type = require("./type"),
+    topojson = require("../../");
+
+module.exports = function(topology, options) {
+  var verbose = false,
+      retained = [],
+      j = -1,
+      n = topology.arcs.length;
+
+  if (options)
+    "verbose" in options && (verbose = !!options["verbose"]);
+
+  var prune = type({
+    LineString: function(lineString) {
+      this.line(lineString.arcs);
+    },
+    MultiLineString: function(multiLineString) {
+      var arcs = multiLineString.arcs, i = -1, n = arcs.length;
+      while (++i < n) this.line(arcs[i]);
+    },
+    MultiPoint: noop,
+    MultiPolygon: function(multiPolygon) {
+      var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
+      while (++i < n) this.polygon(arcs[i]);
+    },
+    Point: noop,
+    Polygon: function(polygon) {
+      this.polygon(polygon.arcs);
+    },
+    line: function(arcs) {
+      var i = -1, n = arcs.length, arc, reversed;
+      while (++i < n) {
+        arc = arcs[i];
+        if (reversed = arc < 0) arc = ~arc;
+        if (retained[arc] == null) retained[arc] = ++j, arc = j;
+        else arc = retained[arc];
+        arcs[i] = reversed ? ~arc : arc;
+      }
+    },
+    polygon: function(arcs) {
+      var i = -1, n = arcs.length;
+      while (++i < n) this.line(arcs[i]);
+    }
+  });
+
+  for (var key in topology.objects) {
+    prune.object(topology.objects[key]);
+  }
+
+  if (verbose) console.warn("prune: retained " + (j + 1) + " / " + n + " arcs (" + Math.round((j + 1) / n * 100) + "%)");
+
+  var arcs = [];
+  retained.forEach(function(i, j) { arcs[i] = topology.arcs[j]; });
+  topology.arcs = arcs;
+};
+
+function noop() {}
+
+},{"../../":"g070js","./type":32}],26:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -6812,7 +6810,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":20,"./min-heap":26}],28:[function(require,module,exports){
+},{"./coordinate-systems":20,"./min-heap":24}],27:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -6894,7 +6892,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -6944,7 +6942,55 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":31}],30:[function(require,module,exports){
+},{"./type":32}],29:[function(require,module,exports){
+(function () {
+	"use strict";
+
+	// modified from https://github.com/kriskowal/es5-shim
+	var has = Object.prototype.hasOwnProperty,
+		is = require('is'),
+		forEach = require('foreach'),
+		hasDontEnumBug = !({'toString': null}).propertyIsEnumerable('toString'),
+		dontEnums = [
+			"toString",
+			"toLocaleString",
+			"valueOf",
+			"hasOwnProperty",
+			"isPrototypeOf",
+			"propertyIsEnumerable",
+			"constructor"
+		],
+		keysShim;
+
+	keysShim = function keys(object) {
+		if (!is.object(object) && !is.array(object)) {
+			throw new TypeError("Object.keys called on a non-object");
+		}
+
+		var name, theKeys = [];
+		for (name in object) {
+			if (has.call(object, name)) {
+				theKeys.push(name);
+			}
+		}
+
+		if (hasDontEnumBug) {
+			forEach(dontEnums, function (dontEnum) {
+				if (has.call(object, dontEnum)) {
+					theKeys.push(dontEnum);
+				}
+			});
+		}
+		return theKeys;
+	};
+
+	module.exports = keysShim;
+}());
+
+
+},{"foreach":36,"is":37}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],31:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -7286,7 +7332,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":20,"./hashtable":25,"./stitch-poles":29,"./type":31}],31:[function(require,module,exports){
+},{"./coordinate-systems":20,"./hashtable":23,"./stitch-poles":28,"./type":32}],32:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -7380,7 +7426,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -7389,7 +7435,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -7416,11 +7462,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":32,"object-keys":34}],34:[function(require,module,exports){
+},{"./has-keys":33,"object-keys":35}],35:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":37}],35:[function(require,module,exports){
+},{"./shim":29}],36:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -7444,7 +7490,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 
 /**!
  * is
@@ -8148,53 +8194,7 @@ is.string = function (value) {
 };
 
 
-},{}],37:[function(require,module,exports){
-(function () {
-	"use strict";
-
-	// modified from https://github.com/kriskowal/es5-shim
-	var has = Object.prototype.hasOwnProperty,
-		is = require('is'),
-		forEach = require('foreach'),
-		hasDontEnumBug = !({'toString': null}).propertyIsEnumerable('toString'),
-		dontEnums = [
-			"toString",
-			"toLocaleString",
-			"valueOf",
-			"hasOwnProperty",
-			"isPrototypeOf",
-			"propertyIsEnumerable",
-			"constructor"
-		],
-		keysShim;
-
-	keysShim = function keys(object) {
-		if (!is.object(object) && !is.array(object)) {
-			throw new TypeError("Object.keys called on a non-object");
-		}
-
-		var name, theKeys = [];
-		for (name in object) {
-			if (has.call(object, name)) {
-				theKeys.push(name);
-			}
-		}
-
-		if (hasDontEnumBug) {
-			forEach(dontEnums, function (dontEnum) {
-				if (has.call(object, dontEnum)) {
-					theKeys.push(dontEnum);
-				}
-			});
-		}
-		return theKeys;
-	};
-
-	module.exports = keysShim;
-}());
-
-
-},{"foreach":35,"is":36}],38:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -8394,7 +8394,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":54,"../source/github":55,"clone":5,"xtend":33}],40:[function(require,module,exports){
+},{"../source/gist":54,"../source/github":55,"clone":5,"xtend":34}],40:[function(require,module,exports){
 module.exports = function(context) {
 
     function success(err, d) {
@@ -8528,7 +8528,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":48,"xtend":33}],43:[function(require,module,exports){
+},{"../lib/querystring":48,"xtend":34}],43:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
