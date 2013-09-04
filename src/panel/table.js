@@ -12,7 +12,7 @@ module.exports = function(context) {
                 selection
                     .html('')
                     .append('div')
-                    .attr('class', 'blank-banner')
+                    .attr('class', 'blank-banner center')
                     .text('no features');
             } else {
                 var props = geojson.features.map(getProperties);

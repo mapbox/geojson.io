@@ -46,7 +46,7 @@ module.exports = function(context) {
                 });
         } else {
             wrap.append('p')
-                .attr('class', 'blank-banner')
+                .attr('class', 'blank-banner center')
                 .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
                       'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
         }

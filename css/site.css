@@ -1,63 +1,4 @@
-/* Elements */
-table tr td input,
-table tr th input {
-    border:none;
-}
-
-table thead {
-    background:#f7f7f7;
-    border:1px solid #ccc;
-}
-
-table td {
-    border:1px solid #ccc;
-}
-
-table thead tr th {
-    font-weight:bold;
-}
-
-table thead tr th,
-table tr th input,
-table tbody tr td input {
-    text-align:left;
-    font:inherit;
-    padding:5px;
-    width:150px;
-    box-sizing:border-box;
-    margin:0;
-}
-
-input[type=text] {
-    font:inherit;
-}
-
 /* Utility classes */
-
-.pad1 {
-    padding:10px;
-}
-
-.pad {
-    padding:20px;
-}
-
-.center {
-    text-align:center;
-}
-
-.fr {
-    float:right;
-}
-
-.drop {
-    margin-top:10px;
-}
-
-.fl {
-    float:left;
-}
-
 .map {
     position:absolute;
     top:40px;
@@ -127,6 +68,10 @@ p.intro-hint:hover {
     width:100%;
 }
 
+/*
+ * .right ---------------------------------------------------------------------
+ */
+
 .top {
     background:#f7f7f7;
 }
@@ -145,32 +90,14 @@ p.intro-hint:hover {
 .top .buttons {
     margin-left:28px;
     height:40px;
-    border-left:1px solid #ddd;
 }
 
-.buttons-joined button {
-    border-right:0;
-}
-
-.buttons-joined button:first-child {
-    border-radius:3px 0 0 3px;
-}
-
-.buttons-joined button:last-child {
-    border-radius:0 3px 3px 0;
-    border-right:1px solid #f0f0f0;
-}
+/*
+ * buttons --------------------------------------------------------------------
+ */
 
 button.delete-invert {
     color:#882255;
-}
-
-.clear-buttons button {
-    opacity:0.6;
-}
-
-.clear-buttons button:hover {
-    opacity:1;
 }
 
 button {
@@ -339,13 +266,7 @@ body.dragover .modal-message {
     background:#f7f7f7;
 }
 
-.fail {
-    font-size:11px;
-    padding:5px;
-}
-
 .blank-banner {
-    text-align:center;
     font-size:20px;
     padding:80px 20px;
     color:#888;
@@ -397,10 +318,6 @@ textarea.full-width {
     margin-right:5px;
 }
 
-.clickable {
-    cursor:pointer;
-}
-
 .subpane {
     position:absolute;
     left:0;
@@ -449,10 +366,6 @@ textarea.full-width {
     margin-left:10px;
 }
 
-.logged-in {
-    width:40px;
-}
-
 @media screen and (max-width:1100px) {
     .file-bar .button-wrap button span.title {
         display:none;
@@ -466,34 +379,6 @@ textarea.full-width {
     .file-bar {
         right:50%;
     }
-}
-
-/* Loading overlay
-------------------------------------------------------- */
-.loading:before {
-  content:'';
-  display:block;
-  position:absolute;
-  left:0px;
-  top:0px;
-  width:100%;
-  height:100%;
-  background:rgba(128,128,128,0.25);
-  z-index:10;
-}
-
-.loading:after {
-  content:'';
-  display:block;
-  position:absolute;
-  left:50%;
-  top:50%;
-  margin:-20px 0px 0px -20px;
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  opacity:0.25;
-  background:#444 url(spinner.gif) 50% 50% no-repeat;
 }
 
 body.dragover:after {
@@ -520,172 +405,6 @@ body.dragover:after {
 }
 
 /*
- * Tooltips -------------------------------------------------------------------
- */
-
-.tooltip {
-    position: absolute;
-    display: none;
-    color:#333;
-    text-align: left;
-    font-size: 12px;
-}
-
-.tooltip.in {
-    opacity: 0.8;
-    z-index: 1030;
-    height: auto;
-    display: block;
-}
-
-.tooltip.top {
-    margin-top: -20px;
-    text-align: center;
-}
-
-.tooltip.right {
-    margin-left: 20px;
-}
-
-.tooltip.bottom {
-    margin-top: 20px;
-    text-align: center;
-}
-
-.tooltip.left {
-    margin-left: -20px;
-    text-align: right;
-}
-
-.tooltip-inner {
-    display: inline-block;
-    max-width: 200px;
-    min-width: 80px;
-    padding: 10px;
-    font-weight: normal;
-    background-color: white;
-}
-
-.tail {
-    width: 200px;
-    height: 400px;
-    pointer-events: none;
-    opacity: .8;
-    margin-top: -200px;
-    position: absolute;
-    background: transparent;
-}
-
-.tail::after {
-    content: "";
-    position: absolute;
-    width: 0;
-    height: 0;
-    border-color: transparent;
-    border-style: solid;
-    top: 50%;
-    right: -5px;
-    margin-top: -5px;
-    border-left-color: white;
-    border-width: 5px 0 5px 5px;
-}
-
-.tail div {
-    padding: 10px;
-    background: white;
-    position: absolute;
-    top: 180px;
-    left: 0;
-    right: 0;
-    margin: auto;
-}
-
-.left.tail::after {
-    content: "";
-    position: absolute;
-    width: 0;
-    height: 0;
-    border-color: transparent;
-    border-style: solid;
-    top: 50%;
-    left: -5px;
-    margin-top: -5px;
-    border-right-color: white;
-    border-width: 5px 5px 5px 0;
-}
-
-.tooltip-arrow {
-    position: absolute;
-    width: 0;
-    height: 0;
-    border-color: transparent;
-    border-style: solid;
-}
-
-.tooltip.top .tooltip-arrow {
-    bottom: -5px;
-    left: 50%;
-    margin-left: -5px;
-    border-top-color: white;
-    border-width: 5px 5px 0;
-}
-
-.tooltip.right .tooltip-arrow {
-    top: 50%;
-    left: -5px;
-    margin-top: -5px;
-    border-right-color: white;
-    border-width: 5px 5px 5px 0;
-}
-
-.tooltip.left .tooltip-arrow {
-    top: 50%;
-    right: -5px;
-    margin-top: -5px;
-    border-left-color: white;
-    border-width: 5px 0 5px 5px;
-}
-
-.tooltip.bottom .tooltip-arrow {
-    top: -5px;
-    left: 50%;
-    margin-left: -5px;
-    border-bottom-color: white;
-    border-width: 0 5px 5px;
-}
-
-.keyhint-wrap {
-    background: #F6F6F6;
-    padding: 10px;
-    margin: 10px -10px -10px;
-}
-
-.tooltip-inner .keyhint {
-    font-size: 10px;
-    padding: 0 7px;
-    font-weight: bold;
-    display: inline-block;
-    border-radius: 2px;
-    border: 1px solid #CCC;
-    position: relative;
-    z-index: 1;
-    text-align: left;
-}
-
-.tooltip-inner .keyhint::after {
-    content: "";
-    position: absolute;
-    border-radius: 2px;
-    height: 10px;
-    width: 100%;
-    z-index: 0;
-    bottom: -4px;
-    left: -1px;
-    border: 1px solid #CCC;
-    border-top: 0;
-}
-
-/*
  * GitHub Browser -------------------------------------------------------------
  */
 .repos a {
@@ -695,15 +414,4 @@ body.dragover:after {
 .repos .item button {
     font-weight: bold;
     margin-left: 10px;
-}
-
-/* loading */
-.loading .mask {
-    background:rgba(255, 255, 255, 0.7);
-    position:absolute;
-    left:0px;
-    top:0px;
-    bottom:0px;
-    right:0px;
-    display:block;
 }

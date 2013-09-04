@@ -102,11 +102,10 @@ function runGeocode(container, list, transform, context) {
     function done(failed, completed) {
 
         failedDiv
-            .selectAll('.fail')
+            .selectAll('pre')
             .data(failed)
             .enter()
-            .append('div')
-            .attr('class', 'fail')
+            .append('pre')
             .text(failedMessage);
 
         function failedMessage(d) {

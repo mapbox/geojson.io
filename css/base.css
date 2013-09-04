@@ -135,3 +135,85 @@ Details: http://www.positioniseverything.net/easyclearing.html
 .clearfix { display: inline-block; }
 
 .hide { display:none; }
+
+.fl {
+    float:left;
+}
+
+.fr {
+    float:right;
+}
+
+.center {
+    text-align:center;
+}
+
+.pad1 {
+    padding:10px;
+}
+
+.pad {
+    padding:20px;
+}
+
+/* Elements */
+table tr td input,
+table tr th input {
+    border:none;
+}
+
+table thead {
+    background:#f7f7f7;
+    border:1px solid #ccc;
+}
+
+table td {
+    border:1px solid #ccc;
+}
+
+table thead tr th {
+    font-weight:bold;
+}
+
+table thead tr th,
+table tr th input,
+table tbody tr td input {
+    text-align:left;
+    font:inherit;
+    padding:5px;
+    width:150px;
+    box-sizing:border-box;
+    margin:0;
+}
+
+input[type=text] {
+    font:inherit;
+}
+
+/* Loading overlay
+------------------------------------------------------- */
+.loading:before {
+  content:'';
+  display:block;
+  position:absolute;
+  left:0px;
+  top:0px;
+  width:100%;
+  height:100%;
+  background:rgba(128,128,128,0.25);
+  z-index:10;
+}
+
+.loading:after {
+  content:'';
+  display:block;
+  position:absolute;
+  left:50%;
+  top:50%;
+  margin:-20px 0px 0px -20px;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  opacity:0.25;
+  background:#444 url(spinner.gif) 50% 50% no-repeat;
+}

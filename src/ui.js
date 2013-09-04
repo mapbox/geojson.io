@@ -58,7 +58,7 @@ function ui(context) {
 
         top
             .append('div')
-            .attr('class', 'user fr pad1')
+            .attr('class', 'user fr pad1 deemphasize')
             .call(userUi(context));
 
         top

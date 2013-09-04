@@ -9005,7 +9005,7 @@ module.exports = function(context) {
                 selection
                     .html('')
                     .append('div')
-                    .attr('class', 'blank-banner')
+                    .attr('class', 'blank-banner center')
                     .text('no features');
             } else {
                 var props = geojson.features.map(getProperties);
@@ -9278,7 +9278,7 @@ function ui(context) {
 
         top
             .append('div')
-            .attr('class', 'user fr pad1')
+            .attr('class', 'user fr pad1 deemphasize')
             .call(userUi(context));
 
         top
@@ -9591,11 +9591,10 @@ function runGeocode(container, list, transform, context) {
     function done(failed, completed) {
 
         failedDiv
-            .selectAll('.fail')
+            .selectAll('pre')
             .data(failed)
             .enter()
-            .append('div')
-            .attr('class', 'fail')
+            .append('pre')
             .text(failedMessage);
 
         function failedMessage(d) {
@@ -9673,7 +9672,7 @@ module.exports = function(context) {
                 });
         } else {
             wrap.append('p')
-                .attr('class', 'blank-banner')
+                .attr('class', 'blank-banner center')
                 .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
                       'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
         }
@@ -9845,9 +9844,9 @@ function bindPopup(l) {
         maxWidth: 500,
         maxHeight: 400
     }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
-        '<div class="clearfix col12 drop">' +
-            '<div class="buttons-joined fl"><button class="save positive">save</button>' +
-            '<button class="cancel">cancel</button></div>' +
+        '<br /><div class="clearfix col12">' +
+            '<div class="buttons-joined fl"><button class="save major">save</button> ' +
+            '<button class="major cancel">cancel</button></div>' +
             '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
         '</div></div>'));
 }
