@@ -18,7 +18,7 @@ module.exports = function(context) {
             case 'gist':
                 message = 'Changes to this map saved to Gist: ';
                 url = res.html_url;
-                path = context.data.get('path');
+                path = res.id;
                 break;
             case 'github':
                 message = 'Changes committed to GitHub: ';

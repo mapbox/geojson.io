@@ -43,7 +43,7 @@ function save(context, callback) {
             source = context.data.get('source'),
             files = {};
 
-        if (!err && user && user.login && meta && meta.login) {
+        if (!err && user && user.login && meta && meta.login && user.login === meta.login) {
             endpoint = 'https://api.github.com/gists/' + source.id;
             method = 'PATCH';
         } else if (!err && source && source.id) {

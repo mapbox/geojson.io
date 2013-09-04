@@ -9227,7 +9227,7 @@ function save(context, callback) {
             source = context.data.get('source'),
             files = {};
 
-        if (!err && user && user.login && meta && meta.login) {
+        if (!err && user && user.login && meta && meta.login && user.login === meta.login) {
             endpoint = 'https://api.github.com/gists/' + source.id;
             method = 'PATCH';
         } else if (!err && source && source.id) {
@@ -10035,7 +10035,7 @@ module.exports = function(context) {
             case 'gist':
                 message = 'Changes to this map saved to Gist: ';
                 url = res.html_url;
-                path = context.data.get('path');
+                path = res.id;
                 break;
             case 'github':
                 message = 'Changes committed to GitHub: ';
