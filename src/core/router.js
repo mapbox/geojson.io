@@ -31,7 +31,11 @@ module.exports = function(context) {
     }
 
     function upgrade(id) {
-        location.hash = '#id=' + id;
+        if (isNaN(parseInt(id, 10))) {
+            location.hash = '#id=' + id;
+        } else {
+            location.hash = '#id=gist:' + id;
+        }
     }
 
     function unroute() {
