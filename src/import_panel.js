@@ -172,7 +172,7 @@ function importPanel(container, updates) {
             .style('position', 'absolute')
             .style('height', '0')
             .on('change', function() {
-                if (this.files && this.files[0]) readFile(this.files[0], 'click');
+                if (this.files && this.files[0]) readFile(this.files[0], 'click', updates);
             });
     } else {
         wrap.append('p')
