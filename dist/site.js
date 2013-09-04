@@ -8522,7 +8522,7 @@ module.exports = function(context) {
     }
 
     function upgrade(id) {
-        if (isNaN(parseInt(id, 10))) {
+        if (isNaN(parseInt(id))) {
             location.hash = '#id=' + id;
         } else {
             location.hash = '#id=gist:' + id;

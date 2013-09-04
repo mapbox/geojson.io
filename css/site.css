@@ -66,6 +66,7 @@ p.intro-hint:hover {
     top:40px;
     bottom:0;
     width:100%;
+    overflow:auto;
 }
 
 /*
