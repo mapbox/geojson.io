@@ -24,7 +24,7 @@ module.exports = function(context) {
             case 'local':
                 message = 'Changes to this map saved to Gist: ';
                 url = res.html_url;
-                path = context.data.get('path');
+                path = res.id;
                 break;
         }
 
