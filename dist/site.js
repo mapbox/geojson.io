@@ -8539,8 +8539,11 @@ module.exports = function(context) {
     }
 
     function upgrade(id) {
+        var split;
         if (isNaN(parseInt(id))) {
-            location.hash = '#id=' + id;
+            split = id.split(':');
+            location.hash = '#id=' + (split[1].indexOf('/') === 0 ?
+                [split[0], split[1].substring(1)].join(':') : id);
         } else {
             location.hash = '#id=gist:/' + id;
         }
