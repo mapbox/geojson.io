@@ -5,7 +5,9 @@ module.exports = function(context) {
 
     user.details = function(callback) {
         if (!context.storage.get('github_token')) return callback('not logged in');
+
         var cached = context.storage.get('github_user_details');
+
         if (cached && cached.when > (+new Date() - 1000 * 60 * 60)) {
             callback(null, cached.data);
         } else {

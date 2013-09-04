@@ -14,16 +14,17 @@ module.exports = function(context) {
           path,
           commitMessage;
 
-        switch(type) {
-            case 'gist':
-                message = 'Changes to this map saved to Gist: ';
-                url = res.html_url;
-                path = context.data.get('path');
-                break;
+        switch (type) {
             case 'github':
                 message = 'Changes committed to GitHub: ';
                 url = res.commit.html_url;
                 path = res.commit.sha.substring(0,10);
+                break;
+            case 'gist':
+            case 'local':
+                message = 'Changes to this map saved to Gist: ';
+                url = res.html_url;
+                path = context.data.get('path');
                 break;
         }
 
@@ -43,14 +44,16 @@ module.exports = function(context) {
     context.container.select('.map').classed('loading', true);
 
     switch(type) {
-        case 'gist':
-            context.data.save(success);
-            break;
         case 'github':
             var wrap = commit(context, function() {
                 wrap.remove();
                 context.data.save(success);
             });
             break;
+        case 'local':
+        case 'gist':
+            context.data.save(success);
+            break;
+
     }
 };
