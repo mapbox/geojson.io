@@ -1,4 +1,4 @@
-var github = require('./source/github');
+var github = require('../source/github');
 
 module.exports = commit;
 

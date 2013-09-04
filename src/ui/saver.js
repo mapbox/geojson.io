@@ -1,4 +1,4 @@
-var commit = require('../commit');
+var commit = require('./commit');
 var flash = require('./flash');
 
 module.exports = function(context) {
