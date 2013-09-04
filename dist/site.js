@@ -8387,7 +8387,8 @@ module.exports = function(context) {
                     meta: {
                         login: chunked[3],
                         repo: chunked[4],
-                        branch: chunked[6]
+                        branch: chunked[6],
+                        name: d.name
                     },
                     map: d.content,
                     path: d.path,
@@ -8401,10 +8402,10 @@ module.exports = function(context) {
                     type: 'gist',
                     source: d,
                     meta: {
-                        login: d.user && d.user.login
+                        login: d.user && d.user.login,
+                        name: file && file.name
                     },
                     map: file && file.content,
-                    name: file && file.name,
                     path: [(d.user && d.user.login) || 'anonymous', d.id].join('/'),
                     url: d.html_url
                 });
@@ -9208,7 +9209,7 @@ function save(context, callback) {
 
     var source = context.data.get('source'),
         meta = context.data.get('meta'),
-        name = context.data.get('name') || 'map.geojson',
+        name = meta.name || 'map.geojson',
         map = context.data.get('map');
 
     var description = (source && source.description) || 'via:geojson.io',
@@ -9563,7 +9564,7 @@ module.exports = function fileBar(context) {
             var content = JSON.stringify(context.data.get('map'));
             window.saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
-            }), 'map.geojson');
+            }), context.data.get('meta').name || 'map.geojson');
         }
 
         function sourceIcon(type) {

@@ -29,7 +29,7 @@ function save(context, callback) {
 
     var source = context.data.get('source'),
         meta = context.data.get('meta'),
-        name = context.data.get('name') || 'map.geojson',
+        name = meta.name || 'map.geojson',
         map = context.data.get('map');
 
     var description = (source && source.description) || 'via:geojson.io',
