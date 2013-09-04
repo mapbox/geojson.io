@@ -22,11 +22,13 @@ module.exports = function(context, pane) {
             .selectAll('button')
             .data(buttonData, function(d) { return d.icon; });
 
-        buttons.enter()
+        var enter = buttons.enter()
             .append('button')
             .attr('title', function(d) { return d.alt; })
-            .attr('class', function(d) { return 'icon-' + d.icon; })
-            .on('click', buttonClick)
+            .on('click', buttonClick);
+        enter.append('span')
+            .attr('class', function(d) { return 'icon-' + d.icon; });
+        enter
             .append('span')
             .text(function(d) { return d.title; });
 
