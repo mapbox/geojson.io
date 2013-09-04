@@ -18,6 +18,8 @@ function share(context) {
     return function(selection) {
 
         selection.select('.share').remove();
+        selection.select('.tooltip.in')
+          .classed('in', false);
 
         var sel = selection.append('div')
             .attr('class', 'share pad1');

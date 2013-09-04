@@ -9426,7 +9426,7 @@ module.exports = commit;
 
 function commit(context, callback) {
     context.container.select('.share').remove();
-    context.container.select('.tooltip')
+    context.container.select('.tooltip.in')
       .classed('in', false);
 
     var wrap = context.container.append('div')
@@ -10088,6 +10088,8 @@ function share(context) {
     return function(selection) {
 
         selection.select('.share').remove();
+        selection.select('.tooltip.in')
+          .classed('in', false);
 
         var sel = selection.append('div')
             .attr('class', 'share pad1');
@@ -10306,5 +10308,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[43,55])
+},{}]},{},[55,43])
 ;

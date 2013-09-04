@@ -4,7 +4,7 @@ module.exports = commit;
 
 function commit(context, callback) {
     context.container.select('.share').remove();
-    context.container.select('.tooltip')
+    context.container.select('.tooltip.in')
       .classed('in', false);
 
     var wrap = context.container.append('div')
