@@ -57,7 +57,7 @@ module.exports = function fileBar(context) {
             var content = JSON.stringify(context.data.get('map'));
             window.saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
-            }), 'map.geojson');
+            }), context.data.get('meta').name || 'map.geojson');
         }
 
         function sourceIcon(type) {
