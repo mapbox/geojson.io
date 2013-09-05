@@ -55,9 +55,10 @@ module.exports = function fileBar(context) {
         function download() {
             if (d3.event) d3.event.preventDefault();
             var content = JSON.stringify(context.data.get('map'));
+            var meta = context.data.get('meta');
             window.saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
-            }), context.data.get('meta').name || 'map.geojson');
+            }), (meta && meta.name) || 'map.geojson');
         }
 
         function sourceIcon(type) {
