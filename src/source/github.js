@@ -3,7 +3,10 @@ module.exports.load = load;
 module.exports.loadRaw = loadRaw;
 
 function save(context, callback) {
-    var source = context.data.get('source');
+    var source = context.data.get('source'),
+        meta = context.data.get('meta'),
+        name = (meta && meta.name) || 'map.geojson',
+        map = context.data.get('map');
 
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
@@ -14,22 +17,41 @@ function save(context, callback) {
         return alert('You need to log in with GitHub to commit changes');
     }
 
-    var commitMessage = context.commitMessage || prompt('Commit message:');
-    if (!commitMessage) return;
+    context.repo.details(onrepo);
 
-    context.user.signXHR(d3.json(source.url))
-        .on('load', function(data) {
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
-        })
-        .send('PUT', JSON.stringify({
-            message: commitMessage,
-            sha: source.sha,
-            branch: context.data.get('meta').branch,
-            content: Base64.toBase64(JSON.stringify(context.data.get('map')))
-        }));
+    function onrepo(err, repo) {
+        var commitMessage,
+            endpoint,
+            method = 'POST',
+            files = {};
+
+        if (!err && repo.permissions.push) {
+            commitMessage = context.commitMessage || prompt('Commit message:');
+            if (!commitMessage) return;
+
+            endpoint = source.url;
+            method = 'PUT';
+            data = {
+                message: commitMessage,
+                sha: source.sha,
+                branch: meta.branch,
+                content: Base64.toBase64(JSON.stringify(map))
+            }
+        } else {
+            endpoint = 'https://api.github.com/gists';
+            files[name] = { content: JSON.stringify(map) };
+            data = { files: files };
+        }
+
+        context.user.signXHR(d3.json(endpoint))
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(err) {
+                callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+            })
+            .send(method, JSON.stringify(data));
+    }
 }
 
 function parseGitHubId(id) {
