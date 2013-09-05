@@ -8824,6 +8824,9 @@ module.exports = function(context) {
         sel.selectAll('.save')
             .on('click', saveFeature);
 
+        sel.selectAll('.add')
+            .on('click', addRow);
+
         sel.selectAll('.delete-invert')
             .on('click', removeFeature);
 
@@ -8850,6 +8853,19 @@ module.exports = function(context) {
             e.popup._source.feature.properties = obj;
             context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
             context.map.closePopup(e.popup);
+        }
+
+        function addRow() {
+            var tr = sel.select('tbody')
+                .append('tr');
+
+            tr.append('th')
+                .append('input')
+                .attr('type', 'text');
+
+            tr.append('td')
+                .append('input')
+                .attr('type', 'text');
         }
     };
 };
@@ -9937,7 +9953,8 @@ function bindPopup(l) {
         maxHeight: 400
     }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
         '<br /><div class="clearfix col12">' +
-            '<div class="buttons-joined fl"><button class="save major">save</button> ' +
+            '<div class="buttons-joined fl"><button class="add major">add row</button> ' +
+            '<button class="save major">save</button> ' +
             '<button class="major cancel">cancel</button></div>' +
             '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
         '</div></div>'));
@@ -10332,5 +10349,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[55,43])
+},{}]},{},[43,55])
 ;

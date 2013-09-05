@@ -84,7 +84,8 @@ function bindPopup(l) {
         maxHeight: 400
     }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
         '<br /><div class="clearfix col12">' +
-            '<div class="buttons-joined fl"><button class="save major">save</button> ' +
+            '<div class="buttons-joined fl"><button class="add major">add row</button> ' +
+            '<button class="save major">save</button> ' +
             '<button class="major cancel">cancel</button></div>' +
             '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
         '</div></div>'));

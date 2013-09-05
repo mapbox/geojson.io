@@ -8,6 +8,9 @@ module.exports = function(context) {
         sel.selectAll('.save')
             .on('click', saveFeature);
 
+        sel.selectAll('.add')
+            .on('click', addRow);
+
         sel.selectAll('.delete-invert')
             .on('click', removeFeature);
 
@@ -34,6 +37,19 @@ module.exports = function(context) {
             e.popup._source.feature.properties = obj;
             context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
             context.map.closePopup(e.popup);
+        }
+
+        function addRow() {
+            var tr = sel.select('tbody')
+                .append('tr');
+
+            tr.append('th')
+                .append('input')
+                .attr('type', 'text');
+
+            tr.append('td')
+                .append('input')
+                .attr('type', 'text');
         }
     };
 };
