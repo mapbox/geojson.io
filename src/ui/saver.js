@@ -4,8 +4,6 @@ var flash = require('./flash');
 module.exports = function(context) {
     if (d3.event) d3.event.preventDefault();
 
-    var type = context.data.get('type');
-
     function success(err, res) {
         if (err) return flash(context.container, err.toString());
 
@@ -14,18 +12,16 @@ module.exports = function(context) {
           path,
           commitMessage;
 
-        switch (type) {
-            case 'github':
-                message = 'Changes committed to GitHub: ';
-                url = res.commit.html_url;
-                path = res.commit.sha.substring(0,10);
-                break;
-            case 'gist':
-            case 'local':
-                message = 'Changes to this map saved to Gist: ';
-                url = res.html_url;
-                path = res.id;
-                break;
+        if (!!res.files) {
+            // Saved as Gist
+            message = 'Changes to this map saved to Gist: ';
+            url = res.html_url;
+            path = res.id;
+        } else {
+            // Committed to GitHub
+            message = 'Changes committed to GitHub: ';
+            url = res.commit.html_url;
+            path = res.commit.sha.substring(0,10);
         }
 
         flash(context.container, message + '<a href="' + url + '">' + path + '</a>');
@@ -34,8 +30,10 @@ module.exports = function(context) {
         context.data.parse(res);
     }
 
-    var map = context.data.get('map');
-    var features = map && map.geometry || (map.features && map.features.length);
+    var meta = context.data.get('meta'),
+        map = context.data.get('map'),
+        features = map && map.geometry || (map.features && map.features.length),
+        type = context.data.get('type');
 
     if (!features) {
         return flash(context.container, 'Add a feature to the map to save it');
@@ -43,17 +41,20 @@ module.exports = function(context) {
 
     context.container.select('.map').classed('loading', true);
 
-    switch(type) {
-        case 'github':
-            var wrap = commit(context, function() {
-                wrap.remove();
-                context.data.save(success);
-            });
-            break;
-        case 'local':
-        case 'gist':
-            context.data.save(success);
-            break;
+    if (type === 'github') {
+        context.repo.details(onrepo);
 
+        function onrepo(err, repo) {
+            if (!err && repo.permissions.push) {
+                var wrap = commit(context, function() {
+                    wrap.remove();
+                    context.data.save(success);
+                });
+            } else {
+                context.data.save(success);
+            }
+        }
+    } else {
+        context.data.save(success);
     }
 };
