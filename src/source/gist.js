@@ -13,7 +13,13 @@ function saveBlocks(content, callback) {
             callback(null, data);
         })
         .on('error', function(err) {
-            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+            var message,
+                url = /(http:\/\/\S*)/g;
+
+            message = JSON.parse(err.responseText).message
+                .replace(url, '<a href="$&">$&</a>');
+
+            callback(message);
         })
         .send('POST', JSON.stringify({
             description: 'via:geojson.io',
@@ -61,7 +67,13 @@ function save(context, callback) {
                 callback(null, data);
             })
             .on('error', function(err) {
-                callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+                var message,
+                    url = /(http:\/\/\S*)/g;
+
+                message = JSON.parse(err.responseText).message
+                    .replace(url, '<a href="$&">$&</a>');
+
+                callback(message);
             })
             .send(method, JSON.stringify({
                 files: files

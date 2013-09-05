@@ -8549,12 +8549,22 @@ module.exports = function(context) {
 
 },{"../source/gist":55,"../source/github":56,"clone":5,"xtend":34}],41:[function(require,module,exports){
 var qs = require('../lib/querystring');
+var flash = require('../ui/flash');
 
 module.exports = function(context) {
 
     function success(err, d) {
         context.container.select('.map').classed('loading', false);
-        if (err) return;
+
+        var message,
+            url = /(http:\/\/\S*)/g;
+
+        if (err) {
+            message = JSON.parse(err.responseText).message
+                .replace(url, '<a href="$&">$&</a>');
+            return flash(context.container, message);
+        }
+
         context.data.parse(d);
         zoomExtent();
     }
@@ -8577,7 +8587,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/querystring":50}],42:[function(require,module,exports){
+},{"../lib/querystring":50,"../ui/flash":61}],42:[function(require,module,exports){
 module.exports = function(context) {
 
     d3.select(window).on('unload', onunload);
@@ -8754,6 +8764,7 @@ module.exports = function(context) {
         function onerror() {
             user.logout();
             context.storage.remove('github_user_details');
+            debugger;
             callback(new Error('not logged in'));
         }
     };
@@ -9189,7 +9200,13 @@ function saveBlocks(content, callback) {
             callback(null, data);
         })
         .on('error', function(err) {
-            callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+            var message,
+                url = /(http:\/\/\S*)/g;
+
+            message = JSON.parse(err.responseText).message
+                .replace(url, '<a href="$&">$&</a>');
+
+            callback(message);
         })
         .send('POST', JSON.stringify({
             description: 'via:geojson.io',
@@ -9237,7 +9254,13 @@ function save(context, callback) {
                 callback(null, data);
             })
             .on('error', function(err) {
-                callback('Gist API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+                var message,
+                    url = /(http:\/\/\S*)/g;
+
+                message = JSON.parse(err.responseText).message
+                    .replace(url, '<a href="$&">$&</a>');
+
+                callback(message);
             })
             .send(method, JSON.stringify({
                 files: files
@@ -9306,7 +9329,13 @@ function save(context, callback) {
                 callback(null, data);
             })
             .on('error', function(err) {
-                callback('GitHub API limit exceeded; saving to GitHub temporarily disabled: ' + err);
+                var message,
+                    url = /(http:\/\/\S*)/g;
+
+                message = JSON.parse(err.responseText).message
+                    .replace(url, '<a href="$&">$&</a>');
+
+                callback(message);
             })
             .send(method, JSON.stringify(data));
     }

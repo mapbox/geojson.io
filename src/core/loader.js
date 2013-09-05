@@ -1,10 +1,20 @@
 var qs = require('../lib/querystring');
+var flash = require('../ui/flash');
 
 module.exports = function(context) {
 
     function success(err, d) {
         context.container.select('.map').classed('loading', false);
-        if (err) return;
+
+        var message,
+            url = /(http:\/\/\S*)/g;
+
+        if (err) {
+            message = JSON.parse(err.responseText).message
+                .replace(url, '<a href="$&">$&</a>');
+            return flash(context.container, message);
+        }
+
         context.data.parse(d);
         zoomExtent();
     }
