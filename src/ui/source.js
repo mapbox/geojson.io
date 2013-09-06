@@ -86,8 +86,11 @@ module.exports = function(context) {
                 .append('div')
                 .attr('class', 'repos')
                 .call(githubBrowser
-                    .gitHubBrowse(context.user.token())
-                        .on('chosen', context.data.parse));
+                    .gitHubBrowse(context.user.token(), {
+                        sort: function(a, b) {
+                            return new Date(b.pushed_at) - new Date(a.pushed_at);
+                        }
+                    }).on('chosen', context.data.parse));
         }
 
         function clickImport() {
@@ -103,8 +106,11 @@ module.exports = function(context) {
                 .append('div')
                 .attr('class', 'browser pad1')
                 .call(githubBrowser
-                    .gistBrowse(context.user.token())
-                        .on('chosen', context.data.parse));
+                    .gistBrowse(context.user.token(), {
+                        sort: function(a, b) {
+                            return new Date(b.updated_at) - new Date(a.updated_at);
+                        }
+                    }).on('chosen', context.data.parse));
         }
 
         $sources.filter(function(d, i) { return !i; }).trigger('click');

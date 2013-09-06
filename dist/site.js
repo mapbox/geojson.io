@@ -4433,13 +4433,14 @@ function hint(str) {
                 message: 'The type ' + _.type + ' is unknown',
                 line: _.__line__
             });
-        } else {
+        } else if (_) {
             types[_.type](_);
         }
     }
 
     function everyIs(_, type) {
-        return _.every(function(x) { return typeof x === type; });
+        // make a single exception because typeof null === 'object'
+        return _.every(function(x) { return (x !== null) && (typeof x === type); });
     }
 
     function requiredProperty(_, name, type) {
@@ -4472,7 +4473,7 @@ function hint(str) {
         crs(_);
         bbox(_);
         if (!requiredProperty(_, 'features', 'array')) {
-            if (!_.features.every(function(_) { return _; })) {
+            if (!everyIs(_.features, 'object')) {
                 return errors.push({
                     message: 'Every feature must be an object',
                     line: _.__line__
@@ -4617,7 +4618,9 @@ function hint(str) {
         crs(_);
         bbox(_);
         if (!requiredProperty(_, 'geometries', 'array')) {
-            _.geometries.forEach(root);
+            _.geometries.forEach(function(geometry) {
+                if (geometry) root(geometry);
+            });
         }
     }
 
@@ -4632,7 +4635,9 @@ function hint(str) {
         }
         requiredProperty(_, 'properties', 'object');
         if (!requiredProperty(_, 'geometry', 'object')) {
-            root(_.geometry);
+            // http://geojson.org/geojson-spec.html#feature-objects
+            // tolerate null geometry
+            if (_.geometry) root(_.geometry);
         }
     }
 
@@ -5329,7 +5334,9 @@ module.exports = function(d3) {
 
     function gitHubBrowse(d3) {
 
-        return function(token) {
+        return function(token, options) {
+            options = options || {};
+
             var event = d3.dispatch('chosen');
 
             function filter(d) {
@@ -5379,6 +5386,11 @@ module.exports = function(d3) {
                         if (repos.length === 1 && repos[0].tree) {
                             repos = repos[0].tree.filter(filter);
                         }
+
+                        if (options.sort) {
+                            repos.sort(options.sort);
+                        }
+
                         data.path.push(d);
                         data.columns = data.columns.concat([repos]);
                         render(data);
@@ -5519,13 +5531,21 @@ module.exports = function(d3) {
     }
 
     function gistBrowse(d3) {
-        return function(token) {
+        return function(token, options) {
+            options = options || {};
+
             var event = d3.dispatch('chosen');
             var time_format = d3.time.format('%Y/%m/%d');
+
             function browse(selection) {
                 var width = Math.min(640, selection.node().offsetWidth);
                 req('/gists', token, function(err, gists) {
                     gists = gists.filter(hasMapFile);
+
+                    if (options.sort) {
+                        gists.sort(options.sort);
+                    }
+
                     var item = selection.selectAll('div.item')
                         .data(gists)
                         .enter()
@@ -5562,6 +5582,7 @@ module.exports = function(d3) {
                         });
                 });
             }
+
             return d3.rebind(browse, event, 'on');
         };
     }
@@ -6304,7 +6325,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":17,"./lib/topojson/clockwise":19,"./lib/topojson/filter":21,"./lib/topojson/prune":27,"./lib/topojson/simplify":28,"./lib/topojson/topology":31,"fs":1}],17:[function(require,module,exports){
+},{"./lib/topojson/bind":17,"./lib/topojson/clockwise":19,"./lib/topojson/filter":21,"./lib/topojson/prune":25,"./lib/topojson/simplify":26,"./lib/topojson/topology":29,"fs":1}],17:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6334,7 +6355,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":32}],18:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":30}],18:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6441,13 +6462,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":20,"./type":32}],20:[function(require,module,exports){
+},{"../../":"PBmiWO","./coordinate-systems":20,"./type":30}],20:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":18,"./spherical":29}],21:[function(require,module,exports){
+},{"./cartesian":18,"./spherical":27}],21:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -6517,7 +6538,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":19,"./coordinate-systems":20,"./prune":27,"./type":32}],22:[function(require,module,exports){
+},{"../../":"PBmiWO","./clockwise":19,"./coordinate-systems":20,"./prune":25,"./type":30}],22:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -6583,108 +6604,6 @@ function equal(keyA, keyB) {
 }
 
 },{"./hash":22}],24:[function(require,module,exports){
-var topojson = require('topojson'),
-    toGeoJSON = require('togeojson');
-
-module.exports.readDrop = readDrop;
-module.exports.readFile = readFile;
-
-function readDrop(callback) {
-    return function() {
-        if (d3.event.dataTransfer) {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
-            var f = d3.event.dataTransfer.files[0];
-            readFile(f, callback);
-        }
-    };
-}
-
-function readFile(f, callback) {
-
-    var reader = new FileReader();
-
-    reader.onload = function(e) {
-
-        var fileType = detectType(f);
-
-        if (!fileType) {
-            return callback({
-                message: 'Could not detect file type'
-            });
-        } else if (fileType === 'kml') {
-            var kmldom = toDom(e.target.result);
-            if (!kmldom) {
-                return callback({
-                    message: 'Invalid KML file: not valid XML'
-                });
-            }
-            var warning;
-            if (kmldom.getElementsByTagName('NetworkLink').length) {
-                warning = {
-                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                      'Please export and upload KML without NetworkLinks for optimal performance'
-                };
-            }
-            callback(null, toGeoJSON.kml(kmldom), warning);
-        } else if (fileType === 'gpx') {
-            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
-        } else if (fileType === 'geojson') {
-            try {
-                gj = JSON.parse(e.target.result);
-                if (gj && gj.type === 'Topology' && gj.objects) {
-                    var collection = { type: 'FeatureCollection', features: [] };
-                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                    callback(null, collection);
-                } else {
-                    callback(null, gj);
-                }
-            } catch(err) {
-                alert('Invalid JSON file: ' + err);
-                return;
-            }
-        } else if (fileType === 'dsv') {
-            csv2geojson.csv2geojson(e.target.result, {
-                delimiter: 'auto'
-            }, function(err, result) {
-                if (err) {
-                    return callback({
-                        type: 'geocode',
-                        result: result,
-                        raw: e.target.result
-                    });
-                } else {
-                    return callback(null, result);
-                }
-            });
-        }
-    };
-
-    reader.readAsText(f);
-
-    function toDom(x) {
-        return (new DOMParser()).parseFromString(x, 'text/xml');
-    }
-
-    function detectType(f) {
-        var filename = f.name ? f.name.toLowerCase() : '';
-        function ext(_) {
-            return filename.indexOf(_) !== -1;
-        }
-        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-            return 'kml';
-        }
-        if (ext('.gpx')) return 'gpx';
-        if (ext('.geojson') || ext('.json')) return 'geojson';
-        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
-            return 'dsv';
-        }
-    }
-}
-
-},{"togeojson":15,"topojson":"PBmiWO"}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],26:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -6750,7 +6669,7 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],27:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6809,7 +6728,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":32}],28:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":30}],26:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -6941,7 +6860,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":20,"./min-heap":26}],29:[function(require,module,exports){
+},{"./coordinate-systems":20,"./min-heap":24}],27:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -7023,7 +6942,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],30:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -7073,7 +6992,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":32}],31:[function(require,module,exports){
+},{"./type":30}],29:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -7415,7 +7334,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":20,"./hashtable":23,"./stitch-poles":30,"./type":32}],32:[function(require,module,exports){
+},{"./coordinate-systems":20,"./hashtable":23,"./stitch-poles":28,"./type":30}],30:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -7509,7 +7428,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],33:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -7518,7 +7437,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],34:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -7545,7 +7464,219 @@ function extend() {
     return target
 }
 
-},{"./has-keys":33,"object-keys":35}],35:[function(require,module,exports){
+},{"./has-keys":31,"object-keys":35}],33:[function(require,module,exports){
+var clone = require('clone');
+    xtend = require('xtend');
+    source = {
+        gist: require('../source/gist'),
+        github: require('../source/github')
+    };
+
+module.exports = function(context) {
+
+    var _data = {
+        map: {
+            type: 'FeatureCollection',
+            features: []
+        },
+        dirty: false,
+        source: null,
+        meta: null,
+        type: 'local'
+    };
+
+    function mapFile(gist) {
+        var f;
+        var content;
+
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.geojson') !== -1 && content) {
+                return {
+                    name: f,
+                    content: JSON.parse(content)
+                };
+            }
+        }
+
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.json') !== -1 && content) {
+                return {
+                    name: f,
+                    file: JSON.parse(content)
+                };
+            }
+        }
+    }
+
+    var data = {};
+
+    data.hasFeatures = function() {
+        return !!(_data.map && _data.map.features && _data.map.features.length);
+    };
+
+    data.set = function(obj, src) {
+        for (var k in obj) {
+            _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
+        }
+        if (obj.dirty !== false) data.dirty = true;
+        context.dispatch.change({
+            obj: obj,
+            source: src
+        });
+        return data;
+    };
+
+    data.mergeFeatures = function(features, src) {
+        _data.map.features = (_data.map.features || []).concat(features);
+        return data.set({ map: _data.map }, src);
+    };
+
+    data.get = function(k) {
+        return _data[k];
+    };
+
+    data.all = function() {
+        return clone(_data, false);
+    };
+
+    data.fetch = function(q, cb) {
+        var type = q.id.split(':')[0];
+
+        switch(type) {
+            case 'gist':
+                var id = q.id.split(':')[1].split('/')[1];
+
+                source.gist.load(id, context, function(err, d) {
+                    return cb(err, d);
+                });
+
+                break;
+            case 'github':
+                var url = q.id.split('/');
+                var parts = {
+                    user: url[0].split(':')[1],
+                    repo: url[1],
+                    branch: url[3],
+                    path: (url.slice(4) || []).join('/')
+                };
+
+                source.github.load(parts, context, function(err, meta) {
+                    return source.github.loadRaw(parts, context, function(err, raw) {
+                        return cb(err, xtend(meta, { content: JSON.parse(raw) }));
+                    });
+                });
+
+                break;
+        }
+    };
+
+    data.parse = function(d, browser) {
+        var login,
+            repo,
+            branch,
+            path,
+            chunked,
+            file;
+
+        if (d.files) d.type = 'gist';
+
+        switch(d.type) {
+            case 'blob':
+                login = browser.path[1].login;
+                repo = browser.path[2].name;
+                branch = browser.path[3].name;
+                path = [browser.path[4].path, d.path].join('/');
+
+                data.set({
+                    type: 'github',
+                    source: d,
+                    meta: {
+                        login: login,
+                        repo: repo,
+                        branch: branch,
+                        name: d.path
+                    },
+                    map: d.content,
+                    path: path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        path
+                    ].join('/'),
+                    url: [
+                        'https://github.com',
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        [path, d.path].join('/')
+                    ].join('/')
+                });
+                break;
+            case 'file':
+                chunked = d.html_url.split('/');
+                login = chunked[3];
+                repo = chunked[4];
+                branch = chunked[6];
+
+                data.set({
+                    type: 'github',
+                    source: d,
+                    meta: {
+                        login: login,
+                        repo: repo,
+                        branch: branch,
+                        name: d.name
+                    },
+                    map: d.content,
+                    path: d.path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        d.path
+                    ].join('/'),
+                    url: d.html_url
+                });
+                break;
+            case 'gist':
+                login = (d.user && d.user.login) || 'anonymous';
+                path = [login, d.id].join('/');
+                file = mapFile(d);
+
+                data.set({
+                    type: 'gist',
+                    source: d,
+                    meta: {
+                        login: login,
+                        name: file && file.name
+                    },
+                    map: file && file.content,
+                    path: path,
+                    route: 'gist:' + path,
+                    url: d.html_url
+                });
+                break;
+        }
+    };
+
+    data.save = function(cb) {
+        var type = context.data.get('type');
+        if (source[type] && source[type].save) source[type].save(context, cb);
+        else source.gist.save(context, cb);
+    };
+
+    return data;
+};
+
+},{"../source/gist":55,"../source/github":56,"clone":5,"xtend":32}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}],35:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
@@ -8338,216 +8469,6 @@ module.exports = function(hostname) {
 };
 
 },{}],40:[function(require,module,exports){
-var clone = require('clone');
-    xtend = require('xtend');
-    source = {
-        gist: require('../source/gist'),
-        github: require('../source/github')
-    };
-
-module.exports = function(context) {
-
-    var _data = {
-        map: {
-            type: 'FeatureCollection',
-            features: []
-        },
-        dirty: false,
-        source: null,
-        meta: null,
-        type: 'local'
-    };
-
-    function mapFile(gist) {
-        var f;
-        var content;
-
-        for (f in gist.files) {
-            content = gist.files[f].content;
-            if (f.indexOf('.geojson') !== -1 && content) {
-                return {
-                    name: f,
-                    content: JSON.parse(content)
-                };
-            }
-        }
-
-        for (f in gist.files) {
-            content = gist.files[f].content;
-            if (f.indexOf('.json') !== -1 && content) {
-                return {
-                    name: f,
-                    file: JSON.parse(content)
-                };
-            }
-        }
-    }
-
-    var data = {};
-
-    data.hasFeatures = function() {
-        return !!(_data.map && _data.map.features && _data.map.features.length);
-    };
-
-    data.set = function(obj, src) {
-        for (var k in obj) {
-            _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
-        }
-        if (obj.dirty !== false) data.dirty = true;
-        context.dispatch.change({
-            obj: obj,
-            source: src
-        });
-        return data;
-    };
-
-    data.mergeFeatures = function(features, src) {
-        _data.map.features = (_data.map.features || []).concat(features);
-        return data.set({ map: _data.map }, src);
-    };
-
-    data.get = function(k) {
-        return _data[k];
-    };
-
-    data.all = function() {
-        return clone(_data, false);
-    };
-
-    data.fetch = function(q, cb) {
-        var type = q.id.split(':')[0];
-
-        switch(type) {
-            case 'gist':
-                var id = q.id.split(':')[1].split('/')[1];
-
-                source.gist.load(id, context, function(err, d) {
-                    return cb(err, d);
-                });
-
-                break;
-            case 'github':
-                var url = q.id.split('/');
-                var parts = {
-                    user: url[0].split(':')[1],
-                    repo: url[1],
-                    branch: url[3],
-                    path: (url.slice(4) || []).join('/')
-                };
-
-                source.github.load(parts, context, function(err, meta) {
-                    return source.github.loadRaw(parts, context, function(err, raw) {
-                        return cb(err, xtend(meta, { content: JSON.parse(raw) }));
-                    });
-                });
-
-                break;
-        }
-    };
-
-    data.parse = function(d, browser) {
-        var login,
-            repo,
-            branch,
-            path,
-            chunked,
-            file;
-
-        if (d.files) d.type = 'gist';
-
-        switch(d.type) {
-            case 'blob':
-                login = browser.path[1].login;
-                repo = browser.path[2].name;
-                branch = browser.path[3].name;
-                path = [browser.path[4].path, d.path].join('/');
-
-                data.set({
-                    type: 'github',
-                    source: d,
-                    meta: {
-                        login: login,
-                        repo: repo,
-                        branch: branch,
-                        name: d.path
-                    },
-                    map: d.content,
-                    path: path,
-                    route: 'github:' + [
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        path
-                    ].join('/'),
-                    url: [
-                        'https://github.com',
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        [path, d.path].join('/')
-                    ].join('/')
-                });
-                break;
-            case 'file':
-                chunked = d.html_url.split('/');
-                login = chunked[3];
-                repo = chunked[4];
-                branch = chunked[6];
-
-                data.set({
-                    type: 'github',
-                    source: d,
-                    meta: {
-                        login: login,
-                        repo: repo,
-                        branch: branch,
-                        name: d.name
-                    },
-                    map: d.content,
-                    path: d.path,
-                    route: 'github:' + [
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        d.path
-                    ].join('/'),
-                    url: d.html_url
-                });
-                break;
-            case 'gist':
-                login = (d.user && d.user.login) || 'anonymous';
-                path = [login, d.id].join('/');
-                file = mapFile(d);
-
-                data.set({
-                    type: 'gist',
-                    source: d,
-                    meta: {
-                        login: login,
-                        name: file && file.name
-                    },
-                    map: file && file.content,
-                    path: path,
-                    route: 'gist:' + path,
-                    url: d.html_url
-                });
-                break;
-        }
-    };
-
-    data.save = function(cb) {
-        var type = context.data.get('type');
-        if (source[type] && source[type].save) source[type].save(context, cb);
-        else source.gist.save(context, cb);
-    };
-
-    return data;
-};
-
-},{"../source/gist":55,"../source/github":56,"clone":5,"xtend":34}],41:[function(require,module,exports){
 var qs = require('../lib/querystring');
 var flash = require('../ui/flash');
 
@@ -8587,7 +8508,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/querystring":50,"../ui/flash":61}],42:[function(require,module,exports){
+},{"../lib/querystring":49,"../ui/flash":61}],41:[function(require,module,exports){
 module.exports = function(context) {
 
     d3.select(window).on('unload', onunload);
@@ -8617,7 +8538,7 @@ module.exports = function(context) {
     }
 };
 
-},{}],43:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -8660,7 +8581,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":39}],44:[function(require,module,exports){
+},{"../config.js":39}],43:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -8729,7 +8650,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":50,"xtend":34}],45:[function(require,module,exports){
+},{"../lib/querystring":49,"xtend":32}],44:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -8764,7 +8685,6 @@ module.exports = function(context) {
         function onerror() {
             user.logout();
             context.storage.remove('github_user_details');
-            debugger;
             callback(new Error('not logged in'));
         }
     };
@@ -8815,7 +8735,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":39}],46:[function(require,module,exports){
+},{"../config.js":39}],45:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -8848,7 +8768,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":40,"./core/loader":41,"./core/recovery":42,"./core/repo":43,"./core/router":44,"./core/user":45,"./ui":57,"./ui/map":65,"store":14}],47:[function(require,module,exports){
+},{"./core/data":33,"./core/loader":40,"./core/recovery":41,"./core/repo":42,"./core/router":43,"./core/user":44,"./ui":57,"./ui/map":65,"store":14}],46:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -8887,7 +8807,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":50,"leaflet-hash":13}],48:[function(require,module,exports){
+},{"../lib/querystring":49,"leaflet-hash":13}],47:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -8944,7 +8864,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports = function(elem, w, h) {
     var c = elem.appendChild(document.createElement('canvas'));
 
@@ -8965,7 +8885,7 @@ module.exports = function(elem, w, h) {
     };
 };
 
-},{}],50:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 module.exports.stringQs = function(str) {
     return str.split('&').reduce(function(obj, pair){
         var parts = pair.split('=');
@@ -8985,7 +8905,107 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],51:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
+var topojson = require('topojson'),
+    toGeoJSON = require('togeojson');
+
+module.exports.readDrop = readDrop;
+module.exports.readFile = readFile;
+
+function readDrop(callback) {
+    return function() {
+        if (d3.event.dataTransfer) {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+            var f = d3.event.dataTransfer.files[0];
+            readFile(f, callback);
+        }
+    };
+}
+
+function readFile(f, callback) {
+
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        var fileType = detectType(f);
+
+        if (!fileType) {
+            return callback({
+                message: 'Could not detect file type'
+            });
+        } else if (fileType === 'kml') {
+            var kmldom = toDom(e.target.result);
+            if (!kmldom) {
+                return callback({
+                    message: 'Invalid KML file: not valid XML'
+                });
+            }
+            var warning;
+            if (kmldom.getElementsByTagName('NetworkLink').length) {
+                warning = {
+                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                      'Please export and upload KML without NetworkLinks for optimal performance'
+                };
+            }
+            callback(null, toGeoJSON.kml(kmldom), warning);
+        } else if (fileType === 'gpx') {
+            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
+        } else if (fileType === 'geojson') {
+            try {
+                gj = JSON.parse(e.target.result);
+                if (gj && gj.type === 'Topology' && gj.objects) {
+                    var collection = { type: 'FeatureCollection', features: [] };
+                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
+                    callback(null, collection);
+                } else {
+                    callback(null, gj);
+                }
+            } catch(err) {
+                alert('Invalid JSON file: ' + err);
+                return;
+            }
+        } else if (fileType === 'dsv') {
+            csv2geojson.csv2geojson(e.target.result, {
+                delimiter: 'auto'
+            }, function(err, result) {
+                if (err) {
+                    return callback({
+                        type: 'geocode',
+                        result: result,
+                        raw: e.target.result
+                    });
+                } else {
+                    return callback(null, result);
+                }
+            });
+        }
+    };
+
+    reader.readAsText(f);
+
+    function toDom(x) {
+        return (new DOMParser()).parseFromString(x, 'text/xml');
+    }
+
+    function detectType(f) {
+        var filename = f.name ? f.name.toLowerCase() : '';
+        function ext(_) {
+            return filename.indexOf(_) !== -1;
+        }
+        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
+            return 'kml';
+        }
+        if (ext('.gpx')) return 'gpx';
+        if (ext('.geojson') || ext('.json')) return 'geojson';
+        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
+            return 'dsv';
+        }
+    }
+}
+
+},{"togeojson":15,"topojson":"PBmiWO"}],51:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -9551,7 +9571,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":24,"./flash.js":61,"./geocode.js":62}],60:[function(require,module,exports){
+},{"../lib/readfile.js":50,"./flash.js":61,"./geocode.js":62}],60:[function(require,module,exports){
 var share = require('./share'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
@@ -9827,7 +9847,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":49}],63:[function(require,module,exports){
+},{"../lib/progress_chart":48}],63:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -9909,7 +9929,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":24,"./flash.js":61,"./geocode.js":62}],64:[function(require,module,exports){
+},{"../lib/readfile.js":50,"./flash.js":61,"./geocode.js":62}],64:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -10056,7 +10076,7 @@ function bindPopup(l) {
         '</div></div>'));
 }
 
-},{"../lib/custom_hash.js":47,"../lib/popup":48,"../lib/querystring.js":50}],66:[function(require,module,exports){
+},{"../lib/custom_hash.js":46,"../lib/popup":47,"../lib/querystring.js":49}],66:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -10371,8 +10391,11 @@ module.exports = function(context) {
                 .append('div')
                 .attr('class', 'repos')
                 .call(githubBrowser
-                    .gitHubBrowse(context.user.token())
-                        .on('chosen', context.data.parse));
+                    .gitHubBrowse(context.user.token(), {
+                        sort: function(a, b) {
+                            return new Date(b.pushed_at) - new Date(a.pushed_at);
+                        }
+                    }).on('chosen', context.data.parse));
         }
 
         function clickImport() {
@@ -10388,8 +10411,11 @@ module.exports = function(context) {
                 .append('div')
                 .attr('class', 'browser pad1')
                 .call(githubBrowser
-                    .gistBrowse(context.user.token())
-                        .on('chosen', context.data.parse));
+                    .gistBrowse(context.user.token(), {
+                        sort: function(a, b) {
+                            return new Date(b.updated_at) - new Date(a.updated_at);
+                        }
+                    }).on('chosen', context.data.parse));
         }
 
         $sources.filter(function(d, i) { return !i; }).trigger('click');
@@ -10446,5 +10472,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[55,46])
+},{}]},{},[55,45])
 ;
