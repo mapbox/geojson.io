@@ -5935,6 +5935,462 @@ module.exports = function(canvas){
 })(window);
 
 },{}],14:[function(require,module,exports){
+var osm_geojson = {};
+
+osm_geojson.geojson2osm = function(geo, changeset) {
+    function togeojson(geo, properties) {
+        var nodes = '',
+            ways = '',
+            relations = '';
+        properties = properties || {};
+
+        switch (geo.type) {
+            case 'Point':
+                var coord = roundCoords([geo.coordinates]);
+                nodes += '<node id="' + count + '" lat="' + coord[0][1] +
+                '" lon="' + coord[0][0] + '">';
+                nodes += propertiesToTags(properties);
+                nodes += '</node>';
+                count--;
+                break;
+
+            case 'MultiPoint':
+                break;
+            case 'LineString':
+                break;
+            case 'MultiLineString':
+                break;
+            case 'Polygon':
+                append(polygon(geo, properties));
+                break;
+
+            case 'MultiPolygon':
+                relations += '<relation id="' + count + '" changeset="' + changeset + '">';
+                properties.type = 'multipolygon';
+                count--;
+
+                for (var i = 0; i < geo.coordinates.length; i++){
+
+                    poly = polygon({
+                        'coordinates': geo.coordinates[i]
+                    }, undefined, true);
+
+                    nodes += poly.nodes;
+                    ways += poly.ways;
+                    relations += poly.relations;
+                }
+
+                relations += propertiesToTags(properties);
+                relations += '</relation>';
+                break;
+        }
+
+        function append(obj) {
+            nodes += obj.nodes;
+            ways += obj.ways;
+            relations += obj.relations;
+        }
+
+        osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="geo2osm.js">' +
+        nodes + ways + relations + '</osm>';
+
+        return {
+            nodes: nodes,
+            ways: ways,
+            relations: relations,
+            osm: osm
+        };
+    }
+
+    function polygon(geo, properties, multipolygon) {
+        var nodes = '',
+            ways = '',
+            relations = '',
+            role = '';
+        properties = properties || {};
+        multipolygon = multipolygon || false;
+
+        var coords = [];
+        if (geo.coordinates.length > 1) {
+            // polygon with holes -> multipolygon
+            if (!multipolygon) relations += '<relation id="' + count + '" changeset="' + changeset +'">';
+            count--;
+            properties.type = 'multipolygon';
+
+            for (var i = 0; i < geo.coordinates.length; i++) {
+
+                role = ((i === 0) ? 'outer' : 'inner');
+
+                relations += '<member type="way" ref="' + count + '" role="' + role + '"/>';
+                ways += '<way id="' + count + '" changeset="' + changeset + '">';
+                count--;
+                for (var a = 0; a < geo.coordinates[i].length-1; a++) {
+                    coords.push([geo.coordinates[i][a][1], geo.coordinates[i][a][0]]);
+                }
+                coords = createNodes(coords, true);
+                nodes += coords.nodes;
+                ways += coords.nds;
+                ways += '</way>';
+                coords = [];
+            }
+
+            if (!multipolygon) {
+                relations += propertiesToTags(properties);
+                relations += '</relation>';
+            }
+        } else {
+            // polygon -> way
+            ways += '<way id="' + count + '" changeset="' + changeset + '">';
+            if (multipolygon) relations += '<member type="way" ref="' + count + '" role="outer"/>';
+            count--;
+            for (var j = 0; j < geo.coordinates[0].length-1; j++) {
+                coords.push([geo.coordinates[0][j][1], geo.coordinates[0][j][0]]);
+            }
+            coords = createNodes(coords, true);
+            nodes += coords.nodes;
+            ways += coords.nds;
+            ways += propertiesToTags(properties);
+            ways += '</way>';
+        }
+
+        return {
+            nodes: nodes,
+            ways: ways,
+            relations: relations
+        };
+    }
+
+    function propertiesToTags(properties) {
+        var tags = '';
+        for (var tag in properties) {
+            if (properties[tag] !== null) {
+                tags += '<tag k="' + tag + '" v="' + properties[tag] + '"/>';
+            }
+        }
+        return tags;
+    }
+
+    function roundCoords(coords){
+        for (var a = 0; a < coords.length; a++) {
+            coords[a][0] = Math.round(coords[a][0] * 1000000) / 1000000;
+            coords[a][1] = Math.round(coords[a][1] * 1000000) / 1000000;
+        }
+        return coords;
+    }
+
+    function createNodes(coords, repeatLastND) {
+        var nds = '',
+            nodes = '',
+            length = coords.length;
+        repeatLastND = repeatLastND || false;
+            // for polygons
+
+        coords = roundCoords(coords);
+
+        for (var a = 0; a < length; a++) {
+            if (repeatLastND && a === 0) repeatLastND = count;
+
+            nds += '<nd ref="' + count + '"/>';
+            nodes += '<node id="' + count + '" lat="' + coords[a][0] +'" lon="' + coords[a][1] +
+            '" changeset="' + changeset + '"/>';
+
+            if (repeatLastND && a === length-1) nds += '<nd ref="' + repeatLastND + '"/>';
+            count--;
+        }
+        return {'nds': nds, 'nodes': nodes};
+    }
+
+    var obj,
+        count = -1;
+    changeset = changeset || false;
+
+    switch (geo.type) {
+        case 'FeatureCollection':
+            var temp = {
+                nodes: '',
+                ways: '',
+                relations: ''
+            };
+            obj = [];
+            for (var i = 0; i < geo.features.length; i++){
+                obj.push(togeojson(geo.features[i].geometry, geo.features[i].properties));
+            }
+            temp.osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="geo2osm.js">';
+            for (var n = 0; n < obj.length; n++) {
+                temp.nodes += obj[n].nodes;
+                temp.ways += obj[n].ways;
+                temp.relations += obj[n].relations;
+            }
+            temp.osm += temp.nodes + temp.ways + temp.relations;
+            temp.osm += '</osm>';
+            obj = temp.osm;
+            break;
+
+        case 'GeometryCollection':
+            obj = [];
+            for (var j = 0; j < geo.geometries.length; j++){
+                obj.push(togeojson(geo.geometries[j]));
+            }
+            break;
+
+        case 'Feature':
+            obj = togeojson(geo.geometry, geo.properties);
+            obj = obj.osm;
+            break;
+
+        case 'Point':
+        case 'MultiPoint':
+        case 'LineString':
+        case 'MultiLineString':
+        case 'Polygon':
+        case 'MultiPolygon':
+            obj = togeojson(geo);
+            obj = obj.osm;
+            break;
+
+        default:
+            if (console) console.log('Invalid GeoJSON object: GeoJSON object must be one of \"Point\", \"LineString\",' +
+                '\"Polygon\", \"MultiPolygon\", \"Feature\", \"FeatureCollection\" or \"GeometryCollection\".');
+    }
+
+    return obj;
+};
+
+osm_geojson.osm2geojson = function(osm, metaProperties) {
+
+    var xml = parse(osm),
+        nodeCache = cacheNodes(),
+        wayCache = cacheWays();
+
+    return Bounds({
+        type : 'FeatureCollection',
+        features : []
+            .concat(Points(nodeCache))
+            .concat(Ways(wayCache))
+            .concat(Ways(Relations))
+    }, xml);
+
+    function parse(xml) {
+        if (typeof xml !== 'string') return xml;
+        return (new DOMParser()).parseFromString(
+            new XMLSerializer().serializeToString(xml), 'text/xml');
+    }
+
+    function Bounds(geo, xml) {
+        var bounds = getBy(xml, 'bounds');
+        if (!bounds.length) return geo;
+        geo.bbox = [
+            attrf(bounds[0], 'minlon'),
+            attrf(bounds[0], 'minlat'),
+            attrf(bounds[0], 'maxlon'),
+            attrf(bounds[0], 'maxlat')
+        ];
+        return geo;
+    }
+
+    function setProperties(element) {
+        var props = {},
+            tags = element.getElementsByTagName('tag'),
+            tags_length = tags.length;
+
+        for (var t = 0; t < tags_length; t++) {
+            props[attr(tags[t], 'k')] = isNumber(attr(tags[t], 'v')) ?
+                parseFloat(attr(tags[t], 'v')) : attr(tags[t], 'v');
+        }
+
+        if (metaProperties) {
+            setIf(element, 'id', props, 'osm_id');
+            setIf(element, 'user', props, 'osm_lastEditor');
+            setIf(element, 'version', props, 'osm_version', true);
+            setIf(element, 'changeset', props, 'osm_lastChangeset', true);
+            setIf(element, 'timestamp', props, 'osm_lastEdited');
+        }
+
+        return sortObject(props);
+    }
+
+    function getFeature(element, type, coordinates) {
+        return {
+            geometry: {
+                type: type,
+                coordinates: coordinates || []
+            },
+            type: 'Feature',
+            properties: setProperties(element)
+        };
+    }
+
+    function cacheNodes() {
+        var nodes = getBy(xml, 'node'),
+            coords = {},
+            withTags = [];
+
+        for (var n = 0; n < nodes.length; n++) {
+            var tags = getBy(nodes[n], 'tag');
+            coords[attr(nodes[n], 'id')] = lonLat(nodes[n]);
+            if (tags.length) withTags.push(nodes[n]);
+        }
+
+        return {
+            coords: coords,
+            withTags: withTags
+        };
+    }
+
+    function Points(nodeCache) {
+        var points = nodeCache.withTags,
+            features = [];
+
+        for (var p = 0, r = points.length; p < r; p++) {
+            var feature = getFeature(points[p], 'Point', lonLat(points[p]));
+            features.push(feature);
+        }
+
+        return features;
+    }
+
+    function cacheWays() {
+        var ways = getBy(xml, 'way'),
+            out = {};
+
+        for (var w = 0; w < ways.length; w++) {
+            var feature = {},
+                nds = getBy(ways[w], 'nd');
+
+            if (attr(nds[0], 'ref') === attr(nds[nds.length - 1], 'ref')) {
+                feature = getFeature(ways[w], 'Polygon', [[]]);
+            } else {
+                feature = getFeature(ways[w], 'LineString');
+            }
+
+            for (var n = 0; n < nds.length; n++) {
+                var cords = nodeCache.coords[attr(nds[n], 'ref')];
+                if (feature.geometry.type === 'Polygon') {
+                    feature.geometry.coordinates[0].push(cords);
+                } else {
+                    feature.geometry.coordinates.push(cords);
+                }
+            }
+
+            out[attr(ways[w], 'id')] = feature;
+        }
+
+        return out;
+    }
+
+    function Relations() {
+        var relations = getBy(xml, 'relation'),
+            relations_length = relations.length,
+            features = [];
+
+        for (var r = 0; r < relations_length; r++) {
+            var feature = getFeature(relations[r], 'MultiPolygon');
+
+            if (feature.properties.type == 'multipolygon') {
+                var members = getBy(relations[r], 'member');
+
+                // osm doesn't keep roles in order, so we do this twice
+                for (var m = 0; m < members.length; m++) {
+                    if (attr(members[m], 'role') == 'outer') assignWay(members[m], feature);
+                }
+
+                for (var n = 0; n < members.length; n++) {
+                    if (attr(members[n], 'role') == 'inner') assignWay(members[n], feature);
+                }
+
+                delete feature.properties.type;
+            } else {
+                // http://taginfo.openstreetmap.us/relations
+            }
+
+            if (feature.geometry.coordinates.length) features.push(feature);
+        }
+
+        return features;
+
+        function assignWay(member, feature) {
+            var ref = attr(member, 'ref'),
+                way = wayCache[ref];
+
+            if (way && way.geometry.type == 'Polygon') {
+                if (way && attr(member, 'role') == 'outer') {
+                    feature.geometry.coordinates.push(way.geometry.coordinates);
+                    if (way.properties) {
+                        // exterior polygon properties can move to the multipolygon
+                        // but multipolygon (relation) tags take precedence
+                        for (var prop in way.properties) {
+                            if (!feature.properties[prop]) {
+                                feature.properties[prop] = prop;
+                            }
+                        }
+                    }
+                } else if (way && attr(member, 'role') == 'inner'){
+                    if (feature.geometry.coordinates.length > 1) {
+                        // do a point in polygon against each outer
+                        // this determines which outer the inner goes with
+                        for (var a = 0; a < feature.geometry.coordinates.length; a++) {
+                            if (pointInPolygon(
+                                way.geometry.coordinates[0][0],
+                                feature.geometry.coordinates[a][0])) {
+                                feature.geometry.coordinates[a].push(way.geometry.coordinates[0]);
+                                break;
+                            }
+                        }
+                    } else {
+                        if (feature.geometry.coordinates.length) {
+                            feature.geometry.coordinates[0].push(way.geometry.coordinates[0]);
+                        }
+                    }
+                }
+            }
+
+            wayCache[ref] = false;
+        }
+    }
+
+    function Ways(wayCache) {
+        var features = [];
+        for (var w in wayCache) if (wayCache[w]) features.push(wayCache[w]);
+        return features;
+    }
+
+    // https://github.com/substack/point-in-polygon/blob/master/index.js
+    function pointInPolygon(point, vs) {
+        var x = point[0], y = point[1];
+        var inside = false;
+        for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+            var xi = vs[i][0], yi = vs[i][1],
+                xj = vs[j][0], yj = vs[j][1],
+                intersect = ((yi > y) != (yj > y)) &&
+                (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
+    }
+
+    // http://stackoverflow.com/a/1359808
+    function sortObject(o) {
+        var sorted = {}, key, a = [];
+        for (key in o) if (o.hasOwnProperty(key)) a.push(key);
+        a.sort();
+        for (key = 0; key < a.length; key++) sorted[a[key]] = o[a[key]];
+        return sorted;
+    }
+
+    // http://stackoverflow.com/a/1830844
+    function isNumber(n) { return !isNaN(parseFloat(n)) && isFinite(n); }
+    function attr(x, y) { return x.getAttribute(y); }
+    function attrf(x, y) { return parseFloat(x.getAttribute(y)); }
+    function getBy(x, y) { return x.getElementsByTagName(y); }
+    function lonLat(elem) { return [attrf(elem, 'lon'), attrf(elem, 'lat')]; }
+    function setIf(x, y, o, name, f) {
+        if (attr(x, y)) o[name] = f ? parseFloat(attr(x, y)) : attr(x, y);
+    }
+};
+
+if (typeof module !== 'undefined') module.exports = osm_geojson;
+
+},{}],15:[function(require,module,exports){
 ;(function(){
 	var store = {},
 		win = window,
@@ -6089,7 +6545,7 @@ module.exports = function(canvas){
 	else { this.store = store }
 })();
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 toGeoJSON = (function() {
     'use strict';
 
@@ -6325,7 +6781,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":17,"./lib/topojson/clockwise":19,"./lib/topojson/filter":21,"./lib/topojson/prune":25,"./lib/topojson/simplify":26,"./lib/topojson/topology":29,"fs":1}],17:[function(require,module,exports){
+},{"./lib/topojson/bind":18,"./lib/topojson/clockwise":20,"./lib/topojson/filter":22,"./lib/topojson/prune":28,"./lib/topojson/simplify":29,"./lib/topojson/topology":32,"fs":1}],18:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6355,7 +6811,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":30}],18:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":33}],19:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6389,7 +6845,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -6462,13 +6918,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":20,"./type":30}],20:[function(require,module,exports){
+},{"../../":"PBmiWO","./coordinate-systems":21,"./type":33}],21:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":18,"./spherical":27}],21:[function(require,module,exports){
+},{"./cartesian":19,"./spherical":30}],22:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -6538,7 +6994,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":19,"./coordinate-systems":20,"./prune":25,"./type":30}],22:[function(require,module,exports){
+},{"../../":"PBmiWO","./clockwise":20,"./coordinate-systems":21,"./prune":28,"./type":33}],23:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -6548,7 +7004,7 @@ module.exports = function(size) {
   };
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -6603,7 +7059,120 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":22}],24:[function(require,module,exports){
+},{"./hash":23}],25:[function(require,module,exports){
+var topojson = require('topojson'),
+    toGeoJSON = require('togeojson'),
+    osm2geojson = require('osm-and-geojson').osm2geojson;
+
+module.exports.readDrop = readDrop;
+module.exports.readFile = readFile;
+
+function readDrop(callback) {
+    return function() {
+        if (d3.event.dataTransfer) {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+            var f = d3.event.dataTransfer.files[0];
+            readFile(f, callback);
+        }
+    };
+}
+
+function readFile(f, callback) {
+
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        var fileType = detectType(f);
+
+        if (!fileType) {
+            return callback({
+                message: 'Could not detect file type'
+            });
+        } else if (fileType === 'kml') {
+            var kmldom = toDom(e.target.result);
+            if (!kmldom) {
+                return callback({
+                    message: 'Invalid KML file: not valid XML'
+                });
+            }
+            var warning;
+            if (kmldom.getElementsByTagName('NetworkLink').length) {
+                warning = {
+                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                      'Please export and upload KML without NetworkLinks for optimal performance'
+                };
+            }
+            callback(null, toGeoJSON.kml(kmldom), warning);
+        } else if (fileType === 'xml') {
+            var xmldom = toDom(e.target.result);
+            if (!xmldom) {
+                return callback({
+                    message: 'Invalid XML file: not valid XML'
+                });
+            }
+            var warning;
+            callback(null, osm2geojson(xmldom), warning);
+        } else if (fileType === 'gpx') {
+            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
+        } else if (fileType === 'geojson') {
+            try {
+                gj = JSON.parse(e.target.result);
+                if (gj && gj.type === 'Topology' && gj.objects) {
+                    var collection = { type: 'FeatureCollection', features: [] };
+                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
+                    callback(null, collection);
+                } else {
+                    callback(null, gj);
+                }
+            } catch(err) {
+                alert('Invalid JSON file: ' + err);
+                return;
+            }
+        } else if (fileType === 'dsv') {
+            csv2geojson.csv2geojson(e.target.result, {
+                delimiter: 'auto'
+            }, function(err, result) {
+                if (err) {
+                    return callback({
+                        type: 'geocode',
+                        result: result,
+                        raw: e.target.result
+                    });
+                } else {
+                    return callback(null, result);
+                }
+            });
+        }
+    };
+
+    reader.readAsText(f);
+
+    function toDom(x) {
+        return (new DOMParser()).parseFromString(x, 'text/xml');
+    }
+
+    function detectType(f) {
+        var filename = f.name ? f.name.toLowerCase() : '';
+        function ext(_) {
+            return filename.indexOf(_) !== -1;
+        }
+        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
+            return 'kml';
+        }
+        if (ext('.gpx')) return 'gpx';
+        if (ext('.geojson') || ext('.json')) return 'geojson';
+        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
+            return 'dsv';
+        }
+        if (ext('.xml')) return 'xml';
+    }
+}
+
+},{"osm-and-geojson":14,"togeojson":16,"topojson":"PBmiWO"}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}],27:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -6669,7 +7238,7 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],25:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6728,7 +7297,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":30}],26:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":33}],29:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -6860,7 +7429,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":20,"./min-heap":24}],27:[function(require,module,exports){
+},{"./coordinate-systems":21,"./min-heap":27}],30:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -6942,7 +7511,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],28:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -6992,7 +7561,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":30}],29:[function(require,module,exports){
+},{"./type":33}],32:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -7334,7 +7903,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":20,"./hashtable":23,"./stitch-poles":28,"./type":30}],30:[function(require,module,exports){
+},{"./coordinate-systems":21,"./hashtable":24,"./stitch-poles":31,"./type":33}],33:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -7428,7 +7997,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],31:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -7437,7 +8006,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -7464,223 +8033,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":31,"object-keys":35}],33:[function(require,module,exports){
-var clone = require('clone');
-    xtend = require('xtend');
-    source = {
-        gist: require('../source/gist'),
-        github: require('../source/github')
-    };
-
-module.exports = function(context) {
-
-    var _data = {
-        map: {
-            type: 'FeatureCollection',
-            features: []
-        },
-        dirty: false,
-        source: null,
-        meta: null,
-        type: 'local'
-    };
-
-    function mapFile(gist) {
-        var f;
-        var content;
-
-        for (f in gist.files) {
-            content = gist.files[f].content;
-            if (f.indexOf('.geojson') !== -1 && content) {
-                return {
-                    name: f,
-                    content: JSON.parse(content)
-                };
-            }
-        }
-
-        for (f in gist.files) {
-            content = gist.files[f].content;
-            if (f.indexOf('.json') !== -1 && content) {
-                return {
-                    name: f,
-                    file: JSON.parse(content)
-                };
-            }
-        }
-    }
-
-    var data = {};
-
-    data.hasFeatures = function() {
-        return !!(_data.map && _data.map.features && _data.map.features.length);
-    };
-
-    data.set = function(obj, src) {
-        for (var k in obj) {
-            _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
-        }
-        if (obj.dirty !== false) data.dirty = true;
-        context.dispatch.change({
-            obj: obj,
-            source: src
-        });
-        return data;
-    };
-
-    data.mergeFeatures = function(features, src) {
-        _data.map.features = (_data.map.features || []).concat(features);
-        return data.set({ map: _data.map }, src);
-    };
-
-    data.get = function(k) {
-        return _data[k];
-    };
-
-    data.all = function() {
-        return clone(_data, false);
-    };
-
-    data.fetch = function(q, cb) {
-        var type = q.id.split(':')[0];
-
-        switch(type) {
-            case 'gist':
-                var id = q.id.split(':')[1].split('/')[1];
-
-                source.gist.load(id, context, function(err, d) {
-                    return cb(err, d);
-                });
-
-                break;
-            case 'github':
-                var url = q.id.split('/');
-                var parts = {
-                    user: url[0].split(':')[1],
-                    repo: url[1],
-                    branch: url[3],
-                    path: (url.slice(4) || []).join('/')
-                };
-
-                source.github.load(parts, context, function(err, meta) {
-                    return source.github.loadRaw(parts, context, function(err, raw) {
-                        return cb(err, xtend(meta, { content: JSON.parse(raw) }));
-                    });
-                });
-
-                break;
-        }
-    };
-
-    data.parse = function(d, browser) {
-        var login,
-            repo,
-            branch,
-            path,
-            chunked,
-            file;
-
-        if (d.files) d.type = 'gist';
-
-        switch(d.type) {
-            case 'blob':
-                login = browser.path[1].login;
-                repo = browser.path[2].name;
-                branch = browser.path[3].name;
-                path = [browser.path[4].path, d.path].join('/');
-
-                data.set({
-                    type: 'github',
-                    source: d,
-                    meta: {
-                        login: login,
-                        repo: repo,
-                        branch: branch,
-                        name: d.path
-                    },
-                    map: d.content,
-                    path: path,
-                    route: 'github:' + [
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        path
-                    ].join('/'),
-                    url: [
-                        'https://github.com',
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        [path, d.path].join('/')
-                    ].join('/')
-                });
-                break;
-            case 'file':
-                chunked = d.html_url.split('/');
-                login = chunked[3];
-                repo = chunked[4];
-                branch = chunked[6];
-
-                data.set({
-                    type: 'github',
-                    source: d,
-                    meta: {
-                        login: login,
-                        repo: repo,
-                        branch: branch,
-                        name: d.name
-                    },
-                    map: d.content,
-                    path: d.path,
-                    route: 'github:' + [
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        d.path
-                    ].join('/'),
-                    url: d.html_url
-                });
-                break;
-            case 'gist':
-                login = (d.user && d.user.login) || 'anonymous';
-                path = [login, d.id].join('/');
-                file = mapFile(d);
-
-                data.set({
-                    type: 'gist',
-                    source: d,
-                    meta: {
-                        login: login,
-                        name: file && file.name
-                    },
-                    map: file && file.content,
-                    path: path,
-                    route: 'gist:' + path,
-                    url: d.html_url
-                });
-                break;
-        }
-    };
-
-    data.save = function(cb) {
-        var type = context.data.get('type');
-        if (source[type] && source[type].save) source[type].save(context, cb);
-        else source.gist.save(context, cb);
-    };
-
-    return data;
-};
-
-},{"../source/gist":55,"../source/github":56,"clone":5,"xtend":32}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],35:[function(require,module,exports){
+},{"./has-keys":34,"object-keys":36}],36:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":38}],36:[function(require,module,exports){
+},{"./shim":39}],37:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -7704,7 +8061,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 
 /**!
  * is
@@ -8408,7 +8765,7 @@ is.string = function (value) {
 };
 
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function () {
 	"use strict";
 
@@ -8454,7 +8811,7 @@ is.string = function (value) {
 }());
 
 
-},{"foreach":36,"is":37}],39:[function(require,module,exports){
+},{"foreach":37,"is":38}],40:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -8468,7 +8825,217 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
+var clone = require('clone');
+    xtend = require('xtend');
+    source = {
+        gist: require('../source/gist'),
+        github: require('../source/github')
+    };
+
+module.exports = function(context) {
+
+    var _data = {
+        map: {
+            type: 'FeatureCollection',
+            features: []
+        },
+        dirty: false,
+        source: null,
+        meta: null,
+        type: 'local'
+    };
+
+    function mapFile(gist) {
+        var f;
+        var content;
+
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.geojson') !== -1 && content) {
+                return {
+                    name: f,
+                    content: JSON.parse(content)
+                };
+            }
+        }
+
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.json') !== -1 && content) {
+                return {
+                    name: f,
+                    file: JSON.parse(content)
+                };
+            }
+        }
+    }
+
+    var data = {};
+
+    data.hasFeatures = function() {
+        return !!(_data.map && _data.map.features && _data.map.features.length);
+    };
+
+    data.set = function(obj, src) {
+        for (var k in obj) {
+            _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
+        }
+        if (obj.dirty !== false) data.dirty = true;
+        context.dispatch.change({
+            obj: obj,
+            source: src
+        });
+        return data;
+    };
+
+    data.mergeFeatures = function(features, src) {
+        _data.map.features = (_data.map.features || []).concat(features);
+        return data.set({ map: _data.map }, src);
+    };
+
+    data.get = function(k) {
+        return _data[k];
+    };
+
+    data.all = function() {
+        return clone(_data, false);
+    };
+
+    data.fetch = function(q, cb) {
+        var type = q.id.split(':')[0];
+
+        switch(type) {
+            case 'gist':
+                var id = q.id.split(':')[1].split('/')[1];
+
+                source.gist.load(id, context, function(err, d) {
+                    return cb(err, d);
+                });
+
+                break;
+            case 'github':
+                var url = q.id.split('/');
+                var parts = {
+                    user: url[0].split(':')[1],
+                    repo: url[1],
+                    branch: url[3],
+                    path: (url.slice(4) || []).join('/')
+                };
+
+                source.github.load(parts, context, function(err, meta) {
+                    return source.github.loadRaw(parts, context, function(err, raw) {
+                        return cb(err, xtend(meta, { content: JSON.parse(raw) }));
+                    });
+                });
+
+                break;
+        }
+    };
+
+    data.parse = function(d, browser) {
+        var login,
+            repo,
+            branch,
+            path,
+            chunked,
+            file;
+
+        if (d.files) d.type = 'gist';
+
+        switch(d.type) {
+            case 'blob':
+                login = browser.path[1].login;
+                repo = browser.path[2].name;
+                branch = browser.path[3].name;
+                path = [browser.path[4].path, d.path].join('/');
+
+                data.set({
+                    type: 'github',
+                    source: d,
+                    meta: {
+                        login: login,
+                        repo: repo,
+                        branch: branch,
+                        name: d.path
+                    },
+                    map: d.content,
+                    path: path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        path
+                    ].join('/'),
+                    url: [
+                        'https://github.com',
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        [path, d.path].join('/')
+                    ].join('/')
+                });
+                break;
+            case 'file':
+                chunked = d.html_url.split('/');
+                login = chunked[3];
+                repo = chunked[4];
+                branch = chunked[6];
+
+                data.set({
+                    type: 'github',
+                    source: d,
+                    meta: {
+                        login: login,
+                        repo: repo,
+                        branch: branch,
+                        name: d.name
+                    },
+                    map: d.content,
+                    path: d.path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        d.path
+                    ].join('/'),
+                    url: d.html_url
+                });
+                break;
+            case 'gist':
+                login = (d.user && d.user.login) || 'anonymous';
+                path = [login, d.id].join('/');
+                file = mapFile(d);
+
+                data.set({
+                    type: 'gist',
+                    source: d,
+                    meta: {
+                        login: login,
+                        name: file && file.name
+                    },
+                    map: file && file.content,
+                    path: path,
+                    route: 'gist:' + path,
+                    url: d.html_url
+                });
+                break;
+        }
+    };
+
+    data.save = function(cb) {
+        var type = context.data.get('type');
+        if (source[type] && source[type].save) source[type].save(context, cb);
+        else source.gist.save(context, cb);
+    };
+
+    return data;
+};
+
+},{"../source/gist":56,"../source/github":57,"clone":5,"xtend":35}],42:[function(require,module,exports){
 var qs = require('../lib/querystring');
 var flash = require('../ui/flash');
 
@@ -8508,7 +9075,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/querystring":49,"../ui/flash":61}],41:[function(require,module,exports){
+},{"../lib/querystring":51,"../ui/flash":62}],43:[function(require,module,exports){
 module.exports = function(context) {
 
     d3.select(window).on('unload', onunload);
@@ -8538,7 +9105,7 @@ module.exports = function(context) {
     }
 };
 
-},{}],42:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -8581,7 +9148,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":39}],43:[function(require,module,exports){
+},{"../config.js":40}],45:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -8650,7 +9217,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":49,"xtend":32}],44:[function(require,module,exports){
+},{"../lib/querystring":51,"xtend":35}],46:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -8735,7 +9302,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":39}],45:[function(require,module,exports){
+},{"../config.js":40}],47:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -8768,7 +9335,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":33,"./core/loader":40,"./core/recovery":41,"./core/repo":42,"./core/router":43,"./core/user":44,"./ui":57,"./ui/map":65,"store":14}],46:[function(require,module,exports){
+},{"./core/data":41,"./core/loader":42,"./core/recovery":43,"./core/repo":44,"./core/router":45,"./core/user":46,"./ui":58,"./ui/map":66,"store":15}],48:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -8807,7 +9374,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":49,"leaflet-hash":13}],47:[function(require,module,exports){
+},{"../lib/querystring":51,"leaflet-hash":13}],49:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -8864,7 +9431,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],48:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports = function(elem, w, h) {
     var c = elem.appendChild(document.createElement('canvas'));
 
@@ -8885,7 +9452,7 @@ module.exports = function(elem, w, h) {
     };
 };
 
-},{}],49:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 module.exports.stringQs = function(str) {
     return str.split('&').reduce(function(obj, pair){
         var parts = pair.split('=');
@@ -8905,107 +9472,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],50:[function(require,module,exports){
-var topojson = require('topojson'),
-    toGeoJSON = require('togeojson');
-
-module.exports.readDrop = readDrop;
-module.exports.readFile = readFile;
-
-function readDrop(callback) {
-    return function() {
-        if (d3.event.dataTransfer) {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
-            var f = d3.event.dataTransfer.files[0];
-            readFile(f, callback);
-        }
-    };
-}
-
-function readFile(f, callback) {
-
-    var reader = new FileReader();
-
-    reader.onload = function(e) {
-
-        var fileType = detectType(f);
-
-        if (!fileType) {
-            return callback({
-                message: 'Could not detect file type'
-            });
-        } else if (fileType === 'kml') {
-            var kmldom = toDom(e.target.result);
-            if (!kmldom) {
-                return callback({
-                    message: 'Invalid KML file: not valid XML'
-                });
-            }
-            var warning;
-            if (kmldom.getElementsByTagName('NetworkLink').length) {
-                warning = {
-                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                      'Please export and upload KML without NetworkLinks for optimal performance'
-                };
-            }
-            callback(null, toGeoJSON.kml(kmldom), warning);
-        } else if (fileType === 'gpx') {
-            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
-        } else if (fileType === 'geojson') {
-            try {
-                gj = JSON.parse(e.target.result);
-                if (gj && gj.type === 'Topology' && gj.objects) {
-                    var collection = { type: 'FeatureCollection', features: [] };
-                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                    callback(null, collection);
-                } else {
-                    callback(null, gj);
-                }
-            } catch(err) {
-                alert('Invalid JSON file: ' + err);
-                return;
-            }
-        } else if (fileType === 'dsv') {
-            csv2geojson.csv2geojson(e.target.result, {
-                delimiter: 'auto'
-            }, function(err, result) {
-                if (err) {
-                    return callback({
-                        type: 'geocode',
-                        result: result,
-                        raw: e.target.result
-                    });
-                } else {
-                    return callback(null, result);
-                }
-            });
-        }
-    };
-
-    reader.readAsText(f);
-
-    function toDom(x) {
-        return (new DOMParser()).parseFromString(x, 'text/xml');
-    }
-
-    function detectType(f) {
-        var filename = f.name ? f.name.toLowerCase() : '';
-        function ext(_) {
-            return filename.indexOf(_) !== -1;
-        }
-        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-            return 'kml';
-        }
-        if (ext('.gpx')) return 'gpx';
-        if (ext('.geojson') || ext('.json')) return 'geojson';
-        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
-            return 'dsv';
-        }
-    }
-}
-
-},{"togeojson":15,"topojson":"PBmiWO"}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -9017,7 +9484,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -9073,7 +9540,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":8}],53:[function(require,module,exports){
+},{"geojsonhint":8}],54:[function(require,module,exports){
 var validate = require('../lib/validate'),
     saver = require('../ui/saver.js');
 
@@ -9132,7 +9599,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":52,"../ui/saver.js":68}],54:[function(require,module,exports){
+},{"../lib/validate":53,"../ui/saver.js":69}],55:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -9204,7 +9671,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":51,"d3-metatable":6}],55:[function(require,module,exports){
+},{"../lib/smartzoom.js":52,"d3-metatable":6}],56:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -9298,7 +9765,7 @@ function load(id, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":1}],56:[function(require,module,exports){
+},{"fs":1}],57:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -9405,7 +9872,7 @@ function fileUrl(parts) {
         '?ref=' + parts.branch;
 }
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -9487,7 +9954,7 @@ function ui(context) {
     return render;
 }
 
-},{"./ui/dnd":59,"./ui/file_bar":60,"./ui/layer_switch":64,"./ui/mode_buttons":67,"./ui/user":71}],58:[function(require,module,exports){
+},{"./ui/dnd":60,"./ui/file_bar":61,"./ui/layer_switch":65,"./ui/mode_buttons":68,"./ui/user":72}],59:[function(require,module,exports){
 var github = require('../source/github');
 
 module.exports = commit;
@@ -9522,7 +9989,7 @@ function commit(context, callback) {
     return wrap;
 }
 
-},{"../source/github":56}],59:[function(require,module,exports){
+},{"../source/github":57}],60:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
     flash = require('./flash.js');
@@ -9571,7 +10038,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":50,"./flash.js":61,"./geocode.js":62}],60:[function(require,module,exports){
+},{"../lib/readfile.js":25,"./flash.js":62,"./geocode.js":63}],61:[function(require,module,exports){
 var share = require('./share'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
@@ -9688,7 +10155,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":68,"./share":69,"./source.js":70}],61:[function(require,module,exports){
+},{"../ui/saver.js":69,"./share":70,"./source.js":71}],62:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -9710,7 +10177,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":66}],62:[function(require,module,exports){
+},{"./message":67}],63:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart');
 
 module.exports = function(context) {
@@ -9847,7 +10314,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":48}],63:[function(require,module,exports){
+},{"../lib/progress_chart":50}],64:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -9883,7 +10350,7 @@ module.exports = function(context) {
             message.append('p')
                 .attr('class', 'deemphasize')
                 .append('small')
-                .text('GeoJSON, TopoJSON, KML, CSV, GPX supported. You can also drag & drop files.');
+                .text('GeoJSON, TopoJSON, KML, CSV, GPX and OSM XML supported. You can also drag & drop files.');
 
             var fileInput = message
                 .append('input')
@@ -9897,7 +10364,7 @@ module.exports = function(context) {
         } else {
             wrap.append('p')
                 .attr('class', 'blank-banner center')
-                .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
+                .text('Sorry, geojson.io supports importing GeoJSON, TopoJSON, KML, CSV, GPX, and OSM XML files, but ' +
                       'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
         }
 
@@ -9929,7 +10396,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":50,"./flash.js":61,"./geocode.js":62}],64:[function(require,module,exports){
+},{"../lib/readfile.js":25,"./flash.js":62,"./geocode.js":63}],65:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -9982,7 +10449,7 @@ module.exports = function(context) {
 };
 
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -10076,7 +10543,7 @@ function bindPopup(l) {
         '</div></div>'));
 }
 
-},{"../lib/custom_hash.js":46,"../lib/popup":47,"../lib/querystring.js":49}],66:[function(require,module,exports){
+},{"../lib/custom_hash.js":48,"../lib/popup":49,"../lib/querystring.js":51}],67:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -10117,7 +10584,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json');
 
@@ -10163,7 +10630,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":53,"../panel/table":54}],68:[function(require,module,exports){
+},{"../panel/json":54,"../panel/table":55}],69:[function(require,module,exports){
 var commit = require('./commit');
 var flash = require('./flash');
 
@@ -10225,7 +10692,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":58,"./flash":61}],69:[function(require,module,exports){
+},{"./commit":59,"./flash":62}],70:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -10302,7 +10769,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":55}],70:[function(require,module,exports){
+},{"../source/gist":56}],71:[function(require,module,exports){
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
@@ -10424,7 +10891,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":63,"detect-json-indent":7,"github-file-browser":10}],71:[function(require,module,exports){
+},{"./import":64,"detect-json-indent":7,"github-file-browser":10}],72:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
@@ -10472,5 +10939,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[55,45])
+},{}]},{},[56,47])
 ;

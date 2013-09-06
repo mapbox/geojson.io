@@ -33,7 +33,7 @@ module.exports = function(context) {
             message.append('p')
                 .attr('class', 'deemphasize')
                 .append('small')
-                .text('GeoJSON, TopoJSON, KML, CSV, GPX supported. You can also drag & drop files.');
+                .text('GeoJSON, TopoJSON, KML, CSV, GPX and OSM XML supported. You can also drag & drop files.');
 
             var fileInput = message
                 .append('input')
@@ -47,7 +47,7 @@ module.exports = function(context) {
         } else {
             wrap.append('p')
                 .attr('class', 'blank-banner center')
-                .text('Sorry, geojson.io supports importing GeoJSON, GPX, KML, and CSV files, but ' +
+                .text('Sorry, geojson.io supports importing GeoJSON, TopoJSON, KML, CSV, GPX, and OSM XML files, but ' +
                       'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
         }
 
