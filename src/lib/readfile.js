@@ -1,5 +1,6 @@
 var topojson = require('topojson'),
-    toGeoJSON = require('togeojson');
+    toGeoJSON = require('togeojson'),
+    osm2geojson = require('osm-and-geojson').osm2geojson;
 
 module.exports.readDrop = readDrop;
 module.exports.readFile = readFile;
@@ -42,6 +43,15 @@ function readFile(f, callback) {
                 };
             }
             callback(null, toGeoJSON.kml(kmldom), warning);
+        } else if (fileType === 'xml') {
+            var xmldom = toDom(e.target.result);
+            if (!xmldom) {
+                return callback({
+                    message: 'Invalid XML file: not valid XML'
+                });
+            }
+            var warning;
+            callback(null, osm2geojson(xmldom), warning);
         } else if (fileType === 'gpx') {
             callback(null, toGeoJSON.gpx(toDom(e.target.result)));
         } else if (fileType === 'geojson') {
@@ -94,5 +104,6 @@ function readFile(f, callback) {
         if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
             return 'dsv';
         }
+        if (ext('.xml')) return 'xml';
     }
 }
