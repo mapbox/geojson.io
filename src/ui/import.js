@@ -1,7 +1,8 @@
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
-    readFile = require('../lib/readfile.js');
+    readFile = require('../lib/readfile.js'),
+    zoomextent = require('../lib/zoomextent');
 
 module.exports = function(context) {
     return function(selection) {
@@ -66,6 +67,7 @@ module.exports = function(context) {
                 } else {
                     flash(context.container, 'Imported ' + gj.features.length + ' features.')
                         .classed('success', 'true');
+                    zoomextent(context);
                 }
             }
         }

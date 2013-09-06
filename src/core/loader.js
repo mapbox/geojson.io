@@ -1,5 +1,6 @@
-var qs = require('../lib/querystring');
-var flash = require('../ui/flash');
+var qs = require('../lib/querystring'),
+    zoomextent = require('../lib/zoomextent'),
+    flash = require('../ui/flash');
 
 module.exports = function(context) {
 
@@ -16,12 +17,7 @@ module.exports = function(context) {
         }
 
         context.data.parse(d);
-        zoomExtent();
-    }
-
-    function zoomExtent() {
-        var bounds = context.mapLayer.getBounds();
-        if (bounds.isValid()) context.map.fitBounds(bounds);
+        zoomextent(context);
     }
 
     return function(query) {
