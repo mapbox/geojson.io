@@ -50,8 +50,7 @@ function readFile(f, callback) {
                     message: 'Invalid XML file: not valid XML'
                 });
             }
-            var warning;
-            callback(null, osm2geojson(xmldom), warning);
+            callback(null, osm2geojson(xmldom));
         } else if (fileType === 'gpx') {
             callback(null, toGeoJSON.gpx(toDom(e.target.result)));
         } else if (fileType === 'geojson') {
@@ -104,6 +103,6 @@ function readFile(f, callback) {
         if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
             return 'dsv';
         }
-        if (ext('.xml')) return 'xml';
+        if (ext('.xml') || ext('.osm')) return 'xml';
     }
 }
