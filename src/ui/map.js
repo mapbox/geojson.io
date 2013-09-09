@@ -29,6 +29,9 @@ module.exports = function(context) {
             .on('draw:created', created)
             .on('popupopen', popup(context));
 
+        context.map.attributionControl.addAttribution('<a href="https://github.com/mapbox/geojson.io/blob/gh-pages/CHANGELOG.md">Changelog</a>');
+        context.map.attributionControl.addAttribution('<a href="http://geojson.io/about.html">About</a>');
+
         function update() {
             geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
             context.data.set({map: layerToGeoJSON(context.mapLayer)}, 'map');

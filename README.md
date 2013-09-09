@@ -2,7 +2,8 @@
 
 ![](http://i.cloudup.com/kz3BAF7Hnx.png)
 
-a fast, simple editor for map data.
+A fast, simple editor for map data. Read more on [MapBox](http://www.mapbox.com/blog/geojsonio-announce/),
+[macwright.org](http://macwright.org/2013/07/26/geojsonio.html).
 
 ## chrome extension
 
@@ -26,12 +27,12 @@ back to `http://localhost:8080/` for GitHub OAuth.
 
 This is made up of small reusable chunks:
 
-* <a href='http://github.com/tmcw/d3-metatable'>github.com/tmcw/d3-metatable</a>
-* <a href='http://github.com/tmcw/geojsonhint'>github.com/tmcw/geojsonhint</a>
-* <a href='http://github.com/tmcw/d3-bucket-ui'>github.com/tmcw/d3-bucket-ui</a>
-* <a href='http://github.com/tmcw/geocode-many'>github.com/tmcw/geocode-many</a>
-* <a href='http://github.com/tmcw/csv2geojson'>github.com/tmcw/csv2geojson</a>
-* <a href='http://github.com/tmcw/togeojson'>github.com/tmcw/togeojson</a>
+* <a href='http://github.com/mapbox/d3-metatable'>github.com/mapbox/d3-metatable</a>
+* <a href='http://github.com/mapbox/geojsonhint'>github.com/mapbox/geojsonhint</a>
+* <a href='http://github.com/mapbox/d3-bucket-ui'>github.com/mapbox/d3-bucket-ui</a>
+* <a href='http://github.com/mapbox/geocode-many'>github.com/mapbox/geocode-many</a>
+* <a href='http://github.com/mapbox/csv2geojson'>github.com/mapbox/csv2geojson</a>
+* <a href='http://github.com/mapbox/togeojson'>github.com/mapbox/togeojson</a>
 
 ## see also
 

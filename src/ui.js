@@ -26,12 +26,6 @@ function ui(context) {
             .append('div')
             .attr('class', 'top');
 
-        container
-            .append('a')
-            .attr('href', './about.html')
-            .attr('class', 'info bottom-right icon-info')
-            .attr('target', '_blank');
-
         map
             .call(layer_switch(context));
 
