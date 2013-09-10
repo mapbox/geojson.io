@@ -9,7 +9,7 @@ var ui = require('./ui'),
     store = require('store');
 
 var gjIO = geojsonIO(),
-    gjUI = ui(gjIO);
+    gjUI = ui(gjIO).write;
 
 
 d3.select('.geojsonio').call(gjUI);

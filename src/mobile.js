@@ -1,72 +1,28 @@
-var map = require('./ui/map')();
-var gist = require('./source/gist'),
-    source = require('./source.js'),
-    github = require('./source/github');
+var ui = require('./ui'),
+    map = require('./ui/map'),
+    data = require('./core/data'),
+    loader = require('./core/loader'),
+    router = require('./core/router'),
+    repo = require('./core/repo'),
+    user = require('./core/user'),
+    store = require('store');
 
-var drawnItems = L.featureGroup().addTo(map);
+var gjIO = geojsonIO(),
+    gjUI = ui(gjIO).read;
 
-if (!s) { window.location.hash = ''; }
-else if (s.type == 'gist') gist.loadGist(s.id, onGistLoad);
-else if (s.type == 'github') github.loadGitHub(s.id, onGitHubLoad);
+d3.select('.geojsonio').call(gjUI);
 
-function mapFile(gist) {
-    var f;
-    for (f in gist.files) if (f.indexOf('.geojson') !== -1) return JSON.parse(gist.files[f].content);
-    for (f in gist.files) if (f.indexOf('.json') !== -1) return JSON.parse(gist.files[f].content);
-}
+gjIO.router.on();
 
-function loadToMap(gj) {
-    drawnItems.clearLayers();
-    L.geoJson(gj).eachLayer(function(l) {
-        showProperties(l);
-        l.addTo(drawnItems);
-    });
-}
-
-function onGistLoad(err, json) {
-    if (err) return alert('Gist API limit exceeded, come back in a bit.');
-    var first = !drawnItems.getBounds().isValid();
-
-    try {
-        var file = mapFile(json);
-        loadToMap(file);
-        if (first && drawnItems.getBounds().isValid()) {
-            map.fitBounds(drawnItems.getBounds());
-        }
-    } catch(e) {
-    }
-}
-
-function onGitHubLoad(err, file) {
-    if (err) return alert('GitHub API limit exceeded, come back in a bit.');
-
-    try {
-        var json = JSON.parse(Base64.fromBase64(file.content));
-        loadToMap(json);
-        if (drawnItems.getBounds().isValid()) {
-            map.fitBounds(drawnItems.getBounds());
-        }
-    } catch(e) {
-        alert('Loading a file from GitHub failed');
-    }
-}
-
-function isEmpty(o) {
-    for (var i in o) { return false; }
-    return true;
-}
-
-function showProperties(l) {
-    var properties = l.toGeoJSON().properties, table = '';
-    if (isEmpty(properties)) properties = { '': '' };
-
-    for (var key in properties) {
-        table += '<tr><th>' + key + '</th>' +
-            '<td>' + properties[key] + '</td></tr>';
-    }
-
-    l.bindPopup(L.popup({
-        maxWidth: 500,
-        maxHeight: 400
-    }, l).setContent('<table class="marker-properties display">' + table + '</table>'));
+function geojsonIO() {
+    var context = {};
+    context.dispatch = d3.dispatch('change', 'route');
+    context.storage = store;
+    context.map = map(context, true);
+    context.data = data(context);
+    context.dispatch.on('route', loader(context));
+    context.repo = repo(context);
+    context.router = router(context);
+    context.user = user(context);
+    return context;
 }

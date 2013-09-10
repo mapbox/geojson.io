@@ -3,12 +3,15 @@ SMASH = node_modules/.bin/smash
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
 
-all: node_modules dist dist/lib.js dist/site.js dist/site.mobile.js
+all: dist/site.js dist/site.mobile.js
+
+node_modules:
+	npm install
 
 dist:
 	mkdir -p dist
 
-dist/d3.min.js: node_modules/d3/*
+dist/d3.min.js: node_modules node_modules/d3/*
 	$(SMASH) node_modules/d3/src/start.js \
 		node_modules/d3/src/arrays/entries.js \
 		node_modules/d3/src/arrays/set.js \
@@ -31,10 +34,7 @@ dist/d3.min.js: node_modules/d3/*
 		node_modules/d3/src/end.js > dist/d3.js
 	$(UGLIFY) dist/d3.js > dist/d3.min.js
 
-node_modules/d3:
-	npm install
-
-dist/lib.js: $(LIBS) dist/d3.min.js
+dist/lib.js: dist dist/d3.min.js $(LIBS)
 	cat dist/d3.min.js \
 		lib/blob.js \
 		lib/base64.js \
@@ -51,10 +51,10 @@ dist/lib.js: $(LIBS) dist/d3.min.js
 		lib/codemirror/mode/javascript/javascript.js \
 		lib/FileSaver.min.js > dist/lib.js
 
-dist/site.js: src/index.js $(shell $(BROWSERIFY) --list src/index.js)
+dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
 	$(BROWSERIFY) -t brfs -r topojson src/source/gist.js src/index.js > dist/site.js
 
-dist/site.mobile.js: src/mobile.js
+dist/site.mobile.js: dist/lib.js src/mobile.js $(shell $(BROWSERIFY) --list src/mobile.js)
 	$(BROWSERIFY) -t brfs -r topojson src/mobile.js > dist/site.mobile.js
 
 clean:
