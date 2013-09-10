@@ -32,7 +32,7 @@ module.exports = function(context) {
 
     function upgrade(id) {
         var split;
-        if (isNaN(parseInt(id))) {
+        if (isNaN(parseInt(id, 10))) {
             split = id.split(':');
             location.hash = '#id=' + (split[1].indexOf('/') === 0 ?
                 [split[0], split[1].substring(1)].join(':') : id);
@@ -59,8 +59,6 @@ module.exports = function(context) {
         return xtend(query, {
             id: context.data.get('route')
         });
-
-        return false;
     }
 
     return router;

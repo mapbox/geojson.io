@@ -21,12 +21,22 @@ module.exports = function(context) {
     }
 
     return function(query) {
-        if (!query.id) return;
+        if (!query.id && !query.data) return;
 
         var oldRoute = d3.event ? qs.stringQs(d3.event.oldURL.split('#')[1]).id :
             context.data.get('route');
 
-        if (query.id !== oldRoute) {
+        if (query.data) {
+            context.container.select('.map').classed('loading', true);
+            try {
+                context.data.set({ map: JSON.parse(query.data.replace('data:application/json,', '')) });
+                context.container.select('.map').classed('loading', false);
+                location.hash = '';
+                zoomextent(context);
+            } catch(e) {
+                return flash(context.container, 'Could not parse JSON');
+            }
+        } else if (query.id !== oldRoute) {
             context.container.select('.map').classed('loading', true);
             context.data.fetch(query, success);
         }
