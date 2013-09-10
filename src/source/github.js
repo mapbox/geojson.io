@@ -36,7 +36,7 @@ function save(context, callback) {
                 sha: source.sha,
                 branch: meta.branch,
                 content: Base64.toBase64(JSON.stringify(map))
-            }
+            };
         } else {
             endpoint = 'https://api.github.com/gists';
             files[name] = { content: JSON.stringify(map) };

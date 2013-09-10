@@ -43,18 +43,18 @@ module.exports = function(context) {
 
     if (type === 'github') {
         context.repo.details(onrepo);
-
-        function onrepo(err, repo) {
-            if (!err && repo.permissions.push) {
-                var wrap = commit(context, function() {
-                    wrap.remove();
-                    context.data.save(success);
-                });
-            } else {
-                context.data.save(success);
-            }
-        }
     } else {
         context.data.save(success);
+    }
+
+    function onrepo(err, repo) {
+        if (!err && repo.permissions.push) {
+            var wrap = commit(context, function() {
+                wrap.remove();
+                context.data.save(success);
+            });
+        } else {
+            context.data.save(success);
+        }
     }
 };

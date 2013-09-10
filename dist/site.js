@@ -9941,7 +9941,7 @@ function save(context, callback) {
                 sha: source.sha,
                 branch: meta.branch,
                 content: Base64.toBase64(JSON.stringify(map))
-            }
+            };
         } else {
             endpoint = 'https://api.github.com/gists';
             files[name] = { content: JSON.stringify(map) };
@@ -10812,19 +10812,19 @@ module.exports = function(context) {
 
     if (type === 'github') {
         context.repo.details(onrepo);
-
-        function onrepo(err, repo) {
-            if (!err && repo.permissions.push) {
-                var wrap = commit(context, function() {
-                    wrap.remove();
-                    context.data.save(success);
-                });
-            } else {
-                context.data.save(success);
-            }
-        }
     } else {
         context.data.save(success);
+    }
+
+    function onrepo(err, repo) {
+        if (!err && repo.permissions.push) {
+            var wrap = commit(context, function() {
+                wrap.remove();
+                context.data.save(success);
+            });
+        } else {
+            context.data.save(success);
+        }
     }
 };
 
@@ -10953,5 +10953,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[47,58])
+},{}]},{},[58,47])
 ;
