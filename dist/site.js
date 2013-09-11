@@ -6781,7 +6781,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":18,"./lib/topojson/clockwise":20,"./lib/topojson/filter":22,"./lib/topojson/prune":27,"./lib/topojson/simplify":28,"./lib/topojson/topology":31,"fs":1}],18:[function(require,module,exports){
+},{"./lib/topojson/bind":18,"./lib/topojson/clockwise":20,"./lib/topojson/filter":22,"./lib/topojson/prune":26,"./lib/topojson/simplify":27,"./lib/topojson/topology":32,"fs":1}],18:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6811,7 +6811,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":32}],19:[function(require,module,exports){
+},{"../../":"g070js","./type":33}],19:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6918,13 +6918,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":21,"./type":32}],21:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":21,"./type":33}],21:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":19,"./spherical":29}],22:[function(require,module,exports){
+},{"./cartesian":19,"./spherical":28}],22:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -6994,9 +6994,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":20,"./coordinate-systems":21,"./prune":27,"./type":32}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
-},{}],24:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":20,"./coordinate-systems":21,"./prune":26,"./type":33}],23:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -7006,7 +7004,7 @@ module.exports = function(size) {
   };
 };
 
-},{}],25:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -7061,7 +7059,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":24}],26:[function(require,module,exports){
+},{"./hash":23}],25:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -7127,7 +7125,7 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -7186,7 +7184,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":32}],28:[function(require,module,exports){
+},{"../../":"g070js","./type":33}],27:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -7318,7 +7316,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":21,"./min-heap":26}],29:[function(require,module,exports){
+},{"./coordinate-systems":21,"./min-heap":25}],28:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -7400,7 +7398,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],30:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -7450,7 +7448,219 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":32}],31:[function(require,module,exports){
+},{"./type":33}],30:[function(require,module,exports){
+var clone = require('clone');
+    xtend = require('xtend');
+    source = {
+        gist: require('../source/gist'),
+        github: require('../source/github')
+    };
+
+module.exports = function(context) {
+
+    var _data = {
+        map: {
+            type: 'FeatureCollection',
+            features: []
+        },
+        dirty: false,
+        source: null,
+        meta: null,
+        type: 'local'
+    };
+
+    function mapFile(gist) {
+        var f;
+        var content;
+
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.geojson') !== -1 && content) {
+                return {
+                    name: f,
+                    content: JSON.parse(content)
+                };
+            }
+        }
+
+        for (f in gist.files) {
+            content = gist.files[f].content;
+            if (f.indexOf('.json') !== -1 && content) {
+                return {
+                    name: f,
+                    file: JSON.parse(content)
+                };
+            }
+        }
+    }
+
+    var data = {};
+
+    data.hasFeatures = function() {
+        return !!(_data.map && _data.map.features && _data.map.features.length);
+    };
+
+    data.set = function(obj, src) {
+        for (var k in obj) {
+            _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
+        }
+        if (obj.dirty !== false) data.dirty = true;
+        context.dispatch.change({
+            obj: obj,
+            source: src
+        });
+        return data;
+    };
+
+    data.mergeFeatures = function(features, src) {
+        _data.map.features = (_data.map.features || []).concat(features);
+        return data.set({ map: _data.map }, src);
+    };
+
+    data.get = function(k) {
+        return _data[k];
+    };
+
+    data.all = function() {
+        return clone(_data, false);
+    };
+
+    data.fetch = function(q, cb) {
+        var type = q.id.split(':')[0];
+
+        switch(type) {
+            case 'gist':
+                var id = q.id.split(':')[1].split('/')[1];
+
+                source.gist.load(id, context, function(err, d) {
+                    return cb(err, d);
+                });
+
+                break;
+            case 'github':
+                var url = q.id.split('/');
+                var parts = {
+                    user: url[0].split(':')[1],
+                    repo: url[1],
+                    branch: url[3],
+                    path: (url.slice(4) || []).join('/')
+                };
+
+                source.github.load(parts, context, function(err, meta) {
+                    return source.github.loadRaw(parts, context, function(err, raw) {
+                        return cb(err, xtend(meta, { content: JSON.parse(raw) }));
+                    });
+                });
+
+                break;
+        }
+    };
+
+    data.parse = function(d, browser) {
+        var login,
+            repo,
+            branch,
+            path,
+            chunked,
+            file;
+
+        if (d.files) d.type = 'gist';
+
+        switch(d.type) {
+            case 'blob':
+                login = browser.path[1].login;
+                repo = browser.path[2].name;
+                branch = browser.path[3].name;
+                path = [browser.path[4].path, d.path].join('/');
+
+                data.set({
+                    type: 'github',
+                    source: d,
+                    meta: {
+                        login: login,
+                        repo: repo,
+                        branch: branch,
+                        name: d.path
+                    },
+                    map: d.content,
+                    path: path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        path
+                    ].join('/'),
+                    url: [
+                        'https://github.com',
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        [path, d.path].join('/')
+                    ].join('/')
+                });
+                break;
+            case 'file':
+                chunked = d.html_url.split('/');
+                login = chunked[3];
+                repo = chunked[4];
+                branch = chunked[6];
+
+                data.set({
+                    type: 'github',
+                    source: d,
+                    meta: {
+                        login: login,
+                        repo: repo,
+                        branch: branch,
+                        name: d.name
+                    },
+                    map: d.content,
+                    path: d.path,
+                    route: 'github:' + [
+                        login,
+                        repo,
+                        'blob',
+                        branch,
+                        d.path
+                    ].join('/'),
+                    url: d.html_url
+                });
+                break;
+            case 'gist':
+                login = (d.user && d.user.login) || 'anonymous';
+                path = [login, d.id].join('/');
+                file = mapFile(d);
+
+                data.set({
+                    type: 'gist',
+                    source: d,
+                    meta: {
+                        login: login,
+                        name: file && file.name
+                    },
+                    map: file && file.content,
+                    path: path,
+                    route: 'gist:' + path,
+                    url: d.html_url
+                });
+                break;
+        }
+    };
+
+    data.save = function(cb) {
+        var type = context.data.get('type');
+        if (source[type] && source[type].save) source[type].save(context, cb);
+        else source.gist.save(context, cb);
+    };
+
+    return data;
+};
+
+},{"../source/gist":57,"../source/github":58,"clone":5,"xtend":35}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],32:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -7792,7 +8002,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":21,"./hashtable":25,"./stitch-poles":30,"./type":32}],32:[function(require,module,exports){
+},{"./coordinate-systems":21,"./hashtable":24,"./stitch-poles":29,"./type":33}],33:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -7886,7 +8096,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -7895,7 +8105,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -7922,11 +8132,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":33,"object-keys":35}],35:[function(require,module,exports){
+},{"./has-keys":34,"object-keys":36}],36:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":38}],36:[function(require,module,exports){
+},{"./shim":39}],37:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -7950,7 +8160,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 
 /**!
  * is
@@ -8654,7 +8864,7 @@ is.string = function (value) {
 };
 
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function () {
 	"use strict";
 
@@ -8700,7 +8910,7 @@ is.string = function (value) {
 }());
 
 
-},{"foreach":36,"is":37}],39:[function(require,module,exports){
+},{"foreach":37,"is":38}],40:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -8714,217 +8924,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],40:[function(require,module,exports){
-var clone = require('clone');
-    xtend = require('xtend');
-    source = {
-        gist: require('../source/gist'),
-        github: require('../source/github')
-    };
-
-module.exports = function(context) {
-
-    var _data = {
-        map: {
-            type: 'FeatureCollection',
-            features: []
-        },
-        dirty: false,
-        source: null,
-        meta: null,
-        type: 'local'
-    };
-
-    function mapFile(gist) {
-        var f;
-        var content;
-
-        for (f in gist.files) {
-            content = gist.files[f].content;
-            if (f.indexOf('.geojson') !== -1 && content) {
-                return {
-                    name: f,
-                    content: JSON.parse(content)
-                };
-            }
-        }
-
-        for (f in gist.files) {
-            content = gist.files[f].content;
-            if (f.indexOf('.json') !== -1 && content) {
-                return {
-                    name: f,
-                    file: JSON.parse(content)
-                };
-            }
-        }
-    }
-
-    var data = {};
-
-    data.hasFeatures = function() {
-        return !!(_data.map && _data.map.features && _data.map.features.length);
-    };
-
-    data.set = function(obj, src) {
-        for (var k in obj) {
-            _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
-        }
-        if (obj.dirty !== false) data.dirty = true;
-        context.dispatch.change({
-            obj: obj,
-            source: src
-        });
-        return data;
-    };
-
-    data.mergeFeatures = function(features, src) {
-        _data.map.features = (_data.map.features || []).concat(features);
-        return data.set({ map: _data.map }, src);
-    };
-
-    data.get = function(k) {
-        return _data[k];
-    };
-
-    data.all = function() {
-        return clone(_data, false);
-    };
-
-    data.fetch = function(q, cb) {
-        var type = q.id.split(':')[0];
-
-        switch(type) {
-            case 'gist':
-                var id = q.id.split(':')[1].split('/')[1];
-
-                source.gist.load(id, context, function(err, d) {
-                    return cb(err, d);
-                });
-
-                break;
-            case 'github':
-                var url = q.id.split('/');
-                var parts = {
-                    user: url[0].split(':')[1],
-                    repo: url[1],
-                    branch: url[3],
-                    path: (url.slice(4) || []).join('/')
-                };
-
-                source.github.load(parts, context, function(err, meta) {
-                    return source.github.loadRaw(parts, context, function(err, raw) {
-                        return cb(err, xtend(meta, { content: JSON.parse(raw) }));
-                    });
-                });
-
-                break;
-        }
-    };
-
-    data.parse = function(d, browser) {
-        var login,
-            repo,
-            branch,
-            path,
-            chunked,
-            file;
-
-        if (d.files) d.type = 'gist';
-
-        switch(d.type) {
-            case 'blob':
-                login = browser.path[1].login;
-                repo = browser.path[2].name;
-                branch = browser.path[3].name;
-                path = [browser.path[4].path, d.path].join('/');
-
-                data.set({
-                    type: 'github',
-                    source: d,
-                    meta: {
-                        login: login,
-                        repo: repo,
-                        branch: branch,
-                        name: d.path
-                    },
-                    map: d.content,
-                    path: path,
-                    route: 'github:' + [
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        path
-                    ].join('/'),
-                    url: [
-                        'https://github.com',
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        [path, d.path].join('/')
-                    ].join('/')
-                });
-                break;
-            case 'file':
-                chunked = d.html_url.split('/');
-                login = chunked[3];
-                repo = chunked[4];
-                branch = chunked[6];
-
-                data.set({
-                    type: 'github',
-                    source: d,
-                    meta: {
-                        login: login,
-                        repo: repo,
-                        branch: branch,
-                        name: d.name
-                    },
-                    map: d.content,
-                    path: d.path,
-                    route: 'github:' + [
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        d.path
-                    ].join('/'),
-                    url: d.html_url
-                });
-                break;
-            case 'gist':
-                login = (d.user && d.user.login) || 'anonymous';
-                path = [login, d.id].join('/');
-                file = mapFile(d);
-
-                data.set({
-                    type: 'gist',
-                    source: d,
-                    meta: {
-                        login: login,
-                        name: file && file.name
-                    },
-                    map: file && file.content,
-                    path: path,
-                    route: 'gist:' + path,
-                    url: d.html_url
-                });
-                break;
-        }
-    };
-
-    data.save = function(cb) {
-        var type = context.data.get('type');
-        if (source[type] && source[type].save) source[type].save(context, cb);
-        else source.gist.save(context, cb);
-    };
-
-    return data;
-};
-
-},{"../source/gist":57,"../source/github":58,"clone":5,"xtend":34}],41:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -9049,7 +9049,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":39}],44:[function(require,module,exports){
+},{"../config.js":40}],44:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -9116,7 +9116,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":50,"xtend":34}],45:[function(require,module,exports){
+},{"../lib/querystring":50,"xtend":35}],45:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9201,7 +9201,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":39}],46:[function(require,module,exports){
+},{"../config.js":40}],46:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -9234,7 +9234,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":40,"./core/loader":41,"./core/recovery":42,"./core/repo":43,"./core/router":44,"./core/user":45,"./ui":59,"./ui/map":67,"store":15}],47:[function(require,module,exports){
+},{"./core/data":30,"./core/loader":41,"./core/recovery":42,"./core/repo":43,"./core/router":44,"./core/user":45,"./ui":59,"./ui/map":67,"store":15}],47:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
