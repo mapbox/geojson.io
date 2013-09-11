@@ -11,7 +11,7 @@
     "topojson": "1.2.3",
     "brfs": "0.0.7",
     "togeojson": "0.3.0",
-    "csv2geojson": "3.4.1",
+    "csv2geojson": "3.5.1",
     "detect-json-indent": "0.0.0",
     "is-mobile": "0.1.0",
     "github-file-browser": "0.3.0",
