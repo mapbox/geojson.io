@@ -8,6 +8,8 @@
       <!--[if lte IE 8]>
         <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' />
       <![endif]-->
+      <link href='css/base.css' rel='stylesheet' />
+      <link href='css/tooltip.css' rel='stylesheet' />
       <meta charset='utf-8'>
       <meta name="viewport" content="initial-scale=1,maximum-scale=1">
       <meta http-equiv='X-UA-Compatible' content='IE=Edge'>
@@ -36,7 +38,7 @@
             left:0;
             right:0;
         }
-        #map {
+        .geojsonio .map {
             position:absolute;
             top:0;
             right:0;
@@ -49,7 +51,7 @@
       </style>
   </head>
   <body>
-    <div id='map'></div>
+    <div class='geojsonio'></div>
     <div class='pad1 fillE bottom'>
         <p>geojson.io mobile <span class='deemphasize'>(read-only)</span></p>
     </div>

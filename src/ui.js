@@ -7,7 +7,7 @@ var buttons = require('./ui/mode_buttons'),
 module.exports = ui;
 
 function ui(context) {
-    function render(selection) {
+    function init(selection) {
 
         var container = selection
             .append('div')
@@ -16,7 +16,17 @@ function ui(context) {
         var map = container
             .append('div')
             .attr('class', 'map')
-            .call(context.map);
+            .call(context.map)
+            .call(layer_switch(context));
+
+        context.container = container;
+
+        return container;
+    }
+
+    function render(selection) {
+
+        var container = init(selection);
 
         var right = container
             .append('div')
@@ -25,9 +35,6 @@ function ui(context) {
         var top = right
             .append('div')
             .attr('class', 'top');
-
-        map
-            .call(layer_switch(context));
 
         top
             .append('button')
@@ -65,10 +72,12 @@ function ui(context) {
             .attr('class', 'file-bar')
             .call(file_bar(context));
 
-        context.container = container;
-
         dnd(context);
     }
 
-    return render;
+
+    return {
+        read: init,
+        write: render
+    };
 }

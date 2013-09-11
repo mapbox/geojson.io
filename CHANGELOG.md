@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2013-09-11
+
+* Fixed mobile/read-only mode
+
 ## 2013-09-09
 
 ![](http://i.imgur.com/QgPQkVT.gif)

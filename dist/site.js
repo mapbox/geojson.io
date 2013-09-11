@@ -9335,7 +9335,7 @@ var ui = require('./ui'),
     store = require('store');
 
 var gjIO = geojsonIO(),
-    gjUI = ui(gjIO);
+    gjUI = ui(gjIO).write;
 
 
 d3.select('.geojsonio').call(gjUI);
@@ -10019,7 +10019,7 @@ var buttons = require('./ui/mode_buttons'),
 module.exports = ui;
 
 function ui(context) {
-    function render(selection) {
+    function init(selection) {
 
         var container = selection
             .append('div')
@@ -10028,7 +10028,17 @@ function ui(context) {
         var map = container
             .append('div')
             .attr('class', 'map')
-            .call(context.map);
+            .call(context.map)
+            .call(layer_switch(context));
+
+        context.container = container;
+
+        return container;
+    }
+
+    function render(selection) {
+
+        var container = init(selection);
 
         var right = container
             .append('div')
@@ -10037,9 +10047,6 @@ function ui(context) {
         var top = right
             .append('div')
             .attr('class', 'top');
-
-        map
-            .call(layer_switch(context));
 
         top
             .append('button')
@@ -10077,12 +10084,14 @@ function ui(context) {
             .attr('class', 'file-bar')
             .call(file_bar(context));
 
-        context.container = container;
-
         dnd(context);
     }
 
-    return render;
+
+    return {
+        read: init,
+        write: render
+    };
 }
 
 },{"./ui/dnd":62,"./ui/file_bar":63,"./ui/layer_switch":67,"./ui/mode_buttons":70,"./ui/user":73}],61:[function(require,module,exports){
@@ -10586,11 +10595,15 @@ module.exports = function(context) {
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
+    writable = false;
 
-module.exports = function(context) {
 
+module.exports = function(context, readonly) {
+
+    writable = !readonly;
 
     function map(selection) {
+        
         context.map = L.mapbox.map(selection.node())
             .setView([20, 0], 2)
             .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt'));
@@ -10599,18 +10612,22 @@ module.exports = function(context) {
 
         context.mapLayer = L.featureGroup().addTo(context.map);
 
-        context.drawControl = new L.Control.Draw({
-            edit: { featureGroup: context.mapLayer },
-            draw: {
-                circle: false,
-                polyline: { metric: navigator.language !== 'en-US' },
-                polygon: { metric: navigator.language !== 'en-US' }
-            }
-        }).addTo(context.map);
+        if (writable) {
+          context.drawControl = new L.Control.Draw({
+              edit: { featureGroup: context.mapLayer },
+              draw: {
+                  circle: false,
+                  polyline: { metric: navigator.language !== 'en-US' },
+                  polygon: { metric: navigator.language !== 'en-US' }
+              }
+          }).addTo(context.map);
+
+          context.map
+            .on('draw:edited', update)
+            .on('draw:deleted', update);
+        }
 
         context.map
-            .on('draw:edited', update)
-            .on('draw:deleted', update)
             .on('draw:created', created)
             .on('popupopen', popup(context));
 
@@ -10663,20 +10680,23 @@ function bindPopup(l) {
     if (!Object.keys(properties).length) properties = { '': '' };
 
     for (var key in properties) {
-        table += '<tr><th><input type="text" value="' + key + '" /></th>' +
-            '<td><input type="text" value="' + properties[key] + '" /></td></tr>';
+        table += '<tr><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
+            '<td><input type="text" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
     }
+
+    var content = '<div class="clearfix">' +
+        '<div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
+        (writable ? '<br /><div class="clearfix col12">' +
+            '<div class="buttons-joined fl"><button class="add major">add row</button> ' +
+            '<button class="save major">save</button> ' +
+            '<button class="major cancel">cancel</button></div>' +
+            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div></div>' : '') +
+        '</div>';
 
     l.bindPopup(L.popup({
         maxWidth: 500,
         maxHeight: 400
-    }, l).setContent('<div class="clearfix"><div class="marker-properties-limit"><table class="marker-properties">' + table + '</table></div>' +
-        '<br /><div class="clearfix col12">' +
-            '<div class="buttons-joined fl"><button class="add major">add row</button> ' +
-            '<button class="save major">save</button> ' +
-            '<button class="major cancel">cancel</button></div>' +
-            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div>' +
-        '</div></div>'));
+    }, l).setContent(content));
 }
 
 },{"../lib/custom_hash.js":48,"../lib/popup":49,"../lib/querystring.js":51}],69:[function(require,module,exports){
