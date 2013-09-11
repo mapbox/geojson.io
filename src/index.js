@@ -1,3 +1,10 @@
+var mobile = require('is-mobile');
+
+if (mobile() || (window.navigator && /iPad/.test(window.navigator.userAgent))) {
+    var hash = window.location.hash;
+    window.location.href = '/mobile.html' + hash;
+}
+
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),

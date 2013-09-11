@@ -6,7 +6,7 @@ module.exports = function(context) {
     d3.select(window).on('unload', onunload);
     context.dispatch.on('change', onchange);
 
-    var query = qs.stringQs(location.hash.split('#')[1]);
+    var query = qs.stringQs(location.hash.split('#')[1] || '');
 
     if (location.hash !== '#new' && !query.id && !query.data) {
         var rec = context.storage.get('recover');
