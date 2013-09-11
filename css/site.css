@@ -7,6 +7,7 @@
     right:40%;
 }
 
+
 .right {
     overflow-x:hidden;
     position:absolute;
@@ -222,6 +223,15 @@ button.major {
 .leaflet-popup-content-wrapper table input {
     width:120px;
     background:transparent;
+}
+
+.leaflet-control-attribution.leaflet-control a {
+    font-size: 12px;
+    color: #555;
+}
+
+.leaflet-control-attribution.leaflet-control a:hover {
+    color:#000;
 }
 
 /*

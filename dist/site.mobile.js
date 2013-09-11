@@ -10442,7 +10442,7 @@ module.exports = function(context, readonly) {
     writable = !readonly;
 
     function map(selection) {
-        
+
         context.map = L.mapbox.map(selection.node())
             .setView([20, 0], 2)
             .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt'));
@@ -10470,8 +10470,9 @@ module.exports = function(context, readonly) {
             .on('draw:created', created)
             .on('popupopen', popup(context));
 
-        context.map.attributionControl.addAttribution('<a href="https://github.com/mapbox/geojson.io/blob/gh-pages/CHANGELOG.md">Changelog</a>');
-        context.map.attributionControl.addAttribution('<a href="http://geojson.io/about.html">About</a>');
+        context.map.attributionControl.addAttribution('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Feedback</a>');
+        context.map.attributionControl.addAttribution('<a target="_blank" href="https://github.com/mapbox/geojson.io/blob/gh-pages/CHANGELOG.md">Changelog</a>');
+        context.map.attributionControl.addAttribution('<a target="_blank" href="http://geojson.io/about.html">About</a>');
 
         function update() {
             geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
