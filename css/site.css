@@ -442,3 +442,26 @@ body.dragover:after {
     font-weight: bold;
     margin-left: 10px;
 }
+
+/*
+ * Extend
+ */
+.right .overlay {
+    position:absolute;
+    height:200px;
+    right:0;
+    bottom:0;
+    left:0;
+    background:#fff;
+    background:rgba(255, 255, 255, 0.9);
+    overflow:auto;
+    z-index:99;
+}
+
+.right .half-cm {
+    position:absolute;
+    top:0;
+    right:0;
+    bottom:200px;
+    left:0;
+}

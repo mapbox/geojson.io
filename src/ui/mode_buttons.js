@@ -1,4 +1,5 @@
 var table = require('../panel/table'),
+    extend = require('../panel/extend'),
     json = require('../panel/json');
 
 module.exports = function(context, pane) {
@@ -16,6 +17,11 @@ module.exports = function(context, pane) {
             title: ' JSON',
             alt: 'JSON Source',
             behavior: json
+        }, {
+            icon: 'beaker',
+            title: ' Extend',
+            alt: 'Extensions',
+            behavior: extend
         }];
 
         var buttons = selection
