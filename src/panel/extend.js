@@ -41,8 +41,10 @@ module.exports = function(context) {
         function saveAction() {
             var val = editor.getValue();
             playground.bundle(val).on('bundleEnd', function(source) {
-                if (source) eval(source);
-                pane.call(plugin(context));
+                if (source) {
+                    eval(source);
+                    pane.call(plugin(context));
+                }
             });
             return false;
         }
