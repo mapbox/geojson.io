@@ -99,7 +99,7 @@ function readFile(f, callback) {
             return 'kml';
         }
         if (ext('.gpx')) return 'gpx';
-        if (ext('.geojson') || ext('.json')) return 'geojson';
+        if (ext('.geojson') || ext('.json') || ext('.topojson')) return 'geojson';
         if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
             return 'dsv';
         }
