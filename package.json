@@ -23,7 +23,8 @@
     "leaflet-hash": "https://github.com/mlevans/leaflet-hash/archive/master.tar.gz",
     "xtend": "~2.0.6",
     "clone": "~0.1.10",
-    "osm-and-geojson": "0.1.0"
+    "osm-and-geojson": "0.1.0",
+    "shpjs": "~1.5.2"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",
