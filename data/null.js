@@ -1,4 +1,4 @@
-var _plugin = function (context) {
+function plugin(context) {
     return function(selection) {
         selection.html('');
 
@@ -24,4 +24,4 @@ var _plugin = function (context) {
             ]);
         }
     };
-};
+}

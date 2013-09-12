@@ -1,8 +1,11 @@
 var fs = require('fs');
+    browserPlayground = require('browser-module-playground');
 
 module.exports = function(context) {
 
     function render(selection) {
+
+        var playground = new browserPlayground();
 
         CodeMirror.keyMap.tabSpace = {
             Tab: function(cm) {
@@ -22,7 +25,7 @@ module.exports = function(context) {
 
         var pane = selection
             .append('div')
-            .attr('class', 'overlay');
+            .attr('class', 'overlay pad1');
 
         var editor = CodeMirror.fromTextArea(textarea.node(), {
             mode: 'text/javascript',
@@ -35,14 +38,12 @@ module.exports = function(context) {
             lineNumbers: true
         });
 
-        context.dispatch.on('change.json', function(event) {
-        });
-
         function saveAction() {
             var val = editor.getValue();
-            console.log(val);
-            eval(val);
-            pane.call(_plugin(context));
+            playground.bundle(val).on('bundleEnd', function(source) {
+                if (source) eval(source);
+                pane.call(plugin(context));
+            });
             return false;
         }
 
