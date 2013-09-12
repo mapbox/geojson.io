@@ -4299,25 +4299,12 @@ function metatable() {
                 colbutton.append('span').attr('class', 'icon-plus');
                 colbutton.append('span').text(' new column');
 
-                var enter = sel.selectAll('table').data([d.map(convertRow)]).enter().append('table');
+                var enter = sel.selectAll('table').data([d]).enter().append('table');
                 var thead = enter.append('thead');
                 var tbody = enter.append('tbody');
                 var tr = thead.append('tr');
 
                 table = sel.select('table');
-            }
-
-            function mapToObject(map) {
-                return map.entries()
-                    .reduce(function(memo, d) {
-                        memo[d.key] = isNaN(d.value) ? d.value : Number(d.value);
-                        return memo;
-                    }, {});
-            }
-
-            function convertRow(row, index) {
-                var map = d3.map(row);
-                return mapToObject(d3.map(row));
             }
 
             function paint() {
@@ -4380,6 +4367,15 @@ function metatable() {
                     d.data[d3.select(this).attr('field')] =
                         isNaN(this.value) ? this.value : Number(this.value);
                     event.change(d.data, d.index);
+                }
+
+                function mapToObject(map) {
+                    return map.entries()
+                        .reduce(function(memo, d) {
+                            memo[d.key] = !isNaN(parseFloat(d.value)) &&
+                               /^(?!0.)/.test(d.value) ? Number(d.value) : d.value;
+                            return memo;
+                        }, {});
                 }
 
                 tr.selectAll('input')
@@ -8847,15 +8843,13 @@ module.exports = function(context) {
         function coerceNum(feature) {
             var props = feature.properties,
                 keys = Object.keys(props),
-                length = keys.length,
-                leadingZero = /^0/,
-                i;
+                length = keys.length;
 
-            for (i = 0; i < length; i++) {
+            for (var i = 0; i < length; i++) {
                 key = keys[i];
                 value = props[key];
                 feature.properties[key] = !isNaN(parseFloat(value)) &&
-                    !leadingZero.test(value) ? Number(value) : value;
+                    /^(?!0.)/.test(value) ? Number(value) : value;
             }
 
             return feature;
