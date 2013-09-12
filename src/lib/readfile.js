@@ -1,5 +1,6 @@
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
+    shp = require('shpjs'),
     osm2geojson = require('osm-and-geojson').osm2geojson;
 
 module.exports.readDrop = readDrop;
@@ -20,76 +21,138 @@ function readFile(f, callback) {
 
     var reader = new FileReader();
 
+    var fileType = detectType(f);
+
     reader.onload = function(e) {
-
-        var fileType = detectType(f);
-
-        if (!fileType) {
-            return callback({
+        switch (fileType) {
+            case 'kml' : return fromKML(e.target.result, callback);
+            case 'xml' : return fromXML(e.target.result, callback);
+            case 'gpx' : return callback(null, toGeoJSON.gpx(toDom(e.target.result)));
+            case 'geojson' : return fromGeoJSON(e.target.result, callback);
+            case 'dsv' : return fromDSV(e.target.result, callback);
+            case 'zip' : return fromZIP(e.target.result, callback);
+            default : return callback({
                 message: 'Could not detect file type'
-            });
-        } else if (fileType === 'kml') {
-            var kmldom = toDom(e.target.result);
-            if (!kmldom) {
-                return callback({
-                    message: 'Invalid KML file: not valid XML'
-                });
-            }
-            var warning;
-            if (kmldom.getElementsByTagName('NetworkLink').length) {
-                warning = {
-                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                      'Please export and upload KML without NetworkLinks for optimal performance'
-                };
-            }
-            callback(null, toGeoJSON.kml(kmldom), warning);
-        } else if (fileType === 'xml') {
-            var xmldom = toDom(e.target.result);
-            if (!xmldom) {
-                return callback({
-                    message: 'Invalid XML file: not valid XML'
-                });
-            }
-            callback(null, osm2geojson(xmldom));
-        } else if (fileType === 'gpx') {
-            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
-        } else if (fileType === 'geojson') {
-            try {
-                gj = JSON.parse(e.target.result);
-                if (gj && gj.type === 'Topology' && gj.objects) {
-                    var collection = { type: 'FeatureCollection', features: [] };
-                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                    callback(null, collection);
-                } else {
-                    callback(null, gj);
-                }
-            } catch(err) {
-                alert('Invalid JSON file: ' + err);
-                return;
-            }
-        } else if (fileType === 'dsv') {
-            csv2geojson.csv2geojson(e.target.result, {
-                delimiter: 'auto'
-            }, function(err, result) {
-                if (err) {
-                    return callback({
-                        type: 'geocode',
-                        result: result,
-                        raw: e.target.result
-                    });
-                } else {
-                    return callback(null, result);
-                }
             });
         }
     };
 
-    reader.readAsText(f);
+    if (fileType === 'zip') {
+        reader.readAsArrayBuffer(f);
+    } else {
+        reader.readAsText(f);
+    }
 
     function toDom(x) {
         return (new DOMParser()).parseFromString(x, 'text/xml');
     }
-
+    
+    function fromKML(raw,callback) {
+        var kmldom = toDom(raw);
+        if (!kmldom) {
+            return callback({
+                message: 'Invalid KML file: not valid XML'
+            });
+        }
+        var warning;
+        if (kmldom.getElementsByTagName('NetworkLink').length) {
+            warning = {
+                message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                  'Please export and upload KML without NetworkLinks for optimal performance'
+            };
+        }
+        callback(null, toGeoJSON.kml(kmldom), warning);
+    }
+    
+    function fromXML(raw, callback) {
+        var xmldom = toDom(raw);
+        if (!xmldom) {
+            return callback({
+                message: 'Invalid XML file: not valid XML'
+            });
+        }
+        callback(null, osm2geojson(xmldom));
+    }
+    
+    function fromGeoJSON(raw, callback) {
+        try {
+            checkTopo(JSON.parse(raw), callback);
+        } catch(err) {
+            alert('Invalid JSON file: ' + err);
+        }
+    }
+    
+    function checkTopo(gj, callback) {
+        if (gj && gj.type === 'Topology' && gj.objects) {
+            var collection = { type: 'FeatureCollection', features: [] };
+            for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
+            callback(null, collection);
+        } else {
+            callback(null, gj);
+        }
+    }
+    
+    function fromDSV(raw, callback) {
+        csv2geojson.csv2geojson(raw, {
+            delimiter: 'auto'
+        }, function(err, result) {
+            if (err) {
+                return callback({
+                    type: 'geocode',
+                    result: result,
+                    raw: raw
+                });
+            } else {
+                return callback(null, result);
+            }
+        });
+    }
+    
+    function zipResult(result, callback) {
+        result.name = result.fileName;
+        var fileType = detectType(result);
+        switch (fileType) {
+            case 'kml' : return fromKML(result, callback);
+            case 'xml' : return fromXML(result, callback);
+            case 'gpx' : return callback(null, toGeoJSON.gpx(toDom(result)));
+            case 'dsv' : return fromDSV(result, callback);
+            default : return checkTopo(result, callback);
+        }
+    }
+    
+    function fromZIP(raw, callback) {
+        shp(raw,['kml','gpx','csv','tsv','dsv','xml','osm']).then(function(result) {
+            if (Array.isArray(result)) {
+                shp.deferred.all(result.map(function(item) {
+                    var def = shp.deferred();
+                    zipResult(item, function(err,response) {
+                        if (err) {
+                            def.reject(err);
+                        } else {
+                            def.resolve(response);
+                        }
+                    });
+                    return def.promise;
+                })).then(function(responses){
+                    callback(null, responses.filter(function(item) {
+                        return item.features && Array.isArray(item.features);
+                    }).reduce(function(a, b) {
+                        a.features = a.features.concat(b.features);
+                        return a;
+                    },{ type: 'FeatureCollection', features: [], name: 'combo'}));
+                }, callback);
+            } else {
+                zipResult(result, callback);
+            }
+        },function(err) {
+            callback({
+                type: 'shapefile',
+                result: err,
+                raw: raw
+            });
+        });
+    }
+    
     function detectType(f) {
         var filename = f.name ? f.name.toLowerCase() : '';
         function ext(_) {
@@ -104,5 +167,7 @@ function readFile(f, callback) {
             return 'dsv';
         }
         if (ext('.xml') || ext('.osm')) return 'xml';
+        
+        if (ext('.zip')) return 'zip';
     }
 }
