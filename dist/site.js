@@ -6807,7 +6807,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":19,"./lib/topojson/clockwise":21,"./lib/topojson/filter":23,"./lib/topojson/prune":27,"./lib/topojson/simplify":28,"./lib/topojson/topology":33,"fs":1}],19:[function(require,module,exports){
+},{"./lib/topojson/bind":19,"./lib/topojson/clockwise":21,"./lib/topojson/filter":23,"./lib/topojson/prune":28,"./lib/topojson/simplify":29,"./lib/topojson/topology":32,"fs":1}],19:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6837,7 +6837,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":34}],20:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":33}],20:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6944,13 +6944,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":22,"./type":34}],22:[function(require,module,exports){
+},{"../../":"PBmiWO","./coordinate-systems":22,"./type":33}],22:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":20,"./spherical":29}],23:[function(require,module,exports){
+},{"./cartesian":20,"./spherical":30}],23:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -7020,7 +7020,9 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":21,"./coordinate-systems":22,"./prune":27,"./type":34}],24:[function(require,module,exports){
+},{"../../":"PBmiWO","./clockwise":21,"./coordinate-systems":22,"./prune":28,"./type":33}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}],25:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -7030,7 +7032,7 @@ module.exports = function(size) {
   };
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -7085,7 +7087,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":24}],26:[function(require,module,exports){
+},{"./hash":25}],27:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -7151,7 +7153,7 @@ function compare(a, b) {
   return a[1].area - b[1].area;
 }
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -7210,7 +7212,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":34}],28:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":33}],29:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -7342,7 +7344,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":22,"./min-heap":26}],29:[function(require,module,exports){
+},{"./coordinate-systems":22,"./min-heap":27}],30:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -7424,7 +7426,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -7474,23 +7476,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":34}],31:[function(require,module,exports){
-module.exports = function(hostname) {
-    var production = (hostname === 'geojson.io');
-
-    return {
-        client_id: production ?
-            '62c753fd0faf18392d85' :
-            'bb7bbe70bd1f707125bc',
-        gatekeeper_url: production ?
-            'https://geojsonioauth.herokuapp.com' :
-            'https://localhostauth.herokuapp.com'
-    };
-};
-
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],33:[function(require,module,exports){
+},{"./type":33}],32:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -7832,7 +7818,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":22,"./hashtable":25,"./stitch-poles":30,"./type":34}],34:[function(require,module,exports){
+},{"./coordinate-systems":22,"./hashtable":26,"./stitch-poles":31,"./type":33}],33:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -7926,7 +7912,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],35:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -7935,7 +7921,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],36:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -7962,11 +7948,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":35,"object-keys":37}],37:[function(require,module,exports){
+},{"./has-keys":34,"object-keys":36}],36:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":40}],38:[function(require,module,exports){
+},{"./shim":39}],37:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -7990,7 +7976,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 
 /**!
  * is
@@ -8694,7 +8680,7 @@ is.string = function (value) {
 };
 
 
-},{}],40:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function () {
 	"use strict";
 
@@ -8740,7 +8726,21 @@ is.string = function (value) {
 }());
 
 
-},{"foreach":38,"is":39}],41:[function(require,module,exports){
+},{"foreach":37,"is":38}],40:[function(require,module,exports){
+module.exports = function(hostname) {
+    var production = (hostname === 'geojson.io');
+
+    return {
+        client_id: production ?
+            '62c753fd0faf18392d85' :
+            'bb7bbe70bd1f707125bc',
+        gatekeeper_url: production ?
+            'https://geojsonioauth.herokuapp.com' :
+            'https://localhostauth.herokuapp.com'
+    };
+};
+
+},{}],41:[function(require,module,exports){
 var clone = require('clone');
     xtend = require('xtend');
     source = {
@@ -8967,7 +8967,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":58,"../source/github":59,"clone":5,"xtend":36}],42:[function(require,module,exports){
+},{"../source/gist":58,"../source/github":59,"clone":5,"xtend":35}],42:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -9092,7 +9092,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":31}],45:[function(require,module,exports){
+},{"../config.js":40}],45:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -9159,7 +9159,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":51,"xtend":36}],46:[function(require,module,exports){
+},{"../lib/querystring":51,"xtend":35}],46:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9244,7 +9244,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":31}],47:[function(require,module,exports){
+},{"../config.js":40}],47:[function(require,module,exports){
 var mobile = require('is-mobile');
 
 if (mobile() || (window.navigator && /iPad/.test(window.navigator.userAgent))) {
@@ -9523,7 +9523,7 @@ function readFile(f, callback) {
             return 'kml';
         }
         if (ext('.gpx')) return 'gpx';
-        if (ext('.geojson') || ext('.json')) return 'geojson';
+        if (ext('.geojson') || ext('.json') || ext('.topojson')) return 'geojson';
         if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
             return 'dsv';
         }
