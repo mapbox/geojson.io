@@ -62,7 +62,24 @@ module.exports = function(context) {
     };
 
     data.mergeFeatures = function(features, src) {
-        _data.map.features = (_data.map.features || []).concat(features);
+        function coerceNum(feature) {
+            var props = feature.properties,
+                keys = Object.keys(props),
+                length = keys.length,
+                leadingZero = /^0/,
+                i;
+
+            for (i = 0; i < length; i++) {
+                key = keys[i];
+                value = props[key];
+                feature.properties[key] = !isNaN(parseFloat(value)) &&
+                    !leadingZero.test(value) ? Number(value) : value;
+            }
+
+            return feature;
+        }
+
+        _data.map.features = (_data.map.features || []).concat(features.map(coerceNum));
         return data.set({ map: _data.map }, src);
     };
 
