@@ -4363,28 +4363,29 @@ function metatable() {
                 delbutton.append('span').attr('class', 'icon-minus');
                 delbutton.append('span').text(' delete');
 
+                function coerceNum(value) {
+                    return !isNaN(parseFloat(value)) && /^(?!0.)/.test(value) ?
+                        Number(value) : value;
+                }
+                
                 function write(d) {
-                    d.data[d3.select(this).attr('field')] =
-                        isNaN(this.value) ? this.value : Number(this.value);
+                    d.data[d3.select(this).attr('field')] = coerceNum(this.value);
                     event.change(d.data, d.index);
                 }
 
                 function mapToObject(map) {
                     return map.entries()
                         .reduce(function(memo, d) {
-                            memo[d.key] = !isNaN(parseFloat(d.value)) &&
-                               /^(?!0.)/.test(d.value) ? Number(d.value) : d.value;
+                            memo[d.key] = d.value;
                             return memo;
                         }, {});
                 }
 
                 tr.selectAll('input')
                     .data(function(d, i) {
-                        var reduced = mapToObject(d3.map(d));
-                            
                         return d3.range(keys.length).map(function() {
                             return {
-                                data: reduced,
+                                data: d,
                                 index: i
                             };
                         });
@@ -4393,7 +4394,8 @@ function metatable() {
                         return d.data[d3.select(this).attr('field')] === undefined;
                     })
                     .property('value', function(d) {
-                        return d.data[d3.select(this).attr('field')] || '';
+                        var value = d.data[d3.select(this).attr('field')];
+                        return !isNaN(value) ? value : value || '';
                     })
                     .on('keyup', write)
                     .on('change', write)

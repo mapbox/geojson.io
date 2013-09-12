@@ -7,7 +7,7 @@
     "leaflet-draw": "0.2.0",
     "jsonlint": "1.6.0",
     "geojsonhint": "0.1.5",
-    "d3-metatable": "0.2.2",
+    "d3-metatable": "0.2.3",
     "topojson": "1.2.3",
     "brfs": "0.0.7",
     "togeojson": "0.3.0",
