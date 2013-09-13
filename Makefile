@@ -11,7 +11,7 @@ node_modules: package.json
 dist:
 	mkdir -p dist
 
-dist/d3.min.js: node_modules node_modules/d3/*
+dist/d3.js: node_modules node_modules/d3/*
 	$(SMASH) node_modules/d3/src/start.js \
 		node_modules/d3/src/arrays/entries.js \
 		node_modules/d3/src/arrays/set.js \
@@ -32,10 +32,12 @@ dist/d3.min.js: node_modules node_modules/d3/*
 		node_modules/d3/src/geo/mercator.js \
 		node_modules/d3/src/geo/path.js \
 		node_modules/d3/src/end.js > dist/d3.js
+
+dist/d3.min.js: dist/d3.js
 	$(UGLIFY) dist/d3.js > dist/d3.min.js
 
-dist/lib.js: dist dist/d3.min.js $(LIBS)
-	cat dist/d3.min.js \
+dist/lib.js: dist dist/d3.js $(LIBS)
+	cat dist/d3.js \
 		lib/blob.js \
 		lib/base64.js \
 		lib/csv2geojson.js \
