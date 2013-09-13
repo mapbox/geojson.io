@@ -5,13 +5,13 @@ LIBS = $(shell find lib -type f -name '*.js')
 
 all: dist/site.js dist/site.mobile.js dist/delegate.js
 
-node_modules:
+node_modules: package.json
 	npm install
 
 dist:
 	mkdir -p dist
 
-dist/d3.min.js: node_modules node_modules/d3/*
+dist/d3.js: node_modules node_modules/d3/*
 	$(SMASH) node_modules/d3/src/start.js \
 		node_modules/d3/src/arrays/entries.js \
 		node_modules/d3/src/arrays/set.js \
@@ -32,10 +32,12 @@ dist/d3.min.js: node_modules node_modules/d3/*
 		node_modules/d3/src/geo/mercator.js \
 		node_modules/d3/src/geo/path.js \
 		node_modules/d3/src/end.js > dist/d3.js
+
+dist/d3.min.js: dist/d3.js
 	$(UGLIFY) dist/d3.js > dist/d3.min.js
 
-dist/lib.js: dist dist/d3.min.js $(LIBS)
-	cat dist/d3.min.js \
+dist/lib.js: dist dist/d3.js $(LIBS)
+	cat dist/d3.js \
 		lib/blob.js \
 		lib/base64.js \
 		lib/csv2geojson.js \
@@ -55,10 +57,13 @@ dist/delegate.js: src/delegate.js
 	$(BROWSERIFY)  src/delegate.js > dist/delegate.js
 
 dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
-	$(BROWSERIFY) -t brfs -r topojson src/source/gist.js src/index.js > dist/site.js
+	$(BROWSERIFY) -t brfs -r topojson  src/index.js > dist/site.js
 
 dist/site.mobile.js: dist/lib.js src/mobile.js $(shell $(BROWSERIFY) --list src/mobile.js)
 	$(BROWSERIFY) -t brfs -r topojson src/mobile.js > dist/site.mobile.js
 
 clean:
 	rm -f dist/*
+
+test:
+	npm test

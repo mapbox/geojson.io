@@ -6777,7 +6777,7 @@ toGeoJSON = (function() {
 
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
-},{}],"g070js":[function(require,module,exports){
+},{}],"PBmiWO":[function(require,module,exports){
 var fs = require("fs");
 
 var topojson = module.exports = new Function("topojson", "return " + "topojson = (function() {\n\n  function merge(topology, arcs) {\n    var fragmentByStart = {},\n        fragmentByEnd = {};\n\n    arcs.forEach(function(i) {\n      var e = ends(i),\n          start = e[0],\n          end = e[1],\n          f, g;\n\n      if (f = fragmentByEnd[start]) {\n        delete fragmentByEnd[f.end];\n        f.push(i);\n        f.end = end;\n        if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByEnd[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[end]) {\n        delete fragmentByStart[f.start];\n        f.unshift(i);\n        f.start = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[start]) {\n        delete fragmentByStart[f.start];\n        f.unshift(~i);\n        f.start = end;\n        if (g = fragmentByEnd[end]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByEnd[end]) {\n        delete fragmentByEnd[f.end];\n        f.push(~i);\n        f.end = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else {\n        f = [i];\n        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;\n      }\n    });\n\n    function ends(i) {\n      var arc = topology.arcs[i], p0 = arc[0], p1 = [0, 0];\n      arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });\n      return [p0, p1];\n    }\n\n    var fragments = [];\n    for (var k in fragmentByEnd) fragments.push(fragmentByEnd[k]);\n    return fragments;\n  }\n\n  function mesh(topology, o, filter) {\n    var arcs = [];\n\n    if (arguments.length > 1) {\n      var geomsByArc = [],\n          geom;\n\n      function arc(i) {\n        if (i < 0) i = ~i;\n        (geomsByArc[i] || (geomsByArc[i] = [])).push(geom);\n      }\n\n      function line(arcs) {\n        arcs.forEach(arc);\n      }\n\n      function polygon(arcs) {\n        arcs.forEach(line);\n      }\n\n      function geometry(o) {\n        if (o.type === \"GeometryCollection\") o.geometries.forEach(geometry);\n        else if (o.type in geometryType) {\n          geom = o;\n          geometryType[o.type](o.arcs);\n        }\n      }\n\n      var geometryType = {\n        LineString: line,\n        MultiLineString: polygon,\n        Polygon: polygon,\n        MultiPolygon: function(arcs) { arcs.forEach(polygon); }\n      };\n\n      geometry(o);\n\n      geomsByArc.forEach(arguments.length < 3\n          ? function(geoms, i) { arcs.push(i); }\n          : function(geoms, i) { if (filter(geoms[0], geoms[geoms.length - 1])) arcs.push(i); });\n    } else {\n      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);\n    }\n\n    return object(topology, {type: \"MultiLineString\", arcs: merge(topology, arcs)});\n  }\n\n  function featureOrCollection(topology, o) {\n    return o.type === \"GeometryCollection\" ? {\n      type: \"FeatureCollection\",\n      features: o.geometries.map(function(o) { return feature(topology, o); })\n    } : feature(topology, o);\n  }\n\n  function feature(topology, o) {\n    var f = {\n      type: \"Feature\",\n      id: o.id,\n      properties: o.properties || {},\n      geometry: object(topology, o)\n    };\n    if (o.id == null) delete f.id;\n    return f;\n  }\n\n  function object(topology, o) {\n    var tf = topology.transform,\n        kx = tf.scale[0],\n        ky = tf.scale[1],\n        dx = tf.translate[0],\n        dy = tf.translate[1],\n        arcs = topology.arcs;\n\n    function arc(i, points) {\n      if (points.length) points.pop();\n      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, x = 0, y = 0, p; k < n; ++k) points.push([\n        (x += (p = a[k])[0]) * kx + dx,\n        (y += p[1]) * ky + dy\n      ]);\n      if (i < 0) reverse(points, n);\n    }\n\n    function point(coordinates) {\n      return [coordinates[0] * kx + dx, coordinates[1] * ky + dy];\n    }\n\n    function line(arcs) {\n      var points = [];\n      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);\n      if (points.length < 2) points.push(points[0].slice());\n      return points;\n    }\n\n    function ring(arcs) {\n      var points = line(arcs);\n      while (points.length < 4) points.push(points[0].slice());\n      return points;\n    }\n\n    function polygon(arcs) {\n      return arcs.map(ring);\n    }\n\n    function geometry(o) {\n      var t = o.type;\n      return t === \"GeometryCollection\" ? {type: t, geometries: o.geometries.map(geometry)}\n          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}\n          : null;\n    }\n\n    var geometryType = {\n      Point: function(o) { return point(o.coordinates); },\n      MultiPoint: function(o) { return o.coordinates.map(point); },\n      LineString: function(o) { return line(o.arcs); },\n      MultiLineString: function(o) { return o.arcs.map(line); },\n      Polygon: function(o) { return polygon(o.arcs); },\n      MultiPolygon: function(o) { return o.arcs.map(polygon); }\n    };\n\n    return geometry(o);\n  }\n\n  function reverse(array, n) {\n    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;\n  }\n\n  function bisect(a, x) {\n    var lo = 0, hi = a.length;\n    while (lo < hi) {\n      var mid = lo + hi >>> 1;\n      if (a[mid] < x) lo = mid + 1;\n      else hi = mid;\n    }\n    return lo;\n  }\n\n  function neighbors(objects) {\n    var indexesByArc = {}, // arc index -> array of object indexes\n        neighbors = objects.map(function() { return []; });\n\n    function line(arcs, i) {\n      arcs.forEach(function(a) {\n        if (a < 0) a = ~a;\n        var o = indexesByArc[a];\n        if (o) o.push(i);\n        else indexesByArc[a] = [i];\n      });\n    }\n\n    function polygon(arcs, i) {\n      arcs.forEach(function(arc) { line(arc, i); });\n    }\n\n    function geometry(o, i) {\n      if (o.type === \"GeometryCollection\") o.geometries.forEach(function(o) { geometry(o, i); });\n      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);\n    }\n\n    var geometryType = {\n      LineString: line,\n      MultiLineString: polygon,\n      Polygon: polygon,\n      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }\n    };\n\n    objects.forEach(geometry);\n\n    for (var i in indexesByArc) {\n      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {\n        for (var k = j + 1; k < m; ++k) {\n          var ij = indexes[j], ik = indexes[k], n;\n          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);\n          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);\n        }\n      }\n    }\n\n    return neighbors;\n  }\n\n  return {\n    version: \"1.2.3\",\n    mesh: mesh,\n    feature: featureOrCollection,\n    neighbors: neighbors\n  };\n})();\n")();
@@ -6788,7 +6788,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":18,"./lib/topojson/clockwise":20,"./lib/topojson/filter":24,"./lib/topojson/prune":28,"./lib/topojson/simplify":29,"./lib/topojson/topology":32,"fs":1}],18:[function(require,module,exports){
+},{"./lib/topojson/bind":18,"./lib/topojson/clockwise":20,"./lib/topojson/filter":22,"./lib/topojson/prune":28,"./lib/topojson/simplify":29,"./lib/topojson/topology":31,"fs":1}],18:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6818,7 +6818,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":33}],19:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":32}],19:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6925,68 +6925,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":21,"./type":33}],21:[function(require,module,exports){
+},{"../../":"PBmiWO","./coordinate-systems":21,"./type":32}],21:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":19,"./spherical":30}],22:[function(require,module,exports){
-module.exports = function(context) {
-
-    return function(selection) {
-
-        var layers = [{
-            title: 'MapBox',
-            layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-                retinaVersion: 'tmcw.map-u4ca5hnt',
-                detectRetina: true
-            })
-        }, {
-            title: 'Satellite',
-            layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-                retinaVersion: 'tmcw.map-ujx9se0r',
-                detectRetina: true
-            })
-        }, {
-            title: 'OSM',
-            layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-            })
-        }];
-
-        var layerSwap = function(d) {
-            var clicked = this instanceof d3.selection ? this.node() : this;
-            layerButtons.classed('active', function() {
-                return clicked === this;
-            });
-            layers.forEach(swap);
-            function swap(l) {
-                var datum = d instanceof d3.selection ? d.datum() : d;
-                if (l.layer == datum.layer) context.map.addLayer(datum.layer);
-                else if (context.map.hasLayer(l.layer)) context.map.removeLayer(l.layer);
-            }
-        };
-        
-        var layerButtons = selection.append('div')
-            .attr('class', 'layer-switch')
-            .selectAll('button')
-            .data(layers)
-            .enter()
-            .append('button')
-            .attr('class', 'pad0')
-            .on('click', layerSwap)
-            .text(function(d) { return d.title; });
-
-        layerButtons.filter(function(d, i) { return i === 0; }).call(layerSwap);
-
-    };
-};
-
-
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('g070js');
-},{}],24:[function(require,module,exports){
+},{"./cartesian":19,"./spherical":25}],22:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -7056,7 +7001,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":20,"./coordinate-systems":21,"./prune":28,"./type":33}],25:[function(require,module,exports){
+},{"../../":"PBmiWO","./clockwise":20,"./coordinate-systems":21,"./prune":28,"./type":32}],23:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -7066,7 +7011,7 @@ module.exports = function(size) {
   };
 };
 
-},{}],26:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -7121,7 +7066,91 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":25}],27:[function(require,module,exports){
+},{"./hash":23}],25:[function(require,module,exports){
+var π = Math.PI,
+    π_4 = π / 4,
+    radians = π / 180;
+
+exports.name = "spherical";
+exports.formatDistance = formatDistance;
+exports.ringArea = ringArea;
+exports.absoluteArea = absoluteArea;
+exports.triangleArea = triangleArea;
+exports.distance = haversinDistance; // XXX why two implementations?
+
+function formatDistance(radians) {
+  var km = radians * 6371;
+  return (km > 1 ? km.toFixed(3) + "km" : (km * 1000).toPrecision(3) + "m")
+      + " (" + (radians * 180 / Math.PI).toPrecision(3) + "°)";
+}
+
+function ringArea(ring) {
+  if (!ring.length) return 0;
+  var area = 0,
+      p = ring[0],
+      λ = p[0] * radians,
+      φ = p[1] * radians / 2 + π_4,
+      λ0 = λ,
+      cosφ0 = Math.cos(φ),
+      sinφ0 = Math.sin(φ);
+
+  for (var i = 1, n = ring.length; i < n; ++i) {
+    p = ring[i], λ = p[0] * radians, φ = p[1] * radians / 2 + π_4;
+
+    // Spherical excess E for a spherical triangle with vertices: south pole,
+    // previous point, current point.  Uses a formula derived from Cagnoli’s
+    // theorem.  See Todhunter, Spherical Trig. (1871), Sec. 103, Eq. (2).
+    var dλ = λ - λ0,
+        cosφ = Math.cos(φ),
+        sinφ = Math.sin(φ),
+        k = sinφ0 * sinφ,
+        u = cosφ0 * cosφ + k * Math.cos(dλ),
+        v = k * Math.sin(dλ);
+    area += Math.atan2(v, u);
+
+    // Advance the previous point.
+    λ0 = λ, cosφ0 = cosφ, sinφ0 = sinφ;
+  }
+
+  return 2 * area;
+}
+
+function absoluteArea(a) {
+  return a < 0 ? a + 4 * π : a;
+}
+
+function triangleArea(t) {
+  var a = distance(t[0], t[1]),
+      b = distance(t[1], t[2]),
+      c = distance(t[2], t[0]),
+      s = (a + b + c) / 2;
+  return 4 * Math.atan(Math.sqrt(Math.max(0, Math.tan(s / 2) * Math.tan((s - a) / 2) * Math.tan((s - b) / 2) * Math.tan((s - c) / 2))));
+}
+
+function distance(a, b) {
+  var Δλ = (b[0] - a[0]) * radians,
+      sinΔλ = Math.sin(Δλ),
+      cosΔλ = Math.cos(Δλ),
+      sinφ0 = Math.sin(a[1] * radians),
+      cosφ0 = Math.cos(a[1] * radians),
+      sinφ1 = Math.sin(b[1] * radians),
+      cosφ1 = Math.cos(b[1] * radians),
+      _;
+  return Math.atan2(Math.sqrt((_ = cosφ1 * sinΔλ) * _ + (_ = cosφ0 * sinφ1 - sinφ0 * cosφ1 * cosΔλ) * _), sinφ0 * sinφ1 + cosφ0 * cosφ1 * cosΔλ);
+}
+
+function haversinDistance(x0, y0, x1, y1) {
+  x0 *= radians, y0 *= radians, x1 *= radians, y1 *= radians;
+  return 2 * Math.asin(Math.sqrt(haversin(y1 - y0) + Math.cos(y0) * Math.cos(y1) * haversin(x1 - x0)));
+}
+
+function haversin(x) {
+  return (x = Math.sin(x / 2)) * x;
+}
+
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}],27:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -7246,7 +7275,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":33}],29:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":32}],29:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -7379,88 +7408,6 @@ function transformRelative(transform) {
 }
 
 },{"./coordinate-systems":21,"./min-heap":27}],30:[function(require,module,exports){
-var π = Math.PI,
-    π_4 = π / 4,
-    radians = π / 180;
-
-exports.name = "spherical";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = absoluteArea;
-exports.triangleArea = triangleArea;
-exports.distance = haversinDistance; // XXX why two implementations?
-
-function formatDistance(radians) {
-  var km = radians * 6371;
-  return (km > 1 ? km.toFixed(3) + "km" : (km * 1000).toPrecision(3) + "m")
-      + " (" + (radians * 180 / Math.PI).toPrecision(3) + "°)";
-}
-
-function ringArea(ring) {
-  if (!ring.length) return 0;
-  var area = 0,
-      p = ring[0],
-      λ = p[0] * radians,
-      φ = p[1] * radians / 2 + π_4,
-      λ0 = λ,
-      cosφ0 = Math.cos(φ),
-      sinφ0 = Math.sin(φ);
-
-  for (var i = 1, n = ring.length; i < n; ++i) {
-    p = ring[i], λ = p[0] * radians, φ = p[1] * radians / 2 + π_4;
-
-    // Spherical excess E for a spherical triangle with vertices: south pole,
-    // previous point, current point.  Uses a formula derived from Cagnoli’s
-    // theorem.  See Todhunter, Spherical Trig. (1871), Sec. 103, Eq. (2).
-    var dλ = λ - λ0,
-        cosφ = Math.cos(φ),
-        sinφ = Math.sin(φ),
-        k = sinφ0 * sinφ,
-        u = cosφ0 * cosφ + k * Math.cos(dλ),
-        v = k * Math.sin(dλ);
-    area += Math.atan2(v, u);
-
-    // Advance the previous point.
-    λ0 = λ, cosφ0 = cosφ, sinφ0 = sinφ;
-  }
-
-  return 2 * area;
-}
-
-function absoluteArea(a) {
-  return a < 0 ? a + 4 * π : a;
-}
-
-function triangleArea(t) {
-  var a = distance(t[0], t[1]),
-      b = distance(t[1], t[2]),
-      c = distance(t[2], t[0]),
-      s = (a + b + c) / 2;
-  return 4 * Math.atan(Math.sqrt(Math.max(0, Math.tan(s / 2) * Math.tan((s - a) / 2) * Math.tan((s - b) / 2) * Math.tan((s - c) / 2))));
-}
-
-function distance(a, b) {
-  var Δλ = (b[0] - a[0]) * radians,
-      sinΔλ = Math.sin(Δλ),
-      cosΔλ = Math.cos(Δλ),
-      sinφ0 = Math.sin(a[1] * radians),
-      cosφ0 = Math.cos(a[1] * radians),
-      sinφ1 = Math.sin(b[1] * radians),
-      cosφ1 = Math.cos(b[1] * radians),
-      _;
-  return Math.atan2(Math.sqrt((_ = cosφ1 * sinΔλ) * _ + (_ = cosφ0 * sinφ1 - sinφ0 * cosφ1 * cosΔλ) * _), sinφ0 * sinφ1 + cosφ0 * cosφ1 * cosΔλ);
-}
-
-function haversinDistance(x0, y0, x1, y1) {
-  x0 *= radians, y0 *= radians, x1 *= radians, y1 *= radians;
-  return 2 * Math.asin(Math.sqrt(haversin(y1 - y0) + Math.cos(y0) * Math.cos(y1) * haversin(x1 - x0)));
-}
-
-function haversin(x) {
-  return (x = Math.sin(x / 2)) * x;
-}
-
-},{}],31:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -7510,7 +7457,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":33}],32:[function(require,module,exports){
+},{"./type":32}],31:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     hashtable = require("./hashtable"),
@@ -7852,7 +7799,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":21,"./hashtable":26,"./stitch-poles":31,"./type":33}],33:[function(require,module,exports){
+},{"./coordinate-systems":21,"./hashtable":24,"./stitch-poles":30,"./type":32}],32:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -7946,7 +7893,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],34:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -7955,7 +7902,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],35:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -7982,11 +7929,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":34,"object-keys":36}],36:[function(require,module,exports){
+},{"./has-keys":33,"object-keys":35}],35:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":39}],37:[function(require,module,exports){
+},{"./shim":38}],36:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -8010,7 +7957,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],38:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 
 /**!
  * is
@@ -8714,7 +8661,7 @@ is.string = function (value) {
 };
 
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 (function () {
 	"use strict";
 
@@ -8760,7 +8707,7 @@ is.string = function (value) {
 }());
 
 
-},{"foreach":37,"is":38}],40:[function(require,module,exports){
+},{"foreach":36,"is":37}],39:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -8774,7 +8721,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],41:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 var clone = require('clone');
     xtend = require('xtend');
     source = {
@@ -8984,7 +8931,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":57,"../source/github":58,"clone":5,"xtend":35}],42:[function(require,module,exports){
+},{"../source/gist":56,"../source/github":57,"clone":5,"xtend":34}],41:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -9030,7 +8977,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/querystring":49,"../lib/zoomextent":53,"../ui/flash":63}],43:[function(require,module,exports){
+},{"../lib/querystring":48,"../lib/zoomextent":52,"../ui/flash":62}],42:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9073,7 +9020,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":40}],44:[function(require,module,exports){
+},{"../config.js":39}],43:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -9140,7 +9087,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":49,"xtend":35}],45:[function(require,module,exports){
+},{"../lib/querystring":48,"xtend":34}],44:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9225,7 +9172,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":40}],46:[function(require,module,exports){
+},{"../config.js":39}],45:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -9264,7 +9211,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":49,"leaflet-hash":13}],47:[function(require,module,exports){
+},{"../lib/querystring":48,"leaflet-hash":13}],46:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -9321,7 +9268,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],48:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module.exports = function(elem, w, h) {
     var c = elem.appendChild(document.createElement('canvas'));
 
@@ -9342,7 +9289,7 @@ module.exports = function(elem, w, h) {
     };
 };
 
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports.stringQs = function(str) {
     return str.split('&').reduce(function(obj, pair){
         var parts = pair.split('=');
@@ -9362,7 +9309,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],50:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     osm2geojson = require('osm-and-geojson').osm2geojson;
@@ -9472,7 +9419,7 @@ function readFile(f, callback) {
     }
 }
 
-},{"osm-and-geojson":14,"togeojson":16,"topojson":"g070js"}],51:[function(require,module,exports){
+},{"osm-and-geojson":14,"togeojson":16,"topojson":"PBmiWO"}],50:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -9484,7 +9431,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],52:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -9540,13 +9487,13 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":8}],53:[function(require,module,exports){
+},{"geojsonhint":8}],52:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],54:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -9576,7 +9523,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":41,"./core/loader":42,"./core/repo":43,"./core/router":44,"./core/user":45,"./ui":59,"./ui/map":66,"store":15}],55:[function(require,module,exports){
+},{"./core/data":40,"./core/loader":41,"./core/repo":42,"./core/router":43,"./core/user":44,"./ui":58,"./ui/map":66,"store":15}],54:[function(require,module,exports){
 var validate = require('../lib/validate'),
     saver = require('../ui/saver.js');
 
@@ -9635,7 +9582,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":52,"../ui/saver.js":69}],56:[function(require,module,exports){
+},{"../lib/validate":51,"../ui/saver.js":69}],55:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -9707,7 +9654,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":51,"d3-metatable":6}],57:[function(require,module,exports){
+},{"../lib/smartzoom.js":50,"d3-metatable":6}],56:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -9801,7 +9748,7 @@ function load(id, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":1}],58:[function(require,module,exports){
+},{"fs":1}],57:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -9908,7 +9855,7 @@ function fileUrl(parts) {
         '?ref=' + parts.branch;
 }
 
-},{}],59:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -9993,7 +9940,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":61,"./ui/file_bar":62,"./ui/layer_switch":22,"./ui/mode_buttons":68,"./ui/user":72}],60:[function(require,module,exports){
+},{"./ui/dnd":60,"./ui/file_bar":61,"./ui/layer_switch":65,"./ui/mode_buttons":68,"./ui/user":72}],59:[function(require,module,exports){
 var github = require('../source/github');
 
 module.exports = commit;
@@ -10028,7 +9975,7 @@ function commit(context, callback) {
     return wrap;
 }
 
-},{"../source/github":58}],61:[function(require,module,exports){
+},{"../source/github":57}],60:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
     flash = require('./flash.js');
@@ -10077,7 +10024,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":50,"./flash.js":63,"./geocode.js":64}],62:[function(require,module,exports){
+},{"../lib/readfile.js":49,"./flash.js":62,"./geocode.js":63}],61:[function(require,module,exports){
 var share = require('./share'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
@@ -10194,7 +10141,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":69,"./share":70,"./source.js":71}],63:[function(require,module,exports){
+},{"../ui/saver.js":69,"./share":70,"./source.js":71}],62:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -10216,7 +10163,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":67}],64:[function(require,module,exports){
+},{"./message":67}],63:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart');
 
 module.exports = function(context) {
@@ -10353,7 +10300,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":48}],65:[function(require,module,exports){
+},{"../lib/progress_chart":47}],64:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -10437,7 +10384,60 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":50,"../lib/zoomextent":53,"./flash.js":63,"./geocode.js":64}],66:[function(require,module,exports){
+},{"../lib/readfile.js":49,"../lib/zoomextent":52,"./flash.js":62,"./geocode.js":63}],65:[function(require,module,exports){
+module.exports = function(context) {
+
+    return function(selection) {
+
+        var layers = [{
+            title: 'MapBox',
+            layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
+                retinaVersion: 'tmcw.map-u4ca5hnt',
+                detectRetina: true
+            })
+        }, {
+            title: 'Satellite',
+            layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
+                retinaVersion: 'tmcw.map-ujx9se0r',
+                detectRetina: true
+            })
+        }, {
+            title: 'OSM',
+            layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            })
+        }];
+
+        var layerSwap = function(d) {
+            var clicked = this instanceof d3.selection ? this.node() : this;
+            layerButtons.classed('active', function() {
+                return clicked === this;
+            });
+            layers.forEach(swap);
+            function swap(l) {
+                var datum = d instanceof d3.selection ? d.datum() : d;
+                if (l.layer == datum.layer) context.map.addLayer(datum.layer);
+                else if (context.map.hasLayer(l.layer)) context.map.removeLayer(l.layer);
+            }
+        };
+        
+        var layerButtons = selection.append('div')
+            .attr('class', 'layer-switch')
+            .selectAll('button')
+            .data(layers)
+            .enter()
+            .append('button')
+            .attr('class', 'pad0')
+            .on('click', layerSwap)
+            .text(function(d) { return d.title; });
+
+        layerButtons.filter(function(d, i) { return i === 0; }).call(layerSwap);
+
+    };
+};
+
+
+},{}],66:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -10546,7 +10546,7 @@ function bindPopup(l) {
     }, l).setContent(content));
 }
 
-},{"../lib/custom_hash.js":46,"../lib/popup":47,"../lib/querystring.js":49}],67:[function(require,module,exports){
+},{"../lib/custom_hash.js":45,"../lib/popup":46,"../lib/querystring.js":48}],67:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -10633,7 +10633,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":55,"../panel/table":56}],69:[function(require,module,exports){
+},{"../panel/json":54,"../panel/table":55}],69:[function(require,module,exports){
 var commit = require('./commit');
 var flash = require('./flash');
 
@@ -10695,7 +10695,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":60,"./flash":63}],70:[function(require,module,exports){
+},{"./commit":59,"./flash":62}],70:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -10772,7 +10772,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":57}],71:[function(require,module,exports){
+},{"../source/gist":56}],71:[function(require,module,exports){
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
@@ -10894,7 +10894,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":65,"detect-json-indent":7,"github-file-browser":10}],72:[function(require,module,exports){
+},{"./import":64,"detect-json-indent":7,"github-file-browser":10}],72:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
@@ -10942,5 +10942,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[54])
+},{}]},{},[53])
 ;
