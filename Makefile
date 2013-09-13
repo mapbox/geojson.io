@@ -3,7 +3,7 @@ SMASH = node_modules/.bin/smash
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
 
-all: dist/site.js dist/site.mobile.js
+all: dist/site.js dist/site.mobile.js dist/delegate.js
 
 node_modules:
 	npm install
@@ -50,6 +50,9 @@ dist/lib.js: dist dist/d3.min.js $(LIBS)
 		lib/codemirror/lib/codemirror.js \
 		lib/codemirror/mode/javascript/javascript.js \
 		lib/FileSaver.min.js > dist/lib.js
+
+dist/delegate.js: src/delegate.js
+	$(BROWSERIFY)  src/delegate.js > dist/delegate.js
 
 dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
 	$(BROWSERIFY) -t brfs -r topojson src/source/gist.js src/index.js > dist/site.js
