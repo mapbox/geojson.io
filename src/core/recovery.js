@@ -20,7 +20,11 @@ module.exports = function(context) {
 
     function onunload() {
         if (context.data.get('type') === 'local' && context.data.hasFeatures()) {
-            context.storage.set('recover', context.data.all());
+            try {
+                context.storage.set('recover', context.data.all());
+            } catch(e) {
+                // QuotaStorageExceeded
+            }
         } else {
             context.storage.remove('recover');
         }
