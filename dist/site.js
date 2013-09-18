@@ -9,7 +9,6 @@ module.exports = function leafletImage(map, callback) {
         if (l instanceof L.TileLayer) {
             layerQueue.defer(handleTileLayer, l);
         } else if (l instanceof L.Marker) {
-            // TODO: cors on marker images.
             // layerQueue.defer(handleMarkerLayer, l);
         }
     });
@@ -108,26 +107,28 @@ module.exports = function leafletImage(map, callback) {
     }
 
     function handleMarkerLayer(marker, callback) {
-        var url = marker._icon.src + '?cache=false';
-        var im = new Image();
-        im.crossOrigin = '*';
-        im.onload = function() {
-            // callback(null, {
-            //     img: this,
-            //     pos: tilePos
-            // });
-        };
-        im.src = url;
+        var canvas = document.createElement('canvas'),
+            ctx = canvas.getContext('2d'),
+            pixelBounds = map.getPixelBounds(),
+            minPoint = new L.Point(pixelBounds.min.x, pixelBounds.min.y),
+            pixelPoint = map.project(marker.getLatLng()),
+            url = marker._icon.src + '?cache=false',
+            im = new Image();
 
-        // var canvas = document.createElement('canvas');
-        // canvas.width = dimensions.x;
-        // canvas.height = dimensions.y;
-        // var ctx = canvas.getContext('2d');
-        // var pos = L.DomUtil.getPosition(root);
-        // ctx.drawImage(root, pos.x, pos.y);
-        // callback(null, {
-        //     canvas: canvas
-        // });
+        canvas.width = dimensions.x;
+        canvas.height = dimensions.y;
+        im.crossOrigin = '';
+
+        im.onload = function() {
+            var pos = pixelPoint.subtract(minPoint);
+            ctx.drawImage(this, pos.x, pos.y);
+
+            callback(null, {
+                canvas: canvas
+            });
+        };
+
+        im.src = url;
     }
 }
 
