@@ -1,7 +1,221 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var queue = require('./queue');
+
+module.exports = function leafletImage(map, callback) {
+    var dimensions = map.getSize(),
+        layerQueue = new queue(1);
+
+    map.eachLayer(function(l) {
+        if (l instanceof L.TileLayer) {
+            layerQueue.defer(handleTileLayer, l);
+        } else if (l instanceof L.Marker) {
+            // TODO: cors on marker images.
+            // layerQueue.defer(handleMarkerLayer, l);
+        }
+    });
+
+    if (map._pathRoot) {
+        layerQueue.defer(handlePathRoot, map._pathRoot);
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = dimensions.x;
+    canvas.height = dimensions.y;
+    var ctx = canvas.getContext('2d');
+
+    function done() {
+        callback(null, canvas);
+    }
+
+    layerQueue.awaitAll(function(err, layers) {
+        if (err) throw err;
+        layers.forEach(function(layer) {
+            if (layer && layer.canvas) {
+                ctx.drawImage(layer.canvas, 0, 0);
+            }
+        });
+        done();
+    });
+
+    function handleTileLayer(layer, callback) {
+        var canvas = document.createElement('canvas');
+        canvas.width = dimensions.x;
+        canvas.height = dimensions.y;
+        var ctx = canvas.getContext('2d');
+        var bounds = map.getPixelBounds(),
+            zoom = map.getZoom(),
+            tileSize = layer.options.tileSize;
+
+        if (!layer.options.tiles || zoom > layer.options.maxZoom || zoom < layer.options.minZoom) {
+            return callback();
+        }
+
+        var tileBounds = L.bounds(
+            bounds.min.divideBy(tileSize)._floor(),
+            bounds.max.divideBy(tileSize)._floor());
+
+        var tiles = [],
+            center = tileBounds.getCenter();
+
+        var j, i, point;
+
+        for (j = tileBounds.min.y; j <= tileBounds.max.y; j++) {
+            for (i = tileBounds.min.x; i <= tileBounds.max.x; i++) {
+                tiles.push(new L.Point(i, j));
+            }
+        }
+
+        var tileQueue = new queue(1);
+
+        tiles.forEach(function(tilePoint) {
+            tileQueue.defer(function(callback) {
+                layer._adjustTilePoint(tilePoint);
+                var tilePos = layer._getTilePos(tilePoint);
+                var url = layer.getTileUrl(tilePoint) + '?cache=' + (+new Date());
+                var im = new Image();
+                im.crossOrigin = '';
+                im.onload = function() {
+                    callback(null, {
+                        img: this,
+                        pos: tilePos,
+                        size: tileSize
+                    });
+                };
+                im.src = url;
+            });
+            tileQueue.awaitAll(function(err, data) {
+                data.forEach(function(d) {
+                    ctx.drawImage(d.img, Math.floor(d.pos.x), Math.floor(d.pos.y),
+                        d.size, d.size);
+                });
+                callback(null, {
+                    canvas: canvas
+                });
+            });
+        });
+    }
+
+    function handlePathRoot(root, callback) {
+        var canvas = document.createElement('canvas');
+        canvas.width = dimensions.x;
+        canvas.height = dimensions.y;
+        var ctx = canvas.getContext('2d');
+        var pos = L.DomUtil.getPosition(root);
+        ctx.drawImage(root, pos.x, pos.y);
+        callback(null, {
+            canvas: canvas
+        });
+    }
+
+    function handleMarkerLayer(marker, callback) {
+        var url = marker._icon.src + '?cache=false';
+        var im = new Image();
+        im.crossOrigin = '*';
+        im.onload = function() {
+            // callback(null, {
+            //     img: this,
+            //     pos: tilePos
+            // });
+        };
+        im.src = url;
+
+        // var canvas = document.createElement('canvas');
+        // canvas.width = dimensions.x;
+        // canvas.height = dimensions.y;
+        // var ctx = canvas.getContext('2d');
+        // var pos = L.DomUtil.getPosition(root);
+        // ctx.drawImage(root, pos.x, pos.y);
+        // callback(null, {
+        //     canvas: canvas
+        // });
+    }
+}
+
+},{"./queue":2}],2:[function(require,module,exports){
+(function() {
+  if (typeof module === "undefined") self.queue = queue;
+  else module.exports = queue;
+  queue.version = "1.0.4";
+
+  var slice = [].slice;
+
+  function queue(parallelism) {
+    var q,
+        tasks = [],
+        started = 0, // number of tasks that have been started (and perhaps finished)
+        active = 0, // number of tasks currently being executed (started but not finished)
+        remaining = 0, // number of tasks not yet finished
+        popping, // inside a synchronous task callback?
+        error = null,
+        await = noop,
+        all;
+
+    if (!parallelism) parallelism = Infinity;
+
+    function pop() {
+      while (popping = started < tasks.length && active < parallelism) {
+        var i = started++,
+            t = tasks[i],
+            a = slice.call(t, 1);
+        a.push(callback(i));
+        ++active;
+        t[0].apply(null, a);
+      }
+    }
+
+    function callback(i) {
+      return function(e, r) {
+        --active;
+        if (error != null) return;
+        if (e != null) {
+          error = e; // ignore new tasks and squelch active callbacks
+          started = remaining = NaN; // stop queued tasks from starting
+          notify();
+        } else {
+          tasks[i] = r;
+          if (--remaining) popping || pop();
+          else notify();
+        }
+      };
+    }
+
+    function notify() {
+      if (error != null) await(error);
+      else if (all) await(error, tasks);
+      else await.apply(null, [error].concat(tasks));
+    }
+
+    return q = {
+      defer: function() {
+        if (!error) {
+          tasks.push(arguments);
+          ++remaining;
+          pop();
+        }
+        return q;
+      },
+      await: function(f) {
+        await = f;
+        all = false;
+        if (!remaining) notify();
+        return q;
+      },
+      awaitAll: function(f) {
+        await = f;
+        all = true;
+        if (!remaining) notify();
+        return q;
+      }
+    };
+  }
+
+  function noop() {}
+})();
+
+},{}],3:[function(require,module,exports){
 // nothing to see here... no file methods for the browser
 
-},{}],2:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var process=require("__browserify_process");function filter (xs, fn) {
     var res = [];
     for (var i = 0; i < xs.length; i++) {
@@ -180,7 +394,7 @@ exports.relative = function(from, to) {
 
 exports.sep = '/';
 
-},{"__browserify_process":4}],3:[function(require,module,exports){
+},{"__browserify_process":6}],5:[function(require,module,exports){
 require=(function(e,t,n,r){function i(r){if(!n[r]){if(!t[r]){if(e)return e(r);throw new Error("Cannot find module '"+r+"'")}var s=n[r]={exports:{}};t[r][0](function(e){var n=t[r][1][e];return i(n?n:e)},s,s.exports)}return n[r].exports}for(var s=0;s<r.length;s++)i(r[s]);return i})(typeof require!=="undefined"&&require,{1:[function(require,module,exports){
 // UTILITY
 var util = require('util');
@@ -4042,7 +4256,7 @@ SlowBuffer.prototype.writeDoubleBE = Buffer.prototype.writeDoubleBE;
 },{}]},{},[])
 ;;module.exports=require("buffer-browserify")
 
-},{}],4:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -4096,7 +4310,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var Buffer=require("__browserify_Buffer").Buffer;"use strict";
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -4255,7 +4469,7 @@ clone.clonePrototype = function(parent) {
   return new c();
 };
 
-},{"__browserify_Buffer":3}],6:[function(require,module,exports){
+},{"__browserify_Buffer":5}],8:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -4412,7 +4626,7 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = function(_, def) {
     def = def === undefined ? 4 : def;
     if (_ === '{}') return '    ';
@@ -4422,7 +4636,7 @@ module.exports = function(_, def) {
     return space[0];
 };
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -4680,7 +4894,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":9}],9:[function(require,module,exports){
+},{"jsonlint-lines":11}],11:[function(require,module,exports){
 var process=require("__browserify_process");/* parser generated by jison 0.4.6 */
 /*
   Returns a Parser object of the following structure:
@@ -5335,7 +5549,7 @@ if (typeof module !== 'undefined' && require.main === module) {
   exports.main(process.argv.slice(1));
 }
 }
-},{"__browserify_process":4,"fs":1,"path":2}],10:[function(require,module,exports){
+},{"__browserify_process":6,"fs":3,"path":4}],12:[function(require,module,exports){
 module.exports = function(d3) {
     var preview = require('static-map-preview')(d3, 'tmcw.map-dsejpecw');
 
@@ -5691,7 +5905,7 @@ function mapFile(data) {
     }
 }
 
-},{"static-map-preview":11}],11:[function(require,module,exports){
+},{"static-map-preview":13}],13:[function(require,module,exports){
 var scaleCanvas = require('autoscale-canvas');
 
 module.exports = function(d3, mapid) {
@@ -5755,7 +5969,7 @@ module.exports = function(d3, mapid) {
     function filterNan(_) { return isNaN(_) ? 0 : _; }
 };
 
-},{"autoscale-canvas":12}],12:[function(require,module,exports){
+},{"autoscale-canvas":14}],14:[function(require,module,exports){
 
 /**
  * Retina-enable the given `canvas`.
@@ -5777,7 +5991,7 @@ module.exports = function(canvas){
   }
   return canvas;
 };
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 (function(window) {
 	var HAS_HASHCHANGE = (function() {
 		var doc_mode = window.documentMode;
@@ -5941,7 +6155,7 @@ module.exports = function(canvas){
 	};
 })(window);
 
-},{}],14:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var osm_geojson = {};
 
 osm_geojson.geojson2osm = function(geo, changeset) {
@@ -6397,7 +6611,7 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
 
 if (typeof module !== 'undefined') module.exports = osm_geojson;
 
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 ;(function(){
 	var store = {},
 		win = window,
@@ -6552,7 +6766,7 @@ if (typeof module !== 'undefined') module.exports = osm_geojson;
 	else { this.store = store }
 })();
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 toGeoJSON = (function() {
     'use strict';
 
@@ -6788,7 +7002,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":18,"./lib/topojson/clockwise":20,"./lib/topojson/filter":22,"./lib/topojson/prune":28,"./lib/topojson/simplify":29,"./lib/topojson/topology":32,"fs":1}],18:[function(require,module,exports){
+},{"./lib/topojson/bind":20,"./lib/topojson/clockwise":22,"./lib/topojson/filter":24,"./lib/topojson/prune":28,"./lib/topojson/simplify":29,"./lib/topojson/topology":32,"fs":3}],20:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6818,7 +7032,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":33}],19:[function(require,module,exports){
+},{"../../":"PBmiWO","./type":33}],21:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6852,7 +7066,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -6925,13 +7139,13 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":21,"./type":33}],21:[function(require,module,exports){
+},{"../../":"PBmiWO","./coordinate-systems":23,"./type":33}],23:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":19,"./spherical":30}],22:[function(require,module,exports){
+},{"./cartesian":21,"./spherical":30}],24:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -7001,7 +7215,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":20,"./coordinate-systems":21,"./prune":28,"./type":33}],23:[function(require,module,exports){
+},{"../../":"PBmiWO","./clockwise":22,"./coordinate-systems":23,"./prune":28,"./type":33}],25:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -7011,7 +7225,7 @@ module.exports = function(size) {
   };
 };
 
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var hasher = require("./hash");
 
 module.exports = function(size) {
@@ -7066,131 +7280,7 @@ function equal(keyA, keyB) {
       && keyA[1] === keyB[1];
 }
 
-},{"./hash":23}],25:[function(require,module,exports){
-var importPanel = require('./import'),
-    githubBrowser = require('github-file-browser')(d3),
-    detectIndentationStyle = require('detect-json-indent');
-
-module.exports = function(context) {
-
-    function render(selection) {
-
-        selection.select('.right.overlay').remove();
-
-        var panel = selection.append('div')
-            .attr('class', 'right overlay');
-
-        var sources = [{
-            title: 'Import',
-            alt: 'CSV, KML, GPX, and other filetypes',
-            icon: 'icon-cog',
-            action: clickImport
-        }, {
-            title: 'GitHub',
-            alt: 'GeoJSON files in GitHub Repositories',
-            icon: 'icon-github',
-            authenticated: true,
-            action: clickGitHub
-        }, {
-            title: 'Gist',
-            alt: 'GeoJSON files in GitHub Gists',
-            icon: 'icon-github-alt',
-            authenticated: true,
-            action: clickGist
-        }];
-
-        var $top = panel
-            .append('div')
-            .attr('class', 'top');
-
-       var $buttons = $top.append('div')
-            .attr('class', 'buttons');
-
-       var $sources = $buttons
-           .selectAll('button.source')
-            .data(sources)
-            .enter()
-            .append('button')
-            .classed('deemphasize', function(d) {
-                return d.authenticated && !context.user.token();
-            })
-            .attr('class', function(d) {
-                return d.icon + ' icon-spaced pad1 source';
-            })
-            .text(function(d) {
-                return ' ' + d.title;
-            })
-            .attr('title', function(d) { return d.alt; })
-            .on('click', clickSource);
-
-        function clickSource(d) {
-            if (d.authenticated && !context.user.token()) {
-                return alert('Log in to load GitHub files and Gists');
-            }
-
-            var that = this;
-            $sources.classed('active', function() {
-                return that === this;
-            });
-
-            d.action.apply(this, d);
-        }
-
-        $buttons.append('button')
-            .on('click', hidePanel)
-            .attr('class', function(d) {
-                return 'icon-remove';
-            });
-
-        function hidePanel(d) {
-            panel.remove();
-        }
-
-        var $subpane = panel.append('div')
-            .attr('class', 'subpane');
-
-        function clickGitHub() {
-            $subpane
-                .html('')
-                .append('div')
-                .attr('class', 'repos')
-                .call(githubBrowser
-                    .gitHubBrowse(context.user.token(), {
-                        sort: function(a, b) {
-                            return new Date(b.pushed_at) - new Date(a.pushed_at);
-                        }
-                    }).on('chosen', context.data.parse));
-        }
-
-        function clickImport() {
-            $subpane
-                .html('')
-                .append('div')
-                .call(importPanel(context));
-        }
-
-        function clickGist() {
-            $subpane
-                .html('')
-                .append('div')
-                .attr('class', 'browser pad1')
-                .call(githubBrowser
-                    .gistBrowse(context.user.token(), {
-                        sort: function(a, b) {
-                            return new Date(b.updated_at) - new Date(a.updated_at);
-                        }
-                    }).on('chosen', context.data.parse));
-        }
-
-        $sources.filter(function(d, i) { return !i; }).trigger('click');
-    }
-
-    return render;
-};
-
-},{"./import":66,"detect-json-indent":7,"github-file-browser":10}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],27:[function(require,module,exports){
+},{"./hash":25}],27:[function(require,module,exports){
 module.exports = function() {
   var heap = {},
       array = [];
@@ -7447,7 +7537,7 @@ function transformRelative(transform) {
   };
 }
 
-},{"./coordinate-systems":21,"./min-heap":27}],30:[function(require,module,exports){
+},{"./coordinate-systems":23,"./min-heap":27}],30:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -7921,7 +8011,7 @@ function pointCompare(a, b) {
 
 function noop() {}
 
-},{"./coordinate-systems":21,"./hashtable":24,"./stitch-poles":31,"./type":33}],33:[function(require,module,exports){
+},{"./coordinate-systems":23,"./hashtable":26,"./stitch-poles":31,"./type":33}],33:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -9053,7 +9143,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":58,"../source/github":59,"clone":5,"xtend":35}],42:[function(require,module,exports){
+},{"../source/gist":60,"../source/github":61,"clone":7,"xtend":35}],42:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -9099,7 +9189,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/querystring":51,"../lib/zoomextent":55,"../ui/flash":64}],43:[function(require,module,exports){
+},{"../lib/querystring":53,"../lib/zoomextent":57,"../ui/flash":66}],43:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('../lib/querystring');
 
@@ -9139,7 +9229,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/querystring":51,"../lib/zoomextent":55}],44:[function(require,module,exports){
+},{"../lib/querystring":53,"../lib/zoomextent":57}],44:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9249,7 +9339,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":51,"xtend":35}],46:[function(require,module,exports){
+},{"../lib/querystring":53,"xtend":35}],46:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9366,7 +9456,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":41,"./core/loader":42,"./core/recovery":43,"./core/repo":44,"./core/router":45,"./core/user":46,"./ui":60,"./ui/map":68,"store":15}],48:[function(require,module,exports){
+},{"./core/data":41,"./core/loader":42,"./core/recovery":43,"./core/repo":44,"./core/router":45,"./core/user":46,"./ui":62,"./ui/map":70,"store":17}],48:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -9405,7 +9495,44 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":51,"leaflet-hash":13}],49:[function(require,module,exports){
+},{"../lib/querystring":53,"leaflet-hash":15}],49:[function(require,module,exports){
+var github = require('../source/github');
+
+module.exports = commit;
+
+function commit(context, callback) {
+    context.container.select('.share').remove();
+    context.container.select('.tooltip.in')
+      .classed('in', false);
+
+    var wrap = context.container.append('div')
+        .attr('class', 'share pad1 center')
+        .style('z-index', 10);
+
+    var form = wrap.append('form')
+        .on('submit', function() {
+            d3.event.preventDefault();
+            context.commitMessage = message.property('value');
+            if (typeof callback === 'function') callback();
+        });
+
+    var message = form.append('input')
+        .attr('placeholder', 'Commit message')
+        .attr('type', 'text');
+
+    var commitButton = form.append('input')
+        .attr('type', 'submit')
+        .property('value', 'Commit Changes')
+        .attr('class', 'semimajor');
+
+    message.node().focus();
+
+    return wrap;
+}
+
+},{"../source/github":61}],"topojson":[function(require,module,exports){
+module.exports=require('PBmiWO');
+},{}],51:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -9462,7 +9589,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],50:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 module.exports = function(elem, w, h) {
     var c = elem.appendChild(document.createElement('canvas'));
 
@@ -9483,7 +9610,7 @@ module.exports = function(elem, w, h) {
     };
 };
 
-},{}],51:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 module.exports.stringQs = function(str) {
     return str.split('&').reduce(function(obj, pair){
         var parts = pair.split('=');
@@ -9503,7 +9630,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],52:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     osm2geojson = require('osm-and-geojson').osm2geojson;
@@ -9613,7 +9740,7 @@ function readFile(f, callback) {
     }
 }
 
-},{"osm-and-geojson":14,"togeojson":16,"topojson":"PBmiWO"}],53:[function(require,module,exports){
+},{"osm-and-geojson":16,"togeojson":18,"topojson":"PBmiWO"}],55:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -9625,7 +9752,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],54:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -9681,13 +9808,13 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":8}],55:[function(require,module,exports){
+},{"geojsonhint":10}],57:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],56:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var validate = require('../lib/validate'),
     saver = require('../ui/saver.js');
 
@@ -9746,7 +9873,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":54,"../ui/saver.js":71}],57:[function(require,module,exports){
+},{"../lib/validate":56,"../ui/saver.js":73}],59:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -9818,7 +9945,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":53,"d3-metatable":6}],58:[function(require,module,exports){
+},{"../lib/smartzoom.js":55,"d3-metatable":8}],60:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -9912,7 +10039,7 @@ function load(id, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":1}],59:[function(require,module,exports){
+},{"fs":3}],61:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -10019,7 +10146,7 @@ function fileUrl(parts) {
         '?ref=' + parts.branch;
 }
 
-},{}],60:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -10104,42 +10231,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":62,"./ui/file_bar":63,"./ui/layer_switch":67,"./ui/mode_buttons":70,"./ui/user":73}],61:[function(require,module,exports){
-var github = require('../source/github');
-
-module.exports = commit;
-
-function commit(context, callback) {
-    context.container.select('.share').remove();
-    context.container.select('.tooltip.in')
-      .classed('in', false);
-
-    var wrap = context.container.append('div')
-        .attr('class', 'share pad1 center')
-        .style('z-index', 10);
-
-    var form = wrap.append('form')
-        .on('submit', function() {
-            d3.event.preventDefault();
-            context.commitMessage = message.property('value');
-            if (typeof callback === 'function') callback();
-        });
-
-    var message = form.append('input')
-        .attr('placeholder', 'Commit message')
-        .attr('type', 'text');
-
-    var commitButton = form.append('input')
-        .attr('type', 'submit')
-        .property('value', 'Commit Changes')
-        .attr('class', 'semimajor');
-
-    message.node().focus();
-
-    return wrap;
-}
-
-},{"../source/github":59}],62:[function(require,module,exports){
+},{"./ui/dnd":63,"./ui/file_bar":65,"./ui/layer_switch":69,"./ui/mode_buttons":72,"./ui/user":76}],63:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
     flash = require('./flash.js');
@@ -10188,8 +10280,85 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":52,"./flash.js":64,"./geocode.js":65}],63:[function(require,module,exports){
-var share = require('./share'),
+},{"../lib/readfile.js":54,"./flash.js":66,"./geocode.js":67}],64:[function(require,module,exports){
+var leafletImage = require('../../lib/leaflet-image');
+
+module.exports = download;
+
+function download(context) {
+    function downloadGeoJSON() {
+        if (d3.event) d3.event.preventDefault();
+        var content = JSON.stringify(context.data.get('map'));
+        var meta = context.data.get('meta');
+        window.saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), (meta && meta.name) || 'map.geojson');
+    }
+
+    function downloadImage() {
+        if (d3.event) d3.event.preventDefault();
+        leafletImage(context.map, function(err, canvas) {
+            var data = canvas.toDataURL().match(/data:(.*),(.*)/),
+                type = data[1].match(/(^.*);/)[1],
+                content = window.atob(data[2]),
+                ext = '.' + type.match(/\/(.*)$/)[1],
+                meta = context.data.get('meta'),
+                arr = new Uint8Array(content.length);
+
+            for (var i = 0, length = content.length; i < length; i++) {
+                arr[i] = content.charCodeAt(i);    
+            }
+
+            window.saveAs(new Blob([arr.buffer], {
+                type: type
+            }), (meta && meta.name ? meta.name.split('.')[0] : 'map') + ext);
+        });
+    }
+
+    return function(selection) {
+
+        selection.select('.download').remove();
+        selection.select('.tooltip.in')
+          .classed('in', false);
+
+        var sel = selection.append('div')
+            .attr('class', 'download pad1');
+
+        var actions = [{
+            icon: 'icon-map-marker',
+            title: 'GeoJSON',
+            action: downloadGeoJSON
+        }, {
+            icon: 'icon-picture',
+            title: 'Image',
+            action: downloadImage
+        }];
+
+        var links = sel
+            .selectAll('.action')
+            .data(actions)
+            .enter()
+            .append('a')
+            .attr('class', 'action')
+            .on('click', function(d) {
+                d.action.apply(this, d);
+            });
+
+        links.append('span')
+            .attr('class', function(d) { return d.icon + ' pre-icon'; });
+
+        links.append('span')
+            .text(function(d) { return d.title; });
+
+        sel.append('a')
+            .attr('class', 'icon-remove')
+            .on('click', function() { sel.remove(); });
+    };
+}
+
+},{"../../lib/leaflet-image":1}],65:[function(require,module,exports){
+var download = require('./download'),
+    share = require('./share'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
 
@@ -10228,7 +10397,7 @@ module.exports = function fileBar(context) {
             title: 'Download',
             icon: 'icon-download',
             action: function() {
-                download();
+                context.container.call(download(context));
             }
         }, {
             title: 'Share',
@@ -10241,15 +10410,6 @@ module.exports = function fileBar(context) {
         function saveAction() {
             if (d3.event) d3.event.preventDefault();
             saver(context);
-        }
-
-        function download() {
-            if (d3.event) d3.event.preventDefault();
-            var content = JSON.stringify(context.data.get('map'));
-            var meta = context.data.get('meta');
-            window.saveAs(new Blob([content], {
-                type: 'text/plain;charset=utf-8'
-            }), (meta && meta.name) || 'map.geojson');
         }
 
         function sourceIcon(type) {
@@ -10298,14 +10458,13 @@ module.exports = function fileBar(context) {
 
         d3.select(document).call(
             d3.keybinding('file_bar')
-                .on('⌘+a', download)
                 .on('⌘+s', saveAction));
     }
 
     return bar;
 };
 
-},{"../ui/saver.js":71,"./share":72,"./source.js":25}],64:[function(require,module,exports){
+},{"../ui/saver.js":73,"./download":64,"./share":74,"./source.js":75}],66:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -10327,7 +10486,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":69}],65:[function(require,module,exports){
+},{"./message":71}],67:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart');
 
 module.exports = function(context) {
@@ -10464,7 +10623,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":50}],66:[function(require,module,exports){
+},{"../lib/progress_chart":52}],68:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -10548,7 +10707,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":52,"../lib/zoomextent":55,"./flash.js":64,"./geocode.js":65}],67:[function(require,module,exports){
+},{"../lib/readfile.js":54,"../lib/zoomextent":57,"./flash.js":66,"./geocode.js":67}],69:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -10601,7 +10760,7 @@ module.exports = function(context) {
 };
 
 
-},{}],68:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -10710,7 +10869,7 @@ function bindPopup(l) {
     }, l).setContent(content));
 }
 
-},{"../lib/custom_hash.js":48,"../lib/popup":49,"../lib/querystring.js":51}],69:[function(require,module,exports){
+},{"../lib/custom_hash.js":48,"../lib/popup":51,"../lib/querystring.js":53}],71:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -10751,7 +10910,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],70:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json');
 
@@ -10797,7 +10956,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":56,"../panel/table":57}],71:[function(require,module,exports){
+},{"../panel/json":58,"../panel/table":59}],73:[function(require,module,exports){
 var commit = require('./commit');
 var flash = require('./flash');
 
@@ -10859,7 +11018,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":61,"./flash":64}],72:[function(require,module,exports){
+},{"./commit":49,"./flash":66}],74:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -10936,7 +11095,129 @@ function share(context) {
     };
 }
 
-},{"../source/gist":58}],73:[function(require,module,exports){
+},{"../source/gist":60}],75:[function(require,module,exports){
+var importPanel = require('./import'),
+    githubBrowser = require('github-file-browser')(d3),
+    detectIndentationStyle = require('detect-json-indent');
+
+module.exports = function(context) {
+
+    function render(selection) {
+
+        selection.select('.right.overlay').remove();
+
+        var panel = selection.append('div')
+            .attr('class', 'right overlay');
+
+        var sources = [{
+            title: 'Import',
+            alt: 'CSV, KML, GPX, and other filetypes',
+            icon: 'icon-cog',
+            action: clickImport
+        }, {
+            title: 'GitHub',
+            alt: 'GeoJSON files in GitHub Repositories',
+            icon: 'icon-github',
+            authenticated: true,
+            action: clickGitHub
+        }, {
+            title: 'Gist',
+            alt: 'GeoJSON files in GitHub Gists',
+            icon: 'icon-github-alt',
+            authenticated: true,
+            action: clickGist
+        }];
+
+        var $top = panel
+            .append('div')
+            .attr('class', 'top');
+
+       var $buttons = $top.append('div')
+            .attr('class', 'buttons');
+
+       var $sources = $buttons
+           .selectAll('button.source')
+            .data(sources)
+            .enter()
+            .append('button')
+            .classed('deemphasize', function(d) {
+                return d.authenticated && !context.user.token();
+            })
+            .attr('class', function(d) {
+                return d.icon + ' icon-spaced pad1 source';
+            })
+            .text(function(d) {
+                return ' ' + d.title;
+            })
+            .attr('title', function(d) { return d.alt; })
+            .on('click', clickSource);
+
+        function clickSource(d) {
+            if (d.authenticated && !context.user.token()) {
+                return alert('Log in to load GitHub files and Gists');
+            }
+
+            var that = this;
+            $sources.classed('active', function() {
+                return that === this;
+            });
+
+            d.action.apply(this, d);
+        }
+
+        $buttons.append('button')
+            .on('click', hidePanel)
+            .attr('class', function(d) {
+                return 'icon-remove';
+            });
+
+        function hidePanel(d) {
+            panel.remove();
+        }
+
+        var $subpane = panel.append('div')
+            .attr('class', 'subpane');
+
+        function clickGitHub() {
+            $subpane
+                .html('')
+                .append('div')
+                .attr('class', 'repos')
+                .call(githubBrowser
+                    .gitHubBrowse(context.user.token(), {
+                        sort: function(a, b) {
+                            return new Date(b.pushed_at) - new Date(a.pushed_at);
+                        }
+                    }).on('chosen', context.data.parse));
+        }
+
+        function clickImport() {
+            $subpane
+                .html('')
+                .append('div')
+                .call(importPanel(context));
+        }
+
+        function clickGist() {
+            $subpane
+                .html('')
+                .append('div')
+                .attr('class', 'browser pad1')
+                .call(githubBrowser
+                    .gistBrowse(context.user.token(), {
+                        sort: function(a, b) {
+                            return new Date(b.updated_at) - new Date(a.updated_at);
+                        }
+                    }).on('chosen', context.data.parse));
+        }
+
+        $sources.filter(function(d, i) { return !i; }).trigger('click');
+    }
+
+    return render;
+};
+
+},{"./import":68,"detect-json-indent":9,"github-file-browser":12}],76:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')

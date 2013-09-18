@@ -1,4 +1,5 @@
-var share = require('./share'),
+var download = require('./download'),
+    share = require('./share'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
 
@@ -37,7 +38,7 @@ module.exports = function fileBar(context) {
             title: 'Download',
             icon: 'icon-download',
             action: function() {
-                download();
+                context.container.call(download(context));
             }
         }, {
             title: 'Share',
@@ -50,15 +51,6 @@ module.exports = function fileBar(context) {
         function saveAction() {
             if (d3.event) d3.event.preventDefault();
             saver(context);
-        }
-
-        function download() {
-            if (d3.event) d3.event.preventDefault();
-            var content = JSON.stringify(context.data.get('map'));
-            var meta = context.data.get('meta');
-            window.saveAs(new Blob([content], {
-                type: 'text/plain;charset=utf-8'
-            }), (meta && meta.name) || 'map.geojson');
         }
 
         function sourceIcon(type) {
@@ -107,7 +99,6 @@ module.exports = function fileBar(context) {
 
         d3.select(document).call(
             d3.keybinding('file_bar')
-                .on('⌘+a', download)
                 .on('⌘+s', saveAction));
     }
 
