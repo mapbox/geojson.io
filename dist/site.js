@@ -9,7 +9,7 @@ module.exports = function leafletImage(map, callback) {
         if (l instanceof L.TileLayer) {
             layerQueue.defer(handleTileLayer, l);
         } else if (l instanceof L.Marker) {
-            // layerQueue.defer(handleMarkerLayer, l);
+            layerQueue.defer(handleMarkerLayer, l);
         }
     });
 
@@ -120,8 +120,11 @@ module.exports = function leafletImage(map, callback) {
         im.crossOrigin = '';
 
         im.onload = function() {
-            var pos = pixelPoint.subtract(minPoint);
-            ctx.drawImage(this, pos.x, pos.y);
+            var pos = pixelPoint.subtract(minPoint),
+                x = pos.x - Math.floor(this.width / 2),
+                y = pos.y - this.height;
+
+            ctx.drawImage(this, x, y);
 
             callback(null, {
                 canvas: canvas
