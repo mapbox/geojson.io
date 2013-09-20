@@ -58,10 +58,14 @@ function readFile(f, callback) {
                 gj = JSON.parse(e.target.result);
                 if (gj && gj.type === 'Topology' && gj.objects) {
                     var collection = { type: 'FeatureCollection', features: [] };
-                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                    callback(null, collection);
+                    for (var o in gj.objects) {
+                        var ft = topojson.feature(gj, gj.objects[o]);
+                        if (ft.features) collection.features = collection.features.concat(ft.features);
+                        else collection.features = collection.features.concat([ft]);
+                    }
+                    return callback(null, collection);
                 } else {
-                    callback(null, gj);
+                    return callback(null, gj);
                 }
             } catch(err) {
                 alert('Invalid JSON file: ' + err);

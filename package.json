@@ -8,7 +8,7 @@
     "jsonlint": "1.6.0",
     "geojsonhint": "0.1.5",
     "d3-metatable": "0.2.1",
-    "topojson": "1.2.3",
+    "topojson": "1.4.0",
     "brfs": "0.0.7",
     "togeojson": "0.3.0",
     "csv2geojson": "3.5.1",

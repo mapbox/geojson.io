@@ -6777,10 +6777,10 @@ toGeoJSON = (function() {
 
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
-},{}],"PBmiWO":[function(require,module,exports){
+},{}],"g070js":[function(require,module,exports){
 var fs = require("fs");
 
-var topojson = module.exports = new Function("topojson", "return " + "topojson = (function() {\n\n  function merge(topology, arcs) {\n    var fragmentByStart = {},\n        fragmentByEnd = {};\n\n    arcs.forEach(function(i) {\n      var e = ends(i),\n          start = e[0],\n          end = e[1],\n          f, g;\n\n      if (f = fragmentByEnd[start]) {\n        delete fragmentByEnd[f.end];\n        f.push(i);\n        f.end = end;\n        if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByEnd[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[end]) {\n        delete fragmentByStart[f.start];\n        f.unshift(i);\n        f.start = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[start]) {\n        delete fragmentByStart[f.start];\n        f.unshift(~i);\n        f.start = end;\n        if (g = fragmentByEnd[end]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByEnd[end]) {\n        delete fragmentByEnd[f.end];\n        f.push(~i);\n        f.end = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else {\n        f = [i];\n        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;\n      }\n    });\n\n    function ends(i) {\n      var arc = topology.arcs[i], p0 = arc[0], p1 = [0, 0];\n      arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });\n      return [p0, p1];\n    }\n\n    var fragments = [];\n    for (var k in fragmentByEnd) fragments.push(fragmentByEnd[k]);\n    return fragments;\n  }\n\n  function mesh(topology, o, filter) {\n    var arcs = [];\n\n    if (arguments.length > 1) {\n      var geomsByArc = [],\n          geom;\n\n      function arc(i) {\n        if (i < 0) i = ~i;\n        (geomsByArc[i] || (geomsByArc[i] = [])).push(geom);\n      }\n\n      function line(arcs) {\n        arcs.forEach(arc);\n      }\n\n      function polygon(arcs) {\n        arcs.forEach(line);\n      }\n\n      function geometry(o) {\n        if (o.type === \"GeometryCollection\") o.geometries.forEach(geometry);\n        else if (o.type in geometryType) {\n          geom = o;\n          geometryType[o.type](o.arcs);\n        }\n      }\n\n      var geometryType = {\n        LineString: line,\n        MultiLineString: polygon,\n        Polygon: polygon,\n        MultiPolygon: function(arcs) { arcs.forEach(polygon); }\n      };\n\n      geometry(o);\n\n      geomsByArc.forEach(arguments.length < 3\n          ? function(geoms, i) { arcs.push(i); }\n          : function(geoms, i) { if (filter(geoms[0], geoms[geoms.length - 1])) arcs.push(i); });\n    } else {\n      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);\n    }\n\n    return object(topology, {type: \"MultiLineString\", arcs: merge(topology, arcs)});\n  }\n\n  function featureOrCollection(topology, o) {\n    return o.type === \"GeometryCollection\" ? {\n      type: \"FeatureCollection\",\n      features: o.geometries.map(function(o) { return feature(topology, o); })\n    } : feature(topology, o);\n  }\n\n  function feature(topology, o) {\n    var f = {\n      type: \"Feature\",\n      id: o.id,\n      properties: o.properties || {},\n      geometry: object(topology, o)\n    };\n    if (o.id == null) delete f.id;\n    return f;\n  }\n\n  function object(topology, o) {\n    var tf = topology.transform,\n        kx = tf.scale[0],\n        ky = tf.scale[1],\n        dx = tf.translate[0],\n        dy = tf.translate[1],\n        arcs = topology.arcs;\n\n    function arc(i, points) {\n      if (points.length) points.pop();\n      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, x = 0, y = 0, p; k < n; ++k) points.push([\n        (x += (p = a[k])[0]) * kx + dx,\n        (y += p[1]) * ky + dy\n      ]);\n      if (i < 0) reverse(points, n);\n    }\n\n    function point(coordinates) {\n      return [coordinates[0] * kx + dx, coordinates[1] * ky + dy];\n    }\n\n    function line(arcs) {\n      var points = [];\n      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);\n      if (points.length < 2) points.push(points[0].slice());\n      return points;\n    }\n\n    function ring(arcs) {\n      var points = line(arcs);\n      while (points.length < 4) points.push(points[0].slice());\n      return points;\n    }\n\n    function polygon(arcs) {\n      return arcs.map(ring);\n    }\n\n    function geometry(o) {\n      var t = o.type;\n      return t === \"GeometryCollection\" ? {type: t, geometries: o.geometries.map(geometry)}\n          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}\n          : null;\n    }\n\n    var geometryType = {\n      Point: function(o) { return point(o.coordinates); },\n      MultiPoint: function(o) { return o.coordinates.map(point); },\n      LineString: function(o) { return line(o.arcs); },\n      MultiLineString: function(o) { return o.arcs.map(line); },\n      Polygon: function(o) { return polygon(o.arcs); },\n      MultiPolygon: function(o) { return o.arcs.map(polygon); }\n    };\n\n    return geometry(o);\n  }\n\n  function reverse(array, n) {\n    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;\n  }\n\n  function bisect(a, x) {\n    var lo = 0, hi = a.length;\n    while (lo < hi) {\n      var mid = lo + hi >>> 1;\n      if (a[mid] < x) lo = mid + 1;\n      else hi = mid;\n    }\n    return lo;\n  }\n\n  function neighbors(objects) {\n    var indexesByArc = {}, // arc index -> array of object indexes\n        neighbors = objects.map(function() { return []; });\n\n    function line(arcs, i) {\n      arcs.forEach(function(a) {\n        if (a < 0) a = ~a;\n        var o = indexesByArc[a];\n        if (o) o.push(i);\n        else indexesByArc[a] = [i];\n      });\n    }\n\n    function polygon(arcs, i) {\n      arcs.forEach(function(arc) { line(arc, i); });\n    }\n\n    function geometry(o, i) {\n      if (o.type === \"GeometryCollection\") o.geometries.forEach(function(o) { geometry(o, i); });\n      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);\n    }\n\n    var geometryType = {\n      LineString: line,\n      MultiLineString: polygon,\n      Polygon: polygon,\n      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }\n    };\n\n    objects.forEach(geometry);\n\n    for (var i in indexesByArc) {\n      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {\n        for (var k = j + 1; k < m; ++k) {\n          var ij = indexes[j], ik = indexes[k], n;\n          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);\n          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);\n        }\n      }\n    }\n\n    return neighbors;\n  }\n\n  return {\n    version: \"1.2.3\",\n    mesh: mesh,\n    feature: featureOrCollection,\n    neighbors: neighbors\n  };\n})();\n")();
+var topojson = module.exports = new Function("topojson", "return " + "topojson = (function() {\n\n  function merge(topology, arcs) {\n    var fragmentByStart = {},\n        fragmentByEnd = {};\n\n    arcs.forEach(function(i) {\n      var e = ends(i),\n          start = e[0],\n          end = e[1],\n          f, g;\n\n      if (f = fragmentByEnd[start]) {\n        delete fragmentByEnd[f.end];\n        f.push(i);\n        f.end = end;\n        if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByEnd[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[end]) {\n        delete fragmentByStart[f.start];\n        f.unshift(i);\n        f.start = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[start]) {\n        delete fragmentByStart[f.start];\n        f.unshift(~i);\n        f.start = end;\n        if (g = fragmentByEnd[end]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByEnd[end]) {\n        delete fragmentByEnd[f.end];\n        f.push(~i);\n        f.end = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else {\n        f = [i];\n        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;\n      }\n    });\n\n    function ends(i) {\n      var arc = topology.arcs[i], p0 = arc[0], p1 = [0, 0];\n      arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });\n      return [p0, p1];\n    }\n\n    var fragments = [];\n    for (var k in fragmentByEnd) fragments.push(fragmentByEnd[k]);\n    return fragments;\n  }\n\n  function mesh(topology, o, filter) {\n    var arcs = [];\n\n    if (arguments.length > 1) {\n      var geomsByArc = [],\n          geom;\n\n      function arc(i) {\n        if (i < 0) i = ~i;\n        (geomsByArc[i] || (geomsByArc[i] = [])).push(geom);\n      }\n\n      function line(arcs) {\n        arcs.forEach(arc);\n      }\n\n      function polygon(arcs) {\n        arcs.forEach(line);\n      }\n\n      function geometry(o) {\n        if (o.type === \"GeometryCollection\") o.geometries.forEach(geometry);\n        else if (o.type in geometryType) {\n          geom = o;\n          geometryType[o.type](o.arcs);\n        }\n      }\n\n      var geometryType = {\n        LineString: line,\n        MultiLineString: polygon,\n        Polygon: polygon,\n        MultiPolygon: function(arcs) { arcs.forEach(polygon); }\n      };\n\n      geometry(o);\n\n      geomsByArc.forEach(arguments.length < 3\n          ? function(geoms, i) { arcs.push(i); }\n          : function(geoms, i) { if (filter(geoms[0], geoms[geoms.length - 1])) arcs.push(i); });\n    } else {\n      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);\n    }\n\n    return object(topology, {type: \"MultiLineString\", arcs: merge(topology, arcs)});\n  }\n\n  function featureOrCollection(topology, o) {\n    return o.type === \"GeometryCollection\" ? {\n      type: \"FeatureCollection\",\n      features: o.geometries.map(function(o) { return feature(topology, o); })\n    } : feature(topology, o);\n  }\n\n  function feature(topology, o) {\n    var f = {\n      type: \"Feature\",\n      id: o.id,\n      properties: o.properties || {},\n      geometry: object(topology, o)\n    };\n    if (o.id == null) delete f.id;\n    return f;\n  }\n\n  function object(topology, o) {\n    var absolute = transformAbsolute(topology.transform),\n        arcs = topology.arcs;\n\n    function arc(i, points) {\n      if (points.length) points.pop();\n      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, p; k < n; ++k) {\n        points.push(p = a[k].slice());\n        absolute(p, k);\n      }\n      if (i < 0) reverse(points, n);\n    }\n\n    function point(p) {\n      p = p.slice();\n      absolute(p, 0);\n      return p;\n    }\n\n    function line(arcs) {\n      var points = [];\n      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);\n      if (points.length < 2) points.push(points[0].slice());\n      return points;\n    }\n\n    function ring(arcs) {\n      var points = line(arcs);\n      while (points.length < 4) points.push(points[0].slice());\n      return points;\n    }\n\n    function polygon(arcs) {\n      return arcs.map(ring);\n    }\n\n    function geometry(o) {\n      var t = o.type;\n      return t === \"GeometryCollection\" ? {type: t, geometries: o.geometries.map(geometry)}\n          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}\n          : null;\n    }\n\n    var geometryType = {\n      Point: function(o) { return point(o.coordinates); },\n      MultiPoint: function(o) { return o.coordinates.map(point); },\n      LineString: function(o) { return line(o.arcs); },\n      MultiLineString: function(o) { return o.arcs.map(line); },\n      Polygon: function(o) { return polygon(o.arcs); },\n      MultiPolygon: function(o) { return o.arcs.map(polygon); }\n    };\n\n    return geometry(o);\n  }\n\n  function reverse(array, n) {\n    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;\n  }\n\n  function bisect(a, x) {\n    var lo = 0, hi = a.length;\n    while (lo < hi) {\n      var mid = lo + hi >>> 1;\n      if (a[mid] < x) lo = mid + 1;\n      else hi = mid;\n    }\n    return lo;\n  }\n\n  function neighbors(objects) {\n    var indexesByArc = {}, // arc index -> array of object indexes\n        neighbors = objects.map(function() { return []; });\n\n    function line(arcs, i) {\n      arcs.forEach(function(a) {\n        if (a < 0) a = ~a;\n        var o = indexesByArc[a];\n        if (o) o.push(i);\n        else indexesByArc[a] = [i];\n      });\n    }\n\n    function polygon(arcs, i) {\n      arcs.forEach(function(arc) { line(arc, i); });\n    }\n\n    function geometry(o, i) {\n      if (o.type === \"GeometryCollection\") o.geometries.forEach(function(o) { geometry(o, i); });\n      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);\n    }\n\n    var geometryType = {\n      LineString: line,\n      MultiLineString: polygon,\n      Polygon: polygon,\n      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }\n    };\n\n    objects.forEach(geometry);\n\n    for (var i in indexesByArc) {\n      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {\n        for (var k = j + 1; k < m; ++k) {\n          var ij = indexes[j], ik = indexes[k], n;\n          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);\n          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);\n        }\n      }\n    }\n\n    return neighbors;\n  }\n\n  function presimplify(topology, triangleArea) {\n    var absolute = transformAbsolute(topology.transform),\n        relative = transformRelative(topology.transform),\n        heap = minHeap(compareArea),\n        maxArea = 0,\n        triangle;\n\n    if (!triangleArea) triangleArea = cartesianArea;\n\n    topology.arcs.forEach(function(arc) {\n      var triangles = [];\n\n      arc.forEach(absolute);\n\n      for (var i = 1, n = arc.length - 1; i < n; ++i) {\n        triangle = arc.slice(i - 1, i + 2);\n        triangle[1][2] = triangleArea(triangle);\n        triangles.push(triangle);\n        heap.push(triangle);\n      }\n\n      // Always keep the arc endpoints!\n      arc[0][2] = arc[n][2] = Infinity;\n\n      for (var i = 0, n = triangles.length; i < n; ++i) {\n        triangle = triangles[i];\n        triangle.previous = triangles[i - 1];\n        triangle.next = triangles[i + 1];\n      }\n    });\n\n    while (triangle = heap.pop()) {\n      var previous = triangle.previous,\n          next = triangle.next;\n\n      // If the area of the current point is less than that of the previous point\n      // to be eliminated, use the latter's area instead. This ensures that the\n      // current point cannot be eliminated without eliminating previously-\n      // eliminated points.\n      if (triangle[1][2] < maxArea) triangle[1][2] = maxArea;\n      else maxArea = triangle[1][2];\n\n      if (previous) {\n        previous.next = next;\n        previous[2] = triangle[2];\n        update(previous);\n      }\n\n      if (next) {\n        next.previous = previous;\n        next[0] = triangle[0];\n        update(next);\n      }\n    }\n\n    topology.arcs.forEach(function(arc) {\n      arc.forEach(relative);\n    });\n\n    function update(triangle) {\n      heap.remove(triangle);\n      triangle[1][2] = triangleArea(triangle);\n      heap.push(triangle);\n    }\n\n    return topology;\n  };\n\n  function cartesianArea(triangle) {\n    return Math.abs(\n      (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])\n      - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])\n    );\n  }\n\n  function compareArea(a, b) {\n    return a[1][2] - b[1][2];\n  }\n\n  function minHeap(compare) {\n    var heap = {},\n        array = [];\n\n    heap.push = function() {\n      for (var i = 0, n = arguments.length; i < n; ++i) {\n        var object = arguments[i];\n        up(object.index = array.push(object) - 1);\n      }\n      return array.length;\n    };\n\n    heap.pop = function() {\n      var removed = array[0],\n          object = array.pop();\n      if (array.length) {\n        array[object.index = 0] = object;\n        down(0);\n      }\n      return removed;\n    };\n\n    heap.remove = function(removed) {\n      var i = removed.index,\n          object = array.pop();\n      if (i !== array.length) {\n        array[object.index = i] = object;\n        (compare(object, removed) < 0 ? up : down)(i);\n      }\n      return i;\n    };\n\n    function up(i) {\n      var object = array[i];\n      while (i > 0) {\n        var up = ((i + 1) >> 1) - 1,\n            parent = array[up];\n        if (compare(object, parent) >= 0) break;\n        array[parent.index = i] = parent;\n        array[object.index = i = up] = object;\n      }\n    }\n\n    function down(i) {\n      var object = array[i];\n      while (true) {\n        var right = (i + 1) << 1,\n            left = right - 1,\n            down = i,\n            child = array[down];\n        if (left < array.length && compare(array[left], child) < 0) child = array[down = left];\n        if (right < array.length && compare(array[right], child) < 0) child = array[down = right];\n        if (down === i) break;\n        array[child.index = i] = child;\n        array[object.index = i = down] = object;\n      }\n    }\n\n    return heap;\n  }\n\n  function transformAbsolute(transform) {\n    if (!transform) return noop;\n    var x0,\n        y0,\n        kx = transform.scale[0],\n        ky = transform.scale[1],\n        dx = transform.translate[0],\n        dy = transform.translate[1];\n    return function(point, i) {\n      if (!i) x0 = y0 = 0;\n      point[0] = (x0 += point[0]) * kx + dx;\n      point[1] = (y0 += point[1]) * ky + dy;\n    };\n  }\n\n  function transformRelative(transform) {\n    if (!transform) return noop;\n    var x0,\n        y0,\n        kx = transform.scale[0],\n        ky = transform.scale[1],\n        dx = transform.translate[0],\n        dy = transform.translate[1];\n    return function(point, i) {\n      if (!i) x0 = y0 = 0;\n      var x1 = (point[0] - dx) / kx | 0,\n          y1 = (point[1] - dy) / ky | 0;\n      point[0] = x1 - x0;\n      point[1] = y1 - y0;\n      x0 = x1;\n      y0 = y1;\n    };\n  }\n\n  function noop() {}\n\n  return {\n    version: \"1.4.0\",\n    mesh: mesh,\n    feature: featureOrCollection,\n    neighbors: neighbors,\n    presimplify: presimplify\n  };\n})();\n")();
 topojson.topology = require("./lib/topojson/topology");
 topojson.simplify = require("./lib/topojson/simplify");
 topojson.clockwise = require("./lib/topojson/clockwise");
@@ -6788,7 +6788,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":18,"./lib/topojson/clockwise":20,"./lib/topojson/filter":22,"./lib/topojson/prune":28,"./lib/topojson/simplify":29,"./lib/topojson/topology":31,"fs":1}],18:[function(require,module,exports){
+},{"./lib/topojson/bind":18,"./lib/topojson/clockwise":21,"./lib/topojson/filter":25,"./lib/topojson/prune":28,"./lib/topojson/simplify":30,"./lib/topojson/topology":33,"fs":1}],18:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6818,7 +6818,54 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":32}],19:[function(require,module,exports){
+},{"../../":"g070js","./type":43}],19:[function(require,module,exports){
+
+// Computes the bounding box of the specified hash of GeoJSON objects.
+module.exports = function(objects) {
+  var x0 = Infinity,
+      y0 = Infinity,
+      x1 = -Infinity,
+      y1 = -Infinity;
+
+  function boundGeometry(geometry) {
+    if (geometry && boundGeometryType.hasOwnProperty(geometry.type)) boundGeometryType[geometry.type](geometry);
+  }
+
+  var boundGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(boundGeometry); },
+    Point: function(o) { boundPoint(o.coordinates); },
+    MultiPoint: function(o) { o.coordinates.forEach(boundPoint); },
+    LineString: function(o) { boundLine(o.coordinates); },
+    MultiLineString: function(o) { o.coordinates.forEach(boundLine); },
+    Polygon: function(o) { o.coordinates.forEach(boundLine); },
+    MultiPolygon: function(o) { o.coordinates.forEach(boundMultiLine); }
+  };
+
+  function boundPoint(coordinates) {
+    var x = coordinates[0],
+        y = coordinates[1];
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (y < y0) y0 = y;
+    if (y > y1) y1 = y;
+  }
+
+  function boundLine(coordinates) {
+    coordinates.forEach(boundPoint);
+  }
+
+  function boundMultiLine(coordinates) {
+    coordinates.forEach(boundLine);
+  }
+
+  for (var key in objects) {
+    boundGeometry(objects[key]);
+  }
+
+  return [x0, y0, x1, y1];
+};
+
+},{}],20:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6837,7 +6884,7 @@ function ringArea(ring) {
   while (++i < n) {
     area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
   }
-  return area * .5;
+  return -area * .5; // ensure clockwise pixel areas are positive
 }
 
 function triangleArea(triangle) {
@@ -6852,7 +6899,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -6925,13 +6972,74 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":21,"./type":32}],21:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":23,"./type":43}],22:[function(require,module,exports){
+// Given a hash of GeoJSON objects and an id function, invokes the id function
+// to compute a new id for each object that is a feature. The function is passed
+// the feature and is expected to return the new feature id, or null if the
+// feature should not have an id.
+module.exports = function(objects, id) {
+  if (arguments.length < 2) id = function(d) { return d.id; };
+
+  function idObject(object) {
+    if (object && idObjectType.hasOwnProperty(object.type)) idObjectType[object.type](object);
+  }
+
+  function idFeature(feature) {
+    var i = id(feature);
+    if (i == null) delete feature.id;
+    else feature.id = i;
+  }
+
+  var idObjectType = {
+    Feature: idFeature,
+    FeatureCollection: function(collection) { collection.features.forEach(idFeature); }
+  };
+
+  for (var key in objects) {
+    idObject(objects[key]);
+  }
+
+  return objects;
+};
+
+},{}],23:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":19,"./spherical":25}],22:[function(require,module,exports){
+},{"./cartesian":20,"./spherical":31}],24:[function(require,module,exports){
+// Given a TopoJSON topology in absolute (quantized) coordinates,
+// converts to fixed-point delta encoding.
+// This is a destructive operation that modifies the given topology!
+module.exports = function(topology) {
+  var arcs = topology.arcs,
+      i = -1,
+      n = arcs.length;
+
+  while (++i < n) {
+    var arc = arcs[i],
+        j = 0,
+        m = arc.length,
+        point = arc[0],
+        x0 = point[0],
+        y0 = point[1],
+        x1,
+        y1;
+    while (++j < m) {
+      point = arc[j];
+      x1 = point[0];
+      y1 = point[1];
+      arc[j] = [x1 - x0, y1 - y0];
+      x0 = x1;
+      y0 = y1;
+    }
+  }
+
+  return topology;
+};
+
+},{}],25:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -6940,13 +7048,17 @@ var type = require("./type"),
 
 module.exports = function(topology, options) {
   var system = null,
-      forceClockwise = true; // force exterior rings to be clockwise?
+      forceClockwise = true, // force exterior rings to be clockwise?
+      minimumArea;
 
   if (options)
     "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
+    "minimum-area" in options && (minimumArea = +options["minimum-area"]),
     "force-clockwise" in options && (forceClockwise = !!options["force-clockwise"]);
 
   if (forceClockwise) clockwise(topology, options); // deprecated; for backwards-compatibility
+
+  if (!(minimumArea > 0)) minimumArea = Number.MIN_VALUE;
 
   var filter = type({
     LineString: noop, // TODO remove empty lines
@@ -6988,85 +7100,437 @@ module.exports = function(topology, options) {
   prune(topology, options);
 
   function ringArea(ring) {
-    return system.absoluteArea(system.ringArea(topojson.feature(topology, {type: "Polygon", arcs: [ring]}).geometry.coordinates[0]));
+    var topopolygon = {type: "Polygon", arcs: [ring]},
+        geopolygon = topojson.feature(topology, topopolygon),
+        exterior = geopolygon.geometry.coordinates[0],
+        exteriorArea = system.absoluteArea(system.ringArea(exterior));
+    return exteriorArea >= minimumArea;
   }
 };
 
-// TODO It might be slightly more compact to reverse the arc.
-function reverse(ring) {
-  var i = -1, n = ring.length;
-  ring.reverse();
-  while (++i < n) ring[i] = ~ring[i];
-}
+function noop() {}
+
+},{"../../":"g070js","./clockwise":21,"./coordinate-systems":23,"./prune":28,"./type":43}],26:[function(require,module,exports){
+// Given a hash of GeoJSON objects, replaces Features with geometry objects.
+// This is a destructive operation that modifies the input objects!
+module.exports = function(objects) {
+
+  function geomifyObject(object) {
+    return (object && geomifyObjectType.hasOwnProperty(object.type)
+        ? geomifyObjectType[object.type]
+        : geomifyGeometry)(object);
+  }
+
+  function geomifyFeature(feature) {
+    var geometry = feature.geometry;
+    if (geometry == null) {
+      feature.type = null;
+    } else {
+      geomifyGeometry(geometry);
+      feature.type = geometry.type;
+      if (geometry.geometries) feature.geometries = geometry.geometries;
+      else if (geometry.coordinates) feature.coordinates = geometry.coordinates;
+    }
+    delete feature.geometry;
+    return feature;
+  }
+
+  function geomifyGeometry(geometry) {
+    if (!geometry) return {type: null};
+    if (geomifyGeometryType.hasOwnProperty(geometry.type)) geomifyGeometryType[geometry.type](geometry);
+    return geometry;
+  }
+
+  var geomifyObjectType = {
+    Feature: geomifyFeature,
+    FeatureCollection: function(collection) {
+      collection.type = "GeometryCollection";
+      collection.geometries = collection.features;
+      collection.features.forEach(geomifyFeature);
+      delete collection.features;
+      return collection;
+    }
+  };
+
+  var geomifyGeometryType = {
+    GeometryCollection: function(o) {
+      var geometries = o.geometries, i = -1, n = geometries.length;
+      while (++i < n) geometries[i] = geomifyGeometry(geometries[i]);
+    },
+    MultiPoint: function(o) {
+      if (!o.coordinates.length) {
+        o.type = null;
+        delete o.coordinates;
+      } else if (o.coordinates.length < 2) {
+        o.type = "Point";
+        o.coordinates = o.coordinates[0];
+      }
+    },
+    LineString: function(o) {
+      if (!o.coordinates.length) {
+        o.type = null;
+        delete o.coordinates;
+      }
+    },
+    MultiLineString: function(o) {
+      for (var lines = o.coordinates, i = 0, N = 0, n = lines.length; i < n; ++i) {
+        var line = lines[i];
+        if (line.length) lines[N++] = line;
+      }
+      if (!N) {
+        o.type = null;
+        delete o.coordinates;
+      } else if (N < 2) {
+        o.type = "LineString";
+        o.coordinates = lines[0];
+      } else {
+        o.coordinates.length = N;
+      }
+    },
+    Polygon: function(o) {
+      for (var rings = o.coordinates, i = 0, N = 0, n = rings.length; i < n; ++i) {
+        var ring = rings[i];
+        if (ring.length) rings[N++] = ring;
+      }
+      if (!N) {
+        o.type = null;
+        delete o.coordinates;
+      } else {
+        o.coordinates.length = N;
+      }
+    },
+    MultiPolygon: function(o) {
+      for (var polygons = o.coordinates, j = 0, M = 0, m = polygons.length; j < m; ++j) {
+        for (var rings = polygons[j], i = 0, N = 0, n = rings.length; i < n; ++i) {
+          var ring = rings[i];
+          if (ring.length) rings[N++] = ring;
+        }
+        if (N) {
+          rings.length = N;
+          polygons[M++] = rings;
+        }
+      }
+      if (!M) {
+        o.type = null;
+        delete o.coordinates;
+      } else if (M < 2) {
+        o.type = "Polygon";
+        o.coordinates = polygons[0];
+      } else {
+        polygons.length = M;
+      }
+    }
+  };
+
+  for (var key in objects) {
+    objects[key] = geomifyObject(objects[key]);
+  }
+
+  return objects;
+};
+
+},{}],27:[function(require,module,exports){
+module.exports = function(objects, filter) {
+
+  function prefilterGeometry(geometry) {
+    if (!geometry) return {type: null};
+    if (prefilterGeometryType.hasOwnProperty(geometry.type)) prefilterGeometryType[geometry.type](geometry);
+    return geometry;
+  }
+
+  var prefilterGeometryType = {
+    GeometryCollection: function(o) {
+      var geometries = o.geometries, i = -1, n = geometries.length;
+      while (++i < n) geometries[i] = prefilterGeometry(geometries[i]);
+    },
+    Polygon: function(o) {
+      for (var rings = o.coordinates, i = 0, N = 0, n = rings.length; i < n; ++i) {
+        var ring = rings[i];
+        if (filter(ring)) rings[N++] = ring;
+      }
+      if (!N) {
+        o.type = null;
+        delete o.coordinates;
+      } else {
+        o.coordinates.length = N;
+      }
+    },
+    MultiPolygon: function(o) {
+      for (var polygons = o.coordinates, j = 0, M = 0, m = polygons.length; j < m; ++j) {
+        for (var rings = polygons[j], i = 0, N = 0, n = rings.length; i < n; ++i) {
+          var ring = rings[i];
+          if (filter(ring)) rings[N++] = ring;
+        }
+        if (N) {
+          rings.length = N;
+          polygons[M++] = rings;
+        }
+      }
+      if (!M) {
+        o.type = null;
+        delete o.coordinates;
+      } else if (M < 2) {
+        o.type = "Polygon";
+        o.coordinates = polygons[0];
+      } else {
+        polygons.length = M;
+      }
+    }
+  };
+
+  for (var key in objects) {
+    objects[key] = prefilterGeometry(objects[key]);
+  }
+
+  return objects;
+};
+
+},{}],28:[function(require,module,exports){
+module.exports = function(topology, options) {
+  var verbose = false,
+      objects = topology.objects,
+      oldArcs = topology.arcs,
+      oldArcCount = oldArcs.length,
+      newArcs = topology.arcs = [],
+      newArcCount = 0,
+      newIndexByOldIndex = new Array(oldArcs.length);
+
+  if (options)
+    "verbose" in options && (verbose = !!options["verbose"]);
+
+  function pruneGeometry(geometry) {
+    if (geometry && pruneGeometryType.hasOwnProperty(geometry.type)) pruneGeometryType[geometry.type](geometry);
+  }
+
+  var pruneGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(pruneGeometry); },
+    LineString: function(o) { pruneArcs(o.arcs); },
+    MultiLineString: function(o) { o.arcs.forEach(pruneArcs); },
+    Polygon: function(o) { o.arcs.forEach(pruneArcs); },
+    MultiPolygon: function(o) { o.arcs.forEach(pruneMultiArcs); }
+  };
+
+  function pruneArcs(arcs) {
+    for (var i = 0, m = 0, n = arcs.length; i < n; ++i) {
+      var oldIndex = arcs[i],
+          oldReverse = oldIndex < 0 && (oldIndex = ~oldIndex, true),
+          oldArc = oldArcs[oldIndex],
+          newIndex;
+
+      // Skip collapsed arc segments.
+      if (oldArc.length < 3 && !oldArc[1][0] && !oldArc[1][1]) continue;
+
+      // If this is the first instance of this arc,
+      // record it under its new index.
+      if ((newIndex = newIndexByOldIndex[oldIndex]) == null) {
+        newIndexByOldIndex[oldIndex] = newIndex = newArcCount++;
+        newArcs[newIndex] = oldArcs[oldIndex];
+      }
+
+      arcs[m++] = oldReverse ? ~newIndex : newIndex;
+    }
+
+    // If all were collapsed, restore the last arc to avoid collapsing the line.
+    if (!(arcs.length = m) && n) {
+
+      // If this is the first instance of this arc,
+      // record it under its new index.
+      if ((newIndex = newIndexByOldIndex[oldIndex]) == null) {
+        newIndexByOldIndex[oldIndex] = newIndex = newArcCount++;
+        newArcs[newIndex] = oldArcs[oldIndex];
+      }
+
+      arcs[0] = oldReverse ? ~newIndex : newIndex;
+    }
+  }
+
+  function pruneMultiArcs(arcs) {
+    arcs.forEach(pruneArcs);
+  }
+
+  for (var key in objects) {
+    pruneGeometry(objects[key]);
+  }
+
+  if (verbose) console.warn("prune: retained " + newArcCount + " / " + oldArcCount + " arcs (" + Math.round(newArcCount / oldArcCount * 100) + "%)");
+
+  return topology;
+};
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":20,"./coordinate-systems":21,"./prune":28,"./type":32}],23:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
-  };
-};
+},{}],29:[function(require,module,exports){
+module.exports = function(objects, bbox, Q) {
+  var x0 = isFinite(bbox[0]) ? bbox[0] : 0,
+      y0 = isFinite(bbox[1]) ? bbox[1] : 0,
+      x1 = isFinite(bbox[2]) ? bbox[2] : 0,
+      y1 = isFinite(bbox[3]) ? bbox[3] : 0,
+      kx = x1 - x0 ? (Q - 1) / (x1 - x0) : 1,
+      ky = y1 - y0 ? (Q - 1) / (y1 - y0) : 1;
 
-},{}],24:[function(require,module,exports){
-var hasher = require("./hash");
+  function quantizeGeometry(geometry) {
+    if (geometry && quantizeGeometryType.hasOwnProperty(geometry.type)) quantizeGeometryType[geometry.type](geometry);
+  }
 
-module.exports = function(size) {
-  var hashtable = new Array(size = 1 << Math.ceil(Math.log(size) / Math.LN2)),
-      hash = hasher(size);
-  return {
-    size: size,
-    peek: function(key) {
-      var matches = hashtable[hash(key)];
-
-      if (matches) {
-        var i = -1,
-            n = matches.length,
-            match;
-        while (++i < n) {
-          match = matches[i];
-          if (equal(match.key, key)) {
-            return match.values;
-          }
-        }
-      }
-
-      return null;
+  var quantizeGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(quantizeGeometry); },
+    Point: function(o) { quantizePoint(o.coordinates); },
+    MultiPoint: function(o) { o.coordinates.forEach(quantizePoint); },
+    LineString: function(o) {
+      var line = o.coordinates;
+      quantizeLine(line);
+      if (line.length < 2) line[1] = line[0]; // must have 2+
     },
-    get: function(key) {
-      var index = hash(key),
-          matches = hashtable[index];
-
-      if (matches) {
-        var i = -1,
-            n = matches.length,
-            match;
-        while (++i < n) {
-          match = matches[i];
-          if (equal(match.key, key)) {
-            return match.values;
-          }
-        }
-      } else {
-        matches = hashtable[index] = [];
+    MultiLineString: function(o) {
+      for (var lines = o.coordinates, i = 0, n = lines.length; i < n; ++i) {
+        var line = lines[i];
+        quantizeLine(line);
+        if (line.length < 2) line[1] = line[0]; // must have 2+
       }
-
-      var values = [];
-      matches.push({key: key, values: values});
-      return values;
+    },
+    Polygon: function(o) {
+      for (var rings = o.coordinates, i = 0, n = rings.length; i < n; ++i) {
+        var ring = rings[i];
+        quantizeLine(ring);
+        while (ring.length < 4) ring.push(ring[0]); // must have 4+
+      }
+    },
+    MultiPolygon: function(o) {
+      for (var polygons = o.coordinates, i = 0, n = polygons.length; i < n; ++i) {
+        for (var rings = polygons[i], j = 0, m = rings.length; j < m; ++j) {
+          var ring = rings[j];
+          quantizeLine(ring);
+          while (ring.length < 4) ring.push(ring[0]); // must have 4+
+        }
+      }
     }
   };
+
+  function quantizePoint(coordinates) {
+    coordinates[0] = Math.round((coordinates[0] - x0) * kx);
+    coordinates[1] = Math.round((coordinates[1] - y0) * ky);
+  }
+
+  function quantizeLine(coordinates) {
+    var i = 0,
+        j = 1,
+        n = coordinates.length,
+        pi = coordinates[0],
+        pj,
+        px = pi[0] = Math.round((pi[0] - x0) * kx),
+        py = pi[1] = Math.round((pi[1] - y0) * ky),
+        x,
+        y;
+
+    while (++i < n) {
+      pi = coordinates[i];
+      x = Math.round((pi[0] - x0) * kx);
+      y = Math.round((pi[1] - y0) * ky);
+      if (x !== px || y !== py) { // skip coincident points
+        pj = coordinates[j++];
+        pj[0] = px = x;
+        pj[1] = py = y;
+      }
+    }
+
+    coordinates.length = j;
+  }
+
+  for (var key in objects) {
+    quantizeGeometry(objects[key]);
+  }
+
+  return {
+    scale: [1 / kx, 1 / ky],
+    translate: [x0, y0]
+  };
 };
 
-function equal(keyA, keyB) {
-  return keyA[0] === keyB[0]
-      && keyA[1] === keyB[1];
-}
+},{}],30:[function(require,module,exports){
+var topojson = require("../../"),
+    systems = require("./coordinate-systems");
 
-},{"./hash":23}],25:[function(require,module,exports){
+module.exports = function(topology, options) {
+  var minimumArea = 0,
+      retainProportion,
+      verbose = false,
+      system = null,
+      N = topology.arcs.reduce(function(p, v) { return p + v.length; }, 0),
+      M = 0;
+
+  if (options)
+    "minimum-area" in options && (minimumArea = +options["minimum-area"]),
+    "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
+    "retain-proportion" in options && (retainProportion = +options["retain-proportion"]),
+    "verbose" in options && (verbose = !!options["verbose"]);
+
+  topojson.presimplify(topology, system.triangleArea);
+
+  if (retainProportion) {
+    var areas = [];
+    topology.arcs.forEach(function(arc) {
+      arc.forEach(function(point) {
+        areas.push(point[2]);
+      });
+    });
+    options["minimum-area"] = minimumArea = N ? areas.sort(function(a, b) { return b - a; })[Math.ceil((N - 1) * retainProportion)] : 0;
+    if (verbose) console.warn("simplification: effective minimum area " + minimumArea.toPrecision(3));
+  }
+
+  topology.arcs.forEach(topology.transform ? function(arc) {
+    var dx = 0,
+        dy = 0, // accumulate removed points
+        i = -1,
+        j = -1,
+        n = arc.length,
+        source,
+        target;
+
+    while (++i < n) {
+      source = arc[i];
+      if (source[2] >= minimumArea) {
+        target = arc[++j];
+        target[0] = source[0] + dx;
+        target[1] = source[1] + dy;
+        dx = dy = 0;
+      } else {
+        dx += source[0];
+        dy += source[1];
+      }
+    }
+
+    arc.length = ++j;
+  } : function(arc) {
+    var i = -1,
+        j = -1,
+        n = arc.length,
+        point;
+
+    while (++i < n) {
+      point = arc[i];
+      if (point[2] >= minimumArea) {
+        arc[++j] = point;
+      }
+    }
+
+    arc.length = ++j;
+  });
+
+  // Remove computed area (z) for each point.
+  // This is done as a separate pass because some coordinates may be shared
+  // between arcs (such as the last point and first point of a cut line).
+  topology.arcs.forEach(function(arc) {
+    var i = -1, n = arc.length;
+    while (++i < n) arc[i].length = 2;
+    M += arc.length;
+  });
+
+  if (verbose) console.warn("simplification: retained " + M + " / " + N + " points (" + Math.round((M / N) * 100) + "%)");
+
+  return topology;
+};
+
+},{"../../":"g070js","./coordinate-systems":23}],31:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -7148,266 +7612,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],27:[function(require,module,exports){
-module.exports = function() {
-  var heap = {},
-      array = [];
-
-  heap.push = function() {
-    for (var i = 0, n = arguments.length; i < n; ++i) {
-      var object = arguments[i];
-      up(object.index = array.push(object) - 1);
-    }
-    return array.length;
-  };
-
-  heap.pop = function() {
-    var removed = array[0],
-        object = array.pop();
-    if (array.length) {
-      array[object.index = 0] = object;
-      down(0);
-    }
-    return removed;
-  };
-
-  heap.remove = function(removed) {
-    var i = removed.index,
-        object = array.pop();
-    if (i !== array.length) {
-      array[object.index = i] = object;
-      (compare(object, removed) < 0 ? up : down)(i);
-    }
-    return i;
-  };
-
-  function up(i) {
-    var object = array[i];
-    while (i > 0) {
-      var up = ((i + 1) >> 1) - 1,
-          parent = array[up];
-      if (compare(object, parent) >= 0) break;
-      array[parent.index = i] = parent;
-      array[object.index = i = up] = object;
-    }
-  }
-
-  function down(i) {
-    var object = array[i];
-    while (true) {
-      var right = (i + 1) << 1,
-          left = right - 1,
-          down = i,
-          child = array[down];
-      if (left < array.length && compare(array[left], child) < 0) child = array[down = left];
-      if (right < array.length && compare(array[right], child) < 0) child = array[down = right];
-      if (down === i) break;
-      array[child.index = i] = child;
-      array[object.index = i = down] = object;
-    }
-  }
-
-  return heap;
-};
-
-function compare(a, b) {
-  return a[1].area - b[1].area;
-}
-
-},{}],28:[function(require,module,exports){
-var type = require("./type"),
-    topojson = require("../../");
-
-module.exports = function(topology, options) {
-  var verbose = false,
-      retained = [],
-      j = -1,
-      n = topology.arcs.length;
-
-  if (options)
-    "verbose" in options && (verbose = !!options["verbose"]);
-
-  var prune = type({
-    LineString: function(lineString) {
-      this.line(lineString.arcs);
-    },
-    MultiLineString: function(multiLineString) {
-      var arcs = multiLineString.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    },
-    MultiPoint: noop,
-    MultiPolygon: function(multiPolygon) {
-      var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.polygon(arcs[i]);
-    },
-    Point: noop,
-    Polygon: function(polygon) {
-      this.polygon(polygon.arcs);
-    },
-    line: function(arcs) {
-      var i = -1, n = arcs.length, arc, reversed;
-      while (++i < n) {
-        arc = arcs[i];
-        if (reversed = arc < 0) arc = ~arc;
-        if (retained[arc] == null) retained[arc] = ++j, arc = j;
-        else arc = retained[arc];
-        arcs[i] = reversed ? ~arc : arc;
-      }
-    },
-    polygon: function(arcs) {
-      var i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    }
-  });
-
-  for (var key in topology.objects) {
-    prune.object(topology.objects[key]);
-  }
-
-  if (verbose) console.warn("prune: retained " + (j + 1) + " / " + n + " arcs (" + Math.round((j + 1) / n * 100) + "%)");
-
-  var arcs = [];
-  retained.forEach(function(i, j) { arcs[i] = topology.arcs[j]; });
-  topology.arcs = arcs;
-};
-
-function noop() {}
-
-},{"../../":"PBmiWO","./type":32}],29:[function(require,module,exports){
-var minHeap = require("./min-heap"),
-    systems = require("./coordinate-systems");
-
-module.exports = function(topology, options) {
-  var mininumArea = 0,
-      retainProportion,
-      verbose = false,
-      heap = minHeap(),
-      maxArea = 0,
-      system = null,
-      triangle,
-      N = 0,
-      M = 0;
-
-  if (options)
-    "minimum-area" in options && (mininumArea = +options["minimum-area"]),
-    "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
-    "retain-proportion" in options && (retainProportion = +options["retain-proportion"]),
-    "verbose" in options && (verbose = !!options["verbose"]);
-
-  topology.arcs.forEach(function(arc) {
-    var triangles = [];
-
-    arc.forEach(transformAbsolute(topology.transform));
-
-    for (var i = 1, n = arc.length - 1; i < n; ++i) {
-      triangle = arc.slice(i - 1, i + 2);
-      triangle[1].area = system.triangleArea(triangle);
-      triangles.push(triangle);
-      heap.push(triangle);
-    }
-
-    // Always keep the arc endpoints!
-    arc[0].area = arc[n].area = Infinity;
-
-    N += n + 1;
-
-    for (var i = 0, n = triangles.length; i < n; ++i) {
-      triangle = triangles[i];
-      triangle.previous = triangles[i - 1];
-      triangle.next = triangles[i + 1];
-    }
-  });
-
-  while (triangle = heap.pop()) {
-    var previous = triangle.previous,
-        next = triangle.next;
-
-    // If the area of the current point is less than that of the previous point
-    // to be eliminated, use the latter's area instead. This ensures that the
-    // current point cannot be eliminated without eliminating previously-
-    // eliminated points.
-    if (triangle[1].area < maxArea) triangle[1].area = maxArea;
-    else maxArea = triangle[1].area;
-
-    if (previous) {
-      previous.next = next;
-      previous[2] = triangle[2];
-      update(previous);
-    }
-
-    if (next) {
-      next.previous = previous;
-      next[0] = triangle[0];
-      update(next);
-    }
-  }
-
-  if (retainProportion) {
-    var areas = [];
-    topology.arcs.forEach(function(arc) {
-      arc.forEach(function(point) {
-        areas.push(point.area);
-      });
-    });
-    mininumArea = areas.sort(function(a, b) { return b - a; })[Math.ceil((N - 1) * retainProportion)];
-    if (verbose) console.warn("simplification: effective minimum area " + mininumArea.toPrecision(3));
-  }
-
-  topology.arcs = topology.arcs.map(function(arc) {
-    return arc.filter(function(point) {
-      return point.area >= mininumArea;
-    });
-  });
-
-  topology.arcs.forEach(function(arc) {
-    arc.forEach(transformRelative(topology.transform));
-    M += arc.length;
-  });
-
-  function update(triangle) {
-    heap.remove(triangle);
-    triangle[1].area = system.triangleArea(triangle);
-    heap.push(triangle);
-  }
-
-  if (verbose) console.warn("simplification: retained " + M + " / " + N + " points (" + Math.round((M / N) * 100) + "%)");
-
-  return topology;
-};
-
-function transformAbsolute(transform) {
-  var x0 = 0,
-      y0 = 0,
-      kx = transform.scale[0],
-      ky = transform.scale[1],
-      dx = transform.translate[0],
-      dy = transform.translate[1];
-  return function(point) {
-    point[0] = (x0 += point[0]) * kx + dx;
-    point[1] = (y0 += point[1]) * ky + dy;
-  };
-}
-
-function transformRelative(transform) {
-  var x0 = 0,
-      y0 = 0,
-      kx = transform.scale[0],
-      ky = transform.scale[1],
-      dx = transform.translate[0],
-      dy = transform.translate[1];
-  return function(point) {
-    var x1 = (point[0] - dx) / kx | 0,
-        y1 = (point[1] - dy) / ky | 0;
-    point[0] = x1 - x0;
-    point[1] = y1 - y0;
-    x0 = x1;
-    y0 = y1;
-  };
-}
-
-},{"./coordinate-systems":21,"./min-heap":27}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -7457,11 +7662,18 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":32}],31:[function(require,module,exports){
+},{"./type":43}],33:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
-    hashtable = require("./hashtable"),
-    systems = require("./coordinate-systems");
+    systems = require("./coordinate-systems"),
+    topologize = require("./topology/index"),
+    delta = require("./delta"),
+    geomify = require("./geomify"),
+    prefilter = require("./prefilter"),
+    quantize = require("./quantize"),
+    bounds = require("./bounds"),
+    computeId = require("./compute-id"),
+    transformProperties = require("./transform-properties");
 
 var ε = 1e-6;
 
@@ -7469,54 +7681,36 @@ module.exports = function(objects, options) {
   var Q = 1e4, // precision of quantization
       id = function(d) { return d.id; }, // function to compute object id
       propertyTransform = function() {}, // function to transform properties
+      transform,
+      minimumArea = 0,
       stitchPoles = true,
       verbose = false,
-      x0, y0, x1, y1,
-      kx, ky,
-      εmax = 0,
-      coincidences,
-      system = null,
-      arcs = [],
-      arcsByPoint,
-      pointsByPoint;
+      system = null;
 
   if (options)
     "verbose" in options && (verbose = !!options["verbose"]),
     "stitch-poles" in options && (stitchPoles = !!options["stitch-poles"]),
     "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
+    "minimum-area" in options && (minimumArea = +options["minimum-area"]),
     "quantization" in options && (Q = +options["quantization"]),
     "id" in options && (id = options["id"]),
     "property-transform" in options && (propertyTransform = options["property-transform"]);
 
-  coincidences = hashtable(Q * 10);
-  arcsByPoint = hashtable(Q * 10);
-  pointsByPoint = hashtable(Q * 10);
+  // Compute the new feature id and transform properties.
+  computeId(objects, id);
+  transformProperties(objects, propertyTransform);
 
-  function each(callback) {
-    var t = type(callback), o = {};
-    for (var k in objects) o[k] = t.object(objects[k]) || {};
-    return o;
-  }
+  // Convert to geometry objects.
+  geomify(objects);
 
-  // Compute bounding box.
-  function bound() {
-    x1 = y1 = -(x0 = y0 = Infinity);
-    each({
-      point: function(point) {
-        var x = point[0],
-            y = point[1];
-        if (x < x0) x0 = x;
-        if (x > x1) x1 = x;
-        if (y < y0) y0 = y;
-        if (y > y1) y1 = y;
-      }
-    });
-  }
-
-  bound();
+  // Compute initial bounding box.
+  var bbox = bounds(objects);
 
   // For automatic coordinate system determination, consider the bounding box.
-  var oversize = x0 < -180 - ε || x1 > 180 + ε || y0 < -90 - ε || y1 > 90 + ε;
+  var oversize = bbox[0] < -180 - ε
+      || bbox[1] < -90 - ε
+      || bbox[2] > 180 + ε
+      || bbox[3] > 90 + ε;
   if (!system) {
     system = systems[oversize ? "cartesian" : "spherical"];
     if (options) options["coordinate-system"] = system.name;
@@ -7524,282 +7718,650 @@ module.exports = function(objects, options) {
 
   if (system === systems.spherical) {
     if (oversize) throw new Error("spherical coordinates outside of [±180°, ±90°]");
-    if (stitchPoles) stitch(objects), bound();
+    if (stitchPoles) stitch(objects), bbox = bounds(objects);
 
     // When near the spherical coordinate limits, clamp to nice round values.
     // This avoids quantized coordinates that are slightly outside the limits.
-    if (x0 < -180 + ε) x0 = -180;
-    if (x1 > 180 - ε) x1 = 180;
-    if (y0 < -90 + ε) y0 = -90;
-    if (y1 > 90 - ε) y1 = 90;
-  }
-
-  if (!isFinite(x0)) x0 = 0;
-  if (!isFinite(x1)) x1 = 0;
-  if (!isFinite(y0)) y0 = 0;
-  if (!isFinite(y1)) y1 = 0;
-
-  // Compute quantization scaling factors.
-  if (Q) {
-    kx = x1 - x0 ? (Q - 1) / (x1 - x0) : 1;
-    ky = y1 - y0 ? (Q - 1) / (y1 - y0) : 1;
-  } else {
-    console.warn("quantization: disabled; assuming inputs already quantized");
-    Q = x1 + 1;
-    kx = ky = 1;
-    x0 = y0 = 0;
+    if (bbox[0] < -180 + ε) bbox[0] = -180;
+    if (bbox[1] < -90 + ε) bbox[1] = -90;
+    if (bbox[2] > 180 - ε) bbox[2] = 180;
+    if (bbox[3] > 90 - ε) bbox[3] = 90;
   }
 
   if (verbose) {
-    var qx0 = Math.round((x0 - x0) * kx) * (1 / kx) + x0,
-        qx1 = Math.round((x1 - x0) * kx) * (1 / kx) + x0,
-        qy0 = Math.round((y0 - y0) * ky) * (1 / ky) + y0,
-        qy1 = Math.round((y1 - y0) * ky) * (1 / ky) + y0;
-    console.warn("quantization: bounds " + [qx0, qy0, qx1, qy1].join(" ") + " (" + system.name + ")");
+    console.warn("bounds: " + bbox.join(" ") + " (" + system.name + ")");
   }
 
-  // Quantize coordinates.
-  each({
-    point: function(point) {
-      var x1 = point[0],
-          y1 = point[1],
-          x = Math.round((x1 - x0) * kx),
-          y = Math.round((y1 - y0) * ky),
-          ε = system.distance(x1, y1, x / kx + x0, y / ky + y0);
-      if (ε > εmax) εmax = ε;
-      point[0] = x;
-      point[1] = y;
-    }
+  // Filter rings smaller than the minimum area.
+  // This can produce a simpler topology.
+  if (minimumArea) prefilter(objects, function(ring) {
+    return system.absoluteArea(system.ringArea(ring)) >= minimumArea;
   });
 
-  if (verbose) console.warn("quantization: maximum error "  + system.formatDistance(εmax));
+  // Compute the quantization transform.
+  if (Q) {
+    transform = quantize(objects, bbox, Q);
+    if (verbose) {
+      console.warn("quantization: " + transform.scale.map(function(degrees) { return system.formatDistance(degrees / 180 * Math.PI); }).join(" "));
+    }
+  }
 
-  // Compute the line strings that go through each unique point.
-  // If the line string goes through the same point more than once,
-  // only record that point once.
-  each({
-    line: function(line) {
-      var i = -1,
-          n = line.length,
-          lines;
-      while (++i < n) {
-        lines = coincidences.get(line[i]);
-        if (lines.indexOf(line) < 0) lines.push(line);
+  // Compute the topology.
+  var topology = topologize(objects);
+  topology.bbox = bbox;
+
+  if (verbose) {
+    console.warn("topology: " + topology.arcs.length + " arcs, " + topology.arcs.reduce(function(p, v) { return p + v.length; }, 0) + " points");
+  }
+
+  // Convert to delta-encoding.
+  if (Q) topology.transform = transform, delta(topology);
+
+  return topology;
+};
+
+},{"./bounds":19,"./compute-id":22,"./coordinate-systems":23,"./delta":24,"./geomify":26,"./prefilter":27,"./quantize":29,"./stitch-poles":32,"./topology/index":38,"./transform-properties":42,"./type":43}],34:[function(require,module,exports){
+var join = require("./join");
+
+// Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
+// point sequences are identified. The topology can then be subsequently deduped
+// to remove exact duplicate arcs.
+module.exports = function(topology) {
+  var junctionByPoint = join(topology),
+      coordinates = topology.coordinates,
+      lines = topology.lines,
+      rings = topology.rings;
+
+  for (var i = 0, n = lines.length; i < n; ++i) {
+    var line = lines[i],
+        lineMid = line[0],
+        lineEnd = line[1];
+    while (++lineMid < lineEnd) {
+      if (junctionByPoint.get(coordinates[lineMid])) {
+        var next = {0: lineMid, 1: line[1]};
+        line[1] = lineMid;
+        line = line.next = next;
       }
     }
-  });
+  }
 
-  // Convert features to geometries, and stitch together arcs.
-  objects = each({
-    Feature: function(feature) {
-      var geometry = feature.geometry;
-      if (feature.geometry == null) geometry = {};
-      if ("id" in feature) geometry.id = feature.id;
-      if ("properties" in feature) geometry.properties = feature.properties;
-      return this.geometry(geometry);
-    },
-
-    FeatureCollection: function(collection) {
-      collection.type = "GeometryCollection";
-      collection.geometries = collection.features.map(this.Feature, this);
-      delete collection.features;
-      return collection;
-    },
-
-    GeometryCollection: function(collection) {
-      collection.geometries = collection.geometries.map(this.geometry, this);
-    },
-
-    MultiPolygon: function(multiPolygon) {
-      multiPolygon.arcs = multiPolygon.coordinates.map(polygon);
-    },
-
-    Polygon: function(polygon) {
-      polygon.arcs = polygon.coordinates.map(lineClosed);
-    },
-
-    MultiLineString: function(multiLineString) {
-      multiLineString.arcs = multiLineString.coordinates.map(lineOpen);
-    },
-
-    LineString: function(lineString) {
-      lineString.arcs = lineOpen(lineString.coordinates);
-    },
-
-    geometry: function(geometry) {
-      if (geometry == null) geometry = {};
-      else this.defaults.geometry.call(this, geometry);
-
-      geometry.id = id(geometry);
-      if (geometry.id == null) delete geometry.id;
-
-      if (properties0 = geometry.properties) {
-        var properties0, properties1 = {};
-        delete geometry.properties;
-        for (var key0 in properties0) {
-          if (propertyTransform(properties1, key0, properties0[key0])) {
-            geometry.properties = properties1;
-          }
+  for (var i = 0, n = rings.length; i < n; ++i) {
+    var ring = rings[i],
+        ringStart = ring[0],
+        ringMid = ringStart,
+        ringEnd = ring[1],
+        ringFixed = junctionByPoint.get(coordinates[ringStart]);
+    while (++ringMid < ringEnd) {
+      if (junctionByPoint.get(coordinates[ringMid])) {
+        if (ringFixed) {
+          var next = {0: ringMid, 1: ring[1]};
+          ring[1] = ringMid;
+          ring = ring.next = next;
+        } else { // For the first junction, we can rotate rather than cut.
+          rotateArray(coordinates, ringStart, ringEnd, ringEnd - ringMid);
+          coordinates[ringEnd] = coordinates[ringStart];
+          ringFixed = true;
+          ringMid = ringStart; // restart; we may have skipped junctions
         }
       }
-
-      if (geometry.arcs) delete geometry.coordinates;
-      return geometry;
     }
-  });
-
-  coincidences = arcsByPoint = pointsByPoint = null;
-
-  function polygon(polygon) {
-    return polygon.map(lineClosed);
   }
 
-  function lineClosed(points) {
-    return line(points, false);
+  return topology;
+};
+
+function rotateArray(array, start, end, offset) {
+  reverse(array, start, end);
+  reverse(array, start, start + offset);
+  reverse(array, start + offset, end);
+}
+
+function reverse(array, start, end) {
+  for (var mid = start + ((end-- - start) >> 1), t; start < mid; ++start, --end) {
+    t = array[start], array[start] = array[end], array[end] = t;
+  }
+}
+
+},{"./join":39}],35:[function(require,module,exports){
+var join = require("./join"),
+    hashtable = require("./hashtable"),
+    hashPoint = require("./point-hash"),
+    equalPoint = require("./point-equal");
+
+// Given a cut topology, combines duplicate arcs.
+module.exports = function(topology) {
+  var coordinates = topology.coordinates,
+      lines = topology.lines,
+      rings = topology.rings,
+      arcCount = lines.length + rings.length;
+
+  delete topology.lines;
+  delete topology.rings;
+
+  // Count the number of (non-unique) arcs to initialize the hashtable safely.
+  for (var i = 0, n = lines.length; i < n; ++i) {
+    var line = lines[i]; while (line = line.next) ++arcCount;
+  }
+  for (var i = 0, n = rings.length; i < n; ++i) {
+    var ring = rings[i]; while (ring = ring.next) ++arcCount;
   }
 
-  function lineOpen(points) {
-    return line(points, true);
+  var arcsByEnd = hashtable(arcCount * 2, hashPoint, equalPoint),
+      arcs = topology.arcs = [];
+
+  for (var i = 0, n = lines.length; i < n; ++i) {
+    var line = lines[i];
+    do {
+      dedupLine(line);
+    } while (line = line.next);
   }
 
-  function line(points, open) {
-    var lineArcs = [],
-        n = points.length,
-        a = [],
-        k = 0,
-        p;
-
-    if (!open) points.pop(), --n;
-
-    // For closed lines, rotate to find a suitable shared starting point.
-    for (; k < n; ++k) {
-      var t = coincidences.peek(points[k]);
-      if (open) break;
-      if (p && !linesEqual(p, t)) {
-        var tInP = t.every(function(line) { return p.indexOf(line) >= 0; }),
-            pInT = p.every(function(line) { return t.indexOf(line) >= 0; });
-        if (tInP && !pInT) --k;
-        break;
-      }
-      p = t;
+  for (var i = 0, n = rings.length; i < n; ++i) {
+    var ring = rings[i];
+    if (ring.next) { // arc is no longer closed
+      do {
+        dedupLine(ring);
+      } while (ring = ring.next);
+    } else {
+      dedupRing(ring);
     }
+  }
 
-    // If no shared starting point is found for closed lines, rotate to minimum.
-    if (k === n && p.length > 1) {
-      var point0 = points[0];
-      for (k = 0, i = 1; i < n; ++i) {
-        var point = points[i];
-        if (pointCompare(point0, point) > 0) point0 = point, k = i;
-      }
-    }
+  function dedupLine(arc) {
+    var startPoint,
+        endPoint,
+        startArcs,
+        endArcs;
 
-    for (var i = 0, m = open ? n : n + 1; i < m; ++i) {
-      var point = points[(i + k) % n],
-          p = coincidences.peek(point);
-      if (!linesEqual(p, t)) {
-        var tInP = t.every(function(line) { return p.indexOf(line) >= 0; }),
-            pInT = p.every(function(line) { return t.indexOf(line) >= 0; });
-        if (tInP) a.push(point);
-        arc(a);
-        if (!tInP && !pInT) arc([a[a.length - 1], point]);
-        if (pInT) a = [a[a.length - 1]];
-        else a = [];
-      }
-      if (!a.length || pointCompare(a[a.length - 1], point)) a.push(point); // skip duplicate points
-      t = p;
-    }
-
-    arc(a, true);
-
-    function arc(a, last) {
-      var n = a.length;
-
-      if (last && !lineArcs.length && n === 1) {
-        var point = a[0],
-            index = pointsByPoint.get(point);
-        if (index.length) {
-          lineArcs.push(index[0]);
-        } else {
-          lineArcs.push(index[0] = arcs.length);
-          arcs.push(a);
+    // Does this arc match an existing arc in order?
+    if (startArcs = arcsByEnd.get(startPoint = coordinates[arc[0]])) {
+      for (var i = 0, n = startArcs.length; i < n; ++i) {
+        var startArc = startArcs[i];
+        if (equalLine(startArc, arc)) {
+          arc[0] = startArc[0];
+          arc[1] = startArc[1];
+          return;
         }
-      } else if (n > 1) {
-        var a0 = a[0],
-            a1 = a[n - 1],
-            point = pointCompare(a0, a1) < 0 ? a0 : a1,
-            pointArcs = arcsByPoint.get(point);
-        if (pointArcs.some(matchForward)) return;
-        if (pointArcs.some(matchBackward)) return;
-        pointArcs.push(a);
-        lineArcs.push(a.index = arcs.length);
-        arcs.push(a);
-      }
-
-      function matchForward(b) {
-        var i = -1;
-        if (b.length !== n) return false;
-        while (++i < n) if (pointCompare(a[i], b[i])) return false;
-        lineArcs.push(b.index);
-        return true;
-      }
-
-      function matchBackward(b) {
-        var i = -1;
-        if (b.length !== n) return false;
-        while (++i < n) if (pointCompare(a[i], b[n - i - 1])) return false;
-        lineArcs.push(~b.index);
-        return true;
       }
     }
 
-    return lineArcs;
+    // Does this arc match an existing arc in reverse order?
+    if (endArcs = arcsByEnd.get(endPoint = coordinates[arc[1]])) {
+      for (var i = 0, n = endArcs.length; i < n; ++i) {
+        var endArc = endArcs[i];
+        if (reverseEqualLine(endArc, arc)) {
+          arc[1] = endArc[0];
+          arc[0] = endArc[1];
+          return;
+        }
+      }
+    }
+
+    if (startArcs) startArcs.push(arc); else arcsByEnd.set(startPoint, [arc]);
+    if (endArcs) endArcs.push(arc); else arcsByEnd.set(endPoint, [arc]);
+    arcs.push(arc);
+  }
+
+  function dedupRing(arc) {
+    var endPoint,
+        endArcs;
+
+    // Does this arc match an existing line in order, or reverse order?
+    // Rings are closed, so their start point and end point is the same.
+    if (endArcs = arcsByEnd.get(endPoint = coordinates[arc[0]])) {
+      for (var i = 0, n = endArcs.length; i < n; ++i) {
+        var endArc = endArcs[i];
+        if (equalRing(endArc, arc)) {
+          arc[0] = endArc[0];
+          arc[1] = endArc[1];
+          return;
+        }
+        if (reverseEqualRing(endArc, arc)) {
+          arc[0] = endArc[1];
+          arc[1] = endArc[0];
+          return;
+        }
+      }
+    }
+
+    // Otherwise, does this arc match an existing ring in order, or reverse order?
+    if (endArcs = arcsByEnd.get(endPoint = coordinates[arc[0] + findMinimumOffset(arc)])) {
+      for (var i = 0, n = endArcs.length; i < n; ++i) {
+        var endArc = endArcs[i];
+        if (equalRing(endArc, arc)) {
+          arc[0] = endArc[0];
+          arc[1] = endArc[1];
+          return;
+        }
+        if (reverseEqualRing(endArc, arc)) {
+          arc[0] = endArc[1];
+          arc[1] = endArc[0];
+          return;
+        }
+      }
+    }
+
+    if (endArcs) endArcs.push(arc); else arcsByEnd.set(endPoint, [arc]);
+    arcs.push(arc);
+  }
+
+  function equalLine(arcA, arcB) {
+    var ia = arcA[0], ib = arcB[0],
+        ja = arcA[1], jb = arcB[1];
+    if (ia - ja !== ib - jb) return false;
+    for (; ia <= ja; ++ia, ++ib) if (!equalPoint(coordinates[ia], coordinates[ib])) return false;
+    return true;
+  }
+
+  function reverseEqualLine(arcA, arcB) {
+    var ia = arcA[0], ib = arcB[0],
+        ja = arcA[1], jb = arcB[1];
+    if (ia - ja !== ib - jb) return false;
+    for (; ia <= ja; ++ia, --jb) if (!equalPoint(coordinates[ia], coordinates[jb])) return false;
+    return true;
+  }
+
+  function equalRing(arcA, arcB) {
+    var ia = arcA[0], ib = arcB[0],
+        ja = arcA[1], jb = arcB[1],
+        n = ja - ia;
+    if (n !== jb - ib) return false;
+    var ka = findMinimumOffset(arcA),
+        kb = findMinimumOffset(arcB);
+    for (var i = 0; i < n; ++i) {
+      if (!equalPoint(coordinates[ia + (i + ka) % n], coordinates[ib + (i + kb) % n])) return false;
+    }
+    return true;
+  }
+
+  function reverseEqualRing(arcA, arcB) {
+    var ia = arcA[0], ib = arcB[0],
+        ja = arcA[1], jb = arcB[1],
+        n = ja - ia;
+    if (n !== jb - ib) return false;
+    var ka = findMinimumOffset(arcA),
+        kb = n - findMinimumOffset(arcB);
+    for (var i = 0; i < n; ++i) {
+      if (!equalPoint(coordinates[ia + (i + ka) % n], coordinates[jb - (i + kb) % n])) return false;
+    }
+    return true;
+  }
+
+  // Rings are rotated to a consistent, but arbitrary, start point.
+  // This is necessary to detect when a ring and a rotated copy are dupes.
+  function findMinimumOffset(arc) {
+    var start = arc[0],
+        end = arc[1],
+        mid = start,
+        minimum = mid,
+        minimumPoint = coordinates[mid];
+    while (++mid < end) {
+      var point = coordinates[mid];
+      if (point[0] < minimumPoint[0] || point[0] === minimumPoint[0] && point[1] < minimumPoint[1]) {
+        minimum = mid;
+        minimumPoint = point;
+      }
+    }
+    return minimum - start;
+  }
+
+  return topology;
+};
+
+},{"./hashtable":37,"./join":39,"./point-equal":40,"./point-hash":41}],36:[function(require,module,exports){
+// Extracts the lines and rings from the specified hash of geometry objects.
+//
+// Returns an object with three properties:
+//
+// * coordinates - shared buffer of [x, y] coordinates
+// * lines - lines extracted from the hash, of the form [start, end]
+// * rings - rings extracted from the hash, of the form [start, end]
+//
+// For each ring or line, start and end represent inclusive indexes into the
+// coordinates buffer. For rings (and closed lines), coordinates[start] equals
+// coordinates[end].
+//
+// For each line or polygon geometry in the input hash, including nested
+// geometries as in geometry collections, the `coordinates` array is replaced
+// with an equivalent `arcs` array that, for each line (for line string
+// geometries) or ring (for polygon geometries), points to one of the above
+// lines or rings.
+module.exports = function(objects) {
+  var index = -1,
+      lines = [],
+      rings = [],
+      coordinates = [];
+
+  function extractGeometry(geometry) {
+    if (geometry && extractGeometryType.hasOwnProperty(geometry.type)) extractGeometryType[geometry.type](geometry);
+  }
+
+  var extractGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(extractGeometry); },
+    LineString: function(o) { o.arcs = extractLine(o.coordinates); delete o.coordinates; },
+    MultiLineString: function(o) { o.arcs = o.coordinates.map(extractLine); delete o.coordinates; },
+    Polygon: function(o) { o.arcs = o.coordinates.map(extractRing); delete o.coordinates; },
+    MultiPolygon: function(o) { o.arcs = o.coordinates.map(extractMultiRing); delete o.coordinates; }
+  };
+
+  function extractLine(line) {
+    for (var i = 0, n = line.length; i < n; ++i) coordinates[++index] = line[i];
+    var arc = {0: index - n + 1, 1: index};
+    lines.push(arc);
+    return arc;
+  }
+
+  function extractRing(ring) {
+    for (var i = 0, n = ring.length; i < n; ++i) coordinates[++index] = ring[i];
+    var arc = {0: index - n + 1, 1: index};
+    rings.push(arc);
+    return arc;
+  }
+
+  function extractMultiRing(rings) {
+    return rings.map(extractRing);
+  }
+
+  for (var key in objects) {
+    extractGeometry(objects[key]);
   }
 
   return {
     type: "Topology",
-    bbox: [x0, y0, x1, y1],
-    transform: {
-      scale: [1 / kx, 1 / ky],
-      translate: [x0, y0]
-    },
-    objects: objects,
-    arcs: arcs.map(function(arc) {
-      var i = 0,
-          n = arc.length,
-          point = arc[0],
-          x1 = point[0], x2, dx,
-          y1 = point[1], y2, dy,
-          points = [[x1, y1]];
-      while (++i < n) {
-        point = arc[i];
-        x2 = point[0];
-        y2 = point[1];
-        dx = x2 - x1;
-        dy = y2 - y1;
-        if (dx || dy) {
-          points.push([dx, dy]);
-          x1 = x2, y1 = y2;
-        }
-      }
-      return points;
-    })
+    coordinates: coordinates,
+    lines: lines,
+    rings: rings,
+    objects: objects
   };
 };
 
-function linesEqual(a, b) {
-  var n = a.length, i = -1;
-  if (b.length !== n) return false;
-  while (++i < n) if (a[i] !== b[i]) return false;
-  return true;
+},{}],37:[function(require,module,exports){
+module.exports = function(size, hash, equal) {
+  var hashtable = new Array(size = 1 << Math.ceil(Math.log(size) / Math.LN2)),
+      mask = size - 1,
+      free = size;
+
+  function set(key, value) {
+    var index = hash(key) & mask,
+        match = hashtable[index],
+        cycle = !index;
+    while (match != null) {
+      if (equal(match.key, key)) return match.value = value;
+      match = hashtable[index = (index + 1) & mask];
+      if (!index && cycle++) throw new Error("full hashtable");
+    }
+    hashtable[index] = {key: key, value: value};
+    --free;
+    return value;
+  }
+
+  function get(key, missingValue) {
+    var index = hash(key) & mask,
+        match = hashtable[index],
+        cycle = !index;
+    while (match != null) {
+      if (equal(match.key, key)) return match.value;
+      match = hashtable[index = (index + 1) & mask];
+      if (!index && cycle++) break;
+    }
+    return missingValue;
+  }
+
+  function remove(key) {
+    var index = hash(key) & mask,
+        match = hashtable[index],
+        cycle = !index;
+    while (match != null) {
+      if (equal(match.key, key)) {
+        hashtable[index] = null;
+        match = hashtable[index = (index + 1) & mask];
+        if (match != null) { // delete and re-add
+          ++free;
+          hashtable[index] = null;
+          set(match.key, match.value);
+        }
+        ++free;
+        return true;
+      }
+      match = hashtable[index = (index + 1) & mask];
+      if (!index && cycle++) break;
+    }
+    return false;
+  }
+
+  function keys() {
+    var keys = [];
+    for (var i = 0, n = hashtable.length; i < n; ++i) {
+      var match = hashtable[i];
+      if (match != null) keys.push(match.key);
+    }
+    return keys;
+  }
+
+  return {
+    set: set,
+    get: get,
+    remove: remove,
+    keys: keys
+  };
+};
+
+},{}],38:[function(require,module,exports){
+var hashtable = require("./hashtable"),
+    extract = require("./extract"),
+    cut = require("./cut"),
+    dedup = require("./dedup");
+
+// Constructs the TopoJSON Topology for the specified hash of geometries.
+// Each object in the specified hash must be a GeoJSON object,
+// meaning FeatureCollection, a Feature or a geometry object.
+module.exports = function(objects) {
+  var topology = dedup(cut(extract(objects))),
+      coordinates = topology.coordinates,
+      indexByArc = hashtable(topology.arcs.length, hashArc, equalArc);
+
+  objects = topology.objects; // for garbage collection
+
+  topology.arcs = topology.arcs.map(function(arc, i) {
+    indexByArc.set(arc, i);
+    return coordinates.slice(arc[0], arc[1] + 1);
+  });
+
+  delete topology.coordinates;
+  coordinates = null;
+
+  function indexGeometry(geometry) {
+    if (geometry && indexGeometryType.hasOwnProperty(geometry.type)) indexGeometryType[geometry.type](geometry);
+  }
+
+  var indexGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(indexGeometry); },
+    LineString: function(o) { o.arcs = indexArcs(o.arcs); },
+    MultiLineString: function(o) { o.arcs = o.arcs.map(indexArcs); },
+    Polygon: function(o) { o.arcs = o.arcs.map(indexArcs); },
+    MultiPolygon: function(o) { o.arcs = o.arcs.map(indexMultiArcs); }
+  };
+
+  function indexArcs(arc) {
+    var indexes = [];
+    do {
+      var index = indexByArc.get(arc);
+      indexes.push(arc[0] < arc[1] ? index : ~index);
+    } while (arc = arc.next);
+    return indexes;
+  }
+
+  function indexMultiArcs(arcs) {
+    return arcs.map(indexArcs);
+  }
+
+  for (var key in objects) {
+    indexGeometry(objects[key]);
+  }
+
+  return topology;
+};
+
+function hashArc(arc) {
+  var i = arc[0], j = arc[1], t;
+  if (j < i) t = i, i = j, j = t;
+  return i + 31 * j;
 }
 
-function pointCompare(a, b) {
-  return a[0] - b[0] || a[1] - b[1];
+function equalArc(arcA, arcB) {
+  var ia = arcA[0], ja = arcA[1],
+      ib = arcB[0], jb = arcB[1], t;
+  if (ja < ia) t = ia, ia = ja, ja = t;
+  if (jb < ib) t = ib, ib = jb, jb = t;
+  return ia === ib && ja === jb;
 }
 
-function noop() {}
+},{"./cut":34,"./dedup":35,"./extract":36,"./hashtable":37}],39:[function(require,module,exports){
+var hashtable = require("./hashtable"),
+    hashPoint = require("./point-hash"),
+    equalPoint = require("./point-equal");
 
-},{"./coordinate-systems":21,"./hashtable":24,"./stitch-poles":30,"./type":32}],32:[function(require,module,exports){
+// Given an extracted (pre-)topology, identifies all of the junctions. These are
+// the points at which arcs (lines or rings) will need to be cut so that each
+// arc is represented uniquely.
+//
+// A junction is a point where at least one arc deviates from another arc going
+// through the same point. For example, consider the point B. If there is a arc
+// through ABC and another arc through CBA, then B is not a junction because in
+// both cases the adjacent point pairs are {A,C}. However, if there is an
+// additional arc ABD, then {A,D} != {A,C}, and thus B becomes a junction.
+//
+// For a closed ring ABCA, the first point A’s adjacent points are the second
+// and last point {B,C}. For a line, the first and last point are always
+// considered junctions, even if the line is closed; this ensures that a closed
+// line is never rotated.
+module.exports = function(topology) {
+  var coordinates = topology.coordinates,
+      lines = topology.lines,
+      rings = topology.rings,
+      visitedByPoint,
+      neighborsByPoint = hashtable(coordinates.length, hashPoint, equalPoint),
+      junctionByPoint = hashtable(coordinates.length, hashPoint, equalPoint);
+
+  for (var i = 0, n = lines.length; i < n; ++i) {
+    var line = lines[i],
+        lineStart = line[0],
+        lineEnd = line[1],
+        previousPoint = null,
+        currentPoint = coordinates[lineStart],
+        nextPoint = coordinates[++lineStart];
+    visitedByPoint = hashtable(lineEnd - lineStart, hashPoint, equalPoint);
+    junctionByPoint.set(currentPoint, true); // start
+    while (++lineStart <= lineEnd) {
+      sequence(previousPoint = currentPoint, currentPoint = nextPoint, nextPoint = coordinates[lineStart]);
+    }
+    junctionByPoint.set(nextPoint, true); // end
+  }
+
+  for (var i = 0, n = rings.length; i < n; ++i) {
+    var ring = rings[i],
+        ringStart = ring[0] + 1,
+        ringEnd = ring[1],
+        previousPoint = coordinates[ringEnd - 1],
+        currentPoint = coordinates[ringStart - 1],
+        nextPoint = coordinates[ringStart];
+    visitedByPoint = hashtable(ringEnd - ringStart + 1, hashPoint, equalPoint);
+    sequence(previousPoint, currentPoint, nextPoint);
+    while (++ringStart <= ringEnd) {
+      sequence(previousPoint = currentPoint, currentPoint = nextPoint, nextPoint = coordinates[ringStart]);
+    }
+  }
+
+  function sequence(previousPoint, currentPoint, nextPoint) {
+    if (visitedByPoint.get(currentPoint)) return; // ignore self-intersection
+    visitedByPoint.set(currentPoint, true);
+    var neighbors = neighborsByPoint.get(currentPoint);
+    if (neighbors) {
+      if (!(equalPoint(neighbors[0], previousPoint)
+        && equalPoint(neighbors[1], nextPoint))
+        && !(equalPoint(neighbors[0], nextPoint)
+        && equalPoint(neighbors[1], previousPoint))) {
+        junctionByPoint.set(currentPoint, true);
+      }
+    } else {
+      neighborsByPoint.set(currentPoint, [previousPoint, nextPoint]);
+    }
+  }
+
+  return junctionByPoint;
+};
+
+},{"./hashtable":37,"./point-equal":40,"./point-hash":41}],40:[function(require,module,exports){
+module.exports = function(pointA, pointB) {
+  return pointA[0] === pointB[0] && pointA[1] === pointB[1];
+};
+
+},{}],41:[function(require,module,exports){
+// TODO if quantized, use simpler Int32 hashing?
+
+var hashBuffer = new ArrayBuffer(8),
+    hashFloats = new Float64Array(hashBuffer),
+    hashInts = new Int32Array(hashBuffer);
+
+function hashFloat(x) {
+  hashFloats[0] = x;
+  x = hashInts[1] ^ hashInts[0];
+  x ^= (x >>> 20) ^ (x >>> 12);
+  x ^= (x >>> 7) ^ (x >>> 4);
+  return x;
+}
+
+module.exports = function(point) {
+  var h = (hashFloat(point[0]) + 31 * hashFloat(point[1])) | 0;
+  return h < 0 ? ~h : h;
+};
+
+},{}],42:[function(require,module,exports){
+// Given a hash of GeoJSON objects, transforms any properties on features using
+// the specified transform function. The function is invoked for each existing
+// property on the current feature, being passed the new properties hash, the
+// property name, and the property value. The function is then expected to
+// assign a new value to the given property hash if the feature is to be
+// retained and return true. Or, to skip the property, do nothing and return
+// false. If no properties are propagated to the new properties hash, the
+// properties hash will be deleted from the current feature.
+module.exports = function(objects, propertyTransform) {
+  if (arguments.length < 2) propertyTransform = function() {};
+
+  function transformObject(object) {
+    if (object && transformObjectType.hasOwnProperty(object.type)) transformObjectType[object.type](object);
+  }
+
+  function transformFeature(feature) {
+    if (feature.properties) {
+      var properties0 = feature.properties,
+          properties1 = {},
+          empty = true;
+
+      for (var key0 in properties0) {
+        if (propertyTransform(properties1, key0, properties0[key0])) {
+          empty = false;
+        }
+      }
+
+      if (empty) delete feature.properties;
+      else feature.properties = properties1;
+    }
+  }
+
+  var transformObjectType = {
+    Feature: transformFeature,
+    FeatureCollection: function(collection) { collection.features.forEach(transformFeature); }
+  };
+
+  for (var key in objects) {
+    transformObject(objects[key]);
+  }
+
+  return objects;
+};
+
+},{}],43:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -7893,7 +8455,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],33:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -7902,7 +8464,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],34:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -7929,11 +8491,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":33,"object-keys":35}],35:[function(require,module,exports){
+},{"./has-keys":44,"object-keys":46}],46:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":38}],36:[function(require,module,exports){
+},{"./shim":49}],47:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -7957,7 +8519,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],37:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 
 /**!
  * is
@@ -8661,7 +9223,7 @@ is.string = function (value) {
 };
 
 
-},{}],38:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 (function () {
 	"use strict";
 
@@ -8707,7 +9269,7 @@ is.string = function (value) {
 }());
 
 
-},{"foreach":36,"is":37}],39:[function(require,module,exports){
+},{"foreach":47,"is":48}],50:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -8721,7 +9283,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],40:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 var clone = require('clone');
     xtend = require('xtend');
     source = {
@@ -8931,7 +9493,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":56,"../source/github":57,"clone":5,"xtend":34}],41:[function(require,module,exports){
+},{"../source/gist":69,"../source/github":70,"clone":5,"xtend":45}],52:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -8977,7 +9539,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/querystring":48,"../lib/zoomextent":52,"../ui/flash":62}],42:[function(require,module,exports){
+},{"../lib/querystring":61,"../lib/zoomextent":65,"../ui/flash":74}],53:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9020,7 +9582,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":39}],43:[function(require,module,exports){
+},{"../config.js":50}],54:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -9087,7 +9649,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":48,"xtend":34}],44:[function(require,module,exports){
+},{"../lib/querystring":61,"xtend":45}],55:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9172,7 +9734,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":39}],45:[function(require,module,exports){
+},{"../config.js":50}],56:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -9211,820 +9773,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":48,"leaflet-hash":13}],46:[function(require,module,exports){
-module.exports = function(context) {
-    return function(e) {
-        var sel = d3.select(e.popup._contentNode);
-
-        sel.selectAll('.cancel')
-            .on('click', clickClose);
-
-        sel.selectAll('.save')
-            .on('click', saveFeature);
-
-        sel.selectAll('.add')
-            .on('click', addRow);
-
-        sel.selectAll('.delete-invert')
-            .on('click', removeFeature);
-
-        function clickClose() {
-            context.map.closePopup(e.popup);
-        }
-
-        function removeFeature() {
-            if (e.popup._source && context.mapLayer.hasLayer(e.popup._source)) {
-                context.mapLayer.removeLayer(e.popup._source);
-                context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
-            }
-        }
-
-        function saveFeature() {
-            var obj = {};
-            sel.selectAll('tr').each(collectRow);
-            function collectRow() {
-                if (d3.select(this).selectAll('input')[0][0].value) {
-                    obj[d3.select(this).selectAll('input')[0][0].value] =
-                        d3.select(this).selectAll('input')[0][1].value;
-                }
-            }
-            e.popup._source.feature.properties = obj;
-            context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
-            context.map.closePopup(e.popup);
-        }
-
-        function addRow() {
-            var tr = sel.select('tbody')
-                .append('tr');
-
-            tr.append('th')
-                .append('input')
-                .attr('type', 'text');
-
-            tr.append('td')
-                .append('input')
-                .attr('type', 'text');
-        }
-    };
-};
-
-},{}],47:[function(require,module,exports){
-module.exports = function(elem, w, h) {
-    var c = elem.appendChild(document.createElement('canvas'));
-
-    c.width = w;
-    c.height = h;
-
-    var ctx = c.getContext('2d'),
-        gap,
-        fill = {
-            success: '#e3e4b8',
-            error: '#E0A990'
-        };
-
-    return function(e) {
-        if (!gap) gap = ((e.done) / e.todo * w) - ((e.done - 1) / e.todo * w);
-        ctx.fillStyle = fill[e.status];
-        ctx.fillRect((e.done - 1) / e.todo * w, 0, gap, h);
-    };
-};
-
-},{}],48:[function(require,module,exports){
-module.exports.stringQs = function(str) {
-    return str.split('&').reduce(function(obj, pair){
-        var parts = pair.split('=');
-        if (parts.length === 2) {
-            obj[parts[0]] = (null === parts[1]) ? '' : decodeURIComponent(parts[1]);
-        }
-        return obj;
-    }, {});
-};
-
-module.exports.qsString = function(obj, noencode) {
-    noencode = true;
-    function softEncode(s) { return s.replace('&', '%26'); }
-    return Object.keys(obj).sort().map(function(key) {
-        return encodeURIComponent(key) + '=' + (
-            noencode ? softEncode(obj[key]) : encodeURIComponent(obj[key]));
-    }).join('&');
-};
-
-},{}],49:[function(require,module,exports){
-var topojson = require('topojson'),
-    toGeoJSON = require('togeojson'),
-    osm2geojson = require('osm-and-geojson').osm2geojson;
-
-module.exports.readDrop = readDrop;
-module.exports.readFile = readFile;
-
-function readDrop(callback) {
-    return function() {
-        if (d3.event.dataTransfer) {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
-            var f = d3.event.dataTransfer.files[0];
-            readFile(f, callback);
-        }
-    };
-}
-
-function readFile(f, callback) {
-
-    var reader = new FileReader();
-
-    reader.onload = function(e) {
-
-        var fileType = detectType(f);
-
-        if (!fileType) {
-            return callback({
-                message: 'Could not detect file type'
-            });
-        } else if (fileType === 'kml') {
-            var kmldom = toDom(e.target.result);
-            if (!kmldom) {
-                return callback({
-                    message: 'Invalid KML file: not valid XML'
-                });
-            }
-            var warning;
-            if (kmldom.getElementsByTagName('NetworkLink').length) {
-                warning = {
-                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                      'Please export and upload KML without NetworkLinks for optimal performance'
-                };
-            }
-            callback(null, toGeoJSON.kml(kmldom), warning);
-        } else if (fileType === 'xml') {
-            var xmldom = toDom(e.target.result);
-            if (!xmldom) {
-                return callback({
-                    message: 'Invalid XML file: not valid XML'
-                });
-            }
-            callback(null, osm2geojson(xmldom));
-        } else if (fileType === 'gpx') {
-            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
-        } else if (fileType === 'geojson') {
-            try {
-                gj = JSON.parse(e.target.result);
-                if (gj && gj.type === 'Topology' && gj.objects) {
-                    var collection = { type: 'FeatureCollection', features: [] };
-                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                    callback(null, collection);
-                } else {
-                    callback(null, gj);
-                }
-            } catch(err) {
-                alert('Invalid JSON file: ' + err);
-                return;
-            }
-        } else if (fileType === 'dsv') {
-            csv2geojson.csv2geojson(e.target.result, {
-                delimiter: 'auto'
-            }, function(err, result) {
-                if (err) {
-                    return callback({
-                        type: 'geocode',
-                        result: result,
-                        raw: e.target.result
-                    });
-                } else {
-                    return callback(null, result);
-                }
-            });
-        }
-    };
-
-    reader.readAsText(f);
-
-    function toDom(x) {
-        return (new DOMParser()).parseFromString(x, 'text/xml');
-    }
-
-    function detectType(f) {
-        var filename = f.name ? f.name.toLowerCase() : '';
-        function ext(_) {
-            return filename.indexOf(_) !== -1;
-        }
-        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-            return 'kml';
-        }
-        if (ext('.gpx')) return 'gpx';
-        if (ext('.geojson') || ext('.json') || ext('.topojson')) return 'geojson';
-        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
-            return 'dsv';
-        }
-        if (ext('.xml') || ext('.osm')) return 'xml';
-    }
-}
-
-},{"osm-and-geojson":14,"togeojson":16,"topojson":"PBmiWO"}],50:[function(require,module,exports){
-module.exports = function(map, feature, bounds) {
-    var zoomLevel;
-
-    if (feature instanceof L.Marker) {
-        zoomLevel = bounds.isValid() ? map.getBoundsZoom(bounds) + 2 : 10;
-        map.setView(feature.getLatLng(), zoomLevel);
-    } else if ('getBounds' in feature && feature.getBounds().isValid()) {
-        map.fitBounds(feature.getBounds());
-    }
-};
-
-},{}],51:[function(require,module,exports){
-var geojsonhint = require('geojsonhint');
-
-module.exports = function(callback) {
-    return function(editor) {
-
-        var err = geojsonhint.hint(editor.getValue());
-        editor.clearGutter('error');
-
-        if (err instanceof Error) {
-            handleError(err.message);
-            return callback({
-                'class': 'icon-circle-blank',
-                title: 'invalid JSON',
-                message: 'invalid JSON'});
-        } else if (err.length) {
-            handleErrors(err);
-            return callback({
-                'class': 'icon-circle-blank',
-                title: 'invalid GeoJSON',
-                message: 'invalid GeoJSON'});
-        } else {
-            var gj = JSON.parse(editor.getValue());
-            try {
-                return callback(null, gj);
-            } catch(e) {
-                return callback({
-                    'class': 'icon-circle-blank',
-                    title: 'invalid GeoJSON',
-                    message: 'invalid GeoJSON'});
-            }
-        }
-
-        function handleError(msg) {
-            var match = msg.match(/line (\d+)/);
-            if (match && match[1]) {
-                editor.clearGutter('error');
-                editor.setGutterMarker(parseInt(match[1], 10) - 1, 'error', makeMarker(msg));
-            }
-        }
-
-        function handleErrors(errors) {
-            editor.clearGutter('error');
-            errors.forEach(function(e) {
-                editor.setGutterMarker(e.line, 'error', makeMarker(e.message));
-            });
-        }
-
-        function makeMarker(msg) {
-            return d3.select(document.createElement('div'))
-                .attr('class', 'error-marker')
-                .attr('message', msg).node();
-        }
-    };
-};
-
-},{"geojsonhint":8}],52:[function(require,module,exports){
-module.exports = function(context) {
-    var bounds = context.mapLayer.getBounds();
-    if (bounds.isValid()) context.map.fitBounds(bounds);
-};
-
-},{}],53:[function(require,module,exports){
-var ui = require('./ui'),
-    map = require('./ui/map'),
-    data = require('./core/data'),
-    loader = require('./core/loader'),
-    router = require('./core/router'),
-    repo = require('./core/repo'),
-    user = require('./core/user'),
-    store = require('store');
-
-var gjIO = geojsonIO(),
-    gjUI = ui(gjIO).read;
-
-d3.select('.geojsonio').call(gjUI);
-
-gjIO.router.on();
-
-function geojsonIO() {
-    var context = {};
-    context.dispatch = d3.dispatch('change', 'route');
-    context.storage = store;
-    context.map = map(context, true);
-    context.data = data(context);
-    context.dispatch.on('route', loader(context));
-    context.repo = repo(context);
-    context.router = router(context);
-    context.user = user(context);
-    return context;
-}
-
-},{"./core/data":40,"./core/loader":41,"./core/repo":42,"./core/router":43,"./core/user":44,"./ui":58,"./ui/map":66,"store":15}],54:[function(require,module,exports){
-var validate = require('../lib/validate'),
-    saver = require('../ui/saver.js');
-
-module.exports = function(context) {
-
-    CodeMirror.keyMap.tabSpace = {
-        Tab: function(cm) {
-            var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
-            cm.replaceSelection(spaces, 'end', '+input');
-        },
-        'Ctrl-S': saveAction,
-        'Cmd-S': saveAction,
-        fallthrough: ['default']
-    };
-
-    function saveAction() {
-        saver(context);
-        return false;
-    }
-
-    function render(selection) {
-        var textarea = selection
-            .html('')
-            .append('textarea');
-
-        var editor = CodeMirror.fromTextArea(textarea.node(), {
-            mode: 'application/json',
-            matchBrackets: true,
-            tabSize: 2,
-            gutters: ['error'],
-            theme: 'eclipse',
-            autofocus: (window === window.top),
-            keyMap: 'tabSpace',
-            lineNumbers: true
-        });
-
-        editor.on('change', validate(changeValidated));
-
-        function changeValidated(err, data) {
-            if (!err) context.data.set({map: data}, 'json');
-        }
-
-        context.dispatch.on('change.json', function(event) {
-            if (event.source !== 'json') {
-                editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
-            }
-        });
-
-        editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
-    }
-
-    render.off = function() {
-        context.dispatch.on('change.json', null);
-    };
-
-    return render;
-};
-
-},{"../lib/validate":51,"../ui/saver.js":69}],55:[function(require,module,exports){
-var metatable = require('d3-metatable')(d3),
-    smartZoom = require('../lib/smartzoom.js');
-
-module.exports = function(context) {
-    function render(selection) {
-
-        selection.html('');
-
-        function rerender() {
-            var geojson = context.data.get('map');
-            var props;
-
-            if (!geojson || !geojson.geometry && 
-                (!geojson.features || !geojson.features.length)) {
-                selection
-                    .html('')
-                    .append('div')
-                    .attr('class', 'blank-banner center')
-                    .text('no features');
-            } else {
-                props = geojson.geometry ? [geojson.properties] :
-                    geojson.features.map(getProperties);
-                selection.select('.blank-banner').remove();
-                selection
-                    .data([props])
-                    .call(metatable()
-                        .on('change', function(row, i) {
-                            var geojson = context.data.get('map');
-                            if (geojson.geometry) {
-                                geojson.properties = row;
-                            } else {
-                                geojson.features[i].properties = row;
-                            }
-                            context.data.set('map', geojson);
-                        })
-                        .on('rowfocus', function(row, i) {
-                            var bounds = context.mapLayer.getBounds();
-                            var j = 0;
-                            context.mapLayer.eachLayer(function(l) {
-                                if (i === j++) smartZoom(context.map, l, bounds);
-                            });
-                        })
-                    );
-            }
-
-        }
-
-        context.dispatch.on('change.table', function(evt) {
-            rerender();
-        });
-
-        rerender();
-
-        function getProperties(f) { return f.properties; }
-
-        function zoomToMap(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
-    }
-
-    render.off = function() {
-        context.dispatch.on('change.table', null);
-    };
-
-    return render;
-};
-
-},{"../lib/smartzoom.js":50,"d3-metatable":6}],56:[function(require,module,exports){
-var fs = require('fs'),
-    tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
-
-module.exports.save = save;
-module.exports.saveBlocks = saveBlocks;
-module.exports.load = load;
-
-function saveBlocks(content, callback) {
-    var endpoint = 'https://api.github.com/gists';
-
-    d3.json(endpoint)
-        .on('load', function(data) {
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            var message,
-                url = /(http:\/\/\S*)/g;
-
-            message = JSON.parse(err.responseText).message
-                .replace(url, '<a href="$&">$&</a>');
-
-            callback(message);
-        })
-        .send('POST', JSON.stringify({
-            description: 'via:geojson.io',
-            public: false,
-            files: {
-                'index.html': { content: tmpl },
-                'map.geojson': { content: content }
-            }
-        }));
-}
-
-function save(context, callback) {
-
-    var source = context.data.get('source'),
-        meta = context.data.get('meta'),
-        name = (meta && meta.name) || 'map.geojson',
-        map = context.data.get('map');
-
-    var description = (source && source.description) || 'via:geojson.io',
-        public = source ? !!source.public : false;
-
-    context.user.details(onuser);
-
-    function onuser(err, user) {
-        var endpoint,
-            method = 'POST',
-            source = context.data.get('source'),
-            files = {};
-
-        if (!err && user && user.login && meta && meta.login && user.login === meta.login) {
-            endpoint = 'https://api.github.com/gists/' + source.id;
-            method = 'PATCH';
-        } else if (!err && source && source.id) {
-            endpoint = 'https://api.github.com/gists/' + source.id + '/forks';
-        } else {
-            endpoint = 'https://api.github.com/gists';
-        }
-
-        files[name] = {
-            content: JSON.stringify(map)
-        };
-
-        context.user.signXHR(d3.json(endpoint))
-            .on('load', function(data) {
-                callback(null, data);
-            })
-            .on('error', function(err) {
-                var message,
-                    url = /(http:\/\/\S*)/g;
-
-                message = JSON.parse(err.responseText).message
-                    .replace(url, '<a href="$&">$&</a>');
-
-                callback(message);
-            })
-            .send(method, JSON.stringify({
-                files: files
-            }));
-    }
-}
-
-function load(id, context, callback) {
-    context.user.signXHR(d3.json('https://api.github.com/gists/' + id))
-        .on('load', onLoad)
-        .on('error', onError)
-        .get();
-
-    function onLoad(json) { callback(null, json); }
-    function onError(err) { callback(err, null); }
-}
-
-},{"fs":1}],57:[function(require,module,exports){
-module.exports.save = save;
-module.exports.load = load;
-module.exports.loadRaw = loadRaw;
-
-function save(context, callback) {
-    var source = context.data.get('source'),
-        meta = context.data.get('meta'),
-        name = (meta && meta.name) || 'map.geojson',
-        map = context.data.get('map');
-
-    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
-        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
-    }
-
-    if (!localStorage.github_token) {
-        return alert('You need to log in with GitHub to commit changes');
-    }
-
-    context.repo.details(onrepo);
-
-    function onrepo(err, repo) {
-        var commitMessage,
-            endpoint,
-            method = 'POST',
-            files = {};
-
-        if (!err && repo.permissions.push) {
-            commitMessage = context.commitMessage || prompt('Commit message:');
-            if (!commitMessage) return;
-
-            endpoint = source.url;
-            method = 'PUT';
-            data = {
-                message: commitMessage,
-                sha: source.sha,
-                branch: meta.branch,
-                content: Base64.toBase64(JSON.stringify(map))
-            };
-        } else {
-            endpoint = 'https://api.github.com/gists';
-            files[name] = { content: JSON.stringify(map) };
-            data = { files: files };
-        }
-
-        context.user.signXHR(d3.json(endpoint))
-            .on('load', function(data) {
-                callback(null, data);
-            })
-            .on('error', function(err) {
-                var message,
-                    url = /(http:\/\/\S*)/g;
-
-                message = JSON.parse(err.responseText).message
-                    .replace(url, '<a href="$&">$&</a>');
-
-                callback(message);
-            })
-            .send(method, JSON.stringify(data));
-    }
-}
-
-function parseGitHubId(id) {
-    var parts = id.split('/');
-    return {
-        user: parts[0],
-        repo: parts[1],
-        mode: parts[2],
-        branch: parts[3],
-        file: parts.slice(4).join('/')
-    };
-}
-
-function load(parts, context, callback) {
-    context.user.signXHR(d3.json(fileUrl(parts)))
-        .on('load', onLoad)
-        .on('error', onError)
-        .get();
-
-    function onLoad(file) {
-        callback(null, file);
-    }
-    function onError(err) { callback(err, null); }
-}
-
-function loadRaw(parts, context, callback) {
-    context.user.signXHR(d3.text(fileUrl(parts)))
-        .on('load', onLoad)
-        .on('error', onError)
-        .header('Accept', 'application/vnd.github.raw')
-        .get();
-
-    function onLoad(file) {
-        callback(null, file);
-    }
-    function onError(err) { callback(err, null); }
-}
-
-function fileUrl(parts) {
-    return 'https://api.github.com/repos/' +
-        parts.user +
-        '/' + parts.repo +
-        '/contents/' + parts.path +
-        '?ref=' + parts.branch;
-}
-
-},{}],58:[function(require,module,exports){
-var buttons = require('./ui/mode_buttons'),
-    file_bar = require('./ui/file_bar'),
-    dnd = require('./ui/dnd'),
-    userUi = require('./ui/user'),
-    layer_switch = require('./ui/layer_switch');
-
-module.exports = ui;
-
-function ui(context) {
-    function init(selection) {
-
-        var container = selection
-            .append('div')
-            .attr('class', 'container');
-
-        var map = container
-            .append('div')
-            .attr('class', 'map')
-            .call(context.map)
-            .call(layer_switch(context));
-
-        context.container = container;
-
-        return container;
-    }
-
-    function render(selection) {
-
-        var container = init(selection);
-
-        var right = container
-            .append('div')
-            .attr('class', 'right');
-
-        var top = right
-            .append('div')
-            .attr('class', 'top');
-
-        top
-            .append('button')
-            .attr('class', 'collapse-button')
-            .attr('title', 'Collapse')
-            .on('click', function collapse() {
-                d3.select('body').classed('fullscreen',
-                    !d3.select('body').classed('fullscreen'));
-                var full = d3.select('body').classed('fullscreen');
-                d3.select(this)
-                    .select('.icon')
-                    .classed('icon-caret-up', !full)
-                    .classed('icon-caret-down', full);
-                context.map.invalidateSize();
-            })
-            .append('class', 'span')
-            .attr('class', 'icon icon-caret-up');
-
-        var pane = right
-            .append('div')
-            .attr('class', 'pane');
-
-        top
-            .append('div')
-            .attr('class', 'user fr pad1 deemphasize')
-            .call(userUi(context));
-
-        top
-            .append('div')
-            .attr('class', 'buttons')
-            .call(buttons(context, pane));
-
-        container
-            .append('div')
-            .attr('class', 'file-bar')
-            .call(file_bar(context));
-
-        dnd(context);
-    }
-
-
-    return {
-        read: init,
-        write: render
-    };
-}
-
-},{"./ui/dnd":60,"./ui/file_bar":61,"./ui/layer_switch":65,"./ui/mode_buttons":68,"./ui/user":72}],59:[function(require,module,exports){
-var github = require('../source/github');
-
-module.exports = commit;
-
-function commit(context, callback) {
-    context.container.select('.share').remove();
-    context.container.select('.tooltip.in')
-      .classed('in', false);
-
-    var wrap = context.container.append('div')
-        .attr('class', 'share pad1 center')
-        .style('z-index', 10);
-
-    var form = wrap.append('form')
-        .on('submit', function() {
-            d3.event.preventDefault();
-            context.commitMessage = message.property('value');
-            if (typeof callback === 'function') callback();
-        });
-
-    var message = form.append('input')
-        .attr('placeholder', 'Commit message')
-        .attr('type', 'text');
-
-    var commitButton = form.append('input')
-        .attr('type', 'submit')
-        .property('value', 'Commit Changes')
-        .attr('class', 'semimajor');
-
-    message.node().focus();
-
-    return wrap;
-}
-
-},{"../source/github":57}],60:[function(require,module,exports){
-var readDrop = require('../lib/readfile.js').readDrop,
-    geocoder = require('./geocode.js'),
-    flash = require('./flash.js');
-
-module.exports = function(context) {
-    d3.select('body')
-        .attr('dropzone', 'copy')
-        .on('drop.import', readDrop(function(err, gj, warning) {
-            if (err) {
-                if (err.type === 'geocode') {
-                    context.container.select('.icon-folder-open-alt')
-                        .trigger('click');
-                    flash(context.container, 'This file requires geocoding. Click Import to geocode it')
-                        .classed('error', 'true');
-                } else if (err.message) {
-                    flash(context.container, err.message)
-                        .classed('error', 'true');
-                }
-            } else if (gj && gj.features) {
-                context.data.mergeFeatures(gj.features);
-                if (warning) {
-                    flash(context.container, warning.message);
-                } else {
-                    flash(context.container, 'Imported ' + gj.features.length + ' features.')
-                        .classed('success', 'true');
-                }
-            }
-            d3.select('body').classed('dragover', false);
-        }))
-        .on('dragenter.import', over)
-        .on('dragleave.import', exit)
-        .on('dragover.import', over);
-
-   function over() {
-        d3.event.stopPropagation();
-        d3.event.preventDefault();
-        d3.event.dataTransfer.dropEffect = 'copy';
-        d3.select('body').classed('dragover', true);
-    }
-
-    function exit() {
-        d3.event.stopPropagation();
-        d3.event.preventDefault();
-        d3.event.dataTransfer.dropEffect = 'copy';
-        d3.select('body').classed('dragover', false);
-    }
-};
-
-},{"../lib/readfile.js":49,"./flash.js":62,"./geocode.js":63}],61:[function(require,module,exports){
+},{"../lib/querystring":61,"leaflet-hash":13}],57:[function(require,module,exports){
 var share = require('./share'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
@@ -10141,7 +9890,826 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":69,"./share":70,"./source.js":71}],62:[function(require,module,exports){
+},{"../ui/saver.js":81,"./share":82,"./source.js":83}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],59:[function(require,module,exports){
+module.exports = function(context) {
+    return function(e) {
+        var sel = d3.select(e.popup._contentNode);
+
+        sel.selectAll('.cancel')
+            .on('click', clickClose);
+
+        sel.selectAll('.save')
+            .on('click', saveFeature);
+
+        sel.selectAll('.add')
+            .on('click', addRow);
+
+        sel.selectAll('.delete-invert')
+            .on('click', removeFeature);
+
+        function clickClose() {
+            context.map.closePopup(e.popup);
+        }
+
+        function removeFeature() {
+            if (e.popup._source && context.mapLayer.hasLayer(e.popup._source)) {
+                context.mapLayer.removeLayer(e.popup._source);
+                context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
+            }
+        }
+
+        function saveFeature() {
+            var obj = {};
+            sel.selectAll('tr').each(collectRow);
+            function collectRow() {
+                if (d3.select(this).selectAll('input')[0][0].value) {
+                    obj[d3.select(this).selectAll('input')[0][0].value] =
+                        d3.select(this).selectAll('input')[0][1].value;
+                }
+            }
+            e.popup._source.feature.properties = obj;
+            context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
+            context.map.closePopup(e.popup);
+        }
+
+        function addRow() {
+            var tr = sel.select('tbody')
+                .append('tr');
+
+            tr.append('th')
+                .append('input')
+                .attr('type', 'text');
+
+            tr.append('td')
+                .append('input')
+                .attr('type', 'text');
+        }
+    };
+};
+
+},{}],60:[function(require,module,exports){
+module.exports = function(elem, w, h) {
+    var c = elem.appendChild(document.createElement('canvas'));
+
+    c.width = w;
+    c.height = h;
+
+    var ctx = c.getContext('2d'),
+        gap,
+        fill = {
+            success: '#e3e4b8',
+            error: '#E0A990'
+        };
+
+    return function(e) {
+        if (!gap) gap = ((e.done) / e.todo * w) - ((e.done - 1) / e.todo * w);
+        ctx.fillStyle = fill[e.status];
+        ctx.fillRect((e.done - 1) / e.todo * w, 0, gap, h);
+    };
+};
+
+},{}],61:[function(require,module,exports){
+module.exports.stringQs = function(str) {
+    return str.split('&').reduce(function(obj, pair){
+        var parts = pair.split('=');
+        if (parts.length === 2) {
+            obj[parts[0]] = (null === parts[1]) ? '' : decodeURIComponent(parts[1]);
+        }
+        return obj;
+    }, {});
+};
+
+module.exports.qsString = function(obj, noencode) {
+    noencode = true;
+    function softEncode(s) { return s.replace('&', '%26'); }
+    return Object.keys(obj).sort().map(function(key) {
+        return encodeURIComponent(key) + '=' + (
+            noencode ? softEncode(obj[key]) : encodeURIComponent(obj[key]));
+    }).join('&');
+};
+
+},{}],62:[function(require,module,exports){
+var topojson = require('topojson'),
+    toGeoJSON = require('togeojson'),
+    osm2geojson = require('osm-and-geojson').osm2geojson;
+
+module.exports.readDrop = readDrop;
+module.exports.readFile = readFile;
+
+function readDrop(callback) {
+    return function() {
+        if (d3.event.dataTransfer) {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+            var f = d3.event.dataTransfer.files[0];
+            readFile(f, callback);
+        }
+    };
+}
+
+function readFile(f, callback) {
+
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        var fileType = detectType(f);
+
+        if (!fileType) {
+            return callback({
+                message: 'Could not detect file type'
+            });
+        } else if (fileType === 'kml') {
+            var kmldom = toDom(e.target.result);
+            if (!kmldom) {
+                return callback({
+                    message: 'Invalid KML file: not valid XML'
+                });
+            }
+            var warning;
+            if (kmldom.getElementsByTagName('NetworkLink').length) {
+                warning = {
+                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                      'Please export and upload KML without NetworkLinks for optimal performance'
+                };
+            }
+            callback(null, toGeoJSON.kml(kmldom), warning);
+        } else if (fileType === 'xml') {
+            var xmldom = toDom(e.target.result);
+            if (!xmldom) {
+                return callback({
+                    message: 'Invalid XML file: not valid XML'
+                });
+            }
+            callback(null, osm2geojson(xmldom));
+        } else if (fileType === 'gpx') {
+            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
+        } else if (fileType === 'geojson') {
+            try {
+                gj = JSON.parse(e.target.result);
+                if (gj && gj.type === 'Topology' && gj.objects) {
+                    var collection = { type: 'FeatureCollection', features: [] };
+                    for (var o in gj.objects) {
+                        var ft = topojson.feature(gj, gj.objects[o]);
+                        if (ft.features) collection.features = collection.features.concat(ft.features);
+                        else collection.features = collection.features.concat([ft]);
+                    }
+                    return callback(null, collection);
+                } else {
+                    return callback(null, gj);
+                }
+            } catch(err) {
+                alert('Invalid JSON file: ' + err);
+                return;
+            }
+        } else if (fileType === 'dsv') {
+            csv2geojson.csv2geojson(e.target.result, {
+                delimiter: 'auto'
+            }, function(err, result) {
+                if (err) {
+                    return callback({
+                        type: 'geocode',
+                        result: result,
+                        raw: e.target.result
+                    });
+                } else {
+                    return callback(null, result);
+                }
+            });
+        }
+    };
+
+    reader.readAsText(f);
+
+    function toDom(x) {
+        return (new DOMParser()).parseFromString(x, 'text/xml');
+    }
+
+    function detectType(f) {
+        var filename = f.name ? f.name.toLowerCase() : '';
+        function ext(_) {
+            return filename.indexOf(_) !== -1;
+        }
+        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
+            return 'kml';
+        }
+        if (ext('.gpx')) return 'gpx';
+        if (ext('.geojson') || ext('.json') || ext('.topojson')) return 'geojson';
+        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
+            return 'dsv';
+        }
+        if (ext('.xml') || ext('.osm')) return 'xml';
+    }
+}
+
+},{"osm-and-geojson":14,"togeojson":16,"topojson":"g070js"}],63:[function(require,module,exports){
+module.exports = function(map, feature, bounds) {
+    var zoomLevel;
+
+    if (feature instanceof L.Marker) {
+        zoomLevel = bounds.isValid() ? map.getBoundsZoom(bounds) + 2 : 10;
+        map.setView(feature.getLatLng(), zoomLevel);
+    } else if ('getBounds' in feature && feature.getBounds().isValid()) {
+        map.fitBounds(feature.getBounds());
+    }
+};
+
+},{}],64:[function(require,module,exports){
+var geojsonhint = require('geojsonhint');
+
+module.exports = function(callback) {
+    return function(editor) {
+
+        var err = geojsonhint.hint(editor.getValue());
+        editor.clearGutter('error');
+
+        if (err instanceof Error) {
+            handleError(err.message);
+            return callback({
+                'class': 'icon-circle-blank',
+                title: 'invalid JSON',
+                message: 'invalid JSON'});
+        } else if (err.length) {
+            handleErrors(err);
+            return callback({
+                'class': 'icon-circle-blank',
+                title: 'invalid GeoJSON',
+                message: 'invalid GeoJSON'});
+        } else {
+            var gj = JSON.parse(editor.getValue());
+            try {
+                return callback(null, gj);
+            } catch(e) {
+                return callback({
+                    'class': 'icon-circle-blank',
+                    title: 'invalid GeoJSON',
+                    message: 'invalid GeoJSON'});
+            }
+        }
+
+        function handleError(msg) {
+            var match = msg.match(/line (\d+)/);
+            if (match && match[1]) {
+                editor.clearGutter('error');
+                editor.setGutterMarker(parseInt(match[1], 10) - 1, 'error', makeMarker(msg));
+            }
+        }
+
+        function handleErrors(errors) {
+            editor.clearGutter('error');
+            errors.forEach(function(e) {
+                editor.setGutterMarker(e.line, 'error', makeMarker(e.message));
+            });
+        }
+
+        function makeMarker(msg) {
+            return d3.select(document.createElement('div'))
+                .attr('class', 'error-marker')
+                .attr('message', msg).node();
+        }
+    };
+};
+
+},{"geojsonhint":8}],65:[function(require,module,exports){
+module.exports = function(context) {
+    var bounds = context.mapLayer.getBounds();
+    if (bounds.isValid()) context.map.fitBounds(bounds);
+};
+
+},{}],66:[function(require,module,exports){
+var ui = require('./ui'),
+    map = require('./ui/map'),
+    data = require('./core/data'),
+    loader = require('./core/loader'),
+    router = require('./core/router'),
+    repo = require('./core/repo'),
+    user = require('./core/user'),
+    store = require('store');
+
+var gjIO = geojsonIO(),
+    gjUI = ui(gjIO).read;
+
+d3.select('.geojsonio').call(gjUI);
+
+gjIO.router.on();
+
+function geojsonIO() {
+    var context = {};
+    context.dispatch = d3.dispatch('change', 'route');
+    context.storage = store;
+    context.map = map(context, true);
+    context.data = data(context);
+    context.dispatch.on('route', loader(context));
+    context.repo = repo(context);
+    context.router = router(context);
+    context.user = user(context);
+    return context;
+}
+
+},{"./core/data":51,"./core/loader":52,"./core/repo":53,"./core/router":54,"./core/user":55,"./ui":71,"./ui/map":78,"store":15}],67:[function(require,module,exports){
+var validate = require('../lib/validate'),
+    saver = require('../ui/saver.js');
+
+module.exports = function(context) {
+
+    CodeMirror.keyMap.tabSpace = {
+        Tab: function(cm) {
+            var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
+            cm.replaceSelection(spaces, 'end', '+input');
+        },
+        'Ctrl-S': saveAction,
+        'Cmd-S': saveAction,
+        fallthrough: ['default']
+    };
+
+    function saveAction() {
+        saver(context);
+        return false;
+    }
+
+    function render(selection) {
+        var textarea = selection
+            .html('')
+            .append('textarea');
+
+        var editor = CodeMirror.fromTextArea(textarea.node(), {
+            mode: 'application/json',
+            matchBrackets: true,
+            tabSize: 2,
+            gutters: ['error'],
+            theme: 'eclipse',
+            autofocus: (window === window.top),
+            keyMap: 'tabSpace',
+            lineNumbers: true
+        });
+
+        editor.on('change', validate(changeValidated));
+
+        function changeValidated(err, data) {
+            if (!err) context.data.set({map: data}, 'json');
+        }
+
+        context.dispatch.on('change.json', function(event) {
+            if (event.source !== 'json') {
+                editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+            }
+        });
+
+        editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+    }
+
+    render.off = function() {
+        context.dispatch.on('change.json', null);
+    };
+
+    return render;
+};
+
+},{"../lib/validate":64,"../ui/saver.js":81}],68:[function(require,module,exports){
+var metatable = require('d3-metatable')(d3),
+    smartZoom = require('../lib/smartzoom.js');
+
+module.exports = function(context) {
+    function render(selection) {
+
+        selection.html('');
+
+        function rerender() {
+            var geojson = context.data.get('map');
+            var props;
+
+            if (!geojson || !geojson.geometry && 
+                (!geojson.features || !geojson.features.length)) {
+                selection
+                    .html('')
+                    .append('div')
+                    .attr('class', 'blank-banner center')
+                    .text('no features');
+            } else {
+                props = geojson.geometry ? [geojson.properties] :
+                    geojson.features.map(getProperties);
+                selection.select('.blank-banner').remove();
+                selection
+                    .data([props])
+                    .call(metatable()
+                        .on('change', function(row, i) {
+                            var geojson = context.data.get('map');
+                            if (geojson.geometry) {
+                                geojson.properties = row;
+                            } else {
+                                geojson.features[i].properties = row;
+                            }
+                            context.data.set('map', geojson);
+                        })
+                        .on('rowfocus', function(row, i) {
+                            var bounds = context.mapLayer.getBounds();
+                            var j = 0;
+                            context.mapLayer.eachLayer(function(l) {
+                                if (i === j++) smartZoom(context.map, l, bounds);
+                            });
+                        })
+                    );
+            }
+
+        }
+
+        context.dispatch.on('change.table', function(evt) {
+            rerender();
+        });
+
+        rerender();
+
+        function getProperties(f) { return f.properties; }
+
+        function zoomToMap(p) {
+            var layer;
+            layers.eachLayer(function(l) {
+                if (p == l.feature.properties) layer = l;
+            });
+            return layer;
+        }
+    }
+
+    render.off = function() {
+        context.dispatch.on('change.table', null);
+    };
+
+    return render;
+};
+
+},{"../lib/smartzoom.js":63,"d3-metatable":6}],69:[function(require,module,exports){
+var fs = require('fs'),
+    tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
+
+module.exports.save = save;
+module.exports.saveBlocks = saveBlocks;
+module.exports.load = load;
+
+function saveBlocks(content, callback) {
+    var endpoint = 'https://api.github.com/gists';
+
+    d3.json(endpoint)
+        .on('load', function(data) {
+            callback(null, data);
+        })
+        .on('error', function(err) {
+            var message,
+                url = /(http:\/\/\S*)/g;
+
+            message = JSON.parse(err.responseText).message
+                .replace(url, '<a href="$&">$&</a>');
+
+            callback(message);
+        })
+        .send('POST', JSON.stringify({
+            description: 'via:geojson.io',
+            public: false,
+            files: {
+                'index.html': { content: tmpl },
+                'map.geojson': { content: content }
+            }
+        }));
+}
+
+function save(context, callback) {
+
+    var source = context.data.get('source'),
+        meta = context.data.get('meta'),
+        name = (meta && meta.name) || 'map.geojson',
+        map = context.data.get('map');
+
+    var description = (source && source.description) || 'via:geojson.io',
+        public = source ? !!source.public : false;
+
+    context.user.details(onuser);
+
+    function onuser(err, user) {
+        var endpoint,
+            method = 'POST',
+            source = context.data.get('source'),
+            files = {};
+
+        if (!err && user && user.login && meta && meta.login && user.login === meta.login) {
+            endpoint = 'https://api.github.com/gists/' + source.id;
+            method = 'PATCH';
+        } else if (!err && source && source.id) {
+            endpoint = 'https://api.github.com/gists/' + source.id + '/forks';
+        } else {
+            endpoint = 'https://api.github.com/gists';
+        }
+
+        files[name] = {
+            content: JSON.stringify(map)
+        };
+
+        context.user.signXHR(d3.json(endpoint))
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(err) {
+                var message,
+                    url = /(http:\/\/\S*)/g;
+
+                message = JSON.parse(err.responseText).message
+                    .replace(url, '<a href="$&">$&</a>');
+
+                callback(message);
+            })
+            .send(method, JSON.stringify({
+                files: files
+            }));
+    }
+}
+
+function load(id, context, callback) {
+    context.user.signXHR(d3.json('https://api.github.com/gists/' + id))
+        .on('load', onLoad)
+        .on('error', onError)
+        .get();
+
+    function onLoad(json) { callback(null, json); }
+    function onError(err) { callback(err, null); }
+}
+
+},{"fs":1}],70:[function(require,module,exports){
+module.exports.save = save;
+module.exports.load = load;
+module.exports.loadRaw = loadRaw;
+
+function save(context, callback) {
+    var source = context.data.get('source'),
+        meta = context.data.get('meta'),
+        name = (meta && meta.name) || 'map.geojson',
+        map = context.data.get('map');
+
+    if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
+        return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
+            'Please use a modern browser to enjoy the full featureset of geojson.io');
+    }
+
+    if (!localStorage.github_token) {
+        return alert('You need to log in with GitHub to commit changes');
+    }
+
+    context.repo.details(onrepo);
+
+    function onrepo(err, repo) {
+        var commitMessage,
+            endpoint,
+            method = 'POST',
+            files = {};
+
+        if (!err && repo.permissions.push) {
+            commitMessage = context.commitMessage || prompt('Commit message:');
+            if (!commitMessage) return;
+
+            endpoint = source.url;
+            method = 'PUT';
+            data = {
+                message: commitMessage,
+                sha: source.sha,
+                branch: meta.branch,
+                content: Base64.toBase64(JSON.stringify(map))
+            };
+        } else {
+            endpoint = 'https://api.github.com/gists';
+            files[name] = { content: JSON.stringify(map) };
+            data = { files: files };
+        }
+
+        context.user.signXHR(d3.json(endpoint))
+            .on('load', function(data) {
+                callback(null, data);
+            })
+            .on('error', function(err) {
+                var message,
+                    url = /(http:\/\/\S*)/g;
+
+                message = JSON.parse(err.responseText).message
+                    .replace(url, '<a href="$&">$&</a>');
+
+                callback(message);
+            })
+            .send(method, JSON.stringify(data));
+    }
+}
+
+function parseGitHubId(id) {
+    var parts = id.split('/');
+    return {
+        user: parts[0],
+        repo: parts[1],
+        mode: parts[2],
+        branch: parts[3],
+        file: parts.slice(4).join('/')
+    };
+}
+
+function load(parts, context, callback) {
+    context.user.signXHR(d3.json(fileUrl(parts)))
+        .on('load', onLoad)
+        .on('error', onError)
+        .get();
+
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function loadRaw(parts, context, callback) {
+    context.user.signXHR(d3.text(fileUrl(parts)))
+        .on('load', onLoad)
+        .on('error', onError)
+        .header('Accept', 'application/vnd.github.raw')
+        .get();
+
+    function onLoad(file) {
+        callback(null, file);
+    }
+    function onError(err) { callback(err, null); }
+}
+
+function fileUrl(parts) {
+    return 'https://api.github.com/repos/' +
+        parts.user +
+        '/' + parts.repo +
+        '/contents/' + parts.path +
+        '?ref=' + parts.branch;
+}
+
+},{}],71:[function(require,module,exports){
+var buttons = require('./ui/mode_buttons'),
+    file_bar = require('./ui/file_bar'),
+    dnd = require('./ui/dnd'),
+    userUi = require('./ui/user'),
+    layer_switch = require('./ui/layer_switch');
+
+module.exports = ui;
+
+function ui(context) {
+    function init(selection) {
+
+        var container = selection
+            .append('div')
+            .attr('class', 'container');
+
+        var map = container
+            .append('div')
+            .attr('class', 'map')
+            .call(context.map)
+            .call(layer_switch(context));
+
+        context.container = container;
+
+        return container;
+    }
+
+    function render(selection) {
+
+        var container = init(selection);
+
+        var right = container
+            .append('div')
+            .attr('class', 'right');
+
+        var top = right
+            .append('div')
+            .attr('class', 'top');
+
+        top
+            .append('button')
+            .attr('class', 'collapse-button')
+            .attr('title', 'Collapse')
+            .on('click', function collapse() {
+                d3.select('body').classed('fullscreen',
+                    !d3.select('body').classed('fullscreen'));
+                var full = d3.select('body').classed('fullscreen');
+                d3.select(this)
+                    .select('.icon')
+                    .classed('icon-caret-up', !full)
+                    .classed('icon-caret-down', full);
+                context.map.invalidateSize();
+            })
+            .append('class', 'span')
+            .attr('class', 'icon icon-caret-up');
+
+        var pane = right
+            .append('div')
+            .attr('class', 'pane');
+
+        top
+            .append('div')
+            .attr('class', 'user fr pad1 deemphasize')
+            .call(userUi(context));
+
+        top
+            .append('div')
+            .attr('class', 'buttons')
+            .call(buttons(context, pane));
+
+        container
+            .append('div')
+            .attr('class', 'file-bar')
+            .call(file_bar(context));
+
+        dnd(context);
+    }
+
+
+    return {
+        read: init,
+        write: render
+    };
+}
+
+},{"./ui/dnd":73,"./ui/file_bar":57,"./ui/layer_switch":77,"./ui/mode_buttons":80,"./ui/user":84}],72:[function(require,module,exports){
+var github = require('../source/github');
+
+module.exports = commit;
+
+function commit(context, callback) {
+    context.container.select('.share').remove();
+    context.container.select('.tooltip.in')
+      .classed('in', false);
+
+    var wrap = context.container.append('div')
+        .attr('class', 'share pad1 center')
+        .style('z-index', 10);
+
+    var form = wrap.append('form')
+        .on('submit', function() {
+            d3.event.preventDefault();
+            context.commitMessage = message.property('value');
+            if (typeof callback === 'function') callback();
+        });
+
+    var message = form.append('input')
+        .attr('placeholder', 'Commit message')
+        .attr('type', 'text');
+
+    var commitButton = form.append('input')
+        .attr('type', 'submit')
+        .property('value', 'Commit Changes')
+        .attr('class', 'semimajor');
+
+    message.node().focus();
+
+    return wrap;
+}
+
+},{"../source/github":70}],73:[function(require,module,exports){
+var readDrop = require('../lib/readfile.js').readDrop,
+    geocoder = require('./geocode.js'),
+    flash = require('./flash.js');
+
+module.exports = function(context) {
+    d3.select('body')
+        .attr('dropzone', 'copy')
+        .on('drop.import', readDrop(function(err, gj, warning) {
+            if (err) {
+                if (err.type === 'geocode') {
+                    context.container.select('.icon-folder-open-alt')
+                        .trigger('click');
+                    flash(context.container, 'This file requires geocoding. Click Import to geocode it')
+                        .classed('error', 'true');
+                } else if (err.message) {
+                    flash(context.container, err.message)
+                        .classed('error', 'true');
+                }
+            } else if (gj && gj.features) {
+                context.data.mergeFeatures(gj.features);
+                if (warning) {
+                    flash(context.container, warning.message);
+                } else {
+                    flash(context.container, 'Imported ' + gj.features.length + ' features.')
+                        .classed('success', 'true');
+                }
+            }
+            d3.select('body').classed('dragover', false);
+        }))
+        .on('dragenter.import', over)
+        .on('dragleave.import', exit)
+        .on('dragover.import', over);
+
+   function over() {
+        d3.event.stopPropagation();
+        d3.event.preventDefault();
+        d3.event.dataTransfer.dropEffect = 'copy';
+        d3.select('body').classed('dragover', true);
+    }
+
+    function exit() {
+        d3.event.stopPropagation();
+        d3.event.preventDefault();
+        d3.event.dataTransfer.dropEffect = 'copy';
+        d3.select('body').classed('dragover', false);
+    }
+};
+
+},{"../lib/readfile.js":62,"./flash.js":74,"./geocode.js":75}],74:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -10163,7 +10731,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":67}],63:[function(require,module,exports){
+},{"./message":79}],75:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart');
 
 module.exports = function(context) {
@@ -10300,7 +10868,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":47}],64:[function(require,module,exports){
+},{"../lib/progress_chart":60}],76:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -10384,7 +10952,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":49,"../lib/zoomextent":52,"./flash.js":62,"./geocode.js":63}],65:[function(require,module,exports){
+},{"../lib/readfile.js":62,"../lib/zoomextent":65,"./flash.js":74,"./geocode.js":75}],77:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -10437,7 +11005,7 @@ module.exports = function(context) {
 };
 
 
-},{}],66:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -10546,7 +11114,7 @@ function bindPopup(l) {
     }, l).setContent(content));
 }
 
-},{"../lib/custom_hash.js":45,"../lib/popup":46,"../lib/querystring.js":48}],67:[function(require,module,exports){
+},{"../lib/custom_hash.js":56,"../lib/popup":59,"../lib/querystring.js":61}],79:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -10587,7 +11155,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],68:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json');
 
@@ -10633,7 +11201,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":54,"../panel/table":55}],69:[function(require,module,exports){
+},{"../panel/json":67,"../panel/table":68}],81:[function(require,module,exports){
 var commit = require('./commit');
 var flash = require('./flash');
 
@@ -10695,7 +11263,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":59,"./flash":62}],70:[function(require,module,exports){
+},{"./commit":72,"./flash":74}],82:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -10772,7 +11340,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":56}],71:[function(require,module,exports){
+},{"../source/gist":69}],83:[function(require,module,exports){
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
@@ -10894,7 +11462,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":64,"detect-json-indent":7,"github-file-browser":10}],72:[function(require,module,exports){
+},{"./import":76,"detect-json-indent":7,"github-file-browser":10}],84:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
@@ -10942,5 +11510,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[53])
+},{}]},{},[66])
 ;
