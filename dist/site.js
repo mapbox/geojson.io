@@ -1,225 +1,7 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var queue = require('./queue');
-
-module.exports = function leafletImage(map, callback) {
-    var dimensions = map.getSize(),
-        layerQueue = new queue(1);
-
-    map.eachLayer(function(l) {
-        if (l instanceof L.TileLayer) {
-            layerQueue.defer(handleTileLayer, l);
-        } else if (l instanceof L.Marker) {
-            layerQueue.defer(handleMarkerLayer, l);
-        }
-    });
-
-    if (map._pathRoot) {
-        layerQueue.defer(handlePathRoot, map._pathRoot);
-    }
-
-    var canvas = document.createElement('canvas');
-    canvas.width = dimensions.x;
-    canvas.height = dimensions.y;
-    var ctx = canvas.getContext('2d');
-
-    function done() {
-        callback(null, canvas);
-    }
-
-    layerQueue.awaitAll(function(err, layers) {
-        if (err) throw err;
-        layers.forEach(function(layer) {
-            if (layer && layer.canvas) {
-                ctx.drawImage(layer.canvas, 0, 0);
-            }
-        });
-        done();
-    });
-
-    function handleTileLayer(layer, callback) {
-        var canvas = document.createElement('canvas');
-        canvas.width = dimensions.x;
-        canvas.height = dimensions.y;
-        var ctx = canvas.getContext('2d');
-        var bounds = map.getPixelBounds(),
-            zoom = map.getZoom(),
-            tileSize = layer.options.tileSize;
-
-        if (!layer.options.tiles || zoom > layer.options.maxZoom || zoom < layer.options.minZoom) {
-            return callback();
-        }
-
-        var tileBounds = L.bounds(
-            bounds.min.divideBy(tileSize)._floor(),
-            bounds.max.divideBy(tileSize)._floor());
-
-        var tiles = [],
-            center = tileBounds.getCenter();
-
-        var j, i, point;
-
-        for (j = tileBounds.min.y; j <= tileBounds.max.y; j++) {
-            for (i = tileBounds.min.x; i <= tileBounds.max.x; i++) {
-                tiles.push(new L.Point(i, j));
-            }
-        }
-
-        var tileQueue = new queue(1);
-
-        tiles.forEach(function(tilePoint) {
-            tileQueue.defer(function(callback) {
-                layer._adjustTilePoint(tilePoint);
-                var tilePos = layer._getTilePos(tilePoint);
-                var url = layer.getTileUrl(tilePoint) + '?cache=' + (+new Date());
-                var im = new Image();
-                im.crossOrigin = '';
-                im.onload = function() {
-                    callback(null, {
-                        img: this,
-                        pos: tilePos,
-                        size: tileSize
-                    });
-                };
-                im.src = url;
-            });
-            tileQueue.awaitAll(function(err, data) {
-                data.forEach(function(d) {
-                    ctx.drawImage(d.img, Math.floor(d.pos.x), Math.floor(d.pos.y),
-                        d.size, d.size);
-                });
-                callback(null, {
-                    canvas: canvas
-                });
-            });
-        });
-    }
-
-    function handlePathRoot(root, callback) {
-        var canvas = document.createElement('canvas');
-        canvas.width = dimensions.x;
-        canvas.height = dimensions.y;
-        var ctx = canvas.getContext('2d');
-        var pos = L.DomUtil.getPosition(root);
-        ctx.drawImage(root, pos.x, pos.y);
-        callback(null, {
-            canvas: canvas
-        });
-    }
-
-    function handleMarkerLayer(marker, callback) {
-        var canvas = document.createElement('canvas'),
-            ctx = canvas.getContext('2d'),
-            pixelBounds = map.getPixelBounds(),
-            minPoint = new L.Point(pixelBounds.min.x, pixelBounds.min.y),
-            pixelPoint = map.project(marker.getLatLng()),
-            url = marker._icon.src + '?cache=false',
-            im = new Image();
-
-        canvas.width = dimensions.x;
-        canvas.height = dimensions.y;
-        im.crossOrigin = '';
-
-        im.onload = function() {
-            var pos = pixelPoint.subtract(minPoint),
-                x = pos.x - Math.floor(this.width / 2),
-                y = pos.y - this.height;
-
-            ctx.drawImage(this, x, y);
-
-            callback(null, {
-                canvas: canvas
-            });
-        };
-
-        im.src = url;
-    }
-}
-
-},{"./queue":2}],2:[function(require,module,exports){
-(function() {
-  if (typeof module === "undefined") self.queue = queue;
-  else module.exports = queue;
-  queue.version = "1.0.4";
-
-  var slice = [].slice;
-
-  function queue(parallelism) {
-    var q,
-        tasks = [],
-        started = 0, // number of tasks that have been started (and perhaps finished)
-        active = 0, // number of tasks currently being executed (started but not finished)
-        remaining = 0, // number of tasks not yet finished
-        popping, // inside a synchronous task callback?
-        error = null,
-        await = noop,
-        all;
-
-    if (!parallelism) parallelism = Infinity;
-
-    function pop() {
-      while (popping = started < tasks.length && active < parallelism) {
-        var i = started++,
-            t = tasks[i],
-            a = slice.call(t, 1);
-        a.push(callback(i));
-        ++active;
-        t[0].apply(null, a);
-      }
-    }
-
-    function callback(i) {
-      return function(e, r) {
-        --active;
-        if (error != null) return;
-        if (e != null) {
-          error = e; // ignore new tasks and squelch active callbacks
-          started = remaining = NaN; // stop queued tasks from starting
-          notify();
-        } else {
-          tasks[i] = r;
-          if (--remaining) popping || pop();
-          else notify();
-        }
-      };
-    }
-
-    function notify() {
-      if (error != null) await(error);
-      else if (all) await(error, tasks);
-      else await.apply(null, [error].concat(tasks));
-    }
-
-    return q = {
-      defer: function() {
-        if (!error) {
-          tasks.push(arguments);
-          ++remaining;
-          pop();
-        }
-        return q;
-      },
-      await: function(f) {
-        await = f;
-        all = false;
-        if (!remaining) notify();
-        return q;
-      },
-      awaitAll: function(f) {
-        await = f;
-        all = true;
-        if (!remaining) notify();
-        return q;
-      }
-    };
-  }
-
-  function noop() {}
-})();
-
-},{}],3:[function(require,module,exports){
 // nothing to see here... no file methods for the browser
 
-},{}],4:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 var process=require("__browserify_process");function filter (xs, fn) {
     var res = [];
     for (var i = 0; i < xs.length; i++) {
@@ -398,7 +180,7 @@ exports.relative = function(from, to) {
 
 exports.sep = '/';
 
-},{"__browserify_process":6}],5:[function(require,module,exports){
+},{"__browserify_process":4}],3:[function(require,module,exports){
 require=(function(e,t,n,r){function i(r){if(!n[r]){if(!t[r]){if(e)return e(r);throw new Error("Cannot find module '"+r+"'")}var s=n[r]={exports:{}};t[r][0](function(e){var n=t[r][1][e];return i(n?n:e)},s,s.exports)}return n[r].exports}for(var s=0;s<r.length;s++)i(r[s]);return i})(typeof require!=="undefined"&&require,{1:[function(require,module,exports){
 // UTILITY
 var util = require('util');
@@ -4260,7 +4042,7 @@ SlowBuffer.prototype.writeDoubleBE = Buffer.prototype.writeDoubleBE;
 },{}]},{},[])
 ;;module.exports=require("buffer-browserify")
 
-},{}],6:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -4314,7 +4096,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],7:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var Buffer=require("__browserify_Buffer").Buffer;"use strict";
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -4473,7 +4255,7 @@ clone.clonePrototype = function(parent) {
   return new c();
 };
 
-},{"__browserify_Buffer":5}],8:[function(require,module,exports){
+},{"__browserify_Buffer":3}],6:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -4630,7 +4412,7 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],9:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports = function(_, def) {
     def = def === undefined ? 4 : def;
     if (_ === '{}') return '    ';
@@ -4640,7 +4422,7 @@ module.exports = function(_, def) {
     return space[0];
 };
 
-},{}],10:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -4898,7 +4680,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":11}],11:[function(require,module,exports){
+},{"jsonlint-lines":9}],9:[function(require,module,exports){
 var process=require("__browserify_process");/* parser generated by jison 0.4.6 */
 /*
   Returns a Parser object of the following structure:
@@ -5553,7 +5335,7 @@ if (typeof module !== 'undefined' && require.main === module) {
   exports.main(process.argv.slice(1));
 }
 }
-},{"__browserify_process":6,"fs":3,"path":4}],12:[function(require,module,exports){
+},{"__browserify_process":4,"fs":1,"path":2}],10:[function(require,module,exports){
 module.exports = function(d3) {
     var preview = require('static-map-preview')(d3, 'tmcw.map-dsejpecw');
 
@@ -5909,7 +5691,7 @@ function mapFile(data) {
     }
 }
 
-},{"static-map-preview":13}],13:[function(require,module,exports){
+},{"static-map-preview":11}],11:[function(require,module,exports){
 var scaleCanvas = require('autoscale-canvas');
 
 module.exports = function(d3, mapid) {
@@ -5973,7 +5755,7 @@ module.exports = function(d3, mapid) {
     function filterNan(_) { return isNaN(_) ? 0 : _; }
 };
 
-},{"autoscale-canvas":14}],14:[function(require,module,exports){
+},{"autoscale-canvas":12}],12:[function(require,module,exports){
 
 /**
  * Retina-enable the given `canvas`.
@@ -5995,7 +5777,7 @@ module.exports = function(canvas){
   }
   return canvas;
 };
-},{}],15:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 (function(window) {
 	var HAS_HASHCHANGE = (function() {
 		var doc_mode = window.documentMode;
@@ -6158,6 +5940,246 @@ module.exports = function(canvas){
 		this._hash.remove();
 	};
 })(window);
+
+},{}],14:[function(require,module,exports){
+var queue = require('./queue');
+
+// leaflet-image
+module.exports = function leafletImage(map, callback) {
+
+    var dimensions = map.getSize(),
+        layerQueue = new queue(1);
+
+    var canvas = document.createElement('canvas');
+    canvas.width = dimensions.x;
+    canvas.height = dimensions.y;
+    var ctx = canvas.getContext('2d');
+
+    // layers are drawn in the same order as they are composed in the DOM:
+    // tiles, paths, and then markers
+    map.eachLayer(drawTileLayer);
+    if (map._pathRoot) layerQueue.defer(handlePathRoot, map._pathRoot);
+    map.eachLayer(drawMarkerLayer);
+    layerQueue.awaitAll(layersDone);
+
+    function drawTileLayer(l) {
+        if (l instanceof L.TileLayer) layerQueue.defer(handleTileLayer, l);
+    }
+
+    function drawMarkerLayer(l) {
+        if (l instanceof L.Marker) layerQueue.defer(handleMarkerLayer, l);
+    }
+
+    function done() {
+        callback(null, canvas);
+    }
+
+    function layersDone(err, layers) {
+        if (err) throw err;
+        layers.forEach(function(layer) {
+            if (layer && layer.canvas) {
+                ctx.drawImage(layer.canvas, 0, 0);
+            }
+        });
+        done();
+    }
+
+    function handleTileLayer(layer, callback) {
+        var canvas = document.createElement('canvas');
+
+        canvas.width = dimensions.x;
+        canvas.height = dimensions.y;
+
+        var ctx = canvas.getContext('2d'),
+            bounds = map.getPixelBounds(),
+            origin = map.getPixelOrigin(),
+            zoom = map.getZoom(),
+            tileSize = layer.options.tileSize;
+
+        if (zoom > layer.options.maxZoom ||
+            zoom < layer.options.minZoom ||
+            // mapbox.tileLayer
+            (layer.options.format && !layer.options.tiles)) {
+            return callback();
+        }
+
+        var offset = new L.Point(
+            ((origin.x / tileSize) - Math.floor(origin.x / tileSize)) * tileSize,
+            ((origin.y / tileSize) - Math.floor(origin.y / tileSize)) * tileSize
+        );
+
+        var tileBounds = L.bounds(
+            bounds.min.divideBy(tileSize)._floor(),
+            bounds.max.divideBy(tileSize)._floor()),
+            tiles = [],
+            center = tileBounds.getCenter(),
+            j, i, point,
+            tileQueue = new queue(1);
+
+        for (j = tileBounds.min.y; j <= tileBounds.max.y; j++) {
+            for (i = tileBounds.min.x; i <= tileBounds.max.x; i++) {
+                tiles.push(new L.Point(i, j));
+            }
+        }
+
+        tiles.forEach(function(tilePoint) {
+            tileQueue.defer(loadTile, tilePoint);
+        });
+
+        tileQueue.awaitAll(tileQueueFinish);
+
+        function loadTile(tilePoint, callback) {
+            var originalTilePoint = tilePoint.clone();
+            layer._adjustTilePoint(tilePoint);
+            var tilePos = layer._getTilePos(originalTilePoint)
+                .subtract(bounds.min)
+                .add(origin);
+            var url = layer.getTileUrl(tilePoint) + '?cache=' + (+new Date());
+            var im = new Image();
+            im.crossOrigin = '';
+            im.onload = function() {
+                callback(null, {
+                    img: this,
+                    pos: tilePos,
+                    size: tileSize
+                });
+            };
+            im.src = url;
+        }
+
+        function tileQueueFinish(err, data) {
+            data.forEach(drawTile);
+            callback(null, { canvas: canvas });
+        }
+
+        function drawTile(d) {
+            ctx.drawImage(d.img, Math.floor(d.pos.x), Math.floor(d.pos.y),
+                d.size, d.size);
+        }
+    }
+
+    function handlePathRoot(root, callback) {
+        var bounds = map.getPixelBounds();
+        var origin = map.getPixelOrigin();
+        var canvas = document.createElement('canvas');
+        canvas.width = dimensions.x;
+        canvas.height = dimensions.y;
+        var ctx = canvas.getContext('2d');
+        var pos = L.DomUtil.getPosition(root).subtract(bounds.min).add(origin);
+        ctx.drawImage(root, pos.x, pos.y);
+        callback(null, {
+            canvas: canvas
+        });
+    }
+
+    function handleMarkerLayer(marker, callback) {
+        var canvas = document.createElement('canvas'),
+            ctx = canvas.getContext('2d'),
+            pixelBounds = map.getPixelBounds(),
+            minPoint = new L.Point(pixelBounds.min.x, pixelBounds.min.y),
+            pixelPoint = map.project(marker.getLatLng()),
+            url = marker._icon.src + '?cache=false',
+            im = new Image(),
+            size = marker.options.icon.options.iconSize,
+            pos = pixelPoint.subtract(minPoint),
+            x = pos.x - (size[0] / 2),
+            y = pos.y - size[1];
+
+        canvas.width = dimensions.x;
+        canvas.height = dimensions.y;
+        im.crossOrigin = '';
+
+        im.onload = function() {
+            ctx.drawImage(this, x, y, size[0], size[1]);
+            callback(null, {
+                canvas: canvas
+            });
+        };
+
+        im.src = url;
+    }
+};
+
+},{"./queue":15}],15:[function(require,module,exports){
+(function() {
+  if (typeof module === "undefined") self.queue = queue;
+  else module.exports = queue;
+  queue.version = "1.0.4";
+
+  var slice = [].slice;
+
+  function queue(parallelism) {
+    var q,
+        tasks = [],
+        started = 0, // number of tasks that have been started (and perhaps finished)
+        active = 0, // number of tasks currently being executed (started but not finished)
+        remaining = 0, // number of tasks not yet finished
+        popping, // inside a synchronous task callback?
+        error = null,
+        await = noop,
+        all;
+
+    if (!parallelism) parallelism = Infinity;
+
+    function pop() {
+      while (popping = started < tasks.length && active < parallelism) {
+        var i = started++,
+            t = tasks[i],
+            a = slice.call(t, 1);
+        a.push(callback(i));
+        ++active;
+        t[0].apply(null, a);
+      }
+    }
+
+    function callback(i) {
+      return function(e, r) {
+        --active;
+        if (error != null) return;
+        if (e != null) {
+          error = e; // ignore new tasks and squelch active callbacks
+          started = remaining = NaN; // stop queued tasks from starting
+          notify();
+        } else {
+          tasks[i] = r;
+          if (--remaining) popping || pop();
+          else notify();
+        }
+      };
+    }
+
+    function notify() {
+      if (error != null) await(error);
+      else if (all) await(error, tasks);
+      else await.apply(null, [error].concat(tasks));
+    }
+
+    return q = {
+      defer: function() {
+        if (!error) {
+          tasks.push(arguments);
+          ++remaining;
+          pop();
+        }
+        return q;
+      },
+      await: function(f) {
+        await = f;
+        all = false;
+        if (!remaining) notify();
+        return q;
+      },
+      awaitAll: function(f) {
+        await = f;
+        all = true;
+        if (!remaining) notify();
+        return q;
+      }
+    };
+  }
+
+  function noop() {}
+})();
 
 },{}],16:[function(require,module,exports){
 var osm_geojson = {};
@@ -6995,7 +7017,7 @@ toGeoJSON = (function() {
 
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
-},{}],"PBmiWO":[function(require,module,exports){
+},{}],"g070js":[function(require,module,exports){
 var fs = require("fs");
 
 var topojson = module.exports = new Function("topojson", "return " + "topojson = (function() {\n\n  function merge(topology, arcs) {\n    var fragmentByStart = {},\n        fragmentByEnd = {};\n\n    arcs.forEach(function(i) {\n      var e = ends(i),\n          start = e[0],\n          end = e[1],\n          f, g;\n\n      if (f = fragmentByEnd[start]) {\n        delete fragmentByEnd[f.end];\n        f.push(i);\n        f.end = end;\n        if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByEnd[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[end]) {\n        delete fragmentByStart[f.start];\n        f.unshift(i);\n        f.start = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[start]) {\n        delete fragmentByStart[f.start];\n        f.unshift(~i);\n        f.start = end;\n        if (g = fragmentByEnd[end]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByEnd[end]) {\n        delete fragmentByEnd[f.end];\n        f.push(~i);\n        f.end = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else {\n        f = [i];\n        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;\n      }\n    });\n\n    function ends(i) {\n      var arc = topology.arcs[i], p0 = arc[0], p1 = [0, 0];\n      arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });\n      return [p0, p1];\n    }\n\n    var fragments = [];\n    for (var k in fragmentByEnd) fragments.push(fragmentByEnd[k]);\n    return fragments;\n  }\n\n  function mesh(topology, o, filter) {\n    var arcs = [];\n\n    if (arguments.length > 1) {\n      var geomsByArc = [],\n          geom;\n\n      function arc(i) {\n        if (i < 0) i = ~i;\n        (geomsByArc[i] || (geomsByArc[i] = [])).push(geom);\n      }\n\n      function line(arcs) {\n        arcs.forEach(arc);\n      }\n\n      function polygon(arcs) {\n        arcs.forEach(line);\n      }\n\n      function geometry(o) {\n        if (o.type === \"GeometryCollection\") o.geometries.forEach(geometry);\n        else if (o.type in geometryType) {\n          geom = o;\n          geometryType[o.type](o.arcs);\n        }\n      }\n\n      var geometryType = {\n        LineString: line,\n        MultiLineString: polygon,\n        Polygon: polygon,\n        MultiPolygon: function(arcs) { arcs.forEach(polygon); }\n      };\n\n      geometry(o);\n\n      geomsByArc.forEach(arguments.length < 3\n          ? function(geoms, i) { arcs.push(i); }\n          : function(geoms, i) { if (filter(geoms[0], geoms[geoms.length - 1])) arcs.push(i); });\n    } else {\n      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);\n    }\n\n    return object(topology, {type: \"MultiLineString\", arcs: merge(topology, arcs)});\n  }\n\n  function featureOrCollection(topology, o) {\n    return o.type === \"GeometryCollection\" ? {\n      type: \"FeatureCollection\",\n      features: o.geometries.map(function(o) { return feature(topology, o); })\n    } : feature(topology, o);\n  }\n\n  function feature(topology, o) {\n    var f = {\n      type: \"Feature\",\n      id: o.id,\n      properties: o.properties || {},\n      geometry: object(topology, o)\n    };\n    if (o.id == null) delete f.id;\n    return f;\n  }\n\n  function object(topology, o) {\n    var tf = topology.transform,\n        kx = tf.scale[0],\n        ky = tf.scale[1],\n        dx = tf.translate[0],\n        dy = tf.translate[1],\n        arcs = topology.arcs;\n\n    function arc(i, points) {\n      if (points.length) points.pop();\n      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, x = 0, y = 0, p; k < n; ++k) points.push([\n        (x += (p = a[k])[0]) * kx + dx,\n        (y += p[1]) * ky + dy\n      ]);\n      if (i < 0) reverse(points, n);\n    }\n\n    function point(coordinates) {\n      return [coordinates[0] * kx + dx, coordinates[1] * ky + dy];\n    }\n\n    function line(arcs) {\n      var points = [];\n      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);\n      if (points.length < 2) points.push(points[0].slice());\n      return points;\n    }\n\n    function ring(arcs) {\n      var points = line(arcs);\n      while (points.length < 4) points.push(points[0].slice());\n      return points;\n    }\n\n    function polygon(arcs) {\n      return arcs.map(ring);\n    }\n\n    function geometry(o) {\n      var t = o.type;\n      return t === \"GeometryCollection\" ? {type: t, geometries: o.geometries.map(geometry)}\n          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}\n          : null;\n    }\n\n    var geometryType = {\n      Point: function(o) { return point(o.coordinates); },\n      MultiPoint: function(o) { return o.coordinates.map(point); },\n      LineString: function(o) { return line(o.arcs); },\n      MultiLineString: function(o) { return o.arcs.map(line); },\n      Polygon: function(o) { return polygon(o.arcs); },\n      MultiPolygon: function(o) { return o.arcs.map(polygon); }\n    };\n\n    return geometry(o);\n  }\n\n  function reverse(array, n) {\n    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;\n  }\n\n  function bisect(a, x) {\n    var lo = 0, hi = a.length;\n    while (lo < hi) {\n      var mid = lo + hi >>> 1;\n      if (a[mid] < x) lo = mid + 1;\n      else hi = mid;\n    }\n    return lo;\n  }\n\n  function neighbors(objects) {\n    var indexesByArc = {}, // arc index -> array of object indexes\n        neighbors = objects.map(function() { return []; });\n\n    function line(arcs, i) {\n      arcs.forEach(function(a) {\n        if (a < 0) a = ~a;\n        var o = indexesByArc[a];\n        if (o) o.push(i);\n        else indexesByArc[a] = [i];\n      });\n    }\n\n    function polygon(arcs, i) {\n      arcs.forEach(function(arc) { line(arc, i); });\n    }\n\n    function geometry(o, i) {\n      if (o.type === \"GeometryCollection\") o.geometries.forEach(function(o) { geometry(o, i); });\n      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);\n    }\n\n    var geometryType = {\n      LineString: line,\n      MultiLineString: polygon,\n      Polygon: polygon,\n      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }\n    };\n\n    objects.forEach(geometry);\n\n    for (var i in indexesByArc) {\n      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {\n        for (var k = j + 1; k < m; ++k) {\n          var ij = indexes[j], ik = indexes[k], n;\n          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);\n          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);\n        }\n      }\n    }\n\n    return neighbors;\n  }\n\n  return {\n    version: \"1.2.3\",\n    mesh: mesh,\n    feature: featureOrCollection,\n    neighbors: neighbors\n  };\n})();\n")();
@@ -7006,7 +7028,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":20,"./lib/topojson/clockwise":22,"./lib/topojson/filter":24,"./lib/topojson/prune":28,"./lib/topojson/simplify":29,"./lib/topojson/topology":32,"fs":3}],20:[function(require,module,exports){
+},{"./lib/topojson/bind":20,"./lib/topojson/clockwise":22,"./lib/topojson/filter":24,"./lib/topojson/prune":28,"./lib/topojson/simplify":29,"./lib/topojson/topology":32,"fs":1}],20:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -7036,7 +7058,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":33}],21:[function(require,module,exports){
+},{"../../":"g070js","./type":33}],21:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -7143,7 +7165,7 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":23,"./type":33}],23:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":23,"./type":33}],23:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
@@ -7219,7 +7241,7 @@ function reverse(ring) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":22,"./coordinate-systems":23,"./prune":28,"./type":33}],25:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":22,"./coordinate-systems":23,"./prune":28,"./type":33}],25:[function(require,module,exports){
 // Note: requires that size is a power of two!
 module.exports = function(size) {
   var mask = size - 1;
@@ -7409,7 +7431,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":33}],29:[function(require,module,exports){
+},{"../../":"g070js","./type":33}],29:[function(require,module,exports){
 var minHeap = require("./min-heap"),
     systems = require("./coordinate-systems");
 
@@ -9147,7 +9169,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":60,"../source/github":61,"clone":7,"xtend":35}],42:[function(require,module,exports){
+},{"../source/gist":60,"../source/github":61,"clone":5,"xtend":35}],42:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -9193,7 +9215,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/querystring":53,"../lib/zoomextent":57,"../ui/flash":66}],43:[function(require,module,exports){
+},{"../lib/querystring":53,"../lib/zoomextent":57,"../ui/flash":49}],43:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('../lib/querystring');
 
@@ -9499,43 +9521,30 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":53,"leaflet-hash":15}],49:[function(require,module,exports){
-var github = require('../source/github');
+},{"../lib/querystring":53,"leaflet-hash":13}],49:[function(require,module,exports){
+var message = require('./message');
 
-module.exports = commit;
+module.exports = flash;
 
-function commit(context, callback) {
-    context.container.select('.share').remove();
-    context.container.select('.tooltip.in')
-      .classed('in', false);
+function flash(selection, txt) {
+    'use strict';
 
-    var wrap = context.container.append('div')
-        .attr('class', 'share pad1 center')
-        .style('z-index', 10);
+    var msg = message(selection);
 
-    var form = wrap.append('form')
-        .on('submit', function() {
-            d3.event.preventDefault();
-            context.commitMessage = message.property('value');
-            if (typeof callback === 'function') callback();
-        });
+    if (txt) msg.select('.content').html(txt);
 
-    var message = form.append('input')
-        .attr('placeholder', 'Commit message')
-        .attr('type', 'text');
+    setTimeout(function() {
+        msg
+            .transition()
+            .style('opacity', 0)
+            .remove();
+    }, 5000);
 
-    var commitButton = form.append('input')
-        .attr('type', 'submit')
-        .property('value', 'Commit Changes')
-        .attr('class', 'semimajor');
-
-    message.node().focus();
-
-    return wrap;
+    return msg;
 }
 
-},{"../source/github":61}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
+},{"./message":71}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
 },{}],51:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
@@ -9744,7 +9753,7 @@ function readFile(f, callback) {
     }
 }
 
-},{"osm-and-geojson":16,"togeojson":18,"topojson":"PBmiWO"}],55:[function(require,module,exports){
+},{"osm-and-geojson":16,"togeojson":18,"topojson":"g070js"}],55:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -9812,7 +9821,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":10}],57:[function(require,module,exports){
+},{"geojsonhint":8}],57:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
@@ -9949,7 +9958,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":55,"d3-metatable":8}],60:[function(require,module,exports){
+},{"../lib/smartzoom.js":55,"d3-metatable":6}],60:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -10043,7 +10052,7 @@ function load(id, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":3}],61:[function(require,module,exports){
+},{"fs":1}],61:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -10235,7 +10244,42 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":63,"./ui/file_bar":65,"./ui/layer_switch":69,"./ui/mode_buttons":72,"./ui/user":76}],63:[function(require,module,exports){
+},{"./ui/dnd":64,"./ui/file_bar":66,"./ui/layer_switch":69,"./ui/mode_buttons":72,"./ui/user":76}],63:[function(require,module,exports){
+var github = require('../source/github');
+
+module.exports = commit;
+
+function commit(context, callback) {
+    context.container.select('.share').remove();
+    context.container.select('.tooltip.in')
+      .classed('in', false);
+
+    var wrap = context.container.append('div')
+        .attr('class', 'share pad1 center')
+        .style('z-index', 10);
+
+    var form = wrap.append('form')
+        .on('submit', function() {
+            d3.event.preventDefault();
+            context.commitMessage = message.property('value');
+            if (typeof callback === 'function') callback();
+        });
+
+    var message = form.append('input')
+        .attr('placeholder', 'Commit message')
+        .attr('type', 'text');
+
+    var commitButton = form.append('input')
+        .attr('type', 'submit')
+        .property('value', 'Commit Changes')
+        .attr('class', 'semimajor');
+
+    message.node().focus();
+
+    return wrap;
+}
+
+},{"../source/github":61}],64:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
     flash = require('./flash.js');
@@ -10284,8 +10328,8 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":54,"./flash.js":66,"./geocode.js":67}],64:[function(require,module,exports){
-var leafletImage = require('../../lib/leaflet-image');
+},{"../lib/readfile.js":54,"./flash.js":49,"./geocode.js":67}],65:[function(require,module,exports){
+var leafletImage = require('leaflet-image');
 
 module.exports = download;
 
@@ -10301,21 +10345,21 @@ function download(context) {
 
     function downloadImage() {
         if (d3.event) d3.event.preventDefault();
+        d3.select('.map').classed('loading', true);
         leafletImage(context.map, function(err, canvas) {
-            var data = canvas.toDataURL().match(/data:(.*),(.*)/),
-                type = data[1].match(/(^.*);/)[1],
+            d3.select('.map').classed('loading', false);
+            var data = canvas.toDataURL('image/png').match(/data:(.*),(.*)/),
                 content = window.atob(data[2]),
-                ext = '.' + type.match(/\/(.*)$/)[1],
                 meta = context.data.get('meta'),
                 arr = new Uint8Array(content.length);
 
             for (var i = 0, length = content.length; i < length; i++) {
-                arr[i] = content.charCodeAt(i);    
+                arr[i] = content.charCodeAt(i);
             }
 
             window.saveAs(new Blob([arr.buffer], {
-                type: type
-            }), (meta && meta.name ? meta.name.split('.')[0] : 'map') + ext);
+                type: 'image/png'
+            }), (meta && meta.name ? meta.name.split('.')[0] : 'map') + '.png');
         });
     }
 
@@ -10360,7 +10404,7 @@ function download(context) {
     };
 }
 
-},{"../../lib/leaflet-image":1}],65:[function(require,module,exports){
+},{"leaflet-image":14}],66:[function(require,module,exports){
 var download = require('./download'),
     share = require('./share'),
     sourcepanel = require('./source.js'),
@@ -10468,29 +10512,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":73,"./download":64,"./share":74,"./source.js":75}],66:[function(require,module,exports){
-var message = require('./message');
-
-module.exports = flash;
-
-function flash(selection, txt) {
-    'use strict';
-
-    var msg = message(selection);
-
-    if (txt) msg.select('.content').html(txt);
-
-    setTimeout(function() {
-        msg
-            .transition()
-            .style('opacity', 0)
-            .remove();
-    }, 5000);
-
-    return msg;
-}
-
-},{"./message":71}],67:[function(require,module,exports){
+},{"../ui/saver.js":73,"./download":65,"./share":74,"./source.js":75}],67:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart');
 
 module.exports = function(context) {
@@ -10711,7 +10733,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":54,"../lib/zoomextent":57,"./flash.js":66,"./geocode.js":67}],69:[function(require,module,exports){
+},{"../lib/readfile.js":54,"../lib/zoomextent":57,"./flash.js":49,"./geocode.js":67}],69:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -10747,7 +10769,7 @@ module.exports = function(context) {
                 else if (context.map.hasLayer(l.layer)) context.map.removeLayer(l.layer);
             }
         };
-        
+
         var layerButtons = selection.append('div')
             .attr('class', 'layer-switch')
             .selectAll('button')
@@ -11022,7 +11044,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":49,"./flash":66}],74:[function(require,module,exports){
+},{"./commit":63,"./flash":49}],74:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -11221,7 +11243,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":68,"detect-json-indent":9,"github-file-browser":12}],76:[function(require,module,exports){
+},{"./import":68,"detect-json-indent":7,"github-file-browser":10}],76:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')

@@ -1,4 +1,4 @@
-var leafletImage = require('../../lib/leaflet-image');
+var leafletImage = require('leaflet-image');
 
 module.exports = download;
 
@@ -14,21 +14,21 @@ function download(context) {
 
     function downloadImage() {
         if (d3.event) d3.event.preventDefault();
+        d3.select('.map').classed('loading', true);
         leafletImage(context.map, function(err, canvas) {
-            var data = canvas.toDataURL().match(/data:(.*),(.*)/),
-                type = data[1].match(/(^.*);/)[1],
+            d3.select('.map').classed('loading', false);
+            var data = canvas.toDataURL('image/png').match(/data:(.*),(.*)/),
                 content = window.atob(data[2]),
-                ext = '.' + type.match(/\/(.*)$/)[1],
                 meta = context.data.get('meta'),
                 arr = new Uint8Array(content.length);
 
             for (var i = 0, length = content.length; i < length; i++) {
-                arr[i] = content.charCodeAt(i);    
+                arr[i] = content.charCodeAt(i);
             }
 
             window.saveAs(new Blob([arr.buffer], {
-                type: type
-            }), (meta && meta.name ? meta.name.split('.')[0] : 'map') + ext);
+                type: 'image/png'
+            }), (meta && meta.name ? meta.name.split('.')[0] : 'map') + '.png');
         });
     }
 

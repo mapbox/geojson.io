@@ -33,7 +33,7 @@ module.exports = function(context) {
                 else if (context.map.hasLayer(l.layer)) context.map.removeLayer(l.layer);
             }
         };
-        
+
         var layerButtons = selection.append('div')
             .attr('class', 'layer-switch')
             .selectAll('button')
