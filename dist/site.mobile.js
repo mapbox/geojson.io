@@ -10167,6 +10167,7 @@ module.exports = function(context) {
 
 },{"../lib/readfile.js":66,"../lib/zoomextent":69,"./flash.js":79,"./geocode.js":80}],78:[function(require,module,exports){
 var share = require('./share'),
+    topojson = require('topojson'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
 
@@ -10222,11 +10223,28 @@ module.exports = function fileBar(context) {
 
         function download() {
             if (d3.event) d3.event.preventDefault();
+            if (d3.event.shiftKey) return downloadTopo();
+
             var content = JSON.stringify(context.data.get('map'));
             var meta = context.data.get('meta');
             window.saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
             }), (meta && meta.name) || 'map.geojson');
+        }
+
+        function downloadTopo() {
+            var content = JSON.stringify(topojson.topology({
+                collection: context.data.get('map')
+            }, {'property-transform': allProperties}));
+
+            window.saveAs(new Blob([content], {
+                type: 'text/plain;charset=utf-8'
+            }), 'map.topojson');
+        }
+
+        function allProperties(properties, key, value) {
+            properties[key] = value;
+            return true;
         }
 
         function sourceIcon(type) {
@@ -10282,7 +10300,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":86,"./share":87,"./source.js":88}],79:[function(require,module,exports){
+},{"../ui/saver.js":86,"./share":87,"./source.js":88,"topojson":"g070js"}],79:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;

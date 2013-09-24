@@ -1,4 +1,5 @@
 var share = require('./share'),
+    topojson = require('topojson'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
 
@@ -54,11 +55,28 @@ module.exports = function fileBar(context) {
 
         function download() {
             if (d3.event) d3.event.preventDefault();
+            if (d3.event.shiftKey) return downloadTopo();
+
             var content = JSON.stringify(context.data.get('map'));
             var meta = context.data.get('meta');
             window.saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
             }), (meta && meta.name) || 'map.geojson');
+        }
+
+        function downloadTopo() {
+            var content = JSON.stringify(topojson.topology({
+                collection: context.data.get('map')
+            }, {'property-transform': allProperties}));
+
+            window.saveAs(new Blob([content], {
+                type: 'text/plain;charset=utf-8'
+            }), 'map.topojson');
+        }
+
+        function allProperties(properties, key, value) {
+            properties[key] = value;
+            return true;
         }
 
         function sourceIcon(type) {
