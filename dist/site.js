@@ -11021,9 +11021,12 @@ module.exports = function(context) {
 
     function render(selection) {
 
-        selection.select('.right.overlay').remove();
+        selection
+            .html('')
+            .select('.right.overlay').remove();
 
-        var panel = selection.append('div')
+        var panel = selection
+            .append('div')
             .attr('class', 'right overlay');
 
         var sources = [{
