@@ -431,6 +431,10 @@ body.dragover:after {
     text-align:center;
 }
 
+.overlay {
+    z-index:999;
+}
+
 /*
  * GitHub Browser -------------------------------------------------------------
  */

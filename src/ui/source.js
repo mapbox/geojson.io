@@ -7,7 +7,6 @@ module.exports = function(context) {
     function render(selection) {
 
         selection
-            .html('')
             .select('.right.overlay').remove();
 
         var panel = selection
