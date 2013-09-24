@@ -1,4 +1,5 @@
 var validate = require('../lib/validate'),
+    zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
 
 module.exports = function(context) {
@@ -37,7 +38,10 @@ module.exports = function(context) {
         editor.on('change', validate(changeValidated));
 
         function changeValidated(err, data) {
-            if (!err) context.data.set({map: data}, 'json');
+            if (!err) {
+              context.data.set({map: data}, 'json');
+              zoomextent(context);
+            }
         }
 
         context.dispatch.on('change.json', function(event) {
