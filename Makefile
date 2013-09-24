@@ -40,7 +40,6 @@ dist/lib.js: dist dist/d3.js $(LIBS)
 	cat dist/d3.js \
 		lib/blob.js \
 		lib/base64.js \
-		lib/csv2geojson.js \
 		lib/geocodemany.js \
 		lib/bucket.js \
 		lib/queue.js \

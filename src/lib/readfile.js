@@ -1,5 +1,6 @@
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
+    csv2geojson = require('csv2geojson'),
     osm2geojson = require('osm-and-geojson').osm2geojson;
 
 module.exports.readDrop = readDrop;
