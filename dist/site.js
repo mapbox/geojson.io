@@ -10237,6 +10237,7 @@ module.exports = function(context) {
 
 },{"../lib/readfile.js":68,"../lib/zoomextent":71,"./flash.js":81,"./geocode.js":82}],80:[function(require,module,exports){
 var share = require('./share'),
+    clone = require('clone'),
     topojson = require('topojson'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
@@ -10304,7 +10305,7 @@ module.exports = function fileBar(context) {
 
         function downloadTopo() {
             var content = JSON.stringify(topojson.topology({
-                collection: context.data.get('map')
+                collection: clone(context.data.get('map'))
             }, {'property-transform': allProperties}));
 
             window.saveAs(new Blob([content], {
@@ -10370,7 +10371,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":88,"./share":89,"./source.js":90,"topojson":"g070js"}],81:[function(require,module,exports){
+},{"../ui/saver.js":88,"./share":89,"./source.js":90,"clone":7,"topojson":"g070js"}],81:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;

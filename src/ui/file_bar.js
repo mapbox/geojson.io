@@ -1,4 +1,5 @@
 var share = require('./share'),
+    clone = require('clone'),
     topojson = require('topojson'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
@@ -66,7 +67,7 @@ module.exports = function fileBar(context) {
 
         function downloadTopo() {
             var content = JSON.stringify(topojson.topology({
-                collection: context.data.get('map')
+                collection: clone(context.data.get('map'))
             }, {'property-transform': allProperties}));
 
             window.saveAs(new Blob([content], {
