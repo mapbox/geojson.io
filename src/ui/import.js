@@ -67,8 +67,8 @@ module.exports = function(context) {
                 } else {
                     flash(context.container, 'Imported ' + gj.features.length + ' features.')
                         .classed('success', 'true');
-                    zoomextent(context);
                 }
+                zoomextent(context);
             }
         }
 

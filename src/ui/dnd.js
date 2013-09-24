@@ -1,21 +1,21 @@
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
-    flash = require('./flash.js');
+    flash = require('./flash.js'),
+    zoomextent = require('../lib/zoomextent');
 
 module.exports = function(context) {
     d3.select('body')
         .attr('dropzone', 'copy')
         .on('drop.import', readDrop(function(err, gj, warning) {
-            if (err) {
-                if (err.type === 'geocode') {
-                    context.container.select('.icon-folder-open-alt')
-                        .trigger('click');
-                    flash(context.container, 'This file requires geocoding. Click Import to geocode it')
-                        .classed('error', 'true');
-                } else if (err.message) {
-                    flash(context.container, err.message)
-                        .classed('error', 'true');
-                }
+            if (err && err.message) {
+                flash(context.container, err.message)
+                    .classed('error', 'true');
+            }
+            if (err && err.type === 'geocode') {
+                context.container.select('.icon-folder-open-alt')
+                    .trigger('click');
+                flash(context.container, 'This file requires geocoding. Click Import to geocode it')
+                    .classed('error', 'true');
             } else if (gj && gj.features) {
                 context.data.mergeFeatures(gj.features);
                 if (warning) {
@@ -24,6 +24,7 @@ module.exports = function(context) {
                     flash(context.container, 'Imported ' + gj.features.length + ' features.')
                         .classed('success', 'true');
                 }
+                zoomextent(context);
             }
             d3.select('body').classed('dragover', false);
         }))

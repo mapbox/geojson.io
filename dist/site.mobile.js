@@ -9774,123 +9774,56 @@ L.Hash.prototype.formatHash = function(map) {
 };
 
 },{"../lib/querystring":61,"leaflet-hash":13}],57:[function(require,module,exports){
-var share = require('./share'),
-    sourcepanel = require('./source.js'),
-    saver = require('../ui/saver.js');
+var readDrop = require('../lib/readfile.js').readDrop,
+    geocoder = require('./geocode.js'),
+    flash = require('./flash.js'),
+    zoomextent = require('../lib/zoomextent');
 
-module.exports = function fileBar(context) {
-
-    function bar(selection) {
-
-        var name = selection.append('div')
-            .attr('class', 'name');
-
-        var filetype = name.append('a')
-            .attr('target', '_blank')
-            .attr('class', 'icon-file-alt');
-
-        var filename = name.append('span')
-            .attr('class', 'filename')
-            .text('unsaved');
-
-        var actions = [{
-            title: 'Save',
-            icon: 'icon-save',
-            action: saveAction
-        }, {
-            title: 'Open',
-            icon: 'icon-folder-open-alt',
-            action: function() {
-                context.container.call(sourcepanel(context));
+module.exports = function(context) {
+    d3.select('body')
+        .attr('dropzone', 'copy')
+        .on('drop.import', readDrop(function(err, gj, warning) {
+            if (err && err.message) {
+                flash(context.container, err.message)
+                    .classed('error', 'true');
             }
-        }, {
-            title: 'New',
-            icon: 'icon-plus',
-            action: function() {
-                window.open('/#new');
+            if (err && err.type === 'geocode') {
+                context.container.select('.icon-folder-open-alt')
+                    .trigger('click');
+                flash(context.container, 'This file requires geocoding. Click Import to geocode it')
+                    .classed('error', 'true');
+            } else if (gj && gj.features) {
+                context.data.mergeFeatures(gj.features);
+                if (warning) {
+                    flash(context.container, warning.message);
+                } else {
+                    flash(context.container, 'Imported ' + gj.features.length + ' features.')
+                        .classed('success', 'true');
+                }
+                zoomextent(context);
             }
-        }, {
-            title: 'Download',
-            icon: 'icon-download',
-            action: function() {
-                download();
-            }
-        }, {
-            title: 'Share',
-            icon: 'icon-share-alt',
-            action: function() {
-                context.container.call(share(context));
-            }
-        }];
+            d3.select('body').classed('dragover', false);
+        }))
+        .on('dragenter.import', over)
+        .on('dragleave.import', exit)
+        .on('dragover.import', over);
 
-        function saveAction() {
-            if (d3.event) d3.event.preventDefault();
-            saver(context);
-        }
-
-        function download() {
-            if (d3.event) d3.event.preventDefault();
-            var content = JSON.stringify(context.data.get('map'));
-            var meta = context.data.get('meta');
-            window.saveAs(new Blob([content], {
-                type: 'text/plain;charset=utf-8'
-            }), (meta && meta.name) || 'map.geojson');
-        }
-
-        function sourceIcon(type) {
-            if (type == 'github') return 'icon-github';
-            else if (type == 'gist') return 'icon-github-alt';
-            else return 'icon-file-alt';
-        }
-
-        function saveNoun(_) {
-            buttons.filter(function(b) {
-                return b.title === 'Save';
-            }).select('span.title').text(_);
-        }
-
-        var buttons = selection.append('div')
-            .attr('class', 'fr')
-            .selectAll('button')
-            .data(actions)
-            .enter()
-            .append('button')
-            .on('click', function(d) {
-                d.action.apply(this, d);
-            })
-            .attr('data-original-title', function(d) {
-                return d.title;
-            })
-            .attr('class', function(d) {
-                return d.icon + ' icon sq40';
-            })
-            .call(bootstrap.tooltip().placement('bottom'));
-
-        context.dispatch.on('change.filebar', onchange);
-
-        function onchange(d) {
-            var data = d.obj,
-                type = data.type,
-                path = data.path;
-            filename
-                .text(path ? path : 'unsaved')
-                .classed('deemphasize', context.data.dirty);
-            filetype
-                .attr('href', data.url)
-                .attr('class', sourceIcon(type));
-            saveNoun(type == 'github' ? 'Commit' : 'Save');
-        }
-
-        d3.select(document).call(
-            d3.keybinding('file_bar')
-                .on('⌘+a', download)
-                .on('⌘+s', saveAction));
+   function over() {
+        d3.event.stopPropagation();
+        d3.event.preventDefault();
+        d3.event.dataTransfer.dropEffect = 'copy';
+        d3.select('body').classed('dragover', true);
     }
 
-    return bar;
+    function exit() {
+        d3.event.stopPropagation();
+        d3.event.preventDefault();
+        d3.event.dataTransfer.dropEffect = 'copy';
+        d3.select('body').classed('dragover', false);
+    }
 };
 
-},{"../ui/saver.js":81,"./share":82,"./source.js":83}],"topojson":[function(require,module,exports){
+},{"../lib/readfile.js":62,"../lib/zoomextent":65,"./flash.js":74,"./geocode.js":75}],"topojson":[function(require,module,exports){
 module.exports=require('g070js');
 },{}],59:[function(require,module,exports){
 module.exports = function(context) {
@@ -10000,88 +9933,140 @@ module.exports.readFile = readFile;
 
 function readDrop(callback) {
     return function() {
-        if (d3.event.dataTransfer) {
+        var results = [];
+        var errors = [];
+        var warnings = [];
+        if (d3.event.dataTransfer && d3.event.dataTransfer &&
+           d3.event.dataTransfer.files && d3.event.dataTransfer.files.length) {
             d3.event.stopPropagation();
             d3.event.preventDefault();
-            var f = d3.event.dataTransfer.files[0];
-            readFile(f, callback);
+            var remaining = d3.event.dataTransfer.files.length;
+            [].forEach.call(d3.event.dataTransfer.files, function(f) {
+                readAsText(f, function(err, text) {
+                    if (err) {
+                        errors.push(err);
+                        if (!--remaining) finish(errors, results);
+                    } else {
+                        readFile(f, text, function(err, res, war) {
+                            if (err) errors.push(err);
+                            if (res) results.push(res);
+                            if (war) results.push(war);
+                            if (!--remaining) finish(errors, results, war);
+                        });
+                    }
+                });
+            });
+        } else {
+            return callback({
+                message: 'No files were dropped'
+            });
+        }
+
+        function finish(errors, results, war) {
+            // if no conversions suceeded, return the first error
+            if (!results.length && errors.length) return callback(errors[0], null, war);
+            // otherwise combine results
+            return callback(null, {
+                type: 'FeatureCollection',
+                features: results.reduce(function(memo, r) {
+                    if (r.features) memo = memo.concat(r.features);
+                    else if (r.type === 'Feature') memo.push(r);
+                    return memo;
+                }, [])
+            }, war);
         }
     };
 }
 
-function readFile(f, callback) {
-
-    var reader = new FileReader();
-
-    reader.onload = function(e) {
-
-        var fileType = detectType(f);
-
-        if (!fileType) {
-            return callback({
-                message: 'Could not detect file type'
+function readAsText(f, callback) {
+    try {
+        var reader = new FileReader();
+        reader.readAsText(f);
+        reader.onload = function(e) {
+            if (e.target && e.target.result) callback(null, e.target.result);
+            else callback({
+                message: 'Dropped file could not be loaded'
             });
-        } else if (fileType === 'kml') {
-            var kmldom = toDom(e.target.result);
-            if (!kmldom) {
-                return callback({
-                    message: 'Invalid KML file: not valid XML'
-                });
-            }
-            var warning;
-            if (kmldom.getElementsByTagName('NetworkLink').length) {
-                warning = {
-                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                      'Please export and upload KML without NetworkLinks for optimal performance'
-                };
-            }
-            callback(null, toGeoJSON.kml(kmldom), warning);
-        } else if (fileType === 'xml') {
-            var xmldom = toDom(e.target.result);
-            if (!xmldom) {
-                return callback({
-                    message: 'Invalid XML file: not valid XML'
-                });
-            }
-            callback(null, osm2geojson(xmldom));
-        } else if (fileType === 'gpx') {
-            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
-        } else if (fileType === 'geojson') {
-            try {
-                gj = JSON.parse(e.target.result);
-                if (gj && gj.type === 'Topology' && gj.objects) {
-                    var collection = { type: 'FeatureCollection', features: [] };
-                    for (var o in gj.objects) {
-                        var ft = topojson.feature(gj, gj.objects[o]);
-                        if (ft.features) collection.features = collection.features.concat(ft.features);
-                        else collection.features = collection.features.concat([ft]);
-                    }
-                    return callback(null, collection);
-                } else {
-                    return callback(null, gj);
-                }
-            } catch(err) {
-                alert('Invalid JSON file: ' + err);
-                return;
-            }
-        } else if (fileType === 'dsv') {
-            csv2geojson.csv2geojson(e.target.result, {
-                delimiter: 'auto'
-            }, function(err, result) {
-                if (err) {
-                    return callback({
-                        type: 'geocode',
-                        result: result,
-                        raw: e.target.result
-                    });
-                } else {
-                    return callback(null, result);
-                }
+        };
+        reader.onerror = function(e) {
+            callback({
+                message: 'Dropped file was unreadable'
+            });
+        };
+    } catch (e) {
+        callback({
+            message: 'Dropped file was unreadable'
+        });
+    }
+}
+
+function readFile(f, text, callback) {
+
+    var fileType = detectType(f);
+
+    if (!fileType) {
+        return callback({
+            message: 'Could not detect file type'
+        });
+    } else if (fileType === 'kml') {
+        var kmldom = toDom(text);
+        if (!kmldom) {
+            return callback({
+                message: 'Invalid KML file: not valid XML'
             });
         }
-    };
+        var warning;
+        if (kmldom.getElementsByTagName('NetworkLink').length) {
+            warning = {
+                message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                  'Please export and upload KML without NetworkLinks for optimal performance'
+            };
+        }
+        callback(null, toGeoJSON.kml(kmldom), warning);
+    } else if (fileType === 'xml') {
+        var xmldom = toDom(text);
+        if (!xmldom) {
+            return callback({
+                message: 'Invalid XML file: not valid XML'
+            });
+        }
+        callback(null, osm2geojson(xmldom));
+    } else if (fileType === 'gpx') {
+        callback(null, toGeoJSON.gpx(toDom(text)));
+    } else if (fileType === 'geojson') {
+        try {
+            gj = JSON.parse(text);
+            if (gj && gj.type === 'Topology' && gj.objects) {
+                var collection = { type: 'FeatureCollection', features: [] };
+                for (var o in gj.objects) {
+                    var ft = topojson.feature(gj, gj.objects[o]);
+                    if (ft.features) collection.features = collection.features.concat(ft.features);
+                    else collection.features = collection.features.concat([ft]);
+                }
+                return callback(null, collection);
+            } else {
+                return callback(null, gj);
+            }
+        } catch(err) {
+            alert('Invalid JSON file: ' + err);
+            return;
+        }
+    } else if (fileType === 'dsv') {
+        csv2geojson.csv2geojson(text, {
+            delimiter: 'auto'
+        }, function(err, result) {
+            if (err) {
+                return callback({
+                    type: 'geocode',
+                    result: result,
+                    raw: text
+                });
+            } else {
+                return callback(null, result);
+            }
+        });
+    }
 
-    reader.readAsText(f);
 
     function toDom(x) {
         return (new DOMParser()).parseFromString(x, 'text/xml');
@@ -10625,7 +10610,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":73,"./ui/file_bar":57,"./ui/layer_switch":77,"./ui/mode_buttons":80,"./ui/user":84}],72:[function(require,module,exports){
+},{"./ui/dnd":57,"./ui/file_bar":73,"./ui/layer_switch":77,"./ui/mode_buttons":80,"./ui/user":84}],72:[function(require,module,exports){
 var github = require('../source/github');
 
 module.exports = commit;
@@ -10661,55 +10646,123 @@ function commit(context, callback) {
 }
 
 },{"../source/github":70}],73:[function(require,module,exports){
-var readDrop = require('../lib/readfile.js').readDrop,
-    geocoder = require('./geocode.js'),
-    flash = require('./flash.js');
+var share = require('./share'),
+    sourcepanel = require('./source.js'),
+    saver = require('../ui/saver.js');
 
-module.exports = function(context) {
-    d3.select('body')
-        .attr('dropzone', 'copy')
-        .on('drop.import', readDrop(function(err, gj, warning) {
-            if (err) {
-                if (err.type === 'geocode') {
-                    context.container.select('.icon-folder-open-alt')
-                        .trigger('click');
-                    flash(context.container, 'This file requires geocoding. Click Import to geocode it')
-                        .classed('error', 'true');
-                } else if (err.message) {
-                    flash(context.container, err.message)
-                        .classed('error', 'true');
-                }
-            } else if (gj && gj.features) {
-                context.data.mergeFeatures(gj.features);
-                if (warning) {
-                    flash(context.container, warning.message);
-                } else {
-                    flash(context.container, 'Imported ' + gj.features.length + ' features.')
-                        .classed('success', 'true');
-                }
+module.exports = function fileBar(context) {
+
+    function bar(selection) {
+
+        var name = selection.append('div')
+            .attr('class', 'name');
+
+        var filetype = name.append('a')
+            .attr('target', '_blank')
+            .attr('class', 'icon-file-alt');
+
+        var filename = name.append('span')
+            .attr('class', 'filename')
+            .text('unsaved');
+
+        var actions = [{
+            title: 'Save',
+            icon: 'icon-save',
+            action: saveAction
+        }, {
+            title: 'Open',
+            icon: 'icon-folder-open-alt',
+            action: function() {
+                context.container.call(sourcepanel(context));
             }
-            d3.select('body').classed('dragover', false);
-        }))
-        .on('dragenter.import', over)
-        .on('dragleave.import', exit)
-        .on('dragover.import', over);
+        }, {
+            title: 'New',
+            icon: 'icon-plus',
+            action: function() {
+                window.open('/#new');
+            }
+        }, {
+            title: 'Download',
+            icon: 'icon-download',
+            action: function() {
+                download();
+            }
+        }, {
+            title: 'Share',
+            icon: 'icon-share-alt',
+            action: function() {
+                context.container.call(share(context));
+            }
+        }];
 
-   function over() {
-        d3.event.stopPropagation();
-        d3.event.preventDefault();
-        d3.event.dataTransfer.dropEffect = 'copy';
-        d3.select('body').classed('dragover', true);
+        function saveAction() {
+            if (d3.event) d3.event.preventDefault();
+            saver(context);
+        }
+
+        function download() {
+            if (d3.event) d3.event.preventDefault();
+            var content = JSON.stringify(context.data.get('map'));
+            var meta = context.data.get('meta');
+            window.saveAs(new Blob([content], {
+                type: 'text/plain;charset=utf-8'
+            }), (meta && meta.name) || 'map.geojson');
+        }
+
+        function sourceIcon(type) {
+            if (type == 'github') return 'icon-github';
+            else if (type == 'gist') return 'icon-github-alt';
+            else return 'icon-file-alt';
+        }
+
+        function saveNoun(_) {
+            buttons.filter(function(b) {
+                return b.title === 'Save';
+            }).select('span.title').text(_);
+        }
+
+        var buttons = selection.append('div')
+            .attr('class', 'fr')
+            .selectAll('button')
+            .data(actions)
+            .enter()
+            .append('button')
+            .on('click', function(d) {
+                d.action.apply(this, d);
+            })
+            .attr('data-original-title', function(d) {
+                return d.title;
+            })
+            .attr('class', function(d) {
+                return d.icon + ' icon sq40';
+            })
+            .call(bootstrap.tooltip().placement('bottom'));
+
+        context.dispatch.on('change.filebar', onchange);
+
+        function onchange(d) {
+            var data = d.obj,
+                type = data.type,
+                path = data.path;
+            filename
+                .text(path ? path : 'unsaved')
+                .classed('deemphasize', context.data.dirty);
+            filetype
+                .attr('href', data.url)
+                .attr('class', sourceIcon(type));
+            saveNoun(type == 'github' ? 'Commit' : 'Save');
+        }
+
+        d3.select(document).call(
+            d3.keybinding('file_bar')
+                .on('⌘+a', download)
+                .on('⌘+s', saveAction));
     }
 
-    function exit() {
-        d3.event.stopPropagation();
-        d3.event.preventDefault();
-        d3.event.dataTransfer.dropEffect = 'copy';
-        d3.select('body').classed('dragover', false);
-    }
+    return bar;
 };
 
-},{"../lib/readfile.js":62,"./flash.js":74,"./geocode.js":75}],74:[function(require,module,exports){
+},{"../ui/saver.js":81,"./share":82,"./source.js":83}],74:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -10938,8 +10991,8 @@ module.exports = function(context) {
                 } else {
                     flash(context.container, 'Imported ' + gj.features.length + ' features.')
                         .classed('success', 'true');
-                    zoomextent(context);
                 }
+                zoomextent(context);
             }
         }
 
