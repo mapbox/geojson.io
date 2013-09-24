@@ -9647,7 +9647,7 @@ module.exports = function(map, feature, bounds) {
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
-    return function(editor) {
+    return function(editor, changeObj) {
 
         var err = geojsonhint.hint(editor.getValue());
         editor.clearGutter('error');
@@ -9665,9 +9665,14 @@ module.exports = function(callback) {
                 title: 'invalid GeoJSON',
                 message: 'invalid GeoJSON'});
         } else {
+            var zoom = changeObj.from.ch === 0 &&
+                changeObj.from.line === 0 &&
+                changeObj.origin == 'paste';
+
             var gj = JSON.parse(editor.getValue());
+
             try {
-                return callback(null, gj);
+                return callback(null, gj, zoom);
             } catch(e) {
                 return callback({
                     'class': 'icon-circle-blank',
@@ -9707,6 +9712,7 @@ module.exports = function(context) {
 
 },{}],72:[function(require,module,exports){
 var validate = require('../lib/validate'),
+    zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
 
 module.exports = function(context) {
@@ -9744,8 +9750,11 @@ module.exports = function(context) {
 
         editor.on('change', validate(changeValidated));
 
-        function changeValidated(err, data) {
-            if (!err) context.data.set({map: data}, 'json');
+        function changeValidated(err, data, zoom) {
+            if (!err) {
+              context.data.set({map: data}, 'json');
+              if (zoom) zoomextent(context);
+            }
         }
 
         context.dispatch.on('change.json', function(event) {
@@ -9764,7 +9773,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":70,"../ui/saver.js":87}],73:[function(require,module,exports){
+},{"../lib/validate":70,"../lib/zoomextent":71,"../ui/saver.js":87}],73:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 

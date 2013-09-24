@@ -19,12 +19,12 @@ module.exports = function(callback) {
                 title: 'invalid GeoJSON',
                 message: 'invalid GeoJSON'});
         } else {
-
-            var zoom = changeObj.from.ch == 0 &&
-                       changeObj.from.line == 0 &&
-                       changeObj.origin == 'paste';
+            var zoom = changeObj.from.ch === 0 &&
+                changeObj.from.line === 0 &&
+                changeObj.origin == 'paste';
 
             var gj = JSON.parse(editor.getValue());
+
             try {
                 return callback(null, gj, zoom);
             } catch(e) {
