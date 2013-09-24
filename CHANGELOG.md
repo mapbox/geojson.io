@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2013-09-24
+
+* Drag and drop of multiple files is supported - files in folders are unfortunately
+  not supported due to core JS/DOM limitations.
+
 ## 2013-09-11
 
 * Fixed mobile/read-only mode
