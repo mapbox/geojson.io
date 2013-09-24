@@ -37,10 +37,10 @@ module.exports = function(context) {
 
         editor.on('change', validate(changeValidated));
 
-        function changeValidated(err, data) {
+        function changeValidated(err, data, zoom) {
             if (!err) {
               context.data.set({map: data}, 'json');
-              zoomextent(context);
+              if (zoom) zoomextent(context);
             }
         }
 
