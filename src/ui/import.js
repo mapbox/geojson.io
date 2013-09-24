@@ -43,7 +43,11 @@ module.exports = function(context) {
                 .style('position', 'absolute')
                 .style('height', '0')
                 .on('change', function() {
-                    if (this.files && this.files[0]) readFile.readFile(this.files[0], onImport);
+                    var files = this.files;
+                    if (!(files && files[0])) return;
+                    readFile.readAsText(files[0], function(err, text) {
+                        readFile.readFile(files[0], text, onImport);
+                    });
                 });
         } else {
             wrap.append('p')

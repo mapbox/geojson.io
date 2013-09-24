@@ -3,6 +3,7 @@ var topojson = require('topojson'),
     osm2geojson = require('osm-and-geojson').osm2geojson;
 
 module.exports.readDrop = readDrop;
+module.exports.readAsText = readAsText;
 module.exports.readFile = readFile;
 
 function readDrop(callback) {
