@@ -9013,7 +9013,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":74,"../source/github":75,"clone":7,"xtend":51}],58:[function(require,module,exports){
+},{"../source/gist":75,"../source/github":76,"clone":7,"xtend":51}],58:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -9059,7 +9059,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/querystring":67,"../lib/zoomextent":71,"../ui/flash":80}],59:[function(require,module,exports){
+},{"../lib/querystring":67,"../lib/zoomextent":71,"../ui/flash":81}],59:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('../lib/querystring');
 
@@ -9326,7 +9326,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":57,"./core/loader":58,"./core/recovery":59,"./core/repo":60,"./core/router":61,"./core/user":62,"./ui":76,"./ui/map":84,"store":20}],64:[function(require,module,exports){
+},{"./core/data":57,"./core/loader":58,"./core/recovery":59,"./core/repo":60,"./core/router":61,"./core/user":62,"./ui":77,"./ui/map":85,"store":20}],64:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -9711,6 +9711,25 @@ module.exports = function(context) {
 };
 
 },{}],72:[function(require,module,exports){
+var fs = require('fs');
+
+module.exports = function(context) {
+
+    function render(selection) {
+        var area = selection
+            .html('')
+            .append('div')
+            .attr('class', 'pad2 prose')
+            .html("<h2>Help</h2>\n\n<p>New here? <strong>geojson.io</strong> is a quick, simple tool for creating,\nviewing, and sharing maps. geojson.io is named after <a href='http://geojson.org/' target='_blank'>GeoJSON</a>,\nan open source data format, and it supports GeoJSON in all ways - but also\naccepts KML, GPX, CSV, TopoJSON, and other formats.</p>\n\n<p>Need extra help or see a bug? <a target='_blank' href='https://github.com/mapbox/geojson.io/issues?state=open'>Open an issue\n    on geojson.io's issue tracker.</a>\n\n<h3>I've got data</h3>\n\n<p>If you have data, like a KML, GeoJSON, or CSV file, just drag &amp; drop\nit onto the page or click 'Open' and 'Import' - your data should appear on\nthe map!</p>\n\n<h3>I want to draw features</h3>\n\n<p>Click the drawing tools on the left-hand side to draw points, polygons,\nlines and rectangles. After you're done drawing the shapes, you can add\ninformation to each feature by clicking on it, editing the feature's properties,\nand clicking 'Save'.</p>\n\n<p>Properties in GeoJSON are stored as 'key value pairs' - so, for instance,\nif you wanted to add a name to each feature, type 'name' in the first table\nfield, and the name of the feature in the second.</p>\n\n<h3>I want to use my map everywhere</h3>\n\n<p>You can share maps in quite a few ways! If you save your map here, the URL\nof this page will update and you can link send friends the link to share\nthe map, or you can click 'Download' to grab the raw GeoJSON data and use\nit in other software, like TileMill or Leaflet.</p>\n\n<h3>I'm a coder</h3>\n\n<p><a href='https://github.com/mapbox/geojson.io#goes-great-with' target='_blank'>geojson.io has an array of cli tools</a>\nthat make it easy to go from a GeoJSON file on your computer to geojson.io.\n\n<h3>Protips?</h3>\n\n<ul>\n    <li>cmd+s: save map to github gists\n    <li>cmd+a: download map as geojson\n    <li>arrow keys: navigate the map\n</ul>\n");
+    }
+
+    render.off = function() {
+    };
+
+    return render;
+};
+
+},{"fs":2}],73:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
@@ -9773,7 +9792,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":70,"../lib/zoomextent":71,"../ui/saver.js":87}],73:[function(require,module,exports){
+},{"../lib/validate":70,"../lib/zoomextent":71,"../ui/saver.js":88}],74:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -9845,7 +9864,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":69,"d3-metatable":11}],74:[function(require,module,exports){
+},{"../lib/smartzoom.js":69,"d3-metatable":11}],75:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -9939,7 +9958,7 @@ function load(id, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":2}],75:[function(require,module,exports){
+},{"fs":2}],76:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -10046,7 +10065,7 @@ function fileUrl(parts) {
         '?ref=' + parts.branch;
 }
 
-},{}],76:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -10131,7 +10150,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":78,"./ui/file_bar":79,"./ui/layer_switch":83,"./ui/mode_buttons":86,"./ui/user":90}],77:[function(require,module,exports){
+},{"./ui/dnd":79,"./ui/file_bar":80,"./ui/layer_switch":84,"./ui/mode_buttons":87,"./ui/user":91}],78:[function(require,module,exports){
 var github = require('../source/github');
 
 module.exports = commit;
@@ -10166,7 +10185,7 @@ function commit(context, callback) {
     return wrap;
 }
 
-},{"../source/github":75}],78:[function(require,module,exports){
+},{"../source/github":76}],79:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
     flash = require('./flash.js'),
@@ -10216,7 +10235,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":68,"../lib/zoomextent":71,"./flash.js":80,"./geocode.js":81}],79:[function(require,module,exports){
+},{"../lib/readfile.js":68,"../lib/zoomextent":71,"./flash.js":81,"./geocode.js":82}],80:[function(require,module,exports){
 var share = require('./share'),
     topojson = require('topojson'),
     sourcepanel = require('./source.js'),
@@ -10351,7 +10370,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":87,"./share":88,"./source.js":89,"topojson":"g070js"}],80:[function(require,module,exports){
+},{"../ui/saver.js":88,"./share":89,"./source.js":90,"topojson":"g070js"}],81:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -10373,7 +10392,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":85}],81:[function(require,module,exports){
+},{"./message":86}],82:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart'),
     csv2geojson = require('csv2geojson');
 
@@ -10511,7 +10530,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":66,"csv2geojson":8}],82:[function(require,module,exports){
+},{"../lib/progress_chart":66,"csv2geojson":8}],83:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -10599,7 +10618,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":68,"../lib/zoomextent":71,"./flash.js":80,"./geocode.js":81}],83:[function(require,module,exports){
+},{"../lib/readfile.js":68,"../lib/zoomextent":71,"./flash.js":81,"./geocode.js":82}],84:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -10652,7 +10671,7 @@ module.exports = function(context) {
 };
 
 
-},{}],84:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -10761,7 +10780,7 @@ function bindPopup(l) {
     }, l).setContent(content));
 }
 
-},{"../lib/custom_hash.js":64,"../lib/popup":65,"../lib/querystring.js":67}],85:[function(require,module,exports){
+},{"../lib/custom_hash.js":64,"../lib/popup":65,"../lib/querystring.js":67}],86:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -10802,9 +10821,10 @@ function message(selection) {
     return sel;
 }
 
-},{}],86:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 var table = require('../panel/table'),
-    json = require('../panel/json');
+    json = require('../panel/json'),
+    help = require('../panel/help');
 
 module.exports = function(context, pane) {
     return function(selection) {
@@ -10821,6 +10841,11 @@ module.exports = function(context, pane) {
             title: ' JSON',
             alt: 'JSON Source',
             behavior: json
+        }, {
+            icon: 'question',
+            title: ' Help',
+            alt: 'Help',
+            behavior: help
         }];
 
         var buttons = selection
@@ -10848,7 +10873,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":72,"../panel/table":73}],87:[function(require,module,exports){
+},{"../panel/help":72,"../panel/json":73,"../panel/table":74}],88:[function(require,module,exports){
 var commit = require('./commit');
 var flash = require('./flash');
 
@@ -10910,7 +10935,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":77,"./flash":80}],88:[function(require,module,exports){
+},{"./commit":78,"./flash":81}],89:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -10987,7 +11012,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":74}],89:[function(require,module,exports){
+},{"../source/gist":75}],90:[function(require,module,exports){
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
@@ -11109,7 +11134,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":82,"detect-json-indent":12,"github-file-browser":15}],90:[function(require,module,exports){
+},{"./import":83,"detect-json-indent":12,"github-file-browser":15}],91:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')

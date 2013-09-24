@@ -442,3 +442,14 @@ body.dragover:after {
     font-weight: bold;
     margin-left: 10px;
 }
+
+/*
+ * Help -----------------------------------------------------------------------
+ */
+.prose h2 {
+    font-weight:bold;
+    font-size:18px;
+}
+.prose h3 {
+    font-weight:bold;
+}
