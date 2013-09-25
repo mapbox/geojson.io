@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2013-09-24
+
+* Drag and drop of multiple files is supported - files in folders are unfortunately
+  not supported due to core JS/DOM limitations.
+* Help panel, first resurgence of in-UI documentation and first listing of
+  keyboard shortcuts
+* Easter-egg status TopoJSON output
+* Zoom to copy-pasted new features
+
 ## 2013-09-11
 
 * Fixed mobile/read-only mode

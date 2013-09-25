@@ -25,13 +25,19 @@ module.exports = function(context) {
             }
         }
 
+        function losslessNumber(x) {
+            var fl = parseFloat(x);
+            if (fl.toString() === x) return fl;
+            else return x;
+        }
+
         function saveFeature() {
             var obj = {};
             sel.selectAll('tr').each(collectRow);
             function collectRow() {
                 if (d3.select(this).selectAll('input')[0][0].value) {
                     obj[d3.select(this).selectAll('input')[0][0].value] =
-                        d3.select(this).selectAll('input')[0][1].value;
+                        losslessNumber(d3.select(this).selectAll('input')[0][1].value);
                 }
             }
             e.popup._source.feature.properties = obj;

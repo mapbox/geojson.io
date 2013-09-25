@@ -1,14 +1,251 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-// nothing to see here... no file methods for the browser
+
+
+//
+// The shims in this file are not fully implemented shims for the ES5
+// features, but do work for the particular usecases there is in
+// the other modules.
+//
+
+var toString = Object.prototype.toString;
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+// Array.isArray is supported in IE9
+function isArray(xs) {
+  return toString.call(xs) === '[object Array]';
+}
+exports.isArray = typeof Array.isArray === 'function' ? Array.isArray : isArray;
+
+// Array.prototype.indexOf is supported in IE9
+exports.indexOf = function indexOf(xs, x) {
+  if (xs.indexOf) return xs.indexOf(x);
+  for (var i = 0; i < xs.length; i++) {
+    if (x === xs[i]) return i;
+  }
+  return -1;
+};
+
+// Array.prototype.filter is supported in IE9
+exports.filter = function filter(xs, fn) {
+  if (xs.filter) return xs.filter(fn);
+  var res = [];
+  for (var i = 0; i < xs.length; i++) {
+    if (fn(xs[i], i, xs)) res.push(xs[i]);
+  }
+  return res;
+};
+
+// Array.prototype.forEach is supported in IE9
+exports.forEach = function forEach(xs, fn, self) {
+  if (xs.forEach) return xs.forEach(fn, self);
+  for (var i = 0; i < xs.length; i++) {
+    fn.call(self, xs[i], i, xs);
+  }
+};
+
+// Array.prototype.map is supported in IE9
+exports.map = function map(xs, fn) {
+  if (xs.map) return xs.map(fn);
+  var out = new Array(xs.length);
+  for (var i = 0; i < xs.length; i++) {
+    out[i] = fn(xs[i], i, xs);
+  }
+  return out;
+};
+
+// Array.prototype.reduce is supported in IE9
+exports.reduce = function reduce(array, callback, opt_initialValue) {
+  if (array.reduce) return array.reduce(callback, opt_initialValue);
+  var value, isValueSet = false;
+
+  if (2 < arguments.length) {
+    value = opt_initialValue;
+    isValueSet = true;
+  }
+  for (var i = 0, l = array.length; l > i; ++i) {
+    if (array.hasOwnProperty(i)) {
+      if (isValueSet) {
+        value = callback(value, array[i], i, array);
+      }
+      else {
+        value = array[i];
+        isValueSet = true;
+      }
+    }
+  }
+
+  return value;
+};
+
+// String.prototype.substr - negative index don't work in IE8
+if ('ab'.substr(-1) !== 'b') {
+  exports.substr = function (str, start, length) {
+    // did we get a negative start, calculate how much it is from the beginning of the string
+    if (start < 0) start = str.length + start;
+
+    // call the original function
+    return str.substr(start, length);
+  };
+} else {
+  exports.substr = function (str, start, length) {
+    return str.substr(start, length);
+  };
+}
+
+// String.prototype.trim is supported in IE9
+exports.trim = function (str) {
+  if (str.trim) return str.trim();
+  return str.replace(/^\s+|\s+$/g, '');
+};
+
+// Function.prototype.bind is supported in IE9
+exports.bind = function () {
+  var args = Array.prototype.slice.call(arguments);
+  var fn = args.shift();
+  if (fn.bind) return fn.bind.apply(fn, args);
+  var self = args.shift();
+  return function () {
+    fn.apply(self, args.concat([Array.prototype.slice.call(arguments)]));
+  };
+};
+
+// Object.create is supported in IE9
+function create(prototype, properties) {
+  var object;
+  if (prototype === null) {
+    object = { '__proto__' : null };
+  }
+  else {
+    if (typeof prototype !== 'object') {
+      throw new TypeError(
+        'typeof prototype[' + (typeof prototype) + '] != \'object\''
+      );
+    }
+    var Type = function () {};
+    Type.prototype = prototype;
+    object = new Type();
+    object.__proto__ = prototype;
+  }
+  if (typeof properties !== 'undefined' && Object.defineProperties) {
+    Object.defineProperties(object, properties);
+  }
+  return object;
+}
+exports.create = typeof Object.create === 'function' ? Object.create : create;
+
+// Object.keys and Object.getOwnPropertyNames is supported in IE9 however
+// they do show a description and number property on Error objects
+function notObject(object) {
+  return ((typeof object != "object" && typeof object != "function") || object === null);
+}
+
+function keysShim(object) {
+  if (notObject(object)) {
+    throw new TypeError("Object.keys called on a non-object");
+  }
+
+  var result = [];
+  for (var name in object) {
+    if (hasOwnProperty.call(object, name)) {
+      result.push(name);
+    }
+  }
+  return result;
+}
+
+// getOwnPropertyNames is almost the same as Object.keys one key feature
+//  is that it returns hidden properties, since that can't be implemented,
+//  this feature gets reduced so it just shows the length property on arrays
+function propertyShim(object) {
+  if (notObject(object)) {
+    throw new TypeError("Object.getOwnPropertyNames called on a non-object");
+  }
+
+  var result = keysShim(object);
+  if (exports.isArray(object) && exports.indexOf(object, 'length') === -1) {
+    result.push('length');
+  }
+  return result;
+}
+
+var keys = typeof Object.keys === 'function' ? Object.keys : keysShim;
+var getOwnPropertyNames = typeof Object.getOwnPropertyNames === 'function' ?
+  Object.getOwnPropertyNames : propertyShim;
+
+if (new Error().hasOwnProperty('description')) {
+  var ERROR_PROPERTY_FILTER = function (obj, array) {
+    if (toString.call(obj) === '[object Error]') {
+      array = exports.filter(array, function (name) {
+        return name !== 'description' && name !== 'number' && name !== 'message';
+      });
+    }
+    return array;
+  };
+
+  exports.keys = function (object) {
+    return ERROR_PROPERTY_FILTER(object, keys(object));
+  };
+  exports.getOwnPropertyNames = function (object) {
+    return ERROR_PROPERTY_FILTER(object, getOwnPropertyNames(object));
+  };
+} else {
+  exports.keys = keys;
+  exports.getOwnPropertyNames = getOwnPropertyNames;
+}
+
+// Object.getOwnPropertyDescriptor - supported in IE8 but only on dom elements
+function valueObject(value, key) {
+  return { value: value[key] };
+}
+
+if (typeof Object.getOwnPropertyDescriptor === 'function') {
+  try {
+    Object.getOwnPropertyDescriptor({'a': 1}, 'a');
+    exports.getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+  } catch (e) {
+    // IE8 dom element issue - use a try catch and default to valueObject
+    exports.getOwnPropertyDescriptor = function (value, key) {
+      try {
+        return Object.getOwnPropertyDescriptor(value, key);
+      } catch (e) {
+        return valueObject(value, key);
+      }
+    };
+  }
+} else {
+  exports.getOwnPropertyDescriptor = valueObject;
+}
 
 },{}],2:[function(require,module,exports){
-var process=require("__browserify_process");function filter (xs, fn) {
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        if (fn(xs[i], i, xs)) res.push(xs[i]);
-    }
-    return res;
-}
+
+// not implemented
+// The reason for having an empty file and not throwing is to allow
+// untraditional implementation of this module.
+
+},{}],3:[function(require,module,exports){
+var process=require("__browserify_process");// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var util = require('util');
+var shims = require('_shims');
 
 // resolves . and .. elements in a path array with directory names there
 // must be no slashes, empty elements, or device names (c:\) in the array
@@ -17,9 +254,9 @@ var process=require("__browserify_process");function filter (xs, fn) {
 function normalizeArray(parts, allowAboveRoot) {
   // if the path tries to go above the root, `up` ends up > 0
   var up = 0;
-  for (var i = parts.length; i >= 0; i--) {
+  for (var i = parts.length - 1; i >= 0; i--) {
     var last = parts[i];
-    if (last == '.') {
+    if (last === '.') {
       parts.splice(i, 1);
     } else if (last === '..') {
       parts.splice(i, 1);
@@ -40,35 +277,39 @@ function normalizeArray(parts, allowAboveRoot) {
   return parts;
 }
 
-// Regex to split a filename into [*, dir, basename, ext]
-// posix version
-var splitPathRe = /^(.+\/(?!$)|\/)?((?:.+?)?(\.[^.]*)?)$/;
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
 
 // path.resolve([from ...], to)
 // posix version
 exports.resolve = function() {
-var resolvedPath = '',
-    resolvedAbsolute = false;
+  var resolvedPath = '',
+      resolvedAbsolute = false;
 
-for (var i = arguments.length; i >= -1 && !resolvedAbsolute; i--) {
-  var path = (i >= 0)
-      ? arguments[i]
-      : process.cwd();
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
 
-  // Skip empty and invalid entries
-  if (typeof path !== 'string' || !path) {
-    continue;
+    // Skip empty and invalid entries
+    if (!util.isString(path)) {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
   }
 
-  resolvedPath = path + '/' + resolvedPath;
-  resolvedAbsolute = path.charAt(0) === '/';
-}
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
 
-// At this point the path should be resolved to a full absolute path, but
-// handle relative paths to be safe (might happen when process.cwd() fails)
-
-// Normalize the path
-resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+  // Normalize the path
+  resolvedPath = normalizeArray(shims.filter(resolvedPath.split('/'), function(p) {
     return !!p;
   }), !resolvedAbsolute).join('/');
 
@@ -78,11 +319,11 @@ resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
 // path.normalize(path)
 // posix version
 exports.normalize = function(path) {
-var isAbsolute = path.charAt(0) === '/',
-    trailingSlash = path.slice(-1) === '/';
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = shims.substr(path, -1) === '/';
 
-// Normalize the path
-path = normalizeArray(filter(path.split('/'), function(p) {
+  // Normalize the path
+  path = normalizeArray(shims.filter(path.split('/'), function(p) {
     return !!p;
   }), !isAbsolute).join('/');
 
@@ -92,51 +333,29 @@ path = normalizeArray(filter(path.split('/'), function(p) {
   if (path && trailingSlash) {
     path += '/';
   }
-  
+
   return (isAbsolute ? '/' : '') + path;
 };
 
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
 
 // posix version
 exports.join = function() {
   var paths = Array.prototype.slice.call(arguments, 0);
-  return exports.normalize(filter(paths, function(p, index) {
-    return p && typeof p === 'string';
+  return exports.normalize(shims.filter(paths, function(p, index) {
+    if (!util.isString(p)) {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
   }).join('/'));
 };
 
 
-exports.dirname = function(path) {
-  var dir = splitPathRe.exec(path)[1] || '';
-  var isWindows = false;
-  if (!dir) {
-    // No dirname
-    return '.';
-  } else if (dir.length === 1 ||
-      (isWindows && dir.length <= 3 && dir.charAt(1) === ':')) {
-    // It is just a slash or a drive letter with a slash
-    return dir;
-  } else {
-    // It is a full dirname, strip trailing slash
-    return dir.substring(0, dir.length - 1);
-  }
-};
-
-
-exports.basename = function(path, ext) {
-  var f = splitPathRe.exec(path)[2] || '';
-  // TODO: make this comparison case-insensitive on windows?
-  if (ext && f.substr(-1 * ext.length) === ext) {
-    f = f.substr(0, f.length - ext.length);
-  }
-  return f;
-};
-
-
-exports.extname = function(path) {
-  return splitPathRe.exec(path)[3] || '';
-};
-
+// path.relative(from, to)
+// posix version
 exports.relative = function(from, to) {
   from = exports.resolve(from).substr(1);
   to = exports.resolve(to).substr(1);
@@ -179,649 +398,71 @@ exports.relative = function(from, to) {
 };
 
 exports.sep = '/';
+exports.delimiter = ':';
 
-},{"__browserify_process":4}],3:[function(require,module,exports){
-require=(function(e,t,n,r){function i(r){if(!n[r]){if(!t[r]){if(e)return e(r);throw new Error("Cannot find module '"+r+"'")}var s=n[r]={exports:{}};t[r][0](function(e){var n=t[r][1][e];return i(n?n:e)},s,s.exports)}return n[r].exports}for(var s=0;s<r.length;s++)i(r[s]);return i})(typeof require!=="undefined"&&require,{1:[function(require,module,exports){
-// UTILITY
-var util = require('util');
-var Buffer = require("buffer").Buffer;
-var pSlice = Array.prototype.slice;
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
 
-function objectKeys(object) {
-  if (Object.keys) return Object.keys(object);
-  var result = [];
-  for (var name in object) {
-    if (Object.prototype.hasOwnProperty.call(object, name)) {
-      result.push(name);
-    }
-  }
-  return result;
-}
-
-// 1. The assert module provides functions that throw
-// AssertionError's when particular conditions are not met. The
-// assert module must conform to the following interface.
-
-var assert = module.exports = ok;
-
-// 2. The AssertionError is defined in assert.
-// new assert.AssertionError({ message: message,
-//                             actual: actual,
-//                             expected: expected })
-
-assert.AssertionError = function AssertionError(options) {
-  this.name = 'AssertionError';
-  this.message = options.message;
-  this.actual = options.actual;
-  this.expected = options.expected;
-  this.operator = options.operator;
-  var stackStartFunction = options.stackStartFunction || fail;
-
-  if (Error.captureStackTrace) {
-    Error.captureStackTrace(this, stackStartFunction);
-  }
-};
-util.inherits(assert.AssertionError, Error);
-
-function replacer(key, value) {
-  if (value === undefined) {
-    return '' + value;
-  }
-  if (typeof value === 'number' && (isNaN(value) || !isFinite(value))) {
-    return value.toString();
-  }
-  if (typeof value === 'function' || value instanceof RegExp) {
-    return value.toString();
-  }
-  return value;
-}
-
-function truncate(s, n) {
-  if (typeof s == 'string') {
-    return s.length < n ? s : s.slice(0, n);
-  } else {
-    return s;
-  }
-}
-
-assert.AssertionError.prototype.toString = function() {
-  if (this.message) {
-    return [this.name + ':', this.message].join(' ');
-  } else {
-    return [
-      this.name + ':',
-      truncate(JSON.stringify(this.actual, replacer), 128),
-      this.operator,
-      truncate(JSON.stringify(this.expected, replacer), 128)
-    ].join(' ');
-  }
-};
-
-// assert.AssertionError instanceof Error
-
-assert.AssertionError.__proto__ = Error.prototype;
-
-// At present only the three keys mentioned above are used and
-// understood by the spec. Implementations or sub modules can pass
-// other keys to the AssertionError's constructor - they will be
-// ignored.
-
-// 3. All of the following functions must throw an AssertionError
-// when a corresponding condition is not met, with a message that
-// may be undefined if not provided.  All assertion methods provide
-// both the actual and expected values to the assertion error for
-// display purposes.
-
-function fail(actual, expected, message, operator, stackStartFunction) {
-  throw new assert.AssertionError({
-    message: message,
-    actual: actual,
-    expected: expected,
-    operator: operator,
-    stackStartFunction: stackStartFunction
-  });
-}
-
-// EXTENSION! allows for well behaved errors defined elsewhere.
-assert.fail = fail;
-
-// 4. Pure assertion tests whether a value is truthy, as determined
-// by !!guard.
-// assert.ok(guard, message_opt);
-// This statement is equivalent to assert.equal(true, guard,
-// message_opt);. To test strictly for the value true, use
-// assert.strictEqual(true, guard, message_opt);.
-
-function ok(value, message) {
-  if (!!!value) fail(value, true, message, '==', assert.ok);
-}
-assert.ok = ok;
-
-// 5. The equality assertion tests shallow, coercive equality with
-// ==.
-// assert.equal(actual, expected, message_opt);
-
-assert.equal = function equal(actual, expected, message) {
-  if (actual != expected) fail(actual, expected, message, '==', assert.equal);
-};
-
-// 6. The non-equality assertion tests for whether two objects are not equal
-// with != assert.notEqual(actual, expected, message_opt);
-
-assert.notEqual = function notEqual(actual, expected, message) {
-  if (actual == expected) {
-    fail(actual, expected, message, '!=', assert.notEqual);
-  }
-};
-
-// 7. The equivalence assertion tests a deep equality relation.
-// assert.deepEqual(actual, expected, message_opt);
-
-assert.deepEqual = function deepEqual(actual, expected, message) {
-  if (!_deepEqual(actual, expected)) {
-    fail(actual, expected, message, 'deepEqual', assert.deepEqual);
-  }
-};
-
-function _deepEqual(actual, expected) {
-  // 7.1. All identical values are equivalent, as determined by ===.
-  if (actual === expected) {
-    return true;
-
-  } else if (Buffer.isBuffer(actual) && Buffer.isBuffer(expected)) {
-    if (actual.length != expected.length) return false;
-
-    for (var i = 0; i < actual.length; i++) {
-      if (actual[i] !== expected[i]) return false;
-    }
-
-    return true;
-
-  // 7.2. If the expected value is a Date object, the actual value is
-  // equivalent if it is also a Date object that refers to the same time.
-  } else if (actual instanceof Date && expected instanceof Date) {
-    return actual.getTime() === expected.getTime();
-
-  // 7.3. Other pairs that do not both pass typeof value == 'object',
-  // equivalence is determined by ==.
-  } else if (typeof actual != 'object' && typeof expected != 'object') {
-    return actual == expected;
-
-  // 7.4. For all other Object pairs, including Array objects, equivalence is
-  // determined by having the same number of owned properties (as verified
-  // with Object.prototype.hasOwnProperty.call), the same set of keys
-  // (although not necessarily the same order), equivalent values for every
-  // corresponding key, and an identical 'prototype' property. Note: this
-  // accounts for both named and indexed properties on Arrays.
-  } else {
-    return objEquiv(actual, expected);
-  }
-}
-
-function isUndefinedOrNull(value) {
-  return value === null || value === undefined;
-}
-
-function isArguments(object) {
-  return Object.prototype.toString.call(object) == '[object Arguments]';
-}
-
-function objEquiv(a, b) {
-  if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
-    return false;
-  // an identical 'prototype' property.
-  if (a.prototype !== b.prototype) return false;
-  //~~~I've managed to break Object.keys through screwy arguments passing.
-  //   Converting to array solves the problem.
-  if (isArguments(a)) {
-    if (!isArguments(b)) {
-      return false;
-    }
-    a = pSlice.call(a);
-    b = pSlice.call(b);
-    return _deepEqual(a, b);
-  }
-  try {
-    var ka = objectKeys(a),
-        kb = objectKeys(b),
-        key, i;
-  } catch (e) {//happens when one is a string literal and the other isn't
-    return false;
-  }
-  // having the same number of owned properties (keys incorporates
-  // hasOwnProperty)
-  if (ka.length != kb.length)
-    return false;
-  //the same set of keys (although not necessarily the same order),
-  ka.sort();
-  kb.sort();
-  //~~~cheap key test
-  for (i = ka.length - 1; i >= 0; i--) {
-    if (ka[i] != kb[i])
-      return false;
-  }
-  //equivalent values for every corresponding key, and
-  //~~~possibly expensive deep test
-  for (i = ka.length - 1; i >= 0; i--) {
-    key = ka[i];
-    if (!_deepEqual(a[key], b[key])) return false;
-  }
-  return true;
-}
-
-// 8. The non-equivalence assertion tests for any deep inequality.
-// assert.notDeepEqual(actual, expected, message_opt);
-
-assert.notDeepEqual = function notDeepEqual(actual, expected, message) {
-  if (_deepEqual(actual, expected)) {
-    fail(actual, expected, message, 'notDeepEqual', assert.notDeepEqual);
-  }
-};
-
-// 9. The strict equality assertion tests strict equality, as determined by ===.
-// assert.strictEqual(actual, expected, message_opt);
-
-assert.strictEqual = function strictEqual(actual, expected, message) {
-  if (actual !== expected) {
-    fail(actual, expected, message, '===', assert.strictEqual);
-  }
-};
-
-// 10. The strict non-equality assertion tests for strict inequality, as
-// determined by !==.  assert.notStrictEqual(actual, expected, message_opt);
-
-assert.notStrictEqual = function notStrictEqual(actual, expected, message) {
-  if (actual === expected) {
-    fail(actual, expected, message, '!==', assert.notStrictEqual);
-  }
-};
-
-function expectedException(actual, expected) {
-  if (!actual || !expected) {
-    return false;
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
   }
 
-  if (expected instanceof RegExp) {
-    return expected.test(actual);
-  } else if (actual instanceof expected) {
-    return true;
-  } else if (expected.call({}, actual) === true) {
-    return true;
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
   }
 
-  return false;
-}
-
-function _throws(shouldThrow, block, expected, message) {
-  var actual;
-
-  if (typeof expected === 'string') {
-    message = expected;
-    expected = null;
-  }
-
-  try {
-    block();
-  } catch (e) {
-    actual = e;
-  }
-
-  message = (expected && expected.name ? ' (' + expected.name + ').' : '.') +
-            (message ? ' ' + message : '.');
-
-  if (shouldThrow && !actual) {
-    fail('Missing expected exception' + message);
-  }
-
-  if (!shouldThrow && expectedException(actual, expected)) {
-    fail('Got unwanted exception' + message);
-  }
-
-  if ((shouldThrow && actual && expected &&
-      !expectedException(actual, expected)) || (!shouldThrow && actual)) {
-    throw actual;
-  }
-}
-
-// 11. Expected to throw an error:
-// assert.throws(block, Error_opt, message_opt);
-
-assert.throws = function(block, /*optional*/error, /*optional*/message) {
-  _throws.apply(this, [true].concat(pSlice.call(arguments)));
-};
-
-// EXTENSION! This is annoying to write outside this module.
-assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
-  _throws.apply(this, [false].concat(pSlice.call(arguments)));
-};
-
-assert.ifError = function(err) { if (err) {throw err;}};
-
-},{"util":2,"buffer":3}],2:[function(require,module,exports){
-var events = require('events');
-
-exports.isArray = isArray;
-exports.isDate = function(obj){return Object.prototype.toString.call(obj) === '[object Date]'};
-exports.isRegExp = function(obj){return Object.prototype.toString.call(obj) === '[object RegExp]'};
-
-
-exports.print = function () {};
-exports.puts = function () {};
-exports.debug = function() {};
-
-exports.inspect = function(obj, showHidden, depth, colors) {
-  var seen = [];
-
-  var stylize = function(str, styleType) {
-    // http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
-    var styles =
-        { 'bold' : [1, 22],
-          'italic' : [3, 23],
-          'underline' : [4, 24],
-          'inverse' : [7, 27],
-          'white' : [37, 39],
-          'grey' : [90, 39],
-          'black' : [30, 39],
-          'blue' : [34, 39],
-          'cyan' : [36, 39],
-          'green' : [32, 39],
-          'magenta' : [35, 39],
-          'red' : [31, 39],
-          'yellow' : [33, 39] };
-
-    var style =
-        { 'special': 'cyan',
-          'number': 'blue',
-          'boolean': 'yellow',
-          'undefined': 'grey',
-          'null': 'bold',
-          'string': 'green',
-          'date': 'magenta',
-          // "name": intentionally not styling
-          'regexp': 'red' }[styleType];
-
-    if (style) {
-      return '\033[' + styles[style][0] + 'm' + str +
-             '\033[' + styles[style][1] + 'm';
-    } else {
-      return str;
-    }
-  };
-  if (! colors) {
-    stylize = function(str, styleType) { return str; };
-  }
-
-  function format(value, recurseTimes) {
-    // Provide a hook for user-specified inspect functions.
-    // Check that value is an object with an inspect function on it
-    if (value && typeof value.inspect === 'function' &&
-        // Filter out the util module, it's inspect function is special
-        value !== exports &&
-        // Also filter out any prototype objects using the circular check.
-        !(value.constructor && value.constructor.prototype === value)) {
-      return value.inspect(recurseTimes);
-    }
-
-    // Primitive types cannot have properties
-    switch (typeof value) {
-      case 'undefined':
-        return stylize('undefined', 'undefined');
-
-      case 'string':
-        var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
-                                                 .replace(/'/g, "\\'")
-                                                 .replace(/\\"/g, '"') + '\'';
-        return stylize(simple, 'string');
-
-      case 'number':
-        return stylize('' + value, 'number');
-
-      case 'boolean':
-        return stylize('' + value, 'boolean');
-    }
-    // For some reason typeof null is "object", so special case here.
-    if (value === null) {
-      return stylize('null', 'null');
-    }
-
-    // Look up the keys of the object.
-    var visible_keys = Object_keys(value);
-    var keys = showHidden ? Object_getOwnPropertyNames(value) : visible_keys;
-
-    // Functions without properties can be shortcutted.
-    if (typeof value === 'function' && keys.length === 0) {
-      if (isRegExp(value)) {
-        return stylize('' + value, 'regexp');
-      } else {
-        var name = value.name ? ': ' + value.name : '';
-        return stylize('[Function' + name + ']', 'special');
-      }
-    }
-
-    // Dates without properties can be shortcutted
-    if (isDate(value) && keys.length === 0) {
-      return stylize(value.toUTCString(), 'date');
-    }
-
-    var base, type, braces;
-    // Determine the object type
-    if (isArray(value)) {
-      type = 'Array';
-      braces = ['[', ']'];
-    } else {
-      type = 'Object';
-      braces = ['{', '}'];
-    }
-
-    // Make functions say that they are functions
-    if (typeof value === 'function') {
-      var n = value.name ? ': ' + value.name : '';
-      base = (isRegExp(value)) ? ' ' + value : ' [Function' + n + ']';
-    } else {
-      base = '';
-    }
-
-    // Make dates with properties first say the date
-    if (isDate(value)) {
-      base = ' ' + value.toUTCString();
-    }
-
-    if (keys.length === 0) {
-      return braces[0] + base + braces[1];
-    }
-
-    if (recurseTimes < 0) {
-      if (isRegExp(value)) {
-        return stylize('' + value, 'regexp');
-      } else {
-        return stylize('[Object]', 'special');
-      }
-    }
-
-    seen.push(value);
-
-    var output = keys.map(function(key) {
-      var name, str;
-      if (value.__lookupGetter__) {
-        if (value.__lookupGetter__(key)) {
-          if (value.__lookupSetter__(key)) {
-            str = stylize('[Getter/Setter]', 'special');
-          } else {
-            str = stylize('[Getter]', 'special');
-          }
-        } else {
-          if (value.__lookupSetter__(key)) {
-            str = stylize('[Setter]', 'special');
-          }
-        }
-      }
-      if (visible_keys.indexOf(key) < 0) {
-        name = '[' + key + ']';
-      }
-      if (!str) {
-        if (seen.indexOf(value[key]) < 0) {
-          if (recurseTimes === null) {
-            str = format(value[key]);
-          } else {
-            str = format(value[key], recurseTimes - 1);
-          }
-          if (str.indexOf('\n') > -1) {
-            if (isArray(value)) {
-              str = str.split('\n').map(function(line) {
-                return '  ' + line;
-              }).join('\n').substr(2);
-            } else {
-              str = '\n' + str.split('\n').map(function(line) {
-                return '   ' + line;
-              }).join('\n');
-            }
-          }
-        } else {
-          str = stylize('[Circular]', 'special');
-        }
-      }
-      if (typeof name === 'undefined') {
-        if (type === 'Array' && key.match(/^\d+$/)) {
-          return str;
-        }
-        name = JSON.stringify('' + key);
-        if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
-          name = name.substr(1, name.length - 2);
-          name = stylize(name, 'name');
-        } else {
-          name = name.replace(/'/g, "\\'")
-                     .replace(/\\"/g, '"')
-                     .replace(/(^"|"$)/g, "'");
-          name = stylize(name, 'string');
-        }
-      }
-
-      return name + ': ' + str;
-    });
-
-    seen.pop();
-
-    var numLinesEst = 0;
-    var length = output.reduce(function(prev, cur) {
-      numLinesEst++;
-      if (cur.indexOf('\n') >= 0) numLinesEst++;
-      return prev + cur.length + 1;
-    }, 0);
-
-    if (length > 50) {
-      output = braces[0] +
-               (base === '' ? '' : base + '\n ') +
-               ' ' +
-               output.join(',\n  ') +
-               ' ' +
-               braces[1];
-
-    } else {
-      output = braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
-    }
-
-    return output;
-  }
-  return format(obj, (typeof depth === 'undefined' ? 2 : depth));
+  return root + dir;
 };
 
 
-function isArray(ar) {
-  return ar instanceof Array ||
-         Array.isArray(ar) ||
-         (ar && ar !== Object.prototype && isArray(ar.__proto__));
-}
-
-
-function isRegExp(re) {
-  return re instanceof RegExp ||
-    (typeof re === 'object' && Object.prototype.toString.call(re) === '[object RegExp]');
-}
-
-
-function isDate(d) {
-  if (d instanceof Date) return true;
-  if (typeof d !== 'object') return false;
-  var properties = Date.prototype && Object_getOwnPropertyNames(Date.prototype);
-  var proto = d.__proto__ && Object_getOwnPropertyNames(d.__proto__);
-  return JSON.stringify(proto) === JSON.stringify(properties);
-}
-
-function pad(n) {
-  return n < 10 ? '0' + n.toString(10) : n.toString(10);
-}
-
-var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-              'Oct', 'Nov', 'Dec'];
-
-// 26 Feb 16:19:34
-function timestamp() {
-  var d = new Date();
-  var time = [pad(d.getHours()),
-              pad(d.getMinutes()),
-              pad(d.getSeconds())].join(':');
-  return [d.getDate(), months[d.getMonth()], time].join(' ');
-}
-
-exports.log = function (msg) {};
-
-exports.pump = null;
-
-var Object_keys = Object.keys || function (obj) {
-    var res = [];
-    for (var key in obj) res.push(key);
-    return res;
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
 };
 
-var Object_getOwnPropertyNames = Object.getOwnPropertyNames || function (obj) {
-    var res = [];
-    for (var key in obj) {
-        if (Object.hasOwnProperty.call(obj, key)) res.push(key);
-    }
-    return res;
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
 };
 
-var Object_create = Object.create || function (prototype, properties) {
-    // from es5-shim
-    var object;
-    if (prototype === null) {
-        object = { '__proto__' : null };
-    }
-    else {
-        if (typeof prototype !== 'object') {
-            throw new TypeError(
-                'typeof prototype[' + (typeof prototype) + '] != \'object\''
-            );
-        }
-        var Type = function () {};
-        Type.prototype = prototype;
-        object = new Type();
-        object.__proto__ = prototype;
-    }
-    if (typeof properties !== 'undefined' && Object.defineProperties) {
-        Object.defineProperties(object, properties);
-    }
-    return object;
-};
+},{"__browserify_process":6,"_shims":1,"util":4}],4:[function(require,module,exports){
+var Buffer=require("__browserify_Buffer").Buffer;// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-exports.inherits = function(ctor, superCtor) {
-  ctor.super_ = superCtor;
-  ctor.prototype = Object_create(superCtor.prototype, {
-    constructor: {
-      value: ctor,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-};
+var shims = require('_shims');
 
 var formatRegExp = /%[sdj%]/g;
 exports.format = function(f) {
-  if (typeof f !== 'string') {
+  if (!isString(f)) {
     var objects = [];
     for (var i = 0; i < arguments.length; i++) {
-      objects.push(exports.inspect(arguments[i]));
+      objects.push(inspect(arguments[i]));
     }
     return objects.join(' ');
   }
@@ -835,22 +476,506 @@ exports.format = function(f) {
     switch (x) {
       case '%s': return String(args[i++]);
       case '%d': return Number(args[i++]);
-      case '%j': return JSON.stringify(args[i++]);
+      case '%j':
+        try {
+          return JSON.stringify(args[i++]);
+        } catch (_) {
+          return '[Circular]';
+        }
       default:
         return x;
     }
   });
-  for(var x = args[i]; i < len; x = args[++i]){
-    if (x === null || typeof x !== 'object') {
+  for (var x = args[i]; i < len; x = args[++i]) {
+    if (isNull(x) || !isObject(x)) {
       str += ' ' + x;
     } else {
-      str += ' ' + exports.inspect(x);
+      str += ' ' + inspect(x);
     }
   }
   return str;
 };
 
-},{"events":4}],5:[function(require,module,exports){
+/**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
+ *
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
+ */
+/* legacy: obj, showHidden, depth, colors*/
+function inspect(obj, opts) {
+  // default options
+  var ctx = {
+    seen: [],
+    stylize: stylizeNoColor
+  };
+  // legacy...
+  if (arguments.length >= 3) ctx.depth = arguments[2];
+  if (arguments.length >= 4) ctx.colors = arguments[3];
+  if (isBoolean(opts)) {
+    // legacy...
+    ctx.showHidden = opts;
+  } else if (opts) {
+    // got an "options" object
+    exports._extend(ctx, opts);
+  }
+  // set default options
+  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+  if (isUndefined(ctx.depth)) ctx.depth = 2;
+  if (isUndefined(ctx.colors)) ctx.colors = false;
+  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+  if (ctx.colors) ctx.stylize = stylizeWithColor;
+  return formatValue(ctx, obj, ctx.depth);
+}
+exports.inspect = inspect;
+
+
+// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+inspect.colors = {
+  'bold' : [1, 22],
+  'italic' : [3, 23],
+  'underline' : [4, 24],
+  'inverse' : [7, 27],
+  'white' : [37, 39],
+  'grey' : [90, 39],
+  'black' : [30, 39],
+  'blue' : [34, 39],
+  'cyan' : [36, 39],
+  'green' : [32, 39],
+  'magenta' : [35, 39],
+  'red' : [31, 39],
+  'yellow' : [33, 39]
+};
+
+// Don't use 'blue' not visible on cmd.exe
+inspect.styles = {
+  'special': 'cyan',
+  'number': 'yellow',
+  'boolean': 'yellow',
+  'undefined': 'grey',
+  'null': 'bold',
+  'string': 'green',
+  'date': 'magenta',
+  // "name": intentionally not styling
+  'regexp': 'red'
+};
+
+
+function stylizeWithColor(str, styleType) {
+  var style = inspect.styles[styleType];
+
+  if (style) {
+    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
+           '\u001b[' + inspect.colors[style][1] + 'm';
+  } else {
+    return str;
+  }
+}
+
+
+function stylizeNoColor(str, styleType) {
+  return str;
+}
+
+
+function arrayToHash(array) {
+  var hash = {};
+
+  shims.forEach(array, function(val, idx) {
+    hash[val] = true;
+  });
+
+  return hash;
+}
+
+
+function formatValue(ctx, value, recurseTimes) {
+  // Provide a hook for user-specified inspect functions.
+  // Check that value is an object with an inspect function on it
+  if (ctx.customInspect &&
+      value &&
+      isFunction(value.inspect) &&
+      // Filter out the util module, it's inspect function is special
+      value.inspect !== exports.inspect &&
+      // Also filter out any prototype objects using the circular check.
+      !(value.constructor && value.constructor.prototype === value)) {
+    var ret = value.inspect(recurseTimes);
+    if (!isString(ret)) {
+      ret = formatValue(ctx, ret, recurseTimes);
+    }
+    return ret;
+  }
+
+  // Primitive types cannot have properties
+  var primitive = formatPrimitive(ctx, value);
+  if (primitive) {
+    return primitive;
+  }
+
+  // Look up the keys of the object.
+  var keys = shims.keys(value);
+  var visibleKeys = arrayToHash(keys);
+
+  if (ctx.showHidden) {
+    keys = shims.getOwnPropertyNames(value);
+  }
+
+  // Some type of object without properties can be shortcutted.
+  if (keys.length === 0) {
+    if (isFunction(value)) {
+      var name = value.name ? ': ' + value.name : '';
+      return ctx.stylize('[Function' + name + ']', 'special');
+    }
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    }
+    if (isDate(value)) {
+      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+    }
+    if (isError(value)) {
+      return formatError(value);
+    }
+  }
+
+  var base = '', array = false, braces = ['{', '}'];
+
+  // Make Array say that they are Array
+  if (isArray(value)) {
+    array = true;
+    braces = ['[', ']'];
+  }
+
+  // Make functions say that they are functions
+  if (isFunction(value)) {
+    var n = value.name ? ': ' + value.name : '';
+    base = ' [Function' + n + ']';
+  }
+
+  // Make RegExps say that they are RegExps
+  if (isRegExp(value)) {
+    base = ' ' + RegExp.prototype.toString.call(value);
+  }
+
+  // Make dates with properties first say the date
+  if (isDate(value)) {
+    base = ' ' + Date.prototype.toUTCString.call(value);
+  }
+
+  // Make error with message first say the error
+  if (isError(value)) {
+    base = ' ' + formatError(value);
+  }
+
+  if (keys.length === 0 && (!array || value.length == 0)) {
+    return braces[0] + base + braces[1];
+  }
+
+  if (recurseTimes < 0) {
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    } else {
+      return ctx.stylize('[Object]', 'special');
+    }
+  }
+
+  ctx.seen.push(value);
+
+  var output;
+  if (array) {
+    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+  } else {
+    output = keys.map(function(key) {
+      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+    });
+  }
+
+  ctx.seen.pop();
+
+  return reduceToSingleString(output, base, braces);
+}
+
+
+function formatPrimitive(ctx, value) {
+  if (isUndefined(value))
+    return ctx.stylize('undefined', 'undefined');
+  if (isString(value)) {
+    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+                                             .replace(/'/g, "\\'")
+                                             .replace(/\\"/g, '"') + '\'';
+    return ctx.stylize(simple, 'string');
+  }
+  if (isNumber(value))
+    return ctx.stylize('' + value, 'number');
+  if (isBoolean(value))
+    return ctx.stylize('' + value, 'boolean');
+  // For some reason typeof null is "object", so special case here.
+  if (isNull(value))
+    return ctx.stylize('null', 'null');
+}
+
+
+function formatError(value) {
+  return '[' + Error.prototype.toString.call(value) + ']';
+}
+
+
+function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+  var output = [];
+  for (var i = 0, l = value.length; i < l; ++i) {
+    if (hasOwnProperty(value, String(i))) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          String(i), true));
+    } else {
+      output.push('');
+    }
+  }
+
+  shims.forEach(keys, function(key) {
+    if (!key.match(/^\d+$/)) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          key, true));
+    }
+  });
+  return output;
+}
+
+
+function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+  var name, str, desc;
+  desc = shims.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+  if (desc.get) {
+    if (desc.set) {
+      str = ctx.stylize('[Getter/Setter]', 'special');
+    } else {
+      str = ctx.stylize('[Getter]', 'special');
+    }
+  } else {
+    if (desc.set) {
+      str = ctx.stylize('[Setter]', 'special');
+    }
+  }
+
+  if (!hasOwnProperty(visibleKeys, key)) {
+    name = '[' + key + ']';
+  }
+  if (!str) {
+    if (shims.indexOf(ctx.seen, desc.value) < 0) {
+      if (isNull(recurseTimes)) {
+        str = formatValue(ctx, desc.value, null);
+      } else {
+        str = formatValue(ctx, desc.value, recurseTimes - 1);
+      }
+      if (str.indexOf('\n') > -1) {
+        if (array) {
+          str = str.split('\n').map(function(line) {
+            return '  ' + line;
+          }).join('\n').substr(2);
+        } else {
+          str = '\n' + str.split('\n').map(function(line) {
+            return '   ' + line;
+          }).join('\n');
+        }
+      }
+    } else {
+      str = ctx.stylize('[Circular]', 'special');
+    }
+  }
+  if (isUndefined(name)) {
+    if (array && key.match(/^\d+$/)) {
+      return str;
+    }
+    name = JSON.stringify('' + key);
+    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+      name = name.substr(1, name.length - 2);
+      name = ctx.stylize(name, 'name');
+    } else {
+      name = name.replace(/'/g, "\\'")
+                 .replace(/\\"/g, '"')
+                 .replace(/(^"|"$)/g, "'");
+      name = ctx.stylize(name, 'string');
+    }
+  }
+
+  return name + ': ' + str;
+}
+
+
+function reduceToSingleString(output, base, braces) {
+  var numLinesEst = 0;
+  var length = shims.reduce(output, function(prev, cur) {
+    numLinesEst++;
+    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+  }, 0);
+
+  if (length > 60) {
+    return braces[0] +
+           (base === '' ? '' : base + '\n ') +
+           ' ' +
+           output.join(',\n  ') +
+           ' ' +
+           braces[1];
+  }
+
+  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+}
+
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+function isArray(ar) {
+  return shims.isArray(ar);
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) && objectToString(e) === '[object Error]';
+}
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+function isBuffer(arg) {
+  return arg instanceof Buffer;
+}
+exports.isBuffer = isBuffer;
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+              'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()),
+              pad(d.getMinutes()),
+              pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
+
+
+// log is just a thin wrapper to console.log that prepends a timestamp
+exports.log = function() {
+  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
+};
+
+
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
+ *
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
+ */
+exports.inherits = function(ctor, superCtor) {
+  ctor.super_ = superCtor;
+  ctor.prototype = shims.create(superCtor.prototype, {
+    constructor: {
+      value: ctor,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+};
+
+exports._extend = function(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || !isObject(add)) return origin;
+
+  var keys = shims.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+};
+
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+},{"__browserify_Buffer":5,"_shims":1}],5:[function(require,module,exports){
+require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -936,291 +1061,98 @@ exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],6:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            if (ev.source === window && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-}
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-
-},{}],4:[function(require,module,exports){
-(function(process){if (!process.EventEmitter) process.EventEmitter = function () {};
-
-var EventEmitter = exports.EventEmitter = process.EventEmitter;
-var isArray = typeof Array.isArray === 'function'
-    ? Array.isArray
-    : function (xs) {
-        return Object.prototype.toString.call(xs) === '[object Array]'
-    }
-;
-function indexOf (xs, x) {
-    if (xs.indexOf) return xs.indexOf(x);
-    for (var i = 0; i < xs.length; i++) {
-        if (x === xs[i]) return i;
-    }
-    return -1;
-}
-
-// By default EventEmitters will print a warning if more than
-// 10 listeners are added to it. This is a useful default which
-// helps finding memory leaks.
-//
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-var defaultMaxListeners = 10;
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!this._events) this._events = {};
-  this._events.maxListeners = n;
-};
-
-
-EventEmitter.prototype.emit = function(type) {
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events || !this._events.error ||
-        (isArray(this._events.error) && !this._events.error.length))
-    {
-      if (arguments[1] instanceof Error) {
-        throw arguments[1]; // Unhandled 'error' event
-      } else {
-        throw new Error("Uncaught, unspecified 'error' event.");
-      }
-      return false;
-    }
-  }
-
-  if (!this._events) return false;
-  var handler = this._events[type];
-  if (!handler) return false;
-
-  if (typeof handler == 'function') {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        var args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-    return true;
-
-  } else if (isArray(handler)) {
-    var args = Array.prototype.slice.call(arguments, 1);
-
-    var listeners = handler.slice();
-    for (var i = 0, l = listeners.length; i < l; i++) {
-      listeners[i].apply(this, args);
-    }
-    return true;
-
-  } else {
-    return false;
-  }
-};
-
-// EventEmitter is defined in src/node_events.cc
-// EventEmitter.prototype.emit() is also defined there.
-EventEmitter.prototype.addListener = function(type, listener) {
-  if ('function' !== typeof listener) {
-    throw new Error('addListener only takes instances of Function');
-  }
-
-  if (!this._events) this._events = {};
-
-  // To avoid recursion in the case that type == "newListeners"! Before
-  // adding it to the listeners, first emit "newListeners".
-  this.emit('newListener', type, listener);
-
-  if (!this._events[type]) {
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  } else if (isArray(this._events[type])) {
-
-    // Check for listener leak
-    if (!this._events[type].warned) {
-      var m;
-      if (this._events.maxListeners !== undefined) {
-        m = this._events.maxListeners;
-      } else {
-        m = defaultMaxListeners;
-      }
-
-      if (m && m > 0 && this._events[type].length > m) {
-        this._events[type].warned = true;
-        console.error('(node) warning: possible EventEmitter memory ' +
-                      'leak detected. %d listeners added. ' +
-                      'Use emitter.setMaxListeners() to increase limit.',
-                      this._events[type].length);
-        console.trace();
-      }
-    }
-
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  } else {
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  var self = this;
-  self.on(type, function g() {
-    self.removeListener(type, g);
-    listener.apply(this, arguments);
-  });
-
-  return this;
-};
-
-EventEmitter.prototype.removeListener = function(type, listener) {
-  if ('function' !== typeof listener) {
-    throw new Error('removeListener only takes instances of Function');
-  }
-
-  // does not use listeners(), so no side effect of creating _events[type]
-  if (!this._events || !this._events[type]) return this;
-
-  var list = this._events[type];
-
-  if (isArray(list)) {
-    var i = indexOf(list, listener);
-    if (i < 0) return this;
-    list.splice(i, 1);
-    if (list.length == 0)
-      delete this._events[type];
-  } else if (this._events[type] === listener) {
-    delete this._events[type];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  if (arguments.length === 0) {
-    this._events = {};
-    return this;
-  }
-
-  // does not use listeners(), so no side effect of creating _events[type]
-  if (type && this._events && this._events[type]) this._events[type] = null;
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  if (!this._events) this._events = {};
-  if (!this._events[type]) this._events[type] = [];
-  if (!isArray(this._events[type])) {
-    this._events[type] = [this._events[type]];
-  }
-  return this._events[type];
-};
-
-})(require("__browserify_process"))
-},{"__browserify_process":6}],"buffer-browserify":[function(require,module,exports){
-module.exports=require('q9TxCC');
 },{}],"q9TxCC":[function(require,module,exports){
-function SlowBuffer (size) {
-    this.length = size;
-};
-
-var assert = require('assert');
-
+var assert;
+exports.Buffer = Buffer;
+exports.SlowBuffer = Buffer;
+Buffer.poolSize = 8192;
 exports.INSPECT_MAX_BYTES = 50;
 
-
-function toHex(n) {
-  if (n < 16) return '0' + n.toString(16);
-  return n.toString(16);
+function stringtrim(str) {
+  if (str.trim) return str.trim();
+  return str.replace(/^\s+|\s+$/g, '');
 }
 
-function utf8ToBytes(str) {
-  var byteArray = [];
-  for (var i = 0; i < str.length; i++)
-    if (str.charCodeAt(i) <= 0x7F)
-      byteArray.push(str.charCodeAt(i));
-    else {
-      var h = encodeURIComponent(str.charAt(i)).substr(1).split('%');
-      for (var j = 0; j < h.length; j++)
-        byteArray.push(parseInt(h[j], 16));
+function Buffer(subject, encoding, offset) {
+  if(!assert) assert= require('assert');
+  if (!(this instanceof Buffer)) {
+    return new Buffer(subject, encoding, offset);
+  }
+  this.parent = this;
+  this.offset = 0;
+
+  // Work-around: node's base64 implementation
+  // allows for non-padded strings while base64-js
+  // does not..
+  if (encoding == "base64" && typeof subject == "string") {
+    subject = stringtrim(subject);
+    while (subject.length % 4 != 0) {
+      subject = subject + "="; 
+    }
+  }
+
+  var type;
+
+  // Are we slicing?
+  if (typeof offset === 'number') {
+    this.length = coerce(encoding);
+    // slicing works, with limitations (no parent tracking/update)
+    // check https://github.com/toots/buffer-browserify/issues/19
+    for (var i = 0; i < this.length; i++) {
+        this[i] = subject.get(i+offset);
+    }
+  } else {
+    // Find the length
+    switch (type = typeof subject) {
+      case 'number':
+        this.length = coerce(subject);
+        break;
+
+      case 'string':
+        this.length = Buffer.byteLength(subject, encoding);
+        break;
+
+      case 'object': // Assume object is an array
+        this.length = coerce(subject.length);
+        break;
+
+      default:
+        throw new Error('First argument needs to be a number, ' +
+                        'array or string.');
     }
 
-  return byteArray;
+    // Treat array-ish objects as a byte array.
+    if (isArrayIsh(subject)) {
+      for (var i = 0; i < this.length; i++) {
+        if (subject instanceof Buffer) {
+          this[i] = subject.readUInt8(i);
+        }
+        else {
+          this[i] = subject[i];
+        }
+      }
+    } else if (type == 'string') {
+      // We are a string
+      this.length = this.write(subject, 0, encoding);
+    } else if (type === 'number') {
+      for (var i = 0; i < this.length; i++) {
+        this[i] = 0;
+      }
+    }
+  }
 }
 
-function asciiToBytes(str) {
-  var byteArray = []
-  for (var i = 0; i < str.length; i++ )
-    // Node's code seems to be doing this and not & 0x7F..
-    byteArray.push( str.charCodeAt(i) & 0xFF );
+Buffer.prototype.get = function get(i) {
+  if (i < 0 || i >= this.length) throw new Error('oob');
+  return this[i];
+};
 
-  return byteArray;
-}
+Buffer.prototype.set = function set(i, v) {
+  if (i < 0 || i >= this.length) throw new Error('oob');
+  return this[i] = v;
+};
 
-function base64ToBytes(str) {
-  return require("base64-js").toByteArray(str);
-}
-
-SlowBuffer.byteLength = function (str, encoding) {
+Buffer.byteLength = function (str, encoding) {
   switch (encoding || "utf8") {
     case 'hex':
       return str.length / 2;
@@ -1241,49 +1173,29 @@ SlowBuffer.byteLength = function (str, encoding) {
   }
 };
 
-function blitBuffer(src, dst, offset, length) {
-  var pos, i = 0;
-  while (i < length) {
-    if ((i+offset >= dst.length) || (i >= src.length))
-      break;
-
-    dst[i + offset] = src[i];
-    i++;
-  }
-  return i;
-}
-
-SlowBuffer.prototype.utf8Write = function (string, offset, length) {
+Buffer.prototype.utf8Write = function (string, offset, length) {
   var bytes, pos;
-  return SlowBuffer._charsWritten =  blitBuffer(utf8ToBytes(string), this, offset, length);
+  return Buffer._charsWritten =  blitBuffer(utf8ToBytes(string), this, offset, length);
 };
 
-SlowBuffer.prototype.asciiWrite = function (string, offset, length) {
+Buffer.prototype.asciiWrite = function (string, offset, length) {
   var bytes, pos;
-  return SlowBuffer._charsWritten =  blitBuffer(asciiToBytes(string), this, offset, length);
+  return Buffer._charsWritten =  blitBuffer(asciiToBytes(string), this, offset, length);
 };
 
-SlowBuffer.prototype.binaryWrite = SlowBuffer.prototype.asciiWrite;
+Buffer.prototype.binaryWrite = Buffer.prototype.asciiWrite;
 
-SlowBuffer.prototype.base64Write = function (string, offset, length) {
+Buffer.prototype.base64Write = function (string, offset, length) {
   var bytes, pos;
-  return SlowBuffer._charsWritten = blitBuffer(base64ToBytes(string), this, offset, length);
+  return Buffer._charsWritten = blitBuffer(base64ToBytes(string), this, offset, length);
 };
 
-SlowBuffer.prototype.base64Slice = function (start, end) {
+Buffer.prototype.base64Slice = function (start, end) {
   var bytes = Array.prototype.slice.apply(this, arguments)
   return require("base64-js").fromByteArray(bytes);
-}
+};
 
-function decodeUtf8Char(str) {
-  try {
-    return decodeURIComponent(str);
-  } catch (err) {
-    return String.fromCharCode(0xFFFD); // UTF 8 invalid char
-  }
-}
-
-SlowBuffer.prototype.utf8Slice = function () {
+Buffer.prototype.utf8Slice = function () {
   var bytes = Array.prototype.slice.apply(this, arguments);
   var res = "";
   var tmp = "";
@@ -1301,7 +1213,7 @@ SlowBuffer.prototype.utf8Slice = function () {
   return res + decodeUtf8Char(tmp);
 }
 
-SlowBuffer.prototype.asciiSlice = function () {
+Buffer.prototype.asciiSlice = function () {
   var bytes = Array.prototype.slice.apply(this, arguments);
   var ret = "";
   for (var i = 0; i < bytes.length; i++)
@@ -1309,9 +1221,9 @@ SlowBuffer.prototype.asciiSlice = function () {
   return ret;
 }
 
-SlowBuffer.prototype.binarySlice = SlowBuffer.prototype.asciiSlice;
+Buffer.prototype.binarySlice = Buffer.prototype.asciiSlice;
 
-SlowBuffer.prototype.inspect = function() {
+Buffer.prototype.inspect = function() {
   var out = [],
       len = this.length;
   for (var i = 0; i < len; i++) {
@@ -1321,11 +1233,11 @@ SlowBuffer.prototype.inspect = function() {
       break;
     }
   }
-  return '<SlowBuffer ' + out.join(' ') + '>';
+  return '<Buffer ' + out.join(' ') + '>';
 };
 
 
-SlowBuffer.prototype.hexSlice = function(start, end) {
+Buffer.prototype.hexSlice = function(start, end) {
   var len = this.length;
 
   if (!start || start < 0) start = 0;
@@ -1339,7 +1251,7 @@ SlowBuffer.prototype.hexSlice = function(start, end) {
 };
 
 
-SlowBuffer.prototype.toString = function(encoding, start, end) {
+Buffer.prototype.toString = function(encoding, start, end) {
   encoding = String(encoding || 'utf8').toLowerCase();
   start = +start || 0;
   if (typeof end == 'undefined') end = this.length;
@@ -1376,7 +1288,7 @@ SlowBuffer.prototype.toString = function(encoding, start, end) {
 };
 
 
-SlowBuffer.prototype.hexWrite = function(string, offset, length) {
+Buffer.prototype.hexWrite = function(string, offset, length) {
   offset = +offset || 0;
   var remaining = this.length - offset;
   if (!length) {
@@ -1401,12 +1313,12 @@ SlowBuffer.prototype.hexWrite = function(string, offset, length) {
     if (isNaN(byte)) throw new Error('Invalid hex string');
     this[offset + i] = byte;
   }
-  SlowBuffer._charsWritten = i * 2;
+  Buffer._charsWritten = i * 2;
   return i;
 };
 
 
-SlowBuffer.prototype.write = function(string, offset, length, encoding) {
+Buffer.prototype.write = function(string, offset, length, encoding) {
   // Support both (string, offset, length, encoding)
   // and the legacy (string, encoding, offset, length)
   if (isFinite(offset)) {
@@ -1459,357 +1371,31 @@ SlowBuffer.prototype.write = function(string, offset, length, encoding) {
   }
 };
 
-
 // slice(start, end)
-SlowBuffer.prototype.slice = function(start, end) {
-  if (end === undefined) end = this.length;
+function clamp(index, len, defaultValue) {
+  if (typeof index !== 'number') return defaultValue;
+  index = ~~index;  // Coerce to integer.
+  if (index >= len) return len;
+  if (index >= 0) return index;
+  index += len;
+  if (index >= 0) return index;
+  return 0;
+}
 
-  if (end > this.length) {
-    throw new Error('oob');
-  }
-  if (start > end) {
-    throw new Error('oob');
-  }
-
+Buffer.prototype.slice = function(start, end) {
+  var len = this.length;
+  start = clamp(start, len, 0);
+  end = clamp(end, len, len);
   return new Buffer(this, end - start, +start);
 };
-
-SlowBuffer.prototype.copy = function(target, targetstart, sourcestart, sourceend) {
-  var temp = [];
-  for (var i=sourcestart; i<sourceend; i++) {
-    assert.ok(typeof this[i] !== 'undefined', "copying undefined buffer bytes!");
-    temp.push(this[i]);
-  }
-
-  for (var i=targetstart; i<targetstart+temp.length; i++) {
-    target[i] = temp[i-targetstart];
-  }
-};
-
-SlowBuffer.prototype.fill = function(value, start, end) {
-  if (end > this.length) {
-    throw new Error('oob');
-  }
-  if (start > end) {
-    throw new Error('oob');
-  }
-
-  for (var i = start; i < end; i++) {
-    this[i] = value;
-  }
-}
-
-function coerce(length) {
-  // Coerce length to a number (possibly NaN), round up
-  // in case it's fractional (e.g. 123.456) then do a
-  // double negate to coerce a NaN to 0. Easy, right?
-  length = ~~Math.ceil(+length);
-  return length < 0 ? 0 : length;
-}
-
-
-// Buffer
-
-function Buffer(subject, encoding, offset) {
-  if (!(this instanceof Buffer)) {
-    return new Buffer(subject, encoding, offset);
-  }
-
-  var type;
-
-  // Are we slicing?
-  if (typeof offset === 'number') {
-    this.length = coerce(encoding);
-    this.parent = subject;
-    this.offset = offset;
-  } else {
-    // Find the length
-    switch (type = typeof subject) {
-      case 'number':
-        this.length = coerce(subject);
-        break;
-
-      case 'string':
-        this.length = Buffer.byteLength(subject, encoding);
-        break;
-
-      case 'object': // Assume object is an array
-        this.length = coerce(subject.length);
-        break;
-
-      default:
-        throw new Error('First argument needs to be a number, ' +
-                        'array or string.');
-    }
-
-    if (this.length > Buffer.poolSize) {
-      // Big buffer, just alloc one.
-      this.parent = new SlowBuffer(this.length);
-      this.offset = 0;
-
-    } else {
-      // Small buffer.
-      if (!pool || pool.length - pool.used < this.length) allocPool();
-      this.parent = pool;
-      this.offset = pool.used;
-      pool.used += this.length;
-    }
-
-    // Treat array-ish objects as a byte array.
-    if (isArrayIsh(subject)) {
-      for (var i = 0; i < this.length; i++) {
-        if (subject instanceof Buffer) {
-          this.parent[i + this.offset] = subject.readUInt8(i);
-        }
-        else {
-          this.parent[i + this.offset] = subject[i];
-        }
-      }
-    } else if (type == 'string') {
-      // We are a string
-      this.length = this.write(subject, 0, encoding);
-    }
-  }
-
-}
-
-function isArrayIsh(subject) {
-  return Array.isArray(subject) || Buffer.isBuffer(subject) ||
-         subject && typeof subject === 'object' &&
-         typeof subject.length === 'number';
-}
-
-exports.SlowBuffer = SlowBuffer;
-exports.Buffer = Buffer;
-
-Buffer.poolSize = 8 * 1024;
-var pool;
-
-function allocPool() {
-  pool = new SlowBuffer(Buffer.poolSize);
-  pool.used = 0;
-}
-
-
-// Static methods
-Buffer.isBuffer = function isBuffer(b) {
-  return b instanceof Buffer || b instanceof SlowBuffer;
-};
-
-Buffer.concat = function (list, totalLength) {
-  if (!Array.isArray(list)) {
-    throw new Error("Usage: Buffer.concat(list, [totalLength])\n \
-      list should be an Array.");
-  }
-
-  if (list.length === 0) {
-    return new Buffer(0);
-  } else if (list.length === 1) {
-    return list[0];
-  }
-
-  if (typeof totalLength !== 'number') {
-    totalLength = 0;
-    for (var i = 0; i < list.length; i++) {
-      var buf = list[i];
-      totalLength += buf.length;
-    }
-  }
-
-  var buffer = new Buffer(totalLength);
-  var pos = 0;
-  for (var i = 0; i < list.length; i++) {
-    var buf = list[i];
-    buf.copy(buffer, pos);
-    pos += buf.length;
-  }
-  return buffer;
-};
-
-// Inspect
-Buffer.prototype.inspect = function inspect() {
-  var out = [],
-      len = this.length;
-
-  for (var i = 0; i < len; i++) {
-    out[i] = toHex(this.parent[i + this.offset]);
-    if (i == exports.INSPECT_MAX_BYTES) {
-      out[i + 1] = '...';
-      break;
-    }
-  }
-
-  return '<Buffer ' + out.join(' ') + '>';
-};
-
-
-Buffer.prototype.get = function get(i) {
-  if (i < 0 || i >= this.length) throw new Error('oob');
-  return this.parent[this.offset + i];
-};
-
-
-Buffer.prototype.set = function set(i, v) {
-  if (i < 0 || i >= this.length) throw new Error('oob');
-  return this.parent[this.offset + i] = v;
-};
-
-
-// write(string, offset = 0, length = buffer.length-offset, encoding = 'utf8')
-Buffer.prototype.write = function(string, offset, length, encoding) {
-  // Support both (string, offset, length, encoding)
-  // and the legacy (string, encoding, offset, length)
-  if (isFinite(offset)) {
-    if (!isFinite(length)) {
-      encoding = length;
-      length = undefined;
-    }
-  } else {  // legacy
-    var swap = encoding;
-    encoding = offset;
-    offset = length;
-    length = swap;
-  }
-
-  offset = +offset || 0;
-  var remaining = this.length - offset;
-  if (!length) {
-    length = remaining;
-  } else {
-    length = +length;
-    if (length > remaining) {
-      length = remaining;
-    }
-  }
-  encoding = String(encoding || 'utf8').toLowerCase();
-
-  var ret;
-  switch (encoding) {
-    case 'hex':
-      ret = this.parent.hexWrite(string, this.offset + offset, length);
-      break;
-
-    case 'utf8':
-    case 'utf-8':
-      ret = this.parent.utf8Write(string, this.offset + offset, length);
-      break;
-
-    case 'ascii':
-      ret = this.parent.asciiWrite(string, this.offset + offset, length);
-      break;
-
-    case 'binary':
-      ret = this.parent.binaryWrite(string, this.offset + offset, length);
-      break;
-
-    case 'base64':
-      // Warning: maxLength not taken into account in base64Write
-      ret = this.parent.base64Write(string, this.offset + offset, length);
-      break;
-
-    case 'ucs2':
-    case 'ucs-2':
-      ret = this.parent.ucs2Write(string, this.offset + offset, length);
-      break;
-
-    default:
-      throw new Error('Unknown encoding');
-  }
-
-  Buffer._charsWritten = SlowBuffer._charsWritten;
-
-  return ret;
-};
-
-
-// toString(encoding, start=0, end=buffer.length)
-Buffer.prototype.toString = function(encoding, start, end) {
-  encoding = String(encoding || 'utf8').toLowerCase();
-
-  if (typeof start == 'undefined' || start < 0) {
-    start = 0;
-  } else if (start > this.length) {
-    start = this.length;
-  }
-
-  if (typeof end == 'undefined' || end > this.length) {
-    end = this.length;
-  } else if (end < 0) {
-    end = 0;
-  }
-
-  start = start + this.offset;
-  end = end + this.offset;
-
-  switch (encoding) {
-    case 'hex':
-      return this.parent.hexSlice(start, end);
-
-    case 'utf8':
-    case 'utf-8':
-      return this.parent.utf8Slice(start, end);
-
-    case 'ascii':
-      return this.parent.asciiSlice(start, end);
-
-    case 'binary':
-      return this.parent.binarySlice(start, end);
-
-    case 'base64':
-      return this.parent.base64Slice(start, end);
-
-    case 'ucs2':
-    case 'ucs-2':
-      return this.parent.ucs2Slice(start, end);
-
-    default:
-      throw new Error('Unknown encoding');
-  }
-};
-
-
-// byteLength
-Buffer.byteLength = SlowBuffer.byteLength;
-
-
-// fill(value, start=0, end=buffer.length)
-Buffer.prototype.fill = function fill(value, start, end) {
-  value || (value = 0);
-  start || (start = 0);
-  end || (end = this.length);
-
-  if (typeof value === 'string') {
-    value = value.charCodeAt(0);
-  }
-  if (!(typeof value === 'number') || isNaN(value)) {
-    throw new Error('value is not a number');
-  }
-
-  if (end < start) throw new Error('end < start');
-
-  // Fill 0 bytes; we're done
-  if (end === start) return 0;
-  if (this.length == 0) return 0;
-
-  if (start < 0 || start >= this.length) {
-    throw new Error('start out of bounds');
-  }
-
-  if (end < 0 || end > this.length) {
-    throw new Error('end out of bounds');
-  }
-
-  return this.parent.fill(value,
-                          start + this.offset,
-                          end + this.offset);
-};
-
 
 // copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
 Buffer.prototype.copy = function(target, target_start, start, end) {
   var source = this;
   start || (start = 0);
-  end || (end = this.length);
+  if (end === undefined || isNaN(end)) {
+    end = this.length;
+  }
   target_start || (target_start = 0);
 
   if (end < start) throw new Error('sourceEnd < sourceStart');
@@ -1839,48 +1425,181 @@ Buffer.prototype.copy = function(target, target_start, start, end) {
     end = target.length - target_start + start;
   }
 
-  return this.parent.copy(target.parent,
-                          target_start + target.offset,
-                          start + this.offset,
-                          end + this.offset);
+  var temp = [];
+  for (var i=start; i<end; i++) {
+    assert.ok(typeof this[i] !== 'undefined', "copying undefined buffer bytes!");
+    temp.push(this[i]);
+  }
+
+  for (var i=target_start; i<target_start+temp.length; i++) {
+    target[i] = temp[i-target_start];
+  }
 };
 
+// fill(value, start=0, end=buffer.length)
+Buffer.prototype.fill = function fill(value, start, end) {
+  value || (value = 0);
+  start || (start = 0);
+  end || (end = this.length);
 
-// slice(start, end)
-Buffer.prototype.slice = function(start, end) {
-  if (end === undefined) end = this.length;
-  if (end > this.length) throw new Error('oob');
-  if (start > end) throw new Error('oob');
+  if (typeof value === 'string') {
+    value = value.charCodeAt(0);
+  }
+  if (!(typeof value === 'number') || isNaN(value)) {
+    throw new Error('value is not a number');
+  }
 
-  return new Buffer(this.parent, end - start, +start + this.offset);
+  if (end < start) throw new Error('end < start');
+
+  // Fill 0 bytes; we're done
+  if (end === start) return 0;
+  if (this.length == 0) return 0;
+
+  if (start < 0 || start >= this.length) {
+    throw new Error('start out of bounds');
+  }
+
+  if (end < 0 || end > this.length) {
+    throw new Error('end out of bounds');
+  }
+
+  for (var i = start; i < end; i++) {
+    this[i] = value;
+  }
+}
+
+// Static methods
+Buffer.isBuffer = function isBuffer(b) {
+  return b instanceof Buffer || b instanceof Buffer;
 };
 
+Buffer.concat = function (list, totalLength) {
+  if (!isArray(list)) {
+    throw new Error("Usage: Buffer.concat(list, [totalLength])\n \
+      list should be an Array.");
+  }
 
-// Legacy methods for backwards compatibility.
+  if (list.length === 0) {
+    return new Buffer(0);
+  } else if (list.length === 1) {
+    return list[0];
+  }
 
-Buffer.prototype.utf8Slice = function(start, end) {
-  return this.toString('utf8', start, end);
+  if (typeof totalLength !== 'number') {
+    totalLength = 0;
+    for (var i = 0; i < list.length; i++) {
+      var buf = list[i];
+      totalLength += buf.length;
+    }
+  }
+
+  var buffer = new Buffer(totalLength);
+  var pos = 0;
+  for (var i = 0; i < list.length; i++) {
+    var buf = list[i];
+    buf.copy(buffer, pos);
+    pos += buf.length;
+  }
+  return buffer;
 };
 
-Buffer.prototype.binarySlice = function(start, end) {
-  return this.toString('binary', start, end);
+Buffer.isEncoding = function(encoding) {
+  switch ((encoding + '').toLowerCase()) {
+    case 'hex':
+    case 'utf8':
+    case 'utf-8':
+    case 'ascii':
+    case 'binary':
+    case 'base64':
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+    case 'raw':
+      return true;
+
+    default:
+      return false;
+  }
 };
 
-Buffer.prototype.asciiSlice = function(start, end) {
-  return this.toString('ascii', start, end);
-};
+// helpers
 
-Buffer.prototype.utf8Write = function(string, offset) {
-  return this.write(string, offset, 'utf8');
-};
+function coerce(length) {
+  // Coerce length to a number (possibly NaN), round up
+  // in case it's fractional (e.g. 123.456) then do a
+  // double negate to coerce a NaN to 0. Easy, right?
+  length = ~~Math.ceil(+length);
+  return length < 0 ? 0 : length;
+}
 
-Buffer.prototype.binaryWrite = function(string, offset) {
-  return this.write(string, offset, 'binary');
-};
+function isArray(subject) {
+  return (Array.isArray ||
+    function(subject){
+      return {}.toString.apply(subject) == '[object Array]'
+    })
+    (subject)
+}
 
-Buffer.prototype.asciiWrite = function(string, offset) {
-  return this.write(string, offset, 'ascii');
-};
+function isArrayIsh(subject) {
+  return isArray(subject) || Buffer.isBuffer(subject) ||
+         subject && typeof subject === 'object' &&
+         typeof subject.length === 'number';
+}
+
+function toHex(n) {
+  if (n < 16) return '0' + n.toString(16);
+  return n.toString(16);
+}
+
+function utf8ToBytes(str) {
+  var byteArray = [];
+  for (var i = 0; i < str.length; i++)
+    if (str.charCodeAt(i) <= 0x7F)
+      byteArray.push(str.charCodeAt(i));
+    else {
+      var h = encodeURIComponent(str.charAt(i)).substr(1).split('%');
+      for (var j = 0; j < h.length; j++)
+        byteArray.push(parseInt(h[j], 16));
+    }
+
+  return byteArray;
+}
+
+function asciiToBytes(str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; i++ )
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push( str.charCodeAt(i) & 0xFF );
+
+  return byteArray;
+}
+
+function base64ToBytes(str) {
+  return require("base64-js").toByteArray(str);
+}
+
+function blitBuffer(src, dst, offset, length) {
+  var pos, i = 0;
+  while (i < length) {
+    if ((i+offset >= dst.length) || (i >= src.length))
+      break;
+
+    dst[i + offset] = src[i];
+    i++;
+  }
+  return i;
+}
+
+function decodeUtf8Char(str) {
+  try {
+    return decodeURIComponent(str);
+  } catch (err) {
+    return String.fromCharCode(0xFFFD); // UTF 8 invalid char
+  }
+}
+
+// read/write bit-twiddling
 
 Buffer.prototype.readUInt8 = function(offset, noAssert) {
   var buffer = this;
@@ -1895,7 +1614,7 @@ Buffer.prototype.readUInt8 = function(offset, noAssert) {
 
   if (offset >= buffer.length) return;
 
-  return buffer.parent[buffer.offset + offset];
+  return buffer[offset];
 };
 
 function readUInt16(buffer, offset, isBigEndian, noAssert) {
@@ -1916,14 +1635,14 @@ function readUInt16(buffer, offset, isBigEndian, noAssert) {
   if (offset >= buffer.length) return 0;
 
   if (isBigEndian) {
-    val = buffer.parent[buffer.offset + offset] << 8;
+    val = buffer[offset] << 8;
     if (offset + 1 < buffer.length) {
-      val |= buffer.parent[buffer.offset + offset + 1];
+      val |= buffer[offset + 1];
     }
   } else {
-    val = buffer.parent[buffer.offset + offset];
+    val = buffer[offset];
     if (offset + 1 < buffer.length) {
-      val |= buffer.parent[buffer.offset + offset + 1] << 8;
+      val |= buffer[offset + 1] << 8;
     }
   }
 
@@ -1956,20 +1675,20 @@ function readUInt32(buffer, offset, isBigEndian, noAssert) {
 
   if (isBigEndian) {
     if (offset + 1 < buffer.length)
-      val = buffer.parent[buffer.offset + offset + 1] << 16;
+      val = buffer[offset + 1] << 16;
     if (offset + 2 < buffer.length)
-      val |= buffer.parent[buffer.offset + offset + 2] << 8;
+      val |= buffer[offset + 2] << 8;
     if (offset + 3 < buffer.length)
-      val |= buffer.parent[buffer.offset + offset + 3];
-    val = val + (buffer.parent[buffer.offset + offset] << 24 >>> 0);
+      val |= buffer[offset + 3];
+    val = val + (buffer[offset] << 24 >>> 0);
   } else {
     if (offset + 2 < buffer.length)
-      val = buffer.parent[buffer.offset + offset + 2] << 16;
+      val = buffer[offset + 2] << 16;
     if (offset + 1 < buffer.length)
-      val |= buffer.parent[buffer.offset + offset + 1] << 8;
-    val |= buffer.parent[buffer.offset + offset];
+      val |= buffer[offset + 1] << 8;
+    val |= buffer[offset];
     if (offset + 3 < buffer.length)
-      val = val + (buffer.parent[buffer.offset + offset + 3] << 24 >>> 0);
+      val = val + (buffer[offset + 3] << 24 >>> 0);
   }
 
   return val;
@@ -2043,12 +1762,12 @@ Buffer.prototype.readInt8 = function(offset, noAssert) {
 
   if (offset >= buffer.length) return;
 
-  neg = buffer.parent[buffer.offset + offset] & 0x80;
+  neg = buffer[offset] & 0x80;
   if (!neg) {
-    return (buffer.parent[buffer.offset + offset]);
+    return (buffer[offset]);
   }
 
-  return ((0xff - buffer.parent[buffer.offset + offset] + 1) * -1);
+  return ((0xff - buffer[offset] + 1) * -1);
 };
 
 function readInt16(buffer, offset, isBigEndian, noAssert) {
@@ -2194,7 +1913,7 @@ Buffer.prototype.writeUInt8 = function(value, offset, noAssert) {
   }
 
   if (offset < buffer.length) {
-    buffer.parent[buffer.offset + offset] = value;
+    buffer[offset] = value;
   }
 };
 
@@ -2216,7 +1935,7 @@ function writeUInt16(buffer, value, offset, isBigEndian, noAssert) {
   }
 
   for (var i = 0; i < Math.min(buffer.length - offset, 2); i++) {
-    buffer.parent[buffer.offset + offset + i] =
+    buffer[offset + i] =
         (value & (0xff << (8 * (isBigEndian ? 1 - i : i)))) >>>
             (isBigEndian ? 1 - i : i) * 8;
   }
@@ -2249,7 +1968,7 @@ function writeUInt32(buffer, value, offset, isBigEndian, noAssert) {
   }
 
   for (var i = 0; i < Math.min(buffer.length - offset, 4); i++) {
-    buffer.parent[buffer.offset + offset + i] =
+    buffer[offset + i] =
         (value >>> (isBigEndian ? 3 - i : i) * 8) & 0xff;
   }
 }
@@ -2468,36 +2187,9 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
   writeDouble(this, value, offset, true, noAssert);
 };
 
-SlowBuffer.prototype.readUInt8 = Buffer.prototype.readUInt8;
-SlowBuffer.prototype.readUInt16LE = Buffer.prototype.readUInt16LE;
-SlowBuffer.prototype.readUInt16BE = Buffer.prototype.readUInt16BE;
-SlowBuffer.prototype.readUInt32LE = Buffer.prototype.readUInt32LE;
-SlowBuffer.prototype.readUInt32BE = Buffer.prototype.readUInt32BE;
-SlowBuffer.prototype.readInt8 = Buffer.prototype.readInt8;
-SlowBuffer.prototype.readInt16LE = Buffer.prototype.readInt16LE;
-SlowBuffer.prototype.readInt16BE = Buffer.prototype.readInt16BE;
-SlowBuffer.prototype.readInt32LE = Buffer.prototype.readInt32LE;
-SlowBuffer.prototype.readInt32BE = Buffer.prototype.readInt32BE;
-SlowBuffer.prototype.readFloatLE = Buffer.prototype.readFloatLE;
-SlowBuffer.prototype.readFloatBE = Buffer.prototype.readFloatBE;
-SlowBuffer.prototype.readDoubleLE = Buffer.prototype.readDoubleLE;
-SlowBuffer.prototype.readDoubleBE = Buffer.prototype.readDoubleBE;
-SlowBuffer.prototype.writeUInt8 = Buffer.prototype.writeUInt8;
-SlowBuffer.prototype.writeUInt16LE = Buffer.prototype.writeUInt16LE;
-SlowBuffer.prototype.writeUInt16BE = Buffer.prototype.writeUInt16BE;
-SlowBuffer.prototype.writeUInt32LE = Buffer.prototype.writeUInt32LE;
-SlowBuffer.prototype.writeUInt32BE = Buffer.prototype.writeUInt32BE;
-SlowBuffer.prototype.writeInt8 = Buffer.prototype.writeInt8;
-SlowBuffer.prototype.writeInt16LE = Buffer.prototype.writeInt16LE;
-SlowBuffer.prototype.writeInt16BE = Buffer.prototype.writeInt16BE;
-SlowBuffer.prototype.writeInt32LE = Buffer.prototype.writeInt32LE;
-SlowBuffer.prototype.writeInt32BE = Buffer.prototype.writeInt32BE;
-SlowBuffer.prototype.writeFloatLE = Buffer.prototype.writeFloatLE;
-SlowBuffer.prototype.writeFloatBE = Buffer.prototype.writeFloatBE;
-SlowBuffer.prototype.writeDoubleLE = Buffer.prototype.writeDoubleLE;
-SlowBuffer.prototype.writeDoubleBE = Buffer.prototype.writeDoubleBE;
-
-},{"assert":1,"./buffer_ieee754":5,"base64-js":7}],7:[function(require,module,exports){
+},{"./buffer_ieee754":1,"assert":6,"base64-js":4}],"buffer-browserify":[function(require,module,exports){
+module.exports=require('q9TxCC');
+},{}],4:[function(require,module,exports){
 (function (exports) {
 	'use strict';
 
@@ -2583,1466 +2275,1086 @@ SlowBuffer.prototype.writeDoubleBE = Buffer.prototype.writeDoubleBE;
 	module.exports.fromByteArray = uint8ToBase64;
 }());
 
-},{}],8:[function(require,module,exports){
-exports.readIEEE754 = function(buffer, offset, isBE, mLen, nBytes) {
-  var e, m,
-      eLen = nBytes * 8 - mLen - 1,
-      eMax = (1 << eLen) - 1,
-      eBias = eMax >> 1,
-      nBits = -7,
-      i = isBE ? 0 : (nBytes - 1),
-      d = isBE ? 1 : -1,
-      s = buffer[offset + i];
+},{}],5:[function(require,module,exports){
 
-  i += d;
 
-  e = s & ((1 << (-nBits)) - 1);
-  s >>= (-nBits);
-  nBits += eLen;
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8);
+//
+// The shims in this file are not fully implemented shims for the ES5
+// features, but do work for the particular usecases there is in
+// the other modules.
+//
 
-  m = e & ((1 << (-nBits)) - 1);
-  e >>= (-nBits);
-  nBits += mLen;
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8);
+var toString = Object.prototype.toString;
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 
-  if (e === 0) {
-    e = 1 - eBias;
-  } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity);
-  } else {
-    m = m + Math.pow(2, mLen);
-    e = e - eBias;
+// Array.isArray is supported in IE9
+function isArray(xs) {
+  return toString.call(xs) === '[object Array]';
+}
+exports.isArray = typeof Array.isArray === 'function' ? Array.isArray : isArray;
+
+// Array.prototype.indexOf is supported in IE9
+exports.indexOf = function indexOf(xs, x) {
+  if (xs.indexOf) return xs.indexOf(x);
+  for (var i = 0; i < xs.length; i++) {
+    if (x === xs[i]) return i;
   }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen);
+  return -1;
 };
 
-exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
-  var e, m, c,
-      eLen = nBytes * 8 - mLen - 1,
-      eMax = (1 << eLen) - 1,
-      eBias = eMax >> 1,
-      rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0),
-      i = isBE ? (nBytes - 1) : 0,
-      d = isBE ? -1 : 1,
-      s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0;
-
-  value = Math.abs(value);
-
-  if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0;
-    e = eMax;
-  } else {
-    e = Math.floor(Math.log(value) / Math.LN2);
-    if (value * (c = Math.pow(2, -e)) < 1) {
-      e--;
-      c *= 2;
-    }
-    if (e + eBias >= 1) {
-      value += rt / c;
-    } else {
-      value += rt * Math.pow(2, 1 - eBias);
-    }
-    if (value * c >= 2) {
-      e++;
-      c /= 2;
-    }
-
-    if (e + eBias >= eMax) {
-      m = 0;
-      e = eMax;
-    } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen);
-      e = e + eBias;
-    } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
-      e = 0;
-    }
+// Array.prototype.filter is supported in IE9
+exports.filter = function filter(xs, fn) {
+  if (xs.filter) return xs.filter(fn);
+  var res = [];
+  for (var i = 0; i < xs.length; i++) {
+    if (fn(xs[i], i, xs)) res.push(xs[i]);
   }
-
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8);
-
-  e = (e << mLen) | m;
-  eLen += mLen;
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
-
-  buffer[offset + i - d] |= s * 128;
+  return res;
 };
 
-},{}],3:[function(require,module,exports){
-function SlowBuffer (size) {
-    this.length = size;
-};
-
-var assert = require('assert');
-
-exports.INSPECT_MAX_BYTES = 50;
-
-
-function toHex(n) {
-  if (n < 16) return '0' + n.toString(16);
-  return n.toString(16);
-}
-
-function utf8ToBytes(str) {
-  var byteArray = [];
-  for (var i = 0; i < str.length; i++)
-    if (str.charCodeAt(i) <= 0x7F)
-      byteArray.push(str.charCodeAt(i));
-    else {
-      var h = encodeURIComponent(str.charAt(i)).substr(1).split('%');
-      for (var j = 0; j < h.length; j++)
-        byteArray.push(parseInt(h[j], 16));
-    }
-
-  return byteArray;
-}
-
-function asciiToBytes(str) {
-  var byteArray = []
-  for (var i = 0; i < str.length; i++ )
-    // Node's code seems to be doing this and not & 0x7F..
-    byteArray.push( str.charCodeAt(i) & 0xFF );
-
-  return byteArray;
-}
-
-function base64ToBytes(str) {
-  return require("base64-js").toByteArray(str);
-}
-
-SlowBuffer.byteLength = function (str, encoding) {
-  switch (encoding || "utf8") {
-    case 'hex':
-      return str.length / 2;
-
-    case 'utf8':
-    case 'utf-8':
-      return utf8ToBytes(str).length;
-
-    case 'ascii':
-      return str.length;
-
-    case 'base64':
-      return base64ToBytes(str).length;
-
-    default:
-      throw new Error('Unknown encoding');
+// Array.prototype.forEach is supported in IE9
+exports.forEach = function forEach(xs, fn, self) {
+  if (xs.forEach) return xs.forEach(fn, self);
+  for (var i = 0; i < xs.length; i++) {
+    fn.call(self, xs[i], i, xs);
   }
 };
 
-function blitBuffer(src, dst, offset, length) {
-  var pos, i = 0;
-  while (i < length) {
-    if ((i+offset >= dst.length) || (i >= src.length))
-      break;
-
-    dst[i + offset] = src[i];
-    i++;
-  }
-  return i;
-}
-
-SlowBuffer.prototype.utf8Write = function (string, offset, length) {
-  var bytes, pos;
-  return SlowBuffer._charsWritten =  blitBuffer(utf8ToBytes(string), this, offset, length);
-};
-
-SlowBuffer.prototype.asciiWrite = function (string, offset, length) {
-  var bytes, pos;
-  return SlowBuffer._charsWritten =  blitBuffer(asciiToBytes(string), this, offset, length);
-};
-
-SlowBuffer.prototype.base64Write = function (string, offset, length) {
-  var bytes, pos;
-  return SlowBuffer._charsWritten = blitBuffer(base64ToBytes(string), this, offset, length);
-};
-
-SlowBuffer.prototype.base64Slice = function (start, end) {
-  var bytes = Array.prototype.slice.apply(this, arguments)
-  return require("base64-js").fromByteArray(bytes);
-}
-
-function decodeUtf8Char(str) {
-  try {
-    return decodeURIComponent(str);
-  } catch (err) {
-    return String.fromCharCode(0xFFFD); // UTF 8 invalid char
-  }
-}
-
-SlowBuffer.prototype.utf8Slice = function () {
-  var bytes = Array.prototype.slice.apply(this, arguments);
-  var res = "";
-  var tmp = "";
-  var i = 0;
-  while (i < bytes.length) {
-    if (bytes[i] <= 0x7F) {
-      res += decodeUtf8Char(tmp) + String.fromCharCode(bytes[i]);
-      tmp = "";
-    } else
-      tmp += "%" + bytes[i].toString(16);
-
-    i++;
-  }
-
-  return res + decodeUtf8Char(tmp);
-}
-
-SlowBuffer.prototype.asciiSlice = function () {
-  var bytes = Array.prototype.slice.apply(this, arguments);
-  var ret = "";
-  for (var i = 0; i < bytes.length; i++)
-    ret += String.fromCharCode(bytes[i]);
-  return ret;
-}
-
-SlowBuffer.prototype.inspect = function() {
-  var out = [],
-      len = this.length;
-  for (var i = 0; i < len; i++) {
-    out[i] = toHex(this[i]);
-    if (i == exports.INSPECT_MAX_BYTES) {
-      out[i + 1] = '...';
-      break;
-    }
-  }
-  return '<SlowBuffer ' + out.join(' ') + '>';
-};
-
-
-SlowBuffer.prototype.hexSlice = function(start, end) {
-  var len = this.length;
-
-  if (!start || start < 0) start = 0;
-  if (!end || end < 0 || end > len) end = len;
-
-  var out = '';
-  for (var i = start; i < end; i++) {
-    out += toHex(this[i]);
+// Array.prototype.map is supported in IE9
+exports.map = function map(xs, fn) {
+  if (xs.map) return xs.map(fn);
+  var out = new Array(xs.length);
+  for (var i = 0; i < xs.length; i++) {
+    out[i] = fn(xs[i], i, xs);
   }
   return out;
 };
 
+// Array.prototype.reduce is supported in IE9
+exports.reduce = function reduce(array, callback, opt_initialValue) {
+  if (array.reduce) return array.reduce(callback, opt_initialValue);
+  var value, isValueSet = false;
 
-SlowBuffer.prototype.toString = function(encoding, start, end) {
-  encoding = String(encoding || 'utf8').toLowerCase();
-  start = +start || 0;
-  if (typeof end == 'undefined') end = this.length;
-
-  // Fastpath empty strings
-  if (+end == start) {
-    return '';
+  if (2 < arguments.length) {
+    value = opt_initialValue;
+    isValueSet = true;
   }
-
-  switch (encoding) {
-    case 'hex':
-      return this.hexSlice(start, end);
-
-    case 'utf8':
-    case 'utf-8':
-      return this.utf8Slice(start, end);
-
-    case 'ascii':
-      return this.asciiSlice(start, end);
-
-    case 'binary':
-      return this.binarySlice(start, end);
-
-    case 'base64':
-      return this.base64Slice(start, end);
-
-    case 'ucs2':
-    case 'ucs-2':
-      return this.ucs2Slice(start, end);
-
-    default:
-      throw new Error('Unknown encoding');
-  }
-};
-
-
-SlowBuffer.prototype.hexWrite = function(string, offset, length) {
-  offset = +offset || 0;
-  var remaining = this.length - offset;
-  if (!length) {
-    length = remaining;
-  } else {
-    length = +length;
-    if (length > remaining) {
-      length = remaining;
-    }
-  }
-
-  // must be an even number of digits
-  var strLen = string.length;
-  if (strLen % 2) {
-    throw new Error('Invalid hex string');
-  }
-  if (length > strLen / 2) {
-    length = strLen / 2;
-  }
-  for (var i = 0; i < length; i++) {
-    var byte = parseInt(string.substr(i * 2, 2), 16);
-    if (isNaN(byte)) throw new Error('Invalid hex string');
-    this[offset + i] = byte;
-  }
-  SlowBuffer._charsWritten = i * 2;
-  return i;
-};
-
-
-SlowBuffer.prototype.write = function(string, offset, length, encoding) {
-  // Support both (string, offset, length, encoding)
-  // and the legacy (string, encoding, offset, length)
-  if (isFinite(offset)) {
-    if (!isFinite(length)) {
-      encoding = length;
-      length = undefined;
-    }
-  } else {  // legacy
-    var swap = encoding;
-    encoding = offset;
-    offset = length;
-    length = swap;
-  }
-
-  offset = +offset || 0;
-  var remaining = this.length - offset;
-  if (!length) {
-    length = remaining;
-  } else {
-    length = +length;
-    if (length > remaining) {
-      length = remaining;
-    }
-  }
-  encoding = String(encoding || 'utf8').toLowerCase();
-
-  switch (encoding) {
-    case 'hex':
-      return this.hexWrite(string, offset, length);
-
-    case 'utf8':
-    case 'utf-8':
-      return this.utf8Write(string, offset, length);
-
-    case 'ascii':
-      return this.asciiWrite(string, offset, length);
-
-    case 'binary':
-      return this.binaryWrite(string, offset, length);
-
-    case 'base64':
-      return this.base64Write(string, offset, length);
-
-    case 'ucs2':
-    case 'ucs-2':
-      return this.ucs2Write(string, offset, length);
-
-    default:
-      throw new Error('Unknown encoding');
-  }
-};
-
-
-// slice(start, end)
-SlowBuffer.prototype.slice = function(start, end) {
-  if (end === undefined) end = this.length;
-
-  if (end > this.length) {
-    throw new Error('oob');
-  }
-  if (start > end) {
-    throw new Error('oob');
-  }
-
-  return new Buffer(this, end - start, +start);
-};
-
-SlowBuffer.prototype.copy = function(target, targetstart, sourcestart, sourceend) {
-  var temp = [];
-  for (var i=sourcestart; i<sourceend; i++) {
-    assert.ok(typeof this[i] !== 'undefined', "copying undefined buffer bytes!");
-    temp.push(this[i]);
-  }
-
-  for (var i=targetstart; i<targetstart+temp.length; i++) {
-    target[i] = temp[i-targetstart];
-  }
-};
-
-function coerce(length) {
-  // Coerce length to a number (possibly NaN), round up
-  // in case it's fractional (e.g. 123.456) then do a
-  // double negate to coerce a NaN to 0. Easy, right?
-  length = ~~Math.ceil(+length);
-  return length < 0 ? 0 : length;
-}
-
-
-// Buffer
-
-function Buffer(subject, encoding, offset) {
-  if (!(this instanceof Buffer)) {
-    return new Buffer(subject, encoding, offset);
-  }
-
-  var type;
-
-  // Are we slicing?
-  if (typeof offset === 'number') {
-    this.length = coerce(encoding);
-    this.parent = subject;
-    this.offset = offset;
-  } else {
-    // Find the length
-    switch (type = typeof subject) {
-      case 'number':
-        this.length = coerce(subject);
-        break;
-
-      case 'string':
-        this.length = Buffer.byteLength(subject, encoding);
-        break;
-
-      case 'object': // Assume object is an array
-        this.length = coerce(subject.length);
-        break;
-
-      default:
-        throw new Error('First argument needs to be a number, ' +
-                        'array or string.');
-    }
-
-    if (this.length > Buffer.poolSize) {
-      // Big buffer, just alloc one.
-      this.parent = new SlowBuffer(this.length);
-      this.offset = 0;
-
-    } else {
-      // Small buffer.
-      if (!pool || pool.length - pool.used < this.length) allocPool();
-      this.parent = pool;
-      this.offset = pool.used;
-      pool.used += this.length;
-    }
-
-    // Treat array-ish objects as a byte array.
-    if (isArrayIsh(subject)) {
-      for (var i = 0; i < this.length; i++) {
-        this.parent[i + this.offset] = subject[i];
+  for (var i = 0, l = array.length; l > i; ++i) {
+    if (array.hasOwnProperty(i)) {
+      if (isValueSet) {
+        value = callback(value, array[i], i, array);
       }
-    } else if (type == 'string') {
-      // We are a string
-      this.length = this.write(subject, 0, encoding);
+      else {
+        value = array[i];
+        isValueSet = true;
+      }
     }
   }
 
+  return value;
+};
+
+// String.prototype.substr - negative index don't work in IE8
+if ('ab'.substr(-1) !== 'b') {
+  exports.substr = function (str, start, length) {
+    // did we get a negative start, calculate how much it is from the beginning of the string
+    if (start < 0) start = str.length + start;
+
+    // call the original function
+    return str.substr(start, length);
+  };
+} else {
+  exports.substr = function (str, start, length) {
+    return str.substr(start, length);
+  };
 }
 
-function isArrayIsh(subject) {
-  return Array.isArray(subject) || Buffer.isBuffer(subject) ||
-         subject && typeof subject === 'object' &&
-         typeof subject.length === 'number';
+// String.prototype.trim is supported in IE9
+exports.trim = function (str) {
+  if (str.trim) return str.trim();
+  return str.replace(/^\s+|\s+$/g, '');
+};
+
+// Function.prototype.bind is supported in IE9
+exports.bind = function () {
+  var args = Array.prototype.slice.call(arguments);
+  var fn = args.shift();
+  if (fn.bind) return fn.bind.apply(fn, args);
+  var self = args.shift();
+  return function () {
+    fn.apply(self, args.concat([Array.prototype.slice.call(arguments)]));
+  };
+};
+
+// Object.create is supported in IE9
+function create(prototype, properties) {
+  var object;
+  if (prototype === null) {
+    object = { '__proto__' : null };
+  }
+  else {
+    if (typeof prototype !== 'object') {
+      throw new TypeError(
+        'typeof prototype[' + (typeof prototype) + '] != \'object\''
+      );
+    }
+    var Type = function () {};
+    Type.prototype = prototype;
+    object = new Type();
+    object.__proto__ = prototype;
+  }
+  if (typeof properties !== 'undefined' && Object.defineProperties) {
+    Object.defineProperties(object, properties);
+  }
+  return object;
+}
+exports.create = typeof Object.create === 'function' ? Object.create : create;
+
+// Object.keys and Object.getOwnPropertyNames is supported in IE9 however
+// they do show a description and number property on Error objects
+function notObject(object) {
+  return ((typeof object != "object" && typeof object != "function") || object === null);
 }
 
-exports.SlowBuffer = SlowBuffer;
-exports.Buffer = Buffer;
+function keysShim(object) {
+  if (notObject(object)) {
+    throw new TypeError("Object.keys called on a non-object");
+  }
 
-Buffer.poolSize = 8 * 1024;
-var pool;
-
-function allocPool() {
-  pool = new SlowBuffer(Buffer.poolSize);
-  pool.used = 0;
+  var result = [];
+  for (var name in object) {
+    if (hasOwnProperty.call(object, name)) {
+      result.push(name);
+    }
+  }
+  return result;
 }
 
-
-// Static methods
-Buffer.isBuffer = function isBuffer(b) {
-  return b instanceof Buffer || b instanceof SlowBuffer;
-};
-
-Buffer.concat = function (list, totalLength) {
-  if (!Array.isArray(list)) {
-    throw new Error("Usage: Buffer.concat(list, [totalLength])\n \
-      list should be an Array.");
+// getOwnPropertyNames is almost the same as Object.keys one key feature
+//  is that it returns hidden properties, since that can't be implemented,
+//  this feature gets reduced so it just shows the length property on arrays
+function propertyShim(object) {
+  if (notObject(object)) {
+    throw new TypeError("Object.getOwnPropertyNames called on a non-object");
   }
 
-  if (list.length === 0) {
-    return new Buffer(0);
-  } else if (list.length === 1) {
-    return list[0];
+  var result = keysShim(object);
+  if (exports.isArray(object) && exports.indexOf(object, 'length') === -1) {
+    result.push('length');
   }
+  return result;
+}
 
-  if (typeof totalLength !== 'number') {
-    totalLength = 0;
-    for (var i = 0; i < list.length; i++) {
-      var buf = list[i];
-      totalLength += buf.length;
+var keys = typeof Object.keys === 'function' ? Object.keys : keysShim;
+var getOwnPropertyNames = typeof Object.getOwnPropertyNames === 'function' ?
+  Object.getOwnPropertyNames : propertyShim;
+
+if (new Error().hasOwnProperty('description')) {
+  var ERROR_PROPERTY_FILTER = function (obj, array) {
+    if (toString.call(obj) === '[object Error]') {
+      array = exports.filter(array, function (name) {
+        return name !== 'description' && name !== 'number' && name !== 'message';
+      });
     }
-  }
+    return array;
+  };
 
-  var buffer = new Buffer(totalLength);
-  var pos = 0;
-  for (var i = 0; i < list.length; i++) {
-    var buf = list[i];
-    buf.copy(buffer, pos);
-    pos += buf.length;
+  exports.keys = function (object) {
+    return ERROR_PROPERTY_FILTER(object, keys(object));
+  };
+  exports.getOwnPropertyNames = function (object) {
+    return ERROR_PROPERTY_FILTER(object, getOwnPropertyNames(object));
+  };
+} else {
+  exports.keys = keys;
+  exports.getOwnPropertyNames = getOwnPropertyNames;
+}
+
+// Object.getOwnPropertyDescriptor - supported in IE8 but only on dom elements
+function valueObject(value, key) {
+  return { value: value[key] };
+}
+
+if (typeof Object.getOwnPropertyDescriptor === 'function') {
+  try {
+    Object.getOwnPropertyDescriptor({'a': 1}, 'a');
+    exports.getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+  } catch (e) {
+    // IE8 dom element issue - use a try catch and default to valueObject
+    exports.getOwnPropertyDescriptor = function (value, key) {
+      try {
+        return Object.getOwnPropertyDescriptor(value, key);
+      } catch (e) {
+        return valueObject(value, key);
+      }
+    };
   }
-  return buffer;
+} else {
+  exports.getOwnPropertyDescriptor = valueObject;
+}
+
+},{}],6:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// UTILITY
+var util = require('util');
+var shims = require('_shims');
+var pSlice = Array.prototype.slice;
+
+// 1. The assert module provides functions that throw
+// AssertionError's when particular conditions are not met. The
+// assert module must conform to the following interface.
+
+var assert = module.exports = ok;
+
+// 2. The AssertionError is defined in assert.
+// new assert.AssertionError({ message: message,
+//                             actual: actual,
+//                             expected: expected })
+
+assert.AssertionError = function AssertionError(options) {
+  this.name = 'AssertionError';
+  this.actual = options.actual;
+  this.expected = options.expected;
+  this.operator = options.operator;
+  this.message = options.message || getMessage(this);
 };
 
-// Inspect
-Buffer.prototype.inspect = function inspect() {
-  var out = [],
-      len = this.length;
+// assert.AssertionError instanceof Error
+util.inherits(assert.AssertionError, Error);
 
-  for (var i = 0; i < len; i++) {
-    out[i] = toHex(this.parent[i + this.offset]);
-    if (i == exports.INSPECT_MAX_BYTES) {
-      out[i + 1] = '...';
-      break;
-    }
+function replacer(key, value) {
+  if (util.isUndefined(value)) {
+    return '' + value;
   }
-
-  return '<Buffer ' + out.join(' ') + '>';
-};
-
-
-Buffer.prototype.get = function get(i) {
-  if (i < 0 || i >= this.length) throw new Error('oob');
-  return this.parent[this.offset + i];
-};
-
-
-Buffer.prototype.set = function set(i, v) {
-  if (i < 0 || i >= this.length) throw new Error('oob');
-  return this.parent[this.offset + i] = v;
-};
-
-
-// write(string, offset = 0, length = buffer.length-offset, encoding = 'utf8')
-Buffer.prototype.write = function(string, offset, length, encoding) {
-  // Support both (string, offset, length, encoding)
-  // and the legacy (string, encoding, offset, length)
-  if (isFinite(offset)) {
-    if (!isFinite(length)) {
-      encoding = length;
-      length = undefined;
-    }
-  } else {  // legacy
-    var swap = encoding;
-    encoding = offset;
-    offset = length;
-    length = swap;
+  if (util.isNumber(value) && (isNaN(value) || !isFinite(value))) {
+    return value.toString();
   }
+  if (util.isFunction(value) || util.isRegExp(value)) {
+    return value.toString();
+  }
+  return value;
+}
 
-  offset = +offset || 0;
-  var remaining = this.length - offset;
-  if (!length) {
-    length = remaining;
+function truncate(s, n) {
+  if (util.isString(s)) {
+    return s.length < n ? s : s.slice(0, n);
   } else {
-    length = +length;
-    if (length > remaining) {
-      length = remaining;
+    return s;
+  }
+}
+
+function getMessage(self) {
+  return truncate(JSON.stringify(self.actual, replacer), 128) + ' ' +
+         self.operator + ' ' +
+         truncate(JSON.stringify(self.expected, replacer), 128);
+}
+
+// At present only the three keys mentioned above are used and
+// understood by the spec. Implementations or sub modules can pass
+// other keys to the AssertionError's constructor - they will be
+// ignored.
+
+// 3. All of the following functions must throw an AssertionError
+// when a corresponding condition is not met, with a message that
+// may be undefined if not provided.  All assertion methods provide
+// both the actual and expected values to the assertion error for
+// display purposes.
+
+function fail(actual, expected, message, operator, stackStartFunction) {
+  throw new assert.AssertionError({
+    message: message,
+    actual: actual,
+    expected: expected,
+    operator: operator,
+    stackStartFunction: stackStartFunction
+  });
+}
+
+// EXTENSION! allows for well behaved errors defined elsewhere.
+assert.fail = fail;
+
+// 4. Pure assertion tests whether a value is truthy, as determined
+// by !!guard.
+// assert.ok(guard, message_opt);
+// This statement is equivalent to assert.equal(true, !!guard,
+// message_opt);. To test strictly for the value true, use
+// assert.strictEqual(true, guard, message_opt);.
+
+function ok(value, message) {
+  if (!value) fail(value, true, message, '==', assert.ok);
+}
+assert.ok = ok;
+
+// 5. The equality assertion tests shallow, coercive equality with
+// ==.
+// assert.equal(actual, expected, message_opt);
+
+assert.equal = function equal(actual, expected, message) {
+  if (actual != expected) fail(actual, expected, message, '==', assert.equal);
+};
+
+// 6. The non-equality assertion tests for whether two objects are not equal
+// with != assert.notEqual(actual, expected, message_opt);
+
+assert.notEqual = function notEqual(actual, expected, message) {
+  if (actual == expected) {
+    fail(actual, expected, message, '!=', assert.notEqual);
+  }
+};
+
+// 7. The equivalence assertion tests a deep equality relation.
+// assert.deepEqual(actual, expected, message_opt);
+
+assert.deepEqual = function deepEqual(actual, expected, message) {
+  if (!_deepEqual(actual, expected)) {
+    fail(actual, expected, message, 'deepEqual', assert.deepEqual);
+  }
+};
+
+function _deepEqual(actual, expected) {
+  // 7.1. All identical values are equivalent, as determined by ===.
+  if (actual === expected) {
+    return true;
+
+  } else if (util.isBuffer(actual) && util.isBuffer(expected)) {
+    if (actual.length != expected.length) return false;
+
+    for (var i = 0; i < actual.length; i++) {
+      if (actual[i] !== expected[i]) return false;
+    }
+
+    return true;
+
+  // 7.2. If the expected value is a Date object, the actual value is
+  // equivalent if it is also a Date object that refers to the same time.
+  } else if (util.isDate(actual) && util.isDate(expected)) {
+    return actual.getTime() === expected.getTime();
+
+  // 7.3 If the expected value is a RegExp object, the actual value is
+  // equivalent if it is also a RegExp object with the same source and
+  // properties (`global`, `multiline`, `lastIndex`, `ignoreCase`).
+  } else if (util.isRegExp(actual) && util.isRegExp(expected)) {
+    return actual.source === expected.source &&
+           actual.global === expected.global &&
+           actual.multiline === expected.multiline &&
+           actual.lastIndex === expected.lastIndex &&
+           actual.ignoreCase === expected.ignoreCase;
+
+  // 7.4. Other pairs that do not both pass typeof value == 'object',
+  // equivalence is determined by ==.
+  } else if (!util.isObject(actual) && !util.isObject(expected)) {
+    return actual == expected;
+
+  // 7.5 For all other Object pairs, including Array objects, equivalence is
+  // determined by having the same number of owned properties (as verified
+  // with Object.prototype.hasOwnProperty.call), the same set of keys
+  // (although not necessarily the same order), equivalent values for every
+  // corresponding key, and an identical 'prototype' property. Note: this
+  // accounts for both named and indexed properties on Arrays.
+  } else {
+    return objEquiv(actual, expected);
+  }
+}
+
+function isArguments(object) {
+  return Object.prototype.toString.call(object) == '[object Arguments]';
+}
+
+function objEquiv(a, b) {
+  if (util.isNullOrUndefined(a) || util.isNullOrUndefined(b))
+    return false;
+  // an identical 'prototype' property.
+  if (a.prototype !== b.prototype) return false;
+  //~~~I've managed to break Object.keys through screwy arguments passing.
+  //   Converting to array solves the problem.
+  if (isArguments(a)) {
+    if (!isArguments(b)) {
+      return false;
+    }
+    a = pSlice.call(a);
+    b = pSlice.call(b);
+    return _deepEqual(a, b);
+  }
+  try {
+    var ka = shims.keys(a),
+        kb = shims.keys(b),
+        key, i;
+  } catch (e) {//happens when one is a string literal and the other isn't
+    return false;
+  }
+  // having the same number of owned properties (keys incorporates
+  // hasOwnProperty)
+  if (ka.length != kb.length)
+    return false;
+  //the same set of keys (although not necessarily the same order),
+  ka.sort();
+  kb.sort();
+  //~~~cheap key test
+  for (i = ka.length - 1; i >= 0; i--) {
+    if (ka[i] != kb[i])
+      return false;
+  }
+  //equivalent values for every corresponding key, and
+  //~~~possibly expensive deep test
+  for (i = ka.length - 1; i >= 0; i--) {
+    key = ka[i];
+    if (!_deepEqual(a[key], b[key])) return false;
+  }
+  return true;
+}
+
+// 8. The non-equivalence assertion tests for any deep inequality.
+// assert.notDeepEqual(actual, expected, message_opt);
+
+assert.notDeepEqual = function notDeepEqual(actual, expected, message) {
+  if (_deepEqual(actual, expected)) {
+    fail(actual, expected, message, 'notDeepEqual', assert.notDeepEqual);
+  }
+};
+
+// 9. The strict equality assertion tests strict equality, as determined by ===.
+// assert.strictEqual(actual, expected, message_opt);
+
+assert.strictEqual = function strictEqual(actual, expected, message) {
+  if (actual !== expected) {
+    fail(actual, expected, message, '===', assert.strictEqual);
+  }
+};
+
+// 10. The strict non-equality assertion tests for strict inequality, as
+// determined by !==.  assert.notStrictEqual(actual, expected, message_opt);
+
+assert.notStrictEqual = function notStrictEqual(actual, expected, message) {
+  if (actual === expected) {
+    fail(actual, expected, message, '!==', assert.notStrictEqual);
+  }
+};
+
+function expectedException(actual, expected) {
+  if (!actual || !expected) {
+    return false;
+  }
+
+  if (Object.prototype.toString.call(expected) == '[object RegExp]') {
+    return expected.test(actual);
+  } else if (actual instanceof expected) {
+    return true;
+  } else if (expected.call({}, actual) === true) {
+    return true;
+  }
+
+  return false;
+}
+
+function _throws(shouldThrow, block, expected, message) {
+  var actual;
+
+  if (util.isString(expected)) {
+    message = expected;
+    expected = null;
+  }
+
+  try {
+    block();
+  } catch (e) {
+    actual = e;
+  }
+
+  message = (expected && expected.name ? ' (' + expected.name + ').' : '.') +
+            (message ? ' ' + message : '.');
+
+  if (shouldThrow && !actual) {
+    fail(actual, expected, 'Missing expected exception' + message);
+  }
+
+  if (!shouldThrow && expectedException(actual, expected)) {
+    fail(actual, expected, 'Got unwanted exception' + message);
+  }
+
+  if ((shouldThrow && actual && expected &&
+      !expectedException(actual, expected)) || (!shouldThrow && actual)) {
+    throw actual;
+  }
+}
+
+// 11. Expected to throw an error:
+// assert.throws(block, Error_opt, message_opt);
+
+assert.throws = function(block, /*optional*/error, /*optional*/message) {
+  _throws.apply(this, [true].concat(pSlice.call(arguments)));
+};
+
+// EXTENSION! This is annoying to write outside this module.
+assert.doesNotThrow = function(block, /*optional*/message) {
+  _throws.apply(this, [false].concat(pSlice.call(arguments)));
+};
+
+assert.ifError = function(err) { if (err) {throw err;}};
+},{"_shims":5,"util":7}],7:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var shims = require('_shims');
+
+var formatRegExp = /%[sdj%]/g;
+exports.format = function(f) {
+  if (!isString(f)) {
+    var objects = [];
+    for (var i = 0; i < arguments.length; i++) {
+      objects.push(inspect(arguments[i]));
+    }
+    return objects.join(' ');
+  }
+
+  var i = 1;
+  var args = arguments;
+  var len = args.length;
+  var str = String(f).replace(formatRegExp, function(x) {
+    if (x === '%%') return '%';
+    if (i >= len) return x;
+    switch (x) {
+      case '%s': return String(args[i++]);
+      case '%d': return Number(args[i++]);
+      case '%j':
+        try {
+          return JSON.stringify(args[i++]);
+        } catch (_) {
+          return '[Circular]';
+        }
+      default:
+        return x;
+    }
+  });
+  for (var x = args[i]; i < len; x = args[++i]) {
+    if (isNull(x) || !isObject(x)) {
+      str += ' ' + x;
+    } else {
+      str += ' ' + inspect(x);
     }
   }
-  encoding = String(encoding || 'utf8').toLowerCase();
-
-  var ret;
-  switch (encoding) {
-    case 'hex':
-      ret = this.parent.hexWrite(string, this.offset + offset, length);
-      break;
-
-    case 'utf8':
-    case 'utf-8':
-      ret = this.parent.utf8Write(string, this.offset + offset, length);
-      break;
-
-    case 'ascii':
-      ret = this.parent.asciiWrite(string, this.offset + offset, length);
-      break;
-
-    case 'binary':
-      ret = this.parent.binaryWrite(string, this.offset + offset, length);
-      break;
-
-    case 'base64':
-      // Warning: maxLength not taken into account in base64Write
-      ret = this.parent.base64Write(string, this.offset + offset, length);
-      break;
-
-    case 'ucs2':
-    case 'ucs-2':
-      ret = this.parent.ucs2Write(string, this.offset + offset, length);
-      break;
-
-    default:
-      throw new Error('Unknown encoding');
-  }
-
-  Buffer._charsWritten = SlowBuffer._charsWritten;
-
-  return ret;
+  return str;
 };
 
-
-// toString(encoding, start=0, end=buffer.length)
-Buffer.prototype.toString = function(encoding, start, end) {
-  encoding = String(encoding || 'utf8').toLowerCase();
-
-  if (typeof start == 'undefined' || start < 0) {
-    start = 0;
-  } else if (start > this.length) {
-    start = this.length;
-  }
-
-  if (typeof end == 'undefined' || end > this.length) {
-    end = this.length;
-  } else if (end < 0) {
-    end = 0;
-  }
-
-  start = start + this.offset;
-  end = end + this.offset;
-
-  switch (encoding) {
-    case 'hex':
-      return this.parent.hexSlice(start, end);
-
-    case 'utf8':
-    case 'utf-8':
-      return this.parent.utf8Slice(start, end);
-
-    case 'ascii':
-      return this.parent.asciiSlice(start, end);
-
-    case 'binary':
-      return this.parent.binarySlice(start, end);
-
-    case 'base64':
-      return this.parent.base64Slice(start, end);
-
-    case 'ucs2':
-    case 'ucs-2':
-      return this.parent.ucs2Slice(start, end);
-
-    default:
-      throw new Error('Unknown encoding');
-  }
-};
-
-
-// byteLength
-Buffer.byteLength = SlowBuffer.byteLength;
-
-
-// fill(value, start=0, end=buffer.length)
-Buffer.prototype.fill = function fill(value, start, end) {
-  value || (value = 0);
-  start || (start = 0);
-  end || (end = this.length);
-
-  if (typeof value === 'string') {
-    value = value.charCodeAt(0);
-  }
-  if (!(typeof value === 'number') || isNaN(value)) {
-    throw new Error('value is not a number');
-  }
-
-  if (end < start) throw new Error('end < start');
-
-  // Fill 0 bytes; we're done
-  if (end === start) return 0;
-  if (this.length == 0) return 0;
-
-  if (start < 0 || start >= this.length) {
-    throw new Error('start out of bounds');
-  }
-
-  if (end < 0 || end > this.length) {
-    throw new Error('end out of bounds');
-  }
-
-  return this.parent.fill(value,
-                          start + this.offset,
-                          end + this.offset);
-};
-
-
-// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
-Buffer.prototype.copy = function(target, target_start, start, end) {
-  var source = this;
-  start || (start = 0);
-  end || (end = this.length);
-  target_start || (target_start = 0);
-
-  if (end < start) throw new Error('sourceEnd < sourceStart');
-
-  // Copy 0 bytes; we're done
-  if (end === start) return 0;
-  if (target.length == 0 || source.length == 0) return 0;
-
-  if (target_start < 0 || target_start >= target.length) {
-    throw new Error('targetStart out of bounds');
-  }
-
-  if (start < 0 || start >= source.length) {
-    throw new Error('sourceStart out of bounds');
-  }
-
-  if (end < 0 || end > source.length) {
-    throw new Error('sourceEnd out of bounds');
-  }
-
-  // Are we oob?
-  if (end > this.length) {
-    end = this.length;
-  }
-
-  if (target.length - target_start < end - start) {
-    end = target.length - target_start + start;
-  }
-
-  return this.parent.copy(target.parent,
-                          target_start + target.offset,
-                          start + this.offset,
-                          end + this.offset);
-};
-
-
-// slice(start, end)
-Buffer.prototype.slice = function(start, end) {
-  if (end === undefined) end = this.length;
-  if (end > this.length) throw new Error('oob');
-  if (start > end) throw new Error('oob');
-
-  return new Buffer(this.parent, end - start, +start + this.offset);
-};
-
-
-// Legacy methods for backwards compatibility.
-
-Buffer.prototype.utf8Slice = function(start, end) {
-  return this.toString('utf8', start, end);
-};
-
-Buffer.prototype.binarySlice = function(start, end) {
-  return this.toString('binary', start, end);
-};
-
-Buffer.prototype.asciiSlice = function(start, end) {
-  return this.toString('ascii', start, end);
-};
-
-Buffer.prototype.utf8Write = function(string, offset) {
-  return this.write(string, offset, 'utf8');
-};
-
-Buffer.prototype.binaryWrite = function(string, offset) {
-  return this.write(string, offset, 'binary');
-};
-
-Buffer.prototype.asciiWrite = function(string, offset) {
-  return this.write(string, offset, 'ascii');
-};
-
-Buffer.prototype.readUInt8 = function(offset, noAssert) {
-  var buffer = this;
-
-  if (!noAssert) {
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset < buffer.length,
-        'Trying to read beyond buffer length');
-  }
-
-  return buffer.parent[buffer.offset + offset];
-};
-
-function readUInt16(buffer, offset, isBigEndian, noAssert) {
-  var val = 0;
-
-
-  if (!noAssert) {
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset + 1 < buffer.length,
-        'Trying to read beyond buffer length');
-  }
-
-  if (isBigEndian) {
-    val = buffer.parent[buffer.offset + offset] << 8;
-    val |= buffer.parent[buffer.offset + offset + 1];
-  } else {
-    val = buffer.parent[buffer.offset + offset];
-    val |= buffer.parent[buffer.offset + offset + 1] << 8;
-  }
-
-  return val;
-}
-
-Buffer.prototype.readUInt16LE = function(offset, noAssert) {
-  return readUInt16(this, offset, false, noAssert);
-};
-
-Buffer.prototype.readUInt16BE = function(offset, noAssert) {
-  return readUInt16(this, offset, true, noAssert);
-};
-
-function readUInt32(buffer, offset, isBigEndian, noAssert) {
-  var val = 0;
-
-  if (!noAssert) {
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset + 3 < buffer.length,
-        'Trying to read beyond buffer length');
-  }
-
-  if (isBigEndian) {
-    val = buffer.parent[buffer.offset + offset + 1] << 16;
-    val |= buffer.parent[buffer.offset + offset + 2] << 8;
-    val |= buffer.parent[buffer.offset + offset + 3];
-    val = val + (buffer.parent[buffer.offset + offset] << 24 >>> 0);
-  } else {
-    val = buffer.parent[buffer.offset + offset + 2] << 16;
-    val |= buffer.parent[buffer.offset + offset + 1] << 8;
-    val |= buffer.parent[buffer.offset + offset];
-    val = val + (buffer.parent[buffer.offset + offset + 3] << 24 >>> 0);
-  }
-
-  return val;
-}
-
-Buffer.prototype.readUInt32LE = function(offset, noAssert) {
-  return readUInt32(this, offset, false, noAssert);
-};
-
-Buffer.prototype.readUInt32BE = function(offset, noAssert) {
-  return readUInt32(this, offset, true, noAssert);
-};
-
-
-/*
- * Signed integer types, yay team! A reminder on how two's complement actually
- * works. The first bit is the signed bit, i.e. tells us whether or not the
- * number should be positive or negative. If the two's complement value is
- * positive, then we're done, as it's equivalent to the unsigned representation.
+/**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
  *
- * Now if the number is positive, you're pretty much done, you can just leverage
- * the unsigned translations and return those. Unfortunately, negative numbers
- * aren't quite that straightforward.
- *
- * At first glance, one might be inclined to use the traditional formula to
- * translate binary numbers between the positive and negative values in two's
- * complement. (Though it doesn't quite work for the most negative value)
- * Mainly:
- *  - invert all the bits
- *  - add one to the result
- *
- * Of course, this doesn't quite work in Javascript. Take for example the value
- * of -128. This could be represented in 16 bits (big-endian) as 0xff80. But of
- * course, Javascript will do the following:
- *
- * > ~0xff80
- * -65409
- *
- * Whoh there, Javascript, that's not quite right. But wait, according to
- * Javascript that's perfectly correct. When Javascript ends up seeing the
- * constant 0xff80, it has no notion that it is actually a signed number. It
- * assumes that we've input the unsigned value 0xff80. Thus, when it does the
- * binary negation, it casts it into a signed value, (positive 0xff80). Then
- * when you perform binary negation on that, it turns it into a negative number.
- *
- * Instead, we're going to have to use the following general formula, that works
- * in a rather Javascript friendly way. I'm glad we don't support this kind of
- * weird numbering scheme in the kernel.
- *
- * (BIT-MAX - (unsigned)val + 1) * -1
- *
- * The astute observer, may think that this doesn't make sense for 8-bit numbers
- * (really it isn't necessary for them). However, when you get 16-bit numbers,
- * you do. Let's go back to our prior example and see how this will look:
- *
- * (0xffff - 0xff80 + 1) * -1
- * (0x007f + 1) * -1
- * (0x0080) * -1
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
  */
-Buffer.prototype.readInt8 = function(offset, noAssert) {
-  var buffer = this;
-  var neg;
-
-  if (!noAssert) {
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset < buffer.length,
-        'Trying to read beyond buffer length');
+/* legacy: obj, showHidden, depth, colors*/
+function inspect(obj, opts) {
+  // default options
+  var ctx = {
+    seen: [],
+    stylize: stylizeNoColor
+  };
+  // legacy...
+  if (arguments.length >= 3) ctx.depth = arguments[2];
+  if (arguments.length >= 4) ctx.colors = arguments[3];
+  if (isBoolean(opts)) {
+    // legacy...
+    ctx.showHidden = opts;
+  } else if (opts) {
+    // got an "options" object
+    exports._extend(ctx, opts);
   }
+  // set default options
+  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+  if (isUndefined(ctx.depth)) ctx.depth = 2;
+  if (isUndefined(ctx.colors)) ctx.colors = false;
+  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+  if (ctx.colors) ctx.stylize = stylizeWithColor;
+  return formatValue(ctx, obj, ctx.depth);
+}
+exports.inspect = inspect;
 
-  neg = buffer.parent[buffer.offset + offset] & 0x80;
-  if (!neg) {
-    return (buffer.parent[buffer.offset + offset]);
-  }
 
-  return ((0xff - buffer.parent[buffer.offset + offset] + 1) * -1);
+// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+inspect.colors = {
+  'bold' : [1, 22],
+  'italic' : [3, 23],
+  'underline' : [4, 24],
+  'inverse' : [7, 27],
+  'white' : [37, 39],
+  'grey' : [90, 39],
+  'black' : [30, 39],
+  'blue' : [34, 39],
+  'cyan' : [36, 39],
+  'green' : [32, 39],
+  'magenta' : [35, 39],
+  'red' : [31, 39],
+  'yellow' : [33, 39]
 };
 
-function readInt16(buffer, offset, isBigEndian, noAssert) {
-  var neg, val;
+// Don't use 'blue' not visible on cmd.exe
+inspect.styles = {
+  'special': 'cyan',
+  'number': 'yellow',
+  'boolean': 'yellow',
+  'undefined': 'grey',
+  'null': 'bold',
+  'string': 'green',
+  'date': 'magenta',
+  // "name": intentionally not styling
+  'regexp': 'red'
+};
 
-  if (!noAssert) {
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
 
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
+function stylizeWithColor(str, styleType) {
+  var style = inspect.styles[styleType];
 
-    assert.ok(offset + 1 < buffer.length,
-        'Trying to read beyond buffer length');
+  if (style) {
+    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
+           '\u001b[' + inspect.colors[style][1] + 'm';
+  } else {
+    return str;
   }
-
-  val = readUInt16(buffer, offset, isBigEndian, noAssert);
-  neg = val & 0x8000;
-  if (!neg) {
-    return val;
-  }
-
-  return (0xffff - val + 1) * -1;
 }
 
-Buffer.prototype.readInt16LE = function(offset, noAssert) {
-  return readInt16(this, offset, false, noAssert);
-};
 
-Buffer.prototype.readInt16BE = function(offset, noAssert) {
-  return readInt16(this, offset, true, noAssert);
-};
-
-function readInt32(buffer, offset, isBigEndian, noAssert) {
-  var neg, val;
-
-  if (!noAssert) {
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset + 3 < buffer.length,
-        'Trying to read beyond buffer length');
-  }
-
-  val = readUInt32(buffer, offset, isBigEndian, noAssert);
-  neg = val & 0x80000000;
-  if (!neg) {
-    return (val);
-  }
-
-  return (0xffffffff - val + 1) * -1;
+function stylizeNoColor(str, styleType) {
+  return str;
 }
 
-Buffer.prototype.readInt32LE = function(offset, noAssert) {
-  return readInt32(this, offset, false, noAssert);
-};
 
-Buffer.prototype.readInt32BE = function(offset, noAssert) {
-  return readInt32(this, offset, true, noAssert);
-};
+function arrayToHash(array) {
+  var hash = {};
 
-function readFloat(buffer, offset, isBigEndian, noAssert) {
-  if (!noAssert) {
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
+  shims.forEach(array, function(val, idx) {
+    hash[val] = true;
+  });
 
-    assert.ok(offset + 3 < buffer.length,
-        'Trying to read beyond buffer length');
-  }
-
-  return require('./buffer_ieee754').readIEEE754(buffer, offset, isBigEndian,
-      23, 4);
+  return hash;
 }
 
-Buffer.prototype.readFloatLE = function(offset, noAssert) {
-  return readFloat(this, offset, false, noAssert);
-};
 
-Buffer.prototype.readFloatBE = function(offset, noAssert) {
-  return readFloat(this, offset, true, noAssert);
-};
-
-function readDouble(buffer, offset, isBigEndian, noAssert) {
-  if (!noAssert) {
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
-
-    assert.ok(offset + 7 < buffer.length,
-        'Trying to read beyond buffer length');
+function formatValue(ctx, value, recurseTimes) {
+  // Provide a hook for user-specified inspect functions.
+  // Check that value is an object with an inspect function on it
+  if (ctx.customInspect &&
+      value &&
+      isFunction(value.inspect) &&
+      // Filter out the util module, it's inspect function is special
+      value.inspect !== exports.inspect &&
+      // Also filter out any prototype objects using the circular check.
+      !(value.constructor && value.constructor.prototype === value)) {
+    var ret = value.inspect(recurseTimes);
+    if (!isString(ret)) {
+      ret = formatValue(ctx, ret, recurseTimes);
+    }
+    return ret;
   }
 
-  return require('./buffer_ieee754').readIEEE754(buffer, offset, isBigEndian,
-      52, 8);
+  // Primitive types cannot have properties
+  var primitive = formatPrimitive(ctx, value);
+  if (primitive) {
+    return primitive;
+  }
+
+  // Look up the keys of the object.
+  var keys = shims.keys(value);
+  var visibleKeys = arrayToHash(keys);
+
+  if (ctx.showHidden) {
+    keys = shims.getOwnPropertyNames(value);
+  }
+
+  // Some type of object without properties can be shortcutted.
+  if (keys.length === 0) {
+    if (isFunction(value)) {
+      var name = value.name ? ': ' + value.name : '';
+      return ctx.stylize('[Function' + name + ']', 'special');
+    }
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    }
+    if (isDate(value)) {
+      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+    }
+    if (isError(value)) {
+      return formatError(value);
+    }
+  }
+
+  var base = '', array = false, braces = ['{', '}'];
+
+  // Make Array say that they are Array
+  if (isArray(value)) {
+    array = true;
+    braces = ['[', ']'];
+  }
+
+  // Make functions say that they are functions
+  if (isFunction(value)) {
+    var n = value.name ? ': ' + value.name : '';
+    base = ' [Function' + n + ']';
+  }
+
+  // Make RegExps say that they are RegExps
+  if (isRegExp(value)) {
+    base = ' ' + RegExp.prototype.toString.call(value);
+  }
+
+  // Make dates with properties first say the date
+  if (isDate(value)) {
+    base = ' ' + Date.prototype.toUTCString.call(value);
+  }
+
+  // Make error with message first say the error
+  if (isError(value)) {
+    base = ' ' + formatError(value);
+  }
+
+  if (keys.length === 0 && (!array || value.length == 0)) {
+    return braces[0] + base + braces[1];
+  }
+
+  if (recurseTimes < 0) {
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    } else {
+      return ctx.stylize('[Object]', 'special');
+    }
+  }
+
+  ctx.seen.push(value);
+
+  var output;
+  if (array) {
+    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+  } else {
+    output = keys.map(function(key) {
+      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+    });
+  }
+
+  ctx.seen.pop();
+
+  return reduceToSingleString(output, base, braces);
 }
 
-Buffer.prototype.readDoubleLE = function(offset, noAssert) {
-  return readDouble(this, offset, false, noAssert);
+
+function formatPrimitive(ctx, value) {
+  if (isUndefined(value))
+    return ctx.stylize('undefined', 'undefined');
+  if (isString(value)) {
+    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+                                             .replace(/'/g, "\\'")
+                                             .replace(/\\"/g, '"') + '\'';
+    return ctx.stylize(simple, 'string');
+  }
+  if (isNumber(value))
+    return ctx.stylize('' + value, 'number');
+  if (isBoolean(value))
+    return ctx.stylize('' + value, 'boolean');
+  // For some reason typeof null is "object", so special case here.
+  if (isNull(value))
+    return ctx.stylize('null', 'null');
+}
+
+
+function formatError(value) {
+  return '[' + Error.prototype.toString.call(value) + ']';
+}
+
+
+function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+  var output = [];
+  for (var i = 0, l = value.length; i < l; ++i) {
+    if (hasOwnProperty(value, String(i))) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          String(i), true));
+    } else {
+      output.push('');
+    }
+  }
+
+  shims.forEach(keys, function(key) {
+    if (!key.match(/^\d+$/)) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          key, true));
+    }
+  });
+  return output;
+}
+
+
+function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+  var name, str, desc;
+  desc = shims.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+  if (desc.get) {
+    if (desc.set) {
+      str = ctx.stylize('[Getter/Setter]', 'special');
+    } else {
+      str = ctx.stylize('[Getter]', 'special');
+    }
+  } else {
+    if (desc.set) {
+      str = ctx.stylize('[Setter]', 'special');
+    }
+  }
+
+  if (!hasOwnProperty(visibleKeys, key)) {
+    name = '[' + key + ']';
+  }
+  if (!str) {
+    if (shims.indexOf(ctx.seen, desc.value) < 0) {
+      if (isNull(recurseTimes)) {
+        str = formatValue(ctx, desc.value, null);
+      } else {
+        str = formatValue(ctx, desc.value, recurseTimes - 1);
+      }
+      if (str.indexOf('\n') > -1) {
+        if (array) {
+          str = str.split('\n').map(function(line) {
+            return '  ' + line;
+          }).join('\n').substr(2);
+        } else {
+          str = '\n' + str.split('\n').map(function(line) {
+            return '   ' + line;
+          }).join('\n');
+        }
+      }
+    } else {
+      str = ctx.stylize('[Circular]', 'special');
+    }
+  }
+  if (isUndefined(name)) {
+    if (array && key.match(/^\d+$/)) {
+      return str;
+    }
+    name = JSON.stringify('' + key);
+    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+      name = name.substr(1, name.length - 2);
+      name = ctx.stylize(name, 'name');
+    } else {
+      name = name.replace(/'/g, "\\'")
+                 .replace(/\\"/g, '"')
+                 .replace(/(^"|"$)/g, "'");
+      name = ctx.stylize(name, 'string');
+    }
+  }
+
+  return name + ': ' + str;
+}
+
+
+function reduceToSingleString(output, base, braces) {
+  var numLinesEst = 0;
+  var length = shims.reduce(output, function(prev, cur) {
+    numLinesEst++;
+    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+  }, 0);
+
+  if (length > 60) {
+    return braces[0] +
+           (base === '' ? '' : base + '\n ') +
+           ' ' +
+           output.join(',\n  ') +
+           ' ' +
+           braces[1];
+  }
+
+  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+}
+
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+function isArray(ar) {
+  return shims.isArray(ar);
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) && objectToString(e) === '[object Error]';
+}
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+function isBuffer(arg) {
+  return arg instanceof Buffer;
+}
+exports.isBuffer = isBuffer;
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+              'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()),
+              pad(d.getMinutes()),
+              pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
+
+
+// log is just a thin wrapper to console.log that prepends a timestamp
+exports.log = function() {
+  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
 };
 
-Buffer.prototype.readDoubleBE = function(offset, noAssert) {
-  return readDouble(this, offset, true, noAssert);
-};
 
-
-/*
- * We have to make sure that the value is a valid integer. This means that it is
- * non-negative. It has no fractional component and that it does not exceed the
- * maximum allowed value.
+/**
+ * Inherit the prototype methods from one constructor into another.
  *
- *      value           The number to check for validity
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
  *
- *      max             The maximum value
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
  */
-function verifuint(value, max) {
-  assert.ok(typeof (value) == 'number',
-      'cannot write a non-number as a number');
+exports.inherits = function(ctor, superCtor) {
+  ctor.super_ = superCtor;
+  ctor.prototype = shims.create(superCtor.prototype, {
+    constructor: {
+      value: ctor,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+};
 
-  assert.ok(value >= 0,
-      'specified a negative value for writing an unsigned value');
+exports._extend = function(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || !isObject(add)) return origin;
 
-  assert.ok(value <= max, 'value is larger than maximum value for type');
+  var keys = shims.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+};
 
-  assert.ok(Math.floor(value) === value, 'value has a fractional component');
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-Buffer.prototype.writeUInt8 = function(value, offset, noAssert) {
-  var buffer = this;
-
-  if (!noAssert) {
-    assert.ok(value !== undefined && value !== null,
-        'missing value');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset < buffer.length,
-        'trying to write beyond buffer length');
-
-    verifuint(value, 0xff);
-  }
-
-  buffer.parent[buffer.offset + offset] = value;
-};
-
-function writeUInt16(buffer, value, offset, isBigEndian, noAssert) {
-  if (!noAssert) {
-    assert.ok(value !== undefined && value !== null,
-        'missing value');
-
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset + 1 < buffer.length,
-        'trying to write beyond buffer length');
-
-    verifuint(value, 0xffff);
-  }
-
-  if (isBigEndian) {
-    buffer.parent[buffer.offset + offset] = (value & 0xff00) >>> 8;
-    buffer.parent[buffer.offset + offset + 1] = value & 0x00ff;
-  } else {
-    buffer.parent[buffer.offset + offset + 1] = (value & 0xff00) >>> 8;
-    buffer.parent[buffer.offset + offset] = value & 0x00ff;
-  }
-}
-
-Buffer.prototype.writeUInt16LE = function(value, offset, noAssert) {
-  writeUInt16(this, value, offset, false, noAssert);
-};
-
-Buffer.prototype.writeUInt16BE = function(value, offset, noAssert) {
-  writeUInt16(this, value, offset, true, noAssert);
-};
-
-function writeUInt32(buffer, value, offset, isBigEndian, noAssert) {
-  if (!noAssert) {
-    assert.ok(value !== undefined && value !== null,
-        'missing value');
-
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset + 3 < buffer.length,
-        'trying to write beyond buffer length');
-
-    verifuint(value, 0xffffffff);
-  }
-
-  if (isBigEndian) {
-    buffer.parent[buffer.offset + offset] = (value >>> 24) & 0xff;
-    buffer.parent[buffer.offset + offset + 1] = (value >>> 16) & 0xff;
-    buffer.parent[buffer.offset + offset + 2] = (value >>> 8) & 0xff;
-    buffer.parent[buffer.offset + offset + 3] = value & 0xff;
-  } else {
-    buffer.parent[buffer.offset + offset + 3] = (value >>> 24) & 0xff;
-    buffer.parent[buffer.offset + offset + 2] = (value >>> 16) & 0xff;
-    buffer.parent[buffer.offset + offset + 1] = (value >>> 8) & 0xff;
-    buffer.parent[buffer.offset + offset] = value & 0xff;
-  }
-}
-
-Buffer.prototype.writeUInt32LE = function(value, offset, noAssert) {
-  writeUInt32(this, value, offset, false, noAssert);
-};
-
-Buffer.prototype.writeUInt32BE = function(value, offset, noAssert) {
-  writeUInt32(this, value, offset, true, noAssert);
-};
-
-
-/*
- * We now move onto our friends in the signed number category. Unlike unsigned
- * numbers, we're going to have to worry a bit more about how we put values into
- * arrays. Since we are only worrying about signed 32-bit values, we're in
- * slightly better shape. Unfortunately, we really can't do our favorite binary
- * & in this system. It really seems to do the wrong thing. For example:
- *
- * > -32 & 0xff
- * 224
- *
- * What's happening above is really: 0xe0 & 0xff = 0xe0. However, the results of
- * this aren't treated as a signed number. Ultimately a bad thing.
- *
- * What we're going to want to do is basically create the unsigned equivalent of
- * our representation and pass that off to the wuint* functions. To do that
- * we're going to do the following:
- *
- *  - if the value is positive
- *      we can pass it directly off to the equivalent wuint
- *  - if the value is negative
- *      we do the following computation:
- *         mb + val + 1, where
- *         mb   is the maximum unsigned value in that byte size
- *         val  is the Javascript negative integer
- *
- *
- * As a concrete value, take -128. In signed 16 bits this would be 0xff80. If
- * you do out the computations:
- *
- * 0xffff - 128 + 1
- * 0xffff - 127
- * 0xff80
- *
- * You can then encode this value as the signed version. This is really rather
- * hacky, but it should work and get the job done which is our goal here.
- */
-
-/*
- * A series of checks to make sure we actually have a signed 32-bit number
- */
-function verifsint(value, max, min) {
-  assert.ok(typeof (value) == 'number',
-      'cannot write a non-number as a number');
-
-  assert.ok(value <= max, 'value larger than maximum allowed value');
-
-  assert.ok(value >= min, 'value smaller than minimum allowed value');
-
-  assert.ok(Math.floor(value) === value, 'value has a fractional component');
-}
-
-function verifIEEE754(value, max, min) {
-  assert.ok(typeof (value) == 'number',
-      'cannot write a non-number as a number');
-
-  assert.ok(value <= max, 'value larger than maximum allowed value');
-
-  assert.ok(value >= min, 'value smaller than minimum allowed value');
-}
-
-Buffer.prototype.writeInt8 = function(value, offset, noAssert) {
-  var buffer = this;
-
-  if (!noAssert) {
-    assert.ok(value !== undefined && value !== null,
-        'missing value');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset < buffer.length,
-        'Trying to write beyond buffer length');
-
-    verifsint(value, 0x7f, -0x80);
-  }
-
-  if (value >= 0) {
-    buffer.writeUInt8(value, offset, noAssert);
-  } else {
-    buffer.writeUInt8(0xff + value + 1, offset, noAssert);
-  }
-};
-
-function writeInt16(buffer, value, offset, isBigEndian, noAssert) {
-  if (!noAssert) {
-    assert.ok(value !== undefined && value !== null,
-        'missing value');
-
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset + 1 < buffer.length,
-        'Trying to write beyond buffer length');
-
-    verifsint(value, 0x7fff, -0x8000);
-  }
-
-  if (value >= 0) {
-    writeUInt16(buffer, value, offset, isBigEndian, noAssert);
-  } else {
-    writeUInt16(buffer, 0xffff + value + 1, offset, isBigEndian, noAssert);
-  }
-}
-
-Buffer.prototype.writeInt16LE = function(value, offset, noAssert) {
-  writeInt16(this, value, offset, false, noAssert);
-};
-
-Buffer.prototype.writeInt16BE = function(value, offset, noAssert) {
-  writeInt16(this, value, offset, true, noAssert);
-};
-
-function writeInt32(buffer, value, offset, isBigEndian, noAssert) {
-  if (!noAssert) {
-    assert.ok(value !== undefined && value !== null,
-        'missing value');
-
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset + 3 < buffer.length,
-        'Trying to write beyond buffer length');
-
-    verifsint(value, 0x7fffffff, -0x80000000);
-  }
-
-  if (value >= 0) {
-    writeUInt32(buffer, value, offset, isBigEndian, noAssert);
-  } else {
-    writeUInt32(buffer, 0xffffffff + value + 1, offset, isBigEndian, noAssert);
-  }
-}
-
-Buffer.prototype.writeInt32LE = function(value, offset, noAssert) {
-  writeInt32(this, value, offset, false, noAssert);
-};
-
-Buffer.prototype.writeInt32BE = function(value, offset, noAssert) {
-  writeInt32(this, value, offset, true, noAssert);
-};
-
-function writeFloat(buffer, value, offset, isBigEndian, noAssert) {
-  if (!noAssert) {
-    assert.ok(value !== undefined && value !== null,
-        'missing value');
-
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset + 3 < buffer.length,
-        'Trying to write beyond buffer length');
-
-    verifIEEE754(value, 3.4028234663852886e+38, -3.4028234663852886e+38);
-  }
-
-  require('./buffer_ieee754').writeIEEE754(buffer, value, offset, isBigEndian,
-      23, 4);
-}
-
-Buffer.prototype.writeFloatLE = function(value, offset, noAssert) {
-  writeFloat(this, value, offset, false, noAssert);
-};
-
-Buffer.prototype.writeFloatBE = function(value, offset, noAssert) {
-  writeFloat(this, value, offset, true, noAssert);
-};
-
-function writeDouble(buffer, value, offset, isBigEndian, noAssert) {
-  if (!noAssert) {
-    assert.ok(value !== undefined && value !== null,
-        'missing value');
-
-    assert.ok(typeof (isBigEndian) === 'boolean',
-        'missing or invalid endian');
-
-    assert.ok(offset !== undefined && offset !== null,
-        'missing offset');
-
-    assert.ok(offset + 7 < buffer.length,
-        'Trying to write beyond buffer length');
-
-    verifIEEE754(value, 1.7976931348623157E+308, -1.7976931348623157E+308);
-  }
-
-  require('./buffer_ieee754').writeIEEE754(buffer, value, offset, isBigEndian,
-      52, 8);
-}
-
-Buffer.prototype.writeDoubleLE = function(value, offset, noAssert) {
-  writeDouble(this, value, offset, false, noAssert);
-};
-
-Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
-  writeDouble(this, value, offset, true, noAssert);
-};
-
-SlowBuffer.prototype.readUInt8 = Buffer.prototype.readUInt8;
-SlowBuffer.prototype.readUInt16LE = Buffer.prototype.readUInt16LE;
-SlowBuffer.prototype.readUInt16BE = Buffer.prototype.readUInt16BE;
-SlowBuffer.prototype.readUInt32LE = Buffer.prototype.readUInt32LE;
-SlowBuffer.prototype.readUInt32BE = Buffer.prototype.readUInt32BE;
-SlowBuffer.prototype.readInt8 = Buffer.prototype.readInt8;
-SlowBuffer.prototype.readInt16LE = Buffer.prototype.readInt16LE;
-SlowBuffer.prototype.readInt16BE = Buffer.prototype.readInt16BE;
-SlowBuffer.prototype.readInt32LE = Buffer.prototype.readInt32LE;
-SlowBuffer.prototype.readInt32BE = Buffer.prototype.readInt32BE;
-SlowBuffer.prototype.readFloatLE = Buffer.prototype.readFloatLE;
-SlowBuffer.prototype.readFloatBE = Buffer.prototype.readFloatBE;
-SlowBuffer.prototype.readDoubleLE = Buffer.prototype.readDoubleLE;
-SlowBuffer.prototype.readDoubleBE = Buffer.prototype.readDoubleBE;
-SlowBuffer.prototype.writeUInt8 = Buffer.prototype.writeUInt8;
-SlowBuffer.prototype.writeUInt16LE = Buffer.prototype.writeUInt16LE;
-SlowBuffer.prototype.writeUInt16BE = Buffer.prototype.writeUInt16BE;
-SlowBuffer.prototype.writeUInt32LE = Buffer.prototype.writeUInt32LE;
-SlowBuffer.prototype.writeUInt32BE = Buffer.prototype.writeUInt32BE;
-SlowBuffer.prototype.writeInt8 = Buffer.prototype.writeInt8;
-SlowBuffer.prototype.writeInt16LE = Buffer.prototype.writeInt16LE;
-SlowBuffer.prototype.writeInt16BE = Buffer.prototype.writeInt16BE;
-SlowBuffer.prototype.writeInt32LE = Buffer.prototype.writeInt32LE;
-SlowBuffer.prototype.writeInt32BE = Buffer.prototype.writeInt32BE;
-SlowBuffer.prototype.writeFloatLE = Buffer.prototype.writeFloatLE;
-SlowBuffer.prototype.writeFloatBE = Buffer.prototype.writeFloatBE;
-SlowBuffer.prototype.writeDoubleLE = Buffer.prototype.writeDoubleLE;
-SlowBuffer.prototype.writeDoubleBE = Buffer.prototype.writeDoubleBE;
-
-},{"assert":1,"./buffer_ieee754":8,"base64-js":9}],9:[function(require,module,exports){
-(function (exports) {
-	'use strict';
-
-	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-	function b64ToByteArray(b64) {
-		var i, j, l, tmp, placeHolders, arr;
-	
-		if (b64.length % 4 > 0) {
-			throw 'Invalid string. Length must be a multiple of 4';
-		}
-
-		// the number of equal signs (place holders)
-		// if there are two placeholders, than the two characters before it
-		// represent one byte
-		// if there is only one, then the three characters before it represent 2 bytes
-		// this is just a cheap hack to not do indexOf twice
-		placeHolders = b64.indexOf('=');
-		placeHolders = placeHolders > 0 ? b64.length - placeHolders : 0;
-
-		// base64 is 4/3 + up to two characters of the original data
-		arr = [];//new Uint8Array(b64.length * 3 / 4 - placeHolders);
-
-		// if there are placeholders, only get up to the last complete 4 chars
-		l = placeHolders > 0 ? b64.length - 4 : b64.length;
-
-		for (i = 0, j = 0; i < l; i += 4, j += 3) {
-			tmp = (lookup.indexOf(b64[i]) << 18) | (lookup.indexOf(b64[i + 1]) << 12) | (lookup.indexOf(b64[i + 2]) << 6) | lookup.indexOf(b64[i + 3]);
-			arr.push((tmp & 0xFF0000) >> 16);
-			arr.push((tmp & 0xFF00) >> 8);
-			arr.push(tmp & 0xFF);
-		}
-
-		if (placeHolders === 2) {
-			tmp = (lookup.indexOf(b64[i]) << 2) | (lookup.indexOf(b64[i + 1]) >> 4);
-			arr.push(tmp & 0xFF);
-		} else if (placeHolders === 1) {
-			tmp = (lookup.indexOf(b64[i]) << 10) | (lookup.indexOf(b64[i + 1]) << 4) | (lookup.indexOf(b64[i + 2]) >> 2);
-			arr.push((tmp >> 8) & 0xFF);
-			arr.push(tmp & 0xFF);
-		}
-
-		return arr;
-	}
-
-	function uint8ToBase64(uint8) {
-		var i,
-			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
-			output = "",
-			temp, length;
-
-		function tripletToBase64 (num) {
-			return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F];
-		};
-
-		// go through the array every three bytes, we'll deal with trailing stuff later
-		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
-			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2]);
-			output += tripletToBase64(temp);
-		}
-
-		// pad the end with zeros, but make sure to not forget the extra bytes
-		switch (extraBytes) {
-			case 1:
-				temp = uint8[uint8.length - 1];
-				output += lookup[temp >> 2];
-				output += lookup[(temp << 4) & 0x3F];
-				output += '==';
-				break;
-			case 2:
-				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1]);
-				output += lookup[temp >> 10];
-				output += lookup[(temp >> 4) & 0x3F];
-				output += lookup[(temp << 2) & 0x3F];
-				output += '=';
-				break;
-		}
-
-		return output;
-	}
-
-	module.exports.toByteArray = b64ToByteArray;
-	module.exports.fromByteArray = uint8ToBase64;
-}());
-
-},{}]},{},[])
+},{"_shims":5}]},{},[])
 ;;module.exports=require("buffer-browserify")
 
-},{}],4:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -4096,7 +3408,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var Buffer=require("__browserify_Buffer").Buffer;"use strict";
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -4255,7 +3567,213 @@ clone.clonePrototype = function(parent) {
   return new c();
 };
 
-},{"__browserify_Buffer":3}],6:[function(require,module,exports){
+},{"__browserify_Buffer":5}],8:[function(require,module,exports){
+var dsv = require('dsv'),
+    sexagesimal = require('sexagesimal');
+
+function isLat(f) { return !!f.match(/(Lat)(itude)?/gi); }
+function isLon(f) { return !!f.match(/(L)(on|ng)(gitude)?/i); }
+
+function keyCount(o) {
+    return (typeof o == 'object') ? Object.keys(o).length : 0;
+}
+
+function autoDelimiter(x) {
+    var delimiters = [',', ';', '\t', '|'];
+    var results = [];
+
+    delimiters.forEach(function(delimiter) {
+        var res = dsv(delimiter).parse(x);
+        if (res.length >= 1) {
+            var count = keyCount(res[0]);
+            for (var i = 0; i < res.length; i++) {
+                if (keyCount(res[i]) !== count) return;
+            }
+        }
+        results.push({
+            delimiter: delimiter,
+            arity: Object.keys(res[0]).length,
+        });
+    });
+
+    if (results.length) {
+        return results.sort(function(a, b) {
+            return b.arity - a.arity;
+        })[0].delimiter;
+    } else {
+        return null;
+    }
+}
+
+function auto(x) {
+    var delimiter = autoDelimiter(x);
+    if (!delimiter) return null;
+    return dsv(delimiter).parse(x);
+}
+
+function csv2geojson(x, options, callback) {
+
+    if (!callback) {
+        callback = options;
+        options = {};
+    }
+
+    options.delimiter = options.delimiter || ',';
+
+    var latfield = options.latfield || '',
+        lonfield = options.lonfield || '';
+
+    var features = [],
+        featurecollection = { type: 'FeatureCollection', features: features };
+
+    if (options.delimiter === 'auto' && typeof x == 'string') {
+        options.delimiter = autoDelimiter(x);
+        if (!options.delimiter) return callback({
+            type: 'Error',
+            message: 'Could not autodetect delimiter'
+        });
+    }
+
+    var parsed = (typeof x == 'string') ? dsv(options.delimiter).parse(x) : x;
+
+    if (!parsed.length) return callback(null, featurecollection);
+
+    if (!latfield || !lonfield) {
+        for (var f in parsed[0]) {
+            if (!latfield && isLat(f)) latfield = f;
+            if (!lonfield && isLon(f)) lonfield = f;
+        }
+        if (!latfield || !lonfield) {
+            var fields = [];
+            for (var k in parsed[0]) fields.push(k);
+            return callback({
+                type: 'Error',
+                message: 'Latitude and longitude fields not present',
+                data: parsed,
+                fields: fields
+            });
+        }
+    }
+
+    var errors = [];
+
+    for (var i = 0; i < parsed.length; i++) {
+        if (parsed[i][lonfield] !== undefined &&
+            parsed[i][lonfield] !== undefined) {
+
+            var lonk = parsed[i][lonfield],
+                latk = parsed[i][latfield],
+                lonf, latf,
+                a;
+
+            a = sexagesimal(lonk, 'EW');
+            if (a) lonk = a;
+            a = sexagesimal(latk, 'NS');
+            if (a) latk = a;
+
+            lonf = parseFloat(lonk);
+            latf = parseFloat(latk);
+
+            if (isNaN(lonf) ||
+                isNaN(latf)) {
+                errors.push({
+                    message: 'A row contained an invalid value for latitude or longitude',
+                    row: parsed[i]
+                });
+            } else {
+                if (!options.includeLatLon) {
+                    delete parsed[i][lonfield];
+                    delete parsed[i][latfield];
+                }
+
+                features.push({
+                    type: 'Feature',
+                    properties: parsed[i],
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [
+                            parseFloat(lonf),
+                            parseFloat(latf)
+                        ]
+                    }
+                });
+            }
+        }
+    }
+
+    callback(errors.length ? errors: null, featurecollection);
+}
+
+function toLine(gj) {
+    var features = gj.features;
+    var line = {
+        type: 'Feature',
+        geometry: {
+            type: 'LineString',
+            coordinates: []
+        }
+    };
+    for (var i = 0; i < features.length; i++) {
+        line.geometry.coordinates.push(features[i].geometry.coordinates);
+    }
+    line.properties = features[0].properties;
+    return {
+        type: 'FeatureSet',
+        features: [line]
+    };
+}
+
+function toPolygon(gj) {
+    var features = gj.features;
+    var poly = {
+        type: 'Feature',
+        geometry: {
+            type: 'Polygon',
+            coordinates: [[]]
+        }
+    };
+    for (var i = 0; i < features.length; i++) {
+        poly.geometry.coordinates[0].push(features[i].geometry.coordinates);
+    }
+    poly.properties = features[0].properties;
+    return {
+        type: 'FeatureSet',
+        features: [poly]
+    };
+}
+
+module.exports = {
+    isLon: isLon,
+    isLat: isLat,
+    csv: dsv.csv.parse,
+    tsv: dsv.tsv.parse,
+    dsv: dsv,
+    auto: auto,
+    csv2geojson: csv2geojson,
+    toLine: toLine,
+    toPolygon: toPolygon
+};
+
+},{"dsv":9,"sexagesimal":10}],9:[function(require,module,exports){
+var fs = require("fs");
+
+module.exports = new Function("dsv.version = \"0.0.3\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.substring(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.substring(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.substring(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && !(a = f(a, n++))) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
+
+},{"fs":2}],10:[function(require,module,exports){
+module.exports = function(x, dims) {
+    if (!dims) dims = 'NSEW';
+    if (typeof x !== 'string') return null;
+    var r = /^([0-9.]+)°? *(?:([0-9.]+)['’′‘] *)?(?:([0-9.]+)(?:''|"|”|″) *)?([NSEW])?/,
+        m = x.match(r);
+    if (!m) return null;
+    else if (m[4] && dims.indexOf(m[4]) === -1) return null;
+    else return (((m[1]) ? parseFloat(m[1]) : 0) +
+        ((m[2] ? parseFloat(m[2]) / 60 : 0)) +
+        ((m[3] ? parseFloat(m[3]) / 3600 : 0))) *
+        ((m[4] && m[4] === 'S' || m[4] === 'W') ? -1 : 1);
+};
+
+},{}],11:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -4363,11 +3881,12 @@ function metatable() {
                 delbutton.append('span').attr('class', 'icon-minus');
                 delbutton.append('span').text(' delete');
 
-                function coerceNum(value) {
-                    return !isNaN(parseFloat(value)) && /^(?!0.)/.test(value) ?
-                        Number(value) : value;
+                function coerceNum(x) {
+                    var fl = parseFloat(x);
+                    if (fl.toString() === x) return fl;
+                    else return x;
                 }
-                
+
                 function write(d) {
                     d.data[d3.select(this).attr('field')] = coerceNum(this.value);
                     event.change(d.data, d.index);
@@ -4415,7 +3934,7 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],7:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 module.exports = function(_, def) {
     def = def === undefined ? 4 : def;
     if (_ === '{}') return '    ';
@@ -4425,7 +3944,7 @@ module.exports = function(_, def) {
     return space[0];
 };
 
-},{}],8:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -4683,7 +4202,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":9}],9:[function(require,module,exports){
+},{"jsonlint-lines":14}],14:[function(require,module,exports){
 var process=require("__browserify_process");/* parser generated by jison 0.4.6 */
 /*
   Returns a Parser object of the following structure:
@@ -5338,7 +4857,7 @@ if (typeof module !== 'undefined' && require.main === module) {
   exports.main(process.argv.slice(1));
 }
 }
-},{"__browserify_process":4,"fs":1,"path":2}],10:[function(require,module,exports){
+},{"__browserify_process":6,"fs":2,"path":3}],15:[function(require,module,exports){
 module.exports = function(d3) {
     var preview = require('static-map-preview')(d3, 'tmcw.map-dsejpecw');
 
@@ -5694,7 +5213,7 @@ function mapFile(data) {
     }
 }
 
-},{"static-map-preview":11}],11:[function(require,module,exports){
+},{"static-map-preview":16}],16:[function(require,module,exports){
 var scaleCanvas = require('autoscale-canvas');
 
 module.exports = function(d3, mapid) {
@@ -5758,7 +5277,7 @@ module.exports = function(d3, mapid) {
     function filterNan(_) { return isNaN(_) ? 0 : _; }
 };
 
-},{"autoscale-canvas":12}],12:[function(require,module,exports){
+},{"autoscale-canvas":17}],17:[function(require,module,exports){
 
 /**
  * Retina-enable the given `canvas`.
@@ -5780,17 +5299,7 @@ module.exports = function(canvas){
   }
   return canvas;
 };
-},{}],13:[function(require,module,exports){
-module.exports = isMobile;
-
-function isMobile (ua) {
-  if (!ua && typeof navigator != 'undefined') ua = navigator.userAgent;
-
-  return /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(ua) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(ua.substr(0,4));
-}
-
-
-},{}],14:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 (function(window) {
 	var HAS_HASHCHANGE = (function() {
 		var doc_mode = window.documentMode;
@@ -5954,7 +5463,7 @@ function isMobile (ua) {
 	};
 })(window);
 
-},{}],15:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var osm_geojson = {};
 
 osm_geojson.geojson2osm = function(geo, changeset) {
@@ -6410,7 +5919,7 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
 
 if (typeof module !== 'undefined') module.exports = osm_geojson;
 
-},{}],16:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 ;(function(){
 	var store = {},
 		win = window,
@@ -6565,7 +6074,7 @@ if (typeof module !== 'undefined') module.exports = osm_geojson;
 	else { this.store = store }
 })();
 
-},{}],17:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 toGeoJSON = (function() {
     'use strict';
 
@@ -6790,10 +6299,12 @@ toGeoJSON = (function() {
 
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
-},{}],"PBmiWO":[function(require,module,exports){
+},{}],"topojson":[function(require,module,exports){
+module.exports=require('g070js');
+},{}],"g070js":[function(require,module,exports){
 var fs = require("fs");
 
-var topojson = module.exports = new Function("topojson", "return " + "topojson = (function() {\n\n  function merge(topology, arcs) {\n    var fragmentByStart = {},\n        fragmentByEnd = {};\n\n    arcs.forEach(function(i) {\n      var e = ends(i),\n          start = e[0],\n          end = e[1],\n          f, g;\n\n      if (f = fragmentByEnd[start]) {\n        delete fragmentByEnd[f.end];\n        f.push(i);\n        f.end = end;\n        if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByEnd[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[end]) {\n        delete fragmentByStart[f.start];\n        f.unshift(i);\n        f.start = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[start]) {\n        delete fragmentByStart[f.start];\n        f.unshift(~i);\n        f.start = end;\n        if (g = fragmentByEnd[end]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByEnd[end]) {\n        delete fragmentByEnd[f.end];\n        f.push(~i);\n        f.end = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else {\n        f = [i];\n        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;\n      }\n    });\n\n    function ends(i) {\n      var arc = topology.arcs[i], p0 = arc[0], p1 = [0, 0];\n      arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });\n      return [p0, p1];\n    }\n\n    var fragments = [];\n    for (var k in fragmentByEnd) fragments.push(fragmentByEnd[k]);\n    return fragments;\n  }\n\n  function mesh(topology, o, filter) {\n    var arcs = [];\n\n    if (arguments.length > 1) {\n      var geomsByArc = [],\n          geom;\n\n      function arc(i) {\n        if (i < 0) i = ~i;\n        (geomsByArc[i] || (geomsByArc[i] = [])).push(geom);\n      }\n\n      function line(arcs) {\n        arcs.forEach(arc);\n      }\n\n      function polygon(arcs) {\n        arcs.forEach(line);\n      }\n\n      function geometry(o) {\n        if (o.type === \"GeometryCollection\") o.geometries.forEach(geometry);\n        else if (o.type in geometryType) {\n          geom = o;\n          geometryType[o.type](o.arcs);\n        }\n      }\n\n      var geometryType = {\n        LineString: line,\n        MultiLineString: polygon,\n        Polygon: polygon,\n        MultiPolygon: function(arcs) { arcs.forEach(polygon); }\n      };\n\n      geometry(o);\n\n      geomsByArc.forEach(arguments.length < 3\n          ? function(geoms, i) { arcs.push(i); }\n          : function(geoms, i) { if (filter(geoms[0], geoms[geoms.length - 1])) arcs.push(i); });\n    } else {\n      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);\n    }\n\n    return object(topology, {type: \"MultiLineString\", arcs: merge(topology, arcs)});\n  }\n\n  function featureOrCollection(topology, o) {\n    return o.type === \"GeometryCollection\" ? {\n      type: \"FeatureCollection\",\n      features: o.geometries.map(function(o) { return feature(topology, o); })\n    } : feature(topology, o);\n  }\n\n  function feature(topology, o) {\n    var f = {\n      type: \"Feature\",\n      id: o.id,\n      properties: o.properties || {},\n      geometry: object(topology, o)\n    };\n    if (o.id == null) delete f.id;\n    return f;\n  }\n\n  function object(topology, o) {\n    var tf = topology.transform,\n        kx = tf.scale[0],\n        ky = tf.scale[1],\n        dx = tf.translate[0],\n        dy = tf.translate[1],\n        arcs = topology.arcs;\n\n    function arc(i, points) {\n      if (points.length) points.pop();\n      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, x = 0, y = 0, p; k < n; ++k) points.push([\n        (x += (p = a[k])[0]) * kx + dx,\n        (y += p[1]) * ky + dy\n      ]);\n      if (i < 0) reverse(points, n);\n    }\n\n    function point(coordinates) {\n      return [coordinates[0] * kx + dx, coordinates[1] * ky + dy];\n    }\n\n    function line(arcs) {\n      var points = [];\n      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);\n      if (points.length < 2) points.push(points[0].slice());\n      return points;\n    }\n\n    function ring(arcs) {\n      var points = line(arcs);\n      while (points.length < 4) points.push(points[0].slice());\n      return points;\n    }\n\n    function polygon(arcs) {\n      return arcs.map(ring);\n    }\n\n    function geometry(o) {\n      var t = o.type;\n      return t === \"GeometryCollection\" ? {type: t, geometries: o.geometries.map(geometry)}\n          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}\n          : null;\n    }\n\n    var geometryType = {\n      Point: function(o) { return point(o.coordinates); },\n      MultiPoint: function(o) { return o.coordinates.map(point); },\n      LineString: function(o) { return line(o.arcs); },\n      MultiLineString: function(o) { return o.arcs.map(line); },\n      Polygon: function(o) { return polygon(o.arcs); },\n      MultiPolygon: function(o) { return o.arcs.map(polygon); }\n    };\n\n    return geometry(o);\n  }\n\n  function reverse(array, n) {\n    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;\n  }\n\n  function bisect(a, x) {\n    var lo = 0, hi = a.length;\n    while (lo < hi) {\n      var mid = lo + hi >>> 1;\n      if (a[mid] < x) lo = mid + 1;\n      else hi = mid;\n    }\n    return lo;\n  }\n\n  function neighbors(objects) {\n    var indexesByArc = {}, // arc index -> array of object indexes\n        neighbors = objects.map(function() { return []; });\n\n    function line(arcs, i) {\n      arcs.forEach(function(a) {\n        if (a < 0) a = ~a;\n        var o = indexesByArc[a];\n        if (o) o.push(i);\n        else indexesByArc[a] = [i];\n      });\n    }\n\n    function polygon(arcs, i) {\n      arcs.forEach(function(arc) { line(arc, i); });\n    }\n\n    function geometry(o, i) {\n      if (o.type === \"GeometryCollection\") o.geometries.forEach(function(o) { geometry(o, i); });\n      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);\n    }\n\n    var geometryType = {\n      LineString: line,\n      MultiLineString: polygon,\n      Polygon: polygon,\n      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }\n    };\n\n    objects.forEach(geometry);\n\n    for (var i in indexesByArc) {\n      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {\n        for (var k = j + 1; k < m; ++k) {\n          var ij = indexes[j], ik = indexes[k], n;\n          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);\n          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);\n        }\n      }\n    }\n\n    return neighbors;\n  }\n\n  return {\n    version: \"1.2.3\",\n    mesh: mesh,\n    feature: featureOrCollection,\n    neighbors: neighbors\n  };\n})();\n")();
+var topojson = module.exports = new Function("topojson", "return " + "topojson = (function() {\n\n  function merge(topology, arcs) {\n    var fragmentByStart = {},\n        fragmentByEnd = {};\n\n    arcs.forEach(function(i) {\n      var e = ends(i),\n          start = e[0],\n          end = e[1],\n          f, g;\n\n      if (f = fragmentByEnd[start]) {\n        delete fragmentByEnd[f.end];\n        f.push(i);\n        f.end = end;\n        if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByEnd[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[end]) {\n        delete fragmentByStart[f.start];\n        f.unshift(i);\n        f.start = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByStart[start]) {\n        delete fragmentByStart[f.start];\n        f.unshift(~i);\n        f.start = end;\n        if (g = fragmentByEnd[end]) {\n          delete fragmentByEnd[g.end];\n          var gf = g === f ? f : g.concat(f);\n          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;\n        } else if (g = fragmentByStart[end]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var gf = g.map(function(i) { return ~i; }).reverse().concat(f);\n          fragmentByStart[gf.start = g.end] = fragmentByEnd[gf.end = f.end] = gf;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else if (f = fragmentByEnd[end]) {\n        delete fragmentByEnd[f.end];\n        f.push(~i);\n        f.end = start;\n        if (g = fragmentByEnd[start]) {\n          delete fragmentByStart[g.start];\n          var fg = g === f ? f : f.concat(g);\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;\n        } else if (g = fragmentByStart[start]) {\n          delete fragmentByStart[g.start];\n          delete fragmentByEnd[g.end];\n          var fg = f.concat(g.map(function(i) { return ~i; }).reverse());\n          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.start] = fg;\n        } else {\n          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;\n        }\n      } else {\n        f = [i];\n        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;\n      }\n    });\n\n    function ends(i) {\n      var arc = topology.arcs[i], p0 = arc[0], p1 = [0, 0];\n      arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });\n      return [p0, p1];\n    }\n\n    var fragments = [];\n    for (var k in fragmentByEnd) fragments.push(fragmentByEnd[k]);\n    return fragments;\n  }\n\n  function mesh(topology, o, filter) {\n    var arcs = [];\n\n    if (arguments.length > 1) {\n      var geomsByArc = [],\n          geom;\n\n      function arc(i) {\n        if (i < 0) i = ~i;\n        (geomsByArc[i] || (geomsByArc[i] = [])).push(geom);\n      }\n\n      function line(arcs) {\n        arcs.forEach(arc);\n      }\n\n      function polygon(arcs) {\n        arcs.forEach(line);\n      }\n\n      function geometry(o) {\n        if (o.type === \"GeometryCollection\") o.geometries.forEach(geometry);\n        else if (o.type in geometryType) {\n          geom = o;\n          geometryType[o.type](o.arcs);\n        }\n      }\n\n      var geometryType = {\n        LineString: line,\n        MultiLineString: polygon,\n        Polygon: polygon,\n        MultiPolygon: function(arcs) { arcs.forEach(polygon); }\n      };\n\n      geometry(o);\n\n      geomsByArc.forEach(arguments.length < 3\n          ? function(geoms, i) { arcs.push(i); }\n          : function(geoms, i) { if (filter(geoms[0], geoms[geoms.length - 1])) arcs.push(i); });\n    } else {\n      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);\n    }\n\n    return object(topology, {type: \"MultiLineString\", arcs: merge(topology, arcs)});\n  }\n\n  function featureOrCollection(topology, o) {\n    return o.type === \"GeometryCollection\" ? {\n      type: \"FeatureCollection\",\n      features: o.geometries.map(function(o) { return feature(topology, o); })\n    } : feature(topology, o);\n  }\n\n  function feature(topology, o) {\n    var f = {\n      type: \"Feature\",\n      id: o.id,\n      properties: o.properties || {},\n      geometry: object(topology, o)\n    };\n    if (o.id == null) delete f.id;\n    return f;\n  }\n\n  function object(topology, o) {\n    var absolute = transformAbsolute(topology.transform),\n        arcs = topology.arcs;\n\n    function arc(i, points) {\n      if (points.length) points.pop();\n      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, p; k < n; ++k) {\n        points.push(p = a[k].slice());\n        absolute(p, k);\n      }\n      if (i < 0) reverse(points, n);\n    }\n\n    function point(p) {\n      p = p.slice();\n      absolute(p, 0);\n      return p;\n    }\n\n    function line(arcs) {\n      var points = [];\n      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);\n      if (points.length < 2) points.push(points[0].slice());\n      return points;\n    }\n\n    function ring(arcs) {\n      var points = line(arcs);\n      while (points.length < 4) points.push(points[0].slice());\n      return points;\n    }\n\n    function polygon(arcs) {\n      return arcs.map(ring);\n    }\n\n    function geometry(o) {\n      var t = o.type;\n      return t === \"GeometryCollection\" ? {type: t, geometries: o.geometries.map(geometry)}\n          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}\n          : null;\n    }\n\n    var geometryType = {\n      Point: function(o) { return point(o.coordinates); },\n      MultiPoint: function(o) { return o.coordinates.map(point); },\n      LineString: function(o) { return line(o.arcs); },\n      MultiLineString: function(o) { return o.arcs.map(line); },\n      Polygon: function(o) { return polygon(o.arcs); },\n      MultiPolygon: function(o) { return o.arcs.map(polygon); }\n    };\n\n    return geometry(o);\n  }\n\n  function reverse(array, n) {\n    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;\n  }\n\n  function bisect(a, x) {\n    var lo = 0, hi = a.length;\n    while (lo < hi) {\n      var mid = lo + hi >>> 1;\n      if (a[mid] < x) lo = mid + 1;\n      else hi = mid;\n    }\n    return lo;\n  }\n\n  function neighbors(objects) {\n    var indexesByArc = {}, // arc index -> array of object indexes\n        neighbors = objects.map(function() { return []; });\n\n    function line(arcs, i) {\n      arcs.forEach(function(a) {\n        if (a < 0) a = ~a;\n        var o = indexesByArc[a];\n        if (o) o.push(i);\n        else indexesByArc[a] = [i];\n      });\n    }\n\n    function polygon(arcs, i) {\n      arcs.forEach(function(arc) { line(arc, i); });\n    }\n\n    function geometry(o, i) {\n      if (o.type === \"GeometryCollection\") o.geometries.forEach(function(o) { geometry(o, i); });\n      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);\n    }\n\n    var geometryType = {\n      LineString: line,\n      MultiLineString: polygon,\n      Polygon: polygon,\n      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }\n    };\n\n    objects.forEach(geometry);\n\n    for (var i in indexesByArc) {\n      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {\n        for (var k = j + 1; k < m; ++k) {\n          var ij = indexes[j], ik = indexes[k], n;\n          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);\n          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);\n        }\n      }\n    }\n\n    return neighbors;\n  }\n\n  function presimplify(topology, triangleArea) {\n    var absolute = transformAbsolute(topology.transform),\n        relative = transformRelative(topology.transform),\n        heap = minHeap(compareArea),\n        maxArea = 0,\n        triangle;\n\n    if (!triangleArea) triangleArea = cartesianArea;\n\n    topology.arcs.forEach(function(arc) {\n      var triangles = [];\n\n      arc.forEach(absolute);\n\n      for (var i = 1, n = arc.length - 1; i < n; ++i) {\n        triangle = arc.slice(i - 1, i + 2);\n        triangle[1][2] = triangleArea(triangle);\n        triangles.push(triangle);\n        heap.push(triangle);\n      }\n\n      // Always keep the arc endpoints!\n      arc[0][2] = arc[n][2] = Infinity;\n\n      for (var i = 0, n = triangles.length; i < n; ++i) {\n        triangle = triangles[i];\n        triangle.previous = triangles[i - 1];\n        triangle.next = triangles[i + 1];\n      }\n    });\n\n    while (triangle = heap.pop()) {\n      var previous = triangle.previous,\n          next = triangle.next;\n\n      // If the area of the current point is less than that of the previous point\n      // to be eliminated, use the latter's area instead. This ensures that the\n      // current point cannot be eliminated without eliminating previously-\n      // eliminated points.\n      if (triangle[1][2] < maxArea) triangle[1][2] = maxArea;\n      else maxArea = triangle[1][2];\n\n      if (previous) {\n        previous.next = next;\n        previous[2] = triangle[2];\n        update(previous);\n      }\n\n      if (next) {\n        next.previous = previous;\n        next[0] = triangle[0];\n        update(next);\n      }\n    }\n\n    topology.arcs.forEach(function(arc) {\n      arc.forEach(relative);\n    });\n\n    function update(triangle) {\n      heap.remove(triangle);\n      triangle[1][2] = triangleArea(triangle);\n      heap.push(triangle);\n    }\n\n    return topology;\n  };\n\n  function cartesianArea(triangle) {\n    return Math.abs(\n      (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])\n      - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])\n    );\n  }\n\n  function compareArea(a, b) {\n    return a[1][2] - b[1][2];\n  }\n\n  function minHeap(compare) {\n    var heap = {},\n        array = [];\n\n    heap.push = function() {\n      for (var i = 0, n = arguments.length; i < n; ++i) {\n        var object = arguments[i];\n        up(object.index = array.push(object) - 1);\n      }\n      return array.length;\n    };\n\n    heap.pop = function() {\n      var removed = array[0],\n          object = array.pop();\n      if (array.length) {\n        array[object.index = 0] = object;\n        down(0);\n      }\n      return removed;\n    };\n\n    heap.remove = function(removed) {\n      var i = removed.index,\n          object = array.pop();\n      if (i !== array.length) {\n        array[object.index = i] = object;\n        (compare(object, removed) < 0 ? up : down)(i);\n      }\n      return i;\n    };\n\n    function up(i) {\n      var object = array[i];\n      while (i > 0) {\n        var up = ((i + 1) >> 1) - 1,\n            parent = array[up];\n        if (compare(object, parent) >= 0) break;\n        array[parent.index = i] = parent;\n        array[object.index = i = up] = object;\n      }\n    }\n\n    function down(i) {\n      var object = array[i];\n      while (true) {\n        var right = (i + 1) << 1,\n            left = right - 1,\n            down = i,\n            child = array[down];\n        if (left < array.length && compare(array[left], child) < 0) child = array[down = left];\n        if (right < array.length && compare(array[right], child) < 0) child = array[down = right];\n        if (down === i) break;\n        array[child.index = i] = child;\n        array[object.index = i = down] = object;\n      }\n    }\n\n    return heap;\n  }\n\n  function transformAbsolute(transform) {\n    if (!transform) return noop;\n    var x0,\n        y0,\n        kx = transform.scale[0],\n        ky = transform.scale[1],\n        dx = transform.translate[0],\n        dy = transform.translate[1];\n    return function(point, i) {\n      if (!i) x0 = y0 = 0;\n      point[0] = (x0 += point[0]) * kx + dx;\n      point[1] = (y0 += point[1]) * ky + dy;\n    };\n  }\n\n  function transformRelative(transform) {\n    if (!transform) return noop;\n    var x0,\n        y0,\n        kx = transform.scale[0],\n        ky = transform.scale[1],\n        dx = transform.translate[0],\n        dy = transform.translate[1];\n    return function(point, i) {\n      if (!i) x0 = y0 = 0;\n      var x1 = (point[0] - dx) / kx | 0,\n          y1 = (point[1] - dy) / ky | 0;\n      point[0] = x1 - x0;\n      point[1] = y1 - y0;\n      x0 = x1;\n      y0 = y1;\n    };\n  }\n\n  function noop() {}\n\n  return {\n    version: \"1.4.0\",\n    mesh: mesh,\n    feature: featureOrCollection,\n    neighbors: neighbors,\n    presimplify: presimplify\n  };\n})();\n")();
 topojson.topology = require("./lib/topojson/topology");
 topojson.simplify = require("./lib/topojson/simplify");
 topojson.clockwise = require("./lib/topojson/clockwise");
@@ -6801,7 +6312,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":19,"./lib/topojson/clockwise":21,"./lib/topojson/filter":23,"./lib/topojson/prune":29,"./lib/topojson/simplify":30,"./lib/topojson/topology":33,"fs":1}],19:[function(require,module,exports){
+},{"./lib/topojson/bind":24,"./lib/topojson/clockwise":27,"./lib/topojson/filter":31,"./lib/topojson/prune":34,"./lib/topojson/simplify":36,"./lib/topojson/topology":39,"fs":2}],24:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6831,7 +6342,54 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":34}],20:[function(require,module,exports){
+},{"../../":"g070js","./type":49}],25:[function(require,module,exports){
+
+// Computes the bounding box of the specified hash of GeoJSON objects.
+module.exports = function(objects) {
+  var x0 = Infinity,
+      y0 = Infinity,
+      x1 = -Infinity,
+      y1 = -Infinity;
+
+  function boundGeometry(geometry) {
+    if (geometry && boundGeometryType.hasOwnProperty(geometry.type)) boundGeometryType[geometry.type](geometry);
+  }
+
+  var boundGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(boundGeometry); },
+    Point: function(o) { boundPoint(o.coordinates); },
+    MultiPoint: function(o) { o.coordinates.forEach(boundPoint); },
+    LineString: function(o) { boundLine(o.coordinates); },
+    MultiLineString: function(o) { o.coordinates.forEach(boundLine); },
+    Polygon: function(o) { o.coordinates.forEach(boundLine); },
+    MultiPolygon: function(o) { o.coordinates.forEach(boundMultiLine); }
+  };
+
+  function boundPoint(coordinates) {
+    var x = coordinates[0],
+        y = coordinates[1];
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (y < y0) y0 = y;
+    if (y > y1) y1 = y;
+  }
+
+  function boundLine(coordinates) {
+    coordinates.forEach(boundPoint);
+  }
+
+  function boundMultiLine(coordinates) {
+    coordinates.forEach(boundLine);
+  }
+
+  for (var key in objects) {
+    boundGeometry(objects[key]);
+  }
+
+  return [x0, y0, x1, y1];
+};
+
+},{}],26:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6850,7 +6408,7 @@ function ringArea(ring) {
   while (++i < n) {
     area += ring[i - 1][1] * ring[i][0] - ring[i - 1][0] * ring[i][1];
   }
-  return area * .5;
+  return -area * .5; // ensure clockwise pixel areas are positive
 }
 
 function triangleArea(triangle) {
@@ -6865,7 +6423,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],21:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -6938,13 +6496,74 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"PBmiWO","./coordinate-systems":22,"./type":34}],22:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":29,"./type":49}],28:[function(require,module,exports){
+// Given a hash of GeoJSON objects and an id function, invokes the id function
+// to compute a new id for each object that is a feature. The function is passed
+// the feature and is expected to return the new feature id, or null if the
+// feature should not have an id.
+module.exports = function(objects, id) {
+  if (arguments.length < 2) id = function(d) { return d.id; };
+
+  function idObject(object) {
+    if (object && idObjectType.hasOwnProperty(object.type)) idObjectType[object.type](object);
+  }
+
+  function idFeature(feature) {
+    var i = id(feature);
+    if (i == null) delete feature.id;
+    else feature.id = i;
+  }
+
+  var idObjectType = {
+    Feature: idFeature,
+    FeatureCollection: function(collection) { collection.features.forEach(idFeature); }
+  };
+
+  for (var key in objects) {
+    idObject(objects[key]);
+  }
+
+  return objects;
+};
+
+},{}],29:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":20,"./spherical":31}],23:[function(require,module,exports){
+},{"./cartesian":26,"./spherical":37}],30:[function(require,module,exports){
+// Given a TopoJSON topology in absolute (quantized) coordinates,
+// converts to fixed-point delta encoding.
+// This is a destructive operation that modifies the given topology!
+module.exports = function(topology) {
+  var arcs = topology.arcs,
+      i = -1,
+      n = arcs.length;
+
+  while (++i < n) {
+    var arc = arcs[i],
+        j = 0,
+        m = arc.length,
+        point = arc[0],
+        x0 = point[0],
+        y0 = point[1],
+        x1,
+        y1;
+    while (++j < m) {
+      point = arc[j];
+      x1 = point[0];
+      y1 = point[1];
+      arc[j] = [x1 - x0, y1 - y0];
+      x0 = x1;
+      y0 = y1;
+    }
+  }
+
+  return topology;
+};
+
+},{}],31:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -6953,13 +6572,17 @@ var type = require("./type"),
 
 module.exports = function(topology, options) {
   var system = null,
-      forceClockwise = true; // force exterior rings to be clockwise?
+      forceClockwise = true, // force exterior rings to be clockwise?
+      minimumArea;
 
   if (options)
     "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
+    "minimum-area" in options && (minimumArea = +options["minimum-area"]),
     "force-clockwise" in options && (forceClockwise = !!options["force-clockwise"]);
 
   if (forceClockwise) clockwise(topology, options); // deprecated; for backwards-compatibility
+
+  if (!(minimumArea > 0)) minimumArea = Number.MIN_VALUE;
 
   var filter = type({
     LineString: noop, // TODO remove empty lines
@@ -7001,454 +6624,437 @@ module.exports = function(topology, options) {
   prune(topology, options);
 
   function ringArea(ring) {
-    return system.absoluteArea(system.ringArea(topojson.feature(topology, {type: "Polygon", arcs: [ring]}).geometry.coordinates[0]));
+    var topopolygon = {type: "Polygon", arcs: [ring]},
+        geopolygon = topojson.feature(topology, topopolygon),
+        exterior = geopolygon.geometry.coordinates[0],
+        exteriorArea = system.absoluteArea(system.ringArea(exterior));
+    return exteriorArea >= minimumArea;
   }
 };
-
-// TODO It might be slightly more compact to reverse the arc.
-function reverse(ring) {
-  var i = -1, n = ring.length;
-  ring.reverse();
-  while (++i < n) ring[i] = ~ring[i];
-}
 
 function noop() {}
 
-},{"../../":"PBmiWO","./clockwise":21,"./coordinate-systems":22,"./prune":29,"./type":34}],24:[function(require,module,exports){
-// Note: requires that size is a power of two!
-module.exports = function(size) {
-  var mask = size - 1;
-  return function(point) {
-    var key = (point[0] + 31 * point[1]) | 0;
-    return (key < 0 ? ~key : key) & mask;
+},{"../../":"g070js","./clockwise":27,"./coordinate-systems":29,"./prune":34,"./type":49}],32:[function(require,module,exports){
+// Given a hash of GeoJSON objects, replaces Features with geometry objects.
+// This is a destructive operation that modifies the input objects!
+module.exports = function(objects) {
+
+  function geomifyObject(object) {
+    return (object && geomifyObjectType.hasOwnProperty(object.type)
+        ? geomifyObjectType[object.type]
+        : geomifyGeometry)(object);
+  }
+
+  function geomifyFeature(feature) {
+    var geometry = feature.geometry;
+    if (geometry == null) {
+      feature.type = null;
+    } else {
+      geomifyGeometry(geometry);
+      feature.type = geometry.type;
+      if (geometry.geometries) feature.geometries = geometry.geometries;
+      else if (geometry.coordinates) feature.coordinates = geometry.coordinates;
+    }
+    delete feature.geometry;
+    return feature;
+  }
+
+  function geomifyGeometry(geometry) {
+    if (!geometry) return {type: null};
+    if (geomifyGeometryType.hasOwnProperty(geometry.type)) geomifyGeometryType[geometry.type](geometry);
+    return geometry;
+  }
+
+  var geomifyObjectType = {
+    Feature: geomifyFeature,
+    FeatureCollection: function(collection) {
+      collection.type = "GeometryCollection";
+      collection.geometries = collection.features;
+      collection.features.forEach(geomifyFeature);
+      delete collection.features;
+      return collection;
+    }
   };
-};
 
-},{}],25:[function(require,module,exports){
-var hasher = require("./hash");
-
-module.exports = function(size) {
-  var hashtable = new Array(size = 1 << Math.ceil(Math.log(size) / Math.LN2)),
-      hash = hasher(size);
-  return {
-    size: size,
-    peek: function(key) {
-      var matches = hashtable[hash(key)];
-
-      if (matches) {
-        var i = -1,
-            n = matches.length,
-            match;
-        while (++i < n) {
-          match = matches[i];
-          if (equal(match.key, key)) {
-            return match.values;
-          }
-        }
-      }
-
-      return null;
+  var geomifyGeometryType = {
+    GeometryCollection: function(o) {
+      var geometries = o.geometries, i = -1, n = geometries.length;
+      while (++i < n) geometries[i] = geomifyGeometry(geometries[i]);
     },
-    get: function(key) {
-      var index = hash(key),
-          matches = hashtable[index];
-
-      if (matches) {
-        var i = -1,
-            n = matches.length,
-            match;
-        while (++i < n) {
-          match = matches[i];
-          if (equal(match.key, key)) {
-            return match.values;
-          }
-        }
-      } else {
-        matches = hashtable[index] = [];
+    MultiPoint: function(o) {
+      if (!o.coordinates.length) {
+        o.type = null;
+        delete o.coordinates;
+      } else if (o.coordinates.length < 2) {
+        o.type = "Point";
+        o.coordinates = o.coordinates[0];
       }
-
-      var values = [];
-      matches.push({key: key, values: values});
-      return values;
+    },
+    LineString: function(o) {
+      if (!o.coordinates.length) {
+        o.type = null;
+        delete o.coordinates;
+      }
+    },
+    MultiLineString: function(o) {
+      for (var lines = o.coordinates, i = 0, N = 0, n = lines.length; i < n; ++i) {
+        var line = lines[i];
+        if (line.length) lines[N++] = line;
+      }
+      if (!N) {
+        o.type = null;
+        delete o.coordinates;
+      } else if (N < 2) {
+        o.type = "LineString";
+        o.coordinates = lines[0];
+      } else {
+        o.coordinates.length = N;
+      }
+    },
+    Polygon: function(o) {
+      for (var rings = o.coordinates, i = 0, N = 0, n = rings.length; i < n; ++i) {
+        var ring = rings[i];
+        if (ring.length) rings[N++] = ring;
+      }
+      if (!N) {
+        o.type = null;
+        delete o.coordinates;
+      } else {
+        o.coordinates.length = N;
+      }
+    },
+    MultiPolygon: function(o) {
+      for (var polygons = o.coordinates, j = 0, M = 0, m = polygons.length; j < m; ++j) {
+        for (var rings = polygons[j], i = 0, N = 0, n = rings.length; i < n; ++i) {
+          var ring = rings[i];
+          if (ring.length) rings[N++] = ring;
+        }
+        if (N) {
+          rings.length = N;
+          polygons[M++] = rings;
+        }
+      }
+      if (!M) {
+        o.type = null;
+        delete o.coordinates;
+      } else if (M < 2) {
+        o.type = "Polygon";
+        o.coordinates = polygons[0];
+      } else {
+        polygons.length = M;
+      }
     }
   };
-};
 
-function equal(keyA, keyB) {
-  return keyA[0] === keyB[0]
-      && keyA[1] === keyB[1];
-}
-
-},{"./hash":24}],26:[function(require,module,exports){
-var topojson = require('topojson'),
-    toGeoJSON = require('togeojson'),
-    osm2geojson = require('osm-and-geojson').osm2geojson;
-
-module.exports.readDrop = readDrop;
-module.exports.readFile = readFile;
-
-function readDrop(callback) {
-    return function() {
-        if (d3.event.dataTransfer) {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
-            var f = d3.event.dataTransfer.files[0];
-            readFile(f, callback);
-        }
-    };
-}
-
-function readFile(f, callback) {
-
-    var reader = new FileReader();
-
-    reader.onload = function(e) {
-
-        var fileType = detectType(f);
-
-        if (!fileType) {
-            return callback({
-                message: 'Could not detect file type'
-            });
-        } else if (fileType === 'kml') {
-            var kmldom = toDom(e.target.result);
-            if (!kmldom) {
-                return callback({
-                    message: 'Invalid KML file: not valid XML'
-                });
-            }
-            var warning;
-            if (kmldom.getElementsByTagName('NetworkLink').length) {
-                warning = {
-                    message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
-                      'Please export and upload KML without NetworkLinks for optimal performance'
-                };
-            }
-            callback(null, toGeoJSON.kml(kmldom), warning);
-        } else if (fileType === 'xml') {
-            var xmldom = toDom(e.target.result);
-            if (!xmldom) {
-                return callback({
-                    message: 'Invalid XML file: not valid XML'
-                });
-            }
-            callback(null, osm2geojson(xmldom));
-        } else if (fileType === 'gpx') {
-            callback(null, toGeoJSON.gpx(toDom(e.target.result)));
-        } else if (fileType === 'geojson') {
-            try {
-                gj = JSON.parse(e.target.result);
-                if (gj && gj.type === 'Topology' && gj.objects) {
-                    var collection = { type: 'FeatureCollection', features: [] };
-                    for (var o in gj.objects) collection.features.push(topojson.feature(gj, gj.objects[o]));
-                    callback(null, collection);
-                } else {
-                    callback(null, gj);
-                }
-            } catch(err) {
-                alert('Invalid JSON file: ' + err);
-                return;
-            }
-        } else if (fileType === 'dsv') {
-            csv2geojson.csv2geojson(e.target.result, {
-                delimiter: 'auto'
-            }, function(err, result) {
-                if (err) {
-                    return callback({
-                        type: 'geocode',
-                        result: result,
-                        raw: e.target.result
-                    });
-                } else {
-                    return callback(null, result);
-                }
-            });
-        }
-    };
-
-    reader.readAsText(f);
-
-    function toDom(x) {
-        return (new DOMParser()).parseFromString(x, 'text/xml');
-    }
-
-    function detectType(f) {
-        var filename = f.name ? f.name.toLowerCase() : '';
-        function ext(_) {
-            return filename.indexOf(_) !== -1;
-        }
-        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
-            return 'kml';
-        }
-        if (ext('.gpx')) return 'gpx';
-        if (ext('.geojson') || ext('.json') || ext('.topojson')) return 'geojson';
-        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
-            return 'dsv';
-        }
-        if (ext('.xml') || ext('.osm')) return 'xml';
-    }
-}
-
-},{"osm-and-geojson":15,"togeojson":17,"topojson":"PBmiWO"}],"topojson":[function(require,module,exports){
-module.exports=require('PBmiWO');
-},{}],28:[function(require,module,exports){
-module.exports = function() {
-  var heap = {},
-      array = [];
-
-  heap.push = function() {
-    for (var i = 0, n = arguments.length; i < n; ++i) {
-      var object = arguments[i];
-      up(object.index = array.push(object) - 1);
-    }
-    return array.length;
-  };
-
-  heap.pop = function() {
-    var removed = array[0],
-        object = array.pop();
-    if (array.length) {
-      array[object.index = 0] = object;
-      down(0);
-    }
-    return removed;
-  };
-
-  heap.remove = function(removed) {
-    var i = removed.index,
-        object = array.pop();
-    if (i !== array.length) {
-      array[object.index = i] = object;
-      (compare(object, removed) < 0 ? up : down)(i);
-    }
-    return i;
-  };
-
-  function up(i) {
-    var object = array[i];
-    while (i > 0) {
-      var up = ((i + 1) >> 1) - 1,
-          parent = array[up];
-      if (compare(object, parent) >= 0) break;
-      array[parent.index = i] = parent;
-      array[object.index = i = up] = object;
-    }
+  for (var key in objects) {
+    objects[key] = geomifyObject(objects[key]);
   }
 
-  function down(i) {
-    var object = array[i];
-    while (true) {
-      var right = (i + 1) << 1,
-          left = right - 1,
-          down = i,
-          child = array[down];
-      if (left < array.length && compare(array[left], child) < 0) child = array[down = left];
-      if (right < array.length && compare(array[right], child) < 0) child = array[down = right];
-      if (down === i) break;
-      array[child.index = i] = child;
-      array[object.index = i = down] = object;
-    }
-  }
-
-  return heap;
+  return objects;
 };
 
-function compare(a, b) {
-  return a[1].area - b[1].area;
-}
+},{}],33:[function(require,module,exports){
+module.exports = function(objects, filter) {
 
-},{}],29:[function(require,module,exports){
-var type = require("./type"),
-    topojson = require("../../");
+  function prefilterGeometry(geometry) {
+    if (!geometry) return {type: null};
+    if (prefilterGeometryType.hasOwnProperty(geometry.type)) prefilterGeometryType[geometry.type](geometry);
+    return geometry;
+  }
 
+  var prefilterGeometryType = {
+    GeometryCollection: function(o) {
+      var geometries = o.geometries, i = -1, n = geometries.length;
+      while (++i < n) geometries[i] = prefilterGeometry(geometries[i]);
+    },
+    Polygon: function(o) {
+      for (var rings = o.coordinates, i = 0, N = 0, n = rings.length; i < n; ++i) {
+        var ring = rings[i];
+        if (filter(ring)) rings[N++] = ring;
+      }
+      if (!N) {
+        o.type = null;
+        delete o.coordinates;
+      } else {
+        o.coordinates.length = N;
+      }
+    },
+    MultiPolygon: function(o) {
+      for (var polygons = o.coordinates, j = 0, M = 0, m = polygons.length; j < m; ++j) {
+        for (var rings = polygons[j], i = 0, N = 0, n = rings.length; i < n; ++i) {
+          var ring = rings[i];
+          if (filter(ring)) rings[N++] = ring;
+        }
+        if (N) {
+          rings.length = N;
+          polygons[M++] = rings;
+        }
+      }
+      if (!M) {
+        o.type = null;
+        delete o.coordinates;
+      } else if (M < 2) {
+        o.type = "Polygon";
+        o.coordinates = polygons[0];
+      } else {
+        polygons.length = M;
+      }
+    }
+  };
+
+  for (var key in objects) {
+    objects[key] = prefilterGeometry(objects[key]);
+  }
+
+  return objects;
+};
+
+},{}],34:[function(require,module,exports){
 module.exports = function(topology, options) {
   var verbose = false,
-      retained = [],
-      j = -1,
-      n = topology.arcs.length;
+      objects = topology.objects,
+      oldArcs = topology.arcs,
+      oldArcCount = oldArcs.length,
+      newArcs = topology.arcs = [],
+      newArcCount = 0,
+      newIndexByOldIndex = new Array(oldArcs.length);
 
   if (options)
     "verbose" in options && (verbose = !!options["verbose"]);
 
-  var prune = type({
-    LineString: function(lineString) {
-      this.line(lineString.arcs);
-    },
-    MultiLineString: function(multiLineString) {
-      var arcs = multiLineString.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    },
-    MultiPoint: noop,
-    MultiPolygon: function(multiPolygon) {
-      var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
-      while (++i < n) this.polygon(arcs[i]);
-    },
-    Point: noop,
-    Polygon: function(polygon) {
-      this.polygon(polygon.arcs);
-    },
-    line: function(arcs) {
-      var i = -1, n = arcs.length, arc, reversed;
-      while (++i < n) {
-        arc = arcs[i];
-        if (reversed = arc < 0) arc = ~arc;
-        if (retained[arc] == null) retained[arc] = ++j, arc = j;
-        else arc = retained[arc];
-        arcs[i] = reversed ? ~arc : arc;
-      }
-    },
-    polygon: function(arcs) {
-      var i = -1, n = arcs.length;
-      while (++i < n) this.line(arcs[i]);
-    }
-  });
-
-  for (var key in topology.objects) {
-    prune.object(topology.objects[key]);
+  function pruneGeometry(geometry) {
+    if (geometry && pruneGeometryType.hasOwnProperty(geometry.type)) pruneGeometryType[geometry.type](geometry);
   }
 
-  if (verbose) console.warn("prune: retained " + (j + 1) + " / " + n + " arcs (" + Math.round((j + 1) / n * 100) + "%)");
+  var pruneGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(pruneGeometry); },
+    LineString: function(o) { pruneArcs(o.arcs); },
+    MultiLineString: function(o) { o.arcs.forEach(pruneArcs); },
+    Polygon: function(o) { o.arcs.forEach(pruneArcs); },
+    MultiPolygon: function(o) { o.arcs.forEach(pruneMultiArcs); }
+  };
 
-  var arcs = [];
-  retained.forEach(function(i, j) { arcs[i] = topology.arcs[j]; });
-  topology.arcs = arcs;
+  function pruneArcs(arcs) {
+    for (var i = 0, m = 0, n = arcs.length; i < n; ++i) {
+      var oldIndex = arcs[i],
+          oldReverse = oldIndex < 0 && (oldIndex = ~oldIndex, true),
+          oldArc = oldArcs[oldIndex],
+          newIndex;
+
+      // Skip collapsed arc segments.
+      if (oldArc.length < 3 && !oldArc[1][0] && !oldArc[1][1]) continue;
+
+      // If this is the first instance of this arc,
+      // record it under its new index.
+      if ((newIndex = newIndexByOldIndex[oldIndex]) == null) {
+        newIndexByOldIndex[oldIndex] = newIndex = newArcCount++;
+        newArcs[newIndex] = oldArcs[oldIndex];
+      }
+
+      arcs[m++] = oldReverse ? ~newIndex : newIndex;
+    }
+
+    // If all were collapsed, restore the last arc to avoid collapsing the line.
+    if (!(arcs.length = m) && n) {
+
+      // If this is the first instance of this arc,
+      // record it under its new index.
+      if ((newIndex = newIndexByOldIndex[oldIndex]) == null) {
+        newIndexByOldIndex[oldIndex] = newIndex = newArcCount++;
+        newArcs[newIndex] = oldArcs[oldIndex];
+      }
+
+      arcs[0] = oldReverse ? ~newIndex : newIndex;
+    }
+  }
+
+  function pruneMultiArcs(arcs) {
+    arcs.forEach(pruneArcs);
+  }
+
+  for (var key in objects) {
+    pruneGeometry(objects[key]);
+  }
+
+  if (verbose) console.warn("prune: retained " + newArcCount + " / " + oldArcCount + " arcs (" + Math.round(newArcCount / oldArcCount * 100) + "%)");
+
+  return topology;
 };
 
 function noop() {}
 
-},{"../../":"PBmiWO","./type":34}],30:[function(require,module,exports){
-var minHeap = require("./min-heap"),
+},{}],35:[function(require,module,exports){
+module.exports = function(objects, bbox, Q) {
+  var x0 = isFinite(bbox[0]) ? bbox[0] : 0,
+      y0 = isFinite(bbox[1]) ? bbox[1] : 0,
+      x1 = isFinite(bbox[2]) ? bbox[2] : 0,
+      y1 = isFinite(bbox[3]) ? bbox[3] : 0,
+      kx = x1 - x0 ? (Q - 1) / (x1 - x0) : 1,
+      ky = y1 - y0 ? (Q - 1) / (y1 - y0) : 1;
+
+  function quantizeGeometry(geometry) {
+    if (geometry && quantizeGeometryType.hasOwnProperty(geometry.type)) quantizeGeometryType[geometry.type](geometry);
+  }
+
+  var quantizeGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(quantizeGeometry); },
+    Point: function(o) { quantizePoint(o.coordinates); },
+    MultiPoint: function(o) { o.coordinates.forEach(quantizePoint); },
+    LineString: function(o) {
+      var line = o.coordinates;
+      quantizeLine(line);
+      if (line.length < 2) line[1] = line[0]; // must have 2+
+    },
+    MultiLineString: function(o) {
+      for (var lines = o.coordinates, i = 0, n = lines.length; i < n; ++i) {
+        var line = lines[i];
+        quantizeLine(line);
+        if (line.length < 2) line[1] = line[0]; // must have 2+
+      }
+    },
+    Polygon: function(o) {
+      for (var rings = o.coordinates, i = 0, n = rings.length; i < n; ++i) {
+        var ring = rings[i];
+        quantizeLine(ring);
+        while (ring.length < 4) ring.push(ring[0]); // must have 4+
+      }
+    },
+    MultiPolygon: function(o) {
+      for (var polygons = o.coordinates, i = 0, n = polygons.length; i < n; ++i) {
+        for (var rings = polygons[i], j = 0, m = rings.length; j < m; ++j) {
+          var ring = rings[j];
+          quantizeLine(ring);
+          while (ring.length < 4) ring.push(ring[0]); // must have 4+
+        }
+      }
+    }
+  };
+
+  function quantizePoint(coordinates) {
+    coordinates[0] = Math.round((coordinates[0] - x0) * kx);
+    coordinates[1] = Math.round((coordinates[1] - y0) * ky);
+  }
+
+  function quantizeLine(coordinates) {
+    var i = 0,
+        j = 1,
+        n = coordinates.length,
+        pi = coordinates[0],
+        pj,
+        px = pi[0] = Math.round((pi[0] - x0) * kx),
+        py = pi[1] = Math.round((pi[1] - y0) * ky),
+        x,
+        y;
+
+    while (++i < n) {
+      pi = coordinates[i];
+      x = Math.round((pi[0] - x0) * kx);
+      y = Math.round((pi[1] - y0) * ky);
+      if (x !== px || y !== py) { // skip coincident points
+        pj = coordinates[j++];
+        pj[0] = px = x;
+        pj[1] = py = y;
+      }
+    }
+
+    coordinates.length = j;
+  }
+
+  for (var key in objects) {
+    quantizeGeometry(objects[key]);
+  }
+
+  return {
+    scale: [1 / kx, 1 / ky],
+    translate: [x0, y0]
+  };
+};
+
+},{}],36:[function(require,module,exports){
+var topojson = require("../../"),
     systems = require("./coordinate-systems");
 
 module.exports = function(topology, options) {
-  var mininumArea = 0,
+  var minimumArea = 0,
       retainProportion,
       verbose = false,
-      heap = minHeap(),
-      maxArea = 0,
       system = null,
-      triangle,
-      N = 0,
+      N = topology.arcs.reduce(function(p, v) { return p + v.length; }, 0),
       M = 0;
 
   if (options)
-    "minimum-area" in options && (mininumArea = +options["minimum-area"]),
+    "minimum-area" in options && (minimumArea = +options["minimum-area"]),
     "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
     "retain-proportion" in options && (retainProportion = +options["retain-proportion"]),
     "verbose" in options && (verbose = !!options["verbose"]);
 
-  topology.arcs.forEach(function(arc) {
-    var triangles = [];
-
-    arc.forEach(transformAbsolute(topology.transform));
-
-    for (var i = 1, n = arc.length - 1; i < n; ++i) {
-      triangle = arc.slice(i - 1, i + 2);
-      triangle[1].area = system.triangleArea(triangle);
-      triangles.push(triangle);
-      heap.push(triangle);
-    }
-
-    // Always keep the arc endpoints!
-    arc[0].area = arc[n].area = Infinity;
-
-    N += n + 1;
-
-    for (var i = 0, n = triangles.length; i < n; ++i) {
-      triangle = triangles[i];
-      triangle.previous = triangles[i - 1];
-      triangle.next = triangles[i + 1];
-    }
-  });
-
-  while (triangle = heap.pop()) {
-    var previous = triangle.previous,
-        next = triangle.next;
-
-    // If the area of the current point is less than that of the previous point
-    // to be eliminated, use the latter's area instead. This ensures that the
-    // current point cannot be eliminated without eliminating previously-
-    // eliminated points.
-    if (triangle[1].area < maxArea) triangle[1].area = maxArea;
-    else maxArea = triangle[1].area;
-
-    if (previous) {
-      previous.next = next;
-      previous[2] = triangle[2];
-      update(previous);
-    }
-
-    if (next) {
-      next.previous = previous;
-      next[0] = triangle[0];
-      update(next);
-    }
-  }
+  topojson.presimplify(topology, system.triangleArea);
 
   if (retainProportion) {
     var areas = [];
     topology.arcs.forEach(function(arc) {
       arc.forEach(function(point) {
-        areas.push(point.area);
+        areas.push(point[2]);
       });
     });
-    mininumArea = areas.sort(function(a, b) { return b - a; })[Math.ceil((N - 1) * retainProportion)];
-    if (verbose) console.warn("simplification: effective minimum area " + mininumArea.toPrecision(3));
+    options["minimum-area"] = minimumArea = N ? areas.sort(function(a, b) { return b - a; })[Math.ceil((N - 1) * retainProportion)] : 0;
+    if (verbose) console.warn("simplification: effective minimum area " + minimumArea.toPrecision(3));
   }
 
-  topology.arcs = topology.arcs.map(function(arc) {
-    return arc.filter(function(point) {
-      return point.area >= mininumArea;
-    });
+  topology.arcs.forEach(topology.transform ? function(arc) {
+    var dx = 0,
+        dy = 0, // accumulate removed points
+        i = -1,
+        j = -1,
+        n = arc.length,
+        source,
+        target;
+
+    while (++i < n) {
+      source = arc[i];
+      if (source[2] >= minimumArea) {
+        target = arc[++j];
+        target[0] = source[0] + dx;
+        target[1] = source[1] + dy;
+        dx = dy = 0;
+      } else {
+        dx += source[0];
+        dy += source[1];
+      }
+    }
+
+    arc.length = ++j;
+  } : function(arc) {
+    var i = -1,
+        j = -1,
+        n = arc.length,
+        point;
+
+    while (++i < n) {
+      point = arc[i];
+      if (point[2] >= minimumArea) {
+        arc[++j] = point;
+      }
+    }
+
+    arc.length = ++j;
   });
 
+  // Remove computed area (z) for each point.
+  // This is done as a separate pass because some coordinates may be shared
+  // between arcs (such as the last point and first point of a cut line).
   topology.arcs.forEach(function(arc) {
-    arc.forEach(transformRelative(topology.transform));
+    var i = -1, n = arc.length;
+    while (++i < n) arc[i].length = 2;
     M += arc.length;
   });
-
-  function update(triangle) {
-    heap.remove(triangle);
-    triangle[1].area = system.triangleArea(triangle);
-    heap.push(triangle);
-  }
 
   if (verbose) console.warn("simplification: retained " + M + " / " + N + " points (" + Math.round((M / N) * 100) + "%)");
 
   return topology;
 };
 
-function transformAbsolute(transform) {
-  var x0 = 0,
-      y0 = 0,
-      kx = transform.scale[0],
-      ky = transform.scale[1],
-      dx = transform.translate[0],
-      dy = transform.translate[1];
-  return function(point) {
-    point[0] = (x0 += point[0]) * kx + dx;
-    point[1] = (y0 += point[1]) * ky + dy;
-  };
-}
-
-function transformRelative(transform) {
-  var x0 = 0,
-      y0 = 0,
-      kx = transform.scale[0],
-      ky = transform.scale[1],
-      dx = transform.translate[0],
-      dy = transform.translate[1];
-  return function(point) {
-    var x1 = (point[0] - dx) / kx | 0,
-        y1 = (point[1] - dy) / ky | 0;
-    point[0] = x1 - x0;
-    point[1] = y1 - y0;
-    x0 = x1;
-    y0 = y1;
-  };
-}
-
-},{"./coordinate-systems":22,"./min-heap":28}],31:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":29}],37:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -7530,7 +7136,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],32:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -7580,11 +7186,18 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":34}],33:[function(require,module,exports){
+},{"./type":49}],39:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
-    hashtable = require("./hashtable"),
-    systems = require("./coordinate-systems");
+    systems = require("./coordinate-systems"),
+    topologize = require("./topology/index"),
+    delta = require("./delta"),
+    geomify = require("./geomify"),
+    prefilter = require("./prefilter"),
+    quantize = require("./quantize"),
+    bounds = require("./bounds"),
+    computeId = require("./compute-id"),
+    transformProperties = require("./transform-properties");
 
 var ε = 1e-6;
 
@@ -7592,54 +7205,36 @@ module.exports = function(objects, options) {
   var Q = 1e4, // precision of quantization
       id = function(d) { return d.id; }, // function to compute object id
       propertyTransform = function() {}, // function to transform properties
+      transform,
+      minimumArea = 0,
       stitchPoles = true,
       verbose = false,
-      x0, y0, x1, y1,
-      kx, ky,
-      εmax = 0,
-      coincidences,
-      system = null,
-      arcs = [],
-      arcsByPoint,
-      pointsByPoint;
+      system = null;
 
   if (options)
     "verbose" in options && (verbose = !!options["verbose"]),
     "stitch-poles" in options && (stitchPoles = !!options["stitch-poles"]),
     "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
+    "minimum-area" in options && (minimumArea = +options["minimum-area"]),
     "quantization" in options && (Q = +options["quantization"]),
     "id" in options && (id = options["id"]),
     "property-transform" in options && (propertyTransform = options["property-transform"]);
 
-  coincidences = hashtable(Q * 10);
-  arcsByPoint = hashtable(Q * 10);
-  pointsByPoint = hashtable(Q * 10);
+  // Compute the new feature id and transform properties.
+  computeId(objects, id);
+  transformProperties(objects, propertyTransform);
 
-  function each(callback) {
-    var t = type(callback), o = {};
-    for (var k in objects) o[k] = t.object(objects[k]) || {};
-    return o;
-  }
+  // Convert to geometry objects.
+  geomify(objects);
 
-  // Compute bounding box.
-  function bound() {
-    x1 = y1 = -(x0 = y0 = Infinity);
-    each({
-      point: function(point) {
-        var x = point[0],
-            y = point[1];
-        if (x < x0) x0 = x;
-        if (x > x1) x1 = x;
-        if (y < y0) y0 = y;
-        if (y > y1) y1 = y;
-      }
-    });
-  }
-
-  bound();
+  // Compute initial bounding box.
+  var bbox = bounds(objects);
 
   // For automatic coordinate system determination, consider the bounding box.
-  var oversize = x0 < -180 - ε || x1 > 180 + ε || y0 < -90 - ε || y1 > 90 + ε;
+  var oversize = bbox[0] < -180 - ε
+      || bbox[1] < -90 - ε
+      || bbox[2] > 180 + ε
+      || bbox[3] > 90 + ε;
   if (!system) {
     system = systems[oversize ? "cartesian" : "spherical"];
     if (options) options["coordinate-system"] = system.name;
@@ -7647,282 +7242,650 @@ module.exports = function(objects, options) {
 
   if (system === systems.spherical) {
     if (oversize) throw new Error("spherical coordinates outside of [±180°, ±90°]");
-    if (stitchPoles) stitch(objects), bound();
+    if (stitchPoles) stitch(objects), bbox = bounds(objects);
 
     // When near the spherical coordinate limits, clamp to nice round values.
     // This avoids quantized coordinates that are slightly outside the limits.
-    if (x0 < -180 + ε) x0 = -180;
-    if (x1 > 180 - ε) x1 = 180;
-    if (y0 < -90 + ε) y0 = -90;
-    if (y1 > 90 - ε) y1 = 90;
-  }
-
-  if (!isFinite(x0)) x0 = 0;
-  if (!isFinite(x1)) x1 = 0;
-  if (!isFinite(y0)) y0 = 0;
-  if (!isFinite(y1)) y1 = 0;
-
-  // Compute quantization scaling factors.
-  if (Q) {
-    kx = x1 - x0 ? (Q - 1) / (x1 - x0) : 1;
-    ky = y1 - y0 ? (Q - 1) / (y1 - y0) : 1;
-  } else {
-    console.warn("quantization: disabled; assuming inputs already quantized");
-    Q = x1 + 1;
-    kx = ky = 1;
-    x0 = y0 = 0;
+    if (bbox[0] < -180 + ε) bbox[0] = -180;
+    if (bbox[1] < -90 + ε) bbox[1] = -90;
+    if (bbox[2] > 180 - ε) bbox[2] = 180;
+    if (bbox[3] > 90 - ε) bbox[3] = 90;
   }
 
   if (verbose) {
-    var qx0 = Math.round((x0 - x0) * kx) * (1 / kx) + x0,
-        qx1 = Math.round((x1 - x0) * kx) * (1 / kx) + x0,
-        qy0 = Math.round((y0 - y0) * ky) * (1 / ky) + y0,
-        qy1 = Math.round((y1 - y0) * ky) * (1 / ky) + y0;
-    console.warn("quantization: bounds " + [qx0, qy0, qx1, qy1].join(" ") + " (" + system.name + ")");
+    console.warn("bounds: " + bbox.join(" ") + " (" + system.name + ")");
   }
 
-  // Quantize coordinates.
-  each({
-    point: function(point) {
-      var x1 = point[0],
-          y1 = point[1],
-          x = Math.round((x1 - x0) * kx),
-          y = Math.round((y1 - y0) * ky),
-          ε = system.distance(x1, y1, x / kx + x0, y / ky + y0);
-      if (ε > εmax) εmax = ε;
-      point[0] = x;
-      point[1] = y;
-    }
+  // Filter rings smaller than the minimum area.
+  // This can produce a simpler topology.
+  if (minimumArea) prefilter(objects, function(ring) {
+    return system.absoluteArea(system.ringArea(ring)) >= minimumArea;
   });
 
-  if (verbose) console.warn("quantization: maximum error "  + system.formatDistance(εmax));
+  // Compute the quantization transform.
+  if (Q) {
+    transform = quantize(objects, bbox, Q);
+    if (verbose) {
+      console.warn("quantization: " + transform.scale.map(function(degrees) { return system.formatDistance(degrees / 180 * Math.PI); }).join(" "));
+    }
+  }
 
-  // Compute the line strings that go through each unique point.
-  // If the line string goes through the same point more than once,
-  // only record that point once.
-  each({
-    line: function(line) {
-      var i = -1,
-          n = line.length,
-          lines;
-      while (++i < n) {
-        lines = coincidences.get(line[i]);
-        if (lines.indexOf(line) < 0) lines.push(line);
+  // Compute the topology.
+  var topology = topologize(objects);
+  topology.bbox = bbox;
+
+  if (verbose) {
+    console.warn("topology: " + topology.arcs.length + " arcs, " + topology.arcs.reduce(function(p, v) { return p + v.length; }, 0) + " points");
+  }
+
+  // Convert to delta-encoding.
+  if (Q) topology.transform = transform, delta(topology);
+
+  return topology;
+};
+
+},{"./bounds":25,"./compute-id":28,"./coordinate-systems":29,"./delta":30,"./geomify":32,"./prefilter":33,"./quantize":35,"./stitch-poles":38,"./topology/index":44,"./transform-properties":48,"./type":49}],40:[function(require,module,exports){
+var join = require("./join");
+
+// Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
+// point sequences are identified. The topology can then be subsequently deduped
+// to remove exact duplicate arcs.
+module.exports = function(topology) {
+  var junctionByPoint = join(topology),
+      coordinates = topology.coordinates,
+      lines = topology.lines,
+      rings = topology.rings;
+
+  for (var i = 0, n = lines.length; i < n; ++i) {
+    var line = lines[i],
+        lineMid = line[0],
+        lineEnd = line[1];
+    while (++lineMid < lineEnd) {
+      if (junctionByPoint.get(coordinates[lineMid])) {
+        var next = {0: lineMid, 1: line[1]};
+        line[1] = lineMid;
+        line = line.next = next;
       }
     }
-  });
+  }
 
-  // Convert features to geometries, and stitch together arcs.
-  objects = each({
-    Feature: function(feature) {
-      var geometry = feature.geometry;
-      if (feature.geometry == null) geometry = {};
-      if ("id" in feature) geometry.id = feature.id;
-      if ("properties" in feature) geometry.properties = feature.properties;
-      return this.geometry(geometry);
-    },
-
-    FeatureCollection: function(collection) {
-      collection.type = "GeometryCollection";
-      collection.geometries = collection.features.map(this.Feature, this);
-      delete collection.features;
-      return collection;
-    },
-
-    GeometryCollection: function(collection) {
-      collection.geometries = collection.geometries.map(this.geometry, this);
-    },
-
-    MultiPolygon: function(multiPolygon) {
-      multiPolygon.arcs = multiPolygon.coordinates.map(polygon);
-    },
-
-    Polygon: function(polygon) {
-      polygon.arcs = polygon.coordinates.map(lineClosed);
-    },
-
-    MultiLineString: function(multiLineString) {
-      multiLineString.arcs = multiLineString.coordinates.map(lineOpen);
-    },
-
-    LineString: function(lineString) {
-      lineString.arcs = lineOpen(lineString.coordinates);
-    },
-
-    geometry: function(geometry) {
-      if (geometry == null) geometry = {};
-      else this.defaults.geometry.call(this, geometry);
-
-      geometry.id = id(geometry);
-      if (geometry.id == null) delete geometry.id;
-
-      if (properties0 = geometry.properties) {
-        var properties0, properties1 = {};
-        delete geometry.properties;
-        for (var key0 in properties0) {
-          if (propertyTransform(properties1, key0, properties0[key0])) {
-            geometry.properties = properties1;
-          }
+  for (var i = 0, n = rings.length; i < n; ++i) {
+    var ring = rings[i],
+        ringStart = ring[0],
+        ringMid = ringStart,
+        ringEnd = ring[1],
+        ringFixed = junctionByPoint.get(coordinates[ringStart]);
+    while (++ringMid < ringEnd) {
+      if (junctionByPoint.get(coordinates[ringMid])) {
+        if (ringFixed) {
+          var next = {0: ringMid, 1: ring[1]};
+          ring[1] = ringMid;
+          ring = ring.next = next;
+        } else { // For the first junction, we can rotate rather than cut.
+          rotateArray(coordinates, ringStart, ringEnd, ringEnd - ringMid);
+          coordinates[ringEnd] = coordinates[ringStart];
+          ringFixed = true;
+          ringMid = ringStart; // restart; we may have skipped junctions
         }
       }
-
-      if (geometry.arcs) delete geometry.coordinates;
-      return geometry;
     }
-  });
-
-  coincidences = arcsByPoint = pointsByPoint = null;
-
-  function polygon(polygon) {
-    return polygon.map(lineClosed);
   }
 
-  function lineClosed(points) {
-    return line(points, false);
+  return topology;
+};
+
+function rotateArray(array, start, end, offset) {
+  reverse(array, start, end);
+  reverse(array, start, start + offset);
+  reverse(array, start + offset, end);
+}
+
+function reverse(array, start, end) {
+  for (var mid = start + ((end-- - start) >> 1), t; start < mid; ++start, --end) {
+    t = array[start], array[start] = array[end], array[end] = t;
+  }
+}
+
+},{"./join":45}],41:[function(require,module,exports){
+var join = require("./join"),
+    hashtable = require("./hashtable"),
+    hashPoint = require("./point-hash"),
+    equalPoint = require("./point-equal");
+
+// Given a cut topology, combines duplicate arcs.
+module.exports = function(topology) {
+  var coordinates = topology.coordinates,
+      lines = topology.lines,
+      rings = topology.rings,
+      arcCount = lines.length + rings.length;
+
+  delete topology.lines;
+  delete topology.rings;
+
+  // Count the number of (non-unique) arcs to initialize the hashtable safely.
+  for (var i = 0, n = lines.length; i < n; ++i) {
+    var line = lines[i]; while (line = line.next) ++arcCount;
+  }
+  for (var i = 0, n = rings.length; i < n; ++i) {
+    var ring = rings[i]; while (ring = ring.next) ++arcCount;
   }
 
-  function lineOpen(points) {
-    return line(points, true);
+  var arcsByEnd = hashtable(arcCount * 2, hashPoint, equalPoint),
+      arcs = topology.arcs = [];
+
+  for (var i = 0, n = lines.length; i < n; ++i) {
+    var line = lines[i];
+    do {
+      dedupLine(line);
+    } while (line = line.next);
   }
 
-  function line(points, open) {
-    var lineArcs = [],
-        n = points.length,
-        a = [],
-        k = 0,
-        p;
-
-    if (!open) points.pop(), --n;
-
-    // For closed lines, rotate to find a suitable shared starting point.
-    for (; k < n; ++k) {
-      var t = coincidences.peek(points[k]);
-      if (open) break;
-      if (p && !linesEqual(p, t)) {
-        var tInP = t.every(function(line) { return p.indexOf(line) >= 0; }),
-            pInT = p.every(function(line) { return t.indexOf(line) >= 0; });
-        if (tInP && !pInT) --k;
-        break;
-      }
-      p = t;
+  for (var i = 0, n = rings.length; i < n; ++i) {
+    var ring = rings[i];
+    if (ring.next) { // arc is no longer closed
+      do {
+        dedupLine(ring);
+      } while (ring = ring.next);
+    } else {
+      dedupRing(ring);
     }
+  }
 
-    // If no shared starting point is found for closed lines, rotate to minimum.
-    if (k === n && p.length > 1) {
-      var point0 = points[0];
-      for (k = 0, i = 1; i < n; ++i) {
-        var point = points[i];
-        if (pointCompare(point0, point) > 0) point0 = point, k = i;
-      }
-    }
+  function dedupLine(arc) {
+    var startPoint,
+        endPoint,
+        startArcs,
+        endArcs;
 
-    for (var i = 0, m = open ? n : n + 1; i < m; ++i) {
-      var point = points[(i + k) % n],
-          p = coincidences.peek(point);
-      if (!linesEqual(p, t)) {
-        var tInP = t.every(function(line) { return p.indexOf(line) >= 0; }),
-            pInT = p.every(function(line) { return t.indexOf(line) >= 0; });
-        if (tInP) a.push(point);
-        arc(a);
-        if (!tInP && !pInT) arc([a[a.length - 1], point]);
-        if (pInT) a = [a[a.length - 1]];
-        else a = [];
-      }
-      if (!a.length || pointCompare(a[a.length - 1], point)) a.push(point); // skip duplicate points
-      t = p;
-    }
-
-    arc(a, true);
-
-    function arc(a, last) {
-      var n = a.length;
-
-      if (last && !lineArcs.length && n === 1) {
-        var point = a[0],
-            index = pointsByPoint.get(point);
-        if (index.length) {
-          lineArcs.push(index[0]);
-        } else {
-          lineArcs.push(index[0] = arcs.length);
-          arcs.push(a);
+    // Does this arc match an existing arc in order?
+    if (startArcs = arcsByEnd.get(startPoint = coordinates[arc[0]])) {
+      for (var i = 0, n = startArcs.length; i < n; ++i) {
+        var startArc = startArcs[i];
+        if (equalLine(startArc, arc)) {
+          arc[0] = startArc[0];
+          arc[1] = startArc[1];
+          return;
         }
-      } else if (n > 1) {
-        var a0 = a[0],
-            a1 = a[n - 1],
-            point = pointCompare(a0, a1) < 0 ? a0 : a1,
-            pointArcs = arcsByPoint.get(point);
-        if (pointArcs.some(matchForward)) return;
-        if (pointArcs.some(matchBackward)) return;
-        pointArcs.push(a);
-        lineArcs.push(a.index = arcs.length);
-        arcs.push(a);
-      }
-
-      function matchForward(b) {
-        var i = -1;
-        if (b.length !== n) return false;
-        while (++i < n) if (pointCompare(a[i], b[i])) return false;
-        lineArcs.push(b.index);
-        return true;
-      }
-
-      function matchBackward(b) {
-        var i = -1;
-        if (b.length !== n) return false;
-        while (++i < n) if (pointCompare(a[i], b[n - i - 1])) return false;
-        lineArcs.push(~b.index);
-        return true;
       }
     }
 
-    return lineArcs;
+    // Does this arc match an existing arc in reverse order?
+    if (endArcs = arcsByEnd.get(endPoint = coordinates[arc[1]])) {
+      for (var i = 0, n = endArcs.length; i < n; ++i) {
+        var endArc = endArcs[i];
+        if (reverseEqualLine(endArc, arc)) {
+          arc[1] = endArc[0];
+          arc[0] = endArc[1];
+          return;
+        }
+      }
+    }
+
+    if (startArcs) startArcs.push(arc); else arcsByEnd.set(startPoint, [arc]);
+    if (endArcs) endArcs.push(arc); else arcsByEnd.set(endPoint, [arc]);
+    arcs.push(arc);
+  }
+
+  function dedupRing(arc) {
+    var endPoint,
+        endArcs;
+
+    // Does this arc match an existing line in order, or reverse order?
+    // Rings are closed, so their start point and end point is the same.
+    if (endArcs = arcsByEnd.get(endPoint = coordinates[arc[0]])) {
+      for (var i = 0, n = endArcs.length; i < n; ++i) {
+        var endArc = endArcs[i];
+        if (equalRing(endArc, arc)) {
+          arc[0] = endArc[0];
+          arc[1] = endArc[1];
+          return;
+        }
+        if (reverseEqualRing(endArc, arc)) {
+          arc[0] = endArc[1];
+          arc[1] = endArc[0];
+          return;
+        }
+      }
+    }
+
+    // Otherwise, does this arc match an existing ring in order, or reverse order?
+    if (endArcs = arcsByEnd.get(endPoint = coordinates[arc[0] + findMinimumOffset(arc)])) {
+      for (var i = 0, n = endArcs.length; i < n; ++i) {
+        var endArc = endArcs[i];
+        if (equalRing(endArc, arc)) {
+          arc[0] = endArc[0];
+          arc[1] = endArc[1];
+          return;
+        }
+        if (reverseEqualRing(endArc, arc)) {
+          arc[0] = endArc[1];
+          arc[1] = endArc[0];
+          return;
+        }
+      }
+    }
+
+    if (endArcs) endArcs.push(arc); else arcsByEnd.set(endPoint, [arc]);
+    arcs.push(arc);
+  }
+
+  function equalLine(arcA, arcB) {
+    var ia = arcA[0], ib = arcB[0],
+        ja = arcA[1], jb = arcB[1];
+    if (ia - ja !== ib - jb) return false;
+    for (; ia <= ja; ++ia, ++ib) if (!equalPoint(coordinates[ia], coordinates[ib])) return false;
+    return true;
+  }
+
+  function reverseEqualLine(arcA, arcB) {
+    var ia = arcA[0], ib = arcB[0],
+        ja = arcA[1], jb = arcB[1];
+    if (ia - ja !== ib - jb) return false;
+    for (; ia <= ja; ++ia, --jb) if (!equalPoint(coordinates[ia], coordinates[jb])) return false;
+    return true;
+  }
+
+  function equalRing(arcA, arcB) {
+    var ia = arcA[0], ib = arcB[0],
+        ja = arcA[1], jb = arcB[1],
+        n = ja - ia;
+    if (n !== jb - ib) return false;
+    var ka = findMinimumOffset(arcA),
+        kb = findMinimumOffset(arcB);
+    for (var i = 0; i < n; ++i) {
+      if (!equalPoint(coordinates[ia + (i + ka) % n], coordinates[ib + (i + kb) % n])) return false;
+    }
+    return true;
+  }
+
+  function reverseEqualRing(arcA, arcB) {
+    var ia = arcA[0], ib = arcB[0],
+        ja = arcA[1], jb = arcB[1],
+        n = ja - ia;
+    if (n !== jb - ib) return false;
+    var ka = findMinimumOffset(arcA),
+        kb = n - findMinimumOffset(arcB);
+    for (var i = 0; i < n; ++i) {
+      if (!equalPoint(coordinates[ia + (i + ka) % n], coordinates[jb - (i + kb) % n])) return false;
+    }
+    return true;
+  }
+
+  // Rings are rotated to a consistent, but arbitrary, start point.
+  // This is necessary to detect when a ring and a rotated copy are dupes.
+  function findMinimumOffset(arc) {
+    var start = arc[0],
+        end = arc[1],
+        mid = start,
+        minimum = mid,
+        minimumPoint = coordinates[mid];
+    while (++mid < end) {
+      var point = coordinates[mid];
+      if (point[0] < minimumPoint[0] || point[0] === minimumPoint[0] && point[1] < minimumPoint[1]) {
+        minimum = mid;
+        minimumPoint = point;
+      }
+    }
+    return minimum - start;
+  }
+
+  return topology;
+};
+
+},{"./hashtable":43,"./join":45,"./point-equal":46,"./point-hash":47}],42:[function(require,module,exports){
+// Extracts the lines and rings from the specified hash of geometry objects.
+//
+// Returns an object with three properties:
+//
+// * coordinates - shared buffer of [x, y] coordinates
+// * lines - lines extracted from the hash, of the form [start, end]
+// * rings - rings extracted from the hash, of the form [start, end]
+//
+// For each ring or line, start and end represent inclusive indexes into the
+// coordinates buffer. For rings (and closed lines), coordinates[start] equals
+// coordinates[end].
+//
+// For each line or polygon geometry in the input hash, including nested
+// geometries as in geometry collections, the `coordinates` array is replaced
+// with an equivalent `arcs` array that, for each line (for line string
+// geometries) or ring (for polygon geometries), points to one of the above
+// lines or rings.
+module.exports = function(objects) {
+  var index = -1,
+      lines = [],
+      rings = [],
+      coordinates = [];
+
+  function extractGeometry(geometry) {
+    if (geometry && extractGeometryType.hasOwnProperty(geometry.type)) extractGeometryType[geometry.type](geometry);
+  }
+
+  var extractGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(extractGeometry); },
+    LineString: function(o) { o.arcs = extractLine(o.coordinates); delete o.coordinates; },
+    MultiLineString: function(o) { o.arcs = o.coordinates.map(extractLine); delete o.coordinates; },
+    Polygon: function(o) { o.arcs = o.coordinates.map(extractRing); delete o.coordinates; },
+    MultiPolygon: function(o) { o.arcs = o.coordinates.map(extractMultiRing); delete o.coordinates; }
+  };
+
+  function extractLine(line) {
+    for (var i = 0, n = line.length; i < n; ++i) coordinates[++index] = line[i];
+    var arc = {0: index - n + 1, 1: index};
+    lines.push(arc);
+    return arc;
+  }
+
+  function extractRing(ring) {
+    for (var i = 0, n = ring.length; i < n; ++i) coordinates[++index] = ring[i];
+    var arc = {0: index - n + 1, 1: index};
+    rings.push(arc);
+    return arc;
+  }
+
+  function extractMultiRing(rings) {
+    return rings.map(extractRing);
+  }
+
+  for (var key in objects) {
+    extractGeometry(objects[key]);
   }
 
   return {
     type: "Topology",
-    bbox: [x0, y0, x1, y1],
-    transform: {
-      scale: [1 / kx, 1 / ky],
-      translate: [x0, y0]
-    },
-    objects: objects,
-    arcs: arcs.map(function(arc) {
-      var i = 0,
-          n = arc.length,
-          point = arc[0],
-          x1 = point[0], x2, dx,
-          y1 = point[1], y2, dy,
-          points = [[x1, y1]];
-      while (++i < n) {
-        point = arc[i];
-        x2 = point[0];
-        y2 = point[1];
-        dx = x2 - x1;
-        dy = y2 - y1;
-        if (dx || dy) {
-          points.push([dx, dy]);
-          x1 = x2, y1 = y2;
-        }
-      }
-      return points;
-    })
+    coordinates: coordinates,
+    lines: lines,
+    rings: rings,
+    objects: objects
   };
 };
 
-function linesEqual(a, b) {
-  var n = a.length, i = -1;
-  if (b.length !== n) return false;
-  while (++i < n) if (a[i] !== b[i]) return false;
-  return true;
+},{}],43:[function(require,module,exports){
+module.exports = function(size, hash, equal) {
+  var hashtable = new Array(size = 1 << Math.ceil(Math.log(size) / Math.LN2)),
+      mask = size - 1,
+      free = size;
+
+  function set(key, value) {
+    var index = hash(key) & mask,
+        match = hashtable[index],
+        cycle = !index;
+    while (match != null) {
+      if (equal(match.key, key)) return match.value = value;
+      match = hashtable[index = (index + 1) & mask];
+      if (!index && cycle++) throw new Error("full hashtable");
+    }
+    hashtable[index] = {key: key, value: value};
+    --free;
+    return value;
+  }
+
+  function get(key, missingValue) {
+    var index = hash(key) & mask,
+        match = hashtable[index],
+        cycle = !index;
+    while (match != null) {
+      if (equal(match.key, key)) return match.value;
+      match = hashtable[index = (index + 1) & mask];
+      if (!index && cycle++) break;
+    }
+    return missingValue;
+  }
+
+  function remove(key) {
+    var index = hash(key) & mask,
+        match = hashtable[index],
+        cycle = !index;
+    while (match != null) {
+      if (equal(match.key, key)) {
+        hashtable[index] = null;
+        match = hashtable[index = (index + 1) & mask];
+        if (match != null) { // delete and re-add
+          ++free;
+          hashtable[index] = null;
+          set(match.key, match.value);
+        }
+        ++free;
+        return true;
+      }
+      match = hashtable[index = (index + 1) & mask];
+      if (!index && cycle++) break;
+    }
+    return false;
+  }
+
+  function keys() {
+    var keys = [];
+    for (var i = 0, n = hashtable.length; i < n; ++i) {
+      var match = hashtable[i];
+      if (match != null) keys.push(match.key);
+    }
+    return keys;
+  }
+
+  return {
+    set: set,
+    get: get,
+    remove: remove,
+    keys: keys
+  };
+};
+
+},{}],44:[function(require,module,exports){
+var hashtable = require("./hashtable"),
+    extract = require("./extract"),
+    cut = require("./cut"),
+    dedup = require("./dedup");
+
+// Constructs the TopoJSON Topology for the specified hash of geometries.
+// Each object in the specified hash must be a GeoJSON object,
+// meaning FeatureCollection, a Feature or a geometry object.
+module.exports = function(objects) {
+  var topology = dedup(cut(extract(objects))),
+      coordinates = topology.coordinates,
+      indexByArc = hashtable(topology.arcs.length, hashArc, equalArc);
+
+  objects = topology.objects; // for garbage collection
+
+  topology.arcs = topology.arcs.map(function(arc, i) {
+    indexByArc.set(arc, i);
+    return coordinates.slice(arc[0], arc[1] + 1);
+  });
+
+  delete topology.coordinates;
+  coordinates = null;
+
+  function indexGeometry(geometry) {
+    if (geometry && indexGeometryType.hasOwnProperty(geometry.type)) indexGeometryType[geometry.type](geometry);
+  }
+
+  var indexGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(indexGeometry); },
+    LineString: function(o) { o.arcs = indexArcs(o.arcs); },
+    MultiLineString: function(o) { o.arcs = o.arcs.map(indexArcs); },
+    Polygon: function(o) { o.arcs = o.arcs.map(indexArcs); },
+    MultiPolygon: function(o) { o.arcs = o.arcs.map(indexMultiArcs); }
+  };
+
+  function indexArcs(arc) {
+    var indexes = [];
+    do {
+      var index = indexByArc.get(arc);
+      indexes.push(arc[0] < arc[1] ? index : ~index);
+    } while (arc = arc.next);
+    return indexes;
+  }
+
+  function indexMultiArcs(arcs) {
+    return arcs.map(indexArcs);
+  }
+
+  for (var key in objects) {
+    indexGeometry(objects[key]);
+  }
+
+  return topology;
+};
+
+function hashArc(arc) {
+  var i = arc[0], j = arc[1], t;
+  if (j < i) t = i, i = j, j = t;
+  return i + 31 * j;
 }
 
-function pointCompare(a, b) {
-  return a[0] - b[0] || a[1] - b[1];
+function equalArc(arcA, arcB) {
+  var ia = arcA[0], ja = arcA[1],
+      ib = arcB[0], jb = arcB[1], t;
+  if (ja < ia) t = ia, ia = ja, ja = t;
+  if (jb < ib) t = ib, ib = jb, jb = t;
+  return ia === ib && ja === jb;
 }
 
-function noop() {}
+},{"./cut":40,"./dedup":41,"./extract":42,"./hashtable":43}],45:[function(require,module,exports){
+var hashtable = require("./hashtable"),
+    hashPoint = require("./point-hash"),
+    equalPoint = require("./point-equal");
 
-},{"./coordinate-systems":22,"./hashtable":25,"./stitch-poles":32,"./type":34}],34:[function(require,module,exports){
+// Given an extracted (pre-)topology, identifies all of the junctions. These are
+// the points at which arcs (lines or rings) will need to be cut so that each
+// arc is represented uniquely.
+//
+// A junction is a point where at least one arc deviates from another arc going
+// through the same point. For example, consider the point B. If there is a arc
+// through ABC and another arc through CBA, then B is not a junction because in
+// both cases the adjacent point pairs are {A,C}. However, if there is an
+// additional arc ABD, then {A,D} != {A,C}, and thus B becomes a junction.
+//
+// For a closed ring ABCA, the first point A’s adjacent points are the second
+// and last point {B,C}. For a line, the first and last point are always
+// considered junctions, even if the line is closed; this ensures that a closed
+// line is never rotated.
+module.exports = function(topology) {
+  var coordinates = topology.coordinates,
+      lines = topology.lines,
+      rings = topology.rings,
+      visitedByPoint,
+      neighborsByPoint = hashtable(coordinates.length, hashPoint, equalPoint),
+      junctionByPoint = hashtable(coordinates.length, hashPoint, equalPoint);
+
+  for (var i = 0, n = lines.length; i < n; ++i) {
+    var line = lines[i],
+        lineStart = line[0],
+        lineEnd = line[1],
+        previousPoint = null,
+        currentPoint = coordinates[lineStart],
+        nextPoint = coordinates[++lineStart];
+    visitedByPoint = hashtable(lineEnd - lineStart, hashPoint, equalPoint);
+    junctionByPoint.set(currentPoint, true); // start
+    while (++lineStart <= lineEnd) {
+      sequence(previousPoint = currentPoint, currentPoint = nextPoint, nextPoint = coordinates[lineStart]);
+    }
+    junctionByPoint.set(nextPoint, true); // end
+  }
+
+  for (var i = 0, n = rings.length; i < n; ++i) {
+    var ring = rings[i],
+        ringStart = ring[0] + 1,
+        ringEnd = ring[1],
+        previousPoint = coordinates[ringEnd - 1],
+        currentPoint = coordinates[ringStart - 1],
+        nextPoint = coordinates[ringStart];
+    visitedByPoint = hashtable(ringEnd - ringStart + 1, hashPoint, equalPoint);
+    sequence(previousPoint, currentPoint, nextPoint);
+    while (++ringStart <= ringEnd) {
+      sequence(previousPoint = currentPoint, currentPoint = nextPoint, nextPoint = coordinates[ringStart]);
+    }
+  }
+
+  function sequence(previousPoint, currentPoint, nextPoint) {
+    if (visitedByPoint.get(currentPoint)) return; // ignore self-intersection
+    visitedByPoint.set(currentPoint, true);
+    var neighbors = neighborsByPoint.get(currentPoint);
+    if (neighbors) {
+      if (!(equalPoint(neighbors[0], previousPoint)
+        && equalPoint(neighbors[1], nextPoint))
+        && !(equalPoint(neighbors[0], nextPoint)
+        && equalPoint(neighbors[1], previousPoint))) {
+        junctionByPoint.set(currentPoint, true);
+      }
+    } else {
+      neighborsByPoint.set(currentPoint, [previousPoint, nextPoint]);
+    }
+  }
+
+  return junctionByPoint;
+};
+
+},{"./hashtable":43,"./point-equal":46,"./point-hash":47}],46:[function(require,module,exports){
+module.exports = function(pointA, pointB) {
+  return pointA[0] === pointB[0] && pointA[1] === pointB[1];
+};
+
+},{}],47:[function(require,module,exports){
+// TODO if quantized, use simpler Int32 hashing?
+
+var hashBuffer = new ArrayBuffer(8),
+    hashFloats = new Float64Array(hashBuffer),
+    hashInts = new Int32Array(hashBuffer);
+
+function hashFloat(x) {
+  hashFloats[0] = x;
+  x = hashInts[1] ^ hashInts[0];
+  x ^= (x >>> 20) ^ (x >>> 12);
+  x ^= (x >>> 7) ^ (x >>> 4);
+  return x;
+}
+
+module.exports = function(point) {
+  var h = (hashFloat(point[0]) + 31 * hashFloat(point[1])) | 0;
+  return h < 0 ? ~h : h;
+};
+
+},{}],48:[function(require,module,exports){
+// Given a hash of GeoJSON objects, transforms any properties on features using
+// the specified transform function. The function is invoked for each existing
+// property on the current feature, being passed the new properties hash, the
+// property name, and the property value. The function is then expected to
+// assign a new value to the given property hash if the feature is to be
+// retained and return true. Or, to skip the property, do nothing and return
+// false. If no properties are propagated to the new properties hash, the
+// properties hash will be deleted from the current feature.
+module.exports = function(objects, propertyTransform) {
+  if (arguments.length < 2) propertyTransform = function() {};
+
+  function transformObject(object) {
+    if (object && transformObjectType.hasOwnProperty(object.type)) transformObjectType[object.type](object);
+  }
+
+  function transformFeature(feature) {
+    if (feature.properties) {
+      var properties0 = feature.properties,
+          properties1 = {},
+          empty = true;
+
+      for (var key0 in properties0) {
+        if (propertyTransform(properties1, key0, properties0[key0])) {
+          empty = false;
+        }
+      }
+
+      if (empty) delete feature.properties;
+      else feature.properties = properties1;
+    }
+  }
+
+  var transformObjectType = {
+    Feature: transformFeature,
+    FeatureCollection: function(collection) { collection.features.forEach(transformFeature); }
+  };
+
+  for (var key in objects) {
+    transformObject(objects[key]);
+  }
+
+  return objects;
+};
+
+},{}],49:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -8016,7 +7979,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],35:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -8025,7 +7988,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],36:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -8052,11 +8015,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":35,"object-keys":37}],37:[function(require,module,exports){
+},{"./has-keys":50,"object-keys":52}],52:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":40}],38:[function(require,module,exports){
+},{"./shim":55}],53:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -8080,7 +8043,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],39:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 
 /**!
  * is
@@ -8784,7 +8747,7 @@ is.string = function (value) {
 };
 
 
-},{}],40:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 (function () {
 	"use strict";
 
@@ -8830,7 +8793,7 @@ is.string = function (value) {
 }());
 
 
-},{"foreach":38,"is":39}],41:[function(require,module,exports){
+},{"foreach":53,"is":54}],56:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -8844,7 +8807,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],42:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var clone = require('clone');
     xtend = require('xtend');
     source = {
@@ -9069,7 +9032,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":58,"../source/github":59,"clone":5,"xtend":36}],43:[function(require,module,exports){
+},{"../source/gist":75,"../source/github":76,"clone":7,"xtend":51}],58:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -9115,7 +9078,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/querystring":52,"../lib/zoomextent":55,"../ui/flash":64}],44:[function(require,module,exports){
+},{"../lib/querystring":67,"../lib/zoomextent":71,"../ui/flash":81}],59:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('../lib/querystring');
 
@@ -9138,7 +9101,11 @@ module.exports = function(context) {
 
     function onunload() {
         if (context.data.get('type') === 'local' && context.data.hasFeatures()) {
-            context.storage.set('recover', context.data.all());
+            try {
+                context.storage.set('recover', context.data.all());
+            } catch(e) {
+                // QuotaStorageExceeded
+            }
         } else {
             context.storage.remove('recover');
         }
@@ -9151,7 +9118,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/querystring":52,"../lib/zoomextent":55}],45:[function(require,module,exports){
+},{"../lib/querystring":67,"../lib/zoomextent":71}],60:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9194,7 +9161,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":41}],46:[function(require,module,exports){
+},{"../config.js":56}],61:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -9261,7 +9228,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":52,"xtend":36}],47:[function(require,module,exports){
+},{"../lib/querystring":67,"xtend":51}],62:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9346,14 +9313,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":41}],48:[function(require,module,exports){
-var mobile = require('is-mobile');
-
-if (mobile() || (window.navigator && /iPad/.test(window.navigator.userAgent))) {
-    var hash = window.location.hash;
-    window.location.href = '/mobile.html' + hash;
-}
-
+},{"../config.js":56}],63:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -9366,7 +9326,6 @@ var ui = require('./ui'),
 
 var gjIO = geojsonIO(),
     gjUI = ui(gjIO).write;
-
 
 d3.select('.geojsonio').call(gjUI);
 
@@ -9386,7 +9345,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":42,"./core/loader":43,"./core/recovery":44,"./core/repo":45,"./core/router":46,"./core/user":47,"./ui":60,"./ui/map":68,"is-mobile":13,"store":16}],49:[function(require,module,exports){
+},{"./core/data":57,"./core/loader":58,"./core/recovery":59,"./core/repo":60,"./core/router":61,"./core/user":62,"./ui":77,"./ui/map":85,"store":20}],64:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -9425,7 +9384,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":52,"leaflet-hash":14}],50:[function(require,module,exports){
+},{"../lib/querystring":67,"leaflet-hash":18}],65:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -9453,13 +9412,19 @@ module.exports = function(context) {
             }
         }
 
+        function losslessNumber(x) {
+            var fl = parseFloat(x);
+            if (fl.toString() === x) return fl;
+            else return x;
+        }
+
         function saveFeature() {
             var obj = {};
             sel.selectAll('tr').each(collectRow);
             function collectRow() {
                 if (d3.select(this).selectAll('input')[0][0].value) {
                     obj[d3.select(this).selectAll('input')[0][0].value] =
-                        d3.select(this).selectAll('input')[0][1].value;
+                        losslessNumber(d3.select(this).selectAll('input')[0][1].value);
                 }
             }
             e.popup._source.feature.properties = obj;
@@ -9482,7 +9447,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],51:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 module.exports = function(elem, w, h) {
     var c = elem.appendChild(document.createElement('canvas'));
 
@@ -9503,7 +9468,7 @@ module.exports = function(elem, w, h) {
     };
 };
 
-},{}],52:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 module.exports.stringQs = function(str) {
     return str.split('&').reduce(function(obj, pair){
         var parts = pair.split('=');
@@ -9523,7 +9488,175 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],53:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
+var topojson = require('topojson'),
+    toGeoJSON = require('togeojson'),
+    csv2geojson = require('csv2geojson'),
+    osm2geojson = require('osm-and-geojson').osm2geojson;
+
+module.exports.readDrop = readDrop;
+module.exports.readAsText = readAsText;
+module.exports.readFile = readFile;
+
+function readDrop(callback) {
+    return function() {
+        var results = [];
+        var errors = [];
+        var warnings = [];
+        if (d3.event.dataTransfer && d3.event.dataTransfer &&
+           d3.event.dataTransfer.files && d3.event.dataTransfer.files.length) {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+            var remaining = d3.event.dataTransfer.files.length;
+            [].forEach.call(d3.event.dataTransfer.files, function(f) {
+                readAsText(f, function(err, text) {
+                    if (err) {
+                        errors.push(err);
+                        if (!--remaining) finish(errors, results);
+                    } else {
+                        readFile(f, text, function(err, res, war) {
+                            if (err) errors.push(err);
+                            if (res) results.push(res);
+                            if (war) results.push(war);
+                            if (!--remaining) finish(errors, results, war);
+                        });
+                    }
+                });
+            });
+        } else {
+            return callback({
+                message: 'No files were dropped'
+            });
+        }
+
+        function finish(errors, results, war) {
+            // if no conversions suceeded, return the first error
+            if (!results.length && errors.length) return callback(errors[0], null, war);
+            // otherwise combine results
+            return callback(null, {
+                type: 'FeatureCollection',
+                features: results.reduce(function(memo, r) {
+                    if (r.features) memo = memo.concat(r.features);
+                    else if (r.type === 'Feature') memo.push(r);
+                    return memo;
+                }, [])
+            }, war);
+        }
+    };
+}
+
+function readAsText(f, callback) {
+    try {
+        var reader = new FileReader();
+        reader.readAsText(f);
+        reader.onload = function(e) {
+            if (e.target && e.target.result) callback(null, e.target.result);
+            else callback({
+                message: 'Dropped file could not be loaded'
+            });
+        };
+        reader.onerror = function(e) {
+            callback({
+                message: 'Dropped file was unreadable'
+            });
+        };
+    } catch (e) {
+        callback({
+            message: 'Dropped file was unreadable'
+        });
+    }
+}
+
+function readFile(f, text, callback) {
+
+    var fileType = detectType(f);
+
+    if (!fileType) {
+        return callback({
+            message: 'Could not detect file type'
+        });
+    } else if (fileType === 'kml') {
+        var kmldom = toDom(text);
+        if (!kmldom) {
+            return callback({
+                message: 'Invalid KML file: not valid XML'
+            });
+        }
+        var warning;
+        if (kmldom.getElementsByTagName('NetworkLink').length) {
+            warning = {
+                message: 'The KML file you uploaded included NetworkLinks: some content may not display. ' +
+                  'Please export and upload KML without NetworkLinks for optimal performance'
+            };
+        }
+        callback(null, toGeoJSON.kml(kmldom), warning);
+    } else if (fileType === 'xml') {
+        var xmldom = toDom(text);
+        if (!xmldom) {
+            return callback({
+                message: 'Invalid XML file: not valid XML'
+            });
+        }
+        callback(null, osm2geojson(xmldom));
+    } else if (fileType === 'gpx') {
+        callback(null, toGeoJSON.gpx(toDom(text)));
+    } else if (fileType === 'geojson') {
+        try {
+            gj = JSON.parse(text);
+            if (gj && gj.type === 'Topology' && gj.objects) {
+                var collection = { type: 'FeatureCollection', features: [] };
+                for (var o in gj.objects) {
+                    var ft = topojson.feature(gj, gj.objects[o]);
+                    if (ft.features) collection.features = collection.features.concat(ft.features);
+                    else collection.features = collection.features.concat([ft]);
+                }
+                return callback(null, collection);
+            } else {
+                return callback(null, gj);
+            }
+        } catch(err) {
+            alert('Invalid JSON file: ' + err);
+            return;
+        }
+    } else if (fileType === 'dsv') {
+        csv2geojson.csv2geojson(text, {
+            delimiter: 'auto'
+        }, function(err, result) {
+            if (err) {
+                return callback({
+                    type: 'geocode',
+                    result: result,
+                    raw: text
+                });
+            } else {
+                return callback(null, result);
+            }
+        });
+    }
+
+
+    function toDom(x) {
+        return (new DOMParser()).parseFromString(x, 'text/xml');
+    }
+
+    function detectType(f) {
+        var filename = f.name ? f.name.toLowerCase() : '';
+        function ext(_) {
+            return filename.indexOf(_) !== -1;
+        }
+        if (f.type === 'application/vnd.google-earth.kml+xml' || ext('.kml')) {
+            return 'kml';
+        }
+        if (ext('.gpx')) return 'gpx';
+        if (ext('.geojson') || ext('.json') || ext('.topojson')) return 'geojson';
+        if (f.type === 'text/csv' || ext('.csv') || ext('.tsv') || ext('.dsv')) {
+            return 'dsv';
+        }
+        if (ext('.xml') || ext('.osm')) return 'xml';
+    }
+}
+
+},{"csv2geojson":8,"osm-and-geojson":19,"togeojson":21,"topojson":"g070js"}],69:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -9535,11 +9668,11 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],54:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
-    return function(editor) {
+    return function(editor, changeObj) {
 
         var err = geojsonhint.hint(editor.getValue());
         editor.clearGutter('error');
@@ -9557,9 +9690,14 @@ module.exports = function(callback) {
                 title: 'invalid GeoJSON',
                 message: 'invalid GeoJSON'});
         } else {
+            var zoom = changeObj.from.ch === 0 &&
+                changeObj.from.line === 0 &&
+                changeObj.origin == 'paste';
+
             var gj = JSON.parse(editor.getValue());
+
             try {
-                return callback(null, gj);
+                return callback(null, gj, zoom);
             } catch(e) {
                 return callback({
                     'class': 'icon-circle-blank',
@@ -9591,14 +9729,34 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":8}],55:[function(require,module,exports){
+},{"geojsonhint":13}],71:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],56:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
+var fs = require('fs');
+
+module.exports = function(context) {
+
+    function render(selection) {
+        var area = selection
+            .html('')
+            .append('div')
+            .attr('class', 'pad2 prose')
+            .html("<h2>Help</h2>\n\n<p>New here? <strong>geojson.io</strong> is a quick, simple tool for creating,\nviewing, and sharing maps. geojson.io is named after <a href='http://geojson.org/' target='_blank'>GeoJSON</a>,\nan open source data format, and it supports GeoJSON in all ways - but also\naccepts KML, GPX, CSV, TopoJSON, and other formats.</p>\n\n<p>Need extra help or see a bug? <a target='_blank' href='https://github.com/mapbox/geojson.io/issues?state=open'>Open an issue\n    on geojson.io's issue tracker.</a>\n\n<h3>I've got data</h3>\n\n<p>If you have data, like a KML, GeoJSON, or CSV file, just drag &amp; drop\nit onto the page or click 'Open' and 'Import' - your data should appear on\nthe map!</p>\n\n<h3>I want to draw features</h3>\n\n<p>Click the drawing tools on the left-hand side to draw points, polygons,\nlines and rectangles. After you're done drawing the shapes, you can add\ninformation to each feature by clicking on it, editing the feature's properties,\nand clicking 'Save'.</p>\n\n<p>Properties in GeoJSON are stored as 'key value pairs' - so, for instance,\nif you wanted to add a name to each feature, type 'name' in the first table\nfield, and the name of the feature in the second.</p>\n\n<h3>I want to use my map everywhere</h3>\n\n<p>You can share maps in quite a few ways! If you save your map here, the URL\nof this page will update and you can link send friends the link to share\nthe map, or you can click 'Download' to grab the raw GeoJSON data and use\nit in other software, like TileMill or Leaflet.</p>\n\n<h3>I'm a coder</h3>\n\n<p><a href='https://github.com/mapbox/geojson.io#goes-great-with' target='_blank'>geojson.io has an array of cli tools</a>\nthat make it easy to go from a GeoJSON file on your computer to geojson.io.\n\n<h3>Protips?</h3>\n\n<ul>\n    <li><strong>cmd+s</strong>: save map to github gists\n    <li><strong>cmd+a</strong>: download map as geojson\n    <li><strong>arrow keys</strong>: navigate the map\n</ul>\n\n<h3>Privacy &amp; License Issues</h3>\n\n<ul>\n    <li><strong>Clicking save</strong> by default saves to a private\n    GitHub Gist - so it will only be accessible to people you are the URL\n    with, and creating it won't appear in your GitHub timeline.\n    <li><strong>The data you create and modify in geojson.io</strong> doesn't\n    acquire any additional license: if it's secret and copyrighted, it will remain\n    that way - it doesn't have to be public or open source.\n</ul>\n");
+    }
+
+    render.off = function() {
+    };
+
+    return render;
+};
+
+},{"fs":2}],73:[function(require,module,exports){
 var validate = require('../lib/validate'),
+    zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
 
 module.exports = function(context) {
@@ -9636,8 +9794,11 @@ module.exports = function(context) {
 
         editor.on('change', validate(changeValidated));
 
-        function changeValidated(err, data) {
-            if (!err) context.data.set({map: data}, 'json');
+        function changeValidated(err, data, zoom) {
+            if (!err) {
+              context.data.set({map: data}, 'json');
+              if (zoom) zoomextent(context);
+            }
         }
 
         context.dispatch.on('change.json', function(event) {
@@ -9656,7 +9817,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":54,"../ui/saver.js":71}],57:[function(require,module,exports){
+},{"../lib/validate":70,"../lib/zoomextent":71,"../ui/saver.js":88}],74:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -9728,7 +9889,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":53,"d3-metatable":6}],58:[function(require,module,exports){
+},{"../lib/smartzoom.js":69,"d3-metatable":11}],75:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -9822,7 +9983,7 @@ function load(id, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":1}],59:[function(require,module,exports){
+},{"fs":2}],76:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -9929,7 +10090,7 @@ function fileUrl(parts) {
         '?ref=' + parts.branch;
 }
 
-},{}],60:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -10014,7 +10175,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":62,"./ui/file_bar":63,"./ui/layer_switch":67,"./ui/mode_buttons":70,"./ui/user":74}],61:[function(require,module,exports){
+},{"./ui/dnd":79,"./ui/file_bar":80,"./ui/layer_switch":84,"./ui/mode_buttons":87,"./ui/user":91}],78:[function(require,module,exports){
 var github = require('../source/github');
 
 module.exports = commit;
@@ -10049,25 +10210,25 @@ function commit(context, callback) {
     return wrap;
 }
 
-},{"../source/github":59}],62:[function(require,module,exports){
+},{"../source/github":76}],79:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
-    flash = require('./flash.js');
+    flash = require('./flash.js'),
+    zoomextent = require('../lib/zoomextent');
 
 module.exports = function(context) {
     d3.select('body')
         .attr('dropzone', 'copy')
         .on('drop.import', readDrop(function(err, gj, warning) {
-            if (err) {
-                if (err.type === 'geocode') {
-                    context.container.select('.icon-folder-open-alt')
-                        .trigger('click');
-                    flash(context.container, 'This file requires geocoding. Click Import to geocode it')
-                        .classed('error', 'true');
-                } else if (err.message) {
-                    flash(context.container, err.message)
-                        .classed('error', 'true');
-                }
+            if (err && err.message) {
+                flash(context.container, err.message)
+                    .classed('error', 'true');
+            }
+            if (err && err.type === 'geocode') {
+                context.container.select('.icon-folder-open-alt')
+                    .trigger('click');
+                flash(context.container, 'This file requires geocoding. Click Import to geocode it')
+                    .classed('error', 'true');
             } else if (gj && gj.features) {
                 context.data.mergeFeatures(gj.features);
                 if (warning) {
@@ -10076,6 +10237,7 @@ module.exports = function(context) {
                     flash(context.container, 'Imported ' + gj.features.length + ' features.')
                         .classed('success', 'true');
                 }
+                zoomextent(context);
             }
             d3.select('body').classed('dragover', false);
         }))
@@ -10098,8 +10260,10 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":26,"./flash.js":64,"./geocode.js":65}],63:[function(require,module,exports){
+},{"../lib/readfile.js":68,"../lib/zoomextent":71,"./flash.js":81,"./geocode.js":82}],80:[function(require,module,exports){
 var share = require('./share'),
+    clone = require('clone'),
+    topojson = require('topojson'),
     sourcepanel = require('./source.js'),
     saver = require('../ui/saver.js');
 
@@ -10155,11 +10319,28 @@ module.exports = function fileBar(context) {
 
         function download() {
             if (d3.event) d3.event.preventDefault();
+            if (d3.event.shiftKey) return downloadTopo();
+
             var content = JSON.stringify(context.data.get('map'));
             var meta = context.data.get('meta');
             window.saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
             }), (meta && meta.name) || 'map.geojson');
+        }
+
+        function downloadTopo() {
+            var content = JSON.stringify(topojson.topology({
+                collection: clone(context.data.get('map'))
+            }, {'property-transform': allProperties}));
+
+            window.saveAs(new Blob([content], {
+                type: 'text/plain;charset=utf-8'
+            }), 'map.topojson');
+        }
+
+        function allProperties(properties, key, value) {
+            properties[key] = value;
+            return true;
         }
 
         function sourceIcon(type) {
@@ -10215,7 +10396,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":71,"./share":72,"./source.js":73}],64:[function(require,module,exports){
+},{"../ui/saver.js":88,"./share":89,"./source.js":90,"clone":7,"topojson":"g070js"}],81:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -10237,8 +10418,9 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":69}],65:[function(require,module,exports){
-var progressChart = require('../lib/progress_chart');
+},{"./message":86}],82:[function(require,module,exports){
+var progressChart = require('../lib/progress_chart'),
+    csv2geojson = require('csv2geojson');
 
 module.exports = function(context) {
     return function(container, text) {
@@ -10374,7 +10556,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":51}],66:[function(require,module,exports){
+},{"../lib/progress_chart":66,"csv2geojson":8}],83:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -10420,7 +10602,11 @@ module.exports = function(context) {
                 .style('position', 'absolute')
                 .style('height', '0')
                 .on('change', function() {
-                    if (this.files && this.files[0]) readFile.readFile(this.files[0], onImport);
+                    var files = this.files;
+                    if (!(files && files[0])) return;
+                    readFile.readAsText(files[0], function(err, text) {
+                        readFile.readFile(files[0], text, onImport);
+                    });
                 });
         } else {
             wrap.append('p')
@@ -10444,8 +10630,8 @@ module.exports = function(context) {
                 } else {
                     flash(context.container, 'Imported ' + gj.features.length + ' features.')
                         .classed('success', 'true');
-                    zoomextent(context);
                 }
+                zoomextent(context);
             }
         }
 
@@ -10458,7 +10644,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":26,"../lib/zoomextent":55,"./flash.js":64,"./geocode.js":65}],67:[function(require,module,exports){
+},{"../lib/readfile.js":68,"../lib/zoomextent":71,"./flash.js":81,"./geocode.js":82}],84:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -10511,7 +10697,7 @@ module.exports = function(context) {
 };
 
 
-},{}],68:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -10620,7 +10806,7 @@ function bindPopup(l) {
     }, l).setContent(content));
 }
 
-},{"../lib/custom_hash.js":49,"../lib/popup":50,"../lib/querystring.js":52}],69:[function(require,module,exports){
+},{"../lib/custom_hash.js":64,"../lib/popup":65,"../lib/querystring.js":67}],86:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -10661,9 +10847,10 @@ function message(selection) {
     return sel;
 }
 
-},{}],70:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 var table = require('../panel/table'),
-    json = require('../panel/json');
+    json = require('../panel/json'),
+    help = require('../panel/help');
 
 module.exports = function(context, pane) {
     return function(selection) {
@@ -10680,6 +10867,11 @@ module.exports = function(context, pane) {
             title: ' JSON',
             alt: 'JSON Source',
             behavior: json
+        }, {
+            icon: 'question',
+            title: ' Help',
+            alt: 'Help',
+            behavior: help
         }];
 
         var buttons = selection
@@ -10707,7 +10899,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/json":56,"../panel/table":57}],71:[function(require,module,exports){
+},{"../panel/help":72,"../panel/json":73,"../panel/table":74}],88:[function(require,module,exports){
 var commit = require('./commit');
 var flash = require('./flash');
 
@@ -10769,7 +10961,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":61,"./flash":64}],72:[function(require,module,exports){
+},{"./commit":78,"./flash":81}],89:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -10846,7 +11038,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":58}],73:[function(require,module,exports){
+},{"../source/gist":75}],90:[function(require,module,exports){
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
@@ -10855,9 +11047,11 @@ module.exports = function(context) {
 
     function render(selection) {
 
-        selection.select('.right.overlay').remove();
+        selection
+            .select('.right.overlay').remove();
 
-        var panel = selection.append('div')
+        var panel = selection
+            .append('div')
             .attr('class', 'right overlay');
 
         var sources = [{
@@ -10968,7 +11162,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":66,"detect-json-indent":7,"github-file-browser":10}],74:[function(require,module,exports){
+},{"./import":83,"detect-json-indent":12,"github-file-browser":15}],91:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
@@ -11016,5 +11210,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[58,48])
+},{}]},{},[63])
 ;

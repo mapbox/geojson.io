@@ -1,4 +1,5 @@
-var progressChart = require('../lib/progress_chart');
+var progressChart = require('../lib/progress_chart'),
+    csv2geojson = require('csv2geojson');
 
 module.exports = function(context) {
     return function(container, text) {
