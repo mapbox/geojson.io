@@ -3945,6 +3945,226 @@ module.exports = function(_, def) {
 };
 
 },{}],13:[function(require,module,exports){
+/* FileSaver.js
+ * A saveAs() FileSaver implementation.
+ * 2013-01-23
+ *
+ * By Eli Grey, http://eligrey.com
+ * License: X11/MIT
+ *   See LICENSE.md
+ */
+
+/*global self */
+/*jslint bitwise: true, regexp: true, confusion: true, es5: true, vars: true, white: true,
+  plusplus: true */
+
+/*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
+
+var saveAs = saveAs
+  || (navigator.msSaveOrOpenBlob && navigator.msSaveOrOpenBlob.bind(navigator))
+  || (function(view) {
+	"use strict";
+	var
+		  doc = view.document
+		  // only get URL when necessary in case BlobBuilder.js hasn't overridden it yet
+		, get_URL = function() {
+			return view.URL || view.webkitURL || view;
+		}
+		, URL = view.URL || view.webkitURL || view
+		, save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
+		, can_use_save_link =  !view.externalHost && "download" in save_link
+		, click = function(node) {
+			var event = doc.createEvent("MouseEvents");
+			event.initMouseEvent(
+				"click", true, false, view, 0, 0, 0, 0, 0
+				, false, false, false, false, 0, null
+			);
+			node.dispatchEvent(event);
+		}
+		, webkit_req_fs = view.webkitRequestFileSystem
+		, req_fs = view.requestFileSystem || webkit_req_fs || view.mozRequestFileSystem
+		, throw_outside = function (ex) {
+			(view.setImmediate || view.setTimeout)(function() {
+				throw ex;
+			}, 0);
+		}
+		, force_saveable_type = "application/octet-stream"
+		, fs_min_size = 0
+		, deletion_queue = []
+		, process_deletion_queue = function() {
+			var i = deletion_queue.length;
+			while (i--) {
+				var file = deletion_queue[i];
+				if (typeof file === "string") { // file is an object URL
+					URL.revokeObjectURL(file);
+				} else { // file is a File
+					file.remove();
+				}
+			}
+			deletion_queue.length = 0; // clear queue
+		}
+		, dispatch = function(filesaver, event_types, event) {
+			event_types = [].concat(event_types);
+			var i = event_types.length;
+			while (i--) {
+				var listener = filesaver["on" + event_types[i]];
+				if (typeof listener === "function") {
+					try {
+						listener.call(filesaver, event || filesaver);
+					} catch (ex) {
+						throw_outside(ex);
+					}
+				}
+			}
+		}
+		, FileSaver = function(blob, name) {
+			// First try a.download, then web filesystem, then object URLs
+			var
+				  filesaver = this
+				, type = blob.type
+				, blob_changed = false
+				, object_url
+				, target_view
+				, get_object_url = function() {
+					var object_url = get_URL().createObjectURL(blob);
+					deletion_queue.push(object_url);
+					return object_url;
+				}
+				, dispatch_all = function() {
+					dispatch(filesaver, "writestart progress write writeend".split(" "));
+				}
+				// on any filesys errors revert to saving with object URLs
+				, fs_error = function() {
+					// don't create more object URLs than needed
+					if (blob_changed || !object_url) {
+						object_url = get_object_url(blob);
+					}
+					if (target_view) {
+						target_view.location.href = object_url;
+					} else {
+                        window.open(object_url, "_blank");
+                    }
+					filesaver.readyState = filesaver.DONE;
+					dispatch_all();
+				}
+				, abortable = function(func) {
+					return function() {
+						if (filesaver.readyState !== filesaver.DONE) {
+							return func.apply(this, arguments);
+						}
+					};
+				}
+				, create_if_not_found = {create: true, exclusive: false}
+				, slice
+			;
+			filesaver.readyState = filesaver.INIT;
+			if (!name) {
+				name = "download";
+			}
+			if (can_use_save_link) {
+				object_url = get_object_url(blob);
+				save_link.href = object_url;
+				save_link.download = name;
+				click(save_link);
+				filesaver.readyState = filesaver.DONE;
+				dispatch_all();
+				return;
+			}
+			// Object and web filesystem URLs have a problem saving in Google Chrome when
+			// viewed in a tab, so I force save with application/octet-stream
+			// http://code.google.com/p/chromium/issues/detail?id=91158
+			if (view.chrome && type && type !== force_saveable_type) {
+				slice = blob.slice || blob.webkitSlice;
+				blob = slice.call(blob, 0, blob.size, force_saveable_type);
+				blob_changed = true;
+			}
+			// Since I can't be sure that the guessed media type will trigger a download
+			// in WebKit, I append .download to the filename.
+			// https://bugs.webkit.org/show_bug.cgi?id=65440
+			if (webkit_req_fs && name !== "download") {
+				name += ".download";
+			}
+			if (type === force_saveable_type || webkit_req_fs) {
+				target_view = view;
+			}
+			if (!req_fs) {
+				fs_error();
+				return;
+			}
+			fs_min_size += blob.size;
+			req_fs(view.TEMPORARY, fs_min_size, abortable(function(fs) {
+				fs.root.getDirectory("saved", create_if_not_found, abortable(function(dir) {
+					var save = function() {
+						dir.getFile(name, create_if_not_found, abortable(function(file) {
+							file.createWriter(abortable(function(writer) {
+								writer.onwriteend = function(event) {
+									target_view.location.href = file.toURL();
+									deletion_queue.push(file);
+									filesaver.readyState = filesaver.DONE;
+									dispatch(filesaver, "writeend", event);
+								};
+								writer.onerror = function() {
+									var error = writer.error;
+									if (error.code !== error.ABORT_ERR) {
+										fs_error();
+									}
+								};
+								"writestart progress write abort".split(" ").forEach(function(event) {
+									writer["on" + event] = filesaver["on" + event];
+								});
+								writer.write(blob);
+								filesaver.abort = function() {
+									writer.abort();
+									filesaver.readyState = filesaver.DONE;
+								};
+								filesaver.readyState = filesaver.WRITING;
+							}), fs_error);
+						}), fs_error);
+					};
+					dir.getFile(name, {create: false}, abortable(function(file) {
+						// delete file if it already exists
+						file.remove();
+						save();
+					}), abortable(function(ex) {
+						if (ex.code === ex.NOT_FOUND_ERR) {
+							save();
+						} else {
+							fs_error();
+						}
+					}));
+				}), fs_error);
+			}), fs_error);
+		}
+		, FS_proto = FileSaver.prototype
+		, saveAs = function(blob, name) {
+			return new FileSaver(blob, name);
+		}
+	;
+	FS_proto.abort = function() {
+		var filesaver = this;
+		filesaver.readyState = filesaver.DONE;
+		dispatch(filesaver, "abort");
+	};
+	FS_proto.readyState = FS_proto.INIT = 0;
+	FS_proto.WRITING = 1;
+	FS_proto.DONE = 2;
+
+	FS_proto.error =
+	FS_proto.onwritestart =
+	FS_proto.onprogress =
+	FS_proto.onwrite =
+	FS_proto.onabort =
+	FS_proto.onerror =
+	FS_proto.onwriteend =
+		null;
+
+	view.addEventListener("unload", process_deletion_queue, false);
+	return saveAs;
+}(self));
+
+if (typeof module !== 'undefined') module.exports = saveAs;
+
+},{}],14:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -4202,7 +4422,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":14}],14:[function(require,module,exports){
+},{"jsonlint-lines":15}],15:[function(require,module,exports){
 var process=require("__browserify_process");/* parser generated by jison 0.4.6 */
 /*
   Returns a Parser object of the following structure:
@@ -4857,7 +5077,7 @@ if (typeof module !== 'undefined' && require.main === module) {
   exports.main(process.argv.slice(1));
 }
 }
-},{"__browserify_process":6,"fs":2,"path":3}],15:[function(require,module,exports){
+},{"__browserify_process":6,"fs":2,"path":3}],16:[function(require,module,exports){
 module.exports = function(d3) {
     var preview = require('static-map-preview')(d3, 'tmcw.map-dsejpecw');
 
@@ -5213,7 +5433,7 @@ function mapFile(data) {
     }
 }
 
-},{"static-map-preview":16}],16:[function(require,module,exports){
+},{"static-map-preview":17}],17:[function(require,module,exports){
 var scaleCanvas = require('autoscale-canvas');
 
 module.exports = function(d3, mapid) {
@@ -5277,7 +5497,7 @@ module.exports = function(d3, mapid) {
     function filterNan(_) { return isNaN(_) ? 0 : _; }
 };
 
-},{"autoscale-canvas":17}],17:[function(require,module,exports){
+},{"autoscale-canvas":18}],18:[function(require,module,exports){
 
 /**
  * Retina-enable the given `canvas`.
@@ -5299,7 +5519,7 @@ module.exports = function(canvas){
   }
   return canvas;
 };
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 (function(window) {
 	var HAS_HASHCHANGE = (function() {
 		var doc_mode = window.documentMode;
@@ -5463,7 +5683,7 @@ module.exports = function(canvas){
 	};
 })(window);
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var osm_geojson = {};
 
 osm_geojson.geojson2osm = function(geo, changeset) {
@@ -5919,7 +6139,7 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
 
 if (typeof module !== 'undefined') module.exports = osm_geojson;
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 ;(function(){
 	var store = {},
 		win = window,
@@ -6074,7 +6294,7 @@ if (typeof module !== 'undefined') module.exports = osm_geojson;
 	else { this.store = store }
 })();
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 toGeoJSON = (function() {
     'use strict';
 
@@ -6312,7 +6532,7 @@ topojson.filter = require("./lib/topojson/filter");
 topojson.prune = require("./lib/topojson/prune");
 topojson.bind = require("./lib/topojson/bind");
 
-},{"./lib/topojson/bind":24,"./lib/topojson/clockwise":27,"./lib/topojson/filter":31,"./lib/topojson/prune":34,"./lib/topojson/simplify":36,"./lib/topojson/topology":39,"fs":2}],24:[function(require,module,exports){
+},{"./lib/topojson/bind":25,"./lib/topojson/clockwise":28,"./lib/topojson/filter":32,"./lib/topojson/prune":35,"./lib/topojson/simplify":37,"./lib/topojson/topology":40,"fs":2}],25:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -6342,7 +6562,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"g070js","./type":49}],25:[function(require,module,exports){
+},{"../../":"g070js","./type":50}],26:[function(require,module,exports){
 
 // Computes the bounding box of the specified hash of GeoJSON objects.
 module.exports = function(objects) {
@@ -6389,7 +6609,7 @@ module.exports = function(objects) {
   return [x0, y0, x1, y1];
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -6423,7 +6643,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -6496,7 +6716,7 @@ function clockwiseTopology(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./coordinate-systems":29,"./type":49}],28:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":30,"./type":50}],29:[function(require,module,exports){
 // Given a hash of GeoJSON objects and an id function, invokes the id function
 // to compute a new id for each object that is a feature. The function is passed
 // the feature and is expected to return the new feature id, or null if the
@@ -6526,13 +6746,13 @@ module.exports = function(objects, id) {
   return objects;
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":26,"./spherical":37}],30:[function(require,module,exports){
+},{"./cartesian":27,"./spherical":38}],31:[function(require,module,exports){
 // Given a TopoJSON topology in absolute (quantized) coordinates,
 // converts to fixed-point delta encoding.
 // This is a destructive operation that modifies the given topology!
@@ -6563,7 +6783,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -6634,7 +6854,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"../../":"g070js","./clockwise":27,"./coordinate-systems":29,"./prune":34,"./type":49}],32:[function(require,module,exports){
+},{"../../":"g070js","./clockwise":28,"./coordinate-systems":30,"./prune":35,"./type":50}],33:[function(require,module,exports){
 // Given a hash of GeoJSON objects, replaces Features with geometry objects.
 // This is a destructive operation that modifies the input objects!
 module.exports = function(objects) {
@@ -6753,7 +6973,7 @@ module.exports = function(objects) {
   return objects;
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = function(objects, filter) {
 
   function prefilterGeometry(geometry) {
@@ -6809,7 +7029,7 @@ module.exports = function(objects, filter) {
   return objects;
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 module.exports = function(topology, options) {
   var verbose = false,
       objects = topology.objects,
@@ -6883,7 +7103,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = function(objects, bbox, Q) {
   var x0 = isFinite(bbox[0]) ? bbox[0] : 0,
       y0 = isFinite(bbox[1]) ? bbox[1] : 0,
@@ -6970,7 +7190,7 @@ module.exports = function(objects, bbox, Q) {
   };
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var topojson = require("../../"),
     systems = require("./coordinate-systems");
 
@@ -7054,7 +7274,7 @@ module.exports = function(topology, options) {
   return topology;
 };
 
-},{"../../":"g070js","./coordinate-systems":29}],37:[function(require,module,exports){
+},{"../../":"g070js","./coordinate-systems":30}],38:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -7136,7 +7356,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, options) {
@@ -7186,7 +7406,7 @@ module.exports = function(objects, options) {
   }
 };
 
-},{"./type":49}],39:[function(require,module,exports){
+},{"./type":50}],40:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch-poles"),
     systems = require("./coordinate-systems"),
@@ -7284,7 +7504,7 @@ module.exports = function(objects, options) {
   return topology;
 };
 
-},{"./bounds":25,"./compute-id":28,"./coordinate-systems":29,"./delta":30,"./geomify":32,"./prefilter":33,"./quantize":35,"./stitch-poles":38,"./topology/index":44,"./transform-properties":48,"./type":49}],40:[function(require,module,exports){
+},{"./bounds":26,"./compute-id":29,"./coordinate-systems":30,"./delta":31,"./geomify":33,"./prefilter":34,"./quantize":36,"./stitch-poles":39,"./topology/index":45,"./transform-properties":49,"./type":50}],41:[function(require,module,exports){
 var join = require("./join");
 
 // Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
@@ -7346,7 +7566,7 @@ function reverse(array, start, end) {
   }
 }
 
-},{"./join":45}],41:[function(require,module,exports){
+},{"./join":46}],42:[function(require,module,exports){
 var join = require("./join"),
     hashtable = require("./hashtable"),
     hashPoint = require("./point-hash"),
@@ -7532,7 +7752,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{"./hashtable":43,"./join":45,"./point-equal":46,"./point-hash":47}],42:[function(require,module,exports){
+},{"./hashtable":44,"./join":46,"./point-equal":47,"./point-hash":48}],43:[function(require,module,exports){
 // Extracts the lines and rings from the specified hash of geometry objects.
 //
 // Returns an object with three properties:
@@ -7599,7 +7819,7 @@ module.exports = function(objects) {
   };
 };
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = function(size, hash, equal) {
   var hashtable = new Array(size = 1 << Math.ceil(Math.log(size) / Math.LN2)),
       mask = size - 1,
@@ -7670,7 +7890,7 @@ module.exports = function(size, hash, equal) {
   };
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var hashtable = require("./hashtable"),
     extract = require("./extract"),
     cut = require("./cut"),
@@ -7740,7 +7960,7 @@ function equalArc(arcA, arcB) {
   return ia === ib && ja === jb;
 }
 
-},{"./cut":40,"./dedup":41,"./extract":42,"./hashtable":43}],45:[function(require,module,exports){
+},{"./cut":41,"./dedup":42,"./extract":43,"./hashtable":44}],46:[function(require,module,exports){
 var hashtable = require("./hashtable"),
     hashPoint = require("./point-hash"),
     equalPoint = require("./point-equal");
@@ -7815,12 +8035,12 @@ module.exports = function(topology) {
   return junctionByPoint;
 };
 
-},{"./hashtable":43,"./point-equal":46,"./point-hash":47}],46:[function(require,module,exports){
+},{"./hashtable":44,"./point-equal":47,"./point-hash":48}],47:[function(require,module,exports){
 module.exports = function(pointA, pointB) {
   return pointA[0] === pointB[0] && pointA[1] === pointB[1];
 };
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 // TODO if quantized, use simpler Int32 hashing?
 
 var hashBuffer = new ArrayBuffer(8),
@@ -7840,7 +8060,7 @@ module.exports = function(point) {
   return h < 0 ? ~h : h;
 };
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 // Given a hash of GeoJSON objects, transforms any properties on features using
 // the specified transform function. The function is invoked for each existing
 // property on the current feature, being passed the new properties hash, the
@@ -7885,7 +8105,7 @@ module.exports = function(objects, propertyTransform) {
   return objects;
 };
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -7979,7 +8199,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 module.exports = hasKeys
 
 function hasKeys(source) {
@@ -7988,7 +8208,7 @@ function hasKeys(source) {
         typeof source === "function")
 }
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 var Keys = require("object-keys")
 var hasKeys = require("./has-keys")
 
@@ -8015,11 +8235,11 @@ function extend() {
     return target
 }
 
-},{"./has-keys":50,"object-keys":52}],52:[function(require,module,exports){
+},{"./has-keys":51,"object-keys":53}],53:[function(require,module,exports){
 module.exports = Object.keys || require('./shim');
 
 
-},{"./shim":55}],53:[function(require,module,exports){
+},{"./shim":56}],54:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -8043,7 +8263,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 
 /**!
  * is
@@ -8747,7 +8967,7 @@ is.string = function (value) {
 };
 
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 (function () {
 	"use strict";
 
@@ -8793,7 +9013,7 @@ is.string = function (value) {
 }());
 
 
-},{"foreach":53,"is":54}],56:[function(require,module,exports){
+},{"foreach":54,"is":55}],57:[function(require,module,exports){
 module.exports = function(hostname) {
     var production = (hostname === 'geojson.io');
 
@@ -8807,7 +9027,7 @@ module.exports = function(hostname) {
     };
 };
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var clone = require('clone');
     xtend = require('xtend');
     source = {
@@ -9032,7 +9252,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":75,"../source/github":76,"clone":7,"xtend":51}],58:[function(require,module,exports){
+},{"../source/gist":76,"../source/github":77,"clone":7,"xtend":52}],59:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -9078,7 +9298,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/querystring":67,"../lib/zoomextent":71,"../ui/flash":81}],59:[function(require,module,exports){
+},{"../lib/querystring":68,"../lib/zoomextent":72,"../ui/flash":82}],60:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('../lib/querystring');
 
@@ -9118,7 +9338,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/querystring":67,"../lib/zoomextent":71}],60:[function(require,module,exports){
+},{"../lib/querystring":68,"../lib/zoomextent":72}],61:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9161,7 +9381,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":56}],61:[function(require,module,exports){
+},{"../config.js":57}],62:[function(require,module,exports){
 var qs = require('../lib/querystring'),
     xtend = require('xtend');
 
@@ -9228,7 +9448,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"../lib/querystring":67,"xtend":51}],62:[function(require,module,exports){
+},{"../lib/querystring":68,"xtend":52}],63:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -9313,7 +9533,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":56}],63:[function(require,module,exports){
+},{"../config.js":57}],64:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -9345,7 +9565,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":57,"./core/loader":58,"./core/recovery":59,"./core/repo":60,"./core/router":61,"./core/user":62,"./ui":77,"./ui/map":85,"store":20}],64:[function(require,module,exports){
+},{"./core/data":58,"./core/loader":59,"./core/recovery":60,"./core/repo":61,"./core/router":62,"./core/user":63,"./ui":78,"./ui/map":86,"store":21}],65:[function(require,module,exports){
 var qs = require('../lib/querystring');
 require('leaflet-hash');
 
@@ -9384,7 +9604,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"../lib/querystring":67,"leaflet-hash":18}],65:[function(require,module,exports){
+},{"../lib/querystring":68,"leaflet-hash":19}],66:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -9447,7 +9667,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 module.exports = function(elem, w, h) {
     var c = elem.appendChild(document.createElement('canvas'));
 
@@ -9468,7 +9688,7 @@ module.exports = function(elem, w, h) {
     };
 };
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 module.exports.stringQs = function(str) {
     return str.split('&').reduce(function(obj, pair){
         var parts = pair.split('=');
@@ -9488,7 +9708,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     csv2geojson = require('csv2geojson'),
@@ -9656,7 +9876,7 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":8,"osm-and-geojson":19,"togeojson":21,"topojson":"g070js"}],69:[function(require,module,exports){
+},{"csv2geojson":8,"osm-and-geojson":20,"togeojson":22,"topojson":"g070js"}],70:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -9668,7 +9888,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],70:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -9729,13 +9949,13 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":13}],71:[function(require,module,exports){
+},{"geojsonhint":14}],72:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 var fs = require('fs');
 
 module.exports = function(context) {
@@ -9754,7 +9974,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"fs":2}],73:[function(require,module,exports){
+},{"fs":2}],74:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
@@ -9817,7 +10037,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":70,"../lib/zoomextent":71,"../ui/saver.js":88}],74:[function(require,module,exports){
+},{"../lib/validate":71,"../lib/zoomextent":72,"../ui/saver.js":89}],75:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -9889,7 +10109,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":69,"d3-metatable":11}],75:[function(require,module,exports){
+},{"../lib/smartzoom.js":70,"d3-metatable":11}],76:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -9983,7 +10203,7 @@ function load(id, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":2}],76:[function(require,module,exports){
+},{"fs":2}],77:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -10090,7 +10310,7 @@ function fileUrl(parts) {
         '?ref=' + parts.branch;
 }
 
-},{}],77:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -10175,7 +10395,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":79,"./ui/file_bar":80,"./ui/layer_switch":84,"./ui/mode_buttons":87,"./ui/user":91}],78:[function(require,module,exports){
+},{"./ui/dnd":80,"./ui/file_bar":81,"./ui/layer_switch":85,"./ui/mode_buttons":88,"./ui/user":92}],79:[function(require,module,exports){
 var github = require('../source/github');
 
 module.exports = commit;
@@ -10210,7 +10430,7 @@ function commit(context, callback) {
     return wrap;
 }
 
-},{"../source/github":76}],79:[function(require,module,exports){
+},{"../source/github":77}],80:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
     flash = require('./flash.js'),
@@ -10260,11 +10480,12 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":68,"../lib/zoomextent":71,"./flash.js":81,"./geocode.js":82}],80:[function(require,module,exports){
+},{"../lib/readfile.js":69,"../lib/zoomextent":72,"./flash.js":82,"./geocode.js":83}],81:[function(require,module,exports){
 var share = require('./share'),
     clone = require('clone'),
     topojson = require('topojson'),
     sourcepanel = require('./source.js'),
+    saveAs = require('filesaver.js'),
     saver = require('../ui/saver.js');
 
 module.exports = function fileBar(context) {
@@ -10323,7 +10544,7 @@ module.exports = function fileBar(context) {
 
             var content = JSON.stringify(context.data.get('map'));
             var meta = context.data.get('meta');
-            window.saveAs(new Blob([content], {
+            saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
             }), (meta && meta.name) || 'map.geojson');
         }
@@ -10333,7 +10554,7 @@ module.exports = function fileBar(context) {
                 collection: clone(context.data.get('map'))
             }, {'property-transform': allProperties}));
 
-            window.saveAs(new Blob([content], {
+            saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
             }), 'map.topojson');
         }
@@ -10396,7 +10617,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../ui/saver.js":88,"./share":89,"./source.js":90,"clone":7,"topojson":"g070js"}],81:[function(require,module,exports){
+},{"../ui/saver.js":89,"./share":90,"./source.js":91,"clone":7,"filesaver.js":13,"topojson":"g070js"}],82:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -10418,7 +10639,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":86}],82:[function(require,module,exports){
+},{"./message":87}],83:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart'),
     csv2geojson = require('csv2geojson');
 
@@ -10556,7 +10777,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":66,"csv2geojson":8}],83:[function(require,module,exports){
+},{"../lib/progress_chart":67,"csv2geojson":8}],84:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -10644,7 +10865,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":68,"../lib/zoomextent":71,"./flash.js":81,"./geocode.js":82}],84:[function(require,module,exports){
+},{"../lib/readfile.js":69,"../lib/zoomextent":72,"./flash.js":82,"./geocode.js":83}],85:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -10697,7 +10918,7 @@ module.exports = function(context) {
 };
 
 
-},{}],85:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('../lib/querystring.js');
@@ -10806,7 +11027,7 @@ function bindPopup(l) {
     }, l).setContent(content));
 }
 
-},{"../lib/custom_hash.js":64,"../lib/popup":65,"../lib/querystring.js":67}],86:[function(require,module,exports){
+},{"../lib/custom_hash.js":65,"../lib/popup":66,"../lib/querystring.js":68}],87:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -10847,7 +11068,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -10899,7 +11120,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":72,"../panel/json":73,"../panel/table":74}],88:[function(require,module,exports){
+},{"../panel/help":73,"../panel/json":74,"../panel/table":75}],89:[function(require,module,exports){
 var commit = require('./commit');
 var flash = require('./flash');
 
@@ -10961,7 +11182,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":78,"./flash":81}],89:[function(require,module,exports){
+},{"./commit":79,"./flash":82}],90:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -11038,7 +11259,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":75}],90:[function(require,module,exports){
+},{"../source/gist":76}],91:[function(require,module,exports){
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     detectIndentationStyle = require('detect-json-indent');
@@ -11162,7 +11383,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":83,"detect-json-indent":12,"github-file-browser":15}],91:[function(require,module,exports){
+},{"./import":84,"detect-json-indent":12,"github-file-browser":16}],92:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
@@ -11210,5 +11431,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[63])
+},{}]},{},[64])
 ;

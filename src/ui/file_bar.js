@@ -2,6 +2,7 @@ var share = require('./share'),
     clone = require('clone'),
     topojson = require('topojson'),
     sourcepanel = require('./source.js'),
+    saveAs = require('filesaver.js'),
     saver = require('../ui/saver.js');
 
 module.exports = function fileBar(context) {
@@ -60,7 +61,7 @@ module.exports = function fileBar(context) {
 
             var content = JSON.stringify(context.data.get('map'));
             var meta = context.data.get('meta');
-            window.saveAs(new Blob([content], {
+            saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
             }), (meta && meta.name) || 'map.geojson');
         }
@@ -70,7 +71,7 @@ module.exports = function fileBar(context) {
                 collection: clone(context.data.get('map'))
             }, {'property-transform': allProperties}));
 
-            window.saveAs(new Blob([content], {
+            saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
             }), 'map.topojson');
         }

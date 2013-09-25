@@ -23,7 +23,8 @@
     "xtend": "~2.0.6",
     "clone": "~0.1.10",
     "osm-and-geojson": "0.1.0",
-    "bowser": "~0.3.1"
+    "bowser": "~0.3.1",
+    "filesaver.js": "~2013.1.23"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",
