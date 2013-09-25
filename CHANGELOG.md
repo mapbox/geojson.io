@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2013-09-25
+
+* Numbers in GeoJSON properties are coerced to be numeric when appropriate
+
 ## 2013-09-24
 
 * Drag and drop of multiple files is supported - files in folders are unfortunately
