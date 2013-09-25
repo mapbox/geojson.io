@@ -456,4 +456,20 @@ body.dragover:after {
 }
 .prose h3 {
     font-weight:bold;
+    margin-top:10px;
+}
+.prose ul {
+    margin:20px 0;
+    border:1px solid #ccc;
+}
+.prose ul li {
+    line-height:200%;
+    padding:5px 5px;
+    border-top:1px solid #ccc;
+}
+.prose ul li:first-child {
+    border-top:none;
+}
+.prose strong {
+    font-weight:bold;
 }
