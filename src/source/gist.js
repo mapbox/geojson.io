@@ -59,7 +59,7 @@ function save(context, callback) {
         }
 
         files[name] = {
-            content: JSON.stringify(map)
+            content: JSON.stringify(map, null, 2)
         };
 
         context.user.signXHR(d3.json(endpoint))
