@@ -35,11 +35,11 @@ function save(context, callback) {
                 message: commitMessage,
                 sha: source.sha,
                 branch: meta.branch,
-                content: Base64.toBase64(JSON.stringify(map))
+                content: Base64.toBase64(JSON.stringify(map, null, 2))
             };
         } else {
             endpoint = 'https://api.github.com/gists';
-            files[name] = { content: JSON.stringify(map) };
+            files[name] = { content: JSON.stringify(map, null, 2) };
             data = { files: files };
         }
 
