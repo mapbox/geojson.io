@@ -59,7 +59,7 @@ module.exports = function fileBar(context) {
             if (d3.event) d3.event.preventDefault();
             if (d3.event.shiftKey) return downloadTopo();
 
-            var content = JSON.stringify(context.data.get('map'));
+            var content = JSON.stringify(context.data.get('map'), null, 2);
             var meta = context.data.get('meta');
             saveAs(new Blob([content], {
                 type: 'text/plain;charset=utf-8'
