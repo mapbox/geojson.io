@@ -5483,7 +5483,7 @@ module.exports = function(d3, mapid) {
             .attr('src', staticUrl(projection.center().concat([z-6]).map(filterNan), wh));
 
         function imageload() {
-            ctx.drawImage(this, 0, 0);
+            ctx.drawImage(this, 0, 0, wh[0], wh[1]);
             painter(geojson);
             ctx.stroke();
             callback(null, canvas.node().toDataURL());

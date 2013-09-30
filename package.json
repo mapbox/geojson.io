@@ -13,7 +13,7 @@
     "togeojson": "0.3.0",
     "csv2geojson": "3.5.2",
     "detect-json-indent": "0.0.0",
-    "github-file-browser": "0.3.0",
+    "github-file-browser": "0.3.1",
     "browserify": "2.33.0",
     "smash": "0.0.11",
     "uglify-js": "2.3.6",
