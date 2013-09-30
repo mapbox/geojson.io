@@ -10307,7 +10307,10 @@ module.exports = function(context, readonly) {
               draw: {
                   circle: false,
                   polyline: { metric: navigator.language !== 'en-US' },
-                  polygon: { metric: navigator.language !== 'en-US' }
+                  polygon: { metric: navigator.language !== 'en-US' },
+                  marker: {
+                      icon: L.mapbox.marker.icon({})
+                  }
               }
           }).addTo(context.map);
 
@@ -10354,7 +10357,9 @@ module.exports = function(context, readonly) {
 
 function geojsonToLayer(geojson, layer) {
     layer.clearLayers();
-    L.geoJson(geojson).eachLayer(add);
+    L.geoJson(geojson, {
+        pointToLayer: L.mapbox.marker.style
+    }).eachLayer(add);
     function add(l) {
         bindPopup(l);
         l.addTo(layer);

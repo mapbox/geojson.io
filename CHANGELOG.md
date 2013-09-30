@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2013-9-30
+
+* Use MapBox markers to expose style options
+* Fix bug with retina monitors and github file previews
+
 ## 2013-09-25
 
 * Numbers in GeoJSON properties are coerced to be numeric when appropriate
