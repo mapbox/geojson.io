@@ -4,6 +4,7 @@
 
 * Use MapBox markers to expose style options
 * Fix bug with retina monitors and github file previews
+* Hit `Cmd+O` to quickly import a new file
 
 ## 2013-09-25
 
