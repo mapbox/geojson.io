@@ -9805,6 +9805,9 @@ var share = require('./share'),
     clone = require('clone'),
     topojson = require('topojson'),
     sourcepanel = require('./source.js'),
+    flash = require('./flash'),
+    zoomextent = require('../lib/zoomextent'),
+    readFile = require('../lib/readfile'),
     saveAs = require('filesaver.js'),
     saver = require('../ui/saver.js');
 
@@ -9928,16 +9931,51 @@ module.exports = function fileBar(context) {
             saveNoun(type == 'github' ? 'Commit' : 'Save');
         }
 
+        function blindImport() {
+            var put = d3.select('body')
+                .append('input')
+                .attr('type', 'file')
+                .style('visibility', 'hidden')
+                .style('position', 'absolute')
+                .style('height', '0')
+                .on('change', function() {
+                    var files = this.files;
+                    if (!(files && files[0])) return;
+                    readFile.readAsText(files[0], function(err, text) {
+                        readFile.readFile(files[0], text, onImport);
+                    });
+                    put.remove();
+                });
+            put.node().click();
+        }
+
+        function onImport(err, gj, warning) {
+            if (gj && gj.features) {
+                context.data.mergeFeatures(gj.features);
+                if (warning) {
+                    flash(context.container, warning.message);
+                } else {
+                    flash(context.container, 'Imported ' + gj.features.length + ' features.')
+                        .classed('success', 'true');
+                }
+                zoomextent(context);
+            }
+        }
+
         d3.select(document).call(
             d3.keybinding('file_bar')
                 .on('⌘+a', download)
+                .on('⌘+o', function() {
+                    blindImport();
+                    d3.event.preventDefault();
+                })
                 .on('⌘+s', saveAction));
     }
 
     return bar;
 };
 
-},{"../ui/saver.js":88,"./share":89,"./source.js":90,"clone":7,"filesaver.js":13,"topojson":"g070js"}],81:[function(require,module,exports){
+},{"../lib/readfile":67,"../lib/zoomextent":70,"../ui/saver.js":88,"./flash":81,"./share":89,"./source.js":90,"clone":7,"filesaver.js":13,"topojson":"g070js"}],81:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
