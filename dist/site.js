@@ -9856,7 +9856,7 @@ module.exports = function writePoly(geometries, extent, fileLength, TYPE) {
     var headerLength = 48,
         totalLength =
             // header
-            8 +
+            16 +
             // feature headers
             (geometries.length * headerLength) +
             // points
@@ -9874,13 +9874,16 @@ module.exports = function writePoly(geometries, extent, fileLength, TYPE) {
         var featureExtent = ext.blank(),
             contentLength = (coordinates.length * 16) + 48;
 
+
         coordinates.forEach(function(c) {
             ext.enlarge(featureExtent, c);
             ext.enlarge(extent, c);
         });
 
         // index
+        // offset
         shxView.setInt32(shxI, fileLength / 2); // length in 16-bit words
+        // offset length
         shxView.setInt32(shxI + 4, contentLength / 2);
 
         // HEADER
@@ -9888,6 +9891,7 @@ module.exports = function writePoly(geometries, extent, fileLength, TYPE) {
         // 4 content length in 16-bit words (20/2)
         shpView.setInt32(shpI, i);
         shpView.setInt32(shpI + 4, contentLength / 2);
+
 
         shpI += 8;
 
@@ -9915,9 +9919,10 @@ module.exports = function writePoly(geometries, extent, fileLength, TYPE) {
         });
 
         shxI += 8;
+
+        fileLength += contentLength;
     }
 
-    fileLength += totalLength;
 
     function totalPoints(geometries) {
         var sum = 0;
