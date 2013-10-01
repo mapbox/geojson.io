@@ -377,7 +377,7 @@ textarea.full-width {
     margin-right:5px;
 }
 
-.share {
+.share, .download {
     position:absolute;
     right:40%;
     top:40px;
@@ -385,11 +385,11 @@ textarea.full-width {
     font-size:12px;
 }
 
-.share .network {
+.share .network, .download .action {
     margin-right:10px;
 }
 
-.share .icon-remove {
+.share .icon-remove, .download .icon-remove {
     margin-left:10px;
 }
 

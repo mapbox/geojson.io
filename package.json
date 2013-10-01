@@ -24,7 +24,8 @@
     "clone": "0.1.10",
     "osm-and-geojson": "0.1.0",
     "bowser": "0.3.1",
-    "filesaver.js": "2013.1.23"
+    "filesaver.js": "2013.1.23",
+    "shp-write": "0.1.2"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",
