@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2013-10-01
+
+* Shapefile export (beta)
+
+![](http://i.imgur.com/5zpt1d3.gif)
+
 ## 2013-9-30
 
 * Use MapBox markers to expose style options
