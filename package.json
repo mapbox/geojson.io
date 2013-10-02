@@ -25,7 +25,7 @@
     "osm-and-geojson": "0.1.0",
     "bowser": "0.3.1",
     "filesaver.js": "2013.1.23",
-    "shp-write": "0.1.4"
+    "shp-write": "0.1.5"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",
