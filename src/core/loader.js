@@ -1,4 +1,4 @@
-var qs = require('../lib/querystring'),
+var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
 

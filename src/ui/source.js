@@ -1,6 +1,6 @@
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
-    qs = require('../lib/querystring'),
+    qs = require('qs-hash'),
     detectIndentationStyle = require('detect-json-indent');
 
 module.exports = function(context) {

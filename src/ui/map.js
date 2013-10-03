@@ -1,6 +1,6 @@
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
-    qs = require('../lib/querystring.js');
+    qs = require('qs-hash');
     writable = false;
 
 

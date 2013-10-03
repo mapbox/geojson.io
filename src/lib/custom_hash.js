@@ -1,4 +1,4 @@
-var qs = require('../lib/querystring');
+var qs = require('qs-hash');
 require('leaflet-hash');
 
 L.Hash.prototype.parseHash = function(hash) {

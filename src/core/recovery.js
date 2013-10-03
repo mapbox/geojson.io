@@ -1,5 +1,5 @@
 var zoomextent = require('../lib/zoomextent'),
-    qs = require('../lib/querystring');
+    qs = require('qs-hash');
 
 module.exports = function(context) {
 

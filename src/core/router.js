@@ -1,4 +1,4 @@
-var qs = require('../lib/querystring'),
+var qs = require('qs-hash'),
     xtend = require('xtend');
 
 module.exports = function(context) {
