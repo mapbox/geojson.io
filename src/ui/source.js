@@ -1,5 +1,6 @@
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
+    qs = require('../lib/querystring'),
     detectIndentationStyle = require('detect-json-indent');
 
 module.exports = function(context) {
@@ -112,7 +113,12 @@ module.exports = function(context) {
                         sort: function(a, b) {
                             return new Date(b.updated_at) - new Date(a.updated_at);
                         }
-                    }).on('chosen', context.data.parse));
+                    }).on('chosen', function(d) {
+                        var login = (d.user && d.user.login) || 'anonymous',
+                            path = 'gist:' + [login, d.id].join('/'),
+                            oldPath = qs.stringQs(location.hash.split('#')[1]).id;
+                        if (oldPath != path) context.data.parse(d);
+                    }));
         }
 
         $sources.filter(function(d, i) { return !i; }).trigger('click');
