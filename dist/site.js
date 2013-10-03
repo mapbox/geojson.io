@@ -9710,7 +9710,7 @@ module.exports = function(gj) {
     });
 
     var content = zip.generate({compression:'STORE'});
-    location.href = "data:application/zip;base64," + content;
+    location.href = 'data:application/zip;base64,' + content;
 };
 
 },{"./geojson":50,"./prj":53,"./write":55,"jszip":36}],48:[function(require,module,exports){
@@ -14338,7 +14338,10 @@ module.exports = function(context, readonly) {
 function geojsonToLayer(geojson, layer) {
     layer.clearLayers();
     L.geoJson(geojson, {
-        pointToLayer: L.mapbox.marker.style
+        pointToLayer: function(feature, latlon) {
+            if (!feature.properties) feature.properties = {};
+            return L.mapbox.marker.style(feature, latlon);
+        }
     }).eachLayer(add);
     function add(l) {
         bindPopup(l);
