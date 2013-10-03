@@ -18960,7 +18960,9 @@ module.exports = function(context) {
                 login = browser.path[1].login;
                 repo = browser.path[2].name;
                 branch = browser.path[3].name;
-                path = [browser.path[4].path, d.path].join('/');
+                path = browser.path.slice(4).map(function(p) {
+                    return p.path;
+                }).concat([d.path]).join('/');
 
                 data.set({
                     type: 'github',
@@ -18971,7 +18973,6 @@ module.exports = function(context) {
                         branch: branch,
                         name: d.path
                     },
-                    map: d.content,
                     path: path,
                     route: 'github:' + [
                         login,
@@ -18986,9 +18987,10 @@ module.exports = function(context) {
                         repo,
                         'blob',
                         branch,
-                        [path, d.path].join('/')
+                        path
                     ].join('/')
                 });
+                if (d.content) data.set({ map: d.content });
                 break;
             case 'file':
                 chunked = d.html_url.split('/');
@@ -19022,6 +19024,7 @@ module.exports = function(context) {
                 path = [login, d.id].join('/');
                 file = mapFile(d);
 
+                if (file && file.content) data.set({ map: file.content });
                 data.set({
                     type: 'gist',
                     source: d,
@@ -19029,7 +19032,6 @@ module.exports = function(context) {
                         login: login,
                         name: file && file.name
                     },
-                    map: file && file.content,
                     path: path,
                     route: 'gist:' + path,
                     url: d.html_url
@@ -21282,12 +21284,7 @@ module.exports = function(context) {
                         sort: function(a, b) {
                             return new Date(b.updated_at) - new Date(a.updated_at);
                         }
-                    }).on('chosen', function(d) {
-                        var login = (d.user && d.user.login) || 'anonymous',
-                            path = 'gist:' + [login, d.id].join('/'),
-                            oldPath = qs.stringQs(location.hash.split('#')[1]).id;
-                        if (oldPath != path) context.data.parse(d);
-                    }));
+                    }).on('chosen', context.data.parse));
         }
 
         $sources.filter(function(d, i) { return !i; }).trigger('click');
