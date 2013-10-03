@@ -48,7 +48,7 @@ This is made up of small reusable chunks:
 * <a href='http://github.com/mapbox/geocode-many'>mapbox/geocode-many</a>
 * <a href='http://github.com/mapbox/csv2geojson'>mapbox/csv2geojson</a>
 * <a href='http://github.com/mapbox/togeojson'>mapbox/togeojson</a>
-* <a href='https://github.com/aaronlidman/osm-and-geojson'>aaronlidman/osm-and-geojson</a>
+* <a href='https://github.com/tyrasd/osmtogeojson'>tyrasd/osmtogeojson</a>
 
 ## See Also
 

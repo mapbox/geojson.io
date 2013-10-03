@@ -1,7 +1,7 @@
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     csv2geojson = require('csv2geojson'),
-    osm2geojson = require('osm-and-geojson').osm2geojson;
+    osmtogeojson = require('osmtogeojson');
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
@@ -100,13 +100,19 @@ function readFile(f, text, callback) {
         }
         callback(null, toGeoJSON.kml(kmldom), warning);
     } else if (fileType === 'xml') {
-        var xmldom = toDom(text);
+        var xmldom = toDom(text),
+            result;
         if (!xmldom) {
             return callback({
                 message: 'Invalid XML file: not valid XML'
             });
         }
-        callback(null, osm2geojson(xmldom));
+        result = osmtogeojson.toGeojson(xmldom);
+        // only keep object tags as properties
+        result.features.forEach(function(feature) {
+            feature.properties = feature.properties.tags;
+        });
+        callback(null, result);
     } else if (fileType === 'gpx') {
         callback(null, toGeoJSON.gpx(toDom(text)));
     } else if (fileType === 'geojson') {
