@@ -12372,7 +12372,6 @@ var osmtogeojson = {};
 osmtogeojson.toGeojson = function( data ) {
 
   var result;
-  console.log(data.childNodes[0].tagName);
   if ( ((typeof XMLDocument !== "undefined") && data instanceof XMLDocument ||
         (typeof XMLDocument === "undefined") && data.childNodes) )
     result = _osmXML2geoJSON(data);
