@@ -20,6 +20,35 @@ module.exports = function(context) {
         zoomextent(context);
     }
 
+    function inlineJSON(data) {
+        try {
+            context.data.set({
+                map: JSON.parse(data)
+            });
+            location.hash = '';
+            zoomextent(context);
+        } catch(e) {
+            return flash(context.container, 'Could not parse JSON');
+        }
+    }
+
+    function loadUrl(data) {
+        d3.json(data)
+            .on('load', onload)
+            .on('error', onerror)
+            .get();
+
+        function onload(d) {
+            context.data.set({ map: d });
+            location.hash = '';
+            zoomextent(context);
+        }
+
+        function onerror() {
+            return flash(context.container, 'Could not load external file. External files must be served with CORS and be valid GeoJSON.');
+        }
+    }
+
     return function(query) {
         if (!query.id && !query.data) return;
 
@@ -27,14 +56,13 @@ module.exports = function(context) {
             context.data.get('route');
 
         if (query.data) {
-            context.container.select('.map').classed('loading', true);
-            try {
-                context.data.set({ map: JSON.parse(query.data.replace('data:application/json,', '')) });
-                context.container.select('.map').classed('loading', false);
-                location.hash = '';
-                zoomextent(context);
-            } catch(e) {
-                return flash(context.container, 'Could not parse JSON');
+            var type = query.data.match(/^(data\:[\w\-]+\/[\w\-]+\,?)/);
+            if (type) {
+                if (type[0] == 'data:application/json,') {
+                    inlineJSON(query.data.replace(type[0], ''));
+                } else if (type[0] == 'data:text/x-url,') {
+                    loadUrl(query.data.replace(type[0], ''));
+                }
             }
         } else if (query.id !== oldRoute) {
             context.container.select('.map').classed('loading', true);
