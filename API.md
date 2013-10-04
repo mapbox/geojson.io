@@ -57,3 +57,28 @@ The url is in the form:
 #### Example
 
 http://geojson.io/#id=github:tmcw/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302
+
+# Console API
+
+[Pop open your browser console](http://debugbrowser.com/) and see the beautiful
+examples: geojson.io has started to expose a subset of its inner workings for
+you to mess around with:
+
+## `window.api.map`
+
+The [Leaflet](http://leafletjs.com/) map that you see and use on the site. See
+the [Leaflet API](http://leafletjs.com/reference.html) for all the things you
+can do with it.
+
+For instance, you could add another map layer:
+
+```js
+window.api.map.addLayer(L.tileLayer('http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg'))
+```
+
+## `window.api.data`
+
+The data model. See the [code to get an idea of how it works](https://github.com/mapbox/geojson.io/blob/gh-pages/src/core/data.js#L48-L90) -
+you'll want to use stuff like `data.set({ map: { .. your geojson map information .. })`
+and `data.get('map')` and `data.mergeFeatures([arrayoffeatures])` to do your
+dirty business.

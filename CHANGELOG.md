@@ -2,8 +2,11 @@
 
 ## 2013-10-04
 
+![](http://i.imgur.com/nfvLdjd.gif)
+
 * Support for `data=text/x-url,` argument to load GeoJSON files on the web via [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 * [URL API Documentation](https://github.com/mapbox/geojson.io/blob/gh-pages/API.md)
+* Console API Documentation & Console API
 
 ## 2013-10-01
 

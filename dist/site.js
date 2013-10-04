@@ -18855,6 +18855,39 @@ module.exports = function(hostname) {
 };
 
 },{}],95:[function(require,module,exports){
+module.exports = api;
+
+function api(context) {
+    if (typeof console === 'undefined' || !console || !console.log) return;
+
+    console.log('%c⚛ geojson.io api ⚛', 'font-family:monospace;font-size:20px;color:darkblue;');
+    console.log('%cfrom here, you can customize geojson.io to your liking by mucking around with the internals', 'font-family:monospace;font-size:14px;color:darkblue;');
+    console.log('%chere\'s what\'s available ↓', 'color:blue;');
+    console.log('');
+
+    console.log('%c- window.api.map: the leaflet map object', 'font-weight:bold;');
+    console.log('%O', context.map);
+
+    console.log('');
+
+    console.log('%c- window.api.data: the data model', 'font-weight:bold;');
+    console.log('%O', context.data);
+
+    console.log('');
+    console.log('%cExample:', 'font-weight:bold;');
+    console.log('');
+    console.log('%c  window.api.map.setView([38, -78], 5);', 'color:green;');
+
+    console.log('');
+    console.log('%c  window.api.data.mergeFeatures([{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [0, 0] } }]);', 'color:green;');
+
+    window.api = {
+        map: context.map,
+        data: context.data
+    };
+}
+
+},{}],96:[function(require,module,exports){
 var clone = require('clone');
     xtend = require('xtend');
     source = {
@@ -19081,7 +19114,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":112,"../source/github":113,"clone":8,"xtend":89}],96:[function(require,module,exports){
+},{"../source/gist":113,"../source/github":114,"clone":8,"xtend":89}],97:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -19155,7 +19188,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/zoomextent":108,"../ui/flash":119,"qs-hash":23}],97:[function(require,module,exports){
+},{"../lib/zoomextent":109,"../ui/flash":120,"qs-hash":23}],98:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('qs-hash');
 
@@ -19195,7 +19228,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/zoomextent":108,"qs-hash":23}],98:[function(require,module,exports){
+},{"../lib/zoomextent":109,"qs-hash":23}],99:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -19238,7 +19271,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":94}],99:[function(require,module,exports){
+},{"../config.js":94}],100:[function(require,module,exports){
 var qs = require('qs-hash'),
     xtend = require('xtend');
 
@@ -19305,7 +19338,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"qs-hash":23,"xtend":89}],100:[function(require,module,exports){
+},{"qs-hash":23,"xtend":89}],101:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -19390,7 +19423,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":94}],101:[function(require,module,exports){
+},{"../config.js":94}],102:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -19399,6 +19432,7 @@ var ui = require('./ui'),
     recovery = require('./core/recovery'),
     repo = require('./core/repo'),
     user = require('./core/user'),
+    api = require('./core/api'),
     store = require('store');
 
 var gjIO = geojsonIO(),
@@ -19408,6 +19442,8 @@ d3.select('.geojsonio').call(gjUI);
 
 gjIO.recovery = recovery(gjIO);
 gjIO.router.on();
+
+api(gjIO);
 
 function geojsonIO() {
     var context = {};
@@ -19422,7 +19458,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":95,"./core/loader":96,"./core/recovery":97,"./core/repo":98,"./core/router":99,"./core/user":100,"./ui":114,"./ui/map":123,"store":58}],102:[function(require,module,exports){
+},{"./core/api":95,"./core/data":96,"./core/loader":97,"./core/recovery":98,"./core/repo":99,"./core/router":100,"./core/user":101,"./ui":115,"./ui/map":124,"store":58}],103:[function(require,module,exports){
 var qs = require('qs-hash');
 require('leaflet-hash');
 
@@ -19461,7 +19497,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"leaflet-hash":20,"qs-hash":23}],103:[function(require,module,exports){
+},{"leaflet-hash":20,"qs-hash":23}],104:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -19524,7 +19560,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 module.exports = function(elem, w, h) {
     var c = elem.appendChild(document.createElement('canvas'));
 
@@ -19545,7 +19581,7 @@ module.exports = function(elem, w, h) {
     };
 };
 
-},{}],105:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     csv2geojson = require('csv2geojson'),
@@ -19719,7 +19755,7 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":9,"osmtogeojson":22,"togeojson":59,"topojson":"g070js"}],106:[function(require,module,exports){
+},{"csv2geojson":9,"osmtogeojson":22,"togeojson":59,"topojson":"g070js"}],107:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -19731,7 +19767,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],107:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -19792,13 +19828,13 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":15}],108:[function(require,module,exports){
+},{"geojsonhint":15}],109:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],109:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 var fs = require('fs');
 
 module.exports = function(context) {
@@ -19817,7 +19853,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"fs":3}],110:[function(require,module,exports){
+},{"fs":3}],111:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
@@ -19880,7 +19916,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":107,"../lib/zoomextent":108,"../ui/saver.js":126}],111:[function(require,module,exports){
+},{"../lib/validate":108,"../lib/zoomextent":109,"../ui/saver.js":127}],112:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -19952,7 +19988,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":106,"d3-metatable":12}],112:[function(require,module,exports){
+},{"../lib/smartzoom.js":107,"d3-metatable":12}],113:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -20046,7 +20082,7 @@ function load(id, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":3}],113:[function(require,module,exports){
+},{"fs":3}],114:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -20153,7 +20189,7 @@ function fileUrl(parts) {
         '?ref=' + parts.branch;
 }
 
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -20238,7 +20274,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":116,"./ui/file_bar":118,"./ui/layer_switch":122,"./ui/mode_buttons":125,"./ui/user":129}],115:[function(require,module,exports){
+},{"./ui/dnd":117,"./ui/file_bar":119,"./ui/layer_switch":123,"./ui/mode_buttons":126,"./ui/user":130}],116:[function(require,module,exports){
 var github = require('../source/github');
 
 module.exports = commit;
@@ -20273,7 +20309,7 @@ function commit(context, callback) {
     return wrap;
 }
 
-},{"../source/github":113}],116:[function(require,module,exports){
+},{"../source/github":114}],117:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
     flash = require('./flash.js'),
@@ -20323,7 +20359,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":105,"../lib/zoomextent":108,"./flash.js":119,"./geocode.js":120}],117:[function(require,module,exports){
+},{"../lib/readfile.js":106,"../lib/zoomextent":109,"./flash.js":120,"./geocode.js":121}],118:[function(require,module,exports){
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     topojson = require('topojson'),
@@ -20418,7 +20454,7 @@ function download(context) {
     };
 }
 
-},{"clone":8,"filesaver.js":14,"shp-write":24,"topojson":"g070js"}],118:[function(require,module,exports){
+},{"clone":8,"filesaver.js":14,"shp-write":24,"topojson":"g070js"}],119:[function(require,module,exports){
 var share = require('./share'),
     sourcepanel = require('./source.js'),
     flash = require('./flash'),
@@ -20564,7 +20600,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../lib/readfile":105,"../lib/zoomextent":108,"../ui/saver.js":126,"./download":117,"./flash":119,"./share":127,"./source.js":128}],119:[function(require,module,exports){
+},{"../lib/readfile":106,"../lib/zoomextent":109,"../ui/saver.js":127,"./download":118,"./flash":120,"./share":128,"./source.js":129}],120:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -20586,7 +20622,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":124}],120:[function(require,module,exports){
+},{"./message":125}],121:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart'),
     csv2geojson = require('csv2geojson');
 
@@ -20724,7 +20760,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":104,"csv2geojson":9}],121:[function(require,module,exports){
+},{"../lib/progress_chart":105,"csv2geojson":9}],122:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -20812,7 +20848,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/readfile.js":105,"../lib/zoomextent":108,"./flash.js":119,"./geocode.js":120}],122:[function(require,module,exports){
+},{"../lib/readfile.js":106,"../lib/zoomextent":109,"./flash.js":120,"./geocode.js":121}],123:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -20865,7 +20901,7 @@ module.exports = function(context) {
 };
 
 
-},{}],123:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('qs-hash');
@@ -20982,7 +21018,7 @@ function bindPopup(l) {
     }, l).setContent(content));
 }
 
-},{"../lib/custom_hash.js":102,"../lib/popup":103,"qs-hash":23}],124:[function(require,module,exports){
+},{"../lib/custom_hash.js":103,"../lib/popup":104,"qs-hash":23}],125:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -21023,7 +21059,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],125:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -21075,7 +21111,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":109,"../panel/json":110,"../panel/table":111}],126:[function(require,module,exports){
+},{"../panel/help":110,"../panel/json":111,"../panel/table":112}],127:[function(require,module,exports){
 var commit = require('./commit');
 var flash = require('./flash');
 
@@ -21137,7 +21173,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":115,"./flash":119}],127:[function(require,module,exports){
+},{"./commit":116,"./flash":120}],128:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -21214,7 +21250,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":112}],128:[function(require,module,exports){
+},{"../source/gist":113}],129:[function(require,module,exports){
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     qs = require('qs-hash'),
@@ -21339,7 +21375,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":121,"detect-json-indent":13,"github-file-browser":17,"qs-hash":23}],129:[function(require,module,exports){
+},{"./import":122,"detect-json-indent":13,"github-file-browser":17,"qs-hash":23}],130:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
@@ -21387,5 +21423,5 @@ module.exports = function(context) {
     };
 };
 
-},{}]},{},[101])
+},{}]},{},[102])
 ;
