@@ -20263,6 +20263,8 @@ module.exports = download;
 
 function download(context) {
 
+    var shpSupport = typeof ArrayBuffer !== 'undefined';
+
     function downloadTopo() {
         var content = JSON.stringify(topojson.topology({
             collection: clone(context.data.get('map'))
@@ -20311,14 +20313,18 @@ function download(context) {
             title: 'GeoJSON',
             action: downloadGeoJSON
         }, {
-            icon: 'icon-file-alt',
-            title: 'Shapefile (beta)',
-            action: downloadShp
-        }, {
             icon: 'icon-file',
             title: 'TopoJSON',
             action: downloadTopo
         }];
+
+        if (shpSupport) {
+            actions.push({
+                icon: 'icon-file-alt',
+                title: 'Shapefile (beta)',
+                action: downloadShp
+            });
+        }
 
         var links = sel
             .selectAll('.action')
