@@ -19939,7 +19939,7 @@ function saveBlocks(content, callback) {
             public: false,
             files: {
                 'index.html': { content: tmpl },
-                'map.geojson': { content: content }
+                'map.geojson': { content: JSON.stringify(content) }
             }
         }));
 }
