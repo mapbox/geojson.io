@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2013-10-07
+
+* Fix iframe embeds
+
 ## 2013-10-04
 
 ![](http://i.imgur.com/nfvLdjd.gif)
