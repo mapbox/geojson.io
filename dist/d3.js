@@ -103,6 +103,11 @@ d3_class(d3_Set, {
     }
   }
 });
+d3.pairs = function(array) {
+  var i = 0, n = array.length - 1, p0, p1 = array[0], pairs = new Array(n < 0 ? 0 : n);
+  while (i < n) pairs[i] = [p0 = p1, p1 = array[++i]];
+  return pairs;
+};
 d3.range = function(start, stop, step) {
   if (arguments.length < 3) {
     step = 1;

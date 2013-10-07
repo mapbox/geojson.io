@@ -15,6 +15,7 @@ dist/d3.js: node_modules node_modules/d3/*
 	$(SMASH) node_modules/d3/src/start.js \
 		node_modules/d3/src/arrays/entries.js \
 		node_modules/d3/src/arrays/set.js \
+		node_modules/d3/src/arrays/pairs.js \
 		node_modules/d3/src/arrays/range.js \
 		node_modules/d3/src/behavior/drag.js \
 		node_modules/d3/src/core/rebind.js \
