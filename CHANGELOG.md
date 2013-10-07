@@ -3,6 +3,7 @@
 ## 2013-10-07
 
 * Fix iframe embeds
+* Popups now show (latitude, longitude) for points or total length for lines.
 
 ## 2013-10-04
 
