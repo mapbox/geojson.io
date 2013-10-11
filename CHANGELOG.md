@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2013-10-11
+
+![](http://i.imgur.com/hUcZLqc.gif)
+
+* [KML](https://developers.google.com/kml/documentation/) export support
+  with [tokml](https://github.com/mapbox/tokml)
+
 ## 2013-10-07
 
 * Fix iframe embeds

@@ -26,7 +26,8 @@
     "filesaver.js": "2013.1.23",
     "shp-write": "0.1.5",
     "osmtogeojson": "1.1.1",
-    "qs-hash": "0.0.0"
+    "qs-hash": "0.0.0",
+    "tokml": "0.0.2"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",

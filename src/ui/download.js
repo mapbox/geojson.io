@@ -1,13 +1,15 @@
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     topojson = require('topojson'),
-    saveAs = require('filesaver.js');
+    saveAs = require('filesaver.js'),
+    tokml = require('tokml');
 
 module.exports = download;
 
 function download(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
+
 
     function downloadTopo() {
         var content = JSON.stringify(topojson.topology({
@@ -17,6 +19,8 @@ function download(context) {
         saveAs(new Blob([content], {
             type: 'text/plain;charset=utf-8'
         }), 'map.topojson');
+
+        analytics.track('download/topojson');
     }
 
     function downloadGeoJSON() {
@@ -26,6 +30,17 @@ function download(context) {
         saveAs(new Blob([content], {
             type: 'text/plain;charset=utf-8'
         }), (meta && meta.name) || 'map.geojson');
+        analytics.track('download/geojson');
+    }
+
+    function downloadKML() {
+        if (d3.event) d3.event.preventDefault();
+        var content = tokml(context.data.get('map'));
+        var meta = context.data.get('meta');
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'map.kml');
+        analytics.track('download/kml');
     }
 
     function downloadShp() {
@@ -36,6 +51,7 @@ function download(context) {
         } finally {
             d3.select('.map').classed('loading', false);
         }
+        analytics.track('download/shp');
     }
 
     function allProperties(properties, key, value) {
@@ -60,6 +76,10 @@ function download(context) {
             icon: 'icon-file',
             title: 'TopoJSON',
             action: downloadTopo
+        }, {
+            icon: 'icon-code',
+            title: 'KML',
+            action: downloadKML
         }];
 
         if (shpSupport) {

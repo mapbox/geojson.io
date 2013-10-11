@@ -387,6 +387,7 @@ textarea.full-width {
 
 .share .network, .download .action {
     margin-right:10px;
+    cursor:pointer;
 }
 
 .share .icon-remove, .download .icon-remove {
@@ -397,7 +398,7 @@ textarea.full-width {
     .file-bar .button-wrap button span.title {
         display:none;
     }
-    .map {
+    .share, .download, .map {
         right:50%;
     }
     .right {
