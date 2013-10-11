@@ -2,7 +2,7 @@
 
 ## 2013-10-11
 
-![](http://i.imgur.com/hUcZLqc.gif)
+![KML Import](http://i.imgur.com/hUcZLqc.gif)
 
 * [KML](https://developers.google.com/kml/documentation/) export support
   with [tokml](https://github.com/mapbox/tokml)
@@ -14,7 +14,7 @@
 
 ## 2013-10-04
 
-![](http://i.imgur.com/nfvLdjd.gif)
+![URL Loading](http://i.imgur.com/nfvLdjd.gif)
 
 * Support for `data=text/x-url,` argument to load GeoJSON files on the web via [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 * [URL API Documentation](https://github.com/mapbox/geojson.io/blob/gh-pages/API.md)
@@ -24,7 +24,7 @@
 
 * Shapefile export (beta)
 
-![](http://i.imgur.com/5zpt1d3.gif)
+![Shapefile Export](http://i.imgur.com/5zpt1d3.gif)
 
 ## 2013-9-30
 
