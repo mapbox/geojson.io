@@ -2,7 +2,7 @@
 
 ## 2013-10-11
 
-![KML Import](http://i.imgur.com/f0L156Am.gif)
+![KML Import](http://i.imgur.com/f0L156A.gif)
 
 * [KML](https://developers.google.com/kml/documentation/) export support
   with [tokml](https://github.com/mapbox/tokml)
