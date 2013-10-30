@@ -23175,13 +23175,11 @@ module.exports = function(context) {
         var layers = [{
             title: 'MapBox',
             layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-                retinaVersion: 'tmcw.map-u4ca5hnt',
                 detectRetina: true
             })
         }, {
             title: 'Satellite',
             layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-                retinaVersion: 'tmcw.map-ujx9se0r',
                 detectRetina: true
             })
         }, {
@@ -23203,7 +23201,7 @@ module.exports = function(context) {
                 else if (context.map.hasLayer(l.layer)) context.map.removeLayer(l.layer);
             }
         };
-        
+
         var layerButtons = selection.append('div')
             .attr('class', 'layer-switch')
             .selectAll('button')
