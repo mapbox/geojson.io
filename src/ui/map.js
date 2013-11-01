@@ -74,6 +74,7 @@ function geojsonToLayer(geojson, layer) {
     L.geoJson(geojson).eachLayer(add);
     function add(l) {
         bindPopup(l);
+        setStyle(l);
         l.addTo(layer);
     }
 }
@@ -104,4 +105,10 @@ function bindPopup(l) {
         maxWidth: 500,
         maxHeight: 400
     }, l).setContent(content));
+}
+
+function setStyle(l){
+    if(l&&l.feature&&l.feature.properties&&l.feature.properties.style){
+        l.setStyle(l.feature.properties.style);
+    }
 }
