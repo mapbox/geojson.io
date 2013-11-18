@@ -23330,8 +23330,8 @@ function bindPopup(l) {
             }, 0);
             info += '<div>Length: ' + total.toFixed(2) + ' m</div>';
         } else if (l.feature.geometry.type === 'Point') {
-            info += '<div>Latitude: ' + l.feature.geometry.coordinates[0].toFixed(2) + '</div>' +
-                '<div>Longitude: ' + l.feature.geometry.coordinates[1].toFixed(2) + '</div>';
+            info += '<div>Latitude: ' + l.feature.geometry.coordinates[1].toFixed(2) + '</div>' +
+                '<div>Longitude: ' + l.feature.geometry.coordinates[0].toFixed(2) + '</div>';
         }
     }
 
