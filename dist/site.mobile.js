@@ -19024,24 +19024,36 @@ if (typeof module !== 'undefined') module.exports = toGeoJSON;
 module.exports = function tokml(geojson, options) {
 
     options = options || {
+        documentName: undefined,
+        documentDescription: undefined,
         name: 'name',
         description: 'description',
+        simplestyle: false
     };
 
     return '<?xml version="1.0" encoding="UTF-8"?>' +
         tag('kml',
             tag('Document',
+                documentName(options) +
+                documentDescription(options) +
                 root(geojson, options)
                ), [['xmlns', 'http://www.opengis.net/kml/2.2']]);
 };
 
 function feature(options) {
     return function(_) {
-        return tag('Placemark',
+        var styleDefinition = '',
+            styleReference = '';
+        if (options.simplestyle && hasStyle(_.properties)) {
+            styleDefinition = iconstyle(_.properties);
+            styleReference = tag('styleUrl', '#' + iconHash(_.properties));
+        }
+        return styleDefinition + tag('Placemark',
             name(_.properties, options) +
             description(_.properties, options) +
             geometry.any(_.geometry) +
-            extendeddata(_.properties));
+            extendeddata(_.properties) +
+            styleReference);
     };
 }
 
@@ -19062,12 +19074,20 @@ function root(_, options) {
     return '';
 }
 
+function documentName(options) {
+    return (options.documentName !== undefined) ? tag('name', options.documentName) : '';
+}
+
+function documentDescription(options) {
+    return (options.documentDescription !== undefined) ? tag('description', options.documentDescription) : '';
+}
+
 function name(_, options) {
-    return (_[options.name]) ? tag('name', encode(_[options.name])) : '';
+    return _[options.name] ? tag('name', encode(_[options.name])) : '';
 }
 
 function description(_, options) {
-    return (_[options.description]) ? tag('description', encode(_[options.description])) : '';
+    return _[options.description] ? tag('description', encode(_[options.description])) : '';
 }
 
 // ## Geometry Types
@@ -19132,6 +19152,43 @@ function data(_) {
     return tag('Data', encode(_[1]), [['name', encode(_[0])]]);
 }
 
+// ## Icons
+function iconstyle(_) {
+    return tag('Style',
+        tag('IconStyle',
+            tag('Icon',
+                tag('href', iconUrl(_)))) +
+        iconSize(_), [['id', iconHash(_)]]);
+}
+
+function iconUrl(_) {
+    var size = _['marker-size'] || 'medium',
+        symbol = _['marker-symbol'] ? '-' + _['marker-symbol'] : '',
+        color = (_['marker-color'] || '7e7e7e').replace('#', '');
+
+    return 'https://api.tiles.mapbox.com/v3/marker/' + 'pin-' + size.charAt(0) +
+        symbol + '+' + color + '.png';
+}
+
+function iconSize(_) {
+    return tag('hotSpot', '', [
+        ['xunits', 'fraction'],
+        ['yunits', 'fraction'],
+        ['x', 0.5],
+        ['y', 0.5]
+    ]);
+}
+
+function hasStyle(_) {
+    return !!(_['marker-size'] || _['marker-symbol'] || _['marker-color']);
+}
+
+function iconHash(_) {
+    return (_['marker-symbol'] || '') +
+        (_['marker-color'] || '').replace('#', '') +
+        (_['marker-size'] || '');
+}
+
 // ## Helpers
 function pairs(_) {
     var o = [];
@@ -19149,9 +19206,8 @@ function tag(el, contents, attributes) {
     return '<' + el + attr(attributes) + '>' + contents + '</' + el + '>';
 }
 
-
 function encode(_) {
-    return (_ || '').replace(/&/g, '&amp;')
+    return (_ === null ? '' : _.toString()).replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
