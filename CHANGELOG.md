@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2013-11-18
+
+* Fix coordinate order in popups
+
 ## 2013-10-11
 
 ![KML Import](http://i.imgur.com/f0L156A.gif)
