@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2013-11-25
+
+* Added ability to rename GeoJSON properties in the table view
+
 ## 2013-11-18
 
 * Fix coordinate order in popups
