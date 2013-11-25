@@ -4158,10 +4158,13 @@ function metatable() {
                     .selectAll('th')
                     .data(keys, function(d) { return d; });
 
-                var delbutton = th.enter().append('th')
-                    .append('span')
-                    .text(String)
-                    .append('button');
+                var thEnter = th.enter().append('th');
+
+                thEnter.append('span')
+                    .text(String);
+
+                var delbutton = thEnter.append('button'),
+                    renamebutton = thEnter.append('button');
 
                 th.exit().remove();
 
@@ -4183,26 +4186,53 @@ function metatable() {
 
                 td.exit().remove();
 
-                delbutton.on('click', function(d) {
-                        var name = d;
-                        if (confirm('Delete column ' + name + '?')) {
-                            keyset.remove(name);
-                            tr.selectAll('input')
-                                .data(function(d, i) {
-                                    var map = d3.map(d);
-                                    map.remove(name);
-                                    var reduced = mapToObject(map);
-                                    event.change(reduced, i);
-                                    return {
-                                        data: reduced,
-                                        index: i
-                                    };
-                                });
-                            paint();
-                        }
-                    });
+                delbutton.on('click', deleteClick);
                 delbutton.append('span').attr('class', 'icon-minus');
                 delbutton.append('span').text(' delete');
+
+                renamebutton.append('span').text(' rename');
+                renamebutton.on('click', renameClick);
+
+                function deleteClick(d) {
+                    var name = d;
+                    if (confirm('Delete column ' + name + '?')) {
+                        keyset.remove(name);
+                        tr.selectAll('input')
+                            .data(function(d, i) {
+                                var map = d3.map(d);
+                                map.remove(name);
+                                var reduced = mapToObject(map);
+                                event.change(reduced, i);
+                                return {
+                                    data: reduced,
+                                    index: i
+                                };
+                            });
+                        paint();
+                    }
+                }
+
+                function renameClick(d) {
+                    var name = d;
+                    var newname = prompt('New name for column ' + name + '?');
+                    if (newname) {
+                        keyset.remove(name);
+                        keyset.add(newname);
+                        tr.selectAll('input')
+                            .data(function(d, i) {
+                                var map = d3.map(d);
+                                map.set(newname, map.get(name));
+                                map.remove(name);
+                                var reduced = mapToObject(map);
+                                event.change(reduced, i);
+                                return {
+                                    data: reduced,
+                                    index: i
+                                };
+                            });
+                        paint();
+                    }
+                }
 
                 function coerceNum(x) {
                     var fl = parseFloat(x);
