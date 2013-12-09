@@ -3912,11 +3912,11 @@ function autoDelimiter(x) {
             for (var i = 0; i < res.length; i++) {
                 if (keyCount(res[i]) !== count) return;
             }
+            results.push({
+                delimiter: delimiter,
+                arity: Object.keys(res[0]).length,
+            });
         }
-        results.push({
-            delimiter: delimiter,
-            arity: Object.keys(res[0]).length,
-        });
     });
 
     if (results.length) {
@@ -4041,7 +4041,7 @@ function toLine(gj) {
     }
     line.properties = features[0].properties;
     return {
-        type: 'FeatureSet',
+        type: 'FeatureCollection',
         features: [line]
     };
 }
@@ -4060,7 +4060,7 @@ function toPolygon(gj) {
     }
     poly.properties = features[0].properties;
     return {
-        type: 'FeatureSet',
+        type: 'FeatureCollection',
         features: [poly]
     };
 }
