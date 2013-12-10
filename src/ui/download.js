@@ -1,5 +1,6 @@
 var shpwrite = require('shp-write'),
     clone = require('clone'),
+    geojson2dsv = require('geojson2dsv'),
     topojson = require('topojson'),
     saveAs = require('filesaver.js'),
     tokml = require('tokml');
@@ -31,6 +32,15 @@ function download(context) {
             type: 'text/plain;charset=utf-8'
         }), (meta && meta.name) || 'map.geojson');
         analytics.track('download/geojson');
+    }
+
+    function downloadDSV() {
+        if (d3.event) d3.event.preventDefault();
+        var content = geojson2dsv(context.data.get('map'));
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'points.csv');
+        analytics.track('download/dsv');
     }
 
     function downloadKML() {
@@ -76,6 +86,10 @@ function download(context) {
             icon: 'icon-file',
             title: 'TopoJSON',
             action: downloadTopo
+        }, {
+            icon: 'icon-table',
+            title: 'CSV',
+            action: downloadDSV
         }, {
             icon: 'icon-code',
             title: 'KML',
