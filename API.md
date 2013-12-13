@@ -31,9 +31,11 @@ refer directly to a resource that is:
 * Supports [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 * Is valid GeoJSON
 
+The URL should be encoded as per `encodeURIComponent(url)`.
+
 #### Example
 
-http://geojson.io/#data=data:text/x-url,http://api.tiles.mapbox.com/v3/tmcw.map-gdv4cswo/markers.geojson&map=5/5.019/5.000
+http://geojson.io/#data=data:text/x-url,http%3A%2F%2Fapi.tiles.mapbox.com%2Fv3%2Ftmcw.map-gdv4cswo%2Fmarkers.geojson
 
 ## `id=gist:`
 
