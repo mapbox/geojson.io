@@ -50,7 +50,7 @@ http://geojson.io/#id=gist:tmcw/e9a29ad54dbaa83dee08&map=8/39.198/-76.981
 ## `id=github:`
 
 Load a file from a GitHub repository. You must have access to the file, and
-it must be valid.
+it must be valid GeoJSON. 
 
 The url is in the form:
 
