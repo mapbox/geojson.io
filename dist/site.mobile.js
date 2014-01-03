@@ -21507,7 +21507,14 @@ module.exports = function(context) {
         }
 
         context.data.parse(d);
-        zoomextent(context);
+
+        if (!qs.stringQs(location.hash.substring(1)).map || mapDefault()) {
+            zoomextent(context);
+        }
+    }
+
+    function mapDefault() {
+        return context.map.getZoom() == 2 || map.getCenter().equals(new L.LatLng(20, 0));
     }
 
     function inlineJSON(data) {
