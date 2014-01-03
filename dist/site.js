@@ -21367,7 +21367,7 @@ module.exports = function(context) {
                 key = keys[i];
                 value = props[key];
                 feature.properties[key] = !isNaN(parseFloat(value)) &&
-                    /^(?!0.)/.test(value) ? Number(value) : value;
+                    isFinite(value) ? Number(value) : value;
             }
 
             return feature;
