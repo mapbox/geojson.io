@@ -18532,7 +18532,7 @@ module.exports = function(context) {
     }
 
     function mapDefault() {
-        return context.map.getZoom() == 2 || map.getCenter().equals(new L.LatLng(20, 0));
+        return context.map.getZoom() == 2 || context.map.getCenter().equals(new L.LatLng(20, 0));
     }
 
     function inlineJSON(data) {
