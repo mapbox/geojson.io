@@ -104,7 +104,7 @@ function fileUrl(parts) {
         '?ref=' + parts.branch;
 }
 
-function shaUrl(parts, sha) {https://api.github.com/repos/landonreed/aris/git/blobs/
+function shaUrl(parts, sha) {
     return 'https://api.github.com/repos/' +
         parts.user +
         '/' + parts.repo +
