@@ -20,6 +20,14 @@ A fast, simple editor for map data. Read more on [MapBox](http://www.mapbox.com/
 
 * [GitSpatial](http://gitspatial.com/) makes GeoJSON on GitHub more like an API
 
+## API
+
+You can interact with geojson.io programmatically in two ways:
+- [URL parameters](API.md#url-api)
+- [Browser console](API.md#console-api)
+
+Full API documentation can be found in [API.md](API.md).
+
 ## Development
 
 Install [browserify](https://github.com/substack/node-browserify)'ied libraries:
