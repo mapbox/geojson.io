@@ -110,10 +110,11 @@ module.exports = function(context) {
                     path: (url.slice(4) || []).join('/')
                 };
 
-                source.github.load(parts, context, function(err, meta) {
-                    return source.github.loadRaw(parts, context, function(err, raw) {
-                        return cb(err, xtend(meta, { content: JSON.parse(raw) }));
+                source.github.load(parts, context, function(err, meta) { 
+                    return source.github.loadRaw(parts, meta.sha, context, function(err, file) {
+                        return cb(err, xtend(meta, { content: JSON.parse(file) }));
                     });
+                        
                 });
 
                 break;
