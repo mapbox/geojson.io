@@ -4,7 +4,7 @@
 
 ![](http://i.cloudup.com/kz3BAF7Hnx.png)
 
-A fast, simple editor for map data. Read more on [MapBox](http://www.mapbox.com/blog/geojsonio-announce/),
+A fast, simple editor for map data. Read more on [Mapbox](http://www.mapbox.com/blog/geojsonio-announce/),
 [macwright.org](http://macwright.org/2013/07/26/geojsonio.html).
 
 ## Goes Great With!
