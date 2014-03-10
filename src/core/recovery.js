@@ -12,7 +12,9 @@ module.exports = function(context) {
         var rec = context.storage.get('recover');
         if (rec && confirm('recover your map from the last time you edited?')) {
             context.data.set(rec);
-            zoomextent(context);
+            setTimeout(function() {
+                zoomextent(context);
+            }, 100);
         } else {
             context.storage.remove('recover');
         }

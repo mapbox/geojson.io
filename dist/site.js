@@ -18601,7 +18601,9 @@ module.exports = function(context) {
         var rec = context.storage.get('recover');
         if (rec && confirm('recover your map from the last time you edited?')) {
             context.data.set(rec);
-            zoomextent(context);
+            setTimeout(function() {
+                zoomextent(context);
+            }, 100);
         } else {
             context.storage.remove('recover');
         }
@@ -20352,7 +20354,10 @@ module.exports = function(context, readonly) {
 
     function map(selection) {
 
-        context.map = L.mapbox.map(selection.node())
+        context.map = L.mapbox.map(selection.node(), null, {
+                infoControl: false,
+                attributionControl: true
+            })
             .setView([20, 0], 2)
             .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt'));
 
@@ -20417,6 +20422,7 @@ module.exports = function(context, readonly) {
 function geojsonToLayer(geojson, layer) {
     layer.clearLayers();
     L.geoJson(geojson, {
+        style: L.mapbox.simplestyle.style,
         pointToLayer: function(feature, latlon) {
             if (!feature.properties) feature.properties = {};
             return L.mapbox.marker.style(feature, latlon);
