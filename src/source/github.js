@@ -83,8 +83,8 @@ function load(parts, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-function loadRaw(parts, context, callback) {
-    context.user.signXHR(d3.text(fileUrl(parts)))
+function loadRaw(parts, sha, context, callback) {
+    context.user.signXHR(d3.text(shaUrl(parts, sha)))
         .on('load', onLoad)
         .on('error', onError)
         .header('Accept', 'application/vnd.github.raw')
@@ -102,4 +102,11 @@ function fileUrl(parts) {
         '/' + parts.repo +
         '/contents/' + parts.path +
         '?ref=' + parts.branch;
+}
+
+function shaUrl(parts, sha) {
+    return 'https://api.github.com/repos/' +
+        parts.user +
+        '/' + parts.repo +
+        '/git/blobs/' + sha;
 }
