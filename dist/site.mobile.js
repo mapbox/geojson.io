@@ -20380,8 +20380,8 @@ function bindPopup(l) {
     if (l.feature && l.feature.geometry) {
         if (l.feature.geometry.type === 'LineString') {
             var total = d3.pairs(l.feature.geometry.coordinates).reduce(function(total, pair) {
-                return total + L.latLng(pair[0][0], pair[0][1])
-                    .distanceTo(L.latLng(pair[1][0], pair[1][1]));
+                return total + L.latLng(pair[0][1], pair[0][0])
+                    .distanceTo(L.latLng(pair[1][1], pair[1][0]));
             }, 0);
             info += '<div>Length: ' + total.toFixed(2) + ' m</div>';
         } else if (l.feature.geometry.type === 'Point') {
