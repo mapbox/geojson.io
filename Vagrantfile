@@ -9,6 +9,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provision "shell", path: "vagrant.sh"
 
-  config.vm.network :forwarded_port, guest: 8081, host: 8080, auto_correct: true
+  config.vm.network :forwarded_port, guest: 8080, host: 8080, auto_correct: true
   config.vm.network :private_network, ip: "192.168.50.120"
 end
