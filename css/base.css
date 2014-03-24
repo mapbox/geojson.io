@@ -63,12 +63,12 @@ body#geojsonio-body {
 :focus { outline:0; }
 
 a {
-    color:#3bb2d0;
+    color:#2980b9;
     text-decoration:none;
 }
 
 a:hover {
-    color:#1E758B;
+    color:#3498db;
 }
 
 p {

@@ -15,7 +15,7 @@ module.exports = function(context) {
             .attr('class', 'right overlay');
 
         var sources = [{
-            title: 'Import',
+            title: 'File',
             alt: 'CSV, KML, GPX, and other filetypes',
             icon: 'icon-cog',
             action: clickImport

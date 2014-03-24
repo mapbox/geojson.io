@@ -83,13 +83,11 @@ function readFile(f, text, callback) {
     if (!fileType) {
         var filename = f.name ? f.name.toLowerCase() : '',
             pts = filename.split('.');
-        if (pts.length > 1) analytics.track('failed/' + pts[pts.length - 1]);
         return callback({
             message: 'Could not detect file type'
         });
     } else if (fileType === 'kml') {
         var kmldom = toDom(text);
-        analytics.track('import/kml');
         if (!kmldom) {
             return callback({
                 message: 'Invalid KML file: not valid XML'
@@ -112,20 +110,17 @@ function readFile(f, text, callback) {
             });
         }
         result = osmtogeojson.toGeojson(xmldom);
-        analytics.track('import/osm');
         // only keep object tags as properties
         result.features.forEach(function(feature) {
             feature.properties = feature.properties.tags;
         });
         callback(null, result);
     } else if (fileType === 'gpx') {
-        analytics.track('import/gpx');
         callback(null, toGeoJSON.gpx(toDom(text)));
     } else if (fileType === 'geojson') {
         try {
             gj = JSON.parse(text);
             if (gj && gj.type === 'Topology' && gj.objects) {
-                analytics.track('import/topojson');
                 var collection = { type: 'FeatureCollection', features: [] };
                 for (var o in gj.objects) {
                     var ft = topojson.feature(gj, gj.objects[o]);
@@ -134,7 +129,6 @@ function readFile(f, text, callback) {
                 }
                 return callback(null, collection);
             } else {
-                analytics.track('import/geojson');
                 return callback(null, gj);
             }
         } catch(err) {
@@ -142,7 +136,6 @@ function readFile(f, text, callback) {
             return;
         }
     } else if (fileType === 'dsv') {
-        analytics.track('import/csv');
         csv2geojson.csv2geojson(text, {
             delimiter: 'auto'
         }, function(err, result) {

@@ -64,6 +64,7 @@ function save(context, callback) {
 
         context.user.signXHR(d3.json(endpoint))
             .on('load', function(data) {
+                data.type = 'gist';
                 callback(null, data);
             })
             .on('error', function(err) {

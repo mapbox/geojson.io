@@ -12,19 +12,22 @@ module.exports = function(context) {
           path,
           commitMessage;
 
-        if (!!res.files) {
+        if (context.data.type === 'gist' || res.type === 'gist') {
             // Saved as Gist
             message = 'Changes to this map saved to Gist: ';
             url = res.html_url;
             path = res.id;
-        } else {
+        } else if (context.data.type === 'github') {
             // Committed to GitHub
             message = 'Changes committed to GitHub: ';
             url = res.commit.html_url;
             path = res.commit.sha.substring(0,10);
+        } else {
+            // Saved as a file
+            message = 'Changes saved to disk.';
         }
 
-        flash(context.container, message + '<a href="' + url + '">' + path + '</a>');
+        flash(context.container, message + (url ? '<a href="' + url + '">' + path + '</a>' : ''));
 
         context.container.select('.map').classed('loading', false);
         context.data.parse(res);

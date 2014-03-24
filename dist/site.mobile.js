@@ -18250,7 +18250,8 @@ var clone = require('clone');
     xtend = require('xtend');
     source = {
         gist: require('../source/gist'),
-        github: require('../source/github')
+        github: require('../source/github'),
+        local: require('../source/local')
     };
 
 module.exports = function(context) {
@@ -18362,7 +18363,6 @@ module.exports = function(context) {
                     return source.github.loadRaw(parts, meta.sha, context, function(err, file) {
                         return cb(err, xtend(meta, { content: JSON.parse(file) }));
                     });
-                        
                 });
 
                 break;
@@ -18380,6 +18380,13 @@ module.exports = function(context) {
         if (d.files) d.type = 'gist';
 
         switch(d.type) {
+            case 'local':
+                data.set({
+                    type: 'local',
+                    map: d.content,
+                    path: d.path
+                });
+                break;
             case 'blob':
                 login = browser.path[1].login;
                 repo = browser.path[2].name;
@@ -18466,14 +18473,25 @@ module.exports = function(context) {
 
     data.save = function(cb) {
         var type = context.data.get('type');
-        if (source[type] && source[type].save) source[type].save(context, cb);
-        else source.gist.save(context, cb);
+        if (type === 'github') {
+            source.github.save(context, cb);
+        } else if (type === 'gist') {
+            source.gist.save(context, cb);
+        } else if (type === 'local') {
+            if (context.data.path) {
+                source.local.save(context, cb);
+            } else {
+                source.gist.save(context, cb);
+            }
+        } else {
+            source.gist.save(context, cb);
+        }
     };
 
     return data;
 };
 
-},{"../source/gist":116,"../source/github":117,"clone":10,"xtend":94}],101:[function(require,module,exports){
+},{"../source/gist":116,"../source/github":117,"../source/local":118,"clone":10,"xtend":94}],101:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -18554,7 +18572,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/zoomextent":111,"../ui/flash":123,"qs-hash":27}],102:[function(require,module,exports){
+},{"../lib/zoomextent":111,"../ui/flash":124,"qs-hash":27}],102:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -18958,13 +18976,11 @@ function readFile(f, text, callback) {
     if (!fileType) {
         var filename = f.name ? f.name.toLowerCase() : '',
             pts = filename.split('.');
-        if (pts.length > 1) analytics.track('failed/' + pts[pts.length - 1]);
         return callback({
             message: 'Could not detect file type'
         });
     } else if (fileType === 'kml') {
         var kmldom = toDom(text);
-        analytics.track('import/kml');
         if (!kmldom) {
             return callback({
                 message: 'Invalid KML file: not valid XML'
@@ -18987,20 +19003,17 @@ function readFile(f, text, callback) {
             });
         }
         result = osmtogeojson.toGeojson(xmldom);
-        analytics.track('import/osm');
         // only keep object tags as properties
         result.features.forEach(function(feature) {
             feature.properties = feature.properties.tags;
         });
         callback(null, result);
     } else if (fileType === 'gpx') {
-        analytics.track('import/gpx');
         callback(null, toGeoJSON.gpx(toDom(text)));
     } else if (fileType === 'geojson') {
         try {
             gj = JSON.parse(text);
             if (gj && gj.type === 'Topology' && gj.objects) {
-                analytics.track('import/topojson');
                 var collection = { type: 'FeatureCollection', features: [] };
                 for (var o in gj.objects) {
                     var ft = topojson.feature(gj, gj.objects[o]);
@@ -19009,7 +19022,6 @@ function readFile(f, text, callback) {
                 }
                 return callback(null, collection);
             } else {
-                analytics.track('import/geojson');
                 return callback(null, gj);
             }
         } catch(err) {
@@ -19017,7 +19029,6 @@ function readFile(f, text, callback) {
             return;
         }
     } else if (fileType === 'dsv') {
-        analytics.track('import/csv');
         csv2geojson.csv2geojson(text, {
             delimiter: 'auto'
         }, function(err, result) {
@@ -19163,7 +19174,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":100,"./core/loader":101,"./core/repo":102,"./core/router":103,"./core/user":104,"./ui":118,"./ui/map":127,"store":62}],113:[function(require,module,exports){
+},{"./core/data":100,"./core/loader":101,"./core/repo":102,"./core/router":103,"./core/user":104,"./ui":119,"./ui/map":128,"store":62}],113:[function(require,module,exports){
 var fs = require('fs');
 
 module.exports = function(context) {
@@ -19245,7 +19256,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":110,"../lib/zoomextent":111,"../ui/saver.js":130}],115:[function(require,module,exports){
+},{"../lib/validate":110,"../lib/zoomextent":111,"../ui/saver.js":131}],115:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -19384,6 +19395,7 @@ function save(context, callback) {
 
         context.user.signXHR(d3.json(endpoint))
             .on('load', function(data) {
+                data.type = 'gist';
                 callback(null, data);
             })
             .on('error', function(err) {
@@ -19526,6 +19538,29 @@ function shaUrl(parts, sha) {
 }
 
 },{}],118:[function(require,module,exports){
+try {
+    var fs = require('fs');
+} catch(e) { }
+
+module.exports.save = save;
+
+function save(context, callback) {
+
+    var path = context.data.get('path'),
+        map = context.data.get('map');
+
+    var content = JSON.stringify(map, null, 2);
+
+    fs.writeFile(path, content, function(err, res) {
+        callback(null, {
+            type: 'local',
+            path: path,
+            content: map
+        });
+    });
+}
+
+},{}],119:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -19610,7 +19645,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":120,"./ui/file_bar":122,"./ui/layer_switch":126,"./ui/mode_buttons":129,"./ui/user":133}],119:[function(require,module,exports){
+},{"./ui/dnd":121,"./ui/file_bar":123,"./ui/layer_switch":127,"./ui/mode_buttons":130,"./ui/user":134}],120:[function(require,module,exports){
 var github = require('../source/github');
 
 module.exports = commit;
@@ -19645,7 +19680,7 @@ function commit(context, callback) {
     return wrap;
 }
 
-},{"../source/github":117}],120:[function(require,module,exports){
+},{"../source/github":117}],121:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     geocoder = require('./geocode.js'),
     flash = require('./flash.js'),
@@ -19695,7 +19730,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":108,"../lib/zoomextent":111,"./flash.js":123,"./geocode.js":124}],121:[function(require,module,exports){
+},{"../lib/readfile.js":108,"../lib/zoomextent":111,"./flash.js":124,"./geocode.js":125}],122:[function(require,module,exports){
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     geojson2dsv = require('geojson2dsv'),
@@ -19709,7 +19744,6 @@ function download(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
 
-
     function downloadTopo() {
         var content = JSON.stringify(topojson.topology({
             collection: clone(context.data.get('map'))
@@ -19719,7 +19753,6 @@ function download(context) {
             type: 'text/plain;charset=utf-8'
         }), 'map.topojson');
 
-        analytics.track('download/topojson');
     }
 
     function downloadGeoJSON() {
@@ -19729,7 +19762,6 @@ function download(context) {
         saveAs(new Blob([content], {
             type: 'text/plain;charset=utf-8'
         }), (meta && meta.name) || 'map.geojson');
-        analytics.track('download/geojson');
     }
 
     function downloadDSV() {
@@ -19738,7 +19770,6 @@ function download(context) {
         saveAs(new Blob([content], {
             type: 'text/plain;charset=utf-8'
         }), 'points.csv');
-        analytics.track('download/dsv');
     }
 
     function downloadKML() {
@@ -19748,7 +19779,6 @@ function download(context) {
         saveAs(new Blob([content], {
             type: 'text/plain;charset=utf-8'
         }), 'map.kml');
-        analytics.track('download/kml');
     }
 
     function downloadShp() {
@@ -19759,7 +19789,6 @@ function download(context) {
         } finally {
             d3.select('.map').classed('loading', false);
         }
-        analytics.track('download/shp');
     }
 
     function allProperties(properties, key, value) {
@@ -19777,27 +19806,22 @@ function download(context) {
             .attr('class', 'download pad1');
 
         var actions = [{
-            icon: 'icon-map-marker',
             title: 'GeoJSON',
             action: downloadGeoJSON
         }, {
-            icon: 'icon-file',
             title: 'TopoJSON',
             action: downloadTopo
         }, {
-            icon: 'icon-table',
             title: 'CSV',
             action: downloadDSV
         }, {
-            icon: 'icon-code',
             title: 'KML',
             action: downloadKML
         }];
 
         if (shpSupport) {
             actions.push({
-                icon: 'icon-file-alt',
-                title: 'Shapefile (beta)',
+                title: 'Shapefile',
                 action: downloadShp
             });
         }
@@ -19813,9 +19837,6 @@ function download(context) {
             });
 
         links.append('span')
-            .attr('class', function(d) { return d.icon + ' pre-icon'; });
-
-        links.append('span')
             .text(function(d) { return d.title; });
 
         sel.append('a')
@@ -19824,7 +19845,7 @@ function download(context) {
     };
 }
 
-},{"clone":10,"filesaver.js":16,"geojson2dsv":17,"shp-write":28,"tokml":64,"topojson":"g070js"}],122:[function(require,module,exports){
+},{"clone":10,"filesaver.js":16,"geojson2dsv":17,"shp-write":28,"tokml":64,"topojson":"g070js"}],123:[function(require,module,exports){
 var share = require('./share'),
     sourcepanel = require('./source.js'),
     flash = require('./flash'),
@@ -19849,30 +19870,25 @@ module.exports = function fileBar(context) {
             .text('unsaved');
 
         var actions = [{
-            title: 'Save',
-            icon: 'icon-save',
-            action: saveAction
-        }, {
             title: 'Open',
-            icon: 'icon-folder-open-alt',
             action: function() {
                 context.container.call(sourcepanel(context));
             }
         }, {
+            title: 'Save',
+            action: saveAction
+        }, {
             title: 'New',
-            icon: 'icon-plus',
             action: function() {
                 window.open('/#new');
             }
         }, {
             title: 'Download',
-            icon: 'icon-download',
             action: function() {
                 context.container.call(download(context));
             }
         }, {
             title: 'Share',
-            icon: 'icon-share-alt',
             action: function() {
                 context.container.call(share(context));
             }
@@ -19904,13 +19920,9 @@ module.exports = function fileBar(context) {
             .on('click', function(d) {
                 d.action.apply(this, d);
             })
-            .attr('data-original-title', function(d) {
-                return d.title;
-            })
-            .attr('class', function(d) {
-                return d.icon + ' icon sq40';
-            })
-            .call(bootstrap.tooltip().placement('bottom'));
+            .text(function(d) {
+                return ' ' + d.title;
+            });
 
         context.dispatch.on('change.filebar', onchange);
 
@@ -19939,6 +19951,11 @@ module.exports = function fileBar(context) {
                     if (!(files && files[0])) return;
                     readFile.readAsText(files[0], function(err, text) {
                         readFile.readFile(files[0], text, onImport);
+                        if (files[0].path) {
+                            context.data.set({
+                                path: files[0].path
+                            });
+                        }
                     });
                     put.remove();
                 });
@@ -19970,7 +19987,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../lib/readfile":108,"../lib/zoomextent":111,"../ui/saver.js":130,"./download":121,"./flash":123,"./share":131,"./source.js":132}],123:[function(require,module,exports){
+},{"../lib/readfile":108,"../lib/zoomextent":111,"../ui/saver.js":131,"./download":122,"./flash":124,"./share":132,"./source.js":133}],124:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -19992,7 +20009,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":128}],124:[function(require,module,exports){
+},{"./message":129}],125:[function(require,module,exports){
 var progressChart = require('../lib/progress_chart'),
     csv2geojson = require('csv2geojson');
 
@@ -20130,7 +20147,7 @@ function printObj(o) {
         .map(function(_) { return _.key + ': ' + _.value; }).join(',') + ')';
 }
 
-},{"../lib/progress_chart":107,"csv2geojson":11}],125:[function(require,module,exports){
+},{"../lib/progress_chart":107,"csv2geojson":11}],126:[function(require,module,exports){
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
     geocode = require('./geocode.js'),
@@ -20163,7 +20180,7 @@ module.exports = function(context) {
                     fileInput.node().click();
                 });
             button.append('span').attr('class', 'icon-arrow-down');
-            button.append('span').text(' Import');
+            button.append('span').text(' Open');
             message.append('p')
                 .attr('class', 'deemphasize')
                 .append('small')
@@ -20180,6 +20197,12 @@ module.exports = function(context) {
                     if (!(files && files[0])) return;
                     readFile.readAsText(files[0], function(err, text) {
                         readFile.readFile(files[0], text, onImport);
+                        // node-webkit: path included
+                        if (files[0].path) {
+                            context.data.set({
+                                path: files[0].path
+                            });
+                        }
                     });
                 });
         } else {
@@ -20209,22 +20232,18 @@ module.exports = function(context) {
             }
         }
 
-        wrap.append('p')
-            .attr('class', 'intro center deemphasize')
-            .html('This is an open source project. <a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Submit feedback or get help</a>, and <a target="_blank" href="http://github.com/mapbox/geojson.io"><span class="icon-github"></span> fork on GitHub</a>');
-
         wrap.append('div')
             .attr('class', 'pad1');
     };
 };
 
-},{"../lib/readfile.js":108,"../lib/zoomextent":111,"./flash.js":123,"./geocode.js":124}],126:[function(require,module,exports){
+},{"../lib/readfile.js":108,"../lib/zoomextent":111,"./flash.js":124,"./geocode.js":125}],127:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
 
         var layers = [{
-            title: 'MapBox',
+            title: 'Mapbox',
             layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
                 detectRetina: true
             })
@@ -20269,7 +20288,7 @@ module.exports = function(context) {
 };
 
 
-},{}],127:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('qs-hash');
@@ -20406,7 +20425,7 @@ function bindPopup(l) {
     }, l).setContent(content));
 }
 
-},{"../lib/custom_hash.js":105,"../lib/popup":106,"qs-hash":27}],128:[function(require,module,exports){
+},{"../lib/custom_hash.js":105,"../lib/popup":106,"qs-hash":27}],129:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -20447,7 +20466,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],129:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -20499,7 +20518,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":113,"../panel/json":114,"../panel/table":115}],130:[function(require,module,exports){
+},{"../panel/help":113,"../panel/json":114,"../panel/table":115}],131:[function(require,module,exports){
 var commit = require('./commit');
 var flash = require('./flash');
 
@@ -20514,19 +20533,22 @@ module.exports = function(context) {
           path,
           commitMessage;
 
-        if (!!res.files) {
+        if (context.data.type === 'gist' || res.type === 'gist') {
             // Saved as Gist
             message = 'Changes to this map saved to Gist: ';
             url = res.html_url;
             path = res.id;
-        } else {
+        } else if (context.data.type === 'github') {
             // Committed to GitHub
             message = 'Changes committed to GitHub: ';
             url = res.commit.html_url;
             path = res.commit.sha.substring(0,10);
+        } else {
+            // Saved as a file
+            message = 'Changes saved to disk.';
         }
 
-        flash(context.container, message + '<a href="' + url + '">' + path + '</a>');
+        flash(context.container, message + (url ? '<a href="' + url + '">' + path + '</a>' : ''));
 
         context.container.select('.map').classed('loading', false);
         context.data.parse(res);
@@ -20561,7 +20583,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./commit":119,"./flash":123}],131:[function(require,module,exports){
+},{"./commit":120,"./flash":124}],132:[function(require,module,exports){
 var gist = require('../source/gist');
 
 module.exports = share;
@@ -20588,35 +20610,6 @@ function share(context) {
         var sel = selection.append('div')
             .attr('class', 'share pad1');
 
-        var networks = [{
-            icon: 'icon-facebook',
-            title: 'Facebook',
-            url: facebookUrl(location.href)
-        }, {
-            icon: 'icon-twitter',
-            title: 'Twitter',
-            url: twitterUrl(location.href)
-        }, {
-            icon: 'icon-envelope-alt',
-            title: 'Email',
-            url: emailUrl(location.href)
-        }];
-
-        var links = sel
-            .selectAll('.network')
-            .data(networks)
-            .enter()
-            .append('a')
-            .attr('target', '_blank')
-            .attr('class', 'network')
-            .attr('href', function(d) { return d.url; });
-
-        links.append('span')
-            .attr('class', function(d) { return d.icon + ' pre-icon'; });
-
-        links.append('span')
-            .text(function(d) { return d.title; });
-
         var embed_html = sel
             .append('input')
             .attr('type', 'text')
@@ -20638,7 +20631,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":116}],132:[function(require,module,exports){
+},{"../source/gist":116}],133:[function(require,module,exports){
 var importPanel = require('./import'),
     githubBrowser = require('github-file-browser')(d3),
     qs = require('qs-hash'),
@@ -20656,7 +20649,7 @@ module.exports = function(context) {
             .attr('class', 'right overlay');
 
         var sources = [{
-            title: 'Import',
+            title: 'File',
             alt: 'CSV, KML, GPX, and other filetypes',
             icon: 'icon-cog',
             action: clickImport
@@ -20763,7 +20756,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"./import":125,"detect-json-indent":15,"github-file-browser":21,"qs-hash":27}],133:[function(require,module,exports){
+},{"./import":126,"detect-json-indent":15,"github-file-browser":21,"qs-hash":27}],134:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')

@@ -30,7 +30,7 @@ module.exports = function(context) {
                     fileInput.node().click();
                 });
             button.append('span').attr('class', 'icon-arrow-down');
-            button.append('span').text(' Import');
+            button.append('span').text(' Open');
             message.append('p')
                 .attr('class', 'deemphasize')
                 .append('small')
@@ -47,6 +47,12 @@ module.exports = function(context) {
                     if (!(files && files[0])) return;
                     readFile.readAsText(files[0], function(err, text) {
                         readFile.readFile(files[0], text, onImport);
+                        // node-webkit: path included
+                        if (files[0].path) {
+                            context.data.set({
+                                path: files[0].path
+                            });
+                        }
                     });
                 });
         } else {
@@ -75,10 +81,6 @@ module.exports = function(context) {
                 zoomextent(context);
             }
         }
-
-        wrap.append('p')
-            .attr('class', 'intro center deemphasize')
-            .html('This is an open source project. <a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Submit feedback or get help</a>, and <a target="_blank" href="http://github.com/mapbox/geojson.io"><span class="icon-github"></span> fork on GitHub</a>');
 
         wrap.append('div')
             .attr('class', 'pad1');

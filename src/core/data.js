@@ -2,7 +2,8 @@ var clone = require('clone');
     xtend = require('xtend');
     source = {
         gist: require('../source/gist'),
-        github: require('../source/github')
+        github: require('../source/github'),
+        local: require('../source/local')
     };
 
 module.exports = function(context) {
@@ -114,7 +115,6 @@ module.exports = function(context) {
                     return source.github.loadRaw(parts, meta.sha, context, function(err, file) {
                         return cb(err, xtend(meta, { content: JSON.parse(file) }));
                     });
-                        
                 });
 
                 break;
@@ -132,6 +132,13 @@ module.exports = function(context) {
         if (d.files) d.type = 'gist';
 
         switch(d.type) {
+            case 'local':
+                data.set({
+                    type: 'local',
+                    map: d.content,
+                    path: d.path
+                });
+                break;
             case 'blob':
                 login = browser.path[1].login;
                 repo = browser.path[2].name;
@@ -218,8 +225,19 @@ module.exports = function(context) {
 
     data.save = function(cb) {
         var type = context.data.get('type');
-        if (source[type] && source[type].save) source[type].save(context, cb);
-        else source.gist.save(context, cb);
+        if (type === 'github') {
+            source.github.save(context, cb);
+        } else if (type === 'gist') {
+            source.gist.save(context, cb);
+        } else if (type === 'local') {
+            if (context.data.path) {
+                source.local.save(context, cb);
+            } else {
+                source.gist.save(context, cb);
+            }
+        } else {
+            source.gist.save(context, cb);
+        }
     };
 
     return data;

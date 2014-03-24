@@ -22,30 +22,25 @@ module.exports = function fileBar(context) {
             .text('unsaved');
 
         var actions = [{
-            title: 'Save',
-            icon: 'icon-save',
-            action: saveAction
-        }, {
             title: 'Open',
-            icon: 'icon-folder-open-alt',
             action: function() {
                 context.container.call(sourcepanel(context));
             }
         }, {
+            title: 'Save',
+            action: saveAction
+        }, {
             title: 'New',
-            icon: 'icon-plus',
             action: function() {
                 window.open('/#new');
             }
         }, {
             title: 'Download',
-            icon: 'icon-download',
             action: function() {
                 context.container.call(download(context));
             }
         }, {
             title: 'Share',
-            icon: 'icon-share-alt',
             action: function() {
                 context.container.call(share(context));
             }
@@ -77,13 +72,9 @@ module.exports = function fileBar(context) {
             .on('click', function(d) {
                 d.action.apply(this, d);
             })
-            .attr('data-original-title', function(d) {
-                return d.title;
-            })
-            .attr('class', function(d) {
-                return d.icon + ' icon sq40';
-            })
-            .call(bootstrap.tooltip().placement('bottom'));
+            .text(function(d) {
+                return ' ' + d.title;
+            });
 
         context.dispatch.on('change.filebar', onchange);
 
@@ -112,6 +103,11 @@ module.exports = function fileBar(context) {
                     if (!(files && files[0])) return;
                     readFile.readAsText(files[0], function(err, text) {
                         readFile.readFile(files[0], text, onImport);
+                        if (files[0].path) {
+                            context.data.set({
+                                path: files[0].path
+                            });
+                        }
                     });
                     put.remove();
                 });

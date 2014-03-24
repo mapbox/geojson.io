@@ -7,7 +7,6 @@
     right:40%;
 }
 
-
 .right {
     overflow-x:hidden;
     position:absolute;
@@ -426,14 +425,18 @@ body.dragover:after {
     padding:5px;
 }
 
-.sq40 {
-    height:40px;
-    width:40px;
-    text-align:center;
-}
-
 .overlay {
     z-index:999;
+}
+
+.file-bar button {
+    font-size:13px;
+    padding-right:10px;
+    color:#888;
+}
+
+.file-bar button:hover {
+    color:inherit;
 }
 
 /*

@@ -56,10 +56,10 @@ dist/delegate.js: src/delegate.js
 	$(BROWSERIFY)  src/delegate.js > dist/delegate.js
 
 dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
-	$(BROWSERIFY) -t brfs -r topojson  src/index.js > dist/site.js
+	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson  src/index.js > dist/site.js
 
 dist/site.mobile.js: dist/lib.js src/mobile.js $(shell $(BROWSERIFY) --list src/mobile.js)
-	$(BROWSERIFY) -t brfs -r topojson src/mobile.js > dist/site.mobile.js
+	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson src/mobile.js > dist/site.mobile.js
 
 clean:
 	rm -f dist/*

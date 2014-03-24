@@ -3,7 +3,7 @@ module.exports = function(context) {
     return function(selection) {
 
         var layers = [{
-            title: 'MapBox',
+            title: 'Mapbox',
             layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
                 detectRetina: true
             })

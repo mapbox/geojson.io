@@ -11,7 +11,6 @@ function download(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
 
-
     function downloadTopo() {
         var content = JSON.stringify(topojson.topology({
             collection: clone(context.data.get('map'))
@@ -21,7 +20,6 @@ function download(context) {
             type: 'text/plain;charset=utf-8'
         }), 'map.topojson');
 
-        analytics.track('download/topojson');
     }
 
     function downloadGeoJSON() {
@@ -31,7 +29,6 @@ function download(context) {
         saveAs(new Blob([content], {
             type: 'text/plain;charset=utf-8'
         }), (meta && meta.name) || 'map.geojson');
-        analytics.track('download/geojson');
     }
 
     function downloadDSV() {
@@ -40,7 +37,6 @@ function download(context) {
         saveAs(new Blob([content], {
             type: 'text/plain;charset=utf-8'
         }), 'points.csv');
-        analytics.track('download/dsv');
     }
 
     function downloadKML() {
@@ -50,7 +46,6 @@ function download(context) {
         saveAs(new Blob([content], {
             type: 'text/plain;charset=utf-8'
         }), 'map.kml');
-        analytics.track('download/kml');
     }
 
     function downloadShp() {
@@ -61,7 +56,6 @@ function download(context) {
         } finally {
             d3.select('.map').classed('loading', false);
         }
-        analytics.track('download/shp');
     }
 
     function allProperties(properties, key, value) {
@@ -79,27 +73,22 @@ function download(context) {
             .attr('class', 'download pad1');
 
         var actions = [{
-            icon: 'icon-map-marker',
             title: 'GeoJSON',
             action: downloadGeoJSON
         }, {
-            icon: 'icon-file',
             title: 'TopoJSON',
             action: downloadTopo
         }, {
-            icon: 'icon-table',
             title: 'CSV',
             action: downloadDSV
         }, {
-            icon: 'icon-code',
             title: 'KML',
             action: downloadKML
         }];
 
         if (shpSupport) {
             actions.push({
-                icon: 'icon-file-alt',
-                title: 'Shapefile (beta)',
+                title: 'Shapefile',
                 action: downloadShp
             });
         }
@@ -113,9 +102,6 @@ function download(context) {
             .on('click', function(d) {
                 d.action.apply(this, d);
             });
-
-        links.append('span')
-            .attr('class', function(d) { return d.icon + ' pre-icon'; });
 
         links.append('span')
             .text(function(d) { return d.title; });
