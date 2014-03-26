@@ -310,7 +310,6 @@ textarea.full-width {
 
 /* ui rework */
 .file-bar {
-    background:#fff;
     position:absolute;
     top:0;
     left:0;
@@ -324,6 +323,7 @@ textarea.full-width {
     display:inline-block;
     vertical-align:top;
     background:#eee;
+    background:rgba(255, 255, 255, 0.8);
 }
 
 .inline {
@@ -436,6 +436,7 @@ body.dragover:after {
     padding:0 10px;
     height: 40px;
     display: inline-block;
+    background:#fff;
 }
 
 .file-bar a:hover {
@@ -446,6 +447,10 @@ body.dragover:after {
     color:inherit;
 }
 
+.file-bar div.item:hover a.parent {
+    background:#eee;
+}
+
 .file-bar div.item:hover div.children {
     display:block;
 }
@@ -453,16 +458,19 @@ body.dragover:after {
 div.children {
     display:none;
     position:absolute;
-    background:#fff;
-    padding:5px 10px;
-    margin-left:-10px;
     margin-top:-1px;
 }
 
 div.children a {
     display: block;
-    padding: 2px;
+    padding: 5px 10px;
     line-height: 20px;
+    background:#fff;
+    border-top:1px solid #efefef;
+}
+
+div.children a:hover {
+    background:#eee;
 }
 
 /*
@@ -514,6 +522,9 @@ div.children a {
     right: 0;
     margin: auto;
     z-index: 2000;
+    overflow-x: hidden;
+    overflow-y: auto;
+    bottom: 20px;
 }
 
 .modal .loader {

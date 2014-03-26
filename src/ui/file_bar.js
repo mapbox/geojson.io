@@ -1,13 +1,41 @@
-var share = require('./share'),
+var shpwrite = require('shp-write'),
+    clone = require('clone'),
+    geojson2dsv = require('geojson2dsv'),
+    topojson = require('topojson'),
+    saveAs = require('filesaver.js'),
+    tokml = require('tokml'),
+    share = require('./share'),
     githubBrowser = require('github-file-browser')(d3),
     modal = require('./modal.js'),
     flash = require('./flash'),
-    download = require('./download'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
     saver = require('../ui/saver.js');
 
 module.exports = function fileBar(context) {
+
+    var shpSupport = typeof ArrayBuffer !== 'undefined';
+
+    var exportFormats = [{
+        title: 'GeoJSON',
+        action: downloadGeoJSON
+    }, {
+        title: 'TopoJSON',
+        action: downloadTopo
+    }, {
+        title: 'CSV',
+        action: downloadDSV
+    }, {
+        title: 'KML',
+        action: downloadKML
+    }];
+
+    if (shpSupport) {
+        exportFormats.push({
+            title: 'Shapefile',
+            action: downloadShp
+        });
+    }
 
     function bar(selection) {
 
@@ -17,24 +45,35 @@ module.exports = function fileBar(context) {
                 {
                     title: 'File',
                     alt: 'CSV, KML, GPX, and other filetypes',
-                    icon: 'icon-cog'
+                    action: blindImport
                 }, {
                     title: 'GitHub',
                     alt: 'GeoJSON files in GitHub Repositories',
-                    icon: 'icon-github',
                     authenticated: true,
                     action: clickGitHub
                 }, {
                     title: 'Gist',
                     alt: 'GeoJSON files in GitHub Gists',
-                    icon: 'icon-github-alt',
                     authenticated: true,
                     action: clickGist
                 }
             ]
         }, {
             title: 'Save',
-            action: saveAction
+            action: saveAction,
+            children: [
+                {
+                    title: 'GitHub',
+                    alt: 'GeoJSON files in GitHub Repositories',
+                    authenticated: true,
+                    action: clickGitHub
+                }, {
+                    title: 'Gist',
+                    alt: 'GeoJSON files in GitHub Gists',
+                    authenticated: true,
+                    action: clickGist
+                }
+            ].concat(exportFormats)
         }, {
             title: 'New',
             action: function() {
@@ -138,13 +177,6 @@ module.exports = function fileBar(context) {
                     }));
         }
 
-        function clickImport() {
-            $subpane
-                .html('')
-                .append('div')
-                .call(importPanel(context));
-        }
-
         function clickGist() {
             var m = modal(d3.select('div.geojsonio'));
 
@@ -223,6 +255,58 @@ module.exports = function fileBar(context) {
                     d3.event.preventDefault();
                 })
                 .on('⌘+s', saveAction));
+    }
+
+    function downloadTopo() {
+        var content = JSON.stringify(topojson.topology({
+            collection: clone(context.data.get('map'))
+        }, {'property-transform': allProperties}));
+
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'map.topojson');
+
+    }
+
+    function downloadGeoJSON() {
+        if (d3.event) d3.event.preventDefault();
+        var content = JSON.stringify(context.data.get('map'));
+        var meta = context.data.get('meta');
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), (meta && meta.name) || 'map.geojson');
+    }
+
+    function downloadDSV() {
+        if (d3.event) d3.event.preventDefault();
+        var content = geojson2dsv(context.data.get('map'));
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'points.csv');
+    }
+
+    function downloadKML() {
+        if (d3.event) d3.event.preventDefault();
+        var content = tokml(context.data.get('map'));
+        var meta = context.data.get('meta');
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'map.kml');
+    }
+
+    function downloadShp() {
+        if (d3.event) d3.event.preventDefault();
+        d3.select('.map').classed('loading', true);
+        try {
+            shpwrite.download(context.data.get('map'));
+        } finally {
+            d3.select('.map').classed('loading', false);
+        }
+    }
+
+    function allProperties(properties, key, value) {
+        properties[key] = value;
+        return true;
     }
 
     return bar;

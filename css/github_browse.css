@@ -42,9 +42,8 @@
 }
 
 .header .back {
-    position:absolute;
-    top:0;
-    left:0;
+    display:inline-block;
+    vertical-align:top;
     height:40px;
     width:40px;
     text-align:center;
@@ -55,6 +54,7 @@
 
 .header .back:hover {
     background:#eee;
+    cursor:pointer;
 }
 
 /* repos */
@@ -68,9 +68,8 @@
 
 .breadcrumbs {
     margin-left:20px;
-    margin-right:10px;
     overflow:hidden;
-    text-align:right;
+    display:inline-block;
 }
 
 .breadcrumbs a {
@@ -85,8 +84,6 @@
     border-bottom:1px solid #ccc;
     padding:10px;
     display:block;
-    -webkit-transition:all 300ms ease-in;
-    transition:all 300ms ease-in;
 }
 
 .column a.item:hover {

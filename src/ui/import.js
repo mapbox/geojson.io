@@ -1,6 +1,5 @@
 var importSupport = !!(window.FileReader),
     flash = require('./flash.js'),
-    geocode = require('./geocode.js'),
     readFile = require('../lib/readfile.js'),
     zoomextent = require('../lib/zoomextent');
 
@@ -64,9 +63,7 @@ module.exports = function(context) {
 
         function onImport(err, gj, warning) {
             if (err) {
-                if (err.type === 'geocode') {
-                    wrap.call(geocode(context), err.raw);
-                } else if (err.message) {
+                if (err.message) {
                     flash(context.container, err.message)
                         .classed('error', 'true');
                 }
