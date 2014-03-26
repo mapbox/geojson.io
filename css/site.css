@@ -1,7 +1,7 @@
 /* Utility classes */
 .map {
     position:absolute;
-    top:40px;
+    top:0;
     bottom:0;
     left:0;
     right:40%;
@@ -310,14 +310,11 @@ textarea.full-width {
 
 /* ui rework */
 .file-bar {
-    background:#f7f7f7;
+    background:#fff;
     position:absolute;
     top:0;
     left:0;
     height:40px;
-    right:40%;
-    border-bottom: 1px solid #d9d9d9;
-    border-color: rgba(102,102,102,0.25);
     box-sizing:border-box;
     line-height:40px;
 }
@@ -325,14 +322,16 @@ textarea.full-width {
 .file-bar .name {
     padding:0 10px;
     display:inline-block;
+    vertical-align:top;
+    background:#eee;
+}
+
+.inline {
+    display:inline-block;
 }
 
 .file-bar .name .filename {
     margin-left:10px;
-}
-
-.import-sources {
-    border-bottom:1px solid #ccc;
 }
 
 .clickable:hover,
@@ -429,14 +428,41 @@ body.dragover:after {
     z-index:999;
 }
 
-.file-bar button {
-    font-size:13px;
-    padding-right:10px;
-    color:#888;
+.file-bar div.item {
+    display:inline-block;
 }
 
-.file-bar button:hover {
+.file-bar div.item a.parent {
+    padding:0 10px;
+    height: 40px;
+    display: inline-block;
+}
+
+.file-bar a:hover {
+    cursor:pointer;
+}
+
+.file-bar a:hover {
     color:inherit;
+}
+
+.file-bar div.item:hover div.children {
+    display:block;
+}
+
+div.children {
+    display:none;
+    position:absolute;
+    background:#fff;
+    padding:5px 10px;
+    margin-left:-10px;
+    margin-top:-1px;
+}
+
+div.children a {
+    display: block;
+    padding: 2px;
+    line-height: 20px;
 }
 
 /*
@@ -476,4 +502,65 @@ body.dragover:after {
 }
 .prose strong {
     font-weight:bold;
+}
+
+/* Modals
+------------------------------------------------------- */
+
+.modal {
+    display: inline-block;
+    position:absolute;
+    left: 0;
+    right: 0;
+    margin: auto;
+    z-index: 2000;
+}
+
+.modal .loader {
+    margin-bottom: 10px;
+}
+
+.modal .description {
+    text-align: center;
+}
+
+.shaded {
+    z-index: 9999999;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+}
+
+.shaded:before {
+    content:'';
+    background:rgba(255,255,255,0.75);
+    position:fixed;
+    left:0px; right:0px; top:0px; bottom:0px;
+}
+
+.modal-section {
+    padding: 20px;
+    border-bottom: 1px solid #CCC;
+}
+
+.modal-section:last-child {
+    border-bottom: 0;
+}
+
+.loading-modal {
+    text-align: center;
+}
+
+.modal-actions button,
+.save-success a.button {
+    font-weight: normal;
+    color: #7092FF;
+    border-bottom: 1px solid #CCC;
+    border-radius: 0;
+    height: 160px;
+    text-align: center;
+    display: inline-block;
 }

@@ -1,5 +1,6 @@
 var share = require('./share'),
-    sourcepanel = require('./source.js'),
+    githubBrowser = require('github-file-browser')(d3),
+    modal = require('./modal.js'),
     flash = require('./flash'),
     download = require('./download'),
     zoomextent = require('../lib/zoomextent'),
@@ -9,6 +10,67 @@ var share = require('./share'),
 module.exports = function fileBar(context) {
 
     function bar(selection) {
+
+        var actions = [{
+            title: 'Open',
+            children: [
+                {
+                    title: 'File',
+                    alt: 'CSV, KML, GPX, and other filetypes',
+                    icon: 'icon-cog'
+                }, {
+                    title: 'GitHub',
+                    alt: 'GeoJSON files in GitHub Repositories',
+                    icon: 'icon-github',
+                    authenticated: true,
+                    action: clickGitHub
+                }, {
+                    title: 'Gist',
+                    alt: 'GeoJSON files in GitHub Gists',
+                    icon: 'icon-github-alt',
+                    authenticated: true,
+                    action: clickGist
+                }
+            ]
+        }, {
+            title: 'Save',
+            action: saveAction
+        }, {
+            title: 'New',
+            action: function() {
+                window.open('/#new');
+            }
+        }, {
+            title: 'Share',
+            action: function() {
+                context.container.call(share(context));
+            }
+        }];
+
+        var items = selection.append('div')
+            .attr('class', 'inline')
+            .selectAll('div.item')
+            .data(actions)
+            .enter()
+            .append('div')
+            .attr('class', 'item');
+
+        var buttons = items.append('a')
+            .attr('class', 'parent')
+            .on('click', function(d) {
+                d.action.apply(this, d);
+            })
+            .text(function(d) {
+                return ' ' + d.title;
+            });
+
+        items.each(function(d) {
+            if (!d.children) return;
+            d3.select(this)
+                .append('div')
+                .attr('class', 'children')
+                .call(submenu(d.children));
+        });
 
         var name = selection.append('div')
             .attr('class', 'name');
@@ -20,31 +82,6 @@ module.exports = function fileBar(context) {
         var filename = name.append('span')
             .attr('class', 'filename')
             .text('unsaved');
-
-        var actions = [{
-            title: 'Open',
-            action: function() {
-                context.container.call(sourcepanel(context));
-            }
-        }, {
-            title: 'Save',
-            action: saveAction
-        }, {
-            title: 'New',
-            action: function() {
-                window.open('/#new');
-            }
-        }, {
-            title: 'Download',
-            action: function() {
-                context.container.call(download(context));
-            }
-        }, {
-            title: 'Share',
-            action: function() {
-                context.container.call(share(context));
-            }
-        }];
 
         function saveAction() {
             if (d3.event) d3.event.preventDefault();
@@ -63,20 +100,72 @@ module.exports = function fileBar(context) {
             }).select('span.title').text(_);
         }
 
-        var buttons = selection.append('div')
-            .attr('class', 'fr')
-            .selectAll('button')
-            .data(actions)
-            .enter()
-            .append('button')
-            .on('click', function(d) {
-                d.action.apply(this, d);
-            })
-            .text(function(d) {
-                return ' ' + d.title;
-            });
+        function submenu(children) {
+            return function(selection) {
+                selection
+                    .selectAll('a')
+                    .data(children)
+                    .enter()
+                    .append('a')
+                    .text(function(d) {
+                        return d.title;
+                    })
+                    .on('click', function(d) {
+                        d.action.apply(this, d);
+                    });
+            };
+        }
 
         context.dispatch.on('change.filebar', onchange);
+
+        function clickGitHub() {
+            var m = modal(d3.select('div.geojsonio'));
+
+            m.select('.m')
+                .attr('class', 'modal-splash modal col6');
+
+            m.select('.content')
+                .append('div')
+                .attr('class', 'repos')
+                .call(githubBrowser
+                    .gitHubBrowse(context.user.token(), {
+                        sort: function(a, b) {
+                            return new Date(b.pushed_at) - new Date(a.pushed_at);
+                        }
+                    }).on('chosen', function(d) {
+                        context.data.parse(d);
+                        m.close();
+                    }));
+        }
+
+        function clickImport() {
+            $subpane
+                .html('')
+                .append('div')
+                .call(importPanel(context));
+        }
+
+        function clickGist() {
+            var m = modal(d3.select('div.geojsonio'));
+
+            m.select('.m')
+                .attr('class', 'modal-splash modal col6');
+
+            m.select('.content')
+                .append('div')
+                .append('div')
+                .attr('class', 'browser pad1')
+                .call(githubBrowser
+                    .gistBrowse(context.user.token(), {
+                        sort: function(a, b) {
+                            return new Date(b.updated_at) - new Date(a.updated_at);
+                        }
+                    })
+                .on('chosen', function(d) {
+                    context.data.parse(d);
+                    m.close();
+                }));
+        }
 
         function onchange(d) {
             var data = d.obj,
