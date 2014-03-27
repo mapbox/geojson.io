@@ -34,7 +34,7 @@ function ui(context) {
 
         var top = right
             .append('div')
-            .attr('class', 'top');
+            .attr('class', 'top fillD');
 
         top
             .append('button')

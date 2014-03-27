@@ -19646,7 +19646,7 @@ function ui(context) {
 
         var top = right
             .append('div')
-            .attr('class', 'top');
+            .attr('class', 'top fillD');
 
         top
             .append('button')
@@ -20422,15 +20422,15 @@ module.exports = function(context, pane) {
         var mode = null;
 
         var buttonData = [{
-            icon: 'table',
-            title: ' Table',
-            alt: 'Edit feature properties in a table',
-            behavior: table
-        }, {
             icon: 'code',
             title: ' JSON',
             alt: 'JSON Source',
             behavior: json
+        }, {
+            icon: 'table',
+            title: ' Table',
+            alt: 'Edit feature properties in a table',
+            behavior: table
         }, {
             icon: 'question',
             title: ' Help',
