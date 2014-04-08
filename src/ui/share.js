@@ -18,40 +18,9 @@ function share(context) {
     return function(selection) {
 
         selection.select('.share').remove();
-        selection.select('.tooltip.in')
-          .classed('in', false);
 
         var sel = selection.append('div')
             .attr('class', 'share pad1');
-
-        var networks = [{
-            icon: 'icon-facebook',
-            title: 'Facebook',
-            url: facebookUrl(location.href)
-        }, {
-            icon: 'icon-twitter',
-            title: 'Twitter',
-            url: twitterUrl(location.href)
-        }, {
-            icon: 'icon-envelope-alt',
-            title: 'Email',
-            url: emailUrl(location.href)
-        }];
-
-        var links = sel
-            .selectAll('.network')
-            .data(networks)
-            .enter()
-            .append('a')
-            .attr('target', '_blank')
-            .attr('class', 'network')
-            .attr('href', function(d) { return d.url; });
-
-        links.append('span')
-            .attr('class', function(d) { return d.icon + ' pre-icon'; });
-
-        links.append('span')
-            .text(function(d) { return d.title; });
 
         var embed_html = sel
             .append('input')

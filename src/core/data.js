@@ -2,7 +2,8 @@ var clone = require('clone');
     xtend = require('xtend');
     source = {
         gist: require('../source/gist'),
-        github: require('../source/github')
+        github: require('../source/github'),
+        local: require('../source/local')
     };
 
 module.exports = function(context) {
@@ -70,11 +71,16 @@ module.exports = function(context) {
             for (var i = 0; i < length; i++) {
                 key = keys[i];
                 value = props[key];
-                feature.properties[key] = !isNaN(parseFloat(value)) &&
-                    isFinite(value) ? Number(value) : value;
+                feature.properties[key] = losslessNumber(value);
             }
 
             return feature;
+        }
+
+        function losslessNumber(x) {
+            var fl = parseFloat(x);
+            if (fl.toString() === x) return fl;
+            else return x;
         }
 
         _data.map.features = (_data.map.features || []).concat(features.map(coerceNum));
@@ -110,11 +116,16 @@ module.exports = function(context) {
                     path: (url.slice(4) || []).join('/')
                 };
 
-                source.github.load(parts, context, function(err, meta) { 
+                source.github.load(parts, context, function(err, meta) {
                     return source.github.loadRaw(parts, meta.sha, context, function(err, file) {
-                        return cb(err, xtend(meta, { content: JSON.parse(file) }));
+                        try {
+                            return cb(err, xtend(meta, { content: JSON.parse(file) }));
+                        } catch(e) {
+                            // this was not a github file
+                            location.hash = '';
+                            return cb(e);
+                        }
                     });
-                        
                 });
 
                 break;
@@ -130,15 +141,22 @@ module.exports = function(context) {
             file;
 
         if (d.files) d.type = 'gist';
-
-        switch(d.type) {
+        var type = d.length ? d[d.length - 1].type : d.type;
+        switch(type) {
+            case 'local':
+                data.set({
+                    type: 'local',
+                    map: d.content,
+                    path: d.path
+                });
+                break;
             case 'blob':
-                login = browser.path[1].login;
-                repo = browser.path[2].name;
-                branch = browser.path[3].name;
-                path = browser.path.slice(4).map(function(p) {
+                login = d[0].login;
+                repo = d[1].name;
+                branch = d[2].name;
+                path = d.slice(3).map(function(p) {
                     return p.path;
-                }).concat([d.path]).join('/');
+                }).join('/');
 
                 data.set({
                     type: 'github',
@@ -218,8 +236,19 @@ module.exports = function(context) {
 
     data.save = function(cb) {
         var type = context.data.get('type');
-        if (source[type] && source[type].save) source[type].save(context, cb);
-        else source.gist.save(context, cb);
+        if (type === 'github') {
+            source.github.save(context, cb);
+        } else if (type === 'gist') {
+            source.gist.save(context, cb);
+        } else if (type === 'local') {
+            if (context.data.path) {
+                source.local.save(context, cb);
+            } else {
+                source.gist.save(context, cb);
+            }
+        } else {
+            source.gist.save(context, cb);
+        }
     };
 
     return data;

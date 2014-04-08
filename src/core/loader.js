@@ -11,7 +11,7 @@ module.exports = function(context) {
             url = /(http:\/\/\S*)/g;
 
         if (err) {
-            message = JSON.parse(err.responseText).message
+            message = err.message || JSON.parse(err.responseText).message
                 .replace(url, '<a href="$&">$&</a>');
             return flash(context.container, message);
         }

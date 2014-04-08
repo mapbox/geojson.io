@@ -3,15 +3,13 @@
 <head>
   <meta charset='utf-8'>
   <meta http-equiv='X-UA-Compatible' content='IE=Edge'>
-  <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />
-  <link rel="stylesheet" href="css/font-awesome/css/font-awesome.min.css">
-  <link rel="stylesheet" href="css/fonts/mplus.css">
-  <title>geojson.io: Edit GeoJSON</title>
+  <link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />
+  <link rel='stylesheet' href='css/font-awesome/css/font-awesome.min.css'>
+  <link rel='stylesheet' href='css/fonts/mplus.css'>
+  <title>geojson.io</title>
   <link href='lib/draw/leaflet.draw.css' rel='stylesheet' />
   <link href='lib/codemirror/lib/codemirror.css' rel='stylesheet' />
-  <link href='lib/bucket.css' rel='stylesheet' />
   <link href='css/base.css' rel='stylesheet' />
-  <link href='css/tooltip.css' rel='stylesheet' />
   <link href='css/marker.css' rel='stylesheet' />
   <link href='css/github_browse.css' rel='stylesheet' />
   <link href='css/site.css' rel='stylesheet' />
@@ -20,12 +18,12 @@
   <meta name='author' content='MapBox' />
   <meta name='description' content='simply edit geojson map data' />
   <meta property='og:site_name' content='geojson.io'/>
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1">
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1'>
   <!--[if lt IE 9]>
     <script type='text/javascript' src='lib/aight.min.js'></script>
   <![endif]-->
-<script src='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.uncompressed.js'></script>
-  <script src="//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js"></script>
+  <script src='https://api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.uncompressed.js'></script>
+  <script src='https://d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js'></script>
   <script>
   Raven.config('https://c2d096c944dd4150ab7e44b0881b4a46@app.getsentry.com/11480', {
       whitelistUrls: [/geojson\.io/],
@@ -43,11 +41,7 @@
 <script src='dist/delegate.js'></script>
 <script src='dist/lib.js'></script>
 <script src='dist/site.js'></script>
-<script type="text/javascript">
-var analytics=analytics||[];(function(){var e=["identify","track","trackLink","trackForm","trackClick","trackSubmit","page","pageview","ab","alias","ready","group"],t=function(e){return function(){analytics.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var n=0;n<e.length;n++)analytics[e[n]]=t(e[n])})(),analytics.load=function(e){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=("https:"===document.location.protocol?"https://":"http://")+"d2dq2ahtl5zl1z.cloudfront.net/analytics.js/v1/"+e+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(t,n)};
-analytics.load("xu28n5b6t9");
-</script>
-<script type="text/javascript">
+<script type='text/javascript'>
   var _gauges = _gauges || [];
   (function() {
     var t   = document.createElement('script');

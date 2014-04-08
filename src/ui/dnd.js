@@ -1,5 +1,4 @@
 var readDrop = require('../lib/readfile.js').readDrop,
-    geocoder = require('./geocode.js'),
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
 
@@ -11,12 +10,7 @@ module.exports = function(context) {
                 flash(context.container, err.message)
                     .classed('error', 'true');
             }
-            if (err && err.type === 'geocode') {
-                context.container.select('.icon-folder-open-alt')
-                    .trigger('click');
-                flash(context.container, 'This file requires geocoding. Click Import to geocode it')
-                    .classed('error', 'true');
-            } else if (gj && gj.features) {
+            if (gj && gj.features) {
                 context.data.mergeFeatures(gj.features);
                 if (warning) {
                     flash(context.container, warning.message);

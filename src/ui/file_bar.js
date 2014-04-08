@@ -1,14 +1,116 @@
-var share = require('./share'),
-    sourcepanel = require('./source.js'),
+var shpwrite = require('shp-write'),
+    clone = require('clone'),
+    geojson2dsv = require('geojson2dsv'),
+    topojson = require('topojson'),
+    saveAs = require('filesaver.js'),
+    tokml = require('tokml'),
+    share = require('./share'),
+    githubBrowser = require('github-file-browser'),
+    gistBrowser = require('gist-map-browser'),
+    modal = require('./modal.js'),
     flash = require('./flash'),
-    download = require('./download'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
     saver = require('../ui/saver.js');
 
 module.exports = function fileBar(context) {
 
+    var shpSupport = typeof ArrayBuffer !== 'undefined';
+
+    var exportFormats = [{
+        title: 'GeoJSON',
+        action: downloadGeoJSON
+    }, {
+        title: 'TopoJSON',
+        action: downloadTopo
+    }, {
+        title: 'CSV',
+        action: downloadDSV
+    }, {
+        title: 'KML',
+        action: downloadKML
+    }];
+
+    if (shpSupport) {
+        exportFormats.push({
+            title: 'Shapefile',
+            action: downloadShp
+        });
+    }
+
     function bar(selection) {
+
+        var actions = [{
+            title: 'Open',
+            children: [
+                {
+                    title: 'File',
+                    alt: 'CSV, KML, GPX, and other filetypes',
+                    action: blindImport
+                }, {
+                    title: 'GitHub',
+                    alt: 'GeoJSON files in GitHub Repositories',
+                    authenticated: true,
+                    action: clickGitHubOpen
+                }, {
+                    title: 'Gist',
+                    alt: 'GeoJSON files in GitHub Gists',
+                    authenticated: true,
+                    action: clickGist
+                }
+            ]
+        }, {
+            title: 'Save',
+            action: saveAction,
+            children: [
+                {
+                    title: 'GitHub',
+                    alt: 'GeoJSON files in GitHub Repositories',
+                    authenticated: true,
+                    action: clickGitHubSave
+                }, {
+                    title: 'Gist',
+                    alt: 'GeoJSON files in GitHub Gists',
+                    authenticated: true,
+                    action: clickGistSave
+                }
+            ].concat(exportFormats)
+        }, {
+            title: 'New',
+            action: function() {
+                window.open('/#new');
+            }
+        }, {
+            title: 'Share',
+            action: function() {
+                context.container.call(share(context));
+            }
+        }];
+
+        var items = selection.append('div')
+            .attr('class', 'inline')
+            .selectAll('div.item')
+            .data(actions)
+            .enter()
+            .append('div')
+            .attr('class', 'item');
+
+        var buttons = items.append('a')
+            .attr('class', 'parent')
+            .on('click', function(d) {
+                d.action.apply(this, d);
+            })
+            .text(function(d) {
+                return ' ' + d.title;
+            });
+
+        items.each(function(d) {
+            if (!d.children) return;
+            d3.select(this)
+                .append('div')
+                .attr('class', 'children')
+                .call(submenu(d.children));
+        });
 
         var name = selection.append('div')
             .attr('class', 'name');
@@ -21,35 +123,11 @@ module.exports = function fileBar(context) {
             .attr('class', 'filename')
             .text('unsaved');
 
-        var actions = [{
-            title: 'Save',
-            icon: 'icon-save',
-            action: saveAction
-        }, {
-            title: 'Open',
-            icon: 'icon-folder-open-alt',
-            action: function() {
-                context.container.call(sourcepanel(context));
-            }
-        }, {
-            title: 'New',
-            icon: 'icon-plus',
-            action: function() {
-                window.open('/#new');
-            }
-        }, {
-            title: 'Download',
-            icon: 'icon-download',
-            action: function() {
-                context.container.call(download(context));
-            }
-        }, {
-            title: 'Share',
-            icon: 'icon-share-alt',
-            action: function() {
-                context.container.call(share(context));
-            }
-        }];
+        function clickGistSave() {
+            if (d3.event) d3.event.preventDefault();
+            context.data.set({ type: 'gist' });
+            saver(context);
+        }
 
         function saveAction() {
             if (d3.event) d3.event.preventDefault();
@@ -68,24 +146,129 @@ module.exports = function fileBar(context) {
             }).select('span.title').text(_);
         }
 
-        var buttons = selection.append('div')
-            .attr('class', 'fr')
-            .selectAll('button')
-            .data(actions)
-            .enter()
-            .append('button')
-            .on('click', function(d) {
-                d.action.apply(this, d);
-            })
-            .attr('data-original-title', function(d) {
-                return d.title;
-            })
-            .attr('class', function(d) {
-                return d.icon + ' icon sq40';
-            })
-            .call(bootstrap.tooltip().placement('bottom'));
+        function submenu(children) {
+            return function(selection) {
+                selection
+                    .selectAll('a')
+                    .data(children)
+                    .enter()
+                    .append('a')
+                    .text(function(d) {
+                        return d.title;
+                    })
+                    .on('click', function(d) {
+                        d.action.apply(this, d);
+                    });
+            };
+        }
 
         context.dispatch.on('change.filebar', onchange);
+
+        function clickGitHubOpen() {
+            var m = modal(d3.select('div.geojsonio'));
+
+            m.select('.m')
+                .attr('class', 'modal-splash modal col6');
+
+            m.select('.content')
+                .append('div')
+                .attr('class', 'header pad2 fillD')
+                .append('h1')
+                .text('GitHub');
+
+            githubBrowser(context.user.token(), false)
+                .open()
+                .onclick(function(d) {
+                    if (!d || !d.length) return;
+                    var last = d[d.length - 1];
+                    if (!last.path.match(/\.(geo)?json/i)) {
+                        return alert('only GeoJSON files are supported from GitHub');
+                    }
+                    if (last.type === 'blob') {
+                        context.data.parse(d);
+                        m.close();
+                    }
+                })
+                .appendTo(
+                    m.select('.content')
+                        .append('div')
+                        .attr('class', 'repos pad2')
+                        .node());
+        }
+
+        function clickGitHubSave() {
+            var m = modal(d3.select('div.geojsonio'));
+
+            m.select('.m')
+                .attr('class', 'modal-splash modal col6');
+
+            m.select('.content')
+                .append('div')
+                .attr('class', 'header pad2 fillD')
+                .append('h1')
+                .text('GitHub');
+
+            githubBrowser(context.user.token(), true)
+                .open()
+                .onclick(function(d) {
+                    if (!d || !d.length) return;
+                    var last = d[d.length - 1];
+                    if (last.type === 'new') {
+                        var filename = prompt('New file name');
+                        if (!filename) {
+                            m.close();
+                            return;
+                        }
+                        var pathparts = d.slice(3);
+                        pathparts.pop();
+                        pathparts.push({ path: filename });
+                        var partial = pathparts.map(function(p) {
+                            return p.path;
+                        }).join('/');
+                        context.data.set({
+                            source: {
+                                url: 'https://api.github.com/repos/' +
+                                    d[0].login + '/' + d[1].name +
+                                        '/contents/' + partial +
+                                        '?ref=' + d[2].name
+                            },
+                            type: 'github',
+                            meta: {
+                                branch: d[2].name
+                            }
+                        });
+                        context.data.set({ newpath: partial + filename });
+                        m.close();
+                        saver(context);
+                    } else {
+                        alert('overwriting existing files is not yet supported');
+                    }
+                })
+                .appendTo(
+                    m.select('.content')
+                        .append('div')
+                        .attr('class', 'repos pad2')
+                        .node());
+        }
+
+        function clickGist() {
+            var m = modal(d3.select('div.geojsonio'));
+
+            m.select('.m')
+                .attr('class', 'modal-splash modal col6');
+
+            gistBrowser(context.user.token())
+                .open()
+                .onclick(function(d) {
+                    context.data.parse(d);
+                    m.close();
+                })
+                .appendTo(
+                    m.select('.content')
+                        .append('div')
+                        .attr('class', 'repos pad2')
+                        .node());
+        }
 
         function onchange(d) {
             var data = d.obj,
@@ -112,6 +295,11 @@ module.exports = function fileBar(context) {
                     if (!(files && files[0])) return;
                     readFile.readAsText(files[0], function(err, text) {
                         readFile.readFile(files[0], text, onImport);
+                        if (files[0].path) {
+                            context.data.set({
+                                path: files[0].path
+                            });
+                        }
                     });
                     put.remove();
                 });
@@ -138,6 +326,58 @@ module.exports = function fileBar(context) {
                     d3.event.preventDefault();
                 })
                 .on('⌘+s', saveAction));
+    }
+
+    function downloadTopo() {
+        var content = JSON.stringify(topojson.topology({
+            collection: clone(context.data.get('map'))
+        }, {'property-transform': allProperties}));
+
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'map.topojson');
+
+    }
+
+    function downloadGeoJSON() {
+        if (d3.event) d3.event.preventDefault();
+        var content = JSON.stringify(context.data.get('map'));
+        var meta = context.data.get('meta');
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), (meta && meta.name) || 'map.geojson');
+    }
+
+    function downloadDSV() {
+        if (d3.event) d3.event.preventDefault();
+        var content = geojson2dsv(context.data.get('map'));
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'points.csv');
+    }
+
+    function downloadKML() {
+        if (d3.event) d3.event.preventDefault();
+        var content = tokml(context.data.get('map'));
+        var meta = context.data.get('meta');
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'map.kml');
+    }
+
+    function downloadShp() {
+        if (d3.event) d3.event.preventDefault();
+        d3.select('.map').classed('loading', true);
+        try {
+            shpwrite.download(context.data.get('map'));
+        } finally {
+            d3.select('.map').classed('loading', false);
+        }
+    }
+
+    function allProperties(properties, key, value) {
+        properties[key] = value;
+        return true;
     }
 
     return bar;

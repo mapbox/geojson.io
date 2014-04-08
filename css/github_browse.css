@@ -1,99 +1,34 @@
-.browser .item {
-    transition:all 100ms ease-in;
-    margin-right:5px;
-    margin-bottom:5px;
-    -webkit-transition:all 100ms ease-in;
+.treeui-caret {
+    color:#555;
+    font-size:10px;
+    padding-right:5px;
+}
+
+.treeui-caret:hover {
     cursor:pointer;
-    box-sizing:border-box;
-    position:relative;
 }
 
-.browser .item .overlay {
-    position:absolute;
-    top:0;
-    left:0;
-    padding:0 5px;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    overflow:hidden;
-    background:#fff;
+.treeui-level {
+    padding-left:15px;
+    border-left:1px solid #555;
 }
 
-.files {
-    margin-left:5px;
+.gist-map-item {
+    padding:5px 0;
+    border-bottom:1px solid #eee;
 }
 
-.static-map-preview canvas,
-.static-map-preview img {
-    position:absolute;
+.gist-map-title {
+    font-weight:bold;
 }
 
-.repos {
-    width:100%;
-    overflow:hidden;
+.gist-map-contents {
+    font-family:monospace;
 }
 
-.header {
-    min-height:40px;
-    background:#f7f7f7;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    border-bottom:1px solid #ccc;
-}
-
-.header .back {
-    position:absolute;
-    top:0;
-    left:0;
-    height:40px;
-    width:40px;
+.gist-map-next {
     text-align:center;
-    line-height:40px;
-    background:#f7f7f7;
-    border-right:1px solid #ccc;
-}
-
-.header .back:hover {
-    background:#eee;
-}
-
-/* repos */
-.column {
-    -webkit-transition:all 300ms ease-in;
-    background:#fff;
-    transition:all 300ms ease-in;
-    position:absolute;
-    width:100%;
-}
-
-.breadcrumbs {
-    margin-left:20px;
-    margin-right:10px;
-    overflow:hidden;
-    text-align:right;
-}
-
-.breadcrumbs a {
-    line-height:40px;
-}
-
-.breadcrumbs a:after {
-    content:': ';
-}
-
-.column a.item {
-    border-bottom:1px solid #ccc;
-    padding:10px;
-    display:block;
-    -webkit-transition:all 300ms ease-in;
-    transition:all 300ms ease-in;
-}
-
-.column a.item:hover {
+    padding:5px;
     background:#eee;
     cursor:pointer;
-}
-
-.column a.item:last-child {
-    border-bottom:none;
 }
