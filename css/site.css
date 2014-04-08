@@ -2,6 +2,14 @@
     background:#ebebeb;
 }
 
+.inline {
+    display:inline-block;
+}
+
+.pad0x {
+    padding:2px 5px;
+}
+
 /* Utility classes */
 .map {
     position:absolute;
@@ -42,12 +50,6 @@ body.fullscreen .file-bar .fr {
     display:none;
 }
 
-p.intro {
-    margin:10px;
-    padding:0;
-    font-size:small;
-}
-
 .deemphasize { color: #888;}
 
 p.intro-hint {
@@ -74,7 +76,6 @@ p.intro-hint:hover {
 /*
  * .right ---------------------------------------------------------------------
  */
-
 .top {
 }
 
@@ -97,21 +98,25 @@ p.intro-hint:hover {
 /*
  * buttons --------------------------------------------------------------------
  */
-
 button.delete-invert {
     color:#882255;
 }
 
 button {
+    background:#fff;
     font: inherit;
     cursor:pointer;
-    background:transparent;
     margin:0;
     padding:0;
     border:none;
     box-sizing:border-box;
     transition:all 100ms ease-in-out;
     -webkit-transition:all 100ms ease-in-out;
+}
+
+button.active {
+    background:#34495e;
+    color:#fff;
 }
 
 button.major {
@@ -121,7 +126,6 @@ button.major {
 
 .top .collapse-button {
     position:absolute;
-    background:#f7f7f7;
     top:0;
     left:0;
     width:28px;
@@ -131,13 +135,8 @@ button.major {
     border:none;
 }
 
-.top .collapse-button:hover {
-    background:#ddd;
-}
-
 .top .buttons button {
-    color:#222;
-    padding:12px 15px;
+    padding:10px 15px;
     font-weight:normal;
     height:40px;
     border:0;
@@ -150,15 +149,9 @@ button.major {
     vertical-align:middle;
 }
 
-.top .buttons button:hover,
-.top .buttons button.active {
-    background:#fff;
-}
-
 /*
  * CodeMirror & Markers -------------------------------------------------------
  */
-
 .right .CodeMirror {
     position:absolute;
     bottom:0;
@@ -281,18 +274,8 @@ th button:hover {
 
 .layer-switch {
     position:absolute;
-    bottom:10px;
-    left:10px;
-}
-
-.layer-switch button {
-    opacity:0.5;
-    background:#fff;
-}
-
-.layer-switch button.active {
-    opacity:1;
-    background:#f7f7f7;
+    bottom:0px;
+    left:0px;
 }
 
 .blank-banner {
@@ -311,7 +294,6 @@ textarea.full-width {
     font:inherit;
 }
 
-/* ui rework */
 .file-bar {
     position:absolute;
     top:0;
@@ -325,12 +307,7 @@ textarea.full-width {
     padding:0 10px;
     display:inline-block;
     vertical-align:top;
-    background:#eee;
-    background:rgba(255, 255, 255, 0.8);
-}
-
-.inline {
-    display:inline-block;
+    background:#fff;
 }
 
 .file-bar .name .filename {
@@ -342,28 +319,13 @@ textarea.full-width {
     background:#eee;
 }
 
-.icon-spaced {
-    margin-right:5px;
-}
-
-.subpane {
-    position:absolute;
-    left:0;
-    right:0;
-    top:40px;
-    bottom:0;
-    overflow:auto;
-}
-
 /* modal, flash */
 .message {
     background:#FFFCE4;
     position:absolute;
     z-index:9999;
-    right:40%;
-    top:40px;
-    left:0;
-    border-bottom:1px solid #ccc;
+    top:50px;
+    left:10px;
 }
 
 .message.error {
@@ -378,56 +340,8 @@ textarea.full-width {
     margin-right:5px;
 }
 
-.share, .download {
-    position:absolute;
-    right:40%;
-    top:40px;
-    background:#fff;
-}
-
-.share .network, .download .action {
-    margin-right:10px;
-    cursor:pointer;
-}
-
-.share .icon-remove, .download .icon-remove {
-    margin-left:10px;
-}
-
-@media screen and (max-width:1100px) {
-    .file-bar .button-wrap button span.title {
-        display:none;
-    }
-    .share, .download, .map {
-        right:50%;
-    }
-    .right {
-        width:50%;
-    }
-    .file-bar {
-        right:50%;
-    }
-}
-
 body.dragover:after {
     content: 'drop files to import';
-}
-
-.bottom-right {
-    position:absolute;
-    bottom:0;
-    right:0;
-    width:20px;
-    height:20px;
-    display:block;
-}
-
-.pad0 {
-    padding:5px;
-}
-
-.overlay {
-    z-index:999;
 }
 
 .file-bar div.item {
@@ -443,14 +357,13 @@ body.dragover:after {
 
 .file-bar a:hover {
     cursor:pointer;
-}
-
-.file-bar a:hover {
-    color:inherit;
+    background:#34495e;
+    color:#fff;
 }
 
 .file-bar div.item:hover a.parent {
-    background:#eee;
+    background:#34495e;
+    color:#fff;
 }
 
 .file-bar div.item:hover div.children {
@@ -465,26 +378,9 @@ div.children {
 
 div.children a {
     display: block;
-    padding: 2px 10px;
+    padding: 5px 10px;
     line-height: 20px;
     background:#fff;
-    border-top:1px solid #efefef;
-}
-
-div.children a:hover {
-    background:#eee;
-}
-
-/*
- * GitHub Browser -------------------------------------------------------------
- */
-.repos a {
-    color:#222;
-}
-
-.repos .item button {
-    font-weight: bold;
-    margin-left: 10px;
 }
 
 /*
@@ -516,7 +412,6 @@ div.children a:hover {
 
 /* Modals
 ------------------------------------------------------- */
-
 .modal {
     display: inline-block;
     position:absolute;
@@ -535,6 +430,14 @@ div.children a:hover {
 
 .modal .description {
     text-align: center;
+}
+
+.modal .content {
+    background:#fff;
+}
+
+.modal .header h1 {
+    font-size:30px;
 }
 
 .shaded {
@@ -576,4 +479,19 @@ div.children a:hover {
     height: 160px;
     text-align: center;
     display: inline-block;
+}
+
+@media screen and (max-width:1100px) {
+    .file-bar .button-wrap button span.title {
+        display:none;
+    }
+    .share, .download, .map {
+        right:50%;
+    }
+    .right {
+        width:50%;
+    }
+    .file-bar {
+        right:50%;
+    }
 }

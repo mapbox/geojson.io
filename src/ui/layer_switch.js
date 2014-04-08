@@ -38,7 +38,7 @@ module.exports = function(context) {
             .data(layers)
             .enter()
             .append('button')
-            .attr('class', 'pad0')
+            .attr('class', 'pad0x')
             .on('click', layerSwap)
             .text(function(d) { return d.title; });
 

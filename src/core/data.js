@@ -111,9 +111,15 @@ module.exports = function(context) {
                     path: (url.slice(4) || []).join('/')
                 };
 
-                source.github.load(parts, context, function(err, meta) { 
+                source.github.load(parts, context, function(err, meta) {
                     return source.github.loadRaw(parts, meta.sha, context, function(err, file) {
-                        return cb(err, xtend(meta, { content: JSON.parse(file) }));
+                        try {
+                            return cb(err, xtend(meta, { content: JSON.parse(file) }));
+                        } catch(e) {
+                            // this was not a github file
+                            location.hash = '';
+                            return cb(e);
+                        }
                     });
                 });
 
@@ -130,8 +136,8 @@ module.exports = function(context) {
             file;
 
         if (d.files) d.type = 'gist';
-
-        switch(d.type) {
+        var type = d.length ? d[d.length - 1].type : d.type;
+        switch(type) {
             case 'local':
                 data.set({
                     type: 'local',
@@ -140,12 +146,12 @@ module.exports = function(context) {
                 });
                 break;
             case 'blob':
-                login = browser.path[1].login;
-                repo = browser.path[2].name;
-                branch = browser.path[3].name;
-                path = browser.path.slice(4).map(function(p) {
+                login = d[0].login;
+                repo = d[1].name;
+                branch = d[2].name;
+                path = d.slice(3).map(function(p) {
                     return p.path;
-                }).concat([d.path]).join('/');
+                }).join('/');
 
                 data.set({
                     type: 'github',

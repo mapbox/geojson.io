@@ -41,13 +41,11 @@ dist/lib.js: dist dist/d3.js $(LIBS)
 	cat dist/d3.js \
 		lib/blob.js \
 		lib/base64.js \
-		lib/geocodemany.js \
 		lib/bucket.js \
 		lib/queue.js \
 		lib/d3.keybinding.js \
 		lib/d3.trigger.js \
 		lib/d3-compat.js \
-		lib/d3-tooltip.js \
 		lib/draw/leaflet.draw-src.js \
 		lib/codemirror/lib/codemirror.js \
 		lib/codemirror/mode/javascript/javascript.js > dist/lib.js

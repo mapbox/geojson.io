@@ -5,7 +5,8 @@ var shpwrite = require('shp-write'),
     saveAs = require('filesaver.js'),
     tokml = require('tokml'),
     share = require('./share'),
-    githubBrowser = require('github-file-browser')(d3),
+    githubBrowser = require('github-file-browser'),
+    gistBrowser = require('gist-map-browser'),
     modal = require('./modal.js'),
     flash = require('./flash'),
     zoomextent = require('../lib/zoomextent'),
@@ -165,16 +166,28 @@ module.exports = function fileBar(context) {
 
             m.select('.content')
                 .append('div')
-                .attr('class', 'repos')
-                .call(githubBrowser
-                    .gitHubBrowse(context.user.token(), {
-                        sort: function(a, b) {
-                            return new Date(b.pushed_at) - new Date(a.pushed_at);
-                        }
-                    }).on('chosen', function(d) {
+                .attr('class', 'header pad2 fillD')
+                .append('h1')
+                .text('GitHub');
+
+            githubBrowser(context.user.token())
+                .open()
+                .onclick(function(d) {
+                    if (!d || !d.length) return;
+                    var last = d[d.length - 1];
+                    if (!last.path.match(/\.(geo)?json/i)) {
+                        return alert('only GeoJSON files are supported from GitHub');
+                    }
+                    if (last.type === 'blob') {
                         context.data.parse(d);
                         m.close();
-                    }));
+                    }
+                })
+                .appendTo(
+                    m.select('.content')
+                        .append('div')
+                        .attr('class', 'repos pad2')
+                        .node());
         }
 
         function clickGist() {
@@ -183,20 +196,17 @@ module.exports = function fileBar(context) {
             m.select('.m')
                 .attr('class', 'modal-splash modal col6');
 
-            m.select('.content')
-                .append('div')
-                .append('div')
-                .attr('class', 'browser pad1')
-                .call(githubBrowser
-                    .gistBrowse(context.user.token(), {
-                        sort: function(a, b) {
-                            return new Date(b.updated_at) - new Date(a.updated_at);
-                        }
-                    })
-                .on('chosen', function(d) {
+            gistBrowser(context.user.token())
+                .open()
+                .onclick(function(d) {
                     context.data.parse(d);
                     m.close();
-                }));
+                })
+                .appendTo(
+                    m.select('.content')
+                        .append('div')
+                        .attr('class', 'repos pad2')
+                        .node());
         }
 
         function onchange(d) {
