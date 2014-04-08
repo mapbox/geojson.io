@@ -5,6 +5,7 @@ module.exports.loadRaw = loadRaw;
 function save(context, callback) {
     var source = context.data.get('source'),
         meta = context.data.get('meta'),
+        newpath = context.data.get('newpath'),
         name = (meta && meta.name) || 'map.geojson',
         map = context.data.get('map');
 
@@ -33,10 +34,20 @@ function save(context, callback) {
             method = 'PUT';
             data = {
                 message: commitMessage,
-                sha: source.sha,
                 branch: meta.branch,
                 content: Base64.toBase64(JSON.stringify(map, null, 2))
             };
+
+            // creating a file
+            if (newpath) {
+                data.path = newpath;
+                context.data.set({ newpath: null });
+            }
+
+            // updating a file
+            if (source.sha) {
+                data.sha = source.sha;
+            }
         } else {
             endpoint = 'https://api.github.com/gists';
             files[name] = { content: JSON.stringify(map, null, 2) };

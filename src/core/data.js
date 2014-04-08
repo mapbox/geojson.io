@@ -71,11 +71,16 @@ module.exports = function(context) {
             for (var i = 0; i < length; i++) {
                 key = keys[i];
                 value = props[key];
-                feature.properties[key] = !isNaN(parseFloat(value)) &&
-                    isFinite(value) ? Number(value) : value;
+                feature.properties[key] = losslessNumber(value);
             }
 
             return feature;
+        }
+
+        function losslessNumber(x) {
+            var fl = parseFloat(x);
+            if (fl.toString() === x) return fl;
+            else return x;
         }
 
         _data.map.features = (_data.map.features || []).concat(features.map(coerceNum));

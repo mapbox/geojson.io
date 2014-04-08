@@ -49,7 +49,11 @@ function save(context, callback) {
             source = context.data.get('source'),
             files = {};
 
-        if (!err && user && user.login && meta && meta.login && user.login === meta.login) {
+        if (!err && user && user.login && meta &&
+            // check that it's not previously a github
+            source && source.id &&
+            // and it is mine
+            meta.login && user.login === meta.login) {
             endpoint = 'https://api.github.com/gists/' + source.id;
             method = 'PATCH';
         } else if (!err && source && source.id) {

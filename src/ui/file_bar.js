@@ -51,7 +51,7 @@ module.exports = function fileBar(context) {
                     title: 'GitHub',
                     alt: 'GeoJSON files in GitHub Repositories',
                     authenticated: true,
-                    action: clickGitHub
+                    action: clickGitHubOpen
                 }, {
                     title: 'Gist',
                     alt: 'GeoJSON files in GitHub Gists',
@@ -67,12 +67,12 @@ module.exports = function fileBar(context) {
                     title: 'GitHub',
                     alt: 'GeoJSON files in GitHub Repositories',
                     authenticated: true,
-                    action: clickGitHub
+                    action: clickGitHubSave
                 }, {
                     title: 'Gist',
                     alt: 'GeoJSON files in GitHub Gists',
                     authenticated: true,
-                    action: clickGist
+                    action: clickGistSave
                 }
             ].concat(exportFormats)
         }, {
@@ -123,6 +123,12 @@ module.exports = function fileBar(context) {
             .attr('class', 'filename')
             .text('unsaved');
 
+        function clickGistSave() {
+            if (d3.event) d3.event.preventDefault();
+            context.data.set({ type: 'gist' });
+            saver(context);
+        }
+
         function saveAction() {
             if (d3.event) d3.event.preventDefault();
             saver(context);
@@ -158,7 +164,7 @@ module.exports = function fileBar(context) {
 
         context.dispatch.on('change.filebar', onchange);
 
-        function clickGitHub() {
+        function clickGitHubOpen() {
             var m = modal(d3.select('div.geojsonio'));
 
             m.select('.m')
@@ -170,7 +176,7 @@ module.exports = function fileBar(context) {
                 .append('h1')
                 .text('GitHub');
 
-            githubBrowser(context.user.token())
+            githubBrowser(context.user.token(), false)
                 .open()
                 .onclick(function(d) {
                     if (!d || !d.length) return;
@@ -181,6 +187,61 @@ module.exports = function fileBar(context) {
                     if (last.type === 'blob') {
                         context.data.parse(d);
                         m.close();
+                    }
+                })
+                .appendTo(
+                    m.select('.content')
+                        .append('div')
+                        .attr('class', 'repos pad2')
+                        .node());
+        }
+
+        function clickGitHubSave() {
+            var m = modal(d3.select('div.geojsonio'));
+
+            m.select('.m')
+                .attr('class', 'modal-splash modal col6');
+
+            m.select('.content')
+                .append('div')
+                .attr('class', 'header pad2 fillD')
+                .append('h1')
+                .text('GitHub');
+
+            githubBrowser(context.user.token(), true)
+                .open()
+                .onclick(function(d) {
+                    if (!d || !d.length) return;
+                    var last = d[d.length - 1];
+                    if (last.type === 'new') {
+                        var filename = prompt('New file name');
+                        if (!filename) {
+                            m.close();
+                            return;
+                        }
+                        var pathparts = d.slice(3);
+                        pathparts.pop();
+                        pathparts.push({ path: filename });
+                        var partial = pathparts.map(function(p) {
+                            return p.path;
+                        }).join('/');
+                        context.data.set({
+                            source: {
+                                url: 'https://api.github.com/repos/' +
+                                    d[0].login + '/' + d[1].name +
+                                        '/contents/' + partial +
+                                        '?ref=' + d[2].name
+                            },
+                            type: 'github',
+                            meta: {
+                                branch: d[2].name
+                            }
+                        });
+                        context.data.set({ newpath: partial + filename });
+                        m.close();
+                        saver(context);
+                    } else {
+                        alert('overwriting existing files is not yet supported');
                     }
                 })
                 .appendTo(

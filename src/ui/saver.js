@@ -1,4 +1,3 @@
-var commit = require('./commit');
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -52,10 +51,10 @@ module.exports = function(context) {
 
     function onrepo(err, repo) {
         if (!err && repo.permissions.push) {
-            var wrap = commit(context, function() {
-                wrap.remove();
-                context.data.save(success);
-            });
+            var msg = prompt('Commit Message');
+            if (!msg) return;
+            context.commitMessage = msg;
+            context.data.save(success);
         } else {
             context.data.save(success);
         }
