@@ -214,7 +214,7 @@ module.exports = function(context) {
                 });
                 break;
             case 'gist':
-                login = (d.user && d.user.login) || 'anonymous';
+                login = (d.owner && d.owner.login) || 'anonymous';
                 path = [login, d.id].join('/');
                 file = mapFile(d);
 
