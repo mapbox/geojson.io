@@ -1,6 +1,10 @@
 # CHANGELOG
 
-## v5 (in progress)
+## 2014-05-23
+
+* Fix non-anonymous gist editing.
+
+## 2014-05-16
 
 * Moves input and output UIs to modals so that the right sidebar isn't overloaded
 * Visual cleanup: fewer icons, more map
