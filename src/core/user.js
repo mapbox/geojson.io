@@ -42,7 +42,9 @@ module.exports = function(context) {
     };
 
     user.authenticate = function() {
-        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' + config.client_id + '&scope=gist,public_repo';
+        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' +
+            config.client_id +
+            '&scope=gist,repo';
     };
 
     user.token = function(callback) {
