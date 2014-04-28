@@ -8,8 +8,7 @@
     "jsonlint": "1.6.0",
     "geojsonhint": "0.2.2",
     "d3-metatable": "0.3.0",
-    "topojson": "1.4.5",
-    "brfs": "0.0.8",
+    "topojson": "1.6.8",
     "togeojson": "0.5.0",
     "csv2geojson": "3.6.1",
     "detect-json-indent": "0.0.0",
@@ -28,12 +27,11 @@
     "qs-hash": "0.0.0",
     "tokml": "0.2.2",
     "geojson2dsv": "0.0.0",
-    "nodewebkit": "~0.9.2",
-    "menu-component": "~0.1.1",
     "gist-map-browser": "~0.1.1"
   },
   "devDependencies": {
-    "browserify": "~3.19.0",
+    "browserify": "~3.44.2",
+    "brfs": "1.0.2",
     "tape": "~2.12.3"
   },
   "scripts": {
