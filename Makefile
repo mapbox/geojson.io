@@ -39,6 +39,7 @@ dist/d3.min.js: dist/d3.js
 
 dist/lib.js: dist dist/d3.js $(LIBS)
 	cat dist/d3.js \
+		lib/hashchange.js \
 		lib/blob.js \
 		lib/base64.js \
 		lib/bucket.js \
