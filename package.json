@@ -36,7 +36,8 @@
     "browserify": "~3.19.0"
   },
   "scripts": {
-    "start": "nodewebkit"
+    "start": "nodewebkit",
+    "test": "jshint src"
   },
   "repository": {
     "type": "git",

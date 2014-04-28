@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mapbox/geojson.io.svg)](https://travis-ci.org/mapbox/geojson.io)
+
 # geojson.io
 
 ### Follow [@geojsonio](https://twitter.com/geojsonio) to keep up with geojson.io's evolution

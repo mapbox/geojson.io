@@ -20151,15 +20151,21 @@ var shpwrite = require('shp-write'),
     topojson = require('topojson'),
     saveAs = require('filesaver.js'),
     tokml = require('tokml'),
-    share = require('./share'),
     githubBrowser = require('github-file-browser'),
-    gistBrowser = require('gist-map-browser'),
+    gistBrowser = require('gist-map-browser');
+
+var share = require('./share'),
     modal = require('./modal.js'),
     flash = require('./flash'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
     saver = require('../ui/saver.js');
 
+/**
+ * This module provides the file picking & status bar above the map interface.
+ * It dispatches to source implementations that interface with specific
+ * sources, like GitHub.
+ */
 module.exports = function fileBar(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
@@ -20245,7 +20251,7 @@ module.exports = function fileBar(context) {
         var buttons = items.append('a')
             .attr('class', 'parent')
             .on('click', function(d) {
-                d.action.apply(this, d);
+                if (d.action) d.action.apply(this, d);
             })
             .text(function(d) {
                 return ' ' + d.title;
