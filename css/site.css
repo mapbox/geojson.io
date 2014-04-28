@@ -452,7 +452,7 @@ div.children a {
 
 .shaded:before {
     content:'';
-    background:rgba(255,255,255,0.75);
+    background:rgba(0,0,0,0.75);
     position:fixed;
     left:0px; right:0px; top:0px; bottom:0px;
 }

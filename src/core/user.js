@@ -4,7 +4,7 @@ module.exports = function(context) {
     var user = {};
 
     user.details = function(callback) {
-        if (!context.storage.get('github_token')) return callback('not logged in');
+        if (!context.storage.get('github_token')) return callback(new Error('not logged in'));
 
         var cached = context.storage.get('github_user_details');
 

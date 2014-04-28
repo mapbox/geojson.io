@@ -4414,6 +4414,7 @@ function open() {
 
     function loadPage() {
         page('/gists?page=' + p, function(err, res) {
+            if (err) throw err;
             res.filter(isMap).forEach(append);
             appendNext();
         });
@@ -19145,7 +19146,7 @@ module.exports = function(context) {
     var user = {};
 
     user.details = function(callback) {
-        if (!context.storage.get('github_token')) return callback('not logged in');
+        if (!context.storage.get('github_token')) return callback(new Error('not logged in'));
 
         var cached = context.storage.get('github_user_details');
 
@@ -19770,7 +19771,7 @@ module.exports = function(context) {
 
 },{"../lib/smartzoom.js":113,"d3-metatable":14}],119:[function(require,module,exports){
 var fs = require('fs'),
-    tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />\n  <!--[if lte IE 8]>\n    <link href='//api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >\n  <![endif]-->\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\nmap.attributionControl.addAttribution('<a href=\"http://geojson.io/\">geojson.io</a>');\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    map.fitBounds(geojsonLayer.getBounds());\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
+    tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
 module.exports.save = save;
 module.exports.saveBlocks = saveBlocks;
@@ -20976,7 +20977,8 @@ module.exports = function(context) {
 };
 
 },{"./flash":125}],132:[function(require,module,exports){
-var gist = require('../source/gist');
+var gist = require('../source/gist'),
+    modal = require('./modal');
 
 module.exports = share;
 
@@ -20994,34 +20996,44 @@ function emailUrl(_) {
 
 function share(context) {
     return function(selection) {
-
-        selection.select('.share').remove();
-
-        var sel = selection.append('div')
-            .attr('class', 'share pad1');
-
-        var embed_html = sel
-            .append('input')
-            .attr('type', 'text')
-            .attr('title', 'Embed HTML');
-
-        sel.append('a')
-            .attr('class', 'icon-remove')
-            .on('click', function() { sel.remove(); });
-
         gist.saveBlocks(context.data.get('map'), function(err, res) {
-            if (err) return;
-            if (res) {
-                embed_html.property('value',
-                    '<iframe frameborder="0" width="100%" height="300" ' +
-                    'src="http://bl.ocks.org/d/' + res.id + '"></iframe>');
-                embed_html.node().select();
+            var m = modal(d3.select('div.geojsonio'));
+            m.select('.m')
+                .attr('class', 'modal-splash modal col6');
+
+            var content = m.select('.content');
+
+            content.append('div')
+                .attr('class', 'header pad2 fillD')
+                .append('h1')
+                .text('Share');
+
+            if (err || !res) {
+                content
+                    .append('div')
+                    .attr('class', 'pad2')
+                    .text('Could not share: an error occurred: ' + err);
+            } else {
+                var container = content.append('div')
+                    .attr('class', 'pad2');
+                var input = container.append('input')
+                    .style('width', '100%')
+                    .property('value', '<iframe frameborder="0" width="100%" height="300" ' +
+                        'src="http://bl.ocks.org/d/' + res.id + '"></iframe>');
+                container.append('p')
+                    .text('This is an iframe embed, a snippet of HTML code you can copy and paste onto a webpage to add this map.');
+                var url = container.append('input')
+                    .style('width', '100%')
+                    .property('value', 'http://bl.ocks.org/d/' + res.id);
+                container.append('p')
+                    .text('URL to the full-screen map in that embed');
+                input.node().select();
             }
         });
     };
 }
 
-},{"../source/gist":119}],133:[function(require,module,exports){
+},{"../source/gist":119,"./modal":129}],133:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
