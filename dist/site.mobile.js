@@ -21055,6 +21055,9 @@ module.exports = function fileBar(context) {
                 .onclick(function(d) {
                     if (!d || !d.length) return;
                     var last = d[d.length - 1];
+                    if (!last.path) {
+                        throw new Error('last is invalid: ' + JSON.stringify(last));
+                    }
                     if (!last.path.match(/\.(geo)?json/i)) {
                         return alert('only GeoJSON files are supported from GitHub');
                     }
