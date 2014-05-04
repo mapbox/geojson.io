@@ -41,7 +41,7 @@ http://geojson.io/#data=data:text/x-url,http%3A%2F%2Fapi.tiles.mapbox.com%2Fv3%2
 
 Load GeoJSON data from a [GitHub Gist](https://gist.github.com/), given an argument
 in the form of `login/gistid`. The Gist can be public or private, and must
-contain a file with a `.json` or `.geojson` extension that is valid GeoJSON.
+contain a file with a `.geojson` extension that is valid GeoJSON.
 
 #### Example
 
