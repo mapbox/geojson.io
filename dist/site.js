@@ -20281,7 +20281,7 @@ function readFile(f, text, callback) {
         callback(null, toGeoJSON.gpx(toDom(text)));
     } else if (fileType === 'geojson') {
         try {
-            gj = JSON.parse(text);
+            var gj = JSON.parse(text);
             if (gj && gj.type === 'Topology' && gj.objects) {
                 var collection = { type: 'FeatureCollection', features: [] };
                 for (var o in gj.objects) {
