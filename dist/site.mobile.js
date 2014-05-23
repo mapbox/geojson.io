@@ -3506,6 +3506,12 @@ function hint(str) {
         } else {
             if (depth === 1 && type) {
                 if (type === 'LinearRing') {
+                    if (!Array.isArray(coords[coords.length - 1])) {
+                        return errors.push({
+                            message: 'a number was found where a coordinate array should have been found: this needs to be nested more deeply',
+                            line: line
+                        });
+                    }
                     if (coords.length < 4) {
                         errors.push({
                             message: 'a LinearRing of coordinates needs to have four or more positions',
