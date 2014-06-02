@@ -27,7 +27,8 @@
     "qs-hash": "0.0.0",
     "tokml": "0.2.2",
     "geojson2dsv": "0.0.0",
-    "gist-map-browser": "~0.1.1"
+    "gist-map-browser": "~0.1.1",
+    "polytogeojson": "0.0.1"
   },
   "devDependencies": {
     "browserify": "~3.44.2",
