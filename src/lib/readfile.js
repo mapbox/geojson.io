@@ -1,7 +1,8 @@
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     csv2geojson = require('csv2geojson'),
-    osmtogeojson = require('osmtogeojson');
+    osmtogeojson = require('osmtogeojson'),
+    polytogeojson = require('polytogeojson');
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
@@ -149,6 +150,8 @@ function readFile(f, text, callback) {
                 return callback(null, result);
             }
         });
+    } else if (fileType === 'poly') {
+        callback(null, polytogeojson(text));
     }
 
     function toDom(x) {
@@ -169,5 +172,6 @@ function readFile(f, text, callback) {
             return 'dsv';
         }
         if (ext('.xml') || ext('.osm')) return 'xml';
+        if (ext('.poly')) return 'poly';
     }
 }
