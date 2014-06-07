@@ -33,7 +33,8 @@
   "devDependencies": {
     "browserify": "~3.44.2",
     "brfs": "1.0.2",
-    "tape": "~2.12.3"
+    "tape": "~2.12.3",
+    "jshint": "2.5.1"
   },
   "scripts": {
     "start": "nodewebkit",
