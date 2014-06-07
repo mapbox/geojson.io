@@ -32,9 +32,6 @@ module.exports = function modal(selection, blocking) {
 
     d3.select(document).call(keybinding);
 
-    var modal = shaded.append('div')
-        .attr('class', 'modal fillL col6');
-
         shaded.on('click.remove-modal', function() {
             if (d3.event.target === this && !blocking) shaded.close();
         });
