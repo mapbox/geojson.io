@@ -19637,6 +19637,7 @@ module.exports = function(context) {
                 };
 
                 source.github.load(parts, context, function(err, meta) {
+                    if (err) return cb(err);
                     return source.github.loadRaw(parts, meta.sha, context, function(err, file) {
                         try {
                             return cb(err, xtend(meta, { content: JSON.parse(file) }));
