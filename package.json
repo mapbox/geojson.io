@@ -6,7 +6,7 @@
   "dependencies": {
     "leaflet-draw": "0.2.2",
     "jsonlint": "1.6.0",
-    "geojsonhint": "0.3.2",
+    "geojsonhint": "0.3.3",
     "d3-metatable": "0.3.0",
     "topojson": "1.6.8",
     "togeojson": "0.5.0",
@@ -18,8 +18,8 @@
     "d3": "3.3.9",
     "store": "1.3.14",
     "leaflet-hash": "0.2.1",
-    "xtend": "2.1.1",
-    "clone": "0.1.11",
+    "xtend": "3.0.0",
+    "clone": "0.1.16",
     "bowser": "0.3.2",
     "filesaver.js": "2013.1.23",
     "shp-write": "0.1.5",
@@ -31,7 +31,7 @@
     "polytogeojson": "0.0.1"
   },
   "devDependencies": {
-    "browserify": "~3.44.2",
+    "browserify": "4.1.11",
     "brfs": "1.0.2",
     "tape": "~2.12.3"
   },
