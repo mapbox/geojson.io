@@ -29,7 +29,7 @@
     "geojson2dsv": "0.0.0",
     "gist-map-browser": "~0.1.1",
     "polytogeojson": "0.0.1",
-    "leaflet-geodesy": "0.1.0"
+    "leaflet-geodesy": "0.1.1"
   },
   "devDependencies": {
     "browserify": "~3.44.2",
