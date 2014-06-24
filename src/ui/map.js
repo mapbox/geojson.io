@@ -1,6 +1,7 @@
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('qs-hash');
+    LGeo = require('leaflet-geodesy'),
     writable = false;
 
 
@@ -119,6 +120,8 @@ function bindPopup(l) {
         } else if (l.feature.geometry.type === 'Point') {
             info += '<div>Latitude: ' + l.feature.geometry.coordinates[1].toFixed(2) + '</div>' +
                 '<div>Longitude: ' + l.feature.geometry.coordinates[0].toFixed(2) + '</div>';
+        } else if (l.feature.geometry.type === 'Polygon') {
+            info += '<div>Area: ~' + (LGeo.area(l) / 1000000).toFixed(2) + ' km<sup>2</sup>'+ '</div>';
         }
     }
 
