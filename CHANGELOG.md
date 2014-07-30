@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2014-07-30
+
+* Support loading large Gist files.
+
 ## 2014-05-23
 
 * Fix non-anonymous gist editing.
