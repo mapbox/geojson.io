@@ -4,6 +4,7 @@ var fs = require('fs'),
 module.exports.save = save;
 module.exports.saveBlocks = saveBlocks;
 module.exports.load = load;
+module.exports.loadRaw = loadRaw;
 
 function saveBlocks(content, callback) {
     var endpoint = 'https://api.github.com/gists';
@@ -93,5 +94,15 @@ function load(id, context, callback) {
         .get();
 
     function onLoad(json) { callback(null, json); }
+    function onError(err) { callback(err, null); }
+}
+
+function loadRaw(url, context, callback) {
+    context.user.signXHR(d3.text(url))
+        .on('load', onLoad)
+        .on('error', onError)
+        .get();
+
+    function onLoad(file) { callback(null, file); }
     function onError(err) { callback(err, null); }
 }

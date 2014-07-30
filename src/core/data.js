@@ -26,20 +26,14 @@ module.exports = function(context) {
         for (f in gist.files) {
             content = gist.files[f].content;
             if (f.indexOf('.geojson') !== -1 && content) {
-                return {
-                    name: f,
-                    content: JSON.parse(content)
-                };
+                return f;
             }
         }
 
         for (f in gist.files) {
             content = gist.files[f].content;
             if (f.indexOf('.json') !== -1 && content) {
-                return {
-                    name: f,
-                    file: JSON.parse(content)
-                };
+                return f;
             }
         }
     }
@@ -102,8 +96,25 @@ module.exports = function(context) {
             case 'gist':
                 var id = q.id.split(':')[1].split('/')[1];
 
+                // From: https://api.github.com/gists/dfa850f66f61ddc58bbf
+                // Gists > 1 MB will have truncated set to true. Request
+                // the raw URL in those cases.
                 source.gist.load(id, context, function(err, d) {
-                    return cb(err, d);
+                    if (err) return cb(err, d);
+
+                    var file = mapFile(d);
+                    // Test for .json or .geojson found
+                    if (typeof file === 'undefined') return cb(err, d);
+
+                    var f = d.files[file];
+                    if (f.truncated === true) {
+                        source.gist.loadRaw(f.raw_url, context, function(err, content) {
+                            if (err) return cb(err);
+                            return cb(err, xtend(d, { file: f.filename, content: JSON.parse(content) }));
+                        });
+                    } else {
+                        return cb(err, xtend(d, { file: f.filename, content: JSON.parse(f.content) }));
+                    }
                 });
 
                 break;
@@ -217,15 +228,14 @@ module.exports = function(context) {
             case 'gist':
                 login = (d.owner && d.owner.login) || 'anonymous';
                 path = [login, d.id].join('/');
-                file = mapFile(d);
 
-                if (file && file.content) data.set({ map: file.content });
+                if (d.content) data.set({ map: d.content });
                 data.set({
                     type: 'gist',
                     source: d,
                     meta: {
                         login: login,
-                        name: file && file.name
+                        name: d.file
                     },
                     path: path,
                     route: 'gist:' + path,
