@@ -108,9 +108,18 @@ module.exports = function fileBar(context) {
                     title: 'Random: Points',
                     alt: 'Add random points to your map',
                     action: function() {
-                        var count = parseInt(prompt('Number of points (default: 100)'), 10);
+                        var response = prompt('Number of points (default: 100)');
+                        if (response === null) return;
+                        console.log(typeof response);
+                        var count = parseInt(response, 10);
                         if (isNaN(count)) count = 100;
                         meta.random(context, count, 'point');
+                    }
+                }, {
+                    title: 'Add bboxes',
+                    alt: 'Add bounding box members to all applicable GeoJSON objects',
+                    action: function() {
+                        meta.bboxify(context);
                     }
                 }
             ]

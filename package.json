@@ -30,7 +30,8 @@
     "gist-map-browser": "~0.1.1",
     "polytogeojson": "0.0.1",
     "leaflet-geodesy": "0.1.1",
-    "geojson-random": "~0.1.0"
+    "geojson-random": "~0.1.0",
+    "geojson-extent": "~0.3.0"
   },
   "devDependencies": {
     "browserify": "4.1.11",
