@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2014-08-01
+
+* Added Meta menu with Clear and Random Points tasks
+* Added background to top bar
+* Removed Dockerfile, Vagrantfile, and other gunk.
+
 ## 2014-07-30
 
 * Support loading large Gist files.

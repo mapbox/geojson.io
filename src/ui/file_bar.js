@@ -104,6 +104,14 @@ module.exports = function fileBar(context) {
                             meta.clear(context);
                         }
                     }
+                }, {
+                    title: 'Random: Points',
+                    alt: 'Add random points to your map',
+                    action: function() {
+                        var count = parseInt(prompt('Number of points (default: 100)'), 10);
+                        if (isNaN(count)) count = 100;
+                        meta.random(context, count, 'point');
+                    }
                 }
             ]
         }];
