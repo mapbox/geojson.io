@@ -12,6 +12,7 @@ var share = require('./share'),
     flash = require('./flash'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
+    meta = require('../lib/meta.js'),
     saver = require('../ui/saver.js');
 
 /**
@@ -91,6 +92,20 @@ module.exports = function fileBar(context) {
             action: function() {
                 context.container.call(share(context));
             }
+        }, {
+            title: 'Meta',
+            action: function() {},
+            children: [
+                {
+                    title: 'Clear',
+                    alt: 'Delete all features from the map',
+                    action: function() {
+                        if (confirm('Are you sure you want to delete all features from this map?')) {
+                            meta.clear(context);
+                        }
+                    }
+                }
+            ]
         }];
 
         var items = selection.append('div')

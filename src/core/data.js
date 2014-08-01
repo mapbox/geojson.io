@@ -6,9 +6,8 @@ var clone = require('clone');
         local: require('../source/local')
     };
 
-module.exports = function(context) {
-
-    var _data = {
+function _getData() {
+    return {
         map: {
             type: 'FeatureCollection',
             features: []
@@ -18,6 +17,11 @@ module.exports = function(context) {
         meta: null,
         type: 'local'
     };
+}
+
+module.exports = function(context) {
+
+    var _data = _getData();
 
     function mapFile(gist) {
         var f;
@@ -54,6 +58,10 @@ module.exports = function(context) {
             source: src
         });
         return data;
+    };
+
+    data.clear = function() {
+        data.set(_getData());
     };
 
     data.mergeFeatures = function(features, src) {

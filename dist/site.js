@@ -978,22 +978,35 @@ exports.INSPECT_MAX_BYTES = 50
 Buffer.poolSize = 8192
 
 /**
- * If `Buffer._useTypedArrays`:
+ * If `TYPED_ARRAY_SUPPORT`:
  *   === true    Use Uint8Array implementation (fastest)
- *   === false   Use Object implementation (compatible down to IE6)
+ *   === false   Use Object implementation (most compatible, even IE6)
+ *
+ * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+ * Opera 11.6+, iOS 4.2+.
+ *
+ * Note:
+ *
+ * - Implementation must support adding new properties to `Uint8Array` instances.
+ *   Firefox 4-29 lacked support, fixed in Firefox 30+.
+ *   See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+ *
+ *  - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+ *
+ *  - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+ *    incorrect length in some situations.
+ *
+ * We detect these buggy browsers and set `TYPED_ARRAY_SUPPORT` to `false` so they will
+ * get the Object implementation, which is slower but will work correctly.
  */
-Buffer._useTypedArrays = (function () {
-  // Detect if browser supports Typed Arrays. Supported browsers are IE 10+, Firefox 4+,
-  // Chrome 7+, Safari 5.1+, Opera 11.6+, iOS 4.2+. If the browser does not support adding
-  // properties to `Uint8Array` instances, then that's the same as no `Uint8Array` support
-  // because we need to be able to add all the node Buffer API methods. This is an issue
-  // in Firefox 4-29. Now fixed: https://bugzilla.mozilla.org/show_bug.cgi?id=695438
+var TYPED_ARRAY_SUPPORT = (function () {
   try {
     var buf = new ArrayBuffer(0)
     var arr = new Uint8Array(buf)
     arr.foo = function () { return 42 }
-    return 42 === arr.foo() &&
-        typeof arr.subarray === 'function' // Chrome 9-10 lack `subarray`
+    return 42 === arr.foo() && // typed array instances can be augmented
+        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+        new Uint8Array(1).subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
   } catch (e) {
     return false
   }
@@ -1017,23 +1030,23 @@ function Buffer (subject, encoding, noZero) {
 
   var type = typeof subject
 
-  if (encoding === 'base64' && type === 'string') {
-    subject = base64clean(subject)
-  }
-
   // Find the length
   var length
   if (type === 'number')
-    length = coerce(subject)
-  else if (type === 'string')
+    length = subject > 0 ? subject >>> 0 : 0
+  else if (type === 'string') {
+    if (encoding === 'base64')
+      subject = base64clean(subject)
     length = Buffer.byteLength(subject, encoding)
-  else if (type === 'object')
-    length = coerce(subject.length) // assume that object is array-like
-  else
+  } else if (type === 'object' && subject !== null) { // assume object is array-like
+    if (subject.type === 'Buffer' && isArray(subject.data))
+      subject = subject.data
+    length = +subject.length > 0 ? Math.floor(+subject.length) : 0
+  } else
     throw new Error('First argument needs to be a number, array or string.')
 
   var buf
-  if (Buffer._useTypedArrays) {
+  if (TYPED_ARRAY_SUPPORT) {
     // Preferred: Return an augmented `Uint8Array` instance for best performance
     buf = Buffer._augment(new Uint8Array(length))
   } else {
@@ -1044,7 +1057,7 @@ function Buffer (subject, encoding, noZero) {
   }
 
   var i
-  if (Buffer._useTypedArrays && typeof subject.byteLength === 'number') {
+  if (TYPED_ARRAY_SUPPORT && typeof subject.byteLength === 'number') {
     // Speed optimization -- use set if we're copying from a typed array
     buf._set(subject)
   } else if (isArrayish(subject)) {
@@ -1058,7 +1071,7 @@ function Buffer (subject, encoding, noZero) {
     }
   } else if (type === 'string') {
     buf.write(subject, 0, encoding)
-  } else if (type === 'number' && !Buffer._useTypedArrays && !noZero) {
+  } else if (type === 'number' && !TYPED_ARRAY_SUPPORT && !noZero) {
     for (i = 0; i < length; i++) {
       buf[i] = 0
     }
@@ -1090,7 +1103,7 @@ Buffer.isEncoding = function (encoding) {
 }
 
 Buffer.isBuffer = function (b) {
-  return !!(b !== null && b !== undefined && b._isBuffer)
+  return !!(b != null && b._isBuffer)
 }
 
 Buffer.byteLength = function (str, encoding) {
@@ -1365,7 +1378,7 @@ Buffer.prototype.copy = function (target, target_start, start, end) {
 
   var len = end - start
 
-  if (len < 100 || !Buffer._useTypedArrays) {
+  if (len < 100 || !TYPED_ARRAY_SUPPORT) {
     for (var i = 0; i < len; i++) {
       target[i + target_start] = this[i + start]
     }
@@ -1437,10 +1450,29 @@ function utf16leSlice (buf, start, end) {
 
 Buffer.prototype.slice = function (start, end) {
   var len = this.length
-  start = clamp(start, len, 0)
-  end = clamp(end, len, len)
+  start = ~~start
+  end = end === undefined ? len : ~~end
 
-  if (Buffer._useTypedArrays) {
+  if (start < 0) {
+    start += len;
+    if (start < 0)
+      start = 0
+  } else if (start > len) {
+    start = len
+  }
+
+  if (end < 0) {
+    end += len
+    if (end < 0)
+      end = 0
+  } else if (end > len) {
+    end = len
+  }
+
+  if (end < start)
+    end = start
+
+  if (TYPED_ARRAY_SUPPORT) {
     return Buffer._augment(this.subarray(start, end))
   } else {
     var sliceLen = end - start
@@ -1899,7 +1931,7 @@ Buffer.prototype.inspect = function () {
  */
 Buffer.prototype.toArrayBuffer = function () {
   if (typeof Uint8Array !== 'undefined') {
-    if (Buffer._useTypedArrays) {
+    if (TYPED_ARRAY_SUPPORT) {
       return (new Buffer(this)).buffer
     } else {
       var buf = new Uint8Array(this.length)
@@ -1990,25 +2022,6 @@ function base64clean (str) {
 function stringtrim (str) {
   if (str.trim) return str.trim()
   return str.replace(/^\s+|\s+$/g, '')
-}
-
-// slice(start, end)
-function clamp (index, len, defaultValue) {
-  if (typeof index !== 'number') return defaultValue
-  index = ~~index;  // Coerce to integer.
-  if (index >= len) return len
-  if (index >= 0) return index
-  index += len
-  if (index >= 0) return index
-  return 0
-}
-
-function coerce (length) {
-  // Coerce length to a number (possibly NaN), round up
-  // in case it's fractional (e.g. 123.456) then do a
-  // double negate to coerce a NaN to 0. Easy, right?
-  length = ~~Math.ceil(+length)
-  return length < 0 ? 0 : length
 }
 
 function isArray (subject) {
@@ -19593,9 +19606,8 @@ var clone = require('clone');
         local: require('../source/local')
     };
 
-module.exports = function(context) {
-
-    var _data = {
+function _getData() {
+    return {
         map: {
             type: 'FeatureCollection',
             features: []
@@ -19605,6 +19617,11 @@ module.exports = function(context) {
         meta: null,
         type: 'local'
     };
+}
+
+module.exports = function(context) {
+
+    var _data = _getData();
 
     function mapFile(gist) {
         var f;
@@ -19641,6 +19658,10 @@ module.exports = function(context) {
             source: src
         });
         return data;
+    };
+
+    data.clear = function() {
+        data.set(_getData());
     };
 
     data.mergeFeatures = function(features, src) {
@@ -19852,7 +19873,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":126,"../source/github":127,"../source/local":128,"clone":12,"xtend":107}],111:[function(require,module,exports){
+},{"../source/gist":127,"../source/github":128,"../source/local":129,"clone":12,"xtend":107}],111:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -19933,7 +19954,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/zoomextent":122,"../ui/flash":132,"qs-hash":37}],112:[function(require,module,exports){
+},{"../lib/zoomextent":123,"../ui/flash":133,"qs-hash":37}],112:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('qs-hash');
 
@@ -19975,7 +19996,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/zoomextent":122,"qs-hash":37}],113:[function(require,module,exports){
+},{"../lib/zoomextent":123,"qs-hash":37}],113:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -20207,7 +20228,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/api":109,"./core/data":110,"./core/loader":111,"./core/recovery":112,"./core/repo":113,"./core/router":114,"./core/user":115,"./ui":129,"./ui/map":134,"store":72}],117:[function(require,module,exports){
+},{"./core/api":109,"./core/data":110,"./core/loader":111,"./core/recovery":112,"./core/repo":113,"./core/router":114,"./core/user":115,"./ui":130,"./ui/map":135,"store":72}],117:[function(require,module,exports){
 var qs = require('qs-hash');
 require('leaflet-hash');
 
@@ -20247,6 +20268,11 @@ L.Hash.prototype.formatHash = function(map) {
 };
 
 },{"leaflet-hash":33,"qs-hash":37}],118:[function(require,module,exports){
+module.exports.clear = function(context) {
+    context.data.clear();
+};
+
+},{}],119:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -20309,7 +20335,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],119:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     csv2geojson = require('csv2geojson'),
@@ -20488,7 +20514,7 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":13,"osmtogeojson":35,"polytogeojson":36,"togeojson":73,"topojson":"BOmyIj"}],120:[function(require,module,exports){
+},{"csv2geojson":13,"osmtogeojson":35,"polytogeojson":36,"togeojson":73,"topojson":"BOmyIj"}],121:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -20500,7 +20526,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],121:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -20561,13 +20587,13 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":20}],122:[function(require,module,exports){
+},{"geojsonhint":20}],123:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],123:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 (function (Buffer){
 var fs = require('fs');
 
@@ -20588,7 +20614,7 @@ module.exports = function(context) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":6,"fs":1}],124:[function(require,module,exports){
+},{"buffer":6,"fs":1}],125:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
@@ -20651,7 +20677,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":121,"../lib/zoomextent":122,"../ui/saver.js":138}],125:[function(require,module,exports){
+},{"../lib/validate":122,"../lib/zoomextent":123,"../ui/saver.js":139}],126:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -20723,7 +20749,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":120,"d3-metatable":16}],126:[function(require,module,exports){
+},{"../lib/smartzoom.js":121,"d3-metatable":16}],127:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.js'></script>\n  <script src=\"//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js\" ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -20833,7 +20859,7 @@ function loadRaw(url, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"fs":1}],127:[function(require,module,exports){
+},{"fs":1}],128:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -20958,7 +20984,7 @@ function shaUrl(parts, sha) {
         '/git/blobs/' + sha;
 }
 
-},{}],128:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 try {
     var fs = require('fs');
 } catch(e) { }
@@ -20981,7 +21007,7 @@ function save(context, callback) {
     });
 }
 
-},{}],129:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -21066,7 +21092,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":130,"./ui/file_bar":131,"./ui/layer_switch":133,"./ui/mode_buttons":137,"./ui/user":140}],130:[function(require,module,exports){
+},{"./ui/dnd":131,"./ui/file_bar":132,"./ui/layer_switch":134,"./ui/mode_buttons":138,"./ui/user":141}],131:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -21110,7 +21136,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":119,"../lib/zoomextent":122,"./flash.js":132}],131:[function(require,module,exports){
+},{"../lib/readfile.js":120,"../lib/zoomextent":123,"./flash.js":133}],132:[function(require,module,exports){
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     geojson2dsv = require('geojson2dsv'),
@@ -21125,6 +21151,7 @@ var share = require('./share'),
     flash = require('./flash'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
+    meta = require('../lib/meta.js'),
     saver = require('../ui/saver.js');
 
 /**
@@ -21204,6 +21231,20 @@ module.exports = function fileBar(context) {
             action: function() {
                 context.container.call(share(context));
             }
+        }, {
+            title: 'Meta',
+            action: function() {},
+            children: [
+                {
+                    title: 'Clear',
+                    alt: 'Delete all features from the map',
+                    action: function() {
+                        if (confirm('Are you sure you want to delete all features from this map?')) {
+                            meta.clear(context);
+                        }
+                    }
+                }
+            ]
         }];
 
         var items = selection.append('div')
@@ -21505,7 +21546,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../lib/readfile":119,"../lib/zoomextent":122,"../ui/saver.js":138,"./flash":132,"./modal.js":136,"./share":139,"clone":12,"filesaver.js":17,"geojson2dsv":18,"gist-map-browser":22,"github-file-browser":24,"shp-write":38,"tokml":74,"topojson":"BOmyIj"}],132:[function(require,module,exports){
+},{"../lib/meta.js":118,"../lib/readfile":120,"../lib/zoomextent":123,"../ui/saver.js":139,"./flash":133,"./modal.js":137,"./share":140,"clone":12,"filesaver.js":17,"geojson2dsv":18,"gist-map-browser":22,"github-file-browser":24,"shp-write":38,"tokml":74,"topojson":"BOmyIj"}],133:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -21527,7 +21568,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":135}],133:[function(require,module,exports){
+},{"./message":136}],134:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -21578,7 +21619,7 @@ module.exports = function(context) {
 };
 
 
-},{}],134:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('qs-hash');
@@ -21722,7 +21763,7 @@ function bindPopup(l) {
     }, l).setContent(content));
 }
 
-},{"../lib/custom_hash.js":117,"../lib/popup":118,"leaflet-geodesy":28,"qs-hash":37}],135:[function(require,module,exports){
+},{"../lib/custom_hash.js":117,"../lib/popup":119,"leaflet-geodesy":28,"qs-hash":37}],136:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -21763,7 +21804,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],136:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 module.exports = function modal(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -21831,7 +21872,7 @@ module.exports = function modal(selection, blocking) {
     return shaded;
 };
 
-},{}],137:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -21883,7 +21924,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":123,"../panel/json":124,"../panel/table":125}],138:[function(require,module,exports){
+},{"../panel/help":124,"../panel/json":125,"../panel/table":126}],139:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -21947,7 +21988,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":132}],139:[function(require,module,exports){
+},{"./flash":133}],140:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -22004,7 +22045,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":126,"./modal":136}],140:[function(require,module,exports){
+},{"../source/gist":127,"./modal":137}],141:[function(require,module,exports){
 module.exports = function(context) {
     return function(selection) {
         var name = selection.append('a')
