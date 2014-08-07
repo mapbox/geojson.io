@@ -496,3 +496,12 @@ div.children a {
         right:50%;
     }
 }
+
+.metadata {
+    width:100%;
+    margin:10px 0;
+}
+
+.metadata td {
+    padding:5px;
+}

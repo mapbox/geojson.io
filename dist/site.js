@@ -22303,18 +22303,21 @@ function bindPopup(l) {
     }
 
     if (l.feature && l.feature.geometry) {
+        info += '<table class="metadata">';
         if (l.feature.geometry.type === 'LineString') {
             var total = d3.pairs(l.feature.geometry.coordinates).reduce(function(total, pair) {
                 return total + L.latLng(pair[0][1], pair[0][0])
                     .distanceTo(L.latLng(pair[1][1], pair[1][0]));
             }, 0);
-            info += '<div>Length: ' + total.toFixed(2) + ' m</div>';
+            info += '<tr><td>meters</td><td>' + total.toFixed(2) +    '</td></tr>';
+            info += '<tr><td>miles</td><td>' + (total / 1609.34).toFixed(2) + '</td></tr>';
         } else if (l.feature.geometry.type === 'Point') {
-            info += '<div>Latitude: ' + l.feature.geometry.coordinates[1].toFixed(2) + '</div>' +
-                '<div>Longitude: ' + l.feature.geometry.coordinates[0].toFixed(2) + '</div>';
+            info += '<tr><td>Latitude </td><td>' + l.feature.geometry.coordinates[1].toFixed(4) + '</td></tr>' +
+                    '<tr><td>Longitude</td><td>' + l.feature.geometry.coordinates[0].toFixed(4) + '</td></tr>';
         } else if (l.feature.geometry.type === 'Polygon') {
-            info += '<div>Area: ~' + (LGeo.area(l) / 1000000).toFixed(2) + ' km<sup>2</sup>'+ '</div>';
+            info += '<tr><td>Area km<sup>2</sup></td><td>' + (LGeo.area(l) / 1000000).toFixed(2) + '</td></tr>';
         }
+        info += '</table>';
     }
 
     var content = '<div class="clearfix">' +
