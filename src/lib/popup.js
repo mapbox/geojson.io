@@ -46,7 +46,7 @@ module.exports = function(context) {
         }
 
         function addRow() {
-            var tr = sel.select('tbody')
+            var tr = sel.select('table.marker-properties tbody')
                 .append('tr');
 
             tr.append('th')
