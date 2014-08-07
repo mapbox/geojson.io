@@ -22472,7 +22472,10 @@ module.exports = function(context) {
     function onrepo(err, repo) {
         if (!err && repo.permissions.push) {
             var msg = prompt('Commit Message');
-            if (!msg) return;
+            if (!msg) {
+                context.container.select('.map').classed('loading', false);
+                return;
+            }
             context.commitMessage = msg;
             context.data.save(success);
         } else {
