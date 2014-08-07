@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2014-08-07
+
+* Bugfixes
+* Github commit message now correct
+* Subsequent commits fixed
+
 ## 2014-08-01
 
 * Added Meta menu with Clear and Random Points tasks

@@ -20271,7 +20271,13 @@ module.exports = function(context) {
 
         if (d.files) d.type = 'gist';
         var type = d.length ? d[d.length - 1].type : d.type;
-        switch(type) {
+        if (d.commit) type = 'commit';
+        switch (type) {
+            case 'commit':
+                data.set({
+                    source: d.content
+                });
+                break;
             case 'local':
                 data.set({
                     type: 'local',
@@ -20328,7 +20334,8 @@ module.exports = function(context) {
                         login: login,
                         repo: repo,
                         branch: branch,
-                        name: d.name
+                        name: d.name,
+                        sha: d.sha
                     },
                     map: d.content,
                     path: d.path,
@@ -22429,14 +22436,15 @@ module.exports = function(context) {
         var message,
           url,
           path,
-          commitMessage;
+          commitMessage,
+          type = context.data.get('type');
 
-        if (context.data.type === 'gist' || res.type === 'gist') {
+        if (type === 'gist' || res.type === 'gist') {
             // Saved as Gist
             message = 'Changes to this map saved to Gist: ';
             url = res.html_url;
             path = res.id;
-        } else if (context.data.type === 'github') {
+        } else if (type === 'github') {
             // Committed to GitHub
             message = 'Changes committed to GitHub: ';
             url = res.commit.html_url;

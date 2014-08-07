@@ -9,14 +9,15 @@ module.exports = function(context) {
         var message,
           url,
           path,
-          commitMessage;
+          commitMessage,
+          type = context.data.get('type');
 
-        if (context.data.type === 'gist' || res.type === 'gist') {
+        if (type === 'gist' || res.type === 'gist') {
             // Saved as Gist
             message = 'Changes to this map saved to Gist: ';
             url = res.html_url;
             path = res.id;
-        } else if (context.data.type === 'github') {
+        } else if (type === 'github') {
             // Committed to GitHub
             message = 'Changes committed to GitHub: ';
             url = res.commit.html_url;
