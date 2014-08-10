@@ -33,7 +33,8 @@ module.exports = function(context) {
 
         function saveFeature() {
             var obj = {};
-            sel.selectAll('tr').each(collectRow);
+            var table = d3.select(this).select('table.marker-properties');
+            table.selectAll('tr').each(collectRow);
             function collectRow() {
                 if (d3.select(this).selectAll('input')[0][0].value) {
                     obj[d3.select(this).selectAll('input')[0][0].value] =
