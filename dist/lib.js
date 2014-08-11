@@ -1,5 +1,5 @@
-d3 = (function(){
-  var d3 = {version: "3.3.9"}; // semver
+!function(){
+  var d3 = {version: "3.4.11"}; // semver
 d3.entries = function(map) {
   var entries = [];
   for (var key in map) entries.push({key: key, value: map[key]});
@@ -28,24 +28,15 @@ d3.map = function(object) {
 function d3_Map() {}
 
 d3_class(d3_Map, {
-  has: function(key) {
-    return d3_map_prefix + key in this;
-  },
+  has: d3_map_has,
   get: function(key) {
     return this[d3_map_prefix + key];
   },
   set: function(key, value) {
     return this[d3_map_prefix + key] = value;
   },
-  remove: function(key) {
-    key = d3_map_prefix + key;
-    return key in this && delete this[key];
-  },
-  keys: function() {
-    var keys = [];
-    this.forEach(function(key) { keys.push(key); });
-    return keys;
-  },
+  remove: d3_map_remove,
+  keys: d3_map_keys,
   values: function() {
     var values = [];
     this.forEach(function(key, value) { values.push(value); });
@@ -56,17 +47,41 @@ d3_class(d3_Map, {
     this.forEach(function(key, value) { entries.push({key: key, value: value}); });
     return entries;
   },
+  size: d3_map_size,
+  empty: d3_map_empty,
   forEach: function(f) {
-    for (var key in this) {
-      if (key.charCodeAt(0) === d3_map_prefixCode) {
-        f.call(this, key.substring(1), this[key]);
-      }
-    }
+    for (var key in this) if (key.charCodeAt(0) === d3_map_prefixCode) f.call(this, key.substring(1), this[key]);
   }
 });
 
 var d3_map_prefix = "\0", // prevent collision with built-ins
     d3_map_prefixCode = d3_map_prefix.charCodeAt(0);
+
+function d3_map_has(key) {
+  return d3_map_prefix + key in this;
+}
+
+function d3_map_remove(key) {
+  key = d3_map_prefix + key;
+  return key in this && delete this[key];
+}
+
+function d3_map_keys() {
+  var keys = [];
+  this.forEach(function(key) { keys.push(key); });
+  return keys;
+}
+
+function d3_map_size() {
+  var size = 0;
+  for (var key in this) if (key.charCodeAt(0) === d3_map_prefixCode) ++size;
+  return size;
+}
+
+function d3_map_empty() {
+  for (var key in this) if (key.charCodeAt(0) === d3_map_prefixCode) return false;
+  return true;
+}
 
 d3.set = function(array) {
   var set = new d3_Set;
@@ -77,9 +92,7 @@ d3.set = function(array) {
 function d3_Set() {}
 
 d3_class(d3_Set, {
-  has: function(value) {
-    return d3_map_prefix + value in this;
-  },
+  has: d3_map_has,
   add: function(value) {
     this[d3_map_prefix + value] = true;
     return value;
@@ -88,19 +101,11 @@ d3_class(d3_Set, {
     value = d3_map_prefix + value;
     return value in this && delete this[value];
   },
-  values: function() {
-    var values = [];
-    this.forEach(function(value) {
-      values.push(value);
-    });
-    return values;
-  },
+  values: d3_map_keys,
+  size: d3_map_size,
+  empty: d3_map_empty,
   forEach: function(f) {
-    for (var value in this) {
-      if (value.charCodeAt(0) === d3_map_prefixCode) {
-        f.call(this, value.substring(1));
-      }
-    }
+    for (var value in this) if (value.charCodeAt(0) === d3_map_prefixCode) f.call(this, value.substring(1));
   }
 });
 d3.pairs = function(array) {
@@ -320,13 +325,13 @@ function d3_selection(groups) {
 
 var d3_select = function(s, n) { return n.querySelector(s); },
     d3_selectAll = function(s, n) { return n.querySelectorAll(s); },
-    d3_selectMatcher = d3_documentElement[d3_vendorSymbol(d3_documentElement, "matchesSelector")],
+    d3_selectMatcher = d3_documentElement.matches || d3_documentElement[d3_vendorSymbol(d3_documentElement, "matchesSelector")],
     d3_selectMatches = function(n, s) { return d3_selectMatcher.call(n, s); };
 
 // Prefer Sizzle, if available.
 if (typeof Sizzle === "function") {
   d3_select = function(s, n) { return Sizzle(s, n)[0] || null; };
-  d3_selectAll = function(s, n) { return Sizzle.uniqueSort(Sizzle(s, n)); };
+  d3_selectAll = Sizzle;
   d3_selectMatches = Sizzle.matchesSelector;
 }
 
@@ -486,7 +491,7 @@ d3_selectionPrototype.classed = function(name, value) {
     // probably doesn't support it on SVG elements (which can be animated).
     if (typeof name === "string") {
       var node = this.node(),
-          n = (name = name.trim().split(/^|\s+/g)).length,
+          n = (name = d3_selection_classes(name)).length,
           i = -1;
       if (value = node.classList) {
         while (++i < n) if (!value.contains(name[i])) return false;
@@ -511,9 +516,13 @@ function d3_selection_classedRe(name) {
   return new RegExp("(?:^|\\s+)" + d3.requote(name) + "(?:\\s+|$)", "g");
 }
 
+function d3_selection_classes(name) {
+  return (name + "").trim().split(/^|\s+/);
+}
+
 // Multiple class names are allowed (e.g., "foo bar").
 function d3_selection_classed(name, value) {
-  name = name.trim().split(/\s+/).map(d3_selection_classedName);
+  name = d3_selection_classes(name).map(d3_selection_classedName);
   var n = name.length;
 
   function classedConstant() {
@@ -826,7 +835,7 @@ d3_selectionPrototype.filter = function(filter) {
     subgroups.push(subgroup = []);
     subgroup.parentNode = (group = this[j]).parentNode;
     for (var i = 0, n = group.length; i < n; i++) {
-      if ((node = group[i]) && filter.call(node, node.__data__, i)) {
+      if ((node = group[i]) && filter.call(node, node.__data__, i, j)) {
         subgroup.push(node);
       }
     }
@@ -852,9 +861,11 @@ d3_selectionPrototype.order = function() {
   }
   return this;
 };
-d3.ascending = function(a, b) {
+d3.ascending = d3_ascending;
+
+function d3_ascending(a, b) {
   return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
-};
+}
 
 d3_selectionPrototype.sort = function(comparator) {
   comparator = d3_selection_sortComparator.apply(this, arguments);
@@ -863,7 +874,7 @@ d3_selectionPrototype.sort = function(comparator) {
 };
 
 function d3_selection_sortComparator(comparator) {
-  if (!arguments.length) comparator = d3.ascending;
+  if (!arguments.length) comparator = d3_ascending;
   return function(a, b) {
     return a && b ? comparator(a.__data__, b.__data__) : !a - !b;
   };
@@ -1185,60 +1196,60 @@ d3.behavior = {};
 d3.behavior.drag = function() {
   var event = d3_eventDispatch(drag, "drag", "dragstart", "dragend"),
       origin = null,
-      mousedown = dragstart(d3_noop, d3.mouse, "mousemove", "mouseup"),
-      touchstart = dragstart(touchid, touchposition, "touchmove", "touchend");
+      mousedown = dragstart(d3_noop, d3.mouse, d3_behavior_dragMouseSubject, "mousemove", "mouseup"),
+      touchstart = dragstart(d3_behavior_dragTouchId, d3.touch, d3_behavior_dragTouchSubject, "touchmove", "touchend");
 
   function drag() {
     this.on("mousedown.drag", mousedown)
         .on("touchstart.drag", touchstart);
   }
 
-  function touchid() {
-    return d3.event.changedTouches[0].identifier;
-  }
-
-  function touchposition(parent, id) {
-    return d3.touches(parent).filter(function(p) { return p.identifier === id; })[0];
-  }
-
-  function dragstart(id, position, move, end) {
+  function dragstart(id, position, subject, move, end) {
     return function() {
-      var target = this,
-          parent = target.parentNode,
-          event_ = event.of(target, arguments),
-          eventTarget = d3.event.target,
-          eventId = id(),
-          drag = eventId == null ? "drag" : "drag-" + eventId,
-          origin_ = position(parent, eventId),
+      var that = this,
+          target = d3.event.target,
+          parent = that.parentNode,
+          dispatch = event.of(that, arguments),
           dragged = 0,
-          offset,
-          w = d3.select(d3_window).on(move + "." + drag, moved).on(end + "." + drag, ended),
-          dragRestore = d3_event_dragSuppress();
+          dragId = id(),
+          dragName = ".drag" + (dragId == null ? "" : "-" + dragId),
+          dragOffset,
+          dragSubject = d3.select(subject()).on(move + dragName, moved).on(end + dragName, ended),
+          dragRestore = d3_event_dragSuppress(),
+          position0 = position(parent, dragId);
 
       if (origin) {
-        offset = origin.apply(target, arguments);
-        offset = [offset.x - origin_[0], offset.y - origin_[1]];
+        dragOffset = origin.apply(that, arguments);
+        dragOffset = [dragOffset.x - position0[0], dragOffset.y - position0[1]];
       } else {
-        offset = [0, 0];
+        dragOffset = [0, 0];
       }
 
-      event_({type: "dragstart"});
+      dispatch({type: "dragstart"});
 
       function moved() {
-        var p = position(parent, eventId),
-            dx = p[0] - origin_[0],
-            dy = p[1] - origin_[1];
+        var position1 = position(parent, dragId), dx, dy;
+        if (!position1) return; // this touch didn’t move
 
+        dx = position1[0] - position0[0];
+        dy = position1[1] - position0[1];
         dragged |= dx | dy;
-        origin_ = p;
+        position0 = position1;
 
-        event_({type: "drag", x: p[0] + offset[0], y: p[1] + offset[1], dx: dx, dy: dy});
+        dispatch({
+          type: "drag",
+          x: position1[0] + dragOffset[0],
+          y: position1[1] + dragOffset[1],
+          dx: dx,
+          dy: dy
+        });
       }
 
       function ended() {
-        w.on(move + "." + drag, null).on(end + "." + drag, null);
-        dragRestore(dragged && d3.event.target === eventTarget);
-        event_({type: "dragend"});
+        if (!position(parent, dragId)) return; // this touch didn’t end
+        dragSubject.on(move + dragName, null).on(end + dragName, null);
+        dragRestore(dragged && d3.event.target === target);
+        dispatch({type: "dragend"});
       }
     };
   }
@@ -1251,6 +1262,24 @@ d3.behavior.drag = function() {
 
   return d3.rebind(drag, event, "on");
 };
+
+// While it is possible to receive a touchstart event with more than one changed
+// touch, the event is only shared by touches on the same target; for new
+// touches targetting different elements, multiple touchstart events are
+// received even when the touches start simultaneously. Since multiple touches
+// cannot move the same target to different locations concurrently without
+// tearing the fabric of spacetime, we allow the first touch to win.
+function d3_behavior_dragTouchId() {
+  return d3.event.changedTouches[0].identifier;
+}
+
+function d3_behavior_dragTouchSubject() {
+  return d3.event.target;
+}
+
+function d3_behavior_dragMouseSubject() {
+  return d3_window;
+}
 function d3_functor(v) {
   return typeof v === "function" ? v : function() { return v; };
 }
@@ -1347,6 +1376,14 @@ var π = Math.PI,
 
 function d3_sgn(x) {
   return x > 0 ? 1 : x < 0 ? -1 : 0;
+}
+
+// Returns the 2D cross product of AB and AC vectors, i.e., the z-component of
+// the 3D cross product in a quadrant I Cartesian coordinate system (+x is
+// right, +y is up). Returns a positive value if ABC is counter-clockwise,
+// negative if clockwise, and zero if the points are collinear.
+function d3_cross2d(a, b, c) {
+  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
 }
 
 function d3_acos(x) {
@@ -1571,7 +1608,7 @@ d3_transitionPrototype.filter = function(filter) {
   for (var j = 0, m = this.length; j < m; j++) {
     subgroups.push(subgroup = []);
     for (var group = this[j], i = 0, n = group.length; i < n; i++) {
-      if ((node = group[i]) && filter.call(node, node.__data__, i)) {
+      if ((node = group[i]) && filter.call(node, node.__data__, i, j)) {
         subgroup.push(node);
       }
     }
@@ -1579,39 +1616,33 @@ d3_transitionPrototype.filter = function(filter) {
 
   return d3_transition(subgroups, this.id);
 };
-function d3_Color() {}
+d3.color = d3_color;
 
-d3_Color.prototype.toString = function() {
+function d3_color() {}
+
+d3_color.prototype.toString = function() {
   return this.rgb() + "";
 };
 
-d3.hsl = function(h, s, l) {
-  return arguments.length === 1
-      ? (h instanceof d3_Hsl ? d3_hsl(h.h, h.s, h.l)
-      : d3_rgb_parse("" + h, d3_rgb_hsl, d3_hsl))
-      : d3_hsl(+h, +s, +l);
-};
+d3.hsl = d3_hsl;
 
 function d3_hsl(h, s, l) {
-  return new d3_Hsl(h, s, l);
+  return this instanceof d3_hsl ? void (this.h = +h, this.s = +s, this.l = +l)
+      : arguments.length < 2 ? (h instanceof d3_hsl ? new d3_hsl(h.h, h.s, h.l)
+      : d3_rgb_parse("" + h, d3_rgb_hsl, d3_hsl))
+      : new d3_hsl(h, s, l);
 }
 
-function d3_Hsl(h, s, l) {
-  this.h = h;
-  this.s = s;
-  this.l = l;
-}
-
-var d3_hslPrototype = d3_Hsl.prototype = new d3_Color;
+var d3_hslPrototype = d3_hsl.prototype = new d3_color;
 
 d3_hslPrototype.brighter = function(k) {
   k = Math.pow(0.7, arguments.length ? k : 1);
-  return d3_hsl(this.h, this.s, this.l / k);
+  return new d3_hsl(this.h, this.s, this.l / k);
 };
 
 d3_hslPrototype.darker = function(k) {
   k = Math.pow(0.7, arguments.length ? k : 1);
-  return d3_hsl(this.h, this.s, k * this.l);
+  return new d3_hsl(this.h, this.s, k * this.l);
 };
 
 d3_hslPrototype.rgb = function() {
@@ -1644,35 +1675,27 @@ function d3_hsl_rgb(h, s, l) {
     return Math.round(v(h) * 255);
   }
 
-  return d3_rgb(vv(h + 120), vv(h), vv(h - 120));
+  return new d3_rgb(vv(h + 120), vv(h), vv(h - 120));
 }
 
-d3.hcl = function(h, c, l) {
-  return arguments.length === 1
-      ? (h instanceof d3_Hcl ? d3_hcl(h.h, h.c, h.l)
-      : (h instanceof d3_Lab ? d3_lab_hcl(h.l, h.a, h.b)
-      : d3_lab_hcl((h = d3_rgb_lab((h = d3.rgb(h)).r, h.g, h.b)).l, h.a, h.b)))
-      : d3_hcl(+h, +c, +l);
-};
+d3.hcl = d3_hcl;
 
 function d3_hcl(h, c, l) {
-  return new d3_Hcl(h, c, l);
+  return this instanceof d3_hcl ? void (this.h = +h, this.c = +c, this.l = +l)
+      : arguments.length < 2 ? (h instanceof d3_hcl ? new d3_hcl(h.h, h.c, h.l)
+      : (h instanceof d3_lab ? d3_lab_hcl(h.l, h.a, h.b)
+      : d3_lab_hcl((h = d3_rgb_lab((h = d3.rgb(h)).r, h.g, h.b)).l, h.a, h.b)))
+      : new d3_hcl(h, c, l);
 }
 
-function d3_Hcl(h, c, l) {
-  this.h = h;
-  this.c = c;
-  this.l = l;
-}
-
-var d3_hclPrototype = d3_Hcl.prototype = new d3_Color;
+var d3_hclPrototype = d3_hcl.prototype = new d3_color;
 
 d3_hclPrototype.brighter = function(k) {
-  return d3_hcl(this.h, this.c, Math.min(100, this.l + d3_lab_K * (arguments.length ? k : 1)));
+  return new d3_hcl(this.h, this.c, Math.min(100, this.l + d3_lab_K * (arguments.length ? k : 1)));
 };
 
 d3_hclPrototype.darker = function(k) {
-  return d3_hcl(this.h, this.c, Math.max(0, this.l - d3_lab_K * (arguments.length ? k : 1)));
+  return new d3_hcl(this.h, this.c, Math.max(0, this.l - d3_lab_K * (arguments.length ? k : 1)));
 };
 
 d3_hclPrototype.rgb = function() {
@@ -1682,25 +1705,17 @@ d3_hclPrototype.rgb = function() {
 function d3_hcl_lab(h, c, l) {
   if (isNaN(h)) h = 0;
   if (isNaN(c)) c = 0;
-  return d3_lab(l, Math.cos(h *= d3_radians) * c, Math.sin(h) * c);
+  return new d3_lab(l, Math.cos(h *= d3_radians) * c, Math.sin(h) * c);
 }
 
-d3.lab = function(l, a, b) {
-  return arguments.length === 1
-      ? (l instanceof d3_Lab ? d3_lab(l.l, l.a, l.b)
-      : (l instanceof d3_Hcl ? d3_hcl_lab(l.l, l.c, l.h)
-      : d3_rgb_lab((l = d3.rgb(l)).r, l.g, l.b)))
-      : d3_lab(+l, +a, +b);
-};
+d3.lab = d3_lab;
 
 function d3_lab(l, a, b) {
-  return new d3_Lab(l, a, b);
-}
-
-function d3_Lab(l, a, b) {
-  this.l = l;
-  this.a = a;
-  this.b = b;
+  return this instanceof d3_lab ? void (this.l = +l, this.a = +a, this.b = +b)
+      : arguments.length < 2 ? (l instanceof d3_lab ? new d3_lab(l.l, l.a, l.b)
+      : (l instanceof d3_hcl ? d3_hcl_lab(l.l, l.c, l.h)
+      : d3_rgb_lab((l = d3_rgb(l)).r, l.g, l.b)))
+      : new d3_lab(l, a, b);
 }
 
 // Corresponds roughly to RGB brighter/darker
@@ -1711,14 +1726,14 @@ var d3_lab_X = 0.950470,
     d3_lab_Y = 1,
     d3_lab_Z = 1.088830;
 
-var d3_labPrototype = d3_Lab.prototype = new d3_Color;
+var d3_labPrototype = d3_lab.prototype = new d3_color;
 
 d3_labPrototype.brighter = function(k) {
-  return d3_lab(Math.min(100, this.l + d3_lab_K * (arguments.length ? k : 1)), this.a, this.b);
+  return new d3_lab(Math.min(100, this.l + d3_lab_K * (arguments.length ? k : 1)), this.a, this.b);
 };
 
 d3_labPrototype.darker = function(k) {
-  return d3_lab(Math.max(0, this.l - d3_lab_K * (arguments.length ? k : 1)), this.a, this.b);
+  return new d3_lab(Math.max(0, this.l - d3_lab_K * (arguments.length ? k : 1)), this.a, this.b);
 };
 
 d3_labPrototype.rgb = function() {
@@ -1732,7 +1747,7 @@ function d3_lab_rgb(l, a, b) {
   x = d3_lab_xyz(x) * d3_lab_X;
   y = d3_lab_xyz(y) * d3_lab_Y;
   z = d3_lab_xyz(z) * d3_lab_Z;
-  return d3_rgb(
+  return new d3_rgb(
     d3_xyz_rgb( 3.2404542 * x - 1.5371385 * y - 0.4985314 * z),
     d3_xyz_rgb(-0.9692660 * x + 1.8760108 * y + 0.0415560 * z),
     d3_xyz_rgb( 0.0556434 * x - 0.2040259 * y + 1.0572252 * z)
@@ -1741,8 +1756,8 @@ function d3_lab_rgb(l, a, b) {
 
 function d3_lab_hcl(l, a, b) {
   return l > 0
-      ? d3_hcl(Math.atan2(b, a) * d3_degrees, Math.sqrt(a * a + b * b), l)
-      : d3_hcl(NaN, NaN, l);
+      ? new d3_hcl(Math.atan2(b, a) * d3_degrees, Math.sqrt(a * a + b * b), l)
+      : new d3_hcl(NaN, NaN, l);
 }
 
 function d3_lab_xyz(x) {
@@ -1756,32 +1771,24 @@ function d3_xyz_rgb(r) {
   return Math.round(255 * (r <= 0.00304 ? 12.92 * r : 1.055 * Math.pow(r, 1 / 2.4) - 0.055));
 }
 
-d3.rgb = function(r, g, b) {
-  return arguments.length === 1
-      ? (r instanceof d3_Rgb ? d3_rgb(r.r, r.g, r.b)
+d3.rgb = d3_rgb;
+
+function d3_rgb(r, g, b) {
+  return this instanceof d3_rgb ? void (this.r = ~~r, this.g = ~~g, this.b = ~~b)
+      : arguments.length < 2 ? (r instanceof d3_rgb ? new d3_rgb(r.r, r.g, r.b)
       : d3_rgb_parse("" + r, d3_rgb, d3_hsl_rgb))
-      : d3_rgb(~~r, ~~g, ~~b);
-};
+      : new d3_rgb(r, g, b);
+}
 
 function d3_rgbNumber(value) {
-  return d3_rgb(value >> 16, value >> 8 & 0xff, value & 0xff);
+  return new d3_rgb(value >> 16, value >> 8 & 0xff, value & 0xff);
 }
 
 function d3_rgbString(value) {
   return d3_rgbNumber(value) + "";
 }
 
-function d3_rgb(r, g, b) {
-  return new d3_Rgb(r, g, b);
-}
-
-function d3_Rgb(r, g, b) {
-  this.r = r;
-  this.g = g;
-  this.b = b;
-}
-
-var d3_rgbPrototype = d3_Rgb.prototype = new d3_Color;
+var d3_rgbPrototype = d3_rgb.prototype = new d3_color;
 
 d3_rgbPrototype.brighter = function(k) {
   k = Math.pow(0.7, arguments.length ? k : 1);
@@ -1789,16 +1796,16 @@ d3_rgbPrototype.brighter = function(k) {
       g = this.g,
       b = this.b,
       i = 30;
-  if (!r && !g && !b) return d3_rgb(i, i, i);
+  if (!r && !g && !b) return new d3_rgb(i, i, i);
   if (r && r < i) r = i;
   if (g && g < i) g = i;
   if (b && b < i) b = i;
-  return d3_rgb(Math.min(255, ~~(r / k)), Math.min(255, ~~(g / k)), Math.min(255, ~~(b / k)));
+  return new d3_rgb(Math.min(255, r / k), Math.min(255, g / k), Math.min(255, b / k));
 };
 
 d3_rgbPrototype.darker = function(k) {
   k = Math.pow(0.7, arguments.length ? k : 1);
-  return d3_rgb(~~(k * this.r), ~~(k * this.g), ~~(k * this.b));
+  return new d3_rgb(k * this.r, k * this.g, k * this.b);
 };
 
 d3_rgbPrototype.hsl = function() {
@@ -1821,7 +1828,7 @@ function d3_rgb_parse(format, rgb, hsl) {
       b = 0, // blue channel; int in [0, 255]
       m1, // CSS color specification match
       m2, // CSS color specification type (e.g., rgb)
-      name;
+      color;
 
   /* Handle hsl, rgb. */
   m1 = /([a-z]+)\((.*)\)/i.exec(format);
@@ -1846,22 +1853,19 @@ function d3_rgb_parse(format, rgb, hsl) {
   }
 
   /* Named colors. */
-  if (name = d3_rgb_names.get(format)) return rgb(name.r, name.g, name.b);
+  if (color = d3_rgb_names.get(format)) return rgb(color.r, color.g, color.b);
 
   /* Hexadecimal colors: #rgb and #rrggbb. */
-  if (format != null && format.charAt(0) === "#") {
+  if (format != null && format.charAt(0) === "#" && !isNaN(color = parseInt(format.substring(1), 16))) {
     if (format.length === 4) {
-      r = format.charAt(1); r += r;
-      g = format.charAt(2); g += g;
-      b = format.charAt(3); b += b;
+      r = (color & 0xf00) >> 4; r = (r >> 4) | r;
+      g = (color & 0xf0); g = (g >> 4) | g;
+      b = (color & 0xf); b = (b << 4) | b;
     } else if (format.length === 7) {
-      r = format.substring(1, 3);
-      g = format.substring(3, 5);
-      b = format.substring(5, 7);
+      r = (color & 0xff0000) >> 16;
+      g = (color & 0xff00) >> 8;
+      b = (color & 0xff);
     }
-    r = parseInt(r, 16);
-    g = parseInt(g, 16);
-    b = parseInt(b, 16);
   }
 
   return rgb(r, g, b);
@@ -1884,7 +1888,7 @@ function d3_rgb_hsl(r, g, b) {
     h = NaN;
     s = l > 0 && l < 1 ? 0 : h;
   }
-  return d3_hsl(h, s, l);
+  return new d3_hsl(h, s, l);
 }
 
 function d3_rgb_lab(r, g, b) {
@@ -2130,89 +2134,55 @@ function d3_interpolateNumber(a, b) {
 d3.interpolateString = d3_interpolateString;
 
 function d3_interpolateString(a, b) {
-  var m, // current match
-      i, // current index
-      j, // current index (for coalescing)
-      s0 = 0, // start index of current string prefix
-      s1 = 0, // end index of current string prefix
+  var bi = d3_interpolate_numberA.lastIndex = d3_interpolate_numberB.lastIndex = 0, // scan index for next number in b
+      am, // current match in a
+      bm, // current match in b
+      bs, // string preceding current number in b, if any
+      i = -1, // index in s
       s = [], // string constants and placeholders
-      q = [], // number interpolators
-      n, // q.length
-      o;
+      q = []; // number interpolators
 
   // Coerce inputs to strings.
   a = a + "", b = b + "";
 
-  // Reset our regular expression!
-  d3_interpolate_number.lastIndex = 0;
-
-  // Find all numbers in b.
-  for (i = 0; m = d3_interpolate_number.exec(b); ++i) {
-    if (m.index) s.push(b.substring(s0, s1 = m.index));
-    q.push({i: s.length, x: m[0]});
-    s.push(null);
-    s0 = d3_interpolate_number.lastIndex;
-  }
-  if (s0 < b.length) s.push(b.substring(s0));
-
-  // Find all numbers in a.
-  for (i = 0, n = q.length; (m = d3_interpolate_number.exec(a)) && i < n; ++i) {
-    o = q[i];
-    if (o.x == m[0]) { // The numbers match, so coalesce.
-      if (o.i) {
-        if (s[o.i + 1] == null) { // This match is followed by another number.
-          s[o.i - 1] += o.x;
-          s.splice(o.i, 1);
-          for (j = i + 1; j < n; ++j) q[j].i--;
-        } else { // This match is followed by a string, so coalesce twice.
-          s[o.i - 1] += o.x + s[o.i + 1];
-          s.splice(o.i, 2);
-          for (j = i + 1; j < n; ++j) q[j].i -= 2;
-        }
-      } else {
-          if (s[o.i + 1] == null) { // This match is followed by another number.
-          s[o.i] = o.x;
-        } else { // This match is followed by a string, so coalesce twice.
-          s[o.i] = o.x + s[o.i + 1];
-          s.splice(o.i + 1, 1);
-          for (j = i + 1; j < n; ++j) q[j].i--;
-        }
-      }
-      q.splice(i, 1);
-      n--;
-      i--;
-    } else {
-      o.x = d3_interpolateNumber(parseFloat(m[0]), parseFloat(o.x));
+  // Interpolate pairs of numbers in a & b.
+  while ((am = d3_interpolate_numberA.exec(a))
+      && (bm = d3_interpolate_numberB.exec(b))) {
+    if ((bs = bm.index) > bi) { // a string precedes the next number in b
+      bs = b.substring(bi, bs);
+      if (s[i]) s[i] += bs; // coalesce with previous string
+      else s[++i] = bs;
     }
+    if ((am = am[0]) === (bm = bm[0])) { // numbers in a & b match
+      if (s[i]) s[i] += bm; // coalesce with previous string
+      else s[++i] = bm;
+    } else { // interpolate non-matching numbers
+      s[++i] = null;
+      q.push({i: i, x: d3_interpolateNumber(am, bm)});
+    }
+    bi = d3_interpolate_numberB.lastIndex;
   }
 
-  // Remove any numbers in b not found in a.
-  while (i < n) {
-    o = q.pop();
-    if (s[o.i + 1] == null) { // This match is followed by another number.
-      s[o.i] = o.x;
-    } else { // This match is followed by a string, so coalesce twice.
-      s[o.i] = o.x + s[o.i + 1];
-      s.splice(o.i + 1, 1);
-    }
-    n--;
+  // Add remains of b.
+  if (bi < b.length) {
+    bs = b.substring(bi);
+    if (s[i]) s[i] += bs; // coalesce with previous string
+    else s[++i] = bs;
   }
 
   // Special optimization for only a single match.
-  if (s.length === 1) {
-    return s[0] == null
-        ? (o = q[0].x, function(t) { return o(t) + ""; })
-        : function() { return b; };
-  }
-
   // Otherwise, interpolate each of the numbers and rejoin the string.
-  return function(t) {
-    for (i = 0; i < n; ++i) s[(o = q[i]).i] = o.x(t);
-    return s.join("");
-  };
+  return s.length < 2
+      ? (q[0] ? (b = q[0].x, function(t) { return b(t) + ""; })
+      : function() { return b; })
+      : (b = q.length, function(t) {
+          for (var i = 0, o; i < b; ++i) s[(o = q[i]).i] = o.x(t);
+          return s.join("");
+        });
 }
 
-var d3_interpolate_number = /[-+]?(?:\d+\.?\d*|\.?\d+)(?:[eE][-+]?\d+)?/g;
+var d3_interpolate_numberA = /[-+]?(?:\d+\.?\d*|\.?\d+)(?:[eE][-+]?\d+)?/g,
+    d3_interpolate_numberB = new RegExp(d3_interpolate_numberA.source, "g");
 
 d3.interpolate = d3_interpolate;
 
@@ -2226,8 +2196,9 @@ d3.interpolators = [
   function(a, b) {
     var t = typeof b;
     return (t === "string" ? (d3_rgb_names.has(b) || /^(#|rgb\(|hsl\()/.test(b) ? d3_interpolateRgb : d3_interpolateString)
-        : b instanceof d3_Color ? d3_interpolateRgb
-        : t === "object" ? (Array.isArray(b) ? d3_interpolateArray : d3_interpolateObject)
+        : b instanceof d3_color ? d3_interpolateRgb
+        : Array.isArray(b) ? d3_interpolateArray
+        : t === "object" && isNaN(b) ? d3_interpolateObject
         : d3_interpolateNumber)(a, b);
   }
 ];
@@ -2490,6 +2461,7 @@ d3_transitionPrototype.ease = function(value) {
 
 d3_transitionPrototype.delay = function(value) {
   var id = this.id;
+  if (arguments.length < 1) return this.node().__transition__[id].delay;
   return d3_selection_each(this, typeof value === "function"
       ? function(node, i, j) { node.__transition__[id].delay = +value.call(node, node.__data__, i, j); }
       : (value = +value, function(node) { node.__transition__[id].delay = value; }));
@@ -2497,6 +2469,7 @@ d3_transitionPrototype.delay = function(value) {
 
 d3_transitionPrototype.duration = function(value) {
   var id = this.id;
+  if (arguments.length < 1) return this.node().__transition__[id].duration;
   return d3_selection_each(this, typeof value === "function"
       ? function(node, i, j) { node.__transition__[id].duration = Math.max(1, value.call(node, node.__data__, i, j)); }
       : (value = Math.max(1, value), function(node) { node.__transition__[id].duration = value; }));
@@ -2741,8 +2714,7 @@ function d3_json(request) {
   return JSON.parse(request.responseText);
 }
 var d3_time = d3.time = {},
-    d3_date = Date,
-    d3_time_daySymbols = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    d3_date = Date;
 
 function d3_date_utc() {
   this._ = new Date(arguments.length > 1
@@ -2774,6 +2746,173 @@ d3_date_utc.prototype = {
 };
 
 var d3_time_prototype = Date.prototype;
+function d3_format_precision(x, p) {
+  return p - (x ? Math.ceil(Math.log(x) / Math.LN10) : 1);
+}
+d3.round = function(x, n) {
+  return n
+      ? Math.round(x * (n = Math.pow(10, n))) / n
+      : Math.round(x);
+};
+
+var d3_formatPrefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P","E","Z","Y"].map(d3_formatPrefix);
+
+d3.formatPrefix = function(value, precision) {
+  var i = 0;
+  if (value) {
+    if (value < 0) value *= -1;
+    if (precision) value = d3.round(value, d3_format_precision(value, precision));
+    i = 1 + Math.floor(1e-12 + Math.log(value) / Math.LN10);
+    i = Math.max(-24, Math.min(24, Math.floor((i - 1) / 3) * 3));
+  }
+  return d3_formatPrefixes[8 + i / 3];
+};
+
+function d3_formatPrefix(d, i) {
+  var k = Math.pow(10, abs(8 - i) * 3);
+  return {
+    scale: i > 8 ? function(d) { return d / k; } : function(d) { return d * k; },
+    symbol: d
+  };
+}
+
+function d3_locale_numberFormat(locale) {
+  var locale_decimal = locale.decimal,
+      locale_thousands = locale.thousands,
+      locale_grouping = locale.grouping,
+      locale_currency = locale.currency,
+      formatGroup = locale_grouping ? function(value) {
+        var i = value.length,
+            t = [],
+            j = 0,
+            g = locale_grouping[0];
+        while (i > 0 && g > 0) {
+          t.push(value.substring(i -= g, i + g));
+          g = locale_grouping[j = (j + 1) % locale_grouping.length];
+        }
+        return t.reverse().join(locale_thousands);
+      } : d3_identity;
+
+  return function(specifier) {
+    var match = d3_format_re.exec(specifier),
+        fill = match[1] || " ",
+        align = match[2] || ">",
+        sign = match[3] || "",
+        symbol = match[4] || "",
+        zfill = match[5],
+        width = +match[6],
+        comma = match[7],
+        precision = match[8],
+        type = match[9],
+        scale = 1,
+        prefix = "",
+        suffix = "",
+        integer = false;
+
+    if (precision) precision = +precision.substring(1);
+
+    if (zfill || fill === "0" && align === "=") {
+      zfill = fill = "0";
+      align = "=";
+      if (comma) width -= Math.floor((width - 1) / 4);
+    }
+
+    switch (type) {
+      case "n": comma = true; type = "g"; break;
+      case "%": scale = 100; suffix = "%"; type = "f"; break;
+      case "p": scale = 100; suffix = "%"; type = "r"; break;
+      case "b":
+      case "o":
+      case "x":
+      case "X": if (symbol === "#") prefix = "0" + type.toLowerCase();
+      case "c":
+      case "d": integer = true; precision = 0; break;
+      case "s": scale = -1; type = "r"; break;
+    }
+
+    if (symbol === "$") prefix = locale_currency[0], suffix = locale_currency[1];
+
+    // If no precision is specified for r, fallback to general notation.
+    if (type == "r" && !precision) type = "g";
+
+    // Ensure that the requested precision is in the supported range.
+    if (precision != null) {
+      if (type == "g") precision = Math.max(1, Math.min(21, precision));
+      else if (type == "e" || type == "f") precision = Math.max(0, Math.min(20, precision));
+    }
+
+    type = d3_format_types.get(type) || d3_format_typeDefault;
+
+    var zcomma = zfill && comma;
+
+    return function(value) {
+      var fullSuffix = suffix;
+
+      // Return the empty string for floats formatted as ints.
+      if (integer && (value % 1)) return "";
+
+      // Convert negative to positive, and record the sign prefix.
+      var negative = value < 0 || value === 0 && 1 / value < 0 ? (value = -value, "-") : sign;
+
+      // Apply the scale, computing it from the value's exponent for si format.
+      // Preserve the existing suffix, if any, such as the currency symbol.
+      if (scale < 0) {
+        var unit = d3.formatPrefix(value, precision);
+        value = unit.scale(value);
+        fullSuffix = unit.symbol + suffix;
+      } else {
+        value *= scale;
+      }
+
+      // Convert to the desired precision.
+      value = type(value, precision);
+
+      // Break the value into the integer part (before) and decimal part (after).
+      var i = value.lastIndexOf("."),
+          before = i < 0 ? value : value.substring(0, i),
+          after = i < 0 ? "" : locale_decimal + value.substring(i + 1);
+
+       // If the fill character is not "0", grouping is applied before padding.
+      if (!zfill && comma) before = formatGroup(before);
+
+      var length = prefix.length + before.length + after.length + (zcomma ? 0 : negative.length),
+          padding = length < width ? new Array(length = width - length + 1).join(fill) : "";
+
+      // If the fill character is "0", grouping is applied after padding.
+      if (zcomma) before = formatGroup(padding + before);
+
+      // Apply prefix.
+      negative += prefix;
+
+      // Rejoin integer and decimal parts.
+      value = before + after;
+
+      return (align === "<" ? negative + value + padding
+            : align === ">" ? padding + negative + value
+            : align === "^" ? padding.substring(0, length >>= 1) + negative + value + padding.substring(length)
+            : negative + (zcomma ? value : padding + value)) + fullSuffix;
+    };
+  };
+}
+
+// [[fill]align][sign][symbol][0][width][,][.precision][type]
+var d3_format_re = /(?:([^{])?([<>=^]))?([+\- ])?([$#])?(0)?(\d+)?(,)?(\.-?\d+)?([a-z%])?/i;
+
+var d3_format_types = d3.map({
+  b: function(x) { return x.toString(2); },
+  c: function(x) { return String.fromCharCode(x); },
+  o: function(x) { return x.toString(8); },
+  x: function(x) { return x.toString(16); },
+  X: function(x) { return x.toString(16).toUpperCase(); },
+  g: function(x, p) { return x.toPrecision(p); },
+  e: function(x, p) { return x.toExponential(p); },
+  f: function(x, p) { return x.toFixed(p); },
+  r: function(x, p) { return (x = d3.round(x, d3_format_precision(x, p))).toFixed(Math.max(0, Math.min(20, d3_format_precision(x * (1 + 1e-15), p)))); }
+});
+
+function d3_format_typeDefault(x) {
+  return x + "";
+}
 
 function d3_time_interval(local, step, number) {
 
@@ -2875,20 +3014,8 @@ d3_time.dayOfYear = function(date) {
   var year = d3_time.year(date);
   return Math.floor((date - year - (date.getTimezoneOffset() - year.getTimezoneOffset()) * 6e4) / 864e5);
 };
-// The date and time format (%c), date format (%x) and time format (%X).
-var d3_time_formatDateTime = "%a %b %e %X %Y",
-    d3_time_formatDate = "%m/%d/%Y",
-    d3_time_formatTime = "%H:%M:%S";
 
-// The weekday and month names.
-var d3_time_days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    d3_time_dayAbbreviations = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    d3_time_months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-    d3_time_monthAbbreviations = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-
-d3_time_daySymbols.forEach(function(day, i) {
-  day = day.toLowerCase();
+["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"].forEach(function(day, i) {
   i = 7 - i;
 
   var interval = d3_time[day] = d3_time_interval(function(date) {
@@ -2915,85 +3042,248 @@ d3_time.weeks = d3_time.sunday.range;
 d3_time.weeks.utc = d3_time.sunday.utc.range;
 d3_time.weekOfYear = d3_time.sundayOfYear;
 
-d3_time.format = d3_time_format;
+function d3_locale_timeFormat(locale) {
+  var locale_dateTime = locale.dateTime,
+      locale_date = locale.date,
+      locale_time = locale.time,
+      locale_periods = locale.periods,
+      locale_days = locale.days,
+      locale_shortDays = locale.shortDays,
+      locale_months = locale.months,
+      locale_shortMonths = locale.shortMonths;
 
-function d3_time_format(template) {
-  var n = template.length;
+  function d3_time_format(template) {
+    var n = template.length;
 
-  function format(date) {
-    var string = [],
-        i = -1,
-        j = 0,
-        c,
+    function format(date) {
+      var string = [],
+          i = -1,
+          j = 0,
+          c,
+          p,
+          f;
+      while (++i < n) {
+        if (template.charCodeAt(i) === 37) {
+          string.push(template.substring(j, i));
+          if ((p = d3_time_formatPads[c = template.charAt(++i)]) != null) c = template.charAt(++i);
+          if (f = d3_time_formats[c]) c = f(date, p == null ? (c === "e" ? " " : "0") : p);
+          string.push(c);
+          j = i + 1;
+        }
+      }
+      string.push(template.substring(j, i));
+      return string.join("");
+    }
+
+    format.parse = function(string) {
+      var d = {y: 1900, m: 0, d: 1, H: 0, M: 0, S: 0, L: 0, Z: null},
+          i = d3_time_parse(d, template, string, 0);
+      if (i != string.length) return null;
+
+      // The am-pm flag is 0 for AM, and 1 for PM.
+      if ("p" in d) d.H = d.H % 12 + d.p * 12;
+
+      // If a time zone is specified, it is always relative to UTC;
+      // we need to use d3_date_utc if we aren’t already.
+      var localZ = d.Z != null && d3_date !== d3_date_utc,
+          date = new (localZ ? d3_date_utc : d3_date);
+
+      // Set year, month, date.
+      if ("j" in d) date.setFullYear(d.y, 0, d.j);
+      else if ("w" in d && ("W" in d || "U" in d)) {
+        date.setFullYear(d.y, 0, 1);
+        date.setFullYear(d.y, 0, "W" in d
+            ? (d.w + 6) % 7 + d.W * 7 - (date.getDay() + 5) % 7
+            :  d.w          + d.U * 7 - (date.getDay() + 6) % 7);
+      } else date.setFullYear(d.y, d.m, d.d);
+
+      // Set hours, minutes, seconds and milliseconds.
+      date.setHours(d.H + Math.floor(d.Z / 100), d.M + d.Z % 100, d.S, d.L);
+
+      return localZ ? date._ : date;
+    };
+
+    format.toString = function() {
+      return template;
+    };
+
+    return format;
+  }
+
+  function d3_time_parse(date, template, string, j) {
+    var c,
         p,
-        f;
-    while (++i < n) {
-      if (template.charCodeAt(i) === 37) {
-        string.push(template.substring(j, i));
-        if ((p = d3_time_formatPads[c = template.charAt(++i)]) != null) c = template.charAt(++i);
-        if (f = d3_time_formats[c]) c = f(date, p == null ? (c === "e" ? " " : "0") : p);
-        string.push(c);
-        j = i + 1;
+        t,
+        i = 0,
+        n = template.length,
+        m = string.length;
+    while (i < n) {
+      if (j >= m) return -1;
+      c = template.charCodeAt(i++);
+      if (c === 37) {
+        t = template.charAt(i++);
+        p = d3_time_parsers[t in d3_time_formatPads ? template.charAt(i++) : t];
+        if (!p || ((j = p(date, string, j)) < 0)) return -1;
+      } else if (c != string.charCodeAt(j++)) {
+        return -1;
       }
     }
-    string.push(template.substring(j, i));
-    return string.join("");
+    return j;
   }
 
-  format.parse = function(string) {
-    var d = {y: 1900, m: 0, d: 1, H: 0, M: 0, S: 0, L: 0, Z: null},
-        i = d3_time_parse(d, template, string, 0);
-    if (i != string.length) return null;
+  d3_time_format.utc = function(template) {
+    var local = d3_time_format(template);
 
-    // The am-pm flag is 0 for AM, and 1 for PM.
-    if ("p" in d) d.H = d.H % 12 + d.p * 12;
+    function format(date) {
+      try {
+        d3_date = d3_date_utc;
+        var utc = new d3_date();
+        utc._ = date;
+        return local(utc);
+      } finally {
+        d3_date = Date;
+      }
+    }
 
-    // If a time zone is specified, it is always relative to UTC;
-    // we need to use d3_date_utc if we aren’t already.
-    var localZ = d.Z != null && d3_date !== d3_date_utc,
-        date = new (localZ ? d3_date_utc : d3_date);
+    format.parse = function(string) {
+      try {
+        d3_date = d3_date_utc;
+        var date = local.parse(string);
+        return date && date._;
+      } finally {
+        d3_date = Date;
+      }
+    };
 
-    // Set year, month, date.
-    if ("j" in d) date.setFullYear(d.y, 0, d.j);
-    else if ("w" in d && ("W" in d || "U" in d)) {
-      date.setFullYear(d.y, 0, 1);
-      date.setFullYear(d.y, 0, "W" in d
-          ? (d.w + 6) % 7 + d.W * 7 - (date.getDay() + 5) % 7
-          :  d.w          + d.U * 7 - (date.getDay() + 6) % 7);
-    } else date.setFullYear(d.y, d.m, d.d);
+    format.toString = local.toString;
 
-    // Set hours, minutes, seconds and milliseconds.
-    date.setHours(d.H + Math.floor(d.Z / 100), d.M + d.Z % 100, d.S, d.L);
-
-    return localZ ? date._ : date;
+    return format;
   };
 
-  format.toString = function() {
-    return template;
+  d3_time_format.multi =
+  d3_time_format.utc.multi = d3_time_formatMulti;
+
+  var d3_time_periodLookup = d3.map(),
+      d3_time_dayRe = d3_time_formatRe(locale_days),
+      d3_time_dayLookup = d3_time_formatLookup(locale_days),
+      d3_time_dayAbbrevRe = d3_time_formatRe(locale_shortDays),
+      d3_time_dayAbbrevLookup = d3_time_formatLookup(locale_shortDays),
+      d3_time_monthRe = d3_time_formatRe(locale_months),
+      d3_time_monthLookup = d3_time_formatLookup(locale_months),
+      d3_time_monthAbbrevRe = d3_time_formatRe(locale_shortMonths),
+      d3_time_monthAbbrevLookup = d3_time_formatLookup(locale_shortMonths);
+
+  locale_periods.forEach(function(p, i) {
+    d3_time_periodLookup.set(p.toLowerCase(), i);
+  });
+
+  var d3_time_formats = {
+    a: function(d) { return locale_shortDays[d.getDay()]; },
+    A: function(d) { return locale_days[d.getDay()]; },
+    b: function(d) { return locale_shortMonths[d.getMonth()]; },
+    B: function(d) { return locale_months[d.getMonth()]; },
+    c: d3_time_format(locale_dateTime),
+    d: function(d, p) { return d3_time_formatPad(d.getDate(), p, 2); },
+    e: function(d, p) { return d3_time_formatPad(d.getDate(), p, 2); },
+    H: function(d, p) { return d3_time_formatPad(d.getHours(), p, 2); },
+    I: function(d, p) { return d3_time_formatPad(d.getHours() % 12 || 12, p, 2); },
+    j: function(d, p) { return d3_time_formatPad(1 + d3_time.dayOfYear(d), p, 3); },
+    L: function(d, p) { return d3_time_formatPad(d.getMilliseconds(), p, 3); },
+    m: function(d, p) { return d3_time_formatPad(d.getMonth() + 1, p, 2); },
+    M: function(d, p) { return d3_time_formatPad(d.getMinutes(), p, 2); },
+    p: function(d) { return locale_periods[+(d.getHours() >= 12)]; },
+    S: function(d, p) { return d3_time_formatPad(d.getSeconds(), p, 2); },
+    U: function(d, p) { return d3_time_formatPad(d3_time.sundayOfYear(d), p, 2); },
+    w: function(d) { return d.getDay(); },
+    W: function(d, p) { return d3_time_formatPad(d3_time.mondayOfYear(d), p, 2); },
+    x: d3_time_format(locale_date),
+    X: d3_time_format(locale_time),
+    y: function(d, p) { return d3_time_formatPad(d.getFullYear() % 100, p, 2); },
+    Y: function(d, p) { return d3_time_formatPad(d.getFullYear() % 10000, p, 4); },
+    Z: d3_time_zone,
+    "%": function() { return "%"; }
   };
 
-  return format;
+  var d3_time_parsers = {
+    a: d3_time_parseWeekdayAbbrev,
+    A: d3_time_parseWeekday,
+    b: d3_time_parseMonthAbbrev,
+    B: d3_time_parseMonth,
+    c: d3_time_parseLocaleFull,
+    d: d3_time_parseDay,
+    e: d3_time_parseDay,
+    H: d3_time_parseHour24,
+    I: d3_time_parseHour24,
+    j: d3_time_parseDayOfYear,
+    L: d3_time_parseMilliseconds,
+    m: d3_time_parseMonthNumber,
+    M: d3_time_parseMinutes,
+    p: d3_time_parseAmPm,
+    S: d3_time_parseSeconds,
+    U: d3_time_parseWeekNumberSunday,
+    w: d3_time_parseWeekdayNumber,
+    W: d3_time_parseWeekNumberMonday,
+    x: d3_time_parseLocaleDate,
+    X: d3_time_parseLocaleTime,
+    y: d3_time_parseYear,
+    Y: d3_time_parseFullYear,
+    Z: d3_time_parseZone,
+    "%": d3_time_parseLiteralPercent
+  };
+
+  function d3_time_parseWeekdayAbbrev(date, string, i) {
+    d3_time_dayAbbrevRe.lastIndex = 0;
+    var n = d3_time_dayAbbrevRe.exec(string.substring(i));
+    return n ? (date.w = d3_time_dayAbbrevLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
+  }
+
+  function d3_time_parseWeekday(date, string, i) {
+    d3_time_dayRe.lastIndex = 0;
+    var n = d3_time_dayRe.exec(string.substring(i));
+    return n ? (date.w = d3_time_dayLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
+  }
+
+  function d3_time_parseMonthAbbrev(date, string, i) {
+    d3_time_monthAbbrevRe.lastIndex = 0;
+    var n = d3_time_monthAbbrevRe.exec(string.substring(i));
+    return n ? (date.m = d3_time_monthAbbrevLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
+  }
+
+  function d3_time_parseMonth(date, string, i) {
+    d3_time_monthRe.lastIndex = 0;
+    var n = d3_time_monthRe.exec(string.substring(i));
+    return n ? (date.m = d3_time_monthLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
+  }
+
+  function d3_time_parseLocaleFull(date, string, i) {
+    return d3_time_parse(date, d3_time_formats.c.toString(), string, i);
+  }
+
+  function d3_time_parseLocaleDate(date, string, i) {
+    return d3_time_parse(date, d3_time_formats.x.toString(), string, i);
+  }
+
+  function d3_time_parseLocaleTime(date, string, i) {
+    return d3_time_parse(date, d3_time_formats.X.toString(), string, i);
+  }
+
+  function d3_time_parseAmPm(date, string, i) {
+    var n = d3_time_periodLookup.get(string.substring(i, i += 2).toLowerCase());
+    return n == null ? -1 : (date.p = n, i);
+  }
+
+  return d3_time_format;
 }
 
-function d3_time_parse(date, template, string, j) {
-  var c,
-      p,
-      t,
-      i = 0,
-      n = template.length,
-      m = string.length;
-  while (i < n) {
-    if (j >= m) return -1;
-    c = template.charCodeAt(i++);
-    if (c === 37) {
-      t = template.charAt(i++);
-      p = d3_time_parsers[t in d3_time_formatPads ? template.charAt(i++) : t];
-      if (!p || ((j = p(date, string, j)) < 0)) return -1;
-    } else if (c != string.charCodeAt(j++)) {
-      return -1;
-    }
-  }
-  return j;
+var d3_time_formatPads = {"-": "", "_": " ", "0": "0"},
+    d3_time_numberRe = /^\s*\d+/, // note: ignores next directive
+    d3_time_percentRe = /^%/;
+
+function d3_time_formatPad(value, fill, width) {
+  var sign = value < 0 ? "-" : "",
+      string = (sign ? -value : value) + "",
+      length = string.length;
+  return sign + (length < width ? new Array(width - length + 1).join(fill) + string : string);
 }
 
 function d3_time_formatRe(names) {
@@ -3004,95 +3294,6 @@ function d3_time_formatLookup(names) {
   var map = new d3_Map, i = -1, n = names.length;
   while (++i < n) map.set(names[i].toLowerCase(), i);
   return map;
-}
-
-function d3_time_formatPad(value, fill, width) {
-  var sign = value < 0 ? "-" : "",
-      string = (sign ? -value : value) + "",
-      length = string.length;
-  return sign + (length < width ? new Array(width - length + 1).join(fill) + string : string);
-}
-
-var d3_time_dayRe = d3_time_formatRe(d3_time_days),
-    d3_time_dayLookup = d3_time_formatLookup(d3_time_days),
-    d3_time_dayAbbrevRe = d3_time_formatRe(d3_time_dayAbbreviations),
-    d3_time_dayAbbrevLookup = d3_time_formatLookup(d3_time_dayAbbreviations),
-    d3_time_monthRe = d3_time_formatRe(d3_time_months),
-    d3_time_monthLookup = d3_time_formatLookup(d3_time_months),
-    d3_time_monthAbbrevRe = d3_time_formatRe(d3_time_monthAbbreviations),
-    d3_time_monthAbbrevLookup = d3_time_formatLookup(d3_time_monthAbbreviations),
-    d3_time_percentRe = /^%/;
-
-var d3_time_formatPads = {
-  "-": "",
-  "_": " ",
-  "0": "0"
-};
-
-var d3_time_formats = {
-  a: function(d) { return d3_time_dayAbbreviations[d.getDay()]; },
-  A: function(d) { return d3_time_days[d.getDay()]; },
-  b: function(d) { return d3_time_monthAbbreviations[d.getMonth()]; },
-  B: function(d) { return d3_time_months[d.getMonth()]; },
-  c: d3_time_format(d3_time_formatDateTime),
-  d: function(d, p) { return d3_time_formatPad(d.getDate(), p, 2); },
-  e: function(d, p) { return d3_time_formatPad(d.getDate(), p, 2); },
-  H: function(d, p) { return d3_time_formatPad(d.getHours(), p, 2); },
-  I: function(d, p) { return d3_time_formatPad(d.getHours() % 12 || 12, p, 2); },
-  j: function(d, p) { return d3_time_formatPad(1 + d3_time.dayOfYear(d), p, 3); },
-  L: function(d, p) { return d3_time_formatPad(d.getMilliseconds(), p, 3); },
-  m: function(d, p) { return d3_time_formatPad(d.getMonth() + 1, p, 2); },
-  M: function(d, p) { return d3_time_formatPad(d.getMinutes(), p, 2); },
-  p: function(d) { return d.getHours() >= 12 ? "PM" : "AM"; },
-  S: function(d, p) { return d3_time_formatPad(d.getSeconds(), p, 2); },
-  U: function(d, p) { return d3_time_formatPad(d3_time.sundayOfYear(d), p, 2); },
-  w: function(d) { return d.getDay(); },
-  W: function(d, p) { return d3_time_formatPad(d3_time.mondayOfYear(d), p, 2); },
-  x: d3_time_format(d3_time_formatDate),
-  X: d3_time_format(d3_time_formatTime),
-  y: function(d, p) { return d3_time_formatPad(d.getFullYear() % 100, p, 2); },
-  Y: function(d, p) { return d3_time_formatPad(d.getFullYear() % 10000, p, 4); },
-  Z: d3_time_zone,
-  "%": function() { return "%"; }
-};
-
-var d3_time_parsers = {
-  a: d3_time_parseWeekdayAbbrev,
-  A: d3_time_parseWeekday,
-  b: d3_time_parseMonthAbbrev,
-  B: d3_time_parseMonth,
-  c: d3_time_parseLocaleFull,
-  d: d3_time_parseDay,
-  e: d3_time_parseDay,
-  H: d3_time_parseHour24,
-  I: d3_time_parseHour24,
-  j: d3_time_parseDayOfYear,
-  L: d3_time_parseMilliseconds,
-  m: d3_time_parseMonthNumber,
-  M: d3_time_parseMinutes,
-  p: d3_time_parseAmPm,
-  S: d3_time_parseSeconds,
-  U: d3_time_parseWeekNumberSunday,
-  w: d3_time_parseWeekdayNumber,
-  W: d3_time_parseWeekNumberMonday,
-  x: d3_time_parseLocaleDate,
-  X: d3_time_parseLocaleTime,
-  y: d3_time_parseYear,
-  Y: d3_time_parseFullYear,
-  Z: d3_time_parseZone,
-  "%": d3_time_parseLiteralPercent
-};
-
-function d3_time_parseWeekdayAbbrev(date, string, i) {
-  d3_time_dayAbbrevRe.lastIndex = 0;
-  var n = d3_time_dayAbbrevRe.exec(string.substring(i));
-  return n ? (date.w = d3_time_dayAbbrevLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
-}
-
-function d3_time_parseWeekday(date, string, i) {
-  d3_time_dayRe.lastIndex = 0;
-  var n = d3_time_dayRe.exec(string.substring(i));
-  return n ? (date.w = d3_time_dayLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
 }
 
 function d3_time_parseWeekdayNumber(date, string, i) {
@@ -3113,30 +3314,6 @@ function d3_time_parseWeekNumberMonday(date, string, i) {
   return n ? (date.W = +n[0], i + n[0].length) : -1;
 }
 
-function d3_time_parseMonthAbbrev(date, string, i) {
-  d3_time_monthAbbrevRe.lastIndex = 0;
-  var n = d3_time_monthAbbrevRe.exec(string.substring(i));
-  return n ? (date.m = d3_time_monthAbbrevLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
-}
-
-function d3_time_parseMonth(date, string, i) {
-  d3_time_monthRe.lastIndex = 0;
-  var n = d3_time_monthRe.exec(string.substring(i));
-  return n ? (date.m = d3_time_monthLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
-}
-
-function d3_time_parseLocaleFull(date, string, i) {
-  return d3_time_parse(date, d3_time_formats.c.toString(), string, i);
-}
-
-function d3_time_parseLocaleDate(date, string, i) {
-  return d3_time_parse(date, d3_time_formats.x.toString(), string, i);
-}
-
-function d3_time_parseLocaleTime(date, string, i) {
-  return d3_time_parse(date, d3_time_formats.X.toString(), string, i);
-}
-
 function d3_time_parseFullYear(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
   var n = d3_time_numberRe.exec(string.substring(i, i + 4));
@@ -3151,7 +3328,7 @@ function d3_time_parseYear(date, string, i) {
 
 function d3_time_parseZone(date, string, i) {
   return /^[+-]\d{4}$/.test(string = string.substring(i, i + 5))
-      ? (date.Z = +string, i + 5)
+      ? (date.Z = -string, i + 5) // sign differs from getTimezoneOffset!
       : -1;
 }
 
@@ -3202,19 +3379,6 @@ function d3_time_parseMilliseconds(date, string, i) {
   return n ? (date.L = +n[0], i + n[0].length) : -1;
 }
 
-// Note: we don't look at the next directive.
-var d3_time_numberRe = /^\s*\d+/;
-
-function d3_time_parseAmPm(date, string, i) {
-  var n = d3_time_amPmLookup.get(string.substring(i, i += 2).toLowerCase());
-  return n == null ? -1 : (date.p = n, i);
-}
-
-var d3_time_amPmLookup = d3.map({
-  am: 0,
-  pm: 1
-});
-
 // TODO table of time zone offset names?
 function d3_time_zone(d) {
   var z = d.getTimezoneOffset(),
@@ -3229,6 +3393,40 @@ function d3_time_parseLiteralPercent(date, string, i) {
   var n = d3_time_percentRe.exec(string.substring(i, i + 1));
   return n ? i + n[0].length : -1;
 }
+
+function d3_time_formatMulti(formats) {
+  var n = formats.length, i = -1;
+  while (++i < n) formats[i][0] = this(formats[i][0]);
+  return function(date) {
+    var i = 0, f = formats[i];
+    while (!f[1](date)) f = formats[++i];
+    return f[0](date);
+  };
+}
+
+d3.locale = function(locale) {
+  return {
+    numberFormat: d3_locale_numberFormat(locale),
+    timeFormat: d3_locale_timeFormat(locale)
+  };
+};
+
+var d3_locale_enUS = d3.locale({
+  decimal: ".",
+  thousands: ",",
+  grouping: [3],
+  currency: ["$", ""],
+  dateTime: "%a %b %e %X %Y",
+  date: "%m/%d/%Y",
+  time: "%H:%M:%S",
+  periods: ["AM", "PM"],
+  days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  shortDays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  shortMonths: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+});
+
+var d3_time_format = d3_time.format = d3_locale_enUS.timeFormat;
 
 d3.text = d3_xhrType(function(request) {
   return request.responseText;
@@ -3384,7 +3582,6 @@ function d3_geo_clip(pointVisible, clipLine, interpolate, clipStart) {
         clip.lineEnd = ringEnd;
         segments = [];
         polygon = [];
-        listener.polygonStart();
       },
       polygonEnd: function() {
         clip.point = point;
@@ -3394,13 +3591,15 @@ function d3_geo_clip(pointVisible, clipLine, interpolate, clipStart) {
         segments = d3.merge(segments);
         var clipStartInside = d3_geo_pointInPolygon(rotatedClipStart, polygon);
         if (segments.length) {
+          if (!polygonStarted) listener.polygonStart(), polygonStarted = true;
           d3_geo_clipPolygon(segments, d3_geo_clipSort, clipStartInside, interpolate, listener);
         } else if (clipStartInside) {
+          if (!polygonStarted) listener.polygonStart(), polygonStarted = true;
           listener.lineStart();
           interpolate(null, null, 1, listener);
           listener.lineEnd();
         }
-        listener.polygonEnd();
+        if (polygonStarted) listener.polygonEnd(), polygonStarted = false;
         segments = polygon = null;
       },
       sphere: function() {
@@ -3427,6 +3626,7 @@ function d3_geo_clip(pointVisible, clipLine, interpolate, clipStart) {
 
     var buffer = d3_geo_clipBufferListener(),
         ringListener = clipLine(buffer),
+        polygonStarted = false,
         polygon,
         ring;
 
@@ -3462,9 +3662,12 @@ function d3_geo_clip(pointVisible, clipLine, interpolate, clipStart) {
         var n = segment.length - 1,
             i = -1,
             point;
-        listener.lineStart();
-        while (++i < n) listener.point((point = segment[i])[0], point[1]);
-        listener.lineEnd();
+        if (n > 0) {
+          if (!polygonStarted) listener.polygonStart(), polygonStarted = true;
+          listener.lineStart();
+          while (++i < n) listener.point((point = segment[i])[0], point[1]);
+          listener.lineEnd();
+        }
         return;
       }
 
@@ -3658,11 +3861,13 @@ function d3_geo_areaRingStart() {
     // previous point, current point.  Uses a formula derived from Cagnoli’s
     // theorem.  See Todhunter, Spherical Trig. (1871), Sec. 103, Eq. (2).
     var dλ = λ - λ0,
+        sdλ = dλ >= 0 ? 1 : -1,
+        adλ = sdλ * dλ,
         cosφ = Math.cos(φ),
         sinφ = Math.sin(φ),
         k = sinφ0 * sinφ,
-        u = cosφ0 * cosφ + k * Math.cos(dλ),
-        v = k * Math.sin(dλ);
+        u = cosφ0 * cosφ + k * Math.cos(adλ),
+        v = k * sdλ * Math.sin(adλ);
     d3_geo_areaRingSum.add(Math.atan2(v, u));
 
     // Advance the previous points.
@@ -3749,11 +3954,13 @@ function d3_geo_pointInPolygon(point, polygon) {
           sinφ = Math.sin(φ),
           cosφ = Math.cos(φ),
           dλ = λ - λ0,
-          antimeridian = abs(dλ) > π,
+          sdλ = dλ >= 0 ? 1 : -1,
+          adλ = sdλ * dλ,
+          antimeridian = adλ > π,
           k = sinφ0 * sinφ;
-      d3_geo_areaRingSum.add(Math.atan2(k * Math.sin(dλ), cosφ0 * cosφ + k * Math.cos(dλ)));
+      d3_geo_areaRingSum.add(Math.atan2(k * sdλ * Math.sin(adλ), cosφ0 * cosφ + k * Math.cos(adλ)));
 
-      polarAngle += antimeridian ? dλ + (dλ >= 0 ? τ : -τ): dλ;
+      polarAngle += antimeridian ? dλ + sdλ * τ : dλ;
 
       // Are the longitudes either side of the point's meridian, and are the
       // latitudes smaller than the parallel?
@@ -3817,7 +4024,7 @@ function d3_geo_clipAntimeridianLine(listener) {
         listener.lineEnd();
         listener.lineStart();
         listener.point(sλ1, φ0);
-        listener.point( λ1, φ0);
+        listener.point(λ1, φ0);
         clean = 0;
       } else if (sλ0 !== sλ1 && dλ >= π) { // line crosses antimeridian
         // handle degeneracies
@@ -4345,18 +4552,14 @@ function d3_geo_clipExtent(x0, y0, x1, y1) {
         for (var j = 1, v = polygon[i], m = v.length, a = v[0], b; j < m; ++j) {
           b = v[j];
           if (a[1] <= y) {
-            if (b[1] >  y && isLeft(a, b, p) > 0) ++wn;
+            if (b[1] >  y && d3_cross2d(a, b, p) > 0) ++wn;
           } else {
-            if (b[1] <= y && isLeft(a, b, p) < 0) --wn;
+            if (b[1] <= y && d3_cross2d(a, b, p) < 0) --wn;
           }
           a = b;
         }
       }
       return wn !== 0;
-    }
-
-    function isLeft(a, b, c) {
-      return (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1]);
     }
 
     function interpolate(from, to, direction, listener) {
@@ -5284,7 +5487,7 @@ function d3_geo_resample(project) {
           c = c0 + c1,
           m = Math.sqrt(a * a + b * b + c * c),
           φ2 = Math.asin(c /= m),
-          λ2 = abs(abs(c) - 1) < ε ? (λ0 + λ1) / 2 : Math.atan2(b, a),
+          λ2 = abs(abs(c) - 1) < ε || abs(λ0 - λ1) < ε ? (λ0 + λ1) / 2 : Math.atan2(b, a),
           p = project(λ2, φ2),
           x2 = p[0],
           y2 = p[1],
@@ -5569,8 +5772,10 @@ function d3_geo_mercatorProjection(project) {
 (d3.geo.mercator = function() {
   return d3_geo_mercatorProjection(d3_geo_mercator);
 }).raw = d3_geo_mercator;
-  return d3;
-})();
+  if (typeof define === "function" && define.amd) define(d3);
+  else if (typeof module === "object" && module.exports) module.exports = d3;
+  this.d3 = d3;
+}();
 /**
  * Hashchange Event Polyfill
  */
