@@ -33,7 +33,7 @@ module.exports = function(context) {
 
         function saveFeature() {
             var obj = {};
-            var table = d3.select(this).select('table.marker-properties');
+            var table = sel.select('table.marker-properties');
             table.selectAll('tr').each(collectRow);
             function collectRow() {
                 if (d3.select(this).selectAll('input')[0][0].value) {
@@ -41,6 +41,7 @@ module.exports = function(context) {
                         losslessNumber(d3.select(this).selectAll('input')[0][1].value);
                 }
             }
+            console.log(obj, table);
             e.popup._source.feature.properties = obj;
             context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
             context.map.closePopup(e.popup);
