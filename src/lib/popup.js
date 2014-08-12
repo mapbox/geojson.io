@@ -41,7 +41,6 @@ module.exports = function(context) {
                         losslessNumber(d3.select(this).selectAll('input')[0][1].value);
                 }
             }
-            console.log(obj, table);
             e.popup._source.feature.properties = obj;
             context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
             context.map.closePopup(e.popup);

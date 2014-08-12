@@ -16326,7 +16326,6 @@ module.exports = function(context) {
                         losslessNumber(d3.select(this).selectAll('input')[0][1].value);
                 }
             }
-            console.log(obj, table);
             e.popup._source.feature.properties = obj;
             context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
             context.map.closePopup(e.popup);
@@ -17291,7 +17290,6 @@ module.exports = function fileBar(context) {
                     action: function() {
                         var response = prompt('Number of points (default: 100)');
                         if (response === null) return;
-                        console.log(typeof response);
                         var count = parseInt(response, 10);
                         if (isNaN(count)) count = 100;
                         meta.random(context, count, 'point');

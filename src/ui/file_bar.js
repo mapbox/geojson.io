@@ -110,7 +110,6 @@ module.exports = function fileBar(context) {
                     action: function() {
                         var response = prompt('Number of points (default: 100)');
                         if (response === null) return;
-                        console.log(typeof response);
                         var count = parseInt(response, 10);
                         if (isNaN(count)) count = 100;
                         meta.random(context, count, 'point');
