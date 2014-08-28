@@ -50,6 +50,8 @@ body.fullscreen .file-bar .fr {
     display:none;
 }
 
+body.fullscreen .leaflet-control-mapbox-geocoder { margin-top:50px; }
+
 .deemphasize { color: #888;}
 
 p.intro-hint {
