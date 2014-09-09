@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2014-09-09
+
+* Added Flatten task to Meta menu with `geojson-flatten`
+
 ## 2014-08-07
 
 * Bugfixes

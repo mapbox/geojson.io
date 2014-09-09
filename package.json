@@ -31,7 +31,8 @@
     "polytogeojson": "0.0.1",
     "leaflet-geodesy": "0.1.1",
     "geojson-random": "0.1.0",
-    "geojson-extent": "0.3.1"
+    "geojson-extent": "0.3.1",
+    "geojson-flatten": "~0.1.0"
   },
   "devDependencies": {
     "browserify": "4.1.11",

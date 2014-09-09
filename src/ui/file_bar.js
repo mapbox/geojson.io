@@ -120,6 +120,12 @@ module.exports = function fileBar(context) {
                     action: function() {
                         meta.bboxify(context);
                     }
+                }, {
+                    title: 'Flatten Multi Features',
+                    alt: 'Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries',
+                    action: function() {
+                        meta.flatten(context);
+                    }
                 }
             ]
         }];
