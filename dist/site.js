@@ -4258,8 +4258,14 @@ function hint(str) {
     function Feature(_) {
         crs(_);
         bbox(_);
-        if (_.id !== undefined) {
-            requiredProperty(_, 'id', 'string');
+        // https://github.com/geojson/draft-geojson/blob/master/middle.mkd#feature-object
+        if (_.id !== undefined &&
+            typeof _.id !== 'string' &&
+            typeof _.id !== 'number') {
+            errors.push({
+                message: 'Feature "id" property must have a string or number value',
+                line: _.__line__
+            });
         }
         if (_.type !== 'Feature') {
             errors.push({

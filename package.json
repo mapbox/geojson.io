@@ -6,7 +6,7 @@
   "dependencies": {
     "leaflet-draw": "0.2.3",
     "jsonlint": "1.6.0",
-    "geojsonhint": "0.3.3",
+    "geojsonhint": "0.3.4",
     "d3-metatable": "0.3.0",
     "topojson": "1.6.8",
     "togeojson": "0.5.0",
