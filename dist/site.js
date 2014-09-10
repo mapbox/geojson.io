@@ -15998,8 +15998,12 @@ module.exports = function(context) {
             url = /(http:\/\/\S*)/g;
 
         if (err) {
-            message = err.message || JSON.parse(err.responseText).message
-                .replace(url, '<a href="$&">$&</a>');
+            try {
+                message = err.message || JSON.parse(err.responseText).message
+                    .replace(url, '<a href="$&">$&</a>');
+            } catch(e) {
+                message = 'Sorry, an error occurred.';
+            }
             return flash(context.container, message);
         }
 
@@ -16956,8 +16960,12 @@ function save(context, callback) {
                 var message,
                     url = /(http:\/\/\S*)/g;
 
-                message = JSON.parse(err.responseText).message
-                    .replace(url, '<a href="$&">$&</a>');
+                try {
+                    message = JSON.parse(err.responseText).message
+                        .replace(url, '<a href="$&">$&</a>');
+                } catch(e) {
+                    message = 'Sorry, an error occurred';
+                }
 
                 callback(message);
             })
@@ -17052,8 +17060,12 @@ function save(context, callback) {
                 var message,
                     url = /(http:\/\/\S*)/g;
 
-                message = JSON.parse(err.responseText).message
-                    .replace(url, '<a href="$&">$&</a>');
+                try {
+                    message = JSON.parse(err.responseText).message
+                        .replace(url, '<a href="$&">$&</a>');
+                } catch(e) {
+                    message = 'Sorry, an error occurred.';
+                }
 
                 callback(message);
             })

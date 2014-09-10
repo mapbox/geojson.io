@@ -76,8 +76,12 @@ function save(context, callback) {
                 var message,
                     url = /(http:\/\/\S*)/g;
 
-                message = JSON.parse(err.responseText).message
-                    .replace(url, '<a href="$&">$&</a>');
+                try {
+                    message = JSON.parse(err.responseText).message
+                        .replace(url, '<a href="$&">$&</a>');
+                } catch(e) {
+                    message = 'Sorry, an error occurred';
+                }
 
                 callback(message);
             })
