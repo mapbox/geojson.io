@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2014-09-10
+
+* Updated `geojsonhint`: Feature `id` properties are now properly validated.
+
 ## 2014-09-09
 
 * Added Flatten task to Meta menu with `geojson-flatten`
