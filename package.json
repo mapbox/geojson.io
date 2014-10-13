@@ -22,7 +22,7 @@
     "clone": "0.1.16",
     "bowser": "0.3.2",
     "filesaver.js": "0.1.0",
-    "shp-write": "0.1.5",
+    "shp-write": "0.2.1",
     "osmtogeojson": "2.0.5",
     "qs-hash": "0.0.0",
     "tokml": "0.2.2",
