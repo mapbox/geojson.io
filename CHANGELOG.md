@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2014-10-13
+
+* Updated `shp-write`: shapefile writing should work again.
+
 ## 2014-09-10
 
 * Updated `geojsonhint`: Feature `id` properties are now properly validated.
