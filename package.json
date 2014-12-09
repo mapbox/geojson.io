@@ -14,6 +14,7 @@
     "detect-json-indent": "0.0.0",
     "github-file-browser": "0.5.0",
     "smash": "0.0.11",
+    "clean-css": "~2.0.7",
     "uglify-js": "2.4.1",
     "d3": "3.4.11",
     "store": "1.3.14",
@@ -32,7 +33,8 @@
     "leaflet-geodesy": "0.1.1",
     "geojson-random": "0.1.0",
     "geojson-extent": "0.3.1",
-    "geojson-flatten": "~0.1.0"
+    "geojson-flatten": "~0.1.0",
+    "mapbox.js": "https://github.com/mapbox/mapbox.js/tarball/mb-pages"
   },
   "devDependencies": {
     "browserify": "4.1.11",

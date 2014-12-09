@@ -1,9 +1,10 @@
 BROWSERIFY = node_modules/.bin/browserify
 SMASH = node_modules/.bin/smash
+CLEANCSS = node_modules/.bin/cleancss
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
 
-all: dist/site.js dist/site.mobile.js dist/delegate.js
+all: dist/site.js dist/site.mobile.js dist/delegate.js lib/mapbox.js/latest
 
 node_modules: package.json
 	npm install
@@ -59,6 +60,21 @@ dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js
 
 dist/site.mobile.js: dist/lib.js src/mobile.js $(shell $(BROWSERIFY) --list src/mobile.js)
 	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson src/mobile.js > dist/site.mobile.js
+
+lib/mapbox.js/latest:
+	mkdir lib/mapbox.js/latest
+
+lib/mapbox.js/latest/mapbox.js: node_modules/mapbox.js
+	$(BROWSERIFY) node_modules/mapbox.js > lib/mapbox.js/latest/mapbox.js
+	$(UGLIFY) -o lib/mapbox.js/latest/mapbox.js lib/mapbox.js/latest/mapbox.js
+
+	$(CLEANCSS) node_modules/mapbox.js/theme/style.css -o lib/mapbox.js/latest/mapbox.css
+
+	@if [ -n $$MapboxAPITile ]; then \
+		echo "\nL.mapbox.config.HTTP_URL = '$$MapboxAPITile/v4';\
+	         \nL.mapbox.config.HTTPS_URL = '$$MapboxAPITile/v4';\
+	         \nL.mapbox.config.REQUIRE_ACCESS_TOKEN = false;" >> lib/mapbox.js/latest/mapbox.js; \
+	fi
 
 clean:
 	rm -f dist/*
