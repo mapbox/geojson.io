@@ -6,7 +6,7 @@ var buttons = require('./ui/mode_buttons'),
 
 module.exports = ui;
 
-function ui(context, config) {
+function ui(context) {
     function init(selection) {
 
         var container = selection
