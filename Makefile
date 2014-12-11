@@ -58,9 +58,9 @@ dist/delegate.js: src/delegate.js
 lib/mapbox.js/latest:
 	mkdir lib/mapbox.js/latest
 
-MapboxAPITile=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./config.json')).MapboxAPITile.replace(/\/$$/, '');")
+MapboxAPITile=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).MapboxAPITile.replace(/\/$$/, '');")
 
-lib/mapbox.js/latest/mapbox.js: config.json
+lib/mapbox.js/latest/mapbox.js: settings.json
 	$(BROWSERIFY) node_modules/mapbox.js > lib/mapbox.js/latest/mapbox.js
 	$(UGLIFY) -o lib/mapbox.js/latest/mapbox.js lib/mapbox.js/latest/mapbox.js
 	$(CLEANCSS) node_modules/mapbox.js/theme/style.css -o lib/mapbox.js/latest/mapbox.css

@@ -21589,7 +21589,7 @@ function extend() {
 module.exports = function(hostname) { 			
 	var production = (hostname === 'geojson.io'); 			
 	return { 			
-		MapboxAPITile: null, 			
+		MapboxAPITile: 'http://localhost:2999', 			
 		client_id: production ? 			
 			'62c753fd0faf18392d85' : 			
 			'bb7bbe70bd1f707125bc', 			
@@ -23381,7 +23381,7 @@ module.exports = function fileBar(context) {
         var name = selection.append('div')
             .attr('class', 'name');
 
-        if (mapboxAPI){
+        if (mapboxAPI) {
             var filetype = name.append('a')
                 .attr('target', '_blank')
                 .attr('class', 'icon-file-alt');
@@ -23939,7 +23939,7 @@ function message(selection) {
 }
 
 },{}],171:[function(require,module,exports){
-module.exports = function modal(selection, blocking) {
+module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
     var animate = previous.empty();
