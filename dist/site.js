@@ -21589,7 +21589,7 @@ function extend() {
 module.exports = function(hostname) { 			
 	var production = (hostname === 'geojson.io'); 			
 	return { 			
-		MapboxAPITile: 'http://localhost:2999', 			
+		MapboxAPITile: null, 			
 		client_id: production ? 			
 			'62c753fd0faf18392d85' : 			
 			'bb7bbe70bd1f707125bc', 			
@@ -23757,7 +23757,6 @@ var popup = require('../lib/popup'),
     LGeo = require('leaflet-geodesy'),
     writable = false;
 
-
 module.exports = function(context, readonly) {
 
     writable = !readonly;
@@ -23770,7 +23769,7 @@ module.exports = function(context, readonly) {
                 attributionControl: true
             })
             .setView([20, 0], 2)
-            .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt', {
+            .addControl(L.mapbox.geocoderControl('mapbox.places-permanent', {
                 position: 'topright'
             }));
 

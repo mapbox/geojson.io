@@ -4,7 +4,6 @@ var popup = require('../lib/popup'),
     LGeo = require('leaflet-geodesy'),
     writable = false;
 
-
 module.exports = function(context, readonly) {
 
     writable = !readonly;
