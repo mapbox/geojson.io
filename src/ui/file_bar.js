@@ -171,7 +171,7 @@ module.exports = function fileBar(context) {
         var name = selection.append('div')
             .attr('class', 'name');
 
-        if (mapboxAPI){
+        if (mapboxAPI) {
             var filetype = name.append('a')
                 .attr('target', '_blank')
                 .attr('class', 'icon-file-alt');

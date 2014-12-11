@@ -1,4 +1,4 @@
-module.exports = function modal(selection, blocking) {
+module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
     var animate = previous.empty();

@@ -58,15 +58,16 @@ dist/delegate.js: src/delegate.js
 lib/mapbox.js/latest:
 	mkdir lib/mapbox.js/latest
 
-MapboxAPITile=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./config.json')).MapboxAPITile;")
+MapboxAPITile=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).MapboxAPITile.replace(/\/$$/, '');")
 
-lib/mapbox.js/latest/mapbox.js: config.json
+lib/mapbox.js/latest/mapbox.js: settings.json
 	$(BROWSERIFY) node_modules/mapbox.js > lib/mapbox.js/latest/mapbox.js
 	$(UGLIFY) -o lib/mapbox.js/latest/mapbox.js lib/mapbox.js/latest/mapbox.js
 	$(CLEANCSS) node_modules/mapbox.js/theme/style.css -o lib/mapbox.js/latest/mapbox.css
 	
 	@if [ $(MapboxAPITile) ]; then \
-		API=$$(node -pe "JSON.parse(process.argv[1]).api;" "$$(curl -s $(MapboxAPITile))") && \
+		API=$$(node -pe "if (process.argv[1]) JSON.parse(process.argv[1]).api; else console.log('\nERROR: Cannot find MapboxAPITile endpoint at $(MapboxAPITile)\n');" "$$(curl -s $(MapboxAPITile))") && \
+		echo "Mapbox API:" $$API && \
 		if [ "$$API" = "atlas" ]; then \
 			echo "module.exports = function(hostname) { \
 				\n\tvar production = (hostname === 'geojson.io'); \
