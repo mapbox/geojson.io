@@ -25,12 +25,14 @@ module.exports = function(context) {
             layers = [{
                 title: 'Mapbox',
                 layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-                    detectRetina: true
+                    detectRetina: true,
+                    accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w'
                 })
             }, {
                 title: 'Satellite',
                 layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-                    detectRetina: true
+                    detectRetina: true,
+                    accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w'
                 })
             }, {
                 title: 'OSM',

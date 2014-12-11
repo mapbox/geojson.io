@@ -35,21 +35,28 @@ dist/d3.js: node_modules node_modules/d3/*
 		node_modules/d3/src/geo/path.js \
 		node_modules/d3/src/end.js > dist/d3.js
 
+dist/lib.js: dist dist/d3.js $(LIBS)
+	cat dist/d3.js \
+		lib/hashchange.js \
+		lib/blob.js \
+		lib/base64.js \
+		lib/bucket.js \
+		lib/queue.js \
+		lib/d3.keybinding.js \
+		lib/d3.trigger.js \
+		lib/d3-compat.js \
+		lib/draw/leaflet.draw-src.js \
+		lib/codemirror/lib/codemirror.js \
+		lib/codemirror/mode/javascript/javascript.js > dist/lib.js
+
 dist/d3.min.js: dist/d3.js
 	$(UGLIFY) dist/d3.js > dist/d3.min.js
 
 dist/delegate.js: src/delegate.js
 	$(BROWSERIFY)  src/delegate.js > dist/delegate.js
 
-dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
-	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson  src/index.js > dist/site.js
-
-dist/site.mobile.js: dist/lib.js src/mobile.js $(shell $(BROWSERIFY) --list src/mobile.js)
-	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson src/mobile.js > dist/site.mobile.js
-
 lib/mapbox.js/latest:
 	mkdir lib/mapbox.js/latest
-
 
 MapboxAPITile=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./config.json')).MapboxAPITile;")
 
@@ -92,19 +99,12 @@ lib/mapbox.js/latest/mapbox.js: config.json
 			\n};" > src/config.js; \
 	fi
 
-dist/lib.js: dist dist/d3.js $(LIBS)
-	cat dist/d3.js \
-		lib/hashchange.js \
-		lib/blob.js \
-		lib/base64.js \
-		lib/bucket.js \
-		lib/queue.js \
-		lib/d3.keybinding.js \
-		lib/d3.trigger.js \
-		lib/d3-compat.js \
-		lib/draw/leaflet.draw-src.js \
-		lib/codemirror/lib/codemirror.js \
-		lib/codemirror/mode/javascript/javascript.js > dist/lib.js
+dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
+	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson  src/index.js > dist/site.js
+
+dist/site.mobile.js: dist/lib.js src/mobile.js $(shell $(BROWSERIFY) --list src/mobile.js)
+	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson src/mobile.js > dist/site.mobile.js
+
 clean:
 	rm -f dist/*
 
