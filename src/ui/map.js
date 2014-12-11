@@ -1,6 +1,6 @@
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
-    qs = require('qs-hash');
+    qs = require('qs-hash'),
     LGeo = require('leaflet-geodesy'),
     writable = false;
 

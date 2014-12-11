@@ -23301,13 +23301,15 @@ module.exports = function fileBar(context) {
         var name = selection.append('div')
             .attr('class', 'name');
 
-        var filetype = name.append('a')
-            .attr('target', '_blank')
-            .attr('class', 'icon-file-alt');
+        if (mapboxAPI){
+            var filetype = name.append('a')
+                .attr('target', '_blank')
+                .attr('class', 'icon-file-alt');
 
-        var filename = name.append('span')
-            .attr('class', 'filename')
-            .text('unsaved');
+            var filename = name.append('span')
+                .attr('class', 'filename')
+                .text('unsaved');
+        }
 
         function clickGistSave() {
             if (d3.event) d3.event.preventDefault();
@@ -23463,10 +23465,10 @@ module.exports = function fileBar(context) {
             var data = d.obj,
                 type = data.type,
                 path = data.path;
-            filename
+            if (mapboxAPI) filename
                 .text(path ? path : 'unsaved')
                 .classed('deemphasize', context.data.dirty);
-            filetype
+            if (mapboxAPI) filetype
                 .attr('href', data.url)
                 .attr('class', sourceIcon(type));
             saveNoun(type == 'github' ? 'Commit' : 'Save');
@@ -23671,7 +23673,7 @@ module.exports = function(context) {
 },{"../config":142}],167:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
-    qs = require('qs-hash');
+    qs = require('qs-hash'),
     LGeo = require('leaflet-geodesy'),
     writable = false;
 
@@ -24107,51 +24109,55 @@ var config = require('../config.js')(location.hostname);
 var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
 
 module.exports = function(context) {
-    if (mapboxAPI) return function(selection) {
-        var name = selection.append('a')
-            .attr('target', '_blank');
+    if (mapboxAPI) {
+        return function(selection) {
+            var name = selection.append('a')
+                .attr('target', '_blank');
 
-        selection.append('span').text(' | ');
+            selection.append('span').text(' | ');
 
-        var action = selection.append('a')
-            .attr('href', '#');
+            var action = selection.append('a')
+                .attr('href', '#');
 
-        function nextLogin() {
-            action.text('login').on('click', login);
-            name
-                .text('anon')
-                .attr('href', '#')
-                .on('click', function() { d3.event.preventDefault(); });
-        }
+            function nextLogin() {
+                action.text('login').on('click', login);
+                name
+                    .text('anon')
+                    .attr('href', '#')
+                    .on('click', function() { d3.event.preventDefault(); });
+            }
 
-        function nextLogout() {
-            name.on('click', null);
-            action.text('logout').on('click', logout);
-        }
+            function nextLogout() {
+                name.on('click', null);
+                action.text('logout').on('click', logout);
+            }
 
-        function login() {
-            d3.event.preventDefault();
-            context.user.authenticate();
-        }
+            function login() {
+                d3.event.preventDefault();
+                context.user.authenticate();
+            }
 
-        function logout() {
-            d3.event.preventDefault();
-            context.user.logout();
+            function logout() {
+                d3.event.preventDefault();
+                context.user.logout();
+                nextLogin();
+            }
+
             nextLogin();
-        }
 
-        nextLogin();
-
-        if (context.user.token()) {
-            context.user.details(function(err, d) {
-                if (err) return;
-                name.text(d.login);
-                name.attr('href', d.html_url);
-                nextLogout();
-            });
-        }
-    };
-    else return function(){};
+            if (context.user.token()) {
+                context.user.details(function(err, d) {
+                    if (err) return;
+                    name.text(d.login);
+                    name.attr('href', d.html_url);
+                    nextLogout();
+                });
+            }
+        };
+    }
+    else {
+        return function() {};
+    }
 };
 
 },{"../config.js":142}]},{},[155])

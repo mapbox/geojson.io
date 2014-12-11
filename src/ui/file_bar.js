@@ -171,13 +171,15 @@ module.exports = function fileBar(context) {
         var name = selection.append('div')
             .attr('class', 'name');
 
-        var filetype = name.append('a')
-            .attr('target', '_blank')
-            .attr('class', 'icon-file-alt');
+        if (mapboxAPI){
+            var filetype = name.append('a')
+                .attr('target', '_blank')
+                .attr('class', 'icon-file-alt');
 
-        var filename = name.append('span')
-            .attr('class', 'filename')
-            .text('unsaved');
+            var filename = name.append('span')
+                .attr('class', 'filename')
+                .text('unsaved');
+        }
 
         function clickGistSave() {
             if (d3.event) d3.event.preventDefault();
@@ -333,10 +335,10 @@ module.exports = function fileBar(context) {
             var data = d.obj,
                 type = data.type,
                 path = data.path;
-            filename
+            if (mapboxAPI) filename
                 .text(path ? path : 'unsaved')
                 .classed('deemphasize', context.data.dirty);
-            filetype
+            if (mapboxAPI) filetype
                 .attr('href', data.url)
                 .attr('class', sourceIcon(type));
             saveNoun(type == 'github' ? 'Commit' : 'Save');
