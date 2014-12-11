@@ -4,7 +4,6 @@ var popup = require('../lib/popup'),
     LGeo = require('leaflet-geodesy'),
     writable = false;
 
-
 module.exports = function(context, readonly) {
 
     writable = !readonly;
@@ -17,7 +16,7 @@ module.exports = function(context, readonly) {
                 attributionControl: true
             })
             .setView([20, 0], 2)
-            .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt', {
+            .addControl(L.mapbox.geocoderControl('mapbox.places-permanent', {
                 position: 'topright'
             }));
 
