@@ -1,5 +1,8 @@
+var config = require('../config.js')(location.hostname);
+var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
+
 module.exports = function(context) {
-    return function(selection) {
+    if (mapboxAPI) return function(selection) {
         var name = selection.append('a')
             .attr('target', '_blank');
 
@@ -43,4 +46,5 @@ module.exports = function(context) {
             });
         }
     };
+    else return function() {};
 };
