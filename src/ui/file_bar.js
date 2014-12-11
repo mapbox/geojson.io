@@ -13,7 +13,8 @@ var share = require('./share'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
     meta = require('../lib/meta.js'),
-    saver = require('../ui/saver.js');
+    saver = require('../ui/saver.js'),
+    config = require('../config.js')(location.hostname);
 
 /**
  * This module provides the file picking & status bar above the map interface.
@@ -23,6 +24,7 @@ var share = require('./share'),
 module.exports = function fileBar(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
+    var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
 
     var exportFormats = [{
         title: 'GeoJSON',
@@ -48,49 +50,13 @@ module.exports = function fileBar(context) {
     function bar(selection) {
 
         var actions = [{
-            title: 'Open',
-            children: [
-                {
-                    title: 'File',
-                    alt: 'CSV, KML, GPX, and other filetypes',
-                    action: blindImport
-                }, {
-                    title: 'GitHub',
-                    alt: 'GeoJSON files in GitHub Repositories',
-                    authenticated: true,
-                    action: clickGitHubOpen
-                }, {
-                    title: 'Gist',
-                    alt: 'GeoJSON files in GitHub Gists',
-                    authenticated: true,
-                    action: clickGist
-                }
-            ]
-        }, {
             title: 'Save',
             action: saveAction,
-            children: [
-                {
-                    title: 'GitHub',
-                    alt: 'GeoJSON files in GitHub Repositories',
-                    authenticated: true,
-                    action: clickGitHubSave
-                }, {
-                    title: 'Gist',
-                    alt: 'GeoJSON files in GitHub Gists',
-                    authenticated: true,
-                    action: clickGistSave
-                }
-            ].concat(exportFormats)
+            children: exportFormats
         }, {
             title: 'New',
             action: function() {
                 window.open('/#new');
-            }
-        }, {
-            title: 'Share',
-            action: function() {
-                context.container.call(share(context));
             }
         }, {
             title: 'Meta',
@@ -129,6 +95,53 @@ module.exports = function fileBar(context) {
                 }
             ]
         }];
+
+        if (mapboxAPI) {
+            actions.unshift({
+                title: 'Open',
+                children: [
+                    {
+                        title: 'File',
+                        alt: 'CSV, KML, GPX, and other filetypes',
+                        action: blindImport
+                    }, {
+                        title: 'GitHub',
+                        alt: 'GeoJSON files in GitHub Repositories',
+                        authenticated: true,
+                        action: clickGitHubOpen
+                    }, {
+                        title: 'Gist',
+                        alt: 'GeoJSON files in GitHub Gists',
+                        authenticated: true,
+                        action: clickGist
+                    }
+                ]
+            });
+            actions[1].children.unshift({
+                    title: 'GitHub',
+                    alt: 'GeoJSON files in GitHub Repositories',
+                    authenticated: true,
+                    action: clickGitHubSave
+                }, {
+                    title: 'Gist',
+                    alt: 'GeoJSON files in GitHub Gists',
+                    authenticated: true,
+                    action: clickGistSave
+                });
+            
+            actions.splice(3, 0, {
+                title: 'Share',
+                action: function() {
+                    context.container.call(share(context));
+                }
+            });
+        } else {
+            actions.unshift({
+                title: 'Open',
+                alt: 'CSV, KML, GPX, and other filetypes',
+                action: blindImport
+            });
+        }
 
         var items = selection.append('div')
             .attr('class', 'inline')
