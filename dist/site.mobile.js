@@ -21589,7 +21589,7 @@ function extend() {
 module.exports = function(hostname) { 			
 	var production = (hostname === 'geojson.io'); 			
 	return { 			
-		MapboxAPITile: 'http://localhost:2999', 			
+		MapboxAPITile: null, 			
 		client_id: production ? 			
 			'62c753fd0faf18392d85' : 			
 			'bb7bbe70bd1f707125bc', 			
