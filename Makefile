@@ -83,6 +83,7 @@ lib/mapbox.js/latest/mapbox.js: config.json
 			echo "\nL.mapbox.config.HTTP_URL = '$(MapboxAPITile)/v4'; \
 			 \nL.mapbox.config.HTTPS_URL = '$(MapboxAPITile)/v4'; \
 			 \nL.mapbox.config.REQUIRE_ACCESS_TOKEN = false;" >> lib/mapbox.js/latest/mapbox.js; \
+			 touch dist/lib.js; \
 		 fi \
 	else \
 		echo "module.exports = function(hostname) { \
@@ -97,6 +98,7 @@ lib/mapbox.js/latest/mapbox.js: config.json
 				\n\t\t\t'https://localhostauth.herokuapp.com' \
 				\n\t}; \
 			\n};" > src/config.js; \
+			touch dist/lib.js; \
 	fi
 
 dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
