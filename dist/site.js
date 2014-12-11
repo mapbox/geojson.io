@@ -716,7 +716,7 @@ function base64Write (buf, string, offset, length) {
 }
 
 function utf16leWrite (buf, string, offset, length) {
-  var charsWritten = blitBuffer(utf16leToBytes(string), buf, offset, length)
+  var charsWritten = blitBuffer(utf16leToBytes(string), buf, offset, length, 2)
   return charsWritten
 }
 
@@ -1400,7 +1400,8 @@ function base64ToBytes (str) {
   return base64.toByteArray(str)
 }
 
-function blitBuffer (src, dst, offset, length) {
+function blitBuffer (src, dst, offset, length, unitSize) {
+  if (unitSize) length -= length % unitSize;
   for (var i = 0; i < length; i++) {
     if ((i + offset >= dst.length) || (i >= src.length))
       break
@@ -21585,18 +21586,17 @@ function extend() {
 }
 
 },{}],142:[function(require,module,exports){
-module.exports = function(hostname) {
-    var production = (hostname === 'geojson.io');
-
-    return {
-        MapboxAPITile: null,
-        client_id: production ?
-            '62c753fd0faf18392d85' :
-            'bb7bbe70bd1f707125bc',
-        gatekeeper_url: production ?
-            'https://geojsonioauth.herokuapp.com' :
-            'https://localhostauth.herokuapp.com'
-    };
+module.exports = function(hostname) { 			
+	var production = (hostname === 'geojson.io'); 			
+	return { 			
+		MapboxAPITile: 'http://localhost:2999', 			
+		client_id: production ? 			
+			'62c753fd0faf18392d85' : 			
+			'bb7bbe70bd1f707125bc', 			
+		gatekeeper_url: production ? 			
+			'https://geojsonioauth.herokuapp.com' : 			
+			'https://localhostauth.herokuapp.com' 			
+	}; 		
 };
 
 },{}],143:[function(require,module,exports){
@@ -23223,7 +23223,8 @@ var share = require('./share'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
     meta = require('../lib/meta.js'),
-    saver = require('../ui/saver.js');
+    saver = require('../ui/saver.js'),
+    config = require('../config.js')(location.hostname);
 
 /**
  * This module provides the file picking & status bar above the map interface.
@@ -23233,6 +23234,7 @@ var share = require('./share'),
 module.exports = function fileBar(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
+    var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
 
     var exportFormats = [{
         title: 'GeoJSON',
@@ -23258,49 +23260,13 @@ module.exports = function fileBar(context) {
     function bar(selection) {
 
         var actions = [{
-            title: 'Open',
-            children: [
-                {
-                    title: 'File',
-                    alt: 'CSV, KML, GPX, and other filetypes',
-                    action: blindImport
-                }, {
-                    title: 'GitHub',
-                    alt: 'GeoJSON files in GitHub Repositories',
-                    authenticated: true,
-                    action: clickGitHubOpen
-                }, {
-                    title: 'Gist',
-                    alt: 'GeoJSON files in GitHub Gists',
-                    authenticated: true,
-                    action: clickGist
-                }
-            ]
-        }, {
             title: 'Save',
             action: saveAction,
-            children: [
-                {
-                    title: 'GitHub',
-                    alt: 'GeoJSON files in GitHub Repositories',
-                    authenticated: true,
-                    action: clickGitHubSave
-                }, {
-                    title: 'Gist',
-                    alt: 'GeoJSON files in GitHub Gists',
-                    authenticated: true,
-                    action: clickGistSave
-                }
-            ].concat(exportFormats)
+            children: exportFormats
         }, {
             title: 'New',
             action: function() {
                 window.open('/#new');
-            }
-        }, {
-            title: 'Share',
-            action: function() {
-                context.container.call(share(context));
             }
         }, {
             title: 'Meta',
@@ -23339,6 +23305,53 @@ module.exports = function fileBar(context) {
                 }
             ]
         }];
+
+        if (mapboxAPI) {
+            actions.unshift({
+                title: 'Open',
+                children: [
+                    {
+                        title: 'File',
+                        alt: 'CSV, KML, GPX, and other filetypes',
+                        action: blindImport
+                    }, {
+                        title: 'GitHub',
+                        alt: 'GeoJSON files in GitHub Repositories',
+                        authenticated: true,
+                        action: clickGitHubOpen
+                    }, {
+                        title: 'Gist',
+                        alt: 'GeoJSON files in GitHub Gists',
+                        authenticated: true,
+                        action: clickGist
+                    }
+                ]
+            });
+            actions[1].children.unshift({
+                    title: 'GitHub',
+                    alt: 'GeoJSON files in GitHub Repositories',
+                    authenticated: true,
+                    action: clickGitHubSave
+                }, {
+                    title: 'Gist',
+                    alt: 'GeoJSON files in GitHub Gists',
+                    authenticated: true,
+                    action: clickGistSave
+                });
+            
+            actions.splice(3, 0, {
+                title: 'Share',
+                action: function() {
+                    context.container.call(share(context));
+                }
+            });
+        } else {
+            actions.unshift({
+                title: 'Open',
+                alt: 'CSV, KML, GPX, and other filetypes',
+                action: blindImport
+            });
+        }
 
         var items = selection.append('div')
             .attr('class', 'inline')
@@ -23639,7 +23652,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../lib/meta.js":152,"../lib/readfile":154,"../lib/zoomextent":157,"../ui/saver.js":173,"./flash":167,"./modal.js":171,"./share":174,"clone":13,"filesaver.js":18,"geojson2dsv":27,"gist-map-browser":31,"github-file-browser":33,"shp-write":51,"tokml":108,"topojson":"BOmyIj"}],167:[function(require,module,exports){
+},{"../config.js":142,"../lib/meta.js":152,"../lib/readfile":154,"../lib/zoomextent":157,"../ui/saver.js":173,"./flash":167,"./modal.js":171,"./share":174,"clone":13,"filesaver.js":18,"geojson2dsv":27,"gist-map-browser":31,"github-file-browser":33,"shp-write":51,"tokml":108,"topojson":"BOmyIj"}],167:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -23689,12 +23702,14 @@ module.exports = function(context) {
             layers = [{
                 title: 'Mapbox',
                 layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-                    detectRetina: true
+                    detectRetina: true,
+                    accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w'
                 })
             }, {
                 title: 'Satellite',
                 layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-                    detectRetina: true
+                    detectRetina: true,
+                    accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w'
                 })
             }, {
                 title: 'OSM',
@@ -23746,6 +23761,7 @@ module.exports = function(context, readonly) {
     writable = !readonly;
 
     function map(selection) {
+        L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w';
 
         context.map = L.mapbox.map(selection.node(), null, {
                 infoControl: false,
