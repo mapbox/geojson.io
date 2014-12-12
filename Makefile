@@ -4,7 +4,7 @@ CLEANCSS = node_modules/.bin/cleancss
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
 
-all: dist/site.js dist/site.mobile.js dist/delegate.js lib/mapbox.js/latest lib/mapbox.js/latest/mapbox.js
+all: dist/site.js dist/site.mobile.js dist/delegate.js dist/raven.js dist/gauges.js lib/mapbox.js/latest lib/mapbox.js/latest/mapbox.js
 
 node_modules: package.json
 	npm install
@@ -101,6 +101,12 @@ lib/mapbox.js/latest/mapbox.js: settings.json
 			\n};" > src/config.js; \
 			touch dist/lib.js; \
 	fi
+
+dist/raven.js: src/config.js
+	$(BROWSERIFY)  lib/tracking/raven.js > dist/raven.js
+
+dist/gauges.js: src/config.js
+	$(BROWSERIFY)  lib/tracking/gauges.js > dist/gauges.js
 
 dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
 	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson  src/index.js > dist/site.js
