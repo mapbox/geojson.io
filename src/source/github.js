@@ -2,6 +2,9 @@ module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
 
+var config = require('../config.js')(location.hostname);
+var githubBase = config.GithubAPI ? config.GithubAPI + '/api/v3': 'https://api.github.com';
+
 function save(context, callback) {
     var source = context.data.get('source'),
         meta = context.data.get('meta'),
@@ -49,7 +52,7 @@ function save(context, callback) {
                 data.sha = source.sha;
             }
         } else {
-            endpoint = 'https://api.github.com/gists';
+            endpoint = githubBase + '/gists';
             files[name] = { content: JSON.stringify(map, null, 2) };
             data = { files: files };
         }
@@ -112,7 +115,7 @@ function loadRaw(parts, sha, context, callback) {
 }
 
 function fileUrl(parts) {
-    return 'https://api.github.com/repos/' +
+    return githubBase + '/gists' +
         parts.user +
         '/' + parts.repo +
         '/contents/' + parts.path +
@@ -120,7 +123,7 @@ function fileUrl(parts) {
 }
 
 function shaUrl(parts, sha) {
-    return 'https://api.github.com/repos/' +
+    return githubBase + '/gists' +
         parts.user +
         '/' + parts.repo +
         '/git/blobs/' + sha;

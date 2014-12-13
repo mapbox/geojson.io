@@ -153,6 +153,7 @@ module.exports = function(context) {
     };
 
     data.parse = function(d, browser) {
+        var endpoint = config.GithubAPI || 'https://github.com/';
         var login,
             repo,
             branch,
@@ -202,7 +203,7 @@ module.exports = function(context) {
                         path
                     ].join('/'),
                     url: [
-                        'https://github.com',
+                        endpoint,
                         login,
                         repo,
                         'blob',
@@ -244,13 +245,15 @@ module.exports = function(context) {
                 login = (d.owner && d.owner.login) || 'anonymous';
                 path = [login, d.id].join('/');
 
-                if (d.content) data.set({ map: d.content });
+                var file = mapFile(d);
+
+                if (d.files[file].content) data.set({ map: JSON.parse(d.files[file].content) });
                 data.set({
                     type: 'gist',
                     source: d,
                     meta: {
                         login: login,
-                        name: d.file
+                        name: file
                     },
                     path: path,
                     route: 'gist:' + path,

@@ -15,13 +15,14 @@ if (mapboxAPI) {
 },{"../../src/config.js":2}],2:[function(require,module,exports){
 module.exports = function(hostname) { 			
 	var production = (hostname === 'geojson.io'); 			
+ 			
 	return { 			
 		MapboxAPITile: null, 			
-		client_id: production ? 			
-			'62c753fd0faf18392d85' : 			
-			'bb7bbe70bd1f707125bc', 			
-		gatekeeper_url: production ? 			
-			'https://geojsonioauth.herokuapp.com' : 			
+		client_id: production ? 		
+			'62c753fd0faf18392d85' : 		
+			'bb7bbe70bd1f707125bc', 		
+		gatekeeper_url: production ? 		
+			'https://geojsonioauth.herokuapp.com' : 		
 			'https://localhostauth.herokuapp.com' 			
 	}; 		
 };

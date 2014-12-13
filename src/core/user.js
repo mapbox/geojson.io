@@ -12,8 +12,9 @@ module.exports = function(context) {
             callback(null, cached.data);
         } else {
             context.storage.remove('github_user_details');
+            var endpoint = !!config.GithubAPI ? config.GithubAPI + '/api/v3' : 'https://api.github.com';
 
-            d3.json('https://api.github.com/user')
+            d3.json(endpoint + '/user')
                 .header('Authorization', 'token ' + context.storage.get('github_token'))
                 .on('load', onload)
                 .on('error', onerror)
@@ -42,7 +43,7 @@ module.exports = function(context) {
     };
 
     user.authenticate = function() {
-        window.location.href = 'https://github.com/login/oauth/authorize?client_id=' +
+        window.location.href = (config.GithubAPI || 'https://github.com') + '/login/oauth/authorize?client_id=' +
             config.client_id +
             '&scope=gist,repo';
     };

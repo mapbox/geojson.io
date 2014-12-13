@@ -59,44 +59,55 @@ lib/mapbox.js/latest:
 	mkdir lib/mapbox.js/latest
 
 MapboxAPITile=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).MapboxAPITile.replace(/\/$$/, '');")
+GithubAPI=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).GithubAPI.replace(/\/$$/, '') || '';")
+GithubClientID=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).GithubClientID.replace(/\/$$/, '') || '';")
+GatekeeperURL=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).GatekeeperURL.replace(/\/$$/, '') || '';")
 
 lib/mapbox.js/latest/mapbox.js: settings.json
 	$(BROWSERIFY) node_modules/mapbox.js > lib/mapbox.js/latest/mapbox.js
 	$(UGLIFY) -o lib/mapbox.js/latest/mapbox.js lib/mapbox.js/latest/mapbox.js
 	$(CLEANCSS) node_modules/mapbox.js/theme/style.css -o lib/mapbox.js/latest/mapbox.css
-	
-	@if [ $(MapboxAPITile) ]; then \
-		API=$$(node -pe "if (process.argv[1]) JSON.parse(process.argv[1]).api; else console.log('\nERROR: Cannot find MapboxAPITile endpoint at $(MapboxAPITile)\n');" "$$(curl -s $(MapboxAPITile))") && \
-		echo "Mapbox API:" $$API && \
-		if [ "$$API" = "atlas" ]; then \
-			echo "module.exports = function(hostname) { \
-				\n\tvar production = (hostname === 'geojson.io'); \
-				\n\treturn { \
-				\n\t\tMapboxAPITile: '$(MapboxAPITile)', \
-				\n\t\tclient_id: production ? \
-				\n\t\t\t'62c753fd0faf18392d85' : \
-				\n\t\t\t'bb7bbe70bd1f707125bc', \
-				\n\t\tgatekeeper_url: production ? \
-				\n\t\t\t'https://geojsonioauth.herokuapp.com' : \
-				\n\t\t\t'https://localhostauth.herokuapp.com' \
-				\n\t}; \
-			\n};" > src/config.js && \
-			echo "\nL.mapbox.config.HTTP_URL = '$(MapboxAPITile)/v4'; \
-			 \nL.mapbox.config.HTTPS_URL = '$(MapboxAPITile)/v4'; \
-			 \nL.mapbox.config.REQUIRE_ACCESS_TOKEN = false;" >> lib/mapbox.js/latest/mapbox.js; \
-			 touch dist/lib.js; \
-		 fi \
+
+	@echo "Configuration settings:"
+	@if [[ -n $(GithubAPI) ]] && [[ -n $(GithubClientID) ]] && [[ -n $(GatekeeperURL) ]]; then \
+		GithubAPIConfig="\n\t\tGithubAPI: '$(GithubAPI)', \
+		\n\t\tclient_id: '$(GithubClientID)', \
+		\n\t\tgatekeeper_url: '$(GatekeeperURL)'"; \
+		echo "Github API:" $(GithubAPI); \
+		echo "Github Client ID:" $(GithubClientID); \
+		echo "Gatekeeper Url:" $(GatekeeperURL); \
 	else \
+		GithubAPIConfig="\n\t\tclient_id: production ? \
+			\n\t\t\t'62c753fd0faf18392d85' : \
+			\n\t\t\t'bb7bbe70bd1f707125bc', \
+			\n\t\tgatekeeper_url: production ? \
+			\n\t\t\t'https://geojsonioauth.herokuapp.com' : \
+			\n\t\t\t'https://localhostauth.herokuapp.com'"; \
+	fi && \
+	if [ $(MapboxAPITile) ]; then \
+		API=$$(node -pe "if (process.argv[1]) JSON.parse(process.argv[1]).api; else console.log('\WARNING: Cannot find MapboxAPITile endpoint at \'$(MapboxAPITile)\'.\n');" "$$(curl -s $(MapboxAPITile))") && \
+		echo "Mapbox API:" $$API && \
+		MapboxAPITileConfig="\n\t\tMapboxAPITile: '$(MapboxAPITile)'," && \
+		echo "\nL.mapbox.config.HTTP_URL = '$(MapboxAPITile)/v4'; \
+		 \nL.mapbox.config.HTTPS_URL = '$(MapboxAPITile)/v4'; \
+		 \nL.mapbox.config.REQUIRE_ACCESS_TOKEN = false;" >> lib/mapbox.js/latest/mapbox.js; \
+		 touch dist/lib.js; \
+		echo "module.exports = function(hostname) { \
+			\n\tvar production = (hostname === 'geojson.io'); \
+			\n \
+			\n\treturn { \
+			$$MapboxAPITileConfig \
+			$$GithubAPIConfig \
+			\n\t}; \
+		\n};" > src/config.js;\
+	else \
+		echo "Mapbox API: mapbox.com" && \
 		echo "module.exports = function(hostname) { \
 				\n\tvar production = (hostname === 'geojson.io'); \
+				\n \
 				\n\treturn { \
 				\n\t\tMapboxAPITile: null, \
-				\n\t\tclient_id: production ? \
-				\n\t\t\t'62c753fd0faf18392d85' : \
-				\n\t\t\t'bb7bbe70bd1f707125bc', \
-				\n\t\tgatekeeper_url: production ? \
-				\n\t\t\t'https://geojsonioauth.herokuapp.com' : \
-				\n\t\t\t'https://localhostauth.herokuapp.com' \
+				$$GithubAPIConfig \
 				\n\t}; \
 			\n};" > src/config.js; \
 			touch dist/lib.js; \

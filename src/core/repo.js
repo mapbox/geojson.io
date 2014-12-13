@@ -4,6 +4,7 @@ module.exports = function(context) {
     var repo = {};
 
     repo.details = function(callback) {
+        var endpoint = (config.GithubAPI) ? config.GithubAPI + '/api/v3/repos' : 'https://api.github.com/repos/';
         var cached = context.storage.get('github_repo_details'),
             meta = context.data.get('meta'),
             login = meta.login,
@@ -15,7 +16,7 @@ module.exports = function(context) {
         } else {
             context.storage.remove('github_repo_details');
 
-            d3.json('https://api.github.com/repos/' + [login, repo].join('/'))
+            d3.json(endpoint + [login, repo].join('/'))
                 .header('Authorization', 'token ' + context.storage.get('github_token'))
                 .on('load', onload)
                 .on('error', onerror)

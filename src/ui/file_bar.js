@@ -25,6 +25,8 @@ module.exports = function fileBar(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
     var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
+    var githubAPI = !!config.GithubAPI;
+    var githubBase = githubAPI ? config.GithubAPI + '/api/v3': 'https://api.github.com';
 
     var exportFormats = [{
         title: 'GeoJSON',
@@ -96,7 +98,7 @@ module.exports = function fileBar(context) {
             ]
         }];
 
-        if (mapboxAPI) {
+        if (mapboxAPI || githubAPI) {
             actions.unshift({
                 title: 'Open',
                 children: [
@@ -171,7 +173,7 @@ module.exports = function fileBar(context) {
         var name = selection.append('div')
             .attr('class', 'name');
 
-        if (mapboxAPI) {
+        if (mapboxAPI || githubAPI) {
             var filetype = name.append('a')
                 .attr('target', '_blank')
                 .attr('class', 'icon-file-alt');
@@ -234,7 +236,7 @@ module.exports = function fileBar(context) {
                 .append('h1')
                 .text('GitHub');
 
-            githubBrowser(context.user.token(), false)
+            githubBrowser(context.user.token(), false, githubBase)
                 .open()
                 .onclick(function(d) {
                     if (!d || !d.length) return;
@@ -246,8 +248,12 @@ module.exports = function fileBar(context) {
                         return alert('only GeoJSON files are supported from GitHub');
                     }
                     if (last.type === 'blob') {
-                        context.data.parse(d);
-                        m.close();
+                        githubBrowser.request('/repos/' + d[1].full_name +
+                            '/git/blobs/' + last.sha, function(err, blob) {
+                                d.content = JSON.parse(atob(blob[0].content));
+                                context.data.parse(d);
+                                m.close();
+                            });
                     }
                 })
                 .appendTo(
@@ -288,7 +294,7 @@ module.exports = function fileBar(context) {
                         }).join('/');
                         context.data.set({
                             source: {
-                                url: 'https://api.github.com/repos/' +
+                                url: githubBase + '/repos/' +
                                     d[0].login + '/' + d[1].name +
                                         '/contents/' + partial +
                                         '?ref=' + d[2].name
@@ -318,7 +324,7 @@ module.exports = function fileBar(context) {
             m.select('.m')
                 .attr('class', 'modal-splash modal col6');
 
-            gistBrowser(context.user.token())
+            gistBrowser(context.user.token(), githubBase)
                 .open()
                 .onclick(function(d) {
                     context.data.parse(d);
@@ -335,10 +341,10 @@ module.exports = function fileBar(context) {
             var data = d.obj,
                 type = data.type,
                 path = data.path;
-            if (mapboxAPI) filename
+            if (mapboxAPI || githubAPI) filename
                 .text(path ? path : 'unsaved')
                 .classed('deemphasize', context.data.dirty);
-            if (mapboxAPI) filetype
+            if (mapboxAPI || githubAPI) filetype
                 .attr('href', data.url)
                 .attr('class', sourceIcon(type));
             saveNoun(type == 'github' ? 'Commit' : 'Save');

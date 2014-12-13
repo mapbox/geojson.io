@@ -1,8 +1,9 @@
 var config = require('../config.js')(location.hostname);
 var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
+var githubAPI = !!config.GithubAPI;
 
 module.exports = function(context) {
-    if (mapboxAPI) {
+    if (mapboxAPI || githubAPI) {
         return function(selection) {
             var name = selection.append('a')
                 .attr('target', '_blank');
