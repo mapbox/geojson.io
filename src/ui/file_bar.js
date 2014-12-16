@@ -13,8 +13,7 @@ var share = require('./share'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
     meta = require('../lib/meta.js'),
-    saver = require('../ui/saver.js'),
-    config = require('../config.js')(location.hostname);
+    saver = require('../ui/saver.js');
 
 /**
  * This module provides the file picking & status bar above the map interface.
@@ -24,7 +23,7 @@ var share = require('./share'),
 module.exports = function fileBar(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
-    var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
+    var mapboxAPI = /a\.tiles\.mapbox.com/.test(L.mapbox.config.HTTP_URL);
 
     var exportFormats = [{
         title: 'GeoJSON',
