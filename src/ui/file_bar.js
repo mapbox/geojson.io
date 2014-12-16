@@ -13,8 +13,7 @@ var share = require('./share'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
     meta = require('../lib/meta.js'),
-    saver = require('../ui/saver.js'),
-    config = require('../config.js')(location.hostname);
+    saver = require('../ui/saver.js');
 
 /**
  * This module provides the file picking & status bar above the map interface.
