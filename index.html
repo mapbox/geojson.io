@@ -24,7 +24,17 @@
   <![endif]-->
   <script src='lib/mapbox.js/latest/mapbox.js'></script>
   <script src='lib/raven.min.js'></script>
-  <script src='dist/raven.js'></script>
+  <script>
+  if (/a\.tiles\.mapbox\.com/.test(L.mapbox.config.HTTP_URL)) {
+    Raven.config('https://c2d096c944dd4150ab7e44b0881b4a46@app.getsentry.com/11480', {
+      whitelistUrls: [/geojson\.io/],
+      ignoreErrors: [
+          'Uncaught Error: Error connecting to extension ckibcdccnfeookdmbahgiakhnjcddpki',
+          'Uncaught Error: Error connecting to extension pioclpoplcdbaefihamjohnefbikjilc'
+      ]
+    }).install();
+  }
+  </script>
 </head>
 <body id='geojsonio-body'>
 
@@ -33,6 +43,20 @@
 <script src='dist/delegate.js'></script>
 <script src='dist/lib.js'></script>
 <script src='dist/site.js'></script>
-<script src='dist/gauges.js'></script>
+<script type='text/javascript'>
+if (/a\.tiles\.mapbox\.com/.test(L.mapbox.config.HTTP_URL)) {
+  var _gauges = _gauges || [];
+  (function() {
+    var t   = document.createElement('script');
+    t.type  = 'text/javascript';
+    t.async = true;
+    t.id    = 'gauges-tracker';
+    t.setAttribute('data-site-id', '51eee846108d7b2871000081');
+    t.src = '//secure.gaug.es/track.js';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(t, s);
+  })();
+}
+</script>
 </body>
 </html>

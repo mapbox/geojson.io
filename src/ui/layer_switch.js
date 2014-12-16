@@ -1,9 +1,9 @@
 module.exports = function(context) {
-    config = require('../config')(location.hostname);
+
     return function(selection) {
         var layers;
 
-        if (config.MapboxAPITile && config.MapboxAPITile !== 'https://a.tiles.mapbox.com') {
+        if (!(/a\.tiles\.mapbox.com/).test(L.mapbox.config.HTTP_URL)) {
             layers = [{
                 title: 'Mapbox',
                 layer: L.mapbox.tileLayer('mapbox.osm-bright', {

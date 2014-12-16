@@ -24,7 +24,7 @@ var share = require('./share'),
 module.exports = function fileBar(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
-    var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
+    var mapboxAPI = /a\.tiles\.mapbox.com/.test(L.mapbox.config.HTTP_URL);
     var githubAPI = !!config.GithubAPI;
     var githubBase = githubAPI ? config.GithubAPI + '/api/v3': 'https://api.github.com';
 
