@@ -56,7 +56,7 @@ dist/delegate.js: src/delegate.js
 	$(BROWSERIFY)  src/delegate.js > dist/delegate.js
 
 lib/mapbox.js/latest:
-	mkdir lib/mapbox.js/latest
+	mkdir -p lib/mapbox.js/latest
 
 MapboxAPITile=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).MapboxAPITile.replace(/\/$$/, '');")
 
