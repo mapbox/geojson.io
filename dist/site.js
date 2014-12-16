@@ -21586,17 +21586,17 @@ function extend() {
 }
 
 },{}],142:[function(require,module,exports){
-module.exports = function(hostname) { 			
-	var production = (hostname === 'geojson.io'); 			
-	return { 			
-		MapboxAPITile: null, 			
-		client_id: production ? 			
-			'62c753fd0faf18392d85' : 			
-			'bb7bbe70bd1f707125bc', 			
-		gatekeeper_url: production ? 			
-			'https://geojsonioauth.herokuapp.com' : 			
-			'https://localhostauth.herokuapp.com' 			
-	}; 		
+module.exports = function(hostname) {
+    var production = (hostname === 'geojson.io');
+
+    return {
+        client_id: production ?
+            '62c753fd0faf18392d85' :
+            'bb7bbe70bd1f707125bc',
+        gatekeeper_url: production ?
+            'https://geojsonioauth.herokuapp.com' :
+            'https://localhostauth.herokuapp.com'
+    };
 };
 
 },{}],143:[function(require,module,exports){
@@ -23223,8 +23223,7 @@ var share = require('./share'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
     meta = require('../lib/meta.js'),
-    saver = require('../ui/saver.js'),
-    config = require('../config.js')(location.hostname);
+    saver = require('../ui/saver.js');
 
 /**
  * This module provides the file picking & status bar above the map interface.
@@ -23234,7 +23233,7 @@ var share = require('./share'),
 module.exports = function fileBar(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
-    var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
+    var mapboxAPI = /a\.tiles\.mapbox.com/.test(L.mapbox.config.HTTP_URL);
 
     var exportFormats = [{
         title: 'GeoJSON',
@@ -23654,7 +23653,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../config.js":142,"../lib/meta.js":152,"../lib/readfile":154,"../lib/zoomextent":157,"../ui/saver.js":173,"./flash":167,"./modal.js":171,"./share":174,"clone":13,"filesaver.js":18,"geojson2dsv":27,"gist-map-browser":31,"github-file-browser":33,"shp-write":51,"tokml":108,"topojson":"BOmyIj"}],167:[function(require,module,exports){
+},{"../lib/meta.js":152,"../lib/readfile":154,"../lib/zoomextent":157,"../ui/saver.js":173,"./flash":167,"./modal.js":171,"./share":174,"clone":13,"filesaver.js":18,"geojson2dsv":27,"gist-map-browser":31,"github-file-browser":33,"shp-write":51,"tokml":108,"topojson":"BOmyIj"}],167:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -23678,11 +23677,11 @@ function flash(selection, txt) {
 
 },{"./message":170}],168:[function(require,module,exports){
 module.exports = function(context) {
-    config = require('../config')(location.hostname);
+
     return function(selection) {
         var layers;
 
-        if (config.MapboxAPITile && config.MapboxAPITile !== 'https://a.tiles.mapbox.com') {
+        if (!(/a\.tiles\.mapbox.com/).test(L.mapbox.config.HTTP_URL)) {
             layers = [{
                 title: 'Mapbox',
                 layer: L.mapbox.tileLayer('mapbox.osm-bright', {
@@ -23750,7 +23749,7 @@ module.exports = function(context) {
 };
 
 
-},{"../config":142}],169:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('qs-hash'),
@@ -24184,59 +24183,54 @@ function share(context) {
 }
 
 },{"../source/gist":161,"./modal":171}],175:[function(require,module,exports){
-var config = require('../config.js')(location.hostname);
-var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
-
 module.exports = function(context) {
-    if (mapboxAPI) {
-        return function(selection) {
-            var name = selection.append('a')
-                .attr('target', '_blank');
-
-            selection.append('span').text(' | ');
-
-            var action = selection.append('a')
-                .attr('href', '#');
-
-            function nextLogin() {
-                action.text('login').on('click', login);
-                name
-                    .text('anon')
-                    .attr('href', '#')
-                    .on('click', function() { d3.event.preventDefault(); });
-            }
-
-            function nextLogout() {
-                name.on('click', null);
-                action.text('logout').on('click', logout);
-            }
-
-            function login() {
-                d3.event.preventDefault();
-                context.user.authenticate();
-            }
-
-            function logout() {
-                d3.event.preventDefault();
-                context.user.logout();
-                nextLogin();
-            }
-
-            nextLogin();
-
-            if (context.user.token()) {
-                context.user.details(function(err, d) {
-                    if (err) return;
-                    name.text(d.login);
-                    name.attr('href', d.html_url);
-                    nextLogout();
-                });
-            }
-        };
-    }
-    else {
+    if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL)) {
         return function() {};
     }
+    return function(selection) {
+        var name = selection.append('a')
+            .attr('target', '_blank');
+
+        selection.append('span').text(' | ');
+
+        var action = selection.append('a')
+            .attr('href', '#');
+
+        function nextLogin() {
+            action.text('login').on('click', login);
+            name
+                .text('anon')
+                .attr('href', '#')
+                .on('click', function() { d3.event.preventDefault(); });
+        }
+
+        function nextLogout() {
+            name.on('click', null);
+            action.text('logout').on('click', logout);
+        }
+
+        function login() {
+            d3.event.preventDefault();
+            context.user.authenticate();
+        }
+
+        function logout() {
+            d3.event.preventDefault();
+            context.user.logout();
+            nextLogin();
+        }
+
+        nextLogin();
+
+        if (context.user.token()) {
+            context.user.details(function(err, d) {
+                if (err) return;
+                name.text(d.login);
+                name.attr('href', d.html_url);
+                nextLogout();
+            });
+        }
+    };
 };
 
-},{"../config.js":142}]},{},[150])
+},{}]},{},[150])
