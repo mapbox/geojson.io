@@ -1422,122 +1422,122 @@ function decodeUtf8Char (str) {
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
-	'use strict';
+  'use strict';
 
   var Arr = (typeof Uint8Array !== 'undefined')
     ? Uint8Array
     : Array
 
-	var PLUS   = '+'.charCodeAt(0)
-	var SLASH  = '/'.charCodeAt(0)
-	var NUMBER = '0'.charCodeAt(0)
-	var LOWER  = 'a'.charCodeAt(0)
-	var UPPER  = 'A'.charCodeAt(0)
+  var PLUS   = '+'.charCodeAt(0)
+  var SLASH  = '/'.charCodeAt(0)
+  var NUMBER = '0'.charCodeAt(0)
+  var LOWER  = 'a'.charCodeAt(0)
+  var UPPER  = 'A'.charCodeAt(0)
 
-	function decode (elt) {
-		var code = elt.charCodeAt(0)
-		if (code === PLUS)
-			return 62 // '+'
-		if (code === SLASH)
-			return 63 // '/'
-		if (code < NUMBER)
-			return -1 //no match
-		if (code < NUMBER + 10)
-			return code - NUMBER + 26 + 26
-		if (code < UPPER + 26)
-			return code - UPPER
-		if (code < LOWER + 26)
-			return code - LOWER + 26
-	}
+  function decode (elt) {
+    var code = elt.charCodeAt(0)
+    if (code === PLUS)
+      return 62 // '+'
+    if (code === SLASH)
+      return 63 // '/'
+    if (code < NUMBER)
+      return -1 //no match
+    if (code < NUMBER + 10)
+      return code - NUMBER + 26 + 26
+    if (code < UPPER + 26)
+      return code - UPPER
+    if (code < LOWER + 26)
+      return code - LOWER + 26
+  }
 
-	function b64ToByteArray (b64) {
-		var i, j, l, tmp, placeHolders, arr
+  function b64ToByteArray (b64) {
+    var i, j, l, tmp, placeHolders, arr
 
-		if (b64.length % 4 > 0) {
-			throw new Error('Invalid string. Length must be a multiple of 4')
-		}
+    if (b64.length % 4 > 0) {
+      throw new Error('Invalid string. Length must be a multiple of 4')
+    }
 
-		// the number of equal signs (place holders)
-		// if there are two placeholders, than the two characters before it
-		// represent one byte
-		// if there is only one, then the three characters before it represent 2 bytes
-		// this is just a cheap hack to not do indexOf twice
-		var len = b64.length
-		placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
+    // the number of equal signs (place holders)
+    // if there are two placeholders, than the two characters before it
+    // represent one byte
+    // if there is only one, then the three characters before it represent 2 bytes
+    // this is just a cheap hack to not do indexOf twice
+    var len = b64.length
+    placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
 
-		// base64 is 4/3 + up to two characters of the original data
-		arr = new Arr(b64.length * 3 / 4 - placeHolders)
+    // base64 is 4/3 + up to two characters of the original data
+    arr = new Arr(b64.length * 3 / 4 - placeHolders)
 
-		// if there are placeholders, only get up to the last complete 4 chars
-		l = placeHolders > 0 ? b64.length - 4 : b64.length
+    // if there are placeholders, only get up to the last complete 4 chars
+    l = placeHolders > 0 ? b64.length - 4 : b64.length
 
-		var L = 0
+    var L = 0
 
-		function push (v) {
-			arr[L++] = v
-		}
+    function push (v) {
+      arr[L++] = v
+    }
 
-		for (i = 0, j = 0; i < l; i += 4, j += 3) {
-			tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
-			push((tmp & 0xFF0000) >> 16)
-			push((tmp & 0xFF00) >> 8)
-			push(tmp & 0xFF)
-		}
+    for (i = 0, j = 0; i < l; i += 4, j += 3) {
+      tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
+      push((tmp & 0xFF0000) >> 16)
+      push((tmp & 0xFF00) >> 8)
+      push(tmp & 0xFF)
+    }
 
-		if (placeHolders === 2) {
-			tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
-			push(tmp & 0xFF)
-		} else if (placeHolders === 1) {
-			tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
-			push((tmp >> 8) & 0xFF)
-			push(tmp & 0xFF)
-		}
+    if (placeHolders === 2) {
+      tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
+      push(tmp & 0xFF)
+    } else if (placeHolders === 1) {
+      tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
+      push((tmp >> 8) & 0xFF)
+      push(tmp & 0xFF)
+    }
 
-		return arr
-	}
+    return arr
+  }
 
-	function uint8ToBase64 (uint8) {
-		var i,
-			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
-			output = "",
-			temp, length
+  function uint8ToBase64 (uint8) {
+    var i,
+      extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
+      output = "",
+      temp, length
 
-		function encode (num) {
-			return lookup.charAt(num)
-		}
+    function encode (num) {
+      return lookup.charAt(num)
+    }
 
-		function tripletToBase64 (num) {
-			return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
-		}
+    function tripletToBase64 (num) {
+      return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
+    }
 
-		// go through the array every three bytes, we'll deal with trailing stuff later
-		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
-			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-			output += tripletToBase64(temp)
-		}
+    // go through the array every three bytes, we'll deal with trailing stuff later
+    for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
+      temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+      output += tripletToBase64(temp)
+    }
 
-		// pad the end with zeros, but make sure to not forget the extra bytes
-		switch (extraBytes) {
-			case 1:
-				temp = uint8[uint8.length - 1]
-				output += encode(temp >> 2)
-				output += encode((temp << 4) & 0x3F)
-				output += '=='
-				break
-			case 2:
-				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
-				output += encode(temp >> 10)
-				output += encode((temp >> 4) & 0x3F)
-				output += encode((temp << 2) & 0x3F)
-				output += '='
-				break
-		}
+    // pad the end with zeros, but make sure to not forget the extra bytes
+    switch (extraBytes) {
+      case 1:
+        temp = uint8[uint8.length - 1]
+        output += encode(temp >> 2)
+        output += encode((temp << 4) & 0x3F)
+        output += '=='
+        break
+      case 2:
+        temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
+        output += encode(temp >> 10)
+        output += encode((temp >> 4) & 0x3F)
+        output += encode((temp << 2) & 0x3F)
+        output += '='
+        break
+    }
 
-		return output
-	}
+    return output
+  }
 
-	exports.toByteArray = b64ToByteArray
-	exports.fromByteArray = uint8ToBase64
+  exports.toByteArray = b64ToByteArray
+  exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
 },{}],6:[function(require,module,exports){
@@ -3126,215 +3126,215 @@ var saveAs = saveAs
       navigator.msSaveOrOpenBlob && navigator.msSaveOrOpenBlob.bind(navigator))
   // Everyone else
   || (function(view) {
-	"use strict";
-	// IE <10 is explicitly unsupported
-	if (typeof navigator !== "undefined" &&
-	    /MSIE [1-9]\./.test(navigator.userAgent)) {
-		return;
-	}
-	var
-		  doc = view.document
-		  // only get URL when necessary in case Blob.js hasn't overridden it yet
-		, get_URL = function() {
-			return view.URL || view.webkitURL || view;
-		}
-		, save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
-		, can_use_save_link = !view.externalHost && "download" in save_link
-		, click = function(node) {
-			var event = doc.createEvent("MouseEvents");
-			event.initMouseEvent(
-				"click", true, false, view, 0, 0, 0, 0, 0
-				, false, false, false, false, 0, null
-			);
-			node.dispatchEvent(event);
-		}
-		, webkit_req_fs = view.webkitRequestFileSystem
-		, req_fs = view.requestFileSystem || webkit_req_fs || view.mozRequestFileSystem
-		, throw_outside = function(ex) {
-			(view.setImmediate || view.setTimeout)(function() {
-				throw ex;
-			}, 0);
-		}
-		, force_saveable_type = "application/octet-stream"
-		, fs_min_size = 0
-		, deletion_queue = []
-		, process_deletion_queue = function() {
-			var i = deletion_queue.length;
-			while (i--) {
-				var file = deletion_queue[i];
-				if (typeof file === "string") { // file is an object URL
-					get_URL().revokeObjectURL(file);
-				} else { // file is a File
-					file.remove();
-				}
-			}
-			deletion_queue.length = 0; // clear queue
-		}
-		, dispatch = function(filesaver, event_types, event) {
-			event_types = [].concat(event_types);
-			var i = event_types.length;
-			while (i--) {
-				var listener = filesaver["on" + event_types[i]];
-				if (typeof listener === "function") {
-					try {
-						listener.call(filesaver, event || filesaver);
-					} catch (ex) {
-						throw_outside(ex);
-					}
-				}
-			}
-		}
-		, FileSaver = function(blob, name) {
-			// First try a.download, then web filesystem, then object URLs
-			var
-				  filesaver = this
-				, type = blob.type
-				, blob_changed = false
-				, object_url
-				, target_view
-				, get_object_url = function() {
-					var object_url = get_URL().createObjectURL(blob);
-					deletion_queue.push(object_url);
-					return object_url;
-				}
-				, dispatch_all = function() {
-					dispatch(filesaver, "writestart progress write writeend".split(" "));
-				}
-				// on any filesys errors revert to saving with object URLs
-				, fs_error = function() {
-					// don't create more object URLs than needed
-					if (blob_changed || !object_url) {
-						object_url = get_object_url(blob);
-					}
-					if (target_view) {
-						target_view.location.href = object_url;
-					} else {
-						window.open(object_url, "_blank");
-					}
-					filesaver.readyState = filesaver.DONE;
-					dispatch_all();
-				}
-				, abortable = function(func) {
-					return function() {
-						if (filesaver.readyState !== filesaver.DONE) {
-							return func.apply(this, arguments);
-						}
-					};
-				}
-				, create_if_not_found = {create: true, exclusive: false}
-				, slice
-			;
-			filesaver.readyState = filesaver.INIT;
-			if (!name) {
-				name = "download";
-			}
-			if (can_use_save_link) {
-				object_url = get_object_url(blob);
-				save_link.href = object_url;
-				save_link.download = name;
-				click(save_link);
-				filesaver.readyState = filesaver.DONE;
-				dispatch_all();
-				return;
-			}
-			// Object and web filesystem URLs have a problem saving in Google Chrome when
-			// viewed in a tab, so I force save with application/octet-stream
-			// http://code.google.com/p/chromium/issues/detail?id=91158
-			if (view.chrome && type && type !== force_saveable_type) {
-				slice = blob.slice || blob.webkitSlice;
-				blob = slice.call(blob, 0, blob.size, force_saveable_type);
-				blob_changed = true;
-			}
-			// Since I can't be sure that the guessed media type will trigger a download
-			// in WebKit, I append .download to the filename.
-			// https://bugs.webkit.org/show_bug.cgi?id=65440
-			if (webkit_req_fs && name !== "download") {
-				name += ".download";
-			}
-			if (type === force_saveable_type || webkit_req_fs) {
-				target_view = view;
-			}
-			if (!req_fs) {
-				fs_error();
-				return;
-			}
-			fs_min_size += blob.size;
-			req_fs(view.TEMPORARY, fs_min_size, abortable(function(fs) {
-				fs.root.getDirectory("saved", create_if_not_found, abortable(function(dir) {
-					var save = function() {
-						dir.getFile(name, create_if_not_found, abortable(function(file) {
-							file.createWriter(abortable(function(writer) {
-								writer.onwriteend = function(event) {
-									target_view.location.href = file.toURL();
-									deletion_queue.push(file);
-									filesaver.readyState = filesaver.DONE;
-									dispatch(filesaver, "writeend", event);
-								};
-								writer.onerror = function() {
-									var error = writer.error;
-									if (error.code !== error.ABORT_ERR) {
-										fs_error();
-									}
-								};
-								"writestart progress write abort".split(" ").forEach(function(event) {
-									writer["on" + event] = filesaver["on" + event];
-								});
-								writer.write(blob);
-								filesaver.abort = function() {
-									writer.abort();
-									filesaver.readyState = filesaver.DONE;
-								};
-								filesaver.readyState = filesaver.WRITING;
-							}), fs_error);
-						}), fs_error);
-					};
-					dir.getFile(name, {create: false}, abortable(function(file) {
-						// delete file if it already exists
-						file.remove();
-						save();
-					}), abortable(function(ex) {
-						if (ex.code === ex.NOT_FOUND_ERR) {
-							save();
-						} else {
-							fs_error();
-						}
-					}));
-				}), fs_error);
-			}), fs_error);
-		}
-		, FS_proto = FileSaver.prototype
-		, saveAs = function(blob, name) {
-			return new FileSaver(blob, name);
-		}
-	;
-	FS_proto.abort = function() {
-		var filesaver = this;
-		filesaver.readyState = filesaver.DONE;
-		dispatch(filesaver, "abort");
-	};
-	FS_proto.readyState = FS_proto.INIT = 0;
-	FS_proto.WRITING = 1;
-	FS_proto.DONE = 2;
+  "use strict";
+  // IE <10 is explicitly unsupported
+  if (typeof navigator !== "undefined" &&
+      /MSIE [1-9]\./.test(navigator.userAgent)) {
+    return;
+  }
+  var
+      doc = view.document
+      // only get URL when necessary in case Blob.js hasn't overridden it yet
+    , get_URL = function() {
+      return view.URL || view.webkitURL || view;
+    }
+    , save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
+    , can_use_save_link = !view.externalHost && "download" in save_link
+    , click = function(node) {
+      var event = doc.createEvent("MouseEvents");
+      event.initMouseEvent(
+        "click", true, false, view, 0, 0, 0, 0, 0
+        , false, false, false, false, 0, null
+      );
+      node.dispatchEvent(event);
+    }
+    , webkit_req_fs = view.webkitRequestFileSystem
+    , req_fs = view.requestFileSystem || webkit_req_fs || view.mozRequestFileSystem
+    , throw_outside = function(ex) {
+      (view.setImmediate || view.setTimeout)(function() {
+        throw ex;
+      }, 0);
+    }
+    , force_saveable_type = "application/octet-stream"
+    , fs_min_size = 0
+    , deletion_queue = []
+    , process_deletion_queue = function() {
+      var i = deletion_queue.length;
+      while (i--) {
+        var file = deletion_queue[i];
+        if (typeof file === "string") { // file is an object URL
+          get_URL().revokeObjectURL(file);
+        } else { // file is a File
+          file.remove();
+        }
+      }
+      deletion_queue.length = 0; // clear queue
+    }
+    , dispatch = function(filesaver, event_types, event) {
+      event_types = [].concat(event_types);
+      var i = event_types.length;
+      while (i--) {
+        var listener = filesaver["on" + event_types[i]];
+        if (typeof listener === "function") {
+          try {
+            listener.call(filesaver, event || filesaver);
+          } catch (ex) {
+            throw_outside(ex);
+          }
+        }
+      }
+    }
+    , FileSaver = function(blob, name) {
+      // First try a.download, then web filesystem, then object URLs
+      var
+          filesaver = this
+        , type = blob.type
+        , blob_changed = false
+        , object_url
+        , target_view
+        , get_object_url = function() {
+          var object_url = get_URL().createObjectURL(blob);
+          deletion_queue.push(object_url);
+          return object_url;
+        }
+        , dispatch_all = function() {
+          dispatch(filesaver, "writestart progress write writeend".split(" "));
+        }
+        // on any filesys errors revert to saving with object URLs
+        , fs_error = function() {
+          // don't create more object URLs than needed
+          if (blob_changed || !object_url) {
+            object_url = get_object_url(blob);
+          }
+          if (target_view) {
+            target_view.location.href = object_url;
+          } else {
+            window.open(object_url, "_blank");
+          }
+          filesaver.readyState = filesaver.DONE;
+          dispatch_all();
+        }
+        , abortable = function(func) {
+          return function() {
+            if (filesaver.readyState !== filesaver.DONE) {
+              return func.apply(this, arguments);
+            }
+          };
+        }
+        , create_if_not_found = {create: true, exclusive: false}
+        , slice
+      ;
+      filesaver.readyState = filesaver.INIT;
+      if (!name) {
+        name = "download";
+      }
+      if (can_use_save_link) {
+        object_url = get_object_url(blob);
+        save_link.href = object_url;
+        save_link.download = name;
+        click(save_link);
+        filesaver.readyState = filesaver.DONE;
+        dispatch_all();
+        return;
+      }
+      // Object and web filesystem URLs have a problem saving in Google Chrome when
+      // viewed in a tab, so I force save with application/octet-stream
+      // http://code.google.com/p/chromium/issues/detail?id=91158
+      if (view.chrome && type && type !== force_saveable_type) {
+        slice = blob.slice || blob.webkitSlice;
+        blob = slice.call(blob, 0, blob.size, force_saveable_type);
+        blob_changed = true;
+      }
+      // Since I can't be sure that the guessed media type will trigger a download
+      // in WebKit, I append .download to the filename.
+      // https://bugs.webkit.org/show_bug.cgi?id=65440
+      if (webkit_req_fs && name !== "download") {
+        name += ".download";
+      }
+      if (type === force_saveable_type || webkit_req_fs) {
+        target_view = view;
+      }
+      if (!req_fs) {
+        fs_error();
+        return;
+      }
+      fs_min_size += blob.size;
+      req_fs(view.TEMPORARY, fs_min_size, abortable(function(fs) {
+        fs.root.getDirectory("saved", create_if_not_found, abortable(function(dir) {
+          var save = function() {
+            dir.getFile(name, create_if_not_found, abortable(function(file) {
+              file.createWriter(abortable(function(writer) {
+                writer.onwriteend = function(event) {
+                  target_view.location.href = file.toURL();
+                  deletion_queue.push(file);
+                  filesaver.readyState = filesaver.DONE;
+                  dispatch(filesaver, "writeend", event);
+                };
+                writer.onerror = function() {
+                  var error = writer.error;
+                  if (error.code !== error.ABORT_ERR) {
+                    fs_error();
+                  }
+                };
+                "writestart progress write abort".split(" ").forEach(function(event) {
+                  writer["on" + event] = filesaver["on" + event];
+                });
+                writer.write(blob);
+                filesaver.abort = function() {
+                  writer.abort();
+                  filesaver.readyState = filesaver.DONE;
+                };
+                filesaver.readyState = filesaver.WRITING;
+              }), fs_error);
+            }), fs_error);
+          };
+          dir.getFile(name, {create: false}, abortable(function(file) {
+            // delete file if it already exists
+            file.remove();
+            save();
+          }), abortable(function(ex) {
+            if (ex.code === ex.NOT_FOUND_ERR) {
+              save();
+            } else {
+              fs_error();
+            }
+          }));
+        }), fs_error);
+      }), fs_error);
+    }
+    , FS_proto = FileSaver.prototype
+    , saveAs = function(blob, name) {
+      return new FileSaver(blob, name);
+    }
+  ;
+  FS_proto.abort = function() {
+    var filesaver = this;
+    filesaver.readyState = filesaver.DONE;
+    dispatch(filesaver, "abort");
+  };
+  FS_proto.readyState = FS_proto.INIT = 0;
+  FS_proto.WRITING = 1;
+  FS_proto.DONE = 2;
 
-	FS_proto.error =
-	FS_proto.onwritestart =
-	FS_proto.onprogress =
-	FS_proto.onwrite =
-	FS_proto.onabort =
-	FS_proto.onerror =
-	FS_proto.onwriteend =
-		null;
+  FS_proto.error =
+  FS_proto.onwritestart =
+  FS_proto.onprogress =
+  FS_proto.onwrite =
+  FS_proto.onabort =
+  FS_proto.onerror =
+  FS_proto.onwriteend =
+    null;
 
-	view.addEventListener("unload", process_deletion_queue, false);
-	saveAs.unload = function() {
-		process_deletion_queue();
-		view.removeEventListener("unload", process_deletion_queue, false);
-	};
-	return saveAs;
+  view.addEventListener("unload", process_deletion_queue, false);
+  saveAs.unload = function() {
+    process_deletion_queue();
+    view.removeEventListener("unload", process_deletion_queue, false);
+  };
+  return saveAs;
 }(
-	   typeof self !== "undefined" && self
-	|| typeof window !== "undefined" && window
-	|| this.content
+     typeof self !== "undefined" && self
+  || typeof window !== "undefined" && window
+  || this.content
 ));
 // `self` is undefined in Firefox for Android content script context
 // while `this` is nsIContentFrameMessageManager
@@ -5983,166 +5983,166 @@ function deg(_) {
 module.exports=require(39)
 },{}],42:[function(require,module,exports){
 (function(window) {
-	var HAS_HASHCHANGE = (function() {
-		var doc_mode = window.documentMode;
-		return ('onhashchange' in window) &&
-			(doc_mode === undefined || doc_mode > 7);
-	})();
+  var HAS_HASHCHANGE = (function() {
+    var doc_mode = window.documentMode;
+    return ('onhashchange' in window) &&
+      (doc_mode === undefined || doc_mode > 7);
+  })();
 
-	L.Hash = function(map) {
-		this.onHashChange = L.Util.bind(this.onHashChange, this);
+  L.Hash = function(map) {
+    this.onHashChange = L.Util.bind(this.onHashChange, this);
 
-		if (map) {
-			this.init(map);
-		}
-	};
+    if (map) {
+      this.init(map);
+    }
+  };
 
-	L.Hash.parseHash = function(hash) {
-		if(hash.indexOf('#') === 0) {
-			hash = hash.substr(1);
-		}
-		var args = hash.split("/");
-		if (args.length == 3) {
-			var zoom = parseInt(args[0], 10),
-			lat = parseFloat(args[1]),
-			lon = parseFloat(args[2]);
-			if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
-				return false;
-			} else {
-				return {
-					center: new L.LatLng(lat, lon),
-					zoom: zoom
-				};
-			}
-		} else {
-			return false;
-		}
-	};
+  L.Hash.parseHash = function(hash) {
+    if(hash.indexOf('#') === 0) {
+      hash = hash.substr(1);
+    }
+    var args = hash.split("/");
+    if (args.length == 3) {
+      var zoom = parseInt(args[0], 10),
+      lat = parseFloat(args[1]),
+      lon = parseFloat(args[2]);
+      if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
+        return false;
+      } else {
+        return {
+          center: new L.LatLng(lat, lon),
+          zoom: zoom
+        };
+      }
+    } else {
+      return false;
+    }
+  };
 
-	L.Hash.formatHash = function(map) {
-		var center = map.getCenter(),
-		    zoom = map.getZoom(),
-		    precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
+  L.Hash.formatHash = function(map) {
+    var center = map.getCenter(),
+        zoom = map.getZoom(),
+        precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
 
-		return "#" + [zoom,
-			center.lat.toFixed(precision),
-			center.lng.toFixed(precision)
-		].join("/");
-	},
+    return "#" + [zoom,
+      center.lat.toFixed(precision),
+      center.lng.toFixed(precision)
+    ].join("/");
+  },
 
-	L.Hash.prototype = {
-		map: null,
-		lastHash: null,
+  L.Hash.prototype = {
+    map: null,
+    lastHash: null,
 
-		parseHash: L.Hash.parseHash,
-		formatHash: L.Hash.formatHash,
+    parseHash: L.Hash.parseHash,
+    formatHash: L.Hash.formatHash,
 
-		init: function(map) {
-			this.map = map;
+    init: function(map) {
+      this.map = map;
 
-			// reset the hash
-			this.lastHash = null;
-			this.onHashChange();
+      // reset the hash
+      this.lastHash = null;
+      this.onHashChange();
 
-			if (!this.isListening) {
-				this.startListening();
-			}
-		},
+      if (!this.isListening) {
+        this.startListening();
+      }
+    },
 
-		removeFrom: function(map) {
-			if (this.changeTimeout) {
-				clearTimeout(this.changeTimeout);
-			}
+    removeFrom: function(map) {
+      if (this.changeTimeout) {
+        clearTimeout(this.changeTimeout);
+      }
 
-			if (this.isListening) {
-				this.stopListening();
-			}
+      if (this.isListening) {
+        this.stopListening();
+      }
 
-			this.map = null;
-		},
+      this.map = null;
+    },
 
-		onMapMove: function() {
-			// bail if we're moving the map (updating from a hash),
-			// or if the map is not yet loaded
+    onMapMove: function() {
+      // bail if we're moving the map (updating from a hash),
+      // or if the map is not yet loaded
 
-			if (this.movingMap || !this.map._loaded) {
-				return false;
-			}
+      if (this.movingMap || !this.map._loaded) {
+        return false;
+      }
 
-			var hash = this.formatHash(this.map);
-			if (this.lastHash != hash) {
-				location.replace(hash);
-				this.lastHash = hash;
-			}
-		},
+      var hash = this.formatHash(this.map);
+      if (this.lastHash != hash) {
+        location.replace(hash);
+        this.lastHash = hash;
+      }
+    },
 
-		movingMap: false,
-		update: function() {
-			var hash = location.hash;
-			if (hash === this.lastHash) {
-				return;
-			}
-			var parsed = this.parseHash(hash);
-			if (parsed) {
-				this.movingMap = true;
+    movingMap: false,
+    update: function() {
+      var hash = location.hash;
+      if (hash === this.lastHash) {
+        return;
+      }
+      var parsed = this.parseHash(hash);
+      if (parsed) {
+        this.movingMap = true;
 
-				this.map.setView(parsed.center, parsed.zoom);
+        this.map.setView(parsed.center, parsed.zoom);
 
-				this.movingMap = false;
-			} else {
-				this.onMapMove(this.map);
-			}
-		},
+        this.movingMap = false;
+      } else {
+        this.onMapMove(this.map);
+      }
+    },
 
-		// defer hash change updates every 100ms
-		changeDefer: 100,
-		changeTimeout: null,
-		onHashChange: function() {
-			// throttle calls to update() so that they only happen every
-			// `changeDefer` ms
-			if (!this.changeTimeout) {
-				var that = this;
-				this.changeTimeout = setTimeout(function() {
-					that.update();
-					that.changeTimeout = null;
-				}, this.changeDefer);
-			}
-		},
+    // defer hash change updates every 100ms
+    changeDefer: 100,
+    changeTimeout: null,
+    onHashChange: function() {
+      // throttle calls to update() so that they only happen every
+      // `changeDefer` ms
+      if (!this.changeTimeout) {
+        var that = this;
+        this.changeTimeout = setTimeout(function() {
+          that.update();
+          that.changeTimeout = null;
+        }, this.changeDefer);
+      }
+    },
 
-		isListening: false,
-		hashChangeInterval: null,
-		startListening: function() {
-			this.map.on("moveend", this.onMapMove, this);
+    isListening: false,
+    hashChangeInterval: null,
+    startListening: function() {
+      this.map.on("moveend", this.onMapMove, this);
 
-			if (HAS_HASHCHANGE) {
-				L.DomEvent.addListener(window, "hashchange", this.onHashChange);
-			} else {
-				clearInterval(this.hashChangeInterval);
-				this.hashChangeInterval = setInterval(this.onHashChange, 50);
-			}
-			this.isListening = true;
-		},
+      if (HAS_HASHCHANGE) {
+        L.DomEvent.addListener(window, "hashchange", this.onHashChange);
+      } else {
+        clearInterval(this.hashChangeInterval);
+        this.hashChangeInterval = setInterval(this.onHashChange, 50);
+      }
+      this.isListening = true;
+    },
 
-		stopListening: function() {
-			this.map.off("moveend", this.onMapMove, this);
+    stopListening: function() {
+      this.map.off("moveend", this.onMapMove, this);
 
-			if (HAS_HASHCHANGE) {
-				L.DomEvent.removeListener(window, "hashchange", this.onHashChange);
-			} else {
-				clearInterval(this.hashChangeInterval);
-			}
-			this.isListening = false;
-		}
-	};
-	L.hash = function(map) {
-		return new L.Hash(map);
-	};
-	L.Map.prototype.addHash = function() {
-		this._hash = L.hash(this);
-	};
-	L.Map.prototype.removeHash = function() {
-		this._hash.removeFrom();
-	};
+      if (HAS_HASHCHANGE) {
+        L.DomEvent.removeListener(window, "hashchange", this.onHashChange);
+      } else {
+        clearInterval(this.hashChangeInterval);
+      }
+      this.isListening = false;
+    }
+  };
+  L.hash = function(map) {
+    return new L.Hash(map);
+  };
+  L.Map.prototype.addHash = function() {
+    this._hash = L.hash(this);
+  };
+  L.Map.prototype.removeHash = function() {
+    this._hash.removeFrom();
+  };
 })(window);
 
 },{}],43:[function(require,module,exports){
@@ -9507,7 +9507,7 @@ Usage:
  * @param {Object=} options the options for creating this objects (optional).
  */
 function JSZip(data, options) {
-    // if this constructor is used without `new`, it adds `new` before itself:
+    // if this constructor is used without `new`, it adds `new` before itself:
     if(!(this instanceof JSZip)) return new JSZip(data, options);
     
     // object containing the files :
@@ -18338,168 +18338,168 @@ module.exports = function(gj) {
 },{"./geojson":99,"./prj":102,"./write":104,"jszip":65}],106:[function(require,module,exports){
 (function (global){
 ;(function(win){
-	var store = {},
-		doc = win.document,
-		localStorageName = 'localStorage',
-		storage
+  var store = {},
+    doc = win.document,
+    localStorageName = 'localStorage',
+    storage
 
-	store.disabled = false
-	store.set = function(key, value) {}
-	store.get = function(key) {}
-	store.remove = function(key) {}
-	store.clear = function() {}
-	store.transact = function(key, defaultVal, transactionFn) {
-		var val = store.get(key)
-		if (transactionFn == null) {
-			transactionFn = defaultVal
-			defaultVal = null
-		}
-		if (typeof val == 'undefined') { val = defaultVal || {} }
-		transactionFn(val)
-		store.set(key, val)
-	}
-	store.getAll = function() {}
-	store.forEach = function() {}
+  store.disabled = false
+  store.set = function(key, value) {}
+  store.get = function(key) {}
+  store.remove = function(key) {}
+  store.clear = function() {}
+  store.transact = function(key, defaultVal, transactionFn) {
+    var val = store.get(key)
+    if (transactionFn == null) {
+      transactionFn = defaultVal
+      defaultVal = null
+    }
+    if (typeof val == 'undefined') { val = defaultVal || {} }
+    transactionFn(val)
+    store.set(key, val)
+  }
+  store.getAll = function() {}
+  store.forEach = function() {}
 
-	store.serialize = function(value) {
-		return JSON.stringify(value)
-	}
-	store.deserialize = function(value) {
-		if (typeof value != 'string') { return undefined }
-		try { return JSON.parse(value) }
-		catch(e) { return value || undefined }
-	}
+  store.serialize = function(value) {
+    return JSON.stringify(value)
+  }
+  store.deserialize = function(value) {
+    if (typeof value != 'string') { return undefined }
+    try { return JSON.parse(value) }
+    catch(e) { return value || undefined }
+  }
 
-	// Functions to encapsulate questionable FireFox 3.6.13 behavior
-	// when about.config::dom.storage.enabled === false
-	// See https://github.com/marcuswestin/store.js/issues#issue/13
-	function isLocalStorageNameSupported() {
-		try { return (localStorageName in win && win[localStorageName]) }
-		catch(err) { return false }
-	}
+  // Functions to encapsulate questionable FireFox 3.6.13 behavior
+  // when about.config::dom.storage.enabled === false
+  // See https://github.com/marcuswestin/store.js/issues#issue/13
+  function isLocalStorageNameSupported() {
+    try { return (localStorageName in win && win[localStorageName]) }
+    catch(err) { return false }
+  }
 
-	if (isLocalStorageNameSupported()) {
-		storage = win[localStorageName]
-		store.set = function(key, val) {
-			if (val === undefined) { return store.remove(key) }
-			storage.setItem(key, store.serialize(val))
-			return val
-		}
-		store.get = function(key) { return store.deserialize(storage.getItem(key)) }
-		store.remove = function(key) { storage.removeItem(key) }
-		store.clear = function() { storage.clear() }
-		store.getAll = function() {
-			var ret = {}
-			store.forEach(function(key, val) {
-				ret[key] = val
-			})
-			return ret
-		}
-		store.forEach = function(callback) {
-			for (var i=0; i<storage.length; i++) {
-				var key = storage.key(i)
-				callback(key, store.get(key))
-			}
-		}
-	} else if (doc.documentElement.addBehavior) {
-		var storageOwner,
-			storageContainer
-		// Since #userData storage applies only to specific paths, we need to
-		// somehow link our data to a specific path.  We choose /favicon.ico
-		// as a pretty safe option, since all browsers already make a request to
-		// this URL anyway and being a 404 will not hurt us here.  We wrap an
-		// iframe pointing to the favicon in an ActiveXObject(htmlfile) object
-		// (see: http://msdn.microsoft.com/en-us/library/aa752574(v=VS.85).aspx)
-		// since the iframe access rules appear to allow direct access and
-		// manipulation of the document element, even for a 404 page.  This
-		// document can be used instead of the current document (which would
-		// have been limited to the current path) to perform #userData storage.
-		try {
-			storageContainer = new ActiveXObject('htmlfile')
-			storageContainer.open()
-			storageContainer.write('<s' + 'cript>document.w=window</s' + 'cript><iframe src="/favicon.ico"></iframe>')
-			storageContainer.close()
-			storageOwner = storageContainer.w.frames[0].document
-			storage = storageOwner.createElement('div')
-		} catch(e) {
-			// somehow ActiveXObject instantiation failed (perhaps some special
-			// security settings or otherwse), fall back to per-path storage
-			storage = doc.createElement('div')
-			storageOwner = doc.body
-		}
-		function withIEStorage(storeFunction) {
-			return function() {
-				var args = Array.prototype.slice.call(arguments, 0)
-				args.unshift(storage)
-				// See http://msdn.microsoft.com/en-us/library/ms531081(v=VS.85).aspx
-				// and http://msdn.microsoft.com/en-us/library/ms531424(v=VS.85).aspx
-				storageOwner.appendChild(storage)
-				storage.addBehavior('#default#userData')
-				storage.load(localStorageName)
-				var result = storeFunction.apply(store, args)
-				storageOwner.removeChild(storage)
-				return result
-			}
-		}
+  if (isLocalStorageNameSupported()) {
+    storage = win[localStorageName]
+    store.set = function(key, val) {
+      if (val === undefined) { return store.remove(key) }
+      storage.setItem(key, store.serialize(val))
+      return val
+    }
+    store.get = function(key) { return store.deserialize(storage.getItem(key)) }
+    store.remove = function(key) { storage.removeItem(key) }
+    store.clear = function() { storage.clear() }
+    store.getAll = function() {
+      var ret = {}
+      store.forEach(function(key, val) {
+        ret[key] = val
+      })
+      return ret
+    }
+    store.forEach = function(callback) {
+      for (var i=0; i<storage.length; i++) {
+        var key = storage.key(i)
+        callback(key, store.get(key))
+      }
+    }
+  } else if (doc.documentElement.addBehavior) {
+    var storageOwner,
+      storageContainer
+    // Since #userData storage applies only to specific paths, we need to
+    // somehow link our data to a specific path.  We choose /favicon.ico
+    // as a pretty safe option, since all browsers already make a request to
+    // this URL anyway and being a 404 will not hurt us here.  We wrap an
+    // iframe pointing to the favicon in an ActiveXObject(htmlfile) object
+    // (see: http://msdn.microsoft.com/en-us/library/aa752574(v=VS.85).aspx)
+    // since the iframe access rules appear to allow direct access and
+    // manipulation of the document element, even for a 404 page.  This
+    // document can be used instead of the current document (which would
+    // have been limited to the current path) to perform #userData storage.
+    try {
+      storageContainer = new ActiveXObject('htmlfile')
+      storageContainer.open()
+      storageContainer.write('<s' + 'cript>document.w=window</s' + 'cript><iframe src="/favicon.ico"></iframe>')
+      storageContainer.close()
+      storageOwner = storageContainer.w.frames[0].document
+      storage = storageOwner.createElement('div')
+    } catch(e) {
+      // somehow ActiveXObject instantiation failed (perhaps some special
+      // security settings or otherwse), fall back to per-path storage
+      storage = doc.createElement('div')
+      storageOwner = doc.body
+    }
+    function withIEStorage(storeFunction) {
+      return function() {
+        var args = Array.prototype.slice.call(arguments, 0)
+        args.unshift(storage)
+        // See http://msdn.microsoft.com/en-us/library/ms531081(v=VS.85).aspx
+        // and http://msdn.microsoft.com/en-us/library/ms531424(v=VS.85).aspx
+        storageOwner.appendChild(storage)
+        storage.addBehavior('#default#userData')
+        storage.load(localStorageName)
+        var result = storeFunction.apply(store, args)
+        storageOwner.removeChild(storage)
+        return result
+      }
+    }
 
-		// In IE7, keys may not contain special chars. See all of https://github.com/marcuswestin/store.js/issues/40
-		var forbiddenCharsRegex = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g")
-		function ieKeyFix(key) {
-			return key.replace(forbiddenCharsRegex, '___')
-		}
-		store.set = withIEStorage(function(storage, key, val) {
-			key = ieKeyFix(key)
-			if (val === undefined) { return store.remove(key) }
-			storage.setAttribute(key, store.serialize(val))
-			storage.save(localStorageName)
-			return val
-		})
-		store.get = withIEStorage(function(storage, key) {
-			key = ieKeyFix(key)
-			return store.deserialize(storage.getAttribute(key))
-		})
-		store.remove = withIEStorage(function(storage, key) {
-			key = ieKeyFix(key)
-			storage.removeAttribute(key)
-			storage.save(localStorageName)
-		})
-		store.clear = withIEStorage(function(storage) {
-			var attributes = storage.XMLDocument.documentElement.attributes
-			storage.load(localStorageName)
-			for (var i=0, attr; attr=attributes[i]; i++) {
-				storage.removeAttribute(attr.name)
-			}
-			storage.save(localStorageName)
-		})
-		store.getAll = function(storage) {
-			var ret = {}
-			store.forEach(function(key, val) {
-				ret[key] = val
-			})
-			return ret
-		}
-		store.forEach = withIEStorage(function(storage, callback) {
-			var attributes = storage.XMLDocument.documentElement.attributes
-			for (var i=0, attr; attr=attributes[i]; ++i) {
-				callback(attr.name, store.deserialize(storage.getAttribute(attr.name)))
-			}
-		})
-	}
+    // In IE7, keys may not contain special chars. See all of https://github.com/marcuswestin/store.js/issues/40
+    var forbiddenCharsRegex = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g")
+    function ieKeyFix(key) {
+      return key.replace(forbiddenCharsRegex, '___')
+    }
+    store.set = withIEStorage(function(storage, key, val) {
+      key = ieKeyFix(key)
+      if (val === undefined) { return store.remove(key) }
+      storage.setAttribute(key, store.serialize(val))
+      storage.save(localStorageName)
+      return val
+    })
+    store.get = withIEStorage(function(storage, key) {
+      key = ieKeyFix(key)
+      return store.deserialize(storage.getAttribute(key))
+    })
+    store.remove = withIEStorage(function(storage, key) {
+      key = ieKeyFix(key)
+      storage.removeAttribute(key)
+      storage.save(localStorageName)
+    })
+    store.clear = withIEStorage(function(storage) {
+      var attributes = storage.XMLDocument.documentElement.attributes
+      storage.load(localStorageName)
+      for (var i=0, attr; attr=attributes[i]; i++) {
+        storage.removeAttribute(attr.name)
+      }
+      storage.save(localStorageName)
+    })
+    store.getAll = function(storage) {
+      var ret = {}
+      store.forEach(function(key, val) {
+        ret[key] = val
+      })
+      return ret
+    }
+    store.forEach = withIEStorage(function(storage, callback) {
+      var attributes = storage.XMLDocument.documentElement.attributes
+      for (var i=0, attr; attr=attributes[i]; ++i) {
+        callback(attr.name, store.deserialize(storage.getAttribute(attr.name)))
+      }
+    })
+  }
 
-	try {
-		var testKey = '__storejs__'
-		store.set(testKey, testKey)
-		if (store.get(testKey) != testKey) { store.disabled = true }
-		store.remove(testKey)
-	} catch(e) {
-		store.disabled = true
-	}
-	store.enabled = !store.disabled
-	
-	if (typeof module != 'undefined' && module.exports) { module.exports = store }
-	else if (typeof define === 'function' && define.amd) { define(store) }
-	else { win.store = store }
-	
+  try {
+    var testKey = '__storejs__'
+    store.set(testKey, testKey)
+    if (store.get(testKey) != testKey) { store.disabled = true }
+    store.remove(testKey)
+  } catch(e) {
+    store.disabled = true
+  }
+  store.enabled = !store.disabled
+  
+  if (typeof module != 'undefined' && module.exports) { module.exports = store }
+  else if (typeof define === 'function' && define.amd) { define(store) }
+  else { win.store = store }
+  
 })(this.window || global);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -21590,18 +21590,17 @@ function extend() {
 }
 
 },{}],142:[function(require,module,exports){
-module.exports = function(hostname) { 			
-	var production = (hostname === 'geojson.io'); 			
- 			
-	return { 			
-		MapboxAPITile: null, 			
-		client_id: production ? 		
-			'62c753fd0faf18392d85' : 		
-			'bb7bbe70bd1f707125bc', 		
-		gatekeeper_url: production ? 		
-			'https://geojsonioauth.herokuapp.com' : 		
-			'https://localhostauth.herokuapp.com' 			
-	}; 		
+module.exports = function(hostname) {
+    var production = (hostname === 'geojson.io');
+
+    return {
+        client_id: production ?
+            '62c753fd0faf18392d85' :
+            'bb7bbe70bd1f707125bc',
+        gatekeeper_url: production ?
+            'https://geojsonioauth.herokuapp.com' :
+            'https://localhostauth.herokuapp.com'
+    };
 };
 
 },{}],143:[function(require,module,exports){
@@ -21612,6 +21611,7 @@ var clone = require('clone');
         github: require('../source/github'),
         local: require('../source/local')
     };
+var config = require('../config.js')(location.hostname);
 
 function _getData() {
     return {
@@ -21890,7 +21890,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":159,"../source/github":160,"../source/local":161,"clone":13,"xtend":141}],144:[function(require,module,exports){
+},{"../config.js":142,"../source/gist":159,"../source/github":160,"../source/local":161,"clone":13,"xtend":141}],144:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -22182,35 +22182,35 @@ L.Hash.prototype.parseHash = function(hash) {
     var query = qs.stringQs(hash.substring(1));
     var map = query.map || '';
     var args = map.split('/');
-	if (args.length == 3) {
-		var zoom = parseInt(args[0], 10),
+  if (args.length == 3) {
+    var zoom = parseInt(args[0], 10),
             lat = parseFloat(args[1]),
             lon = parseFloat(args[2]);
-		if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
-			return false;
-		} else {
-			return {
-				center: new L.LatLng(lat, lon),
-				zoom: zoom
-			};
-		}
-	} else {
-		return false;
-	}
+    if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
+      return false;
+    } else {
+      return {
+        center: new L.LatLng(lat, lon),
+        zoom: zoom
+      };
+    }
+  } else {
+    return false;
+  }
 };
 
 L.Hash.prototype.formatHash = function(map) {
     var query = qs.stringQs(location.hash.substring(1)),
-	    center = map.getCenter(),
-	    zoom = map.getZoom(),
-	    precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
+      center = map.getCenter(),
+      zoom = map.getZoom(),
+      precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
 
     query.map = [zoom,
-		center.lat.toFixed(precision),
-		center.lng.toFixed(precision)
-	].join('/');
+    center.lat.toFixed(precision),
+    center.lng.toFixed(precision)
+  ].join('/');
 
-	return "#" + qs.qsString(query);
+  return "#" + qs.qsString(query);
 };
 
 },{"leaflet-hash":42,"qs-hash":50}],149:[function(require,module,exports){
@@ -23167,7 +23167,7 @@ var share = require('./share'),
 module.exports = function fileBar(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
-    var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
+    var mapboxAPI = /a\.tiles\.mapbox.com/.test(L.mapbox.config.HTTP_URL);
     var githubAPI = !!config.GithubAPI;
     var githubBase = githubAPI ? config.GithubAPI + '/api/v3': 'https://api.github.com';
 
@@ -23617,11 +23617,11 @@ function flash(selection, txt) {
 
 },{"./message":168}],166:[function(require,module,exports){
 module.exports = function(context) {
-    config = require('../config')(location.hostname);
+
     return function(selection) {
         var layers;
 
-        if (config.MapboxAPITile && config.MapboxAPITile !== 'https://a.tiles.mapbox.com') {
+        if (!(/a\.tiles\.mapbox.com/).test(L.mapbox.config.HTTP_URL)) {
             layers = [{
                 title: 'Mapbox',
                 layer: L.mapbox.tileLayer('mapbox.osm-bright', {
@@ -23689,7 +23689,7 @@ module.exports = function(context) {
 };
 
 
-},{"../config":142}],167:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('qs-hash'),
@@ -24123,60 +24123,54 @@ function share(context) {
 }
 
 },{"../source/gist":159,"./modal":169}],173:[function(require,module,exports){
-var config = require('../config.js')(location.hostname);
-var mapboxAPI = !config.MapboxAPITile || /(?:http:\/\/)?a\.tiles\.mapbox\.com\/?/.test(config.MapboxAPITile) ? true : false;
-var githubAPI = !!config.GithubAPI;
-
 module.exports = function(context) {
-    if (mapboxAPI || githubAPI) {
-        return function(selection) {
-            var name = selection.append('a')
-                .attr('target', '_blank');
-
-            selection.append('span').text(' | ');
-
-            var action = selection.append('a')
-                .attr('href', '#');
-
-            function nextLogin() {
-                action.text('login').on('click', login);
-                name
-                    .text('anon')
-                    .attr('href', '#')
-                    .on('click', function() { d3.event.preventDefault(); });
-            }
-
-            function nextLogout() {
-                name.on('click', null);
-                action.text('logout').on('click', logout);
-            }
-
-            function login() {
-                d3.event.preventDefault();
-                context.user.authenticate();
-            }
-
-            function logout() {
-                d3.event.preventDefault();
-                context.user.logout();
-                nextLogin();
-            }
-
-            nextLogin();
-
-            if (context.user.token()) {
-                context.user.details(function(err, d) {
-                    if (err) return;
-                    name.text(d.login);
-                    name.attr('href', d.html_url);
-                    nextLogout();
-                });
-            }
-        };
-    }
-    else {
+    if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};
     }
+    return function(selection) {
+        var name = selection.append('a')
+            .attr('target', '_blank');
+
+        selection.append('span').text(' | ');
+
+        var action = selection.append('a')
+            .attr('href', '#');
+
+        function nextLogin() {
+            action.text('login').on('click', login);
+            name
+                .text('anon')
+                .attr('href', '#')
+                .on('click', function() { d3.event.preventDefault(); });
+        }
+
+        function nextLogout() {
+            name.on('click', null);
+            action.text('logout').on('click', logout);
+        }
+
+        function login() {
+            d3.event.preventDefault();
+            context.user.authenticate();
+        }
+
+        function logout() {
+            d3.event.preventDefault();
+            context.user.logout();
+            nextLogin();
+        }
+
+        nextLogin();
+
+        if (context.user.token()) {
+            context.user.details(function(err, d) {
+                if (err) return;
+                name.text(d.login);
+                name.attr('href', d.html_url);
+                nextLogout();
+            });
+        }
+    };
 };
 
 },{"../config.js":142}]},{},[155])
