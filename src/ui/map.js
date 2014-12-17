@@ -9,8 +9,6 @@ module.exports = function(context, readonly) {
     writable = !readonly;
 
     function map(selection) {
-        L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w';
-
         context.map = L.mapbox.map(selection.node(), null, {
                 infoControl: false,
                 attributionControl: true

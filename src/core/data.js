@@ -1,5 +1,6 @@
-var clone = require('clone');
-    xtend = require('xtend');
+var clone = require('clone'),
+    xtend = require('xtend'),
+    config = require('../config.js')(location.hostname),
     source = {
         gist: require('../source/gist'),
         github: require('../source/github'),
@@ -247,7 +248,11 @@ module.exports = function(context) {
 
                 var name = mapFile(d);
 
-                if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
+                try {
+                    if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
+                } catch (e) {
+                    alert('Invalid JSON');
+                }
                 data.set({
                     type: 'gist',
                     source: d,

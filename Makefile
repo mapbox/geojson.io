@@ -58,52 +58,10 @@ dist/delegate.js: src/delegate.js
 lib/mapbox.js/latest:
 	mkdir -p lib/mapbox.js/latest
 
-MapboxAPITile=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).MapboxAPITile.replace(/\/$$/, '');")
-GithubAPI=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).GithubAPI.replace(/\/$$/, '') || '';")
-GithubClientID=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).GithubClientID.replace(/\/$$/, '') || '';")
-GatekeeperURL=$$(node -pe "var fs = require('fs'); JSON.parse(fs.readFileSync('./settings.json')).GatekeeperURL.replace(/\/$$/, '') || '';")
-
-lib/mapbox.js/latest/mapbox.js: settings.json
+lib/mapbox.js/latest/mapbox.js: node_modules/mapbox.js/*
 	$(BROWSERIFY) node_modules/mapbox.js > lib/mapbox.js/latest/mapbox.js
 	$(UGLIFY) -o lib/mapbox.js/latest/mapbox.js lib/mapbox.js/latest/mapbox.js
 	$(CLEANCSS) node_modules/mapbox.js/theme/style.css -o lib/mapbox.js/latest/mapbox.css
-
-	@echo "Configuration settings:"
-	@if [[ -n $(GithubAPI) ]] && [[ -n $(GithubClientID) ]] && [[ -n $(GatekeeperURL) ]]; then \
-		GithubAPIConfig="\n\t\tGithubAPI: '$(GithubAPI)', \
-		\n\t\tclient_id: '$(GithubClientID)', \
-		\n\t\tgatekeeper_url: '$(GatekeeperURL)'"; \
-		echo "Github API:" $(GithubAPI); \
-		echo "Github Client ID:" $(GithubClientID); \
-		echo "Gatekeeper Url:" $(GatekeeperURL); \
-	else \
-		echo 'what'; \
-		GithubAPIConfig="\n\t\tclient_id: production ? \
-			\n\t\t\t'62c753fd0faf18392d85' : \
-			\n\t\t\t'bb7bbe70bd1f707125bc', \
-			\n\t\tgatekeeper_url: production ? \
-			\n\t\t\t'https://geojsonioauth.herokuapp.com' : \
-			\n\t\t\t'https://localhostauth.herokuapp.com'"; \
-	fi && \
-	echo "module.exports = function(hostname) { \
-			\n\tvar production = (hostname === 'geojson.io'); \
-			\n \
-			\n\treturn { \
-			$$GithubAPIConfig \
-			\n\t}; \
-		\n};" > src/config.js && \
-	if [ $(MapboxAPITile) ]; then \
-		API=$$(node -pe "if (process.argv[1]) JSON.parse(process.argv[1]).api; else console.log('\WARNING: Cannot find MapboxAPITile endpoint at \'$(MapboxAPITile)\'.\n');" "$$(curl -s $(MapboxAPITile))") && \
-		echo "Mapbox API:" $$API && \
-		MapboxAPITileConfig="\n\t\tMapboxAPITile: '$(MapboxAPITile)'," && \
-		touch dist/lib.js; \
-		echo "\nL.mapbox.config.HTTP_URL = '$(MapboxAPITile)/v4'; \
-		 \nL.mapbox.config.HTTPS_URL = '$(MapboxAPITile)/v4'; \
-		 \nL.mapbox.config.REQUIRE_ACCESS_TOKEN = false;" >> lib/mapbox.js/latest/mapbox.js; \
-		 touch dist/lib.js; \
-	else \
-		touch dist/lib.js; \
-	fi
 
 dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
 	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson  src/index.js > dist/site.js

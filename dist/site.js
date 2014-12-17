@@ -21591,18 +21591,28 @@ function extend() {
 
 },{}],142:[function(require,module,exports){
 module.exports = function(hostname) {
-    var production = (hostname === 'geojson.io');
-
-    return {
-        client_id: production ?
-            '62c753fd0faf18392d85' :
-            'bb7bbe70bd1f707125bc',
-        gatekeeper_url: production ?
-            'https://geojsonioauth.herokuapp.com' :
-            'https://localhostauth.herokuapp.com'
-    };
+    // Settings for geojson.io
+    L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w';
+    if (hostname === 'geojson.io') {
+        return {
+            client_id: '62c753fd0faf18392d85',
+            gatekeeper_url: 'https://geojsonioauth.herokuapp.com',
+        };
+    // Customize these settings for your own development/deployment
+    // version of geojson.io.
+    } else {
+        var MapboxAPITile = 'http://a.tiles.mapbox.com';
+        L.mapbox.config.HTTP_URL = MapboxAPITile + '/v4';
+        L.mapbox.config.HTTPS_URL = MapboxAPITile + '/v4';
+        L.mapbox.config.FORCE_HTTPS = true;
+        L.mapbox.config.REQUIRE_ACCESS_TOKEN = true;
+        return {
+            GithubAPI: null,
+            client_id: 'bb7bbe70bd1f707125bc',
+            gatekeeper_url: 'https://localhostauth.herokuapp.com'
+        };
+    }
 };
-
 },{}],143:[function(require,module,exports){
 module.exports = api;
 
@@ -21637,8 +21647,9 @@ function api(context) {
 }
 
 },{}],144:[function(require,module,exports){
-var clone = require('clone');
-    xtend = require('xtend');
+var clone = require('clone'),
+    xtend = require('xtend'),
+    config = require('../config.js')(location.hostname),
     source = {
         gist: require('../source/gist'),
         github: require('../source/github'),
@@ -21886,7 +21897,11 @@ module.exports = function(context) {
 
                 var name = mapFile(d);
 
-                if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
+                try {
+                    if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
+                } catch (e) {
+                    alert('Invalid JSON');
+                }
                 data.set({
                     type: 'gist',
                     source: d,
@@ -21922,7 +21937,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../source/gist":161,"../source/github":162,"../source/local":163,"clone":13,"xtend":141}],145:[function(require,module,exports){
+},{"../config.js":142,"../source/gist":161,"../source/github":162,"../source/local":163,"clone":13,"xtend":141}],145:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -23728,14 +23743,12 @@ module.exports = function(context) {
             layers = [{
                 title: 'Mapbox',
                 layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-                    detectRetina: true,
-                    accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w'
+                    detectRetina: true
                 })
             }, {
                 title: 'Satellite',
                 layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-                    detectRetina: true,
-                    accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w'
+                    detectRetina: true
                 })
             }, {
                 title: 'OSM',
@@ -23786,8 +23799,6 @@ module.exports = function(context, readonly) {
     writable = !readonly;
 
     function map(selection) {
-        L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w';
-
         context.map = L.mapbox.map(selection.node(), null, {
                 infoControl: false,
                 attributionControl: true
