@@ -13,7 +13,8 @@ var share = require('./share'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
     meta = require('../lib/meta.js'),
-    saver = require('../ui/saver.js');
+    saver = require('../ui/saver.js'),
+    config = require('../config.js')(location.hostname);
 
 /**
  * This module provides the file picking & status bar above the map interface.
@@ -130,12 +131,12 @@ module.exports = function fileBar(context) {
                     action: clickGistSave
                 });
             
-            actions.splice(3, 0, {
-                title: 'Share',
-                action: function() {
-                    context.container.call(share(context));
-                }
-            });
+            if (mapboxAPI) actions.splice(3, 0, {
+                    title: 'Share',
+                    action: function() {
+                        context.container.call(share(context));
+                    }
+                });
         } else {
             actions.unshift({
                 title: 'Open',
@@ -224,6 +225,8 @@ module.exports = function fileBar(context) {
         context.dispatch.on('change.filebar', onchange);
 
         function clickGitHubOpen() {
+            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
+
             var m = modal(d3.select('div.geojsonio'));
 
             m.select('.m')
@@ -263,6 +266,8 @@ module.exports = function fileBar(context) {
         }
 
         function clickGitHubSave() {
+            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
+
             var m = modal(d3.select('div.geojsonio'));
 
             m.select('.m')
@@ -318,6 +323,8 @@ module.exports = function fileBar(context) {
         }
 
         function clickGist() {
+            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
+
             var m = modal(d3.select('div.geojsonio'));
 
             m.select('.m')

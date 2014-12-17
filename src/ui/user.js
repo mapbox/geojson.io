@@ -1,5 +1,5 @@
 module.exports = function(context) {
-    if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) || !require('../config.js')(location.hostname).GithubAPI) {
+    if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};
     }
     return function(selection) {

@@ -245,15 +245,15 @@ module.exports = function(context) {
                 login = (d.owner && d.owner.login) || 'anonymous';
                 path = [login, d.id].join('/');
 
-                var file = mapFile(d);
+                var name = mapFile(d);
 
-                if (d.files[file].content) data.set({ map: JSON.parse(d.files[file].content) });
+                if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
                 data.set({
                     type: 'gist',
                     source: d,
                     meta: {
                         login: login,
-                        name: file
+                        name: name
                     },
                     path: path,
                     route: 'gist:' + path,
