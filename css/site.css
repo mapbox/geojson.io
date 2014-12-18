@@ -395,6 +395,10 @@ div.children a {
 }
 .prose h3 {
     font-weight:bold;
+    margin-top:14px;
+}
+.prose h4 {
+    font-weight:bold;
     margin-top:10px;
 }
 .prose ul {
@@ -411,6 +415,18 @@ div.children a {
 }
 .prose strong {
     font-weight:bold;
+}
+.prose code {
+    font-family:Menlo, Bitstream Vera Sans Mono, Monaco, Consolas, monospace;
+    white-space: pre-wrap;
+    background:rgba(0,0,0,0.025);
+    font-size:14px;
+    line-height:20px;
+    padding:3px;
+    border-radius: 3px;
+}
+.prose h3 code {
+    font-size:16px;
 }
 
 /* Modals

@@ -34,7 +34,8 @@
     "geojson-random": "0.1.0",
     "geojson-extent": "0.3.1",
     "geojson-flatten": "~0.1.0",
-    "mapbox.js": "2.1.4"
+    "mapbox.js": "2.1.4",
+    "marked": "0.3.2"
   },
   "devDependencies": {
     "browserify": "4.1.11",
