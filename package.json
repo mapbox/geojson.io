@@ -12,8 +12,9 @@
     "togeojson": "0.5.0",
     "csv2geojson": "3.6.1",
     "detect-json-indent": "0.0.0",
-    "github-file-browser": "0.5.0",
+    "github-file-browser": "0.6.0",
     "smash": "0.0.11",
+    "clean-css": "~2.0.7",
     "uglify-js": "2.4.1",
     "d3": "3.4.11",
     "store": "1.3.14",
@@ -27,12 +28,14 @@
     "qs-hash": "0.0.0",
     "tokml": "0.2.2",
     "geojson2dsv": "0.0.0",
-    "gist-map-browser": "~0.1.1",
+    "gist-map-browser": "0.2.0",
     "polytogeojson": "0.0.1",
     "leaflet-geodesy": "0.1.1",
     "geojson-random": "0.1.0",
     "geojson-extent": "0.3.1",
-    "geojson-flatten": "~0.1.0"
+    "geojson-flatten": "~0.1.0",
+    "mapbox.js": "2.1.4",
+    "marked": "0.3.2"
   },
   "devDependencies": {
     "browserify": "4.1.11",

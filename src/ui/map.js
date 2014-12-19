@@ -1,22 +1,20 @@
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
-    qs = require('qs-hash');
+    qs = require('qs-hash'),
     LGeo = require('leaflet-geodesy'),
     writable = false;
-
 
 module.exports = function(context, readonly) {
 
     writable = !readonly;
 
     function map(selection) {
-
         context.map = L.mapbox.map(selection.node(), null, {
                 infoControl: false,
                 attributionControl: true
             })
             .setView([20, 0], 2)
-            .addControl(L.mapbox.geocoderControl('tmcw.map-u4ca5hnt', {
+            .addControl(L.mapbox.geocoderControl('mapbox.places-permanent', {
                 position: 'topright'
             }));
 

@@ -1,23 +1,34 @@
 module.exports = function(context) {
 
     return function(selection) {
+        var layers;
 
-        var layers = [{
-            title: 'Mapbox',
-            layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-                detectRetina: true
-            })
-        }, {
-            title: 'Satellite',
-            layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-                detectRetina: true
-            })
-        }, {
-            title: 'OSM',
-            layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-            })
-        }];
+        if (!(/a\.tiles\.mapbox.com/).test(L.mapbox.config.HTTP_URL)) {
+            layers = [{
+                title: 'Mapbox',
+                layer: L.mapbox.tileLayer('mapbox.osm-bright')
+            }, {
+                title: 'Mapbox Outdoors',
+                layer: L.mapbox.tileLayer('mapbox.mapbox-outdoors')
+            }, {
+                title: 'Satellite',
+                layer: L.mapbox.tileLayer('mapbox.satellite-full')
+            }];
+
+        } else {
+            layers = [{
+                title: 'Mapbox',
+                layer: L.mapbox.tileLayer('tmcw.map-7s15q36b')
+            }, {
+                title: 'Satellite',
+                layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s')
+            }, {
+                title: 'OSM',
+                layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                })
+            }];
+        }
 
         var layerSwap = function(d) {
             var clicked = this instanceof d3.selection ? this.node() : this;

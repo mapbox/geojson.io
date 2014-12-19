@@ -1,15 +1,16 @@
 var fs = require('fs'),
     tmpl = fs.readFileSync('data/share.html', 'utf8');
 
+var config = require('../config.js')(location.hostname);
+var githubBase = config.GithubAPI ? config.GithubAPI + '/api/v3': 'https://api.github.com';
+
 module.exports.save = save;
 module.exports.saveBlocks = saveBlocks;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
 
 function saveBlocks(content, callback) {
-    var endpoint = 'https://api.github.com/gists';
-
-    d3.json(endpoint)
+    d3.json(githubBase + '/gists')
         .on('load', function(data) {
             callback(null, data);
         })
@@ -45,22 +46,20 @@ function save(context, callback) {
     context.user.details(onuser);
 
     function onuser(err, user) {
-        var endpoint,
-            method = 'POST',
+        var method = 'POST',
             source = context.data.get('source'),
             files = {};
+        var endpoint = githubBase + '/gists';
 
         if (!err && user && user.login && meta &&
             // check that it's not previously a github
             source && source.id &&
             // and it is mine
             meta.login && user.login === meta.login) {
-            endpoint = 'https://api.github.com/gists/' + source.id;
+            endpoint =+ source.id;
             method = 'PATCH';
         } else if (!err && source && source.id) {
-            endpoint = 'https://api.github.com/gists/' + source.id + '/forks';
-        } else {
-            endpoint = 'https://api.github.com/gists';
+            endpoint += source.id + '/forks';
         }
 
         files[name] = {
@@ -92,7 +91,8 @@ function save(context, callback) {
 }
 
 function load(id, context, callback) {
-    context.user.signXHR(d3.json('https://api.github.com/gists/' + id))
+    var endpoint = githubBase + '/gists';
+    context.user.signXHR(d3.json(endpoint + id))
         .on('load', onLoad)
         .on('error', onError)
         .get();

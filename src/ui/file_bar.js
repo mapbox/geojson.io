@@ -13,7 +13,8 @@ var share = require('./share'),
     zoomextent = require('../lib/zoomextent'),
     readFile = require('../lib/readfile'),
     meta = require('../lib/meta.js'),
-    saver = require('../ui/saver.js');
+    saver = require('../ui/saver.js'),
+    config = require('../config.js')(location.hostname);
 
 /**
  * This module provides the file picking & status bar above the map interface.
@@ -23,6 +24,9 @@ var share = require('./share'),
 module.exports = function fileBar(context) {
 
     var shpSupport = typeof ArrayBuffer !== 'undefined';
+    var mapboxAPI = /a\.tiles\.mapbox.com/.test(L.mapbox.config.HTTP_URL);
+    var githubAPI = !!config.GithubAPI;
+    var githubBase = githubAPI ? config.GithubAPI + '/api/v3': 'https://api.github.com';
 
     var exportFormats = [{
         title: 'GeoJSON',
@@ -48,49 +52,13 @@ module.exports = function fileBar(context) {
     function bar(selection) {
 
         var actions = [{
-            title: 'Open',
-            children: [
-                {
-                    title: 'File',
-                    alt: 'CSV, KML, GPX, and other filetypes',
-                    action: blindImport
-                }, {
-                    title: 'GitHub',
-                    alt: 'GeoJSON files in GitHub Repositories',
-                    authenticated: true,
-                    action: clickGitHubOpen
-                }, {
-                    title: 'Gist',
-                    alt: 'GeoJSON files in GitHub Gists',
-                    authenticated: true,
-                    action: clickGist
-                }
-            ]
-        }, {
             title: 'Save',
             action: saveAction,
-            children: [
-                {
-                    title: 'GitHub',
-                    alt: 'GeoJSON files in GitHub Repositories',
-                    authenticated: true,
-                    action: clickGitHubSave
-                }, {
-                    title: 'Gist',
-                    alt: 'GeoJSON files in GitHub Gists',
-                    authenticated: true,
-                    action: clickGistSave
-                }
-            ].concat(exportFormats)
+            children: exportFormats
         }, {
             title: 'New',
             action: function() {
                 window.open('/#new');
-            }
-        }, {
-            title: 'Share',
-            action: function() {
-                context.container.call(share(context));
             }
         }, {
             title: 'Meta',
@@ -130,6 +98,53 @@ module.exports = function fileBar(context) {
             ]
         }];
 
+        if (mapboxAPI || githubAPI) {
+            actions.unshift({
+                title: 'Open',
+                children: [
+                    {
+                        title: 'File',
+                        alt: 'CSV, KML, GPX, and other filetypes',
+                        action: blindImport
+                    }, {
+                        title: 'GitHub',
+                        alt: 'GeoJSON files in GitHub Repositories',
+                        authenticated: true,
+                        action: clickGitHubOpen
+                    }, {
+                        title: 'Gist',
+                        alt: 'GeoJSON files in GitHub Gists',
+                        authenticated: true,
+                        action: clickGist
+                    }
+                ]
+            });
+            actions[1].children.unshift({
+                    title: 'GitHub',
+                    alt: 'GeoJSON files in GitHub Repositories',
+                    authenticated: true,
+                    action: clickGitHubSave
+                }, {
+                    title: 'Gist',
+                    alt: 'GeoJSON files in GitHub Gists',
+                    authenticated: true,
+                    action: clickGistSave
+                });
+            
+            if (mapboxAPI) actions.splice(3, 0, {
+                    title: 'Share',
+                    action: function() {
+                        context.container.call(share(context));
+                    }
+                });
+        } else {
+            actions.unshift({
+                title: 'Open',
+                alt: 'CSV, KML, GPX, and other filetypes',
+                action: blindImport
+            });
+        }
+
         var items = selection.append('div')
             .attr('class', 'inline')
             .selectAll('div.item')
@@ -158,13 +173,15 @@ module.exports = function fileBar(context) {
         var name = selection.append('div')
             .attr('class', 'name');
 
-        var filetype = name.append('a')
-            .attr('target', '_blank')
-            .attr('class', 'icon-file-alt');
+        if (mapboxAPI || githubAPI) {
+            var filetype = name.append('a')
+                .attr('target', '_blank')
+                .attr('class', 'icon-file-alt');
 
-        var filename = name.append('span')
-            .attr('class', 'filename')
-            .text('unsaved');
+            var filename = name.append('span')
+                .attr('class', 'filename')
+                .text('unsaved');
+        }
 
         function clickGistSave() {
             if (d3.event) d3.event.preventDefault();
@@ -208,6 +225,8 @@ module.exports = function fileBar(context) {
         context.dispatch.on('change.filebar', onchange);
 
         function clickGitHubOpen() {
+            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
+
             var m = modal(d3.select('div.geojsonio'));
 
             m.select('.m')
@@ -219,7 +238,7 @@ module.exports = function fileBar(context) {
                 .append('h1')
                 .text('GitHub');
 
-            githubBrowser(context.user.token(), false)
+            githubBrowser(context.user.token(), false, githubBase)
                 .open()
                 .onclick(function(d) {
                     if (!d || !d.length) return;
@@ -231,8 +250,12 @@ module.exports = function fileBar(context) {
                         return alert('only GeoJSON files are supported from GitHub');
                     }
                     if (last.type === 'blob') {
-                        context.data.parse(d);
-                        m.close();
+                        githubBrowser.request('/repos/' + d[1].full_name +
+                            '/git/blobs/' + last.sha, function(err, blob) {
+                                d.content = JSON.parse(atob(blob[0].content));
+                                context.data.parse(d);
+                                m.close();
+                            });
                     }
                 })
                 .appendTo(
@@ -243,6 +266,8 @@ module.exports = function fileBar(context) {
         }
 
         function clickGitHubSave() {
+            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
+
             var m = modal(d3.select('div.geojsonio'));
 
             m.select('.m')
@@ -273,7 +298,7 @@ module.exports = function fileBar(context) {
                         }).join('/');
                         context.data.set({
                             source: {
-                                url: 'https://api.github.com/repos/' +
+                                url: githubBase + '/repos/' +
                                     d[0].login + '/' + d[1].name +
                                         '/contents/' + partial +
                                         '?ref=' + d[2].name
@@ -298,12 +323,14 @@ module.exports = function fileBar(context) {
         }
 
         function clickGist() {
+            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
+
             var m = modal(d3.select('div.geojsonio'));
 
             m.select('.m')
                 .attr('class', 'modal-splash modal col6');
 
-            gistBrowser(context.user.token())
+            gistBrowser(context.user.token(), githubBase)
                 .open()
                 .onclick(function(d) {
                     context.data.parse(d);
@@ -320,10 +347,10 @@ module.exports = function fileBar(context) {
             var data = d.obj,
                 type = data.type,
                 path = data.path;
-            filename
+            if (mapboxAPI || githubAPI) filename
                 .text(path ? path : 'unsaved')
                 .classed('deemphasize', context.data.dirty);
-            filetype
+            if (mapboxAPI || githubAPI) filetype
                 .attr('href', data.url)
                 .attr('class', sourceIcon(type));
             saveNoun(type == 'github' ? 'Commit' : 'Save');

@@ -1,9 +1,10 @@
 BROWSERIFY = node_modules/.bin/browserify
 SMASH = node_modules/.bin/smash
+CLEANCSS = node_modules/.bin/cleancss
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
 
-all: dist/site.js dist/site.mobile.js dist/delegate.js
+all: dist/site.js dist/site.mobile.js dist/delegate.js lib/mapbox.js/latest lib/mapbox.js/latest/mapbox.js
 
 node_modules: package.json
 	npm install
@@ -53,6 +54,14 @@ dist/lib.js: dist dist/d3.js $(LIBS)
 
 dist/delegate.js: src/delegate.js
 	$(BROWSERIFY)  src/delegate.js > dist/delegate.js
+
+lib/mapbox.js/latest:
+	mkdir -p lib/mapbox.js/latest
+
+lib/mapbox.js/latest/mapbox.js: node_modules/mapbox.js/*
+	$(BROWSERIFY) node_modules/mapbox.js > lib/mapbox.js/latest/mapbox.js
+	$(UGLIFY) -o lib/mapbox.js/latest/mapbox.js lib/mapbox.js/latest/mapbox.js
+	$(CLEANCSS) node_modules/mapbox.js/theme/style.css -o lib/mapbox.js/latest/mapbox.css
 
 dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
 	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson  src/index.js > dist/site.js

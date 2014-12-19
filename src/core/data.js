@@ -1,5 +1,6 @@
-var clone = require('clone');
-    xtend = require('xtend');
+var clone = require('clone'),
+    xtend = require('xtend'),
+    config = require('../config.js')(location.hostname),
     source = {
         gist: require('../source/gist'),
         github: require('../source/github'),
@@ -153,6 +154,7 @@ module.exports = function(context) {
     };
 
     data.parse = function(d, browser) {
+        var endpoint = config.GithubAPI || 'https://github.com/';
         var login,
             repo,
             branch,
@@ -202,7 +204,7 @@ module.exports = function(context) {
                         path
                     ].join('/'),
                     url: [
-                        'https://github.com',
+                        endpoint,
                         login,
                         repo,
                         'blob',
@@ -244,13 +246,19 @@ module.exports = function(context) {
                 login = (d.owner && d.owner.login) || 'anonymous';
                 path = [login, d.id].join('/');
 
-                if (d.content) data.set({ map: d.content });
+                var name = mapFile(d);
+
+                try {
+                    if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
+                } catch (e) {
+                    alert('Invalid JSON');
+                }
                 data.set({
                     type: 'gist',
                     source: d,
                     meta: {
                         login: login,
-                        name: d.file
+                        name: name
                     },
                     path: path,
                     route: 'gist:' + path,
