@@ -9,9 +9,8 @@ module.exports = function(hostname) {
     // Customize these settings for your own development/deployment
     // version of geojson.io.
     } else {
-        var MapboxAPITile = 'http://a.tiles.mapbox.com';
-        L.mapbox.config.HTTP_URL = MapboxAPITile + '/v4';
-        L.mapbox.config.HTTPS_URL = MapboxAPITile + '/v4';
+        L.mapbox.config.HTTP_URL = 'http://a.tiles.mapbox.com/v4';
+        L.mapbox.config.HTTPS_URL = 'https://a.tiles.mapbox.com/v4';
         L.mapbox.config.FORCE_HTTPS = true;
         L.mapbox.config.REQUIRE_ACCESS_TOKEN = true;
         return {
