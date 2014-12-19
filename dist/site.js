@@ -24996,32 +24996,22 @@ module.exports = function(context) {
         if (!(/a\.tiles\.mapbox.com/).test(L.mapbox.config.HTTP_URL)) {
             layers = [{
                 title: 'Mapbox',
-                layer: L.mapbox.tileLayer('mapbox.osm-bright', {
-                    detectRetina: true
-                })
+                layer: L.mapbox.tileLayer('mapbox.osm-bright')
             }, {
                 title: 'Mapbox Outdoors',
-                layer: L.mapbox.tileLayer('mapbox.mapbox-outdoors', {
-                        detectRetina: true
-                })
+                layer: L.mapbox.tileLayer('mapbox.mapbox-outdoors')
             }, {
                 title: 'Satellite',
-                layer: L.mapbox.tileLayer('mapbox.satellite-full', {
-                    detectRetina: true
-                })
+                layer: L.mapbox.tileLayer('mapbox.satellite-full')
             }];
 
         } else {
             layers = [{
                 title: 'Mapbox',
-                layer: L.mapbox.tileLayer('tmcw.map-7s15q36b', {
-                    detectRetina: true
-                })
+                layer: L.mapbox.tileLayer('tmcw.map-7s15q36b')
             }, {
                 title: 'Satellite',
-                layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s', {
-                    detectRetina: true
-                })
+                layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s')
             }, {
                 title: 'OSM',
                 layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
