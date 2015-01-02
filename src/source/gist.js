@@ -91,7 +91,7 @@ function save(context, callback) {
 }
 
 function load(id, context, callback) {
-    var endpoint = githubBase + '/gists';
+    var endpoint = githubBase + '/gists/';
     context.user.signXHR(d3.json(endpoint + id))
         .on('load', onLoad)
         .on('error', onError)
