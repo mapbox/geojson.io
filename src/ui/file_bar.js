@@ -5,7 +5,8 @@ var shpwrite = require('shp-write'),
     saveAs = require('filesaver.js'),
     tokml = require('tokml'),
     githubBrowser = require('github-file-browser'),
-    gistBrowser = require('gist-map-browser');
+    gistBrowser = require('gist-map-browser'),
+    wellknown = require('wellknown');
 
 var share = require('./share'),
     modal = require('./modal.js'),
@@ -40,6 +41,9 @@ module.exports = function fileBar(context) {
     }, {
         title: 'KML',
         action: downloadKML
+    }, {
+        title: 'WKT',
+        action: downloadWKT
     }];
 
     if (shpSupport) {
@@ -446,6 +450,18 @@ module.exports = function fileBar(context) {
         } finally {
             d3.select('.map').classed('loading', false);
         }
+    }
+
+    function downloadWKT() {
+        if (d3.event) d3.event.preventDefault();
+        var contentArray = [];
+        var features = context.data.get('map').features; 
+        if (features.length == 0) return;
+        var content = features.map(wellknown.stringify).join('\n');
+        var meta = context.data.get('meta');
+        saveAs(new Blob([content], {
+            type: 'text/plain;charset=utf-8'
+        }), 'map.wkt');
     }
 
     function allProperties(properties, key, value) {
