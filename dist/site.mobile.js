@@ -23516,7 +23516,7 @@ module.exports = function(context) {
     var repo = {};
 
     repo.details = function(callback) {
-        var endpoint = (config.GithubAPI) ? config.GithubAPI + '/api/v3/repos' : 'https://api.github.com/repos/';
+        var endpoint = (config.GithubAPI) ? config.GithubAPI + '/api/v3/repos/' : 'https://api.github.com/repos/';
         var cached = context.storage.get('github_repo_details'),
             meta = context.data.get('meta'),
             login = meta.login,
@@ -24963,7 +24963,7 @@ module.exports = function fileBar(context) {
                 .append('h1')
                 .text('GitHub');
 
-            githubBrowser(context.user.token(), true)
+            githubBrowser(context.user.token(), true, githubBase)
                 .open()
                 .onclick(function(d) {
                     if (!d || !d.length) return;
