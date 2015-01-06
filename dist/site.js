@@ -25069,7 +25069,9 @@ module.exports = function fileBar(context) {
                             },
                             type: 'github',
                             meta: {
-                                branch: d[2].name
+                                branch: d[2].name,
+                                login: d[0].login,
+                                repo: d[1].name
                             }
                         });
                         context.data.set({ newpath: partial + filename });
