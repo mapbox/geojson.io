@@ -115,7 +115,7 @@ function loadRaw(parts, sha, context, callback) {
 }
 
 function fileUrl(parts) {
-    return githubBase + '/gists' +
+    return githubBase + '/repos/' +
         parts.user +
         '/' + parts.repo +
         '/contents/' + parts.path +
@@ -123,7 +123,7 @@ function fileUrl(parts) {
 }
 
 function shaUrl(parts, sha) {
-    return githubBase + '/gists' +
+    return githubBase + '/repos/' +
         parts.user +
         '/' + parts.repo +
         '/git/blobs/' + sha;

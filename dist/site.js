@@ -23420,7 +23420,7 @@ module.exports = function(context) {
                 try {
                     if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
                 } catch (e) {
-                    alert('Invalid JSON');
+
                 }
                 data.set({
                     type: 'gist',
@@ -23591,7 +23591,7 @@ module.exports = function(context) {
     var repo = {};
 
     repo.details = function(callback) {
-        var endpoint = (config.GithubAPI) ? config.GithubAPI + '/api/v3/repos' : 'https://api.github.com/repos/';
+        var endpoint = (config.GithubAPI) ? config.GithubAPI + '/api/v3/repos/' : 'https://api.github.com/repos/';
         var cached = context.storage.get('github_repo_details'),
             meta = context.data.get('meta'),
             login = meta.login,
@@ -24418,10 +24418,10 @@ function save(context, callback) {
             source && source.id &&
             // and it is mine
             meta.login && user.login === meta.login) {
-            endpoint =+ source.id;
+            endpoint += '/' + source.id;
             method = 'PATCH';
         } else if (!err && source && source.id) {
-            endpoint += source.id + '/forks';
+            endpoint += '/' + source.id + '/forks';
         }
 
         files[name] = {
@@ -24591,7 +24591,7 @@ function loadRaw(parts, sha, context, callback) {
 }
 
 function fileUrl(parts) {
-    return githubBase + '/gists' +
+    return githubBase + '/repos/' +
         parts.user +
         '/' + parts.repo +
         '/contents/' + parts.path +
@@ -24599,7 +24599,7 @@ function fileUrl(parts) {
 }
 
 function shaUrl(parts, sha) {
-    return githubBase + '/gists' +
+    return githubBase + '/repos/' +
         parts.user +
         '/' + parts.repo +
         '/git/blobs/' + sha;
@@ -25043,7 +25043,7 @@ module.exports = function fileBar(context) {
                 .append('h1')
                 .text('GitHub');
 
-            githubBrowser(context.user.token(), true)
+            githubBrowser(context.user.token(), true, githubBase)
                 .open()
                 .onclick(function(d) {
                     if (!d || !d.length) return;
@@ -25069,7 +25069,9 @@ module.exports = function fileBar(context) {
                             },
                             type: 'github',
                             meta: {
-                                branch: d[2].name
+                                branch: d[2].name,
+                                login: d[0].login,
+                                repo: d[1].name
                             }
                         });
                         context.data.set({ newpath: partial + filename });
