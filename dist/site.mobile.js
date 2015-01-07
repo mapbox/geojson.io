@@ -23387,7 +23387,7 @@ module.exports = function(context) {
                 try {
                     if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
                 } catch (e) {
-                    alert('Invalid JSON');
+
                 }
                 data.set({
                     type: 'gist',
@@ -24338,10 +24338,10 @@ function save(context, callback) {
             source && source.id &&
             // and it is mine
             meta.login && user.login === meta.login) {
-            endpoint =+ source.id;
+            endpoint += '/' + source.id;
             method = 'PATCH';
         } else if (!err && source && source.id) {
-            endpoint += source.id + '/forks';
+            endpoint += '/' + source.id + '/forks';
         }
 
         files[name] = {
@@ -24511,7 +24511,7 @@ function loadRaw(parts, sha, context, callback) {
 }
 
 function fileUrl(parts) {
-    return githubBase + '/gists' +
+    return githubBase + '/repos/' +
         parts.user +
         '/' + parts.repo +
         '/contents/' + parts.path +
@@ -24519,7 +24519,7 @@ function fileUrl(parts) {
 }
 
 function shaUrl(parts, sha) {
-    return githubBase + '/gists' +
+    return githubBase + '/repos/' +
         parts.user +
         '/' + parts.repo +
         '/git/blobs/' + sha;

@@ -56,10 +56,10 @@ function save(context, callback) {
             source && source.id &&
             // and it is mine
             meta.login && user.login === meta.login) {
-            endpoint =+ source.id;
+            endpoint += '/' + source.id;
             method = 'PATCH';
         } else if (!err && source && source.id) {
-            endpoint += source.id + '/forks';
+            endpoint += '/' + source.id + '/forks';
         }
 
         files[name] = {
