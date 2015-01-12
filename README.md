@@ -20,7 +20,7 @@ A fast, simple editor for map data. Read more on [Mapbox](http://www.mapbox.com/
 
 **Sites**
 
-* [GitSpatial](http://gitspatial.com/) makes GeoJSON on GitHub more like an API
+* [GitSpatial](https://github.com/JasonSanford/gitspatial) makes GeoJSON on GitHub more like an API
 
 ## API
 
