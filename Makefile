@@ -61,7 +61,8 @@ lib/mapbox.js/latest:
 lib/mapbox.js/latest/mapbox.js: node_modules/mapbox.js/*
 	$(BROWSERIFY) node_modules/mapbox.js > lib/mapbox.js/latest/mapbox.js
 	$(UGLIFY) -o lib/mapbox.js/latest/mapbox.js lib/mapbox.js/latest/mapbox.js
-	$(CLEANCSS) node_modules/mapbox.js/theme/style.css -o lib/mapbox.js/latest/mapbox.css
+	cp -r node_modules/mapbox.js/theme/images/ lib/mapbox.js/latest/images/
+	$(CLEANCSS) -o lib/mapbox.js/latest/mapbox.css --skip-rebase node_modules/mapbox.js/theme/style.css
 
 dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
 	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson  src/index.js > dist/site.js
