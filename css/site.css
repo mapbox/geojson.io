@@ -127,6 +127,10 @@ button.major {
     padding:5px;
 }
 
+button.major:hover {
+    background:#f8f8f8;
+}
+
 .top .collapse-button {
     position:absolute;
     top:0;
