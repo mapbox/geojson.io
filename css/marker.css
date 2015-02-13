@@ -1,18 +1,21 @@
-.marker-properties-limit {
-    max-width:500px;
-}
-
 .marker-properties {
     border-collapse:collapse;
     font-size:11px;
     border:1px solid #ccc;
     margin:0;
+    width:100%;
 }
 
-.marker-properties td,
+
 .marker-properties th {
+    width:40%;
+    min-width:100px;
     white-space:nowrap;
     border:1px solid #ccc;
+}
+
+.marker-properties td {
+    width:60%;
 }
 
 .marker-properties.display td,
@@ -31,7 +34,8 @@
 }
 
 .leaflet-popup-content {
-    margin-bottom: -25px;
+    margin-bottom:-25px;
+    width:100%;
 }
 
 /* Tabs
@@ -42,9 +46,15 @@
 
 .tabs-ui {
     position:relative;
-    min-height:200px;
-    min-width:225px;
+    height:250px;
+    width:300px;
     clear:both;
+}
+@media (max-width: 767px){
+    .tabs-ui {
+        height:250px;
+        width:250px;
+    }
 }
 .tab {
     float:left;

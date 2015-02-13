@@ -25474,7 +25474,8 @@ function bindPopup(l) {
 
     l.bindPopup(L.popup({
         maxWidth: 500,
-        maxHeight: 400
+        maxHeight: 400,
+        autoPanPadding: [5, 45]
     }, l).setContent(content));
 
     l.on('popupopen', function(e){
