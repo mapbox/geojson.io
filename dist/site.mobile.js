@@ -25249,7 +25249,6 @@ var popup = require('../lib/popup'),
 
 d3.json("data/maki.json", function(error, json) {
     for (i = 0; i < json.length; i++) {
-        console.log(json[i].icon);
         maki += '<option value="' + json[i].icon + '">';
     }
 });
