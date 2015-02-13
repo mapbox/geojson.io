@@ -30,6 +30,10 @@
     background-color:#f7f7f7;
 }
 
+.leaflet-popup-content {
+    margin-bottom: -25px;
+}
+
 /* Tabs
 ------------------------------------------------------- */
 .clearfix{
