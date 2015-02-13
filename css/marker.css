@@ -1,6 +1,4 @@
 .marker-properties-limit {
-    overflow:auto;
-    max-height:150px;
     max-width:500px;
 }
 
@@ -30,4 +28,55 @@
 .marker-properties tr:nth-child(even) th,
 .marker-properties tr:nth-child(even) td {
     background-color:#f7f7f7;
+}
+
+/* Tabs
+------------------------------------------------------- */
+.clearfix{
+    width:100%;
+}
+
+.tabs-ui {
+    position:relative;
+    min-height:200px;
+    min-width:225px;
+    clear:both;
+}
+.tab {
+    float:left;
+}
+.tab label {
+    background:#eee;
+    padding:10px;
+    border:1px solid #ccc;
+    margin-left:-1px;
+    position:relative;
+    left:1px;
+    top:1px;
+    cursor:pointer;
+}
+.tab label:hover {
+    background:#f8f8f8;
+}
+.tab [type=radio] {
+    display:none;
+}
+.tab .content {
+    background:white;
+    position:absolute;
+    top:28px;
+    left:0;
+    right:0;
+    bottom:0;
+    padding:5px;
+    border:1px solid #ccc;
+    overflow:auto;
+}
+.tab [type=radio]:checked ~ label {
+    background:white;
+    border-bottom:1px solid white;
+    z-index:2;
+}
+.tab [type=radio]:checked ~ label ~ .content {
+    z-index:1;
 }

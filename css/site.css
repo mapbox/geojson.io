@@ -224,7 +224,7 @@ button.major:hover {
 }
 
 .leaflet-popup-content-wrapper table input {
-    width:120px;
+    width:100%;
     background:transparent;
 }
 
@@ -521,7 +521,6 @@ div.children a {
 
 .metadata {
     width:100%;
-    margin:10px 0;
 }
 
 .metadata td {
