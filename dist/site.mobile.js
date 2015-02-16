@@ -26023,7 +26023,7 @@ module.exports = function fileBar(context) {
                 children: [
                     {
                         title: 'File',
-                        alt: 'CSV, KML, GPX, and other filetypes',
+                        alt: 'GeoJSON, TopoJSON, KML, CSV, GPX and OSM XML supported',
                         action: blindImport
                     }, {
                         title: 'GitHub',
@@ -26049,7 +26049,7 @@ module.exports = function fileBar(context) {
                     authenticated: true,
                     action: clickGistSave
                 });
-            
+
             if (mapboxAPI) actions.splice(3, 0, {
                     title: 'Share',
                     action: function() {
@@ -26132,6 +26132,9 @@ module.exports = function fileBar(context) {
                     .data(children)
                     .enter()
                     .append('a')
+                    .attr('title', function(d) {
+                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist') return d.alt;
+                    })
                     .text(function(d) {
                         return d.title;
                     })
@@ -26372,7 +26375,7 @@ module.exports = function fileBar(context) {
     function downloadWKT() {
         if (d3.event) d3.event.preventDefault();
         var contentArray = [];
-        var features = context.data.get('map').features; 
+        var features = context.data.get('map').features;
         if (features.length == 0) return;
         var content = features.map(wellknown.stringify).join('\n');
         var meta = context.data.get('meta');
