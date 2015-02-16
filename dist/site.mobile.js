@@ -1,6 +1,1241 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports=[
+    {
+        "name": "Circle stroked",
+        "tags": [
+            "circle",
+            "disc",
+            "shape",
+            "shapes",
+            "geometric",
+            "stroke",
+            "round"
+        ],
+        "icon": "circle-stroked"
+    },
+    {
+        "name": "Circle solid",
+        "tags": [
+            "circle",
+            "shape",
+            "shapes",
+            "geometric",
+            "round"
+        ],
+        "icon": "circle"
+    },
+    {
+        "name": "Square stroked",
+        "tags": [
+            "box",
+            "square",
+            "shapes",
+            "shape",
+            "geometric",
+            "stroke"
+        ],
+        "icon": "square-stroked"
+    },
+    {
+        "name": "Square solid",
+        "tags": [
+            "box",
+            "square",
+            "shape",
+            "shapes",
+            "geometric"
+        ],
+        "icon": "square"
+    },
+    {
+        "name": "Triangle stroked",
+        "tags": [
+            "triangle",
+            "shape",
+            "shapes",
+            "geometric",
+            "stroke"
+        ],
+        "icon": "triangle-stroked"
+    },
+    {
+        "name": "Triangle solid",
+        "tags": [
+            "triangle",
+            "shape",
+            "shapes",
+            "geometric"
+        ],
+        "icon": "triangle"
+    },
+    {
+        "name": "Star stroked",
+        "tags": [
+            "star",
+            "shape",
+            "shapes",
+            "geometric",
+            "stroke"
+        ],
+        "icon": "star-stroked"
+    },
+    {
+        "name": "Star solid",
+        "tags": [
+            "star",
+            "shape",
+            "shapes",
+            "geometric"
+        ],
+        "icon": "star"
+    },
+    {
+        "name": "Cross",
+        "tags": [
+            "cross",
+            "x",
+            "ex",
+            "shape",
+            "shapes",
+            "geometric"
+        ],
+        "icon": "cross"
+    },
+    {
+        "name": "Marker Stroke",
+        "tags": [
+            "marker",
+            "point",
+            "shape",
+            "shapes",
+            "stroke"
+        ],
+        "icon": "marker-stroked"
+    },
+    {
+        "name": "Marker Solid",
+        "tags": [
+            "marker",
+            "point",
+            "shape",
+            "shapes"
+        ],
+        "icon": "marker"
+    },
+    {
+        "name": "Religious Jewish",
+        "tags": [
+            "jewish",
+            "judaism",
+            "hebrew",
+            "star",
+            "david",
+            "religious",
+            "religion",
+            "temple",
+            "synagogue"
+        ],
+        "icon": "religious-jewish"
+    },
+    {
+        "name": "Religious Christian",
+        "tags": [
+            "christian",
+            "cross",
+            "religious",
+            "religion",
+            "church",
+            "cathedral"
+        ],
+        "icon": "religious-christian"
+    },
+    {
+        "name": "Religious Muslim",
+        "tags": [
+            "muslim",
+            "crescent",
+            "star",
+            "religious",
+            "religion",
+            "mosque"
+        ],
+        "icon": "religious-muslim"
+    },
+    {
+        "name": "Cemetery",
+        "tags": [
+            "cemetery",
+            "graveyard",
+            "funeral",
+            "religious",
+            "religion",
+            "memorial"
+        ],
+        "icon": "cemetery"
+    },
+    {
+        "name": "Rocket",
+        "tags": [
+            "rocket",
+            "space",
+            "launch",
+            "transportation"
+        ],
+        "icon": "rocket"
+    },
+    {
+        "name": "Airport",
+        "tags": [
+            "airplane",
+            "plane",
+            "airport",
+            "transportation"
+        ],
+        "icon": "airport"
+    },
+    {
+        "name": "Heliport",
+        "tags": [
+            "heliport",
+            "helicopter",
+            "transportation"
+        ],
+        "icon": "heliport"
+    },
+    {
+        "name": "Rail",
+        "tags": [
+            "rail",
+            "train",
+            "transportation"
+        ],
+        "icon": "rail"
+    },
+    {
+        "name": "Rail Metro",
+        "tags": [
+            "rail",
+            "train",
+            "metro",
+            "subway",
+            "rapid-transit",
+            "transportation"
+        ],
+        "icon": "rail-metro"
+    },
+    {
+        "name": "Rail Light",
+        "tags": [
+            "rail",
+            "train",
+            "light-rail",
+            "transportation"
+        ],
+        "icon": "rail-light"
+    },
+    {
+        "name": "Bus",
+        "tags": [
+            "vehicle",
+            "bus",
+            "transportation"
+        ],
+        "icon": "bus"
+    },
+    {
+        "name": "Fuel",
+        "tags": [
+            "petrol",
+            "fuel",
+            "gas",
+            "transportation",
+            "station"
+        ],
+        "icon": "fuel"
+    },
+    {
+        "name": "Parking",
+        "tags": [
+            "parking",
+            "transportation"
+        ],
+        "icon": "parking"
+    },
+    {
+        "name": "Parking Garage",
+        "tags": [
+            "parking",
+            "transportation",
+            "garage"
+        ],
+        "icon": "parking-garage"
+    },
+    {
+        "name": "Airfield",
+        "tags": [
+            "airfield",
+            "airport",
+            "plane",
+            "landing strip"
+        ],
+        "icon": "airfield"
+    },
+    {
+        "name": "Roadblock",
+        "tags": [
+            "roadblock",
+            "stop",
+            "warning",
+            "dead end"
+        ],
+        "icon": "roadblock"
+    },
+    {
+        "name": "Ferry",
+        "tags": [
+            "ship",
+            "boat",
+            "water",
+            "ferry",
+            "transportation"
+        ],
+        "icon": "ferry"
+    },
+    {
+        "name": "Harbor",
+        "tags": [
+            "marine",
+            "dock",
+            "water",
+            "wharf"
+        ],
+        "icon": "harbor"
+    },
+    {
+        "name": "Bicycle",
+        "tags": [
+            "cycling",
+            "cycle",
+            "transportation"
+        ],
+        "icon": "bicycle"
+    },
+    {
+        "name": "Park",
+        "tags": [
+            "recreation",
+            "park",
+            "forest",
+            "tree",
+            "green",
+            "woods",
+            "nature"
+        ],
+        "icon": "park"
+    },
+    {
+        "name": "Park 2",
+        "tags": [
+            "recreation",
+            "park",
+            "forest",
+            "tree",
+            "green",
+            "woods",
+            "nature"
+        ],
+        "icon": "park2"
+    },
+    {
+        "name": "Museum",
+        "tags": [
+            "recreation",
+            "museum",
+            "tourism"
+        ],
+        "icon": "museum"
+    },
+    {
+        "name": "Lodging",
+        "tags": [
+            "lodging",
+            "hotel",
+            "recreation",
+            "motel",
+            "tourism"
+        ],
+        "icon": "lodging"
+    },
+    {
+        "name": "Monument",
+        "tags": [
+            "recreation",
+            "statue",
+            "monument",
+            "tourism"
+        ],
+        "icon": "monument"
+    },
+    {
+        "name": "Zoo",
+        "tags": [
+            "recreation",
+            "zoo",
+            "animal",
+            "giraffe"
+        ],
+        "icon": "zoo"
+    },
+    {
+        "name": "Garden",
+        "tags": [
+            "recreation",
+            "garden",
+            "park",
+            "flower",
+            "nature"
+        ],
+        "icon": "garden"
+    },
+    {
+        "name": "Campsite",
+        "tags": [
+            "recreation",
+            "campsite",
+            "camp",
+            "camping",
+            "tent",
+            "nature"
+        ],
+        "icon": "campsite"
+    },
+    {
+        "name": "Theatre",
+        "tags": [
+            "recreation",
+            "theatre",
+            "theater",
+            "entertainment",
+            "play",
+            "performance"
+        ],
+        "icon": "theatre"
+    },
+    {
+        "name": "Art gallery",
+        "tags": [
+            "art",
+            "center",
+            "museum",
+            "gallery",
+            "creative",
+            "recreation",
+            "entertainment",
+            "studio"
+        ],
+        "icon": "art-gallery"
+    },
+    {
+        "name": "Pitch",
+        "tags": [
+            "pitch",
+            "track",
+            "athletic",
+            "sports",
+            "field"
+        ],
+        "icon": "pitch"
+    },
+    {
+        "name": "Soccer",
+        "tags": [
+            "soccer",
+            "sports"
+        ],
+        "icon": "soccer"
+    },
+    {
+        "name": "American Football",
+        "tags": [
+            "football",
+            "sports"
+        ],
+        "icon": "america-football"
+    },
+    {
+        "name": "Tennis",
+        "tags": [
+            "tennis",
+            "court",
+            "ball",
+            "sports"
+        ],
+        "icon": "tennis"
+    },
+    {
+        "name": "Basketball",
+        "tags": [
+            "basketball",
+            "ball",
+            "sports"
+        ],
+        "icon": "basketball"
+    },
+    {
+        "name": "Baseball",
+        "tags": [
+            "baseball",
+            "softball",
+            "ball",
+            "sports"
+        ],
+        "icon": "baseball"
+    },
+    {
+        "name": "Golf",
+        "tags": [
+            "golf",
+            "sports",
+            "course"
+        ],
+        "icon": "golf"
+    },
+    {
+        "name": "Swimming",
+        "tags": [
+            "swimming",
+            "water",
+            "swim",
+            "sports"
+        ],
+        "icon": "swimming"
+    },
+    {
+        "name": "Cricket",
+        "tags": [
+            "cricket",
+            "sports"
+        ],
+        "icon": "cricket"
+    },
+    {
+        "name": "Skiing",
+        "tags": [
+            "winter",
+            "skiing",
+            "ski",
+            "sports"
+        ],
+        "icon": "skiing"
+    },
+    {
+        "name": "School",
+        "tags": [
+            "school",
+            "highschool",
+            "elementary",
+            "children",
+            "amenity",
+            "middle"
+        ],
+        "icon": "school"
+    },
+    {
+        "name": "College",
+        "tags": [
+            "college",
+            "school",
+            "amenity",
+            "university"
+        ],
+        "icon": "college"
+    },
+    {
+        "name": "Library",
+        "tags": [
+            "library",
+            "books",
+            "amenity"
+        ],
+        "icon": "library"
+    },
+    {
+        "name": "Post",
+        "tags": [
+            "post",
+            "office",
+            "amenity",
+            "mail",
+            "letter"
+        ],
+        "icon": "post"
+    },
+    {
+        "name": "Fire station",
+        "tags": [
+            "fire",
+            "station",
+            "amenity"
+        ],
+        "icon": "fire-station"
+    },
+    {
+        "name": "Town hall",
+        "tags": [
+            "townhall",
+            "mayor",
+            "building",
+            "amenity",
+            "government"
+        ],
+        "icon": "town-hall"
+    },
+    {
+        "name": "Police",
+        "tags": [
+            "police",
+            "jail",
+            "arrest",
+            "amenity",
+            "station"
+        ],
+        "icon": "police"
+    },
+    {
+        "name": "Prison",
+        "tags": [
+            "prison",
+            "jail",
+            "amenity"
+        ],
+        "icon": "prison"
+    },
+    {
+        "name": "Embassy",
+        "tags": [
+            "embassy",
+            "diplomacy",
+            "consulate",
+            "amenity",
+            "flag"
+        ],
+        "icon": "embassy"
+    },
+    {
+        "name": "Beer",
+        "tags": [
+            "bar",
+            "beer",
+            "drink",
+            "commercial",
+            "biergarten",
+            "pub"
+        ],
+        "icon": "beer"
+    },
+    {
+        "name": "Restaurant",
+        "tags": [
+            "restaurant",
+            "commercial"
+        ],
+        "icon": "restaurant"
+    },
+    {
+        "name": "Cafe",
+        "tags": [
+            "cafe",
+            "coffee",
+            "commercial",
+            "tea"
+        ],
+        "icon": "cafe"
+    },
+    {
+        "name": "Shop",
+        "tags": [
+            "shop",
+            "mall",
+            "commercial",
+            "store"
+        ],
+        "icon": "shop"
+    },
+    {
+        "name": "Fast Food",
+        "tags": [
+            "food",
+            "fast",
+            "commercial",
+            "burger",
+            "drive-through"
+        ],
+        "icon": "fast-food"
+    },
+    {
+        "name": "Bar",
+        "tags": [
+            "bar",
+            "drink",
+            "commercial",
+            "club",
+            "martini",
+            "lounge"
+        ],
+        "icon": "bar"
+    },
+    {
+        "name": "Bank",
+        "tags": [
+            "bank",
+            "atm",
+            "commercial",
+            "money"
+        ],
+        "icon": "bank"
+    },
+    {
+        "name": "Grocery",
+        "tags": [
+            "food",
+            "grocery",
+            "commercial",
+            "store",
+            "market"
+        ],
+        "icon": "grocery"
+    },
+    {
+        "name": "Cinema",
+        "tags": [
+            "cinema",
+            "theatre",
+            "film",
+            "movie",
+            "commercial",
+            "theater",
+            "entertainment"
+        ],
+        "icon": "cinema"
+    },
+    {
+        "name": "Pharmacy",
+        "tags": [
+            "pharmacy",
+            "drugs",
+            "medication",
+            "social",
+            "medicine",
+            "prescription"
+        ],
+        "icon": "pharmacy"
+    },
+    {
+        "name": "Hospital",
+        "tags": [
+            "hospital",
+            "health",
+            "medication",
+            "social",
+            "medicine",
+            "medical",
+            "clinic"
+        ],
+        "icon": "hospital"
+    },
+    {
+        "name": "Danger",
+        "tags": [
+            "minefield",
+            "landmine",
+            "disaster",
+            "dangerous",
+            "hazard"
+        ],
+        "icon": "danger"
+    },
+    {
+        "name": "Industrial",
+        "tags": [
+            "industrial",
+            "factory",
+            "property",
+            "building"
+        ],
+        "icon": "industrial"
+    },
+    {
+        "name": "Warehouse",
+        "tags": [
+            "warehouse",
+            "property",
+            "storage",
+            "building"
+        ],
+        "icon": "warehouse"
+    },
+    {
+        "name": "Commercial",
+        "tags": [
+            "commercial",
+            "property",
+            "business",
+            "building"
+        ],
+        "icon": "commercial"
+    },
+    {
+        "name": "Building",
+        "tags": [
+            "building",
+            "property",
+            "structure",
+            "business",
+            "building"
+        ],
+        "icon": "building"
+    },
+    {
+        "name": "Place of worship",
+        "tags": [
+            "religion",
+            "ceremony",
+            "religious",
+            "nondenominational",
+            "church",
+            "temple"
+        ],
+        "icon": "place-of-worship"
+    },
+    {
+        "name": "Alcohol shop",
+        "tags": [
+            "alcohol",
+            "liquor",
+            "store",
+            "shop",
+            "beer",
+            "wine",
+            "vodka"
+        ],
+        "icon": "alcohol-shop"
+    },
+    {
+        "name": "Logging",
+        "tags": [
+            "logger",
+            "chainsaw",
+            "woods",
+            "industry"
+        ],
+        "icon": "logging"
+    },
+    {
+        "name": "Oil well",
+        "tags": [
+            "oil",
+            "natural",
+            "environment",
+            "industry",
+            "resources"
+        ],
+        "icon": "oil-well"
+    },
+    {
+        "name": "Slaughterhouse",
+        "tags": [
+            "cows",
+            "cattle",
+            "food",
+            "meat",
+            "industry",
+            "resources"
+        ],
+        "icon": "slaughterhouse"
+    },
+    {
+        "name": "Dam",
+        "tags": [
+            "water",
+            "natural",
+            "hydro",
+            "hydroelectric",
+            "energy",
+            "environment",
+            "industry",
+            "resources"
+        ],
+        "icon": "dam"
+    },
+    {
+    "name": "Water",
+    "tags": [
+        "water",
+        "natural",
+        "hydro",
+        "lake",
+        "river",
+        "ocean",
+        "resources"
+    ],
+    "icon": "water"
+    },
+    {
+    "name": "Wetland",
+    "tags": [
+        "water",
+        "swamp",
+        "natural"
+    ],
+    "icon": "wetland"
+    },
+    {
+    "name": "Disability",
+    "tags": [
+        "handicap",
+        "wheelchair",
+        "access"
+    ],
+    "icon": "disability"
+    },
+    {
+    "name": "Telephone",
+    "tags": [
+        "payphone",
+        "call"
+    ],
+    "icon": "telephone"
+    },
+    {
+    "name": "Emergency Telephone",
+    "tags": [
+        "payphone",
+        "danger",
+        "safety",
+        "call"
+    ],
+    "icon": "emergency-telephone"
+    },
+    {
+    "name": "Toilets",
+    "tags": [
+        "bathroom",
+        "men",
+        "women",
+        "sink",
+        "washroom",
+        "lavatory"
+    ],
+    "icon": "toilets"
+    },
+    {
+    "name": "Waste Basket",
+    "tags": [
+        "trash",
+        "rubbish",
+        "bin",
+        "garbage"
+    ],
+    "icon": "waste-basket"
+    },
+    {
+    "name": "Music",
+    "tags": [
+        "stage",
+        "performance",
+        "band",
+        "concert",
+        "venue"
+    ],
+    "icon": "music"
+    },
+    {
+    "name": "Land Use",
+    "tags": [
+        "zoning",
+        "usage",
+        "area"
+    ],
+    "icon": "land-use"
+    },
+    {
+    "name": "City",
+    "tags": [
+        "area",
+        "point",
+        "place",
+        "urban"
+    ],
+    "icon": "city"
+    },
+    {
+    "name": "Town",
+    "tags": [
+        "area",
+        "point",
+        "place",
+        "small"
+    ],
+    "icon": "town"
+    },
+    {
+    "name": "Village",
+    "tags": [
+        "area",
+        "point",
+        "place",
+        "small",
+        "rural"
+    ],
+    "icon": "village"
+    },
+    {
+    "name": "Farm",
+    "tags": [
+        "building",
+        "farming",
+        "crops",
+        "plants",
+        "agriculture",
+        "rural"
+    ],
+    "icon": "farm"
+    },
+    {
+    "name": "Bakery",
+    "tags": [
+        "bakery",
+        "pastry",
+        "croissant",
+        "food",
+        "shop",
+        "bread"
+    ],
+    "icon": "bakery"
+    },
+	{
+    "name": "Dog Park",
+    "tags": [
+        "dog",
+        "pet"
+    ],
+    "icon": "dog-park"
+    },
+   {
+    "name": "Lighthouse",
+    "tags": [
+        "building",
+        "navigation",
+        "nautical",
+        "ocean",
+        "logistics"
+    ],
+    "icon": "lighthouse"
+    },
+    {
+    "name": "Clothing Store",
+    "tags": [
+        "clothing",
+        "store",
+        "shop"
+    ],
+    "icon": "clothing-store"
+    },
+    {
+    "name": "Polling Place",
+    "tags": [
+        "poll",
+        "polling",
+        "vote"
+    ],
+    "icon": "polling-place"
+    },
+    {
+    "name": "Playground",
+    "tags": [
+        "playground",
+        "play",
+        "park",
+        "children"
+    ],
+    "icon": "playground"
+    },
+    {
+    "name": "Entrance",
+    "tags": [
+        "entrance",
+        "enter",
+        "subway",
+        "rail"
+    ],
+    "icon": "entrance"
+    },
+    {
+    "name": "Heart",
+    "tags": [
+        "heart",
+        "love",
+        "shape",
+        "shapes",
+        "wedding"
+    ],
+    "icon": "heart"
+    },
+    {
+    "name": "London Underground",
+    "tags": [
+        "deprecated"
+    ],
+    "icon": "london-underground"
+    },
+    {
+    "name": "Minefield",
+    "tags": [
+        "deprecated"
+    ],
+    "icon": "minefield"
+    },
+    {
+    "name": "Rail Underground",
+    "tags": [
+        "deprecated"
+    ],
+    "icon": "rail-underground"
+    },
+    {
+    "name": "Rail Above",
+    "tags": [
+        "deprecated"
+    ],
+    "icon": "rail-above"
+    },
+    {
+     "name": "Camera",
+     "tags": [
+         "camera",
+         "photo",
+         "commercial",
+         "shop"
+     ],
+     "icon": "camera"
+    },
+    {
+    "name": "Laundry",
+    "tags": [
+        "laundry",
+        "washing machine",
+        "dry_cleaning",
+        "commercial",
+        "store"
+    ],
+    "icon": "laundry"
+    },
+    {
+        "name": "Car",
+        "tags": [
+            "car",
+            "auto",
+            "vehicle",
+            "transportation"
+        ],
+        "icon": "car"
+    },
+    {
+    "name": "Suitcase",
+    "tags": [
+      "suitcase",
+      "travel",
+      "travel agency",
+      "commercial",
+      "store"
+    ],
+    "icon": "suitcase"
+    },
+    {
+    "name": "Hairdresser",
+    "tags": [
+      "scissors",
+      "barber shop",
+      "barber",
+      "stylist",
+      "hair",
+      "cut",
+      "salon"
+    ],
+    "icon": "hairdresser"
+    },
+    {
+    "name": "Chemist",
+    "tags": [
+      "shop",
+      "science",
+      "chemistry",
+      "experiment",
+      "research",
+      "pharmacy"
+    ],
+    "icon": "chemist"
+    },
+    {
+    "name": "Mobile phone",
+    "tags": [
+      "phone",
+      "cellphone",
+      "communication",
+      "mobile"
+    ],
+    "icon": "mobilephone"
+    },
+    {
+    "name": "Scooter",
+    "tags": [
+      "bike",
+      "transportation",
+      "vehicle",
+      "route",
+      "moped",
+      "motorcycle"
+    ],
+    "icon": "scooter"
+    },
+    {
+    "name": "Gift",
+    "tags": [
+      "gift",
+      "shop",
+      "commercial",
+      "store"
+    ],
+    "icon": "gift"
+    },
+    {
+    "name": "Ice cream",
+    "tags": [
+      "ice",
+      "sweets",
+      "food",
+      "shop"
+    ],
+    "icon": "ice-cream"
+    },
+    {
+    "name": "Dentist",
+    "tags": [
+      "dentist",
+      "tooth",
+      "health",
+      "medication",
+      "social",
+      "medicine",
+      "medical"
+    ],
+    "icon": "dentist"
+    }
+]
 
 },{}],2:[function(require,module,exports){
+
+},{}],3:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -362,9 +1597,9 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":12}],3:[function(require,module,exports){
-module.exports=require(1)
-},{}],4:[function(require,module,exports){
+},{"util/":13}],4:[function(require,module,exports){
+module.exports=require(2)
+},{}],5:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -1418,7 +2653,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":5,"ieee754":6,"is-array":7}],5:[function(require,module,exports){
+},{"base64-js":6,"ieee754":7,"is-array":8}],6:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -1540,7 +2775,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -1626,7 +2861,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 
 /**
  * isArray
@@ -1661,7 +2896,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1686,7 +2921,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -1914,7 +3149,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require("FWaASH"))
-},{"FWaASH":10}],10:[function(require,module,exports){
+},{"FWaASH":11}],11:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1979,14 +3214,14 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2576,7 +3811,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":11,"FWaASH":10,"inherits":8}],13:[function(require,module,exports){
+},{"./support/isBuffer":12,"FWaASH":11,"inherits":9}],14:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -2708,7 +3943,7 @@ clone.clonePrototype = function(parent) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":4}],14:[function(require,module,exports){
+},{"buffer":5}],15:[function(require,module,exports){
 var dsv = require('dsv'),
     sexagesimal = require('sexagesimal');
 
@@ -2895,12 +4130,12 @@ module.exports = {
     toPolygon: toPolygon
 };
 
-},{"dsv":15,"sexagesimal":16}],15:[function(require,module,exports){
+},{"dsv":16,"sexagesimal":17}],16:[function(require,module,exports){
 var fs = require("fs");
 
 module.exports = new Function("dsv.version = \"0.0.3\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.substring(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.substring(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.substring(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && !(a = f(a, n++))) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{"fs":1}],16:[function(require,module,exports){
+},{"fs":2}],17:[function(require,module,exports){
 module.exports = function(x, dims) {
     if (!dims) dims = 'NSEW';
     if (typeof x !== 'string') return null;
@@ -2914,7 +4149,7 @@ module.exports = function(x, dims) {
         ((m[4] && m[4] === 'S' || m[4] === 'W') ? -1 : 1);
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -3105,7 +4340,7 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /* FileSaver.js
  *  A saveAs() FileSaver implementation.
  *  2014-05-27
@@ -3348,7 +4583,7 @@ if (typeof module !== "undefined" && module !== null) {
   });
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var geojsonCoords = require('geojson-coords'),
     traverse = require('traverse'),
     extent = require('extent');
@@ -3378,7 +4613,7 @@ function getExtent(_) {
     return ext;
 }
 
-},{"extent":20,"geojson-coords":22,"traverse":24}],20:[function(require,module,exports){
+},{"extent":21,"geojson-coords":23,"traverse":25}],21:[function(require,module,exports){
 module.exports = Extent;
 
 function Extent() {
@@ -3441,7 +4676,7 @@ Extent.prototype.polygon = function() {
     };
 };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 module.exports = function flatten(list, depth) {
     return _flatten(list);
 
@@ -3461,7 +4696,7 @@ module.exports = function flatten(list, depth) {
     }
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var geojsonNormalize = require('geojson-normalize'),
     geojsonFlatten = require('geojson-flatten'),
     flatten = require('./flatten');
@@ -3477,7 +4712,7 @@ module.exports = function(_) {
     return coordinates;
 };
 
-},{"./flatten":21,"geojson-flatten":25,"geojson-normalize":23}],23:[function(require,module,exports){
+},{"./flatten":22,"geojson-flatten":26,"geojson-normalize":24}],24:[function(require,module,exports){
 module.exports = normalize;
 
 var types = {
@@ -3522,7 +4757,7 @@ function normalize(gj) {
     }
 }
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -3838,7 +5073,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = flatten;
 
 function flatten(gj, up) {
@@ -3879,7 +5114,7 @@ function flatten(gj, up) {
     }
 }
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 module.exports = function(count, type) {
     switch (type) {
         case 'point':
@@ -3898,7 +5133,7 @@ function feature(geom) {
 }
 function collection(f) { return { type: 'FeatureCollection', features: f }; }
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var dsv = require('dsv');
 
 module.exports = function(_, delim) {
@@ -3925,9 +5160,9 @@ module.exports = function(_, delim) {
     }));
 };
 
-},{"dsv":28}],28:[function(require,module,exports){
-module.exports=require(15)
-},{"fs":1}],29:[function(require,module,exports){
+},{"dsv":29}],29:[function(require,module,exports){
+module.exports=require(16)
+},{"fs":2}],30:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -4246,7 +5481,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":30}],30:[function(require,module,exports){
+},{"jsonlint-lines":31}],31:[function(require,module,exports){
 (function (process){
 /* parser generated by jison 0.4.6 */
 /*
@@ -4903,7 +6138,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 }).call(this,require("FWaASH"))
-},{"FWaASH":10,"fs":1,"path":9}],31:[function(require,module,exports){
+},{"FWaASH":11,"fs":2,"path":10}],32:[function(require,module,exports){
 var request = require('browser-request'),
     token;
 
@@ -4999,7 +6234,7 @@ function page(postfix, callback) {
     });
 }
 
-},{"browser-request":32}],32:[function(require,module,exports){
+},{"browser-request":33}],33:[function(require,module,exports){
 // Browser Request
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -5495,7 +6730,7 @@ function b64_enc (data) {
 }));
 //UMD FOOTER END
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var queue = require('queue-async'),
     request = require('browser-request'),
     treeui = require('treeui'),
@@ -5630,9 +6865,9 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":34,"queue-async":35,"treeui":36}],34:[function(require,module,exports){
-module.exports=require(32)
-},{}],35:[function(require,module,exports){
+},{"browser-request":35,"queue-async":36,"treeui":37}],35:[function(require,module,exports){
+module.exports=require(33)
+},{}],36:[function(require,module,exports){
 (function() {
   var slice = [].slice;
 
@@ -5714,7 +6949,7 @@ module.exports=require(32)
   else this.queue = queue;
 })();
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = function(request) {
     var parent = ce('div', 'treeui'),
         onclick = function() { };
@@ -5813,7 +7048,7 @@ function ae(x, y, z) {
     return x.addEventListener(y, z);
 }
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var spherical = require('spherical'),
     geojsonArea = require('geojson-area');
 
@@ -5858,7 +7093,7 @@ module.exports.area = function(layer) {
     return geojsonArea(gj.geometry);
 };
 
-},{"geojson-area":38,"spherical":40}],38:[function(require,module,exports){
+},{"geojson-area":39,"spherical":41}],39:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports = function(_) {
@@ -5920,12 +7155,12 @@ function rad(_) {
     return _ * Math.PI / 180;
 }
 
-},{"wgs84":39}],39:[function(require,module,exports){
+},{"wgs84":40}],40:[function(require,module,exports){
 module.exports.RADIUS = 6378137;
 module.exports.FLATTENING = 1/298.257223563;
 module.exports.POLAR_RADIUS = 6356752.3142;
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports.heading = function(from, to) {
@@ -5979,9 +7214,9 @@ function deg(_) {
     return _ * (180 / Math.PI);
 }
 
-},{"wgs84":41}],41:[function(require,module,exports){
-module.exports=require(39)
-},{}],42:[function(require,module,exports){
+},{"wgs84":42}],42:[function(require,module,exports){
+module.exports=require(40)
+},{}],43:[function(require,module,exports){
 (function(window) {
 	var HAS_HASHCHANGE = (function() {
 		var doc_mode = window.documentMode;
@@ -6145,7 +7380,7 @@ module.exports=require(39)
 	};
 })(window);
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 (function (global){
 /**
  * marked - a markdown parser
@@ -7415,7 +8650,7 @@ if (typeof exports === 'object') {
 }());
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var _ = require("./lodash.custom.js");
 var rewind = require("geojson-rewind");
 
@@ -8011,7 +9246,7 @@ osmtogeojson.toGeojson = osmtogeojson;
 
 module.exports = osmtogeojson;
 
-},{"./lodash.custom.js":45,"./polygon_features.json":49,"geojson-rewind":46}],45:[function(require,module,exports){
+},{"./lodash.custom.js":46,"./polygon_features.json":50,"geojson-rewind":47}],46:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -9809,7 +11044,7 @@ module.exports = osmtogeojson;
 }.call(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 var geojsonArea = require('geojson-area');
 
 module.exports = rewind;
@@ -9860,7 +11095,7 @@ function cw(_) {
     return geojsonArea.ring(_) >= 0;
 }
 
-},{"geojson-area":47}],47:[function(require,module,exports){
+},{"geojson-area":48}],48:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports.geometry = geometry;
@@ -9926,9 +11161,9 @@ function rad(_) {
     return _ * Math.PI / 180;
 }
 
-},{"wgs84":48}],48:[function(require,module,exports){
-module.exports=require(39)
-},{}],49:[function(require,module,exports){
+},{"wgs84":49}],49:[function(require,module,exports){
+module.exports=require(40)
+},{}],50:[function(require,module,exports){
 module.exports={
     "building": true,
     "highway": {
@@ -10009,7 +11244,7 @@ module.exports={
     "area:highway": true,
     "craft": true
 }
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 module.exports = function (data) {
     var lines = data.split('\n'),
                 isNameLine = true,
@@ -10075,7 +11310,7 @@ module.exports = function (data) {
     return gj;
 };
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 /*
  * Given a querystring, return an object of that querystring's components.
  *
@@ -10108,14 +11343,14 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 module.exports.download = require('./src/download')
 module.exports.write = require('./src/write')
 module.exports.zip = require('./src/zip')
-},{"./src/download":97,"./src/write":105,"./src/zip":106}],53:[function(require,module,exports){
+},{"./src/download":98,"./src/write":106,"./src/zip":107}],54:[function(require,module,exports){
 module.exports.structure = require('./src/structure');
 
-},{"./src/structure":57}],54:[function(require,module,exports){
+},{"./src/structure":58}],55:[function(require,module,exports){
 var fieldSize = require('./fieldsize');
 
 var types = {
@@ -10159,7 +11394,7 @@ function bytesPer(fields) {
     return fields.reduce(function(memo, f) { return memo + f.size; }, 1);
 }
 
-},{"./fieldsize":55}],55:[function(require,module,exports){
+},{"./fieldsize":56}],56:[function(require,module,exports){
 module.exports = {
     // string
     C: 254,
@@ -10177,7 +11412,7 @@ module.exports = {
     B: 8,
 };
 
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 module.exports.lpad = function lpad(str, len, char) {
     while (str.length < len) { str = char + str; } return str;
 };
@@ -10193,7 +11428,7 @@ module.exports.writeField = function writeField(view, fieldLength, str, offset) 
     return offset;
 };
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var fieldSize = require('./fieldsize'),
     lib = require('./lib'),
     fields = require('./fields');
@@ -10290,7 +11525,7 @@ module.exports = function structure(data) {
     return view;
 };
 
-},{"./fields":54,"./fieldsize":55,"./lib":56}],58:[function(require,module,exports){
+},{"./fields":55,"./fieldsize":56,"./lib":57}],59:[function(require,module,exports){
 'use strict';
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -10362,7 +11597,7 @@ exports.decode = function(input, utf8) {
 
 };
 
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 'use strict';
 function CompressedObject() {
     this.compressedSize = 0;
@@ -10392,7 +11627,7 @@ CompressedObject.prototype = {
 };
 module.exports = CompressedObject;
 
-},{}],60:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 exports.STORE = {
     magic: "\x00\x00",
@@ -10407,7 +11642,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":65}],61:[function(require,module,exports){
+},{"./flate":66}],62:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -10511,7 +11746,7 @@ module.exports = function crc32(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":78}],62:[function(require,module,exports){
+},{"./utils":79}],63:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -10620,7 +11855,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"./utils":78}],63:[function(require,module,exports){
+},{"./utils":79}],64:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -10630,7 +11865,7 @@ exports.date = null;
 exports.compression = null;
 exports.comment = null;
 
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -10737,7 +11972,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./utils":78}],65:[function(require,module,exports){
+},{"./utils":79}],66:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -10753,7 +11988,7 @@ exports.uncompress =  function(input) {
     return pako.inflateRaw(input);
 };
 
-},{"pako":81}],66:[function(require,module,exports){
+},{"pako":82}],67:[function(require,module,exports){
 'use strict';
 
 var base64 = require('./base64');
@@ -10834,7 +12069,7 @@ JSZip.base64 = {
 JSZip.compressions = require('./compressions');
 module.exports = JSZip;
 
-},{"./base64":58,"./compressions":60,"./defaults":63,"./deprecatedPublicUtils":64,"./load":67,"./object":70,"./support":74}],67:[function(require,module,exports){
+},{"./base64":59,"./compressions":61,"./defaults":64,"./deprecatedPublicUtils":65,"./load":68,"./object":71,"./support":75}],68:[function(require,module,exports){
 'use strict';
 var base64 = require('./base64');
 var ZipEntries = require('./zipEntries');
@@ -10865,7 +12100,7 @@ module.exports = function(data, options) {
     return this;
 };
 
-},{"./base64":58,"./zipEntries":79}],68:[function(require,module,exports){
+},{"./base64":59,"./zipEntries":80}],69:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 module.exports = function(data, encoding){
@@ -10875,7 +12110,7 @@ module.exports.test = function(b){
     return Buffer.isBuffer(b);
 };
 }).call(this,require("buffer").Buffer)
-},{"buffer":4}],69:[function(require,module,exports){
+},{"buffer":5}],70:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./uint8ArrayReader');
 
@@ -10897,7 +12132,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"./uint8ArrayReader":75}],70:[function(require,module,exports){
+},{"./uint8ArrayReader":76}],71:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var utils = require('./utils');
@@ -11667,7 +12902,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./base64":58,"./compressedObject":59,"./compressions":60,"./crc32":61,"./defaults":63,"./nodeBuffer":68,"./signature":71,"./stringWriter":73,"./support":74,"./uint8ArrayWriter":76,"./utf8":77,"./utils":78}],71:[function(require,module,exports){
+},{"./base64":59,"./compressedObject":60,"./compressions":61,"./crc32":62,"./defaults":64,"./nodeBuffer":69,"./signature":72,"./stringWriter":74,"./support":75,"./uint8ArrayWriter":77,"./utf8":78,"./utils":79}],72:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -11676,7 +12911,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 var utils = require('./utils');
@@ -11714,7 +12949,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"./dataReader":62,"./utils":78}],73:[function(require,module,exports){
+},{"./dataReader":63,"./utils":79}],74:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -11746,7 +12981,7 @@ StringWriter.prototype = {
 
 module.exports = StringWriter;
 
-},{"./utils":78}],74:[function(require,module,exports){
+},{"./utils":79}],75:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 exports.base64 = true;
@@ -11784,7 +13019,7 @@ else {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":4}],75:[function(require,module,exports){
+},{"buffer":5}],76:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 
@@ -11833,7 +13068,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"./dataReader":62}],76:[function(require,module,exports){
+},{"./dataReader":63}],77:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -11871,7 +13106,7 @@ Uint8ArrayWriter.prototype = {
 
 module.exports = Uint8ArrayWriter;
 
-},{"./utils":78}],77:[function(require,module,exports){
+},{"./utils":79}],78:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -12080,7 +13315,7 @@ exports.utf8decode = function utf8decode(buf) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./nodeBuffer":68,"./support":74,"./utils":78}],78:[function(require,module,exports){
+},{"./nodeBuffer":69,"./support":75,"./utils":79}],79:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var compressions = require('./compressions');
@@ -12407,7 +13642,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./compressions":60,"./nodeBuffer":68,"./support":74}],79:[function(require,module,exports){
+},{"./compressions":61,"./nodeBuffer":69,"./support":75}],80:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var NodeBufferReader = require('./nodeBufferReader');
@@ -12612,7 +13847,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./nodeBufferReader":69,"./object":70,"./signature":71,"./stringReader":72,"./support":74,"./uint8ArrayReader":75,"./utils":78,"./zipEntry":80}],80:[function(require,module,exports){
+},{"./nodeBufferReader":70,"./object":71,"./signature":72,"./stringReader":73,"./support":75,"./uint8ArrayReader":76,"./utils":79,"./zipEntry":81}],81:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var utils = require('./utils');
@@ -12893,7 +14128,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":59,"./object":70,"./stringReader":72,"./utils":78}],81:[function(require,module,exports){
+},{"./compressedObject":60,"./object":71,"./stringReader":73,"./utils":79}],82:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -12908,7 +14143,7 @@ var pako = {};
 assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
-},{"./lib/deflate":82,"./lib/inflate":83,"./lib/utils/common":84,"./lib/zlib/constants":87}],82:[function(require,module,exports){
+},{"./lib/deflate":83,"./lib/inflate":84,"./lib/utils/common":85,"./lib/zlib/constants":88}],83:[function(require,module,exports){
 'use strict';
 
 
@@ -13270,7 +14505,7 @@ exports.Deflate = Deflate;
 exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
-},{"./utils/common":84,"./utils/strings":85,"./zlib/deflate.js":89,"./zlib/messages":94,"./zlib/zstream":96}],83:[function(require,module,exports){
+},{"./utils/common":85,"./utils/strings":86,"./zlib/deflate.js":90,"./zlib/messages":95,"./zlib/zstream":97}],84:[function(require,module,exports){
 'use strict';
 
 
@@ -13636,7 +14871,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":84,"./utils/strings":85,"./zlib/constants":87,"./zlib/gzheader":90,"./zlib/inflate.js":92,"./zlib/messages":94,"./zlib/zstream":96}],84:[function(require,module,exports){
+},{"./utils/common":85,"./utils/strings":86,"./zlib/constants":88,"./zlib/gzheader":91,"./zlib/inflate.js":93,"./zlib/messages":95,"./zlib/zstream":97}],85:[function(require,module,exports){
 'use strict';
 
 
@@ -13739,7 +14974,7 @@ exports.setTyped = function (on) {
 };
 
 exports.setTyped(TYPED_OK);
-},{}],85:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -13926,7 +15161,7 @@ exports.utf8border = function(buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":84}],86:[function(require,module,exports){
+},{"./common":85}],87:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -13959,7 +15194,7 @@ function adler32(adler, buf, len, pos) {
 
 
 module.exports = adler32;
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 module.exports = {
 
   /* Allowed flush values; see deflate() and inflate() below for details */
@@ -14007,7 +15242,7 @@ module.exports = {
   Z_DEFLATED:               8
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
-},{}],88:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -14049,7 +15284,7 @@ function crc32(crc, buf, len, pos) {
 
 
 module.exports = crc32;
-},{}],89:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -15815,7 +17050,7 @@ exports.deflatePending = deflatePending;
 exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
-},{"../utils/common":84,"./adler32":86,"./crc32":88,"./messages":94,"./trees":95}],90:[function(require,module,exports){
+},{"../utils/common":85,"./adler32":87,"./crc32":89,"./messages":95,"./trees":96}],91:[function(require,module,exports){
 'use strict';
 
 
@@ -15856,7 +17091,7 @@ function GZheader() {
 }
 
 module.exports = GZheader;
-},{}],91:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -16183,7 +17418,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],92:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 'use strict';
 
 
@@ -17687,7 +18922,7 @@ exports.inflateSync = inflateSync;
 exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
-},{"../utils/common":84,"./adler32":86,"./crc32":88,"./inffast":91,"./inftrees":93}],93:[function(require,module,exports){
+},{"../utils/common":85,"./adler32":87,"./crc32":89,"./inffast":92,"./inftrees":94}],94:[function(require,module,exports){
 'use strict';
 
 
@@ -18014,7 +19249,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":84}],94:[function(require,module,exports){
+},{"../utils/common":85}],95:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -18028,7 +19263,7 @@ module.exports = {
   '-5':   'buffer error',        /* Z_BUF_ERROR     (-5) */
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
-},{}],95:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 'use strict';
 
 
@@ -19228,7 +20463,7 @@ exports._tr_stored_block = _tr_stored_block;
 exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
-},{"../utils/common":84}],96:[function(require,module,exports){
+},{"../utils/common":85}],97:[function(require,module,exports){
 'use strict';
 
 
@@ -19258,7 +20493,7 @@ function ZStream() {
 }
 
 module.exports = ZStream;
-},{}],97:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 var zip = require('./zip');
 
 module.exports = function(gj) {
@@ -19266,7 +20501,7 @@ module.exports = function(gj) {
     location.href = 'data:application/zip;base64,' + content;
 };
 
-},{"./zip":106}],98:[function(require,module,exports){
+},{"./zip":107}],99:[function(require,module,exports){
 module.exports.enlarge = function enlargeExtent(extent, pt) {
     if (pt[0] < extent.xmin) extent.xmin = pt[0];
     if (pt[0] > extent.xmax) extent.xmax = pt[0];
@@ -19292,7 +20527,7 @@ module.exports.blank = function() {
     };
 };
 
-},{}],99:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 var types = require('./types').jstypes;
 
 module.exports.geojson = geojson;
@@ -19322,7 +20557,7 @@ function obj(_) {
     return o;
 }
 
-},{"./types":104}],100:[function(require,module,exports){
+},{"./types":105}],101:[function(require,module,exports){
 module.exports.point = justType('Point', 'POINT');
 module.exports.line = justType('LineString', 'POLYLINE');
 module.exports.polygon = justType('Polygon', 'POLYGON');
@@ -19356,7 +20591,7 @@ function isType(t) {
     return function(f) { return f.geometry.type === t; };
 }
 
-},{}],101:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(coordinates, extent, shpView, shxView) {
@@ -19403,7 +20638,7 @@ module.exports.shpLength = function(coordinates) {
     return coordinates.length * 28;
 };
 
-},{"./extent":98}],102:[function(require,module,exports){
+},{"./extent":99}],103:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
@@ -19483,10 +20718,10 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":98}],103:[function(require,module,exports){
+},{"./extent":99}],104:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 module.exports.geometries = {
     NULL: 0,
     POINT: 1,
@@ -19504,7 +20739,7 @@ module.exports.geometries = {
     MULTIPATCH: 31,
 };
 
-},{}],105:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 var types = require('./types'),
     dbf = require('dbf'),
     prj = require('./prj'),
@@ -19573,7 +20808,7 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":98,"./fields":99,"./points":101,"./poly":102,"./prj":103,"./types":104,"assert":2,"dbf":53}],106:[function(require,module,exports){
+},{"./extent":99,"./fields":100,"./points":102,"./poly":103,"./prj":104,"./types":105,"assert":3,"dbf":54}],107:[function(require,module,exports){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
@@ -19605,7 +20840,7 @@ module.exports = function(gj) {
     return zip.generate({compression:'STORE'});
 };
 
-},{"./geojson":100,"./prj":103,"./write":105,"jszip":66}],107:[function(require,module,exports){
+},{"./geojson":101,"./prj":104,"./write":106,"jszip":67}],108:[function(require,module,exports){
 (function (global){
 ;(function(win){
 	var store = {},
@@ -19773,7 +21008,7 @@ module.exports = function(gj) {
 })(this.window || global);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],108:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 (function (process){
 toGeoJSON = (function() {
     'use strict';
@@ -20012,7 +21247,7 @@ toGeoJSON = (function() {
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
 }).call(this,require("FWaASH"))
-},{"FWaASH":10,"xmldom":3}],109:[function(require,module,exports){
+},{"FWaASH":11,"xmldom":4}],110:[function(require,module,exports){
 module.exports = function tokml(geojson, options) {
 
     options = options || {
@@ -20218,7 +21453,7 @@ topojson.bind = require("./lib/topojson/bind");
 topojson.stitch = require("./lib/topojson/stitch");
 topojson.scale = require("./lib/topojson/scale");
 
-},{"./lib/topojson/bind":112,"./lib/topojson/clockwise":115,"./lib/topojson/filter":119,"./lib/topojson/prune":123,"./lib/topojson/scale":125,"./lib/topojson/simplify":126,"./lib/topojson/stitch":128,"./lib/topojson/topology":129,"./topojson":141}],112:[function(require,module,exports){
+},{"./lib/topojson/bind":113,"./lib/topojson/clockwise":116,"./lib/topojson/filter":120,"./lib/topojson/prune":124,"./lib/topojson/scale":126,"./lib/topojson/simplify":127,"./lib/topojson/stitch":129,"./lib/topojson/topology":130,"./topojson":142}],113:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -20248,7 +21483,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"BOmyIj","./type":140}],113:[function(require,module,exports){
+},{"../../":"BOmyIj","./type":141}],114:[function(require,module,exports){
 
 // Computes the bounding box of the specified hash of GeoJSON objects.
 module.exports = function(objects) {
@@ -20295,7 +21530,7 @@ module.exports = function(objects) {
   return [x0, y0, x1, y1];
 };
 
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -20335,7 +21570,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],115:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -20426,7 +21661,7 @@ function clockwisePolygonSystem(ringArea, reverse) {
 
 function noop() {}
 
-},{"../../":"BOmyIj","./coordinate-systems":117,"./type":140}],116:[function(require,module,exports){
+},{"../../":"BOmyIj","./coordinate-systems":118,"./type":141}],117:[function(require,module,exports){
 // Given a hash of GeoJSON objects and an id function, invokes the id function
 // to compute a new id for each object that is a feature. The function is passed
 // the feature and is expected to return the new feature id, or null if the
@@ -20456,13 +21691,13 @@ module.exports = function(objects, id) {
   return objects;
 };
 
-},{}],117:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":114,"./spherical":127}],118:[function(require,module,exports){
+},{"./cartesian":115,"./spherical":128}],119:[function(require,module,exports){
 // Given a TopoJSON topology in absolute (quantized) coordinates,
 // converts to fixed-point delta encoding.
 // This is a destructive operation that modifies the given topology!
@@ -20493,7 +21728,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{}],119:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -20622,7 +21857,7 @@ function preserveNone() {
   return false;
 }
 
-},{"../../":"BOmyIj","./clockwise":115,"./coordinate-systems":117,"./prune":123,"./type":140}],120:[function(require,module,exports){
+},{"../../":"BOmyIj","./clockwise":116,"./coordinate-systems":118,"./prune":124,"./type":141}],121:[function(require,module,exports){
 // Given a hash of GeoJSON objects, replaces Features with geometry objects.
 // This is a destructive operation that modifies the input objects!
 module.exports = function(objects) {
@@ -20741,7 +21976,7 @@ module.exports = function(objects) {
   return objects;
 };
 
-},{}],121:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(topology, Q0, Q1) {
@@ -20789,7 +22024,7 @@ module.exports = function(topology, Q0, Q1) {
   return topology;
 };
 
-},{"./quantize":124}],122:[function(require,module,exports){
+},{"./quantize":125}],123:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(objects, bbox, Q0, Q1) {
@@ -20848,7 +22083,7 @@ module.exports = function(objects, bbox, Q0, Q1) {
   return q.transform;
 };
 
-},{"./quantize":124}],123:[function(require,module,exports){
+},{"./quantize":125}],124:[function(require,module,exports){
 module.exports = function(topology, options) {
   var verbose = false,
       objects = topology.objects,
@@ -20905,7 +22140,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{}],124:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 module.exports = function(dx, dy, kx, ky) {
 
   function quantizePoint(coordinates) {
@@ -20949,7 +22184,7 @@ module.exports = function(dx, dy, kx, ky) {
   };
 };
 
-},{}],125:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(topology, options) {
@@ -21029,7 +22264,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":140}],126:[function(require,module,exports){
+},{"./type":141}],127:[function(require,module,exports){
 var topojson = require("../../"),
     systems = require("./coordinate-systems");
 
@@ -21138,7 +22373,7 @@ module.exports = function(topology, options) {
   return topology;
 };
 
-},{"../../":"BOmyIj","./coordinate-systems":117}],127:[function(require,module,exports){
+},{"../../":"BOmyIj","./coordinate-systems":118}],128:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -21219,7 +22454,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],128:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, transform) {
@@ -21402,7 +22637,7 @@ module.exports = function(objects, transform) {
   }
 };
 
-},{"./type":140}],129:[function(require,module,exports){
+},{"./type":141}],130:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch"),
     systems = require("./coordinate-systems"),
@@ -21515,7 +22750,7 @@ module.exports = function(objects, options) {
   return topology;
 };
 
-},{"./bounds":113,"./compute-id":116,"./coordinate-systems":117,"./delta":118,"./geomify":120,"./post-quantize":121,"./pre-quantize":122,"./stitch":128,"./topology/index":135,"./transform-properties":139,"./type":140}],130:[function(require,module,exports){
+},{"./bounds":114,"./compute-id":117,"./coordinate-systems":118,"./delta":119,"./geomify":121,"./post-quantize":122,"./pre-quantize":123,"./stitch":129,"./topology/index":136,"./transform-properties":140,"./type":141}],131:[function(require,module,exports){
 var join = require("./join");
 
 // Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
@@ -21577,7 +22812,7 @@ function reverse(array, start, end) {
   }
 }
 
-},{"./join":136}],131:[function(require,module,exports){
+},{"./join":137}],132:[function(require,module,exports){
 var join = require("./join"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -21763,7 +22998,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{"./hashmap":133,"./join":136,"./point-equal":137,"./point-hash":138}],132:[function(require,module,exports){
+},{"./hashmap":134,"./join":137,"./point-equal":138,"./point-hash":139}],133:[function(require,module,exports){
 // Extracts the lines and rings from the specified hash of geometry objects.
 //
 // Returns an object with three properties:
@@ -21830,7 +23065,7 @@ module.exports = function(objects) {
   };
 };
 
-},{}],133:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   if (arguments.length === 3) {
     keyType = valueType = Array;
@@ -21905,7 +23140,7 @@ module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   };
 };
 
-},{}],134:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 module.exports = function(size, hash, equal, type, empty) {
   if (arguments.length === 3) {
     type = Array;
@@ -21962,7 +23197,7 @@ module.exports = function(size, hash, equal, type, empty) {
   };
 };
 
-},{}],135:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 var hashmap = require("./hashmap"),
     extract = require("./extract"),
     cut = require("./cut"),
@@ -22032,7 +23267,7 @@ function equalArc(arcA, arcB) {
   return ia === ib && ja === jb;
 }
 
-},{"./cut":130,"./dedup":131,"./extract":132,"./hashmap":133}],136:[function(require,module,exports){
+},{"./cut":131,"./dedup":132,"./extract":133,"./hashmap":134}],137:[function(require,module,exports){
 var hashset = require("./hashset"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -22147,12 +23382,12 @@ module.exports = function(topology) {
   return junctionByPoint;
 };
 
-},{"./hashmap":133,"./hashset":134,"./point-equal":137,"./point-hash":138}],137:[function(require,module,exports){
+},{"./hashmap":134,"./hashset":135,"./point-equal":138,"./point-hash":139}],138:[function(require,module,exports){
 module.exports = function(pointA, pointB) {
   return pointA[0] === pointB[0] && pointA[1] === pointB[1];
 };
 
-},{}],138:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 // TODO if quantized, use simpler Int32 hashing?
 
 var buffer = new ArrayBuffer(16),
@@ -22167,7 +23402,7 @@ module.exports = function(point) {
   return hash & 0x7fffffff;
 };
 
-},{}],139:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 // Given a hash of GeoJSON objects, transforms any properties on features using
 // the specified transform function. The function is invoked for each existing
 // property on the current feature, being passed the new properties hash, the
@@ -22212,7 +23447,7 @@ module.exports = function(objects, propertyTransform) {
   return objects;
 };
 
-},{}],140:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -22306,7 +23541,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],141:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 !function() {
   var topojson = {
     version: "1.6.8",
@@ -22840,7 +24075,7 @@ var typeObjects = {
   else this.topojson = topojson;
 }();
 
-},{}],142:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -23091,7 +24326,7 @@ function stringify(gj) {
     }
 }
 
-},{}],143:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -23110,7 +24345,7 @@ function extend() {
     return target
 }
 
-},{}],144:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 module.exports = function(hostname) {
     // Settings for geojson.io
     L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w';
@@ -23133,7 +24368,7 @@ module.exports = function(hostname) {
         };
     }
 };
-},{}],145:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 var clone = require('clone'),
     xtend = require('xtend'),
     config = require('../config.js')(location.hostname),
@@ -23424,7 +24659,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../config.js":144,"../source/gist":161,"../source/github":162,"../source/local":163,"clone":13,"xtend":143}],146:[function(require,module,exports){
+},{"../config.js":145,"../source/gist":162,"../source/github":163,"../source/local":164,"clone":14,"xtend":144}],147:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -23509,7 +24744,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/zoomextent":156,"../ui/flash":167,"qs-hash":51}],147:[function(require,module,exports){
+},{"../lib/zoomextent":157,"../ui/flash":168,"qs-hash":52}],148:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -23553,7 +24788,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":144}],148:[function(require,module,exports){
+},{"../config.js":145}],149:[function(require,module,exports){
 var qs = require('qs-hash'),
     xtend = require('xtend');
 
@@ -23620,7 +24855,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"qs-hash":51,"xtend":143}],149:[function(require,module,exports){
+},{"qs-hash":52,"xtend":144}],150:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -23708,7 +24943,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":144}],150:[function(require,module,exports){
+},{"../config.js":145}],151:[function(require,module,exports){
 var qs = require('qs-hash');
 require('leaflet-hash');
 
@@ -23747,7 +24982,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"leaflet-hash":42,"qs-hash":51}],151:[function(require,module,exports){
+},{"leaflet-hash":43,"qs-hash":52}],152:[function(require,module,exports){
 var geojsonRandom = require('geojson-random'),
     geojsonExtent = require('geojson-extent'),
     geojsonFlatten = require('geojson-flatten');
@@ -23768,7 +25003,7 @@ module.exports.flatten = function(context) {
     context.data.set({ map: geojsonFlatten(context.data.get('map')) });
 };
 
-},{"geojson-extent":19,"geojson-flatten":25,"geojson-random":26}],152:[function(require,module,exports){
+},{"geojson-extent":20,"geojson-flatten":26,"geojson-random":27}],153:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -23832,7 +25067,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],153:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     csv2geojson = require('csv2geojson'),
@@ -24011,7 +25246,7 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":14,"osmtogeojson":44,"polytogeojson":50,"togeojson":108,"topojson":"BOmyIj"}],154:[function(require,module,exports){
+},{"csv2geojson":15,"osmtogeojson":45,"polytogeojson":51,"togeojson":109,"topojson":"BOmyIj"}],155:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -24023,7 +25258,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],155:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -24084,13 +25319,13 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":29}],156:[function(require,module,exports){
+},{"geojsonhint":30}],157:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],157:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -24120,7 +25355,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":145,"./core/loader":146,"./core/repo":147,"./core/router":148,"./core/user":149,"./ui":164,"./ui/map":169,"store":107}],158:[function(require,module,exports){
+},{"./core/data":146,"./core/loader":147,"./core/repo":148,"./core/router":149,"./core/user":150,"./ui":165,"./ui/map":170,"store":108}],159:[function(require,module,exports){
 (function (Buffer){
 var fs = require('fs');
 var marked = require('marked');
@@ -24144,7 +25379,7 @@ module.exports = function(context) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":4,"fs":1,"marked":43}],159:[function(require,module,exports){
+},{"buffer":5,"fs":2,"marked":44}],160:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
@@ -24207,7 +25442,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":155,"../lib/zoomextent":156,"../ui/saver.js":173}],160:[function(require,module,exports){
+},{"../lib/validate":156,"../lib/zoomextent":157,"../ui/saver.js":174}],161:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -24279,7 +25514,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":154,"d3-metatable":17}],161:[function(require,module,exports){
+},{"../lib/smartzoom.js":155,"d3-metatable":18}],162:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -24393,7 +25628,7 @@ function loadRaw(url, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"../config.js":144,"fs":1}],162:[function(require,module,exports){
+},{"../config.js":145,"fs":2}],163:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -24525,7 +25760,7 @@ function shaUrl(parts, sha) {
         '/git/blobs/' + sha;
 }
 
-},{"../config.js":144}],163:[function(require,module,exports){
+},{"../config.js":145}],164:[function(require,module,exports){
 try {
     var fs = require('fs');
 } catch(e) { }
@@ -24548,7 +25783,7 @@ function save(context, callback) {
     });
 }
 
-},{}],164:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -24633,7 +25868,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":165,"./ui/file_bar":166,"./ui/layer_switch":168,"./ui/mode_buttons":172,"./ui/user":175}],165:[function(require,module,exports){
+},{"./ui/dnd":166,"./ui/file_bar":167,"./ui/layer_switch":169,"./ui/mode_buttons":173,"./ui/user":176}],166:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -24677,7 +25912,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":153,"../lib/zoomextent":156,"./flash.js":167}],166:[function(require,module,exports){
+},{"../lib/readfile.js":154,"../lib/zoomextent":157,"./flash.js":168}],167:[function(require,module,exports){
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     geojson2dsv = require('geojson2dsv'),
@@ -25154,7 +26389,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../config.js":144,"../lib/meta.js":151,"../lib/readfile":153,"../lib/zoomextent":156,"../ui/saver.js":173,"./flash":167,"./modal.js":171,"./share":174,"clone":13,"filesaver.js":18,"geojson2dsv":27,"gist-map-browser":31,"github-file-browser":33,"shp-write":52,"tokml":109,"topojson":"BOmyIj","wellknown":142}],167:[function(require,module,exports){
+},{"../config.js":145,"../lib/meta.js":152,"../lib/readfile":154,"../lib/zoomextent":157,"../ui/saver.js":174,"./flash":168,"./modal.js":172,"./share":175,"clone":14,"filesaver.js":19,"geojson2dsv":28,"gist-map-browser":32,"github-file-browser":34,"shp-write":53,"tokml":110,"topojson":"BOmyIj","wellknown":143}],168:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -25176,7 +26411,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":170}],168:[function(require,module,exports){
+},{"./message":171}],169:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -25238,20 +26473,19 @@ module.exports = function(context) {
 };
 
 
-},{}],169:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('qs-hash'),
     LGeo = require('leaflet-geodesy'),
     writable = false,
     showStyle = true,
+    makiValues = require('../../data/maki.json'),
     maki = '';
 
-d3.json("data/maki.json", function(error, json) {
-    for (i = 0; i < json.length; i++) {
-        maki += '<option value="' + json[i].icon + '">';
-    }
-});
+for (i = 0; i < makiValues.length; i++) {
+    maki += '<option value="' + makiValues[i].icon + '">';
+}
 
 module.exports = function(context, readonly) {
 
@@ -25495,7 +26729,7 @@ function bindPopup(l) {
     });
 }
 
-},{"../lib/custom_hash.js":150,"../lib/popup":152,"leaflet-geodesy":37,"qs-hash":51}],170:[function(require,module,exports){
+},{"../../data/maki.json":1,"../lib/custom_hash.js":151,"../lib/popup":153,"leaflet-geodesy":38,"qs-hash":52}],171:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -25536,7 +26770,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],171:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -25604,7 +26838,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],172:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -25656,7 +26890,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":158,"../panel/json":159,"../panel/table":160}],173:[function(require,module,exports){
+},{"../panel/help":159,"../panel/json":160,"../panel/table":161}],174:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -25724,7 +26958,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":167}],174:[function(require,module,exports){
+},{"./flash":168}],175:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -25781,7 +27015,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":161,"./modal":171}],175:[function(require,module,exports){
+},{"../source/gist":162,"./modal":172}],176:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};
@@ -25832,4 +27066,4 @@ module.exports = function(context) {
     };
 };
 
-},{"../config.js":144}]},{},[157])
+},{"../config.js":145}]},{},[158])

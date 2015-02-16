@@ -4,13 +4,12 @@ var popup = require('../lib/popup'),
     LGeo = require('leaflet-geodesy'),
     writable = false,
     showStyle = true,
+    makiValues = require('../../data/maki.json'),
     maki = '';
 
-d3.json("data/maki.json", function(error, json) {
-    for (i = 0; i < json.length; i++) {
-        maki += '<option value="' + json[i].icon + '">';
-    }
-});
+for (i = 0; i < makiValues.length; i++) {
+    maki += '<option value="' + makiValues[i].icon + '">';
+}
 
 module.exports = function(context, readonly) {
 
