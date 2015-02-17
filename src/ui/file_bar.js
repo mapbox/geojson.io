@@ -69,6 +69,13 @@ module.exports = function fileBar(context) {
             action: function() {},
             children: [
                 {
+                    title: 'Zoom to features',
+                    alt: 'Zoom to the extent of all features',
+                    action: function() {
+                        meta.zoomextent(context);
+                    }
+                },
+                {
                     title: 'Clear',
                     alt: 'Delete all features from the map',
                     action: function() {
@@ -218,7 +225,7 @@ module.exports = function fileBar(context) {
                     .enter()
                     .append('a')
                     .attr('title', function(d) {
-                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist') return d.alt;
+                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist' || d.title == 'Zoom to features' || d.title == 'Clear' || d.title == 'Random: Points' || d.title == 'Add bboxes' || d.title == 'Flatten Multi Features') return d.alt;
                     })
                     .text(function(d) {
                         return d.title;
@@ -261,6 +268,7 @@ module.exports = function fileBar(context) {
                             '/git/blobs/' + last.sha, function(err, blob) {
                                 d.content = JSON.parse(atob(blob[0].content));
                                 context.data.parse(d);
+                                zoomextent(context);
                                 m.close();
                             });
                     }
@@ -343,6 +351,7 @@ module.exports = function fileBar(context) {
                 .open()
                 .onclick(function(d) {
                     context.data.parse(d);
+                    zoomextent(context);
                     m.close();
                 })
                 .appendTo(

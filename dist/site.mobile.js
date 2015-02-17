@@ -24985,7 +24985,12 @@ L.Hash.prototype.formatHash = function(map) {
 },{"leaflet-hash":43,"qs-hash":52}],152:[function(require,module,exports){
 var geojsonRandom = require('geojson-random'),
     geojsonExtent = require('geojson-extent'),
-    geojsonFlatten = require('geojson-flatten');
+    geojsonFlatten = require('geojson-flatten'),
+    zoomextent = require('../lib/zoomextent');
+
+module.exports.zoomextent = function(context) {
+    zoomextent(context);
+};
 
 module.exports.clear = function(context) {
     context.data.clear();
@@ -25003,7 +25008,7 @@ module.exports.flatten = function(context) {
     context.data.set({ map: geojsonFlatten(context.data.get('map')) });
 };
 
-},{"geojson-extent":20,"geojson-flatten":26,"geojson-random":27}],153:[function(require,module,exports){
+},{"../lib/zoomextent":157,"geojson-extent":20,"geojson-flatten":26,"geojson-random":27}],153:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -25361,7 +25366,7 @@ var fs = require('fs');
 var marked = require('marked');
 
 module.exports = function(context) {
-    var html = Buffer("PGgyPkhlbHA8L2gyPgoKPHA+TmV3IGhlcmU/IDxzdHJvbmc+Z2VvanNvbi5pbzwvc3Ryb25nPiBpcyBhIHF1aWNrLCBzaW1wbGUgdG9vbCBmb3IgY3JlYXRpbmcsCnZpZXdpbmcsIGFuZCBzaGFyaW5nIG1hcHMuIGdlb2pzb24uaW8gaXMgbmFtZWQgYWZ0ZXIgPGEgaHJlZj0naHR0cDovL2dlb2pzb24ub3JnLycgdGFyZ2V0PSdfYmxhbmsnPkdlb0pTT048L2E+LAphbiBvcGVuIHNvdXJjZSBkYXRhIGZvcm1hdCwgYW5kIGl0IHN1cHBvcnRzIEdlb0pTT04gaW4gYWxsIHdheXMgLSBidXQgYWxzbwphY2NlcHRzIEtNTCwgR1BYLCBDU1YsIFRvcG9KU09OLCBhbmQgb3RoZXIgZm9ybWF0cy48L3A+Cgo8cD5OZWVkIGV4dHJhIGhlbHAgb3Igc2VlIGEgYnVnPyA8YSB0YXJnZXQ9J19ibGFuaycgaHJlZj0naHR0cHM6Ly9naXRodWIuY29tL21hcGJveC9nZW9qc29uLmlvL2lzc3Vlcz9zdGF0ZT1vcGVuJz5PcGVuIGFuIGlzc3VlCiAgICBvbiBnZW9qc29uLmlvJ3MgaXNzdWUgdHJhY2tlci48L2E+Cgo8aDM+SSd2ZSBnb3QgZGF0YTwvaDM+Cgo8cD5JZiB5b3UgaGF2ZSBkYXRhLCBsaWtlIGEgS01MLCBHZW9KU09OLCBvciBDU1YgZmlsZSwganVzdCBkcmFnICZhbXA7IGRyb3AKaXQgb250byB0aGUgcGFnZSBvciBjbGljayAnT3BlbicgYW5kICdJbXBvcnQnIC0geW91ciBkYXRhIHNob3VsZCBhcHBlYXIgb24KdGhlIG1hcCE8L3A+Cgo8aDM+SSB3YW50IHRvIGRyYXcgZmVhdHVyZXM8L2gzPgoKPHA+Q2xpY2sgdGhlIGRyYXdpbmcgdG9vbHMgb24gdGhlIGxlZnQtaGFuZCBzaWRlIHRvIGRyYXcgcG9pbnRzLCBwb2x5Z29ucywKbGluZXMgYW5kIHJlY3RhbmdsZXMuIEFmdGVyIHlvdSdyZSBkb25lIGRyYXdpbmcgdGhlIHNoYXBlcywgeW91IGNhbiBhZGQKaW5mb3JtYXRpb24gdG8gZWFjaCBmZWF0dXJlIGJ5IGNsaWNraW5nIG9uIGl0LCBlZGl0aW5nIHRoZSBmZWF0dXJlJ3MgcHJvcGVydGllcywKYW5kIGNsaWNraW5nICdTYXZlJy48L3A+Cgo8cD5Qcm9wZXJ0aWVzIGluIEdlb0pTT04gYXJlIHN0b3JlZCBhcyAna2V5IHZhbHVlIHBhaXJzJyAtIHNvLCBmb3IgaW5zdGFuY2UsCmlmIHlvdSB3YW50ZWQgdG8gYWRkIGEgbmFtZSB0byBlYWNoIGZlYXR1cmUsIHR5cGUgJ25hbWUnIGluIHRoZSBmaXJzdCB0YWJsZQpmaWVsZCwgYW5kIHRoZSBuYW1lIG9mIHRoZSBmZWF0dXJlIGluIHRoZSBzZWNvbmQuPC9wPgoKPGgzPkkgd2FudCB0byB1c2UgbXkgbWFwIGV2ZXJ5d2hlcmU8L2gzPgoKPHA+WW91IGNhbiBzaGFyZSBtYXBzIGluIHF1aXRlIGEgZmV3IHdheXMhIElmIHlvdSBzYXZlIHlvdXIgbWFwIGhlcmUsIHRoZSBVUkwKb2YgdGhpcyBwYWdlIHdpbGwgdXBkYXRlIGFuZCB5b3UgY2FuIGxpbmsgc2VuZCBmcmllbmRzIHRoZSBsaW5rIHRvIHNoYXJlCnRoZSBtYXAsIG9yIHlvdSBjYW4gY2xpY2sgJ0Rvd25sb2FkJyB0byBncmFiIHRoZSByYXcgR2VvSlNPTiBkYXRhIGFuZCB1c2UKaXQgaW4gb3RoZXIgc29mdHdhcmUsIGxpa2UgVGlsZU1pbGwgb3IgTGVhZmxldC48L3A+Cgo8aDM+SSdtIGEgY29kZXI8L2gzPgoKPHA+PGEgaHJlZj0nI2dlb2pzb24taW8tYXBpJz5nZW9qc29uLmlvIGhhcyBhbiBhcnJheSBvZiBjbGkgdG9vbHM8L2E+CnRoYXQgbWFrZSBpdCBlYXN5IHRvIGdvIGZyb20gYSBHZW9KU09OIGZpbGUgb24geW91ciBjb21wdXRlciB0byBnZW9qc29uLmlvLgoKPGgzPlByb3RpcHM/PC9oMz4KCjx1bD4KICAgIDxsaT48c3Ryb25nPmNtZCtzPC9zdHJvbmc+OiBzYXZlIG1hcCB0byBnaXRodWIgZ2lzdHMKICAgIDxsaT48c3Ryb25nPmNtZCthPC9zdHJvbmc+OiBkb3dubG9hZCBtYXAgYXMgZ2VvanNvbgogICAgPGxpPjxzdHJvbmc+YXJyb3cga2V5czwvc3Ryb25nPjogbmF2aWdhdGUgdGhlIG1hcAo8L3VsPgoKPGgzPlByaXZhY3kgJmFtcDsgTGljZW5zZSBJc3N1ZXM8L2gzPgoKPHVsPgogICAgPGxpPjxzdHJvbmc+Q2xpY2tpbmcgc2F2ZTwvc3Ryb25nPiBieSBkZWZhdWx0IHNhdmVzIHRvIGEgcHJpdmF0ZQogICAgR2l0SHViIEdpc3QgLSBzbyBpdCB3aWxsIG9ubHkgYmUgYWNjZXNzaWJsZSB0byBwZW9wbGUgeW91IHNoYXJlIHRoZSBVUkwKICAgIHdpdGgsIGFuZCBjcmVhdGluZyBpdCB3b24ndCBhcHBlYXIgaW4geW91ciBHaXRIdWIgdGltZWxpbmUuCiAgICA8bGk+PHN0cm9uZz5UaGUgZGF0YSB5b3UgY3JlYXRlIGFuZCBtb2RpZnkgaW4gZ2VvanNvbi5pbzwvc3Ryb25nPiBkb2Vzbid0CiAgICBhY3F1aXJlIGFueSBhZGRpdGlvbmFsIGxpY2Vuc2U6IGlmIGl0J3Mgc2VjcmV0IGFuZCBjb3B5cmlnaHRlZCwgaXQgd2lsbCByZW1haW4KICAgIHRoYXQgd2F5IC0gaXQgZG9lc24ndCBoYXZlIHRvIGJlIHB1YmxpYyBvciBvcGVuIHNvdXJjZS4KPC91bD4K","base64") +
+    var html = Buffer("PGgyPkhlbHA8L2gyPgoKPHA+TmV3IGhlcmU/IDxzdHJvbmc+Z2VvanNvbi5pbzwvc3Ryb25nPiBpcyBhIHF1aWNrLCBzaW1wbGUgdG9vbCBmb3IgY3JlYXRpbmcsCnZpZXdpbmcsIGFuZCBzaGFyaW5nIG1hcHMuIGdlb2pzb24uaW8gaXMgbmFtZWQgYWZ0ZXIgPGEgaHJlZj0naHR0cDovL2dlb2pzb24ub3JnLycgdGFyZ2V0PSdfYmxhbmsnPkdlb0pTT048L2E+LAphbiBvcGVuIHNvdXJjZSBkYXRhIGZvcm1hdCwgYW5kIGl0IHN1cHBvcnRzIEdlb0pTT04gaW4gYWxsIHdheXMgLSBidXQgYWxzbwphY2NlcHRzIEtNTCwgR1BYLCBDU1YsIFRvcG9KU09OLCBhbmQgb3RoZXIgZm9ybWF0cy48L3A+Cgo8cD5OZWVkIGV4dHJhIGhlbHAgb3Igc2VlIGEgYnVnPyA8YSB0YXJnZXQ9J19ibGFuaycgaHJlZj0naHR0cHM6Ly9naXRodWIuY29tL21hcGJveC9nZW9qc29uLmlvL2lzc3Vlcz9zdGF0ZT1vcGVuJz5PcGVuIGFuIGlzc3VlCiAgICBvbiBnZW9qc29uLmlvJ3MgaXNzdWUgdHJhY2tlci48L2E+Cgo8aDM+SSd2ZSBnb3QgZGF0YTwvaDM+Cgo8cD5JZiB5b3UgaGF2ZSBkYXRhLCBsaWtlIGEgS01MLCBHZW9KU09OLCBvciBDU1YgZmlsZSwganVzdCBkcmFnICZhbXA7IGRyb3AKaXQgb250byB0aGUgcGFnZSBvciBjbGljayAnT3BlbicgYW5kICdGaWxlJyAtIHlvdXIgZGF0YSBzaG91bGQgYXBwZWFyIG9uCnRoZSBtYXAhPC9wPgoKPGgzPkkgd2FudCB0byBkcmF3IGZlYXR1cmVzPC9oMz4KCjxwPkNsaWNrIHRoZSBkcmF3aW5nIHRvb2xzIG9uIHRoZSBsZWZ0LWhhbmQgc2lkZSB0byBkcmF3IHBvaW50cywgcG9seWdvbnMsCmxpbmVzIGFuZCByZWN0YW5nbGVzLiBBZnRlciB5b3UncmUgZG9uZSBkcmF3aW5nIHRoZSBzaGFwZXMsIHlvdSBjYW4gYWRkCmluZm9ybWF0aW9uIHRvIGVhY2ggZmVhdHVyZSBieSBjbGlja2luZyBvbiBpdCwgZWRpdGluZyB0aGUgZmVhdHVyZSdzIHByb3BlcnRpZXMsCmFuZCBjbGlja2luZyAnU2F2ZScuPC9wPgoKPHA+UHJvcGVydGllcyBpbiBHZW9KU09OIGFyZSBzdG9yZWQgYXMgJ2tleSB2YWx1ZSBwYWlycycgLSBzbywgZm9yIGluc3RhbmNlLAppZiB5b3Ugd2FudGVkIHRvIGFkZCBhIG5hbWUgdG8gZWFjaCBmZWF0dXJlLCB0eXBlICduYW1lJyBpbiB0aGUgZmlyc3QgdGFibGUKZmllbGQsIGFuZCB0aGUgbmFtZSBvZiB0aGUgZmVhdHVyZSBpbiB0aGUgc2Vjb25kLjwvcD4KCjxoMz5JIHdhbnQgdG8gdXNlIG15IG1hcCBldmVyeXdoZXJlPC9oMz4KCjxwPllvdSBjYW4gc2hhcmUgbWFwcyBpbiBxdWl0ZSBhIGZldyB3YXlzISBJZiB5b3Ugc2F2ZSB5b3VyIG1hcCBoZXJlLCB0aGUgVVJMCm9mIHRoaXMgcGFnZSB3aWxsIHVwZGF0ZSBhbmQgeW91IGNhbiBsaW5rIHNlbmQgZnJpZW5kcyB0aGUgbGluayB0byBzaGFyZQp0aGUgbWFwLCBvciB5b3UgY2FuIGNsaWNrICdEb3dubG9hZCcgdG8gZ3JhYiB0aGUgcmF3IEdlb0pTT04gZGF0YSBhbmQgdXNlCml0IGluIG90aGVyIHNvZnR3YXJlLCBsaWtlIFRpbGVNaWxsIG9yIExlYWZsZXQuPC9wPgoKPGgzPkknbSBhIGNvZGVyPC9oMz4KCjxwPjxhIGhyZWY9JyNnZW9qc29uLWlvLWFwaSc+Z2VvanNvbi5pbyBoYXMgYW4gYXJyYXkgb2YgY2xpIHRvb2xzPC9hPgp0aGF0IG1ha2UgaXQgZWFzeSB0byBnbyBmcm9tIGEgR2VvSlNPTiBmaWxlIG9uIHlvdXIgY29tcHV0ZXIgdG8gZ2VvanNvbi5pby4KCjxoMz5Qcm90aXBzPzwvaDM+Cgo8dWw+CiAgICA8bGk+PHN0cm9uZz5jbWQrczwvc3Ryb25nPjogc2F2ZSBtYXAgdG8gZ2l0aHViIGdpc3RzCiAgICA8bGk+PHN0cm9uZz5jbWQrYTwvc3Ryb25nPjogZG93bmxvYWQgbWFwIGFzIGdlb2pzb24KICAgIDxsaT48c3Ryb25nPmFycm93IGtleXM8L3N0cm9uZz46IG5hdmlnYXRlIHRoZSBtYXAKPC91bD4KCjxoMz5Qcml2YWN5ICZhbXA7IExpY2Vuc2UgSXNzdWVzPC9oMz4KCjx1bD4KICAgIDxsaT48c3Ryb25nPkNsaWNraW5nIHNhdmU8L3N0cm9uZz4gYnkgZGVmYXVsdCBzYXZlcyB0byBhIHByaXZhdGUKICAgIEdpdEh1YiBHaXN0IC0gc28gaXQgd2lsbCBvbmx5IGJlIGFjY2Vzc2libGUgdG8gcGVvcGxlIHlvdSBzaGFyZSB0aGUgVVJMCiAgICB3aXRoLCBhbmQgY3JlYXRpbmcgaXQgd29uJ3QgYXBwZWFyIGluIHlvdXIgR2l0SHViIHRpbWVsaW5lLgogICAgPGxpPjxzdHJvbmc+VGhlIGRhdGEgeW91IGNyZWF0ZSBhbmQgbW9kaWZ5IGluIGdlb2pzb24uaW88L3N0cm9uZz4gZG9lc24ndAogICAgYWNxdWlyZSBhbnkgYWRkaXRpb25hbCBsaWNlbnNlOiBpZiBpdCdzIHNlY3JldCBhbmQgY29weXJpZ2h0ZWQsIGl0IHdpbGwgcmVtYWluCiAgICB0aGF0IHdheSAtIGl0IGRvZXNuJ3QgaGF2ZSB0byBiZSBwdWJsaWMgb3Igb3BlbiBzb3VyY2UuCjwvdWw+Cg==","base64") +
         '<br><hr><br>' +
         marked("## Geojson.io API\nYou can interact with geojson.io programmatically in two ways:\n\n* [URL parameters](#url-api)\n* [Browser console](#console-api)\n\n## URL API\nYou can do a few interesting things with just URLs and geojson.io. Here are the\ncurrent URL formats.\n\n### `map`\n\nOpen the map at a specific location. The argument is numbers separated by `/`\nin the form `zoom/latitude/longitude`.\n\n#### Example:\n\nhttp://geojson.io/#map=2/20.0/0.0\n\n\n### `data=data:application/json,`\n\nOpen the map and load a chunk of [GeoJSON](http://geojson.org/) data from a\nURL segment directly onto the map. The GeoJSON data should be encoded\nas per `encodeURIComponent(JSON.stringify(geojson_data))`.\n\n#### Example:\n\nhttp://geojson.io/#data=data:application/json,%7B%22type%22%3A%22LineString%22%2C%22coordinates%22%3A%5B%5B0%2C0%5D%2C%5B10%2C10%5D%5D%7D\n\n\n### `data=data:text/x-url,`\n\nLoad GeoJSON data from a URL on the internet onto the map. The URL must\nrefer directly to a resource that is:\n\n* Freely accessible (not behind a password)\n* Supports [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)\n* Is valid GeoJSON\n\nThe URL should be encoded as per `encodeURIComponent(url)`.\n\n#### Example:\n\nhttp://geojson.io/#data=data:text/x-url,http%3A%2F%2Fapi.tiles.mapbox.com%2Fv3%2Ftmcw.map-gdv4cswo%2Fmarkers.geojson\n\n\n### `id=gist:`\n\nLoad GeoJSON data from a [GitHub Gist](https://gist.github.com/), given an argument\nin the form of `login/gistid`. The Gist can be public or private, and must\ncontain a file with a `.geojson` extension that is valid GeoJSON.\n\n#### Example:\n\nhttp://geojson.io/#id=gist:tmcw/e9a29ad54dbaa83dee08&map=8/39.198/-76.981\n\n\n### `id=github:`\n\nLoad a file from a GitHub repository. You must have access to the file, and\nit must be valid GeoJSON. \n\nThe url is in the form:\n\n    login/repository/blob/branch/filepath\n\n#### Example:\n\nhttp://geojson.io/#id=github:tmcw/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302\n\n## Console API\n\n[Pop open your browser console](http://debugbrowser.com/) and see the beautiful\nexamples: geojson.io has started to expose a subset of its inner workings for\nyou to mess around with:\n\n\n### `window.api.map`\n\nThe [Leaflet](http://leafletjs.com/) map that you see and use on the site. See\nthe [Leaflet API](http://leafletjs.com/reference.html) for all the things you\ncan do with it.\n\nFor instance, you could add another map layer:\n\n```js\nwindow.api.map.addLayer(L.tileLayer('http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg'))\n```\n\n### `window.api.data`\n\nThe data model. See the [code to get an idea of how it works](https://github.com/mapbox/geojson.io/blob/gh-pages/src/core/data.js#L48-L90) -\nyou'll want to use stuff like `data.set({ map: { .. your geojson map information .. })`\nand `data.get('map')` and `data.mergeFeatures([arrayoffeatures])` to do your\ndirty business.\n");
     function render(selection) {
@@ -25984,6 +25989,13 @@ module.exports = function fileBar(context) {
             action: function() {},
             children: [
                 {
+                    title: 'Zoom to features',
+                    alt: 'Zoom to the extent of all features',
+                    action: function() {
+                        meta.zoomextent(context);
+                    }
+                },
+                {
                     title: 'Clear',
                     alt: 'Delete all features from the map',
                     action: function() {
@@ -26133,7 +26145,7 @@ module.exports = function fileBar(context) {
                     .enter()
                     .append('a')
                     .attr('title', function(d) {
-                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist') return d.alt;
+                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist' || d.title == 'Zoom to features' || d.title == 'Clear' || d.title == 'Random: Points' || d.title == 'Add bboxes' || d.title == 'Flatten Multi Features') return d.alt;
                     })
                     .text(function(d) {
                         return d.title;
@@ -26176,6 +26188,7 @@ module.exports = function fileBar(context) {
                             '/git/blobs/' + last.sha, function(err, blob) {
                                 d.content = JSON.parse(atob(blob[0].content));
                                 context.data.parse(d);
+                                zoomextent(context);
                                 m.close();
                             });
                     }
@@ -26258,6 +26271,7 @@ module.exports = function fileBar(context) {
                 .open()
                 .onclick(function(d) {
                     context.data.parse(d);
+                    zoomextent(context);
                     m.close();
                 })
                 .appendTo(

@@ -1,6 +1,11 @@
 var geojsonRandom = require('geojson-random'),
     geojsonExtent = require('geojson-extent'),
-    geojsonFlatten = require('geojson-flatten');
+    geojsonFlatten = require('geojson-flatten'),
+    zoomextent = require('../lib/zoomextent');
+
+module.exports.zoomextent = function(context) {
+    zoomextent(context);
+};
 
 module.exports.clear = function(context) {
     context.data.clear();
