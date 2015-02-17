@@ -26188,6 +26188,7 @@ module.exports = function fileBar(context) {
                             '/git/blobs/' + last.sha, function(err, blob) {
                                 d.content = JSON.parse(atob(blob[0].content));
                                 context.data.parse(d);
+                                zoomextent(context);
                                 m.close();
                             });
                     }
@@ -26270,6 +26271,7 @@ module.exports = function fileBar(context) {
                 .open()
                 .onclick(function(d) {
                     context.data.parse(d);
+                    zoomextent(context);
                     m.close();
                 })
                 .appendTo(
