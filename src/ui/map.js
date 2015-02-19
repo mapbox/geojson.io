@@ -209,7 +209,7 @@ function bindPopup(l) {
                         '<label class="keyline-top keyline-right tab-toggle pad0 pin-bottomleft z10 center col6" for="properties">Properties</label>' +
                         '<div class="space-bottom1 col12 content">' +
                             '<table class="space-bottom0 marker-properties">' + table + '</table>' +
-                            (writable ? '<div class="add-row-button add fl col3"><span class="icon-plus-sign"> Add row</div>' +
+                            (writable ? '<div class="add-row-button add fl col3"><span class="icon-plus"> Add row</div>' +
                             '<div class="fl text-right col9"><input type="checkbox" id="show-style" name="show-style" value="true" checked><label for="show-style">Show style properties</label></div>' : '') +
                         '</div>' +
                     '</div>' +
