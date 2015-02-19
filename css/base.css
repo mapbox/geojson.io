@@ -1,4 +1,4 @@
-/* http://meyerweb.com/eric/tools/css/reset/ 
+/* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)
 */
@@ -12,8 +12,8 @@ b, u, i, center,
 dl, dt, dd, ol, ul, li,
 fieldset, form, label, legend,
 table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed, 
-figure, figcaption, footer, header, hgroup, 
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
 menu, nav, output, ruby, section, summary,
 time, mark, audio, video {
 	margin: 0;
@@ -24,7 +24,7 @@ time, mark, audio, video {
 	vertical-align: baseline;
 }
 /* HTML5 display-role reset for older browsers */
-article, aside, details, figcaption, figure, 
+article, aside, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section {
 	display: block;
 }
@@ -47,8 +47,8 @@ table {
 	border-spacing: 0;
 }
 
-::-webkit-scrollbar { width:10px; height:10px; }
-::-webkit-scrollbar-track { background:transparent; border-left:1px solid rgba(0,0,0,0.1); }
+::-webkit-scrollbar { width:5px; height:10px; }
+::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.2); }
 
 /* base */
@@ -70,7 +70,7 @@ a {
 }
 
 a:hover {
-    color:#3498db;
+    color:#199CF4;
 }
 
 p {
@@ -113,21 +113,76 @@ small { font-size: 11px;}
 /* Padding
 ------------------------------------------------------- */
 
+.pad0  { padding:5px; }
+.pad0y { padding-top:5px; padding-bottom:5px; }
+.pad0x { padding-right:5px; padding-left:5px; }
+
 .pad1    { padding:10px; }
 .pad2    { padding:20px; }
-.pad21h  { padding:10px 20px; }
-.pad2h   { padding:0 20px; }
 .pad4    { padding:40px; }
-.pad4h   { padding-left:40px; padding-right:40px; }
-.pad8    { padding:80px 40px; }
-.pad4c   { padding:40px; }
+
+.pad1x { padding-left: 10px; padding-right: 10px;}
+.pad2x { padding-left: 20px; padding-right: 20px;}
+.pad4x { padding-left: 40px; padding-right: 40px;}
+
+.pad1y { padding-top: 10px; padding-bottom: 10px;}
+.pad2y { padding-top: 20px; padding-bottom: 20px;}
+.pad4y { padding-top: 40px; padding-bottom: 40px;}
+
+/* Margin
+------------------------------------------------------- */
+
+.space-bottom0                { margin-bottom: 5px;}
+.space-bottom1                { margin-bottom:10px; }
+.space-bottom2                { margin-bottom:20px; }
+.space-bottom4                { margin-bottom:40px; }
+.space-top0                   { margin-top: 5px; }
+.space-top1                   { margin-top: 10px; }
+.space-top2                   { margin-top: 20px; }
+.space-top4                   { margin-top: 40px;}
+
+/* Z-index
+------------------------------------------------------- */
+
+.z1   { z-index:1; }
+.z10  { z-index:10; }
+.z100 { z-index:100; }
+
+/* Absolute containers
+------------------------------------------------------- */
+.pin-top,
+.pin-right,
+.pin-bottom,
+.pin-left,
+.pin-topleft,
+.pin-topright,
+.pin-bottomleft,
+.pin-bottomright {
+  position:absolute;
+  }
+  .pin-bottom { right:0; bottom:0; left:0; }
+  .pin-top    { top:0; right:0; left:0; }
+  .pin-left   { top:0; bottom:0; left:0; }
+  .pin-right  { top:0; right:0; bottom:0; }
+  .pin-bottomright { bottom:0; right:0; }
+  .pin-bottomleft  { bottom:0; left:0; }
+  .pin-topright    { top:0; right:0; }
+  .pin-topleft     { top:0; left:0; }
+
+/* Keylines
+------------------------------------------------------- */
+.keyline-all    { border:1px solid #ccc; }
+.keyline-top    { border-top:1px solid #ccc; }
+.keyline-right  { border-right:1px solid #ccc; }
+.keyline-bottom { border-bottom:1px solid #ccc; }
+.keyline-left   { border-left:1px solid #ccc; }
 
 /* Markup free clearing
 Details: http://www.positioniseverything.net/easyclearing.html
 ------------------------------------------------------- */
 
 .clearfix:after {
-  content: ".";
+  content: "";
   display: block;
   height: 0;
   clear: both;
@@ -135,28 +190,11 @@ Details: http://www.positioniseverything.net/easyclearing.html
   }
 
 .clearfix { display: inline-block; }
-
 .hide { display:none; }
-
-.fl {
-    float:left;
-}
-
-.fr {
-    float:right;
-}
-
-.center {
-    text-align:center;
-}
-
-.pad1 {
-    padding:10px;
-}
-
-.pad {
-    padding:20px;
-}
+.fl { float:left; }
+.fr { float:right; }
+.center { text-align:center; }
+.text-right { text-align: right;}
 
 /* Elements */
 table tr td input,

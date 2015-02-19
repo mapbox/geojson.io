@@ -18,7 +18,7 @@ module.exports = function(context) {
         if (importSupport) {
 
             var import_landing = wrap.append('div')
-                .attr('class', 'pad fillL');
+                .attr('class', 'pad2 fillL');
 
             var message = import_landing
                 .append('div')

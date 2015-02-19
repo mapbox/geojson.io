@@ -101,9 +101,6 @@ p.intro-hint:hover {
 /*
  * buttons --------------------------------------------------------------------
  */
-button.delete-invert {
-    color:#882255;
-}
 
 button {
     background:#fff;
@@ -113,8 +110,6 @@ button {
     padding:0;
     border:none;
     box-sizing:border-box;
-    transition:all 100ms ease-in-out;
-    -webkit-transition:all 100ms ease-in-out;
 }
 
 button.active {
@@ -123,12 +118,40 @@ button.active {
 }
 
 button.major {
-    border:1px solid #aaa;
     padding:5px;
+    border-radius: 3px;
+    color: white;
+    background: #2980b9;
 }
 
 button.major:hover {
-    background:#f8f8f8;
+    background:#199CF4;
+}
+
+button.minor {
+    padding:5px;
+    border-radius: 3px;
+    background: #eee;
+}
+
+button.minor:hover {
+    background: #f7f7f7;
+}
+
+.pill button:first-child {
+    border-radius: 3px 0 0 3px;
+}
+
+.pill button:last-child {
+    border-radius: 0 3px 3px 0;
+}
+
+button.delete-invert {
+    color:#B81B1B;
+}
+
+button.delete-invert:hover {
+    color: #E25353;
 }
 
 .top .collapse-button {
@@ -226,6 +249,10 @@ button.major:hover {
 .leaflet-popup-content-wrapper table input {
     width:100%;
     background:transparent;
+}
+
+.leaflet-popup-content-wrapper input[type=color] {
+    height: 30px;
 }
 
 .leaflet-control-attribution.leaflet-control a {
