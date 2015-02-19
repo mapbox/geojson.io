@@ -3,12 +3,19 @@
     border-collapse:collapse;
     font-size:11px;
     width:100%;
-    overflow: auto;
-    display: block;
-    border-bottom: 1px solid #ccc;
+    overflow:auto;
+    border-bottom:1px solid #ccc;
 
     /* Equal to 6 rows */
-    max-height: 189px;
+    max-height:189px;
+}
+
+.marker-properties {
+    display:block;
+}
+
+.metadata {
+    display:table;
 }
 
 .marker-properties th {
@@ -33,7 +40,8 @@
 }
 
 .marker-properties tr:nth-child(even) th,
-.marker-properties tr:nth-child(even) td {
+.marker-properties tr:nth-child(even) td,
+.metadata tr:nth-child(even) td {
     background-color:#f7f7f7;
 }
 
@@ -106,5 +114,3 @@ datalist {
     cursor: pointer;
     color: #199CF4;
 }
-
-
