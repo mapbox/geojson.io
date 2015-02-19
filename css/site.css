@@ -121,11 +121,11 @@ button.major {
     padding:5px;
     border-radius: 3px;
     color: white;
-    background: #2980b9;
+    background: #34495e;
 }
 
 button.major:hover {
-    background:#199CF4;
+    background:#2980b9;
 }
 
 button.minor {
