@@ -136,7 +136,7 @@ function bindPopup(l) {
             }
             if (!('stroke-opacity' in properties)) {
                 table += '<tr class="style-row"><th><input type="text" value="stroke-opacity"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                    '<td><input type="range" min="0" max="1" step="0.1" value="1"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
+                    '<td><input type="number" min="0" max="1" step="0.1" value="1"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
             }
         }
         if (l.feature.geometry.type === 'Polygon') {
@@ -146,7 +146,7 @@ function bindPopup(l) {
             }
             if (!('fill-opacity' in properties)) {
                 table += '<tr class="style-row"><th><input type="text" value="fill-opacity"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                    '<td><input type="range" min="0" max="1" step="0.1" value="0.5"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
+                    '<td><input type="number" min="0" max="1" step="0.1" value="0.5"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
             }
         }
     }
@@ -170,7 +170,7 @@ function bindPopup(l) {
         }
         else if ((key == 'stroke-opacity' || key == 'fill-opacity') && writable) {
             table += '<tr class="style-row"><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                '<td><input type="range" min="0" max="1" step="0.1" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
+                '<td><input type="number" min="0" max="1" step="0.1" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
         }
         else {
             table += '<tr><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
@@ -203,34 +203,35 @@ function bindPopup(l) {
         info += '</table>';
     }
 
-    var tabs = '<div class="tabs-ui">' +
-                    '<div class="tab">' +
-                        '<input type="radio" id="properties" name="tab-group" checked="true">' +
-                        '<label for="properties">Properties</label>' +
-                        '<div class="content">' +
-                            (writable ? '<input type="checkbox" id="show-style" name="show-style" value="true" checked> Show style properties<br>' : '') +
-                            '<table class="marker-properties">' + table + '</table>' +
+    var tabs = '<div class="pad1 tabs-ui clearfix col12">' +
+                    '<div class="tab col12">' +
+                        '<input class="hide" type="radio" id="properties" name="tab-group" checked="true">' +
+                        '<label class="keyline-top keyline-right tab-toggle pad0 pin-bottomleft z10 center col6" for="properties">Properties</label>' +
+                        '<div class="space-bottom1 col12 content">' +
+                            '<table class="space-bottom0 marker-properties">' + table + '</table>' +
+                            (writable ? '<div class="add-row-button add fl col3"><span class="icon-plus-sign"> Add row</div>' +
+                            '<div class="fl text-right col9"><input type="checkbox" id="show-style" name="show-style" value="true" checked><label for="show-style">Show style properties</label></div>' : '') +
                         '</div>' +
                     '</div>' +
-                    '<div class="tab">' +
-                        '<input type="radio" id="info" name="tab-group">' +
-                        '<label for="info">Info</label>' +
-                        '<div class="content">' +
+                    '<div class="space-bottom2 tab col12">' +
+                        '<input class="hide" type="radio" id="info" name="tab-group">' +
+                        '<label class="keyline-top tab-toggle pad0 pin-bottomright z10 center col6" for="info">Info</label>' +
+                        '<div class="space-bottom1 col12 content">' +
                             '<div class="marker-info">' + info + ' </div>' +
                         '</div>' +
                     '</div>' +
                 '</div>';
 
-    var content = '<div class="clearfix">' +
-        '<div>' + tabs + '</div>' +
-        (writable ? '<br /><div class="clearfix col12">' +
-            '<div class="buttons-joined fl"><button class="add major">add row</button> ' +
-            '<button class="save major">save</button> ' +
-            '<button class="major cancel">cancel</button></div>' +
-            '<div class="fr clear-buttons"><button class="delete-invert"><span class="icon-remove-sign"></span> remove</button></div></div>' : '') +
-        '</div>';
+    var content = tabs +
+        (writable ? '<div class="clearfix col12 pad1 keyline-top">' +
+            '<div class="pill col6">' +
+            '<button class="save col6 major">Save</button> ' +
+            '<button class="minor col6 cancel">Cancel</button>' +
+            '</div>' +
+            '<button class="col6 text-right pad0 delete-invert"><span class="icon-remove-sign"></span> Delete feature</button></div>' : '');
 
     l.bindPopup(L.popup({
+        closeButton: false,
         maxWidth: 500,
         maxHeight: 400,
         autoPanPadding: [5, 45]

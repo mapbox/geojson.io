@@ -470,7 +470,7 @@ module.exports = function fileBar(context) {
         if (d3.event) d3.event.preventDefault();
         var contentArray = [];
         var features = context.data.get('map').features;
-        if (features.length == 0) return;
+        if (features.length === 0) return;
         var content = features.map(wellknown.stringify).join('\n');
         var meta = context.data.get('meta');
         saveAs(new Blob([content], {
