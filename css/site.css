@@ -252,7 +252,7 @@ button.delete-invert:hover {
 }
 
 .leaflet-popup-content-wrapper input[type=color] {
-    height: 30px;
+    height: 29px;
 }
 
 .leaflet-control-attribution.leaflet-control a {
