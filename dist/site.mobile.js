@@ -24988,6 +24988,21 @@ var geojsonRandom = require('geojson-random'),
     geojsonFlatten = require('geojson-flatten'),
     zoomextent = require('../lib/zoomextent');
 
+module.exports.adduserlayer = function(context, url, name) {
+    var layer = L.tileLayer(url);
+    if (context.layerControl) {
+        context.map.addLayer(layer);
+        context.layerControl.addOverlay(layer, name);
+    }
+    else {
+        context.layerControl = L.control.layers(null, {}, {
+            position: 'bottomright',
+            collapsed: false
+        }).addTo(context.map).addOverlay(layer, name);
+        context.map.addLayer(layer);
+    }
+};
+
 module.exports.zoomextent = function(context) {
     zoomextent(context);
 };
@@ -25989,6 +26004,17 @@ module.exports = function fileBar(context) {
             action: function() {},
             children: [
                 {
+                    title: 'Add map layer',
+                    alt: 'Add a custom tile layer',
+                    action: function() {
+                        var layerURL = prompt('Layer URL \n(http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)');
+                        if (layerURL === null) return;
+                        var layerName = prompt('Layer name');
+                        if (layerName === null) return;
+                        meta.adduserlayer(context, layerURL, layerName);
+                    }
+                },
+                {
                     title: 'Zoom to features',
                     alt: 'Zoom to the extent of all features',
                     action: function() {
@@ -26145,7 +26171,7 @@ module.exports = function fileBar(context) {
                     .enter()
                     .append('a')
                     .attr('title', function(d) {
-                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist' || d.title == 'Zoom to features' || d.title == 'Clear' || d.title == 'Random: Points' || d.title == 'Add bboxes' || d.title == 'Flatten Multi Features') return d.alt;
+                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist' || d.title == 'Add map layer' || d.title == 'Zoom to features' || d.title == 'Clear' || d.title == 'Random: Points' || d.title == 'Add bboxes' || d.title == 'Flatten Multi Features') return d.alt;
                     })
                     .text(function(d) {
                         return d.title;
@@ -26702,7 +26728,7 @@ function bindPopup(l) {
                         '<label class="keyline-top keyline-right tab-toggle pad0 pin-bottomleft z10 center col6" for="properties">Properties</label>' +
                         '<div class="space-bottom1 col12 content">' +
                             '<table class="space-bottom0 marker-properties">' + table + '</table>' +
-                            (writable ? '<div class="add-row-button add fl col3"><span class="icon-plus-sign"> Add row</div>' +
+                            (writable ? '<div class="add-row-button add fl col3"><span class="icon-plus"> Add row</div>' +
                             '<div class="fl text-right col9"><input type="checkbox" id="show-style" name="show-style" value="true" checked><label for="show-style">Show style properties</label></div>' : '') +
                         '</div>' +
                     '</div>' +

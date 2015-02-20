@@ -69,6 +69,17 @@ module.exports = function fileBar(context) {
             action: function() {},
             children: [
                 {
+                    title: 'Add map layer',
+                    alt: 'Add a custom tile layer',
+                    action: function() {
+                        var layerURL = prompt('Layer URL \n(http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)');
+                        if (layerURL === null) return;
+                        var layerName = prompt('Layer name');
+                        if (layerName === null) return;
+                        meta.adduserlayer(context, layerURL, layerName);
+                    }
+                },
+                {
                     title: 'Zoom to features',
                     alt: 'Zoom to the extent of all features',
                     action: function() {
@@ -225,7 +236,7 @@ module.exports = function fileBar(context) {
                     .enter()
                     .append('a')
                     .attr('title', function(d) {
-                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist' || d.title == 'Zoom to features' || d.title == 'Clear' || d.title == 'Random: Points' || d.title == 'Add bboxes' || d.title == 'Flatten Multi Features') return d.alt;
+                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist' || d.title == 'Add map layer' || d.title == 'Zoom to features' || d.title == 'Clear' || d.title == 'Random: Points' || d.title == 'Add bboxes' || d.title == 'Flatten Multi Features') return d.alt;
                     })
                     .text(function(d) {
                         return d.title;
