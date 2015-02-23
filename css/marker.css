@@ -45,25 +45,22 @@
     background-color:#f7f7f7;
 }
 
-.leaflet-popup-content-wrapper {
+.geojsonio-feature .leaflet-popup-content-wrapper {
     float: left;
     width: 100%;
+    padding: 0;
 }
 
-.leaflet-popup-content {
+.geojsonio-feature .leaflet-popup-content {
     float: left;
     padding: 0 !important;
     width:100%;
 }
 
-.leaflet-popup-tip-container {
+.geojsonio-feature .leaflet-popup-tip-container {
     float: left;
     margin-left: 50%;
     right: 10px;
-}
-
-.leaflet-popup-content-wrapper {
-    padding: 0;
 }
 
 datalist {

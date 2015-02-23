@@ -26833,7 +26833,8 @@ function bindPopup(l) {
         closeButton: false,
         maxWidth: 500,
         maxHeight: 400,
-        autoPanPadding: [5, 45]
+        autoPanPadding: [5, 45],
+        className: 'geojsonio-feature'
     }, l).setContent(content));
 
     l.on('popupopen', function(e){
