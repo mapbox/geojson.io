@@ -1,6 +1,6 @@
 {
   "name": "geojson.io",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "create and edit maps, on the internet",
   "main": "index.html",
   "dependencies": {
