@@ -26072,12 +26072,13 @@ module.exports = function fileBar(context) {
 
         var actions = [{
             title: 'Save',
-            action: saveAction,
+            action: (mapboxAPI || githubAPI) ? saveAction : function() {},
             children: exportFormats
         }, {
             title: 'New',
             action: function() {
-                window.open('/#new');
+                window.open(window.location.origin +
+                    window.location.pathname + '#new');
             }
         }, {
             title: 'Meta',
