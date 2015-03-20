@@ -26,7 +26,7 @@
     "shp-write": "0.2.1",
     "osmtogeojson": "2.0.5",
     "qs-hash": "0.0.0",
-    "tokml": "0.2.2",
+    "tokml": "0.3.0",
     "geojson2dsv": "0.0.0",
     "gist-map-browser": "0.2.0",
     "polytogeojson": "0.0.1",
@@ -36,7 +36,7 @@
     "geojson-flatten": "~0.1.0",
     "mapbox.js": "2.1.4",
     "marked": "0.3.2",
-    "wellknown": "0.3.0"
+    "wellknown": "0.3.1"
   },
   "devDependencies": {
     "browserify": "4.1.11",

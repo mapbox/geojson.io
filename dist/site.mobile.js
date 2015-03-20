@@ -21248,6 +21248,10 @@ if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
 }).call(this,require("FWaASH"))
 },{"FWaASH":11,"xmldom":4}],110:[function(require,module,exports){
+var strxml = require('strxml'),
+    tag = strxml.tag,
+    encode = strxml.encode;
+
 module.exports = function tokml(geojson, options) {
 
     options = options || {
@@ -21255,7 +21259,8 @@ module.exports = function tokml(geojson, options) {
         documentDescription: undefined,
         name: 'name',
         description: 'description',
-        simplestyle: false
+        simplestyle: false,
+        timestamp: 'timestamp'
     };
 
     return '<?xml version="1.0" encoding="UTF-8"?>' +
@@ -21275,11 +21280,15 @@ function feature(options) {
             styleDefinition = iconstyle(_.properties);
             styleReference = tag('styleUrl', '#' + iconHash(_.properties));
         }
+        if (!_.properties || !geometry.valid(_.geometry)) return '';
+        var geometryString = geometry.any(_.geometry);
+        if (!geometryString) return '';
         return styleDefinition + tag('Placemark',
             name(_.properties, options) +
             description(_.properties, options) +
-            geometry.any(_.geometry) +
             extendeddata(_.properties) +
+            timestamp(_.properties, options) +
+            geometryString +
             styleReference);
     };
 }
@@ -21287,18 +21296,18 @@ function feature(options) {
 function root(_, options) {
     if (!_.type) return '';
     switch (_.type) {
-        case 'FeatureCollection': return _.features.map(feature(options)).join('');
-        case 'Feature': return feature(options)(_);
+        case 'FeatureCollection':
+            if (!_.features) return '';
+            return _.features.map(feature(options)).join('');
+        case 'Feature':
+            return feature(options)(_);
         default:
-            if (_.type in geometry) {
-                return feature(options)({
-                    type: 'Feature',
-                    geometry: _,
-                    properties: {}
-                });
-            }
+            return feature(options)({
+                type: 'Feature',
+                geometry: _,
+                properties: {}
+            });
     }
-    return '';
 }
 
 function documentName(options) {
@@ -21317,6 +21326,10 @@ function description(_, options) {
     return _[options.description] ? tag('description', encode(_[options.description])) : '';
 }
 
+function timestamp(_, options) {
+    return _[options.timestamp] ? tag('TimeStamp', tag('when', encode(_[options.timestamp]))) : '';
+}
+
 // ## Geometry Types
 //
 // https://developers.google.com/kml/documentation/kmlreference#geometry
@@ -21328,6 +21341,7 @@ var geometry = {
         return tag('LineString', tag('coordinates', linearring(_.coordinates)));
     },
     Polygon: function(_) {
+        if (!_.coordinates.length) return '';
         var outer = _.coordinates[0],
             inner = _.coordinates.slice(1),
             outerRing = tag('outerBoundaryIs',
@@ -21339,16 +21353,19 @@ var geometry = {
         return tag('Polygon', outerRing + innerRings);
     },
     MultiPoint: function(_) {
+        if (!_.coordinates.length) return '';
         return tag('MultiGeometry', _.coordinates.map(function(c) {
             return geometry.Point({ coordinates: c });
         }).join(''));
     },
     MultiPolygon: function(_) {
+        if (!_.coordinates.length) return '';
         return tag('MultiGeometry', _.coordinates.map(function(c) {
             return geometry.Polygon({ coordinates: c });
         }).join(''));
     },
     MultiLineString: function(_) {
+        if (!_.coordinates.length) return '';
         return tag('MultiGeometry', _.coordinates.map(function(c) {
             return geometry.LineString({ coordinates: c });
         }).join(''));
@@ -21356,6 +21373,10 @@ var geometry = {
     GeometryCollection: function(_) {
         return tag('MultiGeometry',
             _.geometries.map(geometry.any).join(''));
+    },
+    valid: function(_) {
+        return _ && _.type && (_.coordinates ||
+            _.type === 'GeometryCollection' && _.geometries.every(geometry.valid));
     },
     any: function(_) {
         if (geometry[_.type]) {
@@ -21423,16 +21444,45 @@ function pairs(_) {
     return o;
 }
 
+},{"strxml":111}],111:[function(require,module,exports){
+module.exports.attr = attr;
+module.exports.tagClose = tagClose;
+module.exports.tag = tag;
+module.exports.encode = encode;
+
+/**
+ * @param {array} _ an array of attributes
+ * @returns {string}
+ */
 function attr(_) {
-    return _ ? (' ' + _.map(function(a) {
+    return (_ && _.length) ? (' ' + _.map(function(a) {
         return a[0] + '="' + a[1] + '"';
     }).join(' ')) : '';
 }
 
+/**
+ * @param {string} el element name
+ * @param {array} attributes array of pairs
+ * @returns {string}
+ */
+function tagClose(el, attributes) {
+    return '<' + el + attr(attributes) + '/>';
+}
+
+/**
+ * @param {string} el element name
+ * @param {string} contents innerXML
+ * @param {array} attributes array of pairs
+ * @returns {string}
+ */
 function tag(el, contents, attributes) {
     return '<' + el + attr(attributes) + '>' + contents + '</' + el + '>';
 }
 
+/**
+ * @param {string} _ a string of attribute
+ * @returns {string}
+ */
 function encode(_) {
     return (_ === null ? '' : _.toString()).replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -21453,7 +21503,7 @@ topojson.bind = require("./lib/topojson/bind");
 topojson.stitch = require("./lib/topojson/stitch");
 topojson.scale = require("./lib/topojson/scale");
 
-},{"./lib/topojson/bind":113,"./lib/topojson/clockwise":116,"./lib/topojson/filter":120,"./lib/topojson/prune":124,"./lib/topojson/scale":126,"./lib/topojson/simplify":127,"./lib/topojson/stitch":129,"./lib/topojson/topology":130,"./topojson":142}],113:[function(require,module,exports){
+},{"./lib/topojson/bind":114,"./lib/topojson/clockwise":117,"./lib/topojson/filter":121,"./lib/topojson/prune":125,"./lib/topojson/scale":127,"./lib/topojson/simplify":128,"./lib/topojson/stitch":130,"./lib/topojson/topology":131,"./topojson":143}],114:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -21483,7 +21533,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"BOmyIj","./type":141}],114:[function(require,module,exports){
+},{"../../":"BOmyIj","./type":142}],115:[function(require,module,exports){
 
 // Computes the bounding box of the specified hash of GeoJSON objects.
 module.exports = function(objects) {
@@ -21530,7 +21580,7 @@ module.exports = function(objects) {
   return [x0, y0, x1, y1];
 };
 
-},{}],115:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -21570,7 +21620,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],116:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -21661,7 +21711,7 @@ function clockwisePolygonSystem(ringArea, reverse) {
 
 function noop() {}
 
-},{"../../":"BOmyIj","./coordinate-systems":118,"./type":141}],117:[function(require,module,exports){
+},{"../../":"BOmyIj","./coordinate-systems":119,"./type":142}],118:[function(require,module,exports){
 // Given a hash of GeoJSON objects and an id function, invokes the id function
 // to compute a new id for each object that is a feature. The function is passed
 // the feature and is expected to return the new feature id, or null if the
@@ -21691,13 +21741,13 @@ module.exports = function(objects, id) {
   return objects;
 };
 
-},{}],118:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":115,"./spherical":128}],119:[function(require,module,exports){
+},{"./cartesian":116,"./spherical":129}],120:[function(require,module,exports){
 // Given a TopoJSON topology in absolute (quantized) coordinates,
 // converts to fixed-point delta encoding.
 // This is a destructive operation that modifies the given topology!
@@ -21728,7 +21778,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{}],120:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -21857,7 +21907,7 @@ function preserveNone() {
   return false;
 }
 
-},{"../../":"BOmyIj","./clockwise":116,"./coordinate-systems":118,"./prune":124,"./type":141}],121:[function(require,module,exports){
+},{"../../":"BOmyIj","./clockwise":117,"./coordinate-systems":119,"./prune":125,"./type":142}],122:[function(require,module,exports){
 // Given a hash of GeoJSON objects, replaces Features with geometry objects.
 // This is a destructive operation that modifies the input objects!
 module.exports = function(objects) {
@@ -21976,7 +22026,7 @@ module.exports = function(objects) {
   return objects;
 };
 
-},{}],122:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(topology, Q0, Q1) {
@@ -22024,7 +22074,7 @@ module.exports = function(topology, Q0, Q1) {
   return topology;
 };
 
-},{"./quantize":125}],123:[function(require,module,exports){
+},{"./quantize":126}],124:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(objects, bbox, Q0, Q1) {
@@ -22083,7 +22133,7 @@ module.exports = function(objects, bbox, Q0, Q1) {
   return q.transform;
 };
 
-},{"./quantize":125}],124:[function(require,module,exports){
+},{"./quantize":126}],125:[function(require,module,exports){
 module.exports = function(topology, options) {
   var verbose = false,
       objects = topology.objects,
@@ -22140,7 +22190,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{}],125:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 module.exports = function(dx, dy, kx, ky) {
 
   function quantizePoint(coordinates) {
@@ -22184,7 +22234,7 @@ module.exports = function(dx, dy, kx, ky) {
   };
 };
 
-},{}],126:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(topology, options) {
@@ -22264,7 +22314,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":141}],127:[function(require,module,exports){
+},{"./type":142}],128:[function(require,module,exports){
 var topojson = require("../../"),
     systems = require("./coordinate-systems");
 
@@ -22373,7 +22423,7 @@ module.exports = function(topology, options) {
   return topology;
 };
 
-},{"../../":"BOmyIj","./coordinate-systems":118}],128:[function(require,module,exports){
+},{"../../":"BOmyIj","./coordinate-systems":119}],129:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -22454,7 +22504,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],129:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, transform) {
@@ -22637,7 +22687,7 @@ module.exports = function(objects, transform) {
   }
 };
 
-},{"./type":141}],130:[function(require,module,exports){
+},{"./type":142}],131:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch"),
     systems = require("./coordinate-systems"),
@@ -22750,7 +22800,7 @@ module.exports = function(objects, options) {
   return topology;
 };
 
-},{"./bounds":114,"./compute-id":117,"./coordinate-systems":118,"./delta":119,"./geomify":121,"./post-quantize":122,"./pre-quantize":123,"./stitch":129,"./topology/index":136,"./transform-properties":140,"./type":141}],131:[function(require,module,exports){
+},{"./bounds":115,"./compute-id":118,"./coordinate-systems":119,"./delta":120,"./geomify":122,"./post-quantize":123,"./pre-quantize":124,"./stitch":130,"./topology/index":137,"./transform-properties":141,"./type":142}],132:[function(require,module,exports){
 var join = require("./join");
 
 // Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
@@ -22812,7 +22862,7 @@ function reverse(array, start, end) {
   }
 }
 
-},{"./join":137}],132:[function(require,module,exports){
+},{"./join":138}],133:[function(require,module,exports){
 var join = require("./join"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -22998,7 +23048,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{"./hashmap":134,"./join":137,"./point-equal":138,"./point-hash":139}],133:[function(require,module,exports){
+},{"./hashmap":135,"./join":138,"./point-equal":139,"./point-hash":140}],134:[function(require,module,exports){
 // Extracts the lines and rings from the specified hash of geometry objects.
 //
 // Returns an object with three properties:
@@ -23065,7 +23115,7 @@ module.exports = function(objects) {
   };
 };
 
-},{}],134:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   if (arguments.length === 3) {
     keyType = valueType = Array;
@@ -23140,7 +23190,7 @@ module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   };
 };
 
-},{}],135:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 module.exports = function(size, hash, equal, type, empty) {
   if (arguments.length === 3) {
     type = Array;
@@ -23197,7 +23247,7 @@ module.exports = function(size, hash, equal, type, empty) {
   };
 };
 
-},{}],136:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 var hashmap = require("./hashmap"),
     extract = require("./extract"),
     cut = require("./cut"),
@@ -23267,7 +23317,7 @@ function equalArc(arcA, arcB) {
   return ia === ib && ja === jb;
 }
 
-},{"./cut":131,"./dedup":132,"./extract":133,"./hashmap":134}],137:[function(require,module,exports){
+},{"./cut":132,"./dedup":133,"./extract":134,"./hashmap":135}],138:[function(require,module,exports){
 var hashset = require("./hashset"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -23382,12 +23432,12 @@ module.exports = function(topology) {
   return junctionByPoint;
 };
 
-},{"./hashmap":134,"./hashset":135,"./point-equal":138,"./point-hash":139}],138:[function(require,module,exports){
+},{"./hashmap":135,"./hashset":136,"./point-equal":139,"./point-hash":140}],139:[function(require,module,exports){
 module.exports = function(pointA, pointB) {
   return pointA[0] === pointB[0] && pointA[1] === pointB[1];
 };
 
-},{}],139:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 // TODO if quantized, use simpler Int32 hashing?
 
 var buffer = new ArrayBuffer(16),
@@ -23402,7 +23452,7 @@ module.exports = function(point) {
   return hash & 0x7fffffff;
 };
 
-},{}],140:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 // Given a hash of GeoJSON objects, transforms any properties on features using
 // the specified transform function. The function is invoked for each existing
 // property on the current feature, being passed the new properties hash, the
@@ -23447,7 +23497,7 @@ module.exports = function(objects, propertyTransform) {
   return objects;
 };
 
-},{}],141:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -23541,7 +23591,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],142:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 !function() {
   var topojson = {
     version: "1.6.8",
@@ -24075,7 +24125,7 @@ var typeObjects = {
   else this.topojson = topojson;
 }();
 
-},{}],143:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -24326,7 +24376,7 @@ function stringify(gj) {
     }
 }
 
-},{}],144:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -24345,7 +24395,7 @@ function extend() {
     return target
 }
 
-},{}],145:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 module.exports = function(hostname) {
     // Settings for geojson.io
     L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w';
@@ -24368,7 +24418,7 @@ module.exports = function(hostname) {
         };
     }
 };
-},{}],146:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 var clone = require('clone'),
     xtend = require('xtend'),
     config = require('../config.js')(location.hostname),
@@ -24659,7 +24709,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../config.js":145,"../source/gist":162,"../source/github":163,"../source/local":164,"clone":14,"xtend":144}],147:[function(require,module,exports){
+},{"../config.js":146,"../source/gist":163,"../source/github":164,"../source/local":165,"clone":14,"xtend":145}],148:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -24744,7 +24794,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/zoomextent":157,"../ui/flash":168,"qs-hash":52}],148:[function(require,module,exports){
+},{"../lib/zoomextent":158,"../ui/flash":169,"qs-hash":52}],149:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -24788,7 +24838,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":145}],149:[function(require,module,exports){
+},{"../config.js":146}],150:[function(require,module,exports){
 var qs = require('qs-hash'),
     xtend = require('xtend');
 
@@ -24855,7 +24905,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"qs-hash":52,"xtend":144}],150:[function(require,module,exports){
+},{"qs-hash":52,"xtend":145}],151:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -24943,7 +24993,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":145}],151:[function(require,module,exports){
+},{"../config.js":146}],152:[function(require,module,exports){
 var qs = require('qs-hash');
 require('leaflet-hash');
 
@@ -24982,7 +25032,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"leaflet-hash":43,"qs-hash":52}],152:[function(require,module,exports){
+},{"leaflet-hash":43,"qs-hash":52}],153:[function(require,module,exports){
 var geojsonRandom = require('geojson-random'),
     geojsonExtent = require('geojson-extent'),
     geojsonFlatten = require('geojson-flatten'),
@@ -25023,7 +25073,7 @@ module.exports.flatten = function(context) {
     context.data.set({ map: geojsonFlatten(context.data.get('map')) });
 };
 
-},{"../lib/zoomextent":157,"geojson-extent":20,"geojson-flatten":26,"geojson-random":27}],153:[function(require,module,exports){
+},{"../lib/zoomextent":158,"geojson-extent":20,"geojson-flatten":26,"geojson-random":27}],154:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -25087,7 +25137,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],154:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     csv2geojson = require('csv2geojson'),
@@ -25266,7 +25316,7 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":15,"osmtogeojson":45,"polytogeojson":51,"togeojson":109,"topojson":"BOmyIj"}],155:[function(require,module,exports){
+},{"csv2geojson":15,"osmtogeojson":45,"polytogeojson":51,"togeojson":109,"topojson":"BOmyIj"}],156:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -25278,7 +25328,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],156:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -25339,13 +25389,13 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":30}],157:[function(require,module,exports){
+},{"geojsonhint":30}],158:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],158:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -25375,7 +25425,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":146,"./core/loader":147,"./core/repo":148,"./core/router":149,"./core/user":150,"./ui":165,"./ui/map":170,"store":108}],159:[function(require,module,exports){
+},{"./core/data":147,"./core/loader":148,"./core/repo":149,"./core/router":150,"./core/user":151,"./ui":166,"./ui/map":171,"store":108}],160:[function(require,module,exports){
 (function (Buffer){
 var fs = require('fs');
 var marked = require('marked');
@@ -25399,7 +25449,7 @@ module.exports = function(context) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":5,"fs":2,"marked":44}],160:[function(require,module,exports){
+},{"buffer":5,"fs":2,"marked":44}],161:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
@@ -25462,7 +25512,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":156,"../lib/zoomextent":157,"../ui/saver.js":174}],161:[function(require,module,exports){
+},{"../lib/validate":157,"../lib/zoomextent":158,"../ui/saver.js":175}],162:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -25534,7 +25584,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":155,"d3-metatable":18}],162:[function(require,module,exports){
+},{"../lib/smartzoom.js":156,"d3-metatable":18}],163:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -25648,7 +25698,7 @@ function loadRaw(url, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"../config.js":145,"fs":2}],163:[function(require,module,exports){
+},{"../config.js":146,"fs":2}],164:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -25780,7 +25830,7 @@ function shaUrl(parts, sha) {
         '/git/blobs/' + sha;
 }
 
-},{"../config.js":145}],164:[function(require,module,exports){
+},{"../config.js":146}],165:[function(require,module,exports){
 try {
     var fs = require('fs');
 } catch(e) { }
@@ -25803,7 +25853,7 @@ function save(context, callback) {
     });
 }
 
-},{}],165:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -25888,7 +25938,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":166,"./ui/file_bar":167,"./ui/layer_switch":169,"./ui/mode_buttons":173,"./ui/user":176}],166:[function(require,module,exports){
+},{"./ui/dnd":167,"./ui/file_bar":168,"./ui/layer_switch":170,"./ui/mode_buttons":174,"./ui/user":177}],167:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -25932,7 +25982,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":154,"../lib/zoomextent":157,"./flash.js":168}],167:[function(require,module,exports){
+},{"../lib/readfile.js":155,"../lib/zoomextent":158,"./flash.js":169}],168:[function(require,module,exports){
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     geojson2dsv = require('geojson2dsv'),
@@ -26433,7 +26483,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../config.js":145,"../lib/meta.js":152,"../lib/readfile":154,"../lib/zoomextent":157,"../ui/saver.js":174,"./flash":168,"./modal.js":172,"./share":175,"clone":14,"filesaver.js":19,"geojson2dsv":28,"gist-map-browser":32,"github-file-browser":34,"shp-write":53,"tokml":110,"topojson":"BOmyIj","wellknown":143}],168:[function(require,module,exports){
+},{"../config.js":146,"../lib/meta.js":153,"../lib/readfile":155,"../lib/zoomextent":158,"../ui/saver.js":175,"./flash":169,"./modal.js":173,"./share":176,"clone":14,"filesaver.js":19,"geojson2dsv":28,"gist-map-browser":32,"github-file-browser":34,"shp-write":53,"tokml":110,"topojson":"BOmyIj","wellknown":144}],169:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -26455,7 +26505,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":171}],169:[function(require,module,exports){
+},{"./message":172}],170:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -26517,7 +26567,7 @@ module.exports = function(context) {
 };
 
 
-},{}],170:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 var popup = require('../lib/popup'),
     customHash = require('../lib/custom_hash.js'),
     qs = require('qs-hash'),
@@ -26775,7 +26825,7 @@ function bindPopup(l) {
     });
 }
 
-},{"../../data/maki.json":1,"../lib/custom_hash.js":151,"../lib/popup":153,"leaflet-geodesy":38,"qs-hash":52}],171:[function(require,module,exports){
+},{"../../data/maki.json":1,"../lib/custom_hash.js":152,"../lib/popup":154,"leaflet-geodesy":38,"qs-hash":52}],172:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -26816,7 +26866,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],172:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -26884,7 +26934,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],173:[function(require,module,exports){
+},{}],174:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -26936,7 +26986,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":159,"../panel/json":160,"../panel/table":161}],174:[function(require,module,exports){
+},{"../panel/help":160,"../panel/json":161,"../panel/table":162}],175:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -27004,7 +27054,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":168}],175:[function(require,module,exports){
+},{"./flash":169}],176:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -27061,7 +27111,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":162,"./modal":172}],176:[function(require,module,exports){
+},{"../source/gist":163,"./modal":173}],177:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};
@@ -27112,4 +27162,4 @@ module.exports = function(context) {
     };
 };
 
-},{"../config.js":145}]},{},[158])
+},{"../config.js":146}]},{},[159])
