@@ -46,7 +46,9 @@ module.exports = function(context) {
 
         context.dispatch.on('change.json', function(event) {
             if (event.source !== 'json') {
+                var scrollInfo = editor.getScrollInfo();
                 editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+                editor.scrollTo(scrollInfo.left, scrollInfo.top);
             }
         });
 
