@@ -6,6 +6,7 @@ var shpwrite = require('shp-write'),
     tokml = require('tokml'),
     githubBrowser = require('github-file-browser'),
     gistBrowser = require('gist-map-browser'),
+    geojsonNormalize = require('geojson-normalize'),
     wellknown = require('wellknown');
 
 var share = require('./share'),
@@ -410,7 +411,8 @@ module.exports = function fileBar(context) {
         }
 
         function onImport(err, gj, warning) {
-            if (gj && gj.features) {
+            gj = geojsonNormalize(gj);
+            if (gj) {
                 context.data.mergeFeatures(gj.features);
                 if (warning) {
                     flash(context.container, warning.message);
