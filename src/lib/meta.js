@@ -1,9 +1,11 @@
-var geojsonRandom = require('geojson-random'),
+var escape = require('escape-html'),
+    geojsonRandom = require('geojson-random'),
     geojsonExtent = require('geojson-extent'),
     geojsonFlatten = require('geojson-flatten'),
     zoomextent = require('../lib/zoomextent');
 
-module.exports.adduserlayer = function(context, url, name) {
+module.exports.adduserlayer = function(context, _url, _name) {
+    var url = escape(_url), name = escape(_name);
     var layer = L.tileLayer(url);
     if (context.layerControl) {
         context.map.addLayer(layer);
