@@ -1,13 +1,15 @@
+require('qs-hash');
+require('../lib/custom_hash.js');
+
 var popup = require('../lib/popup'),
-    customHash = require('../lib/custom_hash.js'),
-    qs = require('qs-hash'),
+    escape = require('escape-html'),
     LGeo = require('leaflet-geodesy'),
     writable = false,
     showStyle = true,
     makiValues = require('../../data/maki.json'),
     maki = '';
 
-for (i = 0; i < makiValues.length; i++) {
+for (var i = 0; i < makiValues.length; i++) {
     maki += '<option value="' + makiValues[i].icon + '">';
 }
 
@@ -102,9 +104,17 @@ function geojsonToLayer(geojson, layer) {
 
 function bindPopup(l) {
 
-    var properties = l.toGeoJSON().properties,
+    var props = JSON.parse(JSON.stringify(l.toGeoJSON().properties)),
         table = '',
         info = '';
+
+    var properties = {};
+
+    // Steer clear of XSS
+    for (var k in props) {
+        var e = escape(k);
+        properties[e] = escape(props[k]);
+    }
 
     if (!properties) return;
 

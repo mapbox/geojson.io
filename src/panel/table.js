@@ -10,7 +10,7 @@ module.exports = function(context) {
             var geojson = context.data.get('map');
             var props;
 
-            if (!geojson || !geojson.geometry && 
+            if (!geojson || !geojson.geometry &&
                 (!geojson.features || !geojson.features.length)) {
                 selection
                     .html('')
