@@ -2,7 +2,8 @@ var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     csv2geojson = require('csv2geojson'),
     osmtogeojson = require('osmtogeojson'),
-    polytogeojson = require('polytogeojson');
+    polytogeojson = require('polytogeojson'),
+    geojsonNormalize = require('geojson-normalize');
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
@@ -46,8 +47,10 @@ function readDrop(callback) {
             return callback(null, {
                 type: 'FeatureCollection',
                 features: results.reduce(function(memo, r) {
-                    if (r.features) memo = memo.concat(r.features);
-                    else if (r.type === 'Feature') memo.push(r);
+                    r = geojsonNormalize(r);
+                    if (r) {
+                        memo = memo.concat(r.features);
+                    }
                     return memo;
                 }, [])
             }, war);
