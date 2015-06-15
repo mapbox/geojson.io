@@ -4341,15 +4341,28 @@ function metatable() {
 }
 
 },{}],19:[function(require,module,exports){
+/*!
+ * escape-html
+ * Copyright(c) 2012-2013 TJ Holowaychuk
+ * MIT Licensed
+ */
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = escapeHtml;
+
 /**
  * Escape special characters in the given string of html.
  *
- * @param  {String} html
- * @return {String}
- * @api private
+ * @param  {string} str The string to escape for inserting into HTML
+ * @return {string}
+ * @public
  */
 
-module.exports = function(html) {
+function escapeHtml(html) {
   return String(html)
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
@@ -26623,8 +26636,8 @@ module.exports = function(context, readonly) {
 
     function map(selection) {
         context.map = L.mapbox.map(selection.node(), null, {
-                infoControl: false,
-                attributionControl: true
+                infoControl: true,
+                attributionControl: false
             })
             .setView([20, 0], 2)
             .addControl(L.mapbox.geocoderControl('mapbox.places-permanent', {
@@ -26660,8 +26673,8 @@ module.exports = function(context, readonly) {
             .on('draw:created', created)
             .on('popupopen', popup(context));
 
-        context.map.attributionControl.addAttribution('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Feedback</a>');
-        context.map.attributionControl.addAttribution('<a target="_blank" href="http://geojson.io/about.html">About</a>');
+        context.map.infoControl.addInfo('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Feedback</a>');
+        context.map.infoControl.addInfo('<a target="_blank" href="http://geojson.io/about.html">About</a>');
 
         function update() {
             geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
