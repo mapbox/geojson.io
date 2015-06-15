@@ -19,8 +19,8 @@ module.exports = function(context, readonly) {
 
     function map(selection) {
         context.map = L.mapbox.map(selection.node(), null, {
-                infoControl: false,
-                attributionControl: true
+                infoControl: true,
+                attributionControl: false
             })
             .setView([20, 0], 2)
             .addControl(L.mapbox.geocoderControl('mapbox.places-permanent', {
@@ -56,8 +56,8 @@ module.exports = function(context, readonly) {
             .on('draw:created', created)
             .on('popupopen', popup(context));
 
-        context.map.attributionControl.addAttribution('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Feedback</a>');
-        context.map.attributionControl.addAttribution('<a target="_blank" href="http://geojson.io/about.html">About</a>');
+        context.map.infoControl.addInfo('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Feedback</a>');
+        context.map.infoControl.addInfo('<a target="_blank" href="http://geojson.io/about.html">About</a>');
 
         function update() {
             geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
