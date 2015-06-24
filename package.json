@@ -19,7 +19,7 @@
     "geojson2dsv": "0.0.0",
     "geojsonhint": "0.3.4",
     "gist-map-browser": "0.2.0",
-    "github-file-browser": "0.6.0",
+    "github-file-browser": "0.6.1",
     "jsonlint": "1.6.0",
     "leaflet-draw": "0.2.3",
     "leaflet-geodesy": "0.1.1",
