@@ -26805,7 +26805,7 @@ function bindPopup(l) {
     if (!Object.keys(properties).length) properties = { '': '' };
 
     if (l.feature && l.feature.geometry && writable) {
-        if (l.feature.geometry.type === 'Point') {
+        if (l.feature.geometry.type === 'Point' || l.feature.geometry.type === 'MultiPoint') {
             if (!('marker-color' in properties)) {
                 table += '<tr class="style-row"><th><input type="text" value="marker-color"' + (!writable ? ' readonly' : '') + ' /></th>' +
                     '<td><input type="color" value="#7E7E7E"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
@@ -26819,7 +26819,7 @@ function bindPopup(l) {
                     '<td><input type="text" list="marker-symbol" value=""' + (!writable ? ' readonly' : '') + ' /><datalist id="marker-symbol">' + maki + '</datalist></td></tr>';
             }
         }
-        if (l.feature.geometry.type === 'LineString' || l.feature.geometry.type === 'Polygon') {
+        if (l.feature.geometry.type === 'LineString' || l.feature.geometry.type === 'MultiLineString' || l.feature.geometry.type === 'Polygon' || l.feature.geometry.type === 'MultiPolygon') {
             if (!('stroke' in properties)) {
                 table += '<tr class="style-row"><th><input type="text" value="stroke"' + (!writable ? ' readonly' : '') + ' /></th>' +
                     '<td><input type="color" value="#555555"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
@@ -26833,7 +26833,7 @@ function bindPopup(l) {
                     '<td><input type="number" min="0" max="1" step="0.1" value="1"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
             }
         }
-        if (l.feature.geometry.type === 'Polygon') {
+        if (l.feature.geometry.type === 'Polygon' || l.feature.geometry.type === 'MultiPolygon') {
             if (!('fill' in properties)) {
                 table += '<tr class="style-row"><th><input type="text" value="fill"' + (!writable ? ' readonly' : '') + ' /></th>' +
                     '<td><input type="color" value="#555555"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
