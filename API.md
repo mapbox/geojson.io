@@ -59,7 +59,7 @@ http://geojson.io/#id=gist:tmcw/e9a29ad54dbaa83dee08&map=8/39.198/-76.981
 ### `id=github:`
 
 Load a file from a GitHub repository. You must have access to the file, and
-it must be valid GeoJSON. 
+it must be valid GeoJSON.
 
 The url is in the form:
 
@@ -67,7 +67,7 @@ The url is in the form:
 
 #### Example:
 
-http://geojson.io/#id=github:tmcw/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302
+http://geojson.io/#id=github:benbalter/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302
 
 ## Console API
 
