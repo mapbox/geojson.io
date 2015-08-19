@@ -2776,90 +2776,90 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
 },{}],7:[function(require,module,exports){
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var nBits = -7
-  var i = isLE ? (nBytes - 1) : 0
-  var d = isLE ? -1 : 1
-  var s = buffer[offset + i]
+exports.read = function(buffer, offset, isLE, mLen, nBytes) {
+  var e, m,
+      eLen = nBytes * 8 - mLen - 1,
+      eMax = (1 << eLen) - 1,
+      eBias = eMax >> 1,
+      nBits = -7,
+      i = isLE ? (nBytes - 1) : 0,
+      d = isLE ? -1 : 1,
+      s = buffer[offset + i];
 
-  i += d
+  i += d;
 
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  e = s & ((1 << (-nBits)) - 1);
+  s >>= (-nBits);
+  nBits += eLen;
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8);
 
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  m = e & ((1 << (-nBits)) - 1);
+  e >>= (-nBits);
+  nBits += mLen;
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8);
 
   if (e === 0) {
-    e = 1 - eBias
+    e = 1 - eBias;
   } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
+    return m ? NaN : ((s ? -1 : 1) * Infinity);
   } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
+    m = m + Math.pow(2, mLen);
+    e = e - eBias;
   }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen);
+};
 
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
-  var i = isLE ? 0 : (nBytes - 1)
-  var d = isLE ? 1 : -1
-  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c,
+      eLen = nBytes * 8 - mLen - 1,
+      eMax = (1 << eLen) - 1,
+      eBias = eMax >> 1,
+      rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0),
+      i = isLE ? 0 : (nBytes - 1),
+      d = isLE ? 1 : -1,
+      s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0;
 
-  value = Math.abs(value)
+  value = Math.abs(value);
 
   if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
+    m = isNaN(value) ? 1 : 0;
+    e = eMax;
   } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
+    e = Math.floor(Math.log(value) / Math.LN2);
     if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
+      e--;
+      c *= 2;
     }
     if (e + eBias >= 1) {
-      value += rt / c
+      value += rt / c;
     } else {
-      value += rt * Math.pow(2, 1 - eBias)
+      value += rt * Math.pow(2, 1 - eBias);
     }
     if (value * c >= 2) {
-      e++
-      c /= 2
+      e++;
+      c /= 2;
     }
 
     if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
+      m = 0;
+      e = eMax;
     } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
-      e = e + eBias
+      m = (value * c - 1) * Math.pow(2, mLen);
+      e = e + eBias;
     } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
+      e = 0;
     }
   }
 
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8);
 
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+  e = (e << mLen) | m;
+  eLen += mLen;
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
 
-  buffer[offset + i - d] |= s * 128
-}
+  buffer[offset + i - d] |= s * 128;
+};
 
 },{}],8:[function(require,module,exports){
 
@@ -4341,28 +4341,15 @@ function metatable() {
 }
 
 },{}],19:[function(require,module,exports){
-/*!
- * escape-html
- * Copyright(c) 2012-2013 TJ Holowaychuk
- * MIT Licensed
- */
-
-/**
- * Module exports.
- * @public
- */
-
-module.exports = escapeHtml;
-
 /**
  * Escape special characters in the given string of html.
  *
- * @param  {string} str The string to escape for inserting into HTML
- * @return {string}
- * @public
+ * @param  {String} html
+ * @return {String}
+ * @api private
  */
 
-function escapeHtml(html) {
+module.exports = function(html) {
   return String(html)
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
@@ -4644,7 +4631,7 @@ function getExtent(_) {
     return ext;
 }
 
-},{"extent":22,"geojson-coords":24,"traverse":25}],22:[function(require,module,exports){
+},{"extent":22,"geojson-coords":24,"traverse":26}],22:[function(require,module,exports){
 module.exports = Extent;
 
 function Extent() {
@@ -4743,7 +4730,52 @@ module.exports = function(_) {
     return coordinates;
 };
 
-},{"./flatten":23,"geojson-flatten":26,"geojson-normalize":27}],25:[function(require,module,exports){
+},{"./flatten":23,"geojson-flatten":27,"geojson-normalize":25}],25:[function(require,module,exports){
+module.exports = normalize;
+
+var types = {
+    Point: 'geometry',
+    MultiPoint: 'geometry',
+    LineString: 'geometry',
+    MultiLineString: 'geometry',
+    Polygon: 'geometry',
+    MultiPolygon: 'geometry',
+    GeometryCollection: 'geometry',
+    Feature: 'feature',
+    FeatureCollection: 'featurecollection'
+};
+
+/**
+ * Normalize a GeoJSON feature into a FeatureCollection.
+ *
+ * @param {object} gj geojson data
+ * @returns {object} normalized geojson data
+ */
+function normalize(gj) {
+    if (!gj || !gj.type) return null;
+    var type = types[gj.type];
+    if (!type) return null;
+
+    if (type === 'geometry') {
+        return {
+            type: 'FeatureCollection',
+            features: [{
+                type: 'Feature',
+                properties: {},
+                geometry: gj
+            }]
+        };
+    } else if (type === 'feature') {
+        return {
+            type: 'FeatureCollection',
+            features: [gj]
+        };
+    } else if (type === 'featurecollection') {
+        return gj;
+    }
+}
+
+},{}],26:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -5059,7 +5091,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 module.exports = flatten;
 
 function flatten(gj, up) {
@@ -5100,52 +5132,9 @@ function flatten(gj, up) {
     }
 }
 
-},{}],27:[function(require,module,exports){
-module.exports = normalize;
-
-var types = {
-    Point: 'geometry',
-    MultiPoint: 'geometry',
-    LineString: 'geometry',
-    MultiLineString: 'geometry',
-    Polygon: 'geometry',
-    MultiPolygon: 'geometry',
-    GeometryCollection: 'geometry',
-    Feature: 'feature',
-    FeatureCollection: 'featurecollection'
-};
-
-/**
- * Normalize a GeoJSON feature into a FeatureCollection.
- *
- * @param {object} gj geojson data
- * @returns {object} normalized geojson data
- */
-function normalize(gj) {
-    if (!gj || !gj.type) return null;
-    var type = types[gj.type];
-    if (!type) return null;
-
-    if (type === 'geometry') {
-        return {
-            type: 'FeatureCollection',
-            features: [{
-                type: 'Feature',
-                properties: {},
-                geometry: gj
-            }]
-        };
-    } else if (type === 'feature') {
-        return {
-            type: 'FeatureCollection',
-            features: [gj]
-        };
-    } else if (type === 'featurecollection') {
-        return gj;
-    }
-}
-
 },{}],28:[function(require,module,exports){
+module.exports=require(25)
+},{}],29:[function(require,module,exports){
 module.exports = function(count, type) {
     switch (type) {
         case 'point':
@@ -5164,7 +5153,7 @@ function feature(geom) {
 }
 function collection(f) { return { type: 'FeatureCollection', features: f }; }
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var dsv = require('dsv');
 
 module.exports = function(_, delim) {
@@ -5191,9 +5180,9 @@ module.exports = function(_, delim) {
     }));
 };
 
-},{"dsv":30}],30:[function(require,module,exports){
+},{"dsv":31}],31:[function(require,module,exports){
 module.exports=require(16)
-},{"fs":2}],31:[function(require,module,exports){
+},{"fs":2}],32:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -5512,7 +5501,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":32}],32:[function(require,module,exports){
+},{"jsonlint-lines":33}],33:[function(require,module,exports){
 (function (process){
 /* parser generated by jison 0.4.6 */
 /*
@@ -6169,7 +6158,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 }).call(this,require("FWaASH"))
-},{"FWaASH":11,"fs":2,"path":10}],33:[function(require,module,exports){
+},{"FWaASH":11,"fs":2,"path":10}],34:[function(require,module,exports){
 var request = require('browser-request'),
     token;
 
@@ -6265,7 +6254,7 @@ function page(postfix, callback) {
     });
 }
 
-},{"browser-request":34}],34:[function(require,module,exports){
+},{"browser-request":35}],35:[function(require,module,exports){
 // Browser Request
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -6761,7 +6750,7 @@ function b64_enc (data) {
 }));
 //UMD FOOTER END
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var queue = require('queue-async'),
     request = require('browser-request'),
     treeui = require('treeui'),
@@ -6896,9 +6885,9 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":36,"queue-async":37,"treeui":38}],36:[function(require,module,exports){
-module.exports=require(34)
-},{}],37:[function(require,module,exports){
+},{"browser-request":37,"queue-async":38,"treeui":39}],37:[function(require,module,exports){
+module.exports=require(35)
+},{}],38:[function(require,module,exports){
 (function() {
   var slice = [].slice;
 
@@ -6980,7 +6969,7 @@ module.exports=require(34)
   else this.queue = queue;
 })();
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 module.exports = function(request) {
     var parent = ce('div', 'treeui'),
         onclick = function() { };
@@ -7079,7 +7068,7 @@ function ae(x, y, z) {
     return x.addEventListener(y, z);
 }
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 var spherical = require('spherical'),
     geojsonArea = require('geojson-area');
 
@@ -7124,7 +7113,7 @@ module.exports.area = function(layer) {
     return geojsonArea(gj.geometry);
 };
 
-},{"geojson-area":40,"spherical":42}],40:[function(require,module,exports){
+},{"geojson-area":41,"spherical":43}],41:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports = function(_) {
@@ -7186,12 +7175,12 @@ function rad(_) {
     return _ * Math.PI / 180;
 }
 
-},{"wgs84":41}],41:[function(require,module,exports){
+},{"wgs84":42}],42:[function(require,module,exports){
 module.exports.RADIUS = 6378137;
 module.exports.FLATTENING = 1/298.257223563;
 module.exports.POLAR_RADIUS = 6356752.3142;
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports.heading = function(from, to) {
@@ -7245,9 +7234,9 @@ function deg(_) {
     return _ * (180 / Math.PI);
 }
 
-},{"wgs84":43}],43:[function(require,module,exports){
-module.exports=require(41)
-},{}],44:[function(require,module,exports){
+},{"wgs84":44}],44:[function(require,module,exports){
+module.exports=require(42)
+},{}],45:[function(require,module,exports){
 (function(window) {
 	var HAS_HASHCHANGE = (function() {
 		var doc_mode = window.documentMode;
@@ -7411,7 +7400,7 @@ module.exports=require(41)
 	};
 })(window);
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 (function (global){
 /**
  * marked - a markdown parser
@@ -8681,7 +8670,7 @@ if (typeof exports === 'object') {
 }());
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 var _ = require("./lodash.custom.js");
 var rewind = require("geojson-rewind");
 
@@ -9277,7 +9266,7 @@ osmtogeojson.toGeojson = osmtogeojson;
 
 module.exports = osmtogeojson;
 
-},{"./lodash.custom.js":47,"./polygon_features.json":51,"geojson-rewind":48}],47:[function(require,module,exports){
+},{"./lodash.custom.js":48,"./polygon_features.json":52,"geojson-rewind":49}],48:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -11075,7 +11064,7 @@ module.exports = osmtogeojson;
 }.call(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 var geojsonArea = require('geojson-area');
 
 module.exports = rewind;
@@ -11126,7 +11115,7 @@ function cw(_) {
     return geojsonArea.ring(_) >= 0;
 }
 
-},{"geojson-area":49}],49:[function(require,module,exports){
+},{"geojson-area":50}],50:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports.geometry = geometry;
@@ -11192,9 +11181,9 @@ function rad(_) {
     return _ * Math.PI / 180;
 }
 
-},{"wgs84":50}],50:[function(require,module,exports){
-module.exports=require(41)
-},{}],51:[function(require,module,exports){
+},{"wgs84":51}],51:[function(require,module,exports){
+module.exports=require(42)
+},{}],52:[function(require,module,exports){
 module.exports={
     "building": true,
     "highway": {
@@ -11275,7 +11264,7 @@ module.exports={
     "area:highway": true,
     "craft": true
 }
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 module.exports = function (data) {
     var lines = data.split('\n'),
                 isNameLine = true,
@@ -11341,7 +11330,7 @@ module.exports = function (data) {
     return gj;
 };
 
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 /*
  * Given a querystring, return an object of that querystring's components.
  *
@@ -11374,14 +11363,14 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 module.exports.download = require('./src/download')
 module.exports.write = require('./src/write')
 module.exports.zip = require('./src/zip')
-},{"./src/download":99,"./src/write":107,"./src/zip":108}],55:[function(require,module,exports){
+},{"./src/download":100,"./src/write":108,"./src/zip":109}],56:[function(require,module,exports){
 module.exports.structure = require('./src/structure');
 
-},{"./src/structure":59}],56:[function(require,module,exports){
+},{"./src/structure":60}],57:[function(require,module,exports){
 var fieldSize = require('./fieldsize');
 
 var types = {
@@ -11425,7 +11414,7 @@ function bytesPer(fields) {
     return fields.reduce(function(memo, f) { return memo + f.size; }, 1);
 }
 
-},{"./fieldsize":57}],57:[function(require,module,exports){
+},{"./fieldsize":58}],58:[function(require,module,exports){
 module.exports = {
     // string
     C: 254,
@@ -11443,7 +11432,7 @@ module.exports = {
     B: 8,
 };
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports.lpad = function lpad(str, len, char) {
     while (str.length < len) { str = char + str; } return str;
 };
@@ -11459,7 +11448,7 @@ module.exports.writeField = function writeField(view, fieldLength, str, offset) 
     return offset;
 };
 
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 var fieldSize = require('./fieldsize'),
     lib = require('./lib'),
     fields = require('./fields');
@@ -11556,7 +11545,7 @@ module.exports = function structure(data) {
     return view;
 };
 
-},{"./fields":56,"./fieldsize":57,"./lib":58}],60:[function(require,module,exports){
+},{"./fields":57,"./fieldsize":58,"./lib":59}],61:[function(require,module,exports){
 'use strict';
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -11628,7 +11617,7 @@ exports.decode = function(input, utf8) {
 
 };
 
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 'use strict';
 function CompressedObject() {
     this.compressedSize = 0;
@@ -11658,11 +11647,11 @@ CompressedObject.prototype = {
 };
 module.exports = CompressedObject;
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 exports.STORE = {
     magic: "\x00\x00",
-    compress: function(content) {
+    compress: function(content, compressionOptions) {
         return content; // no compression
     },
     uncompress: function(content) {
@@ -11673,7 +11662,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":67}],63:[function(require,module,exports){
+},{"./flate":68}],64:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -11777,7 +11766,7 @@ module.exports = function crc32(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":80}],64:[function(require,module,exports){
+},{"./utils":81}],65:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -11886,7 +11875,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"./utils":80}],65:[function(require,module,exports){
+},{"./utils":81}],66:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -11894,9 +11883,12 @@ exports.dir = false;
 exports.createFolders = false;
 exports.date = null;
 exports.compression = null;
+exports.compressionOptions = null;
 exports.comment = null;
+exports.unixPermissions = null;
+exports.dosPermissions = null;
 
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -12003,7 +11995,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./utils":80}],67:[function(require,module,exports){
+},{"./utils":81}],68:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -12012,14 +12004,16 @@ exports.uncompressInputType = USE_TYPEDARRAY ? "uint8array" : "array";
 exports.compressInputType = USE_TYPEDARRAY ? "uint8array" : "array";
 
 exports.magic = "\x08\x00";
-exports.compress = function(input) {
-    return pako.deflateRaw(input);
+exports.compress = function(input, compressionOptions) {
+    return pako.deflateRaw(input, {
+        level : compressionOptions.level || -1 // default compression
+    });
 };
 exports.uncompress =  function(input) {
     return pako.inflateRaw(input);
 };
 
-},{"pako":83}],68:[function(require,module,exports){
+},{"pako":84}],69:[function(require,module,exports){
 'use strict';
 
 var base64 = require('./base64');
@@ -12045,7 +12039,7 @@ Usage:
 function JSZip(data, options) {
     // if this constructor is used without `new`, it adds `new` before itself:
     if(!(this instanceof JSZip)) return new JSZip(data, options);
-    
+
     // object containing the files :
     // {
     //   "folder/" : {...},
@@ -12100,7 +12094,7 @@ JSZip.base64 = {
 JSZip.compressions = require('./compressions');
 module.exports = JSZip;
 
-},{"./base64":60,"./compressions":62,"./defaults":65,"./deprecatedPublicUtils":66,"./load":69,"./object":72,"./support":76}],69:[function(require,module,exports){
+},{"./base64":61,"./compressions":63,"./defaults":66,"./deprecatedPublicUtils":67,"./load":70,"./object":73,"./support":77}],70:[function(require,module,exports){
 'use strict';
 var base64 = require('./base64');
 var ZipEntries = require('./zipEntries');
@@ -12121,6 +12115,8 @@ module.exports = function(data, options) {
             date: input.date,
             dir: input.dir,
             comment : input.fileComment.length ? input.fileComment : null,
+            unixPermissions : input.unixPermissions,
+            dosPermissions : input.dosPermissions,
             createFolders: options.createFolders
         });
     }
@@ -12131,17 +12127,18 @@ module.exports = function(data, options) {
     return this;
 };
 
-},{"./base64":60,"./zipEntries":81}],70:[function(require,module,exports){
+},{"./base64":61,"./zipEntries":82}],71:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 module.exports = function(data, encoding){
-    return new Buffer(data, encoding);   
+    return new Buffer(data, encoding);
 };
 module.exports.test = function(b){
     return Buffer.isBuffer(b);
 };
+
 }).call(this,require("buffer").Buffer)
-},{"buffer":5}],71:[function(require,module,exports){
+},{"buffer":5}],72:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./uint8ArrayReader');
 
@@ -12163,7 +12160,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"./uint8ArrayReader":77}],72:[function(require,module,exports){
+},{"./uint8ArrayReader":78}],73:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var utils = require('./utils');
@@ -12265,6 +12262,8 @@ var ZipObject = function(name, data, options) {
     this.dir = options.dir;
     this.date = options.date;
     this.comment = options.comment;
+    this.unixPermissions = options.unixPermissions;
+    this.dosPermissions = options.dosPermissions;
 
     this._data = data;
     this.options = options;
@@ -12389,6 +12388,23 @@ var fileAdd = function(name, data, o) {
 
     o = prepareFileAttrs(o);
 
+    if (typeof o.unixPermissions === "string") {
+        o.unixPermissions = parseInt(o.unixPermissions, 8);
+    }
+
+    // UNX_IFDIR  0040000 see zipinfo.c
+    if (o.unixPermissions && (o.unixPermissions & 0x4000)) {
+        o.dir = true;
+    }
+    // Bit 4    Directory
+    if (o.dosPermissions && (o.dosPermissions & 0x0010)) {
+        o.dir = true;
+    }
+
+    if (o.dir) {
+        name = forceTrailingSlash(name);
+    }
+
     if (o.createFolders && (parent = parentFolder(name))) {
         folderAdd.call(this, parent, true);
     }
@@ -12397,6 +12413,7 @@ var fileAdd = function(name, data, o) {
         o.base64 = false;
         o.binary = false;
         data = null;
+        dataType = null;
     }
     else if (dataType === "string") {
         if (o.binary && !o.base64) {
@@ -12441,21 +12458,32 @@ var parentFolder = function (path) {
     return (lastSlash > 0) ? path.substring(0, lastSlash) : "";
 };
 
+
+/**
+ * Returns the path with a slash at the end.
+ * @private
+ * @param {String} path the path to check.
+ * @return {String} the path with a trailing slash.
+ */
+var forceTrailingSlash = function(path) {
+    // Check the name ends with a /
+    if (path.slice(-1) != "/") {
+        path += "/"; // IE doesn't like substr(-1)
+    }
+    return path;
+};
 /**
  * Add a (sub) folder in the current folder.
  * @private
  * @param {string} name the folder's name
- * @param {boolean=} [createFolders] If true, automatically create sub 
+ * @param {boolean=} [createFolders] If true, automatically create sub
  *  folders. Defaults to false.
  * @return {Object} the new folder.
  */
 var folderAdd = function(name, createFolders) {
-    // Check the name ends with a /
-    if (name.slice(-1) != "/") {
-        name += "/"; // IE doesn't like substr(-1)
-    }
-
     createFolders = (typeof createFolders !== 'undefined') ? createFolders : false;
+
+    name = forceTrailingSlash(name);
 
     // Does this folder already exist?
     if (!this.files[name]) {
@@ -12471,9 +12499,10 @@ var folderAdd = function(name, createFolders) {
  * Generate a JSZip.CompressedObject for a given zipOject.
  * @param {ZipObject} file the object to read.
  * @param {JSZip.compression} compression the compression to use.
+ * @param {Object} compressionOptions the options to use when compressing.
  * @return {JSZip.CompressedObject} the compressed result.
  */
-var generateCompressedObjectFrom = function(file, compression) {
+var generateCompressedObjectFrom = function(file, compression, compressionOptions) {
     var result = new CompressedObject(),
         content;
 
@@ -12493,7 +12522,7 @@ var generateCompressedObjectFrom = function(file, compression) {
         else {
             content = file._data.getContent();
             // need to decompress / recompress
-            result.compressedContent = compression.compress(utils.transformTo(compression.compressInputType, content));
+            result.compressedContent = compression.compress(utils.transformTo(compression.compressInputType, content), compressionOptions);
         }
     }
     else {
@@ -12505,7 +12534,7 @@ var generateCompressedObjectFrom = function(file, compression) {
         }
         result.uncompressedSize = content.length;
         result.crc32 = crc32(content);
-        result.compressedContent = compression.compress(utils.transformTo(compression.compressInputType, content));
+        result.compressedContent = compression.compress(utils.transformTo(compression.compressInputType, content), compressionOptions);
     }
 
     result.compressedSize = result.compressedContent.length;
@@ -12514,15 +12543,67 @@ var generateCompressedObjectFrom = function(file, compression) {
     return result;
 };
 
+
+
+
+/**
+ * Generate the UNIX part of the external file attributes.
+ * @param {Object} unixPermissions the unix permissions or null.
+ * @param {Boolean} isDir true if the entry is a directory, false otherwise.
+ * @return {Number} a 32 bit integer.
+ *
+ * adapted from http://unix.stackexchange.com/questions/14705/the-zip-formats-external-file-attribute :
+ *
+ * TTTTsstrwxrwxrwx0000000000ADVSHR
+ * ^^^^____________________________ file type, see zipinfo.c (UNX_*)
+ *     ^^^_________________________ setuid, setgid, sticky
+ *        ^^^^^^^^^________________ permissions
+ *                 ^^^^^^^^^^______ not used ?
+ *                           ^^^^^^ DOS attribute bits : Archive, Directory, Volume label, System file, Hidden, Read only
+ */
+var generateUnixExternalFileAttr = function (unixPermissions, isDir) {
+
+    var result = unixPermissions;
+    if (!unixPermissions) {
+        // I can't use octal values in strict mode, hence the hexa.
+        //  040775 => 0x41fd
+        // 0100664 => 0x81b4
+        result = isDir ? 0x41fd : 0x81b4;
+    }
+
+    return (result & 0xFFFF) << 16;
+};
+
+/**
+ * Generate the DOS part of the external file attributes.
+ * @param {Object} dosPermissions the dos permissions or null.
+ * @param {Boolean} isDir true if the entry is a directory, false otherwise.
+ * @return {Number} a 32 bit integer.
+ *
+ * Bit 0     Read-Only
+ * Bit 1     Hidden
+ * Bit 2     System
+ * Bit 3     Volume Label
+ * Bit 4     Directory
+ * Bit 5     Archive
+ */
+var generateDosExternalFileAttr = function (dosPermissions, isDir) {
+
+    // the dir flag is already set for compatibility
+
+    return (dosPermissions || 0)  & 0x3F;
+};
+
 /**
  * Generate the various parts used in the construction of the final zip file.
  * @param {string} name the file name.
  * @param {ZipObject} file the file content.
  * @param {JSZip.CompressedObject} compressedObject the compressed object.
  * @param {number} offset the current offset from the start of the zip file.
+ * @param {String} platform let's pretend we are this platform (change platform dependents fields)
  * @return {object} the zip parts.
  */
-var generateZipParts = function(name, file, compressedObject, offset) {
+var generateZipParts = function(name, file, compressedObject, offset, platform) {
     var data = compressedObject.compressedContent,
         utfEncodedFileName = utils.transformTo("string", utf8.utf8encode(file.name)),
         comment = file.comment || "",
@@ -12550,6 +12631,20 @@ var generateZipParts = function(name, file, compressedObject, offset) {
         date = file.date;
     } else {
         date = o.date;
+    }
+
+    var extFileAttr = 0;
+    var versionMadeBy = 0;
+    if (dir) {
+        // dos or unix, we set the dos dir flag
+        extFileAttr |= 0x00010;
+    }
+    if(platform === "UNIX") {
+        versionMadeBy = 0x031E; // UNIX, version 3.0
+        extFileAttr |= generateUnixExternalFileAttr(file.unixPermissions, dir);
+    } else { // DOS or other, fallback to DOS
+        versionMadeBy = 0x0014; // DOS, version 2.0
+        extFileAttr |= generateDosExternalFileAttr(file.dosPermissions, dir);
     }
 
     // date
@@ -12644,7 +12739,7 @@ var generateZipParts = function(name, file, compressedObject, offset) {
 
     var dirRecord = signature.CENTRAL_FILE_HEADER +
     // version made by (00: DOS)
-    "\x14\x00" +
+    decToHex(versionMadeBy, 2) +
     // file header (common to file and central directory)
     header +
     // file comment length
@@ -12654,7 +12749,7 @@ var generateZipParts = function(name, file, compressedObject, offset) {
     // internal file attributes TODO
     "\x00\x00" +
     // external file attributes
-    (dir === true ? "\x10\x00\x00\x00" : "\x00\x00\x00\x00") +
+    decToHex(extFileAttr, 4) +
     // relative offset of local header
     decToHex(offset, 4) +
     // file name
@@ -12812,11 +12907,27 @@ var out = {
         options = extend(options || {}, {
             base64: true,
             compression: "STORE",
+            compressionOptions : null,
             type: "base64",
-            comment: null
+            platform: "DOS",
+            comment: null,
+            mimeType: 'application/zip'
         });
 
         utils.checkSupport(options.type);
+
+        // accept nodejs `process.platform`
+        if(
+          options.platform === 'darwin' ||
+          options.platform === 'freebsd' ||
+          options.platform === 'linux' ||
+          options.platform === 'sunos'
+        ) {
+          options.platform = "UNIX";
+        }
+        if (options.platform === 'win32') {
+          options.platform = "DOS";
+        }
 
         var zipData = [],
             localDirLength = 0,
@@ -12836,10 +12947,11 @@ var out = {
             if (!compression) {
                 throw new Error(compressionName + " is not a valid compression method !");
             }
+            var compressionOptions = file.options.compressionOptions || options.compressionOptions || {};
 
-            var compressedObject = generateCompressedObjectFrom.call(this, file, compression);
+            var compressedObject = generateCompressedObjectFrom.call(this, file, compression, compressionOptions);
 
-            var zipPart = generateZipParts.call(this, name, file, compressedObject, localDirLength);
+            var zipPart = generateZipParts.call(this, name, file, compressedObject, localDirLength, options.platform);
             localDirLength += zipPart.fileRecord.length + compressedObject.compressedSize;
             centralDirLength += zipPart.dirRecord.length;
             zipData.push(zipPart);
@@ -12897,14 +13009,14 @@ var out = {
             case "nodebuffer" :
                return utils.transformTo(options.type.toLowerCase(), zip);
             case "blob" :
-               return utils.arrayBuffer2Blob(utils.transformTo("arraybuffer", zip));
+               return utils.arrayBuffer2Blob(utils.transformTo("arraybuffer", zip), options.mimeType);
             // case "zip is a string"
             case "base64" :
                return (options.base64) ? base64.encode(zip) : zip;
             default : // case "string" :
                return zip;
          }
-      
+
     },
 
     /**
@@ -12933,7 +13045,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./base64":60,"./compressedObject":61,"./compressions":62,"./crc32":63,"./defaults":65,"./nodeBuffer":70,"./signature":73,"./stringWriter":75,"./support":76,"./uint8ArrayWriter":78,"./utf8":79,"./utils":80}],73:[function(require,module,exports){
+},{"./base64":61,"./compressedObject":62,"./compressions":63,"./crc32":64,"./defaults":66,"./nodeBuffer":71,"./signature":74,"./stringWriter":76,"./support":77,"./uint8ArrayWriter":79,"./utf8":80,"./utils":81}],74:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -12942,7 +13054,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],74:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 var utils = require('./utils');
@@ -12980,7 +13092,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"./dataReader":64,"./utils":80}],75:[function(require,module,exports){
+},{"./dataReader":65,"./utils":81}],76:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -13012,7 +13124,7 @@ StringWriter.prototype = {
 
 module.exports = StringWriter;
 
-},{"./utils":80}],76:[function(require,module,exports){
+},{"./utils":81}],77:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 exports.base64 = true;
@@ -13050,7 +13162,7 @@ else {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":5}],77:[function(require,module,exports){
+},{"buffer":5}],78:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 
@@ -13099,7 +13211,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"./dataReader":64}],78:[function(require,module,exports){
+},{"./dataReader":65}],79:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -13137,7 +13249,7 @@ Uint8ArrayWriter.prototype = {
 
 module.exports = Uint8ArrayWriter;
 
-},{"./utils":80}],79:[function(require,module,exports){
+},{"./utils":81}],80:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -13346,7 +13458,7 @@ exports.utf8decode = function utf8decode(buf) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./nodeBuffer":70,"./support":76,"./utils":80}],80:[function(require,module,exports){
+},{"./nodeBuffer":71,"./support":77,"./utils":81}],81:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var compressions = require('./compressions');
@@ -13363,13 +13475,14 @@ exports.string2binary = function(str) {
     }
     return result;
 };
-exports.arrayBuffer2Blob = function(buffer) {
+exports.arrayBuffer2Blob = function(buffer, mimeType) {
     exports.checkSupport("blob");
+	mimeType = mimeType || 'application/zip';
 
     try {
         // Blob constructor
         return new Blob([buffer], {
-            type: "application/zip"
+            type: mimeType
         });
     }
     catch (e) {
@@ -13379,7 +13492,7 @@ exports.arrayBuffer2Blob = function(buffer) {
             var Builder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
             var builder = new Builder();
             builder.append(buffer);
-            return builder.getBlob('application/zip');
+            return builder.getBlob(mimeType);
         }
         catch (e) {
 
@@ -13673,7 +13786,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./compressions":62,"./nodeBuffer":70,"./support":76}],81:[function(require,module,exports){
+},{"./compressions":63,"./nodeBuffer":71,"./support":77}],82:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var NodeBufferReader = require('./nodeBufferReader');
@@ -13785,6 +13898,7 @@ ZipEntries.prototype = {
             this.checkSignature(sig.LOCAL_FILE_HEADER);
             file.readLocalPart(this.reader);
             file.handleUTF8();
+            file.processAttributes();
         }
     },
     /**
@@ -13808,7 +13922,24 @@ ZipEntries.prototype = {
     readEndOfCentral: function() {
         var offset = this.reader.lastIndexOfSignature(sig.CENTRAL_DIRECTORY_END);
         if (offset === -1) {
-            throw new Error("Corrupted zip : can't find end of central directory");
+            // Check if the content is a truncated zip or complete garbage.
+            // A "LOCAL_FILE_HEADER" is not required at the beginning (auto
+            // extractible zip for example) but it can give a good hint.
+            // If an ajax request was used without responseType, we will also
+            // get unreadable data.
+            var isGarbage = true;
+            try {
+                this.reader.setIndex(0);
+                this.checkSignature(sig.LOCAL_FILE_HEADER);
+                isGarbage = false;
+            } catch (e) {}
+
+            if (isGarbage) {
+                throw new Error("Can't find end of central directory : is this a zip file ? " +
+                                "If it is, see http://stuk.github.io/jszip/documentation/howto/read_zip.html");
+            } else {
+                throw new Error("Corrupted zip : can't find end of central directory");
+            }
         }
         this.reader.setIndex(offset);
         this.checkSignature(sig.CENTRAL_DIRECTORY_END);
@@ -13878,12 +14009,16 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./nodeBufferReader":71,"./object":72,"./signature":73,"./stringReader":74,"./support":76,"./uint8ArrayReader":77,"./utils":80,"./zipEntry":82}],82:[function(require,module,exports){
+},{"./nodeBufferReader":72,"./object":73,"./signature":74,"./stringReader":75,"./support":77,"./uint8ArrayReader":78,"./utils":81,"./zipEntry":83}],83:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var utils = require('./utils');
 var CompressedObject = require('./compressedObject');
 var jszipProto = require('./object');
+
+var MADE_BY_DOS = 0x00;
+var MADE_BY_UNIX = 0x03;
+
 // class ZipEntry {{{
 /**
  * An entry in the zip file.
@@ -14010,7 +14145,7 @@ ZipEntry.prototype = {
      * @param {DataReader} reader the reader to use.
      */
     readCentralPart: function(reader) {
-        this.versionMadeBy = reader.readString(2);
+        this.versionMadeBy = reader.readInt(2);
         this.versionNeeded = reader.readInt(2);
         this.bitFlag = reader.readInt(2);
         this.compressionMethod = reader.readString(2);
@@ -14034,10 +14169,37 @@ ZipEntry.prototype = {
         this.readExtraFields(reader);
         this.parseZIP64ExtraField(reader);
         this.fileComment = reader.readString(this.fileCommentLength);
-
-        // warning, this is true only for zip with madeBy == DOS (plateform dependent feature)
-        this.dir = this.externalFileAttributes & 0x00000010 ? true : false;
     },
+
+    /**
+     * Parse the external file attributes and get the unix/dos permissions.
+     */
+    processAttributes: function () {
+        this.unixPermissions = null;
+        this.dosPermissions = null;
+        var madeBy = this.versionMadeBy >> 8;
+
+        // Check if we have the DOS directory flag set.
+        // We look for it in the DOS and UNIX permissions
+        // but some unknown platform could set it as a compatibility flag.
+        this.dir = this.externalFileAttributes & 0x0010 ? true : false;
+
+        if(madeBy === MADE_BY_DOS) {
+            // first 6 bits (0 to 5)
+            this.dosPermissions = this.externalFileAttributes & 0x3F;
+        }
+
+        if(madeBy === MADE_BY_UNIX) {
+            this.unixPermissions = (this.externalFileAttributes >> 16) & 0xFFFF;
+            // the octal permissions are in (this.unixPermissions & 0x01FF).toString(8);
+        }
+
+        // fail safe : if the name ends with a / it probably means a folder
+        if (!this.dir && this.fileName.slice(-1) === '/') {
+            this.dir = true;
+        }
+    },
+
     /**
      * Parse the ZIP64 extra field and merge the info in the current ZipEntry.
      * @param {DataReader} reader the reader to use.
@@ -14159,7 +14321,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":61,"./object":72,"./stringReader":74,"./utils":80}],83:[function(require,module,exports){
+},{"./compressedObject":62,"./object":73,"./stringReader":75,"./utils":81}],84:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -14175,7 +14337,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":84,"./lib/inflate":85,"./lib/utils/common":86,"./lib/zlib/constants":89}],84:[function(require,module,exports){
+},{"./lib/deflate":85,"./lib/inflate":86,"./lib/utils/common":87,"./lib/zlib/constants":90}],85:[function(require,module,exports){
 'use strict';
 
 
@@ -14553,7 +14715,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":86,"./utils/strings":87,"./zlib/deflate.js":91,"./zlib/messages":96,"./zlib/zstream":98}],85:[function(require,module,exports){
+},{"./utils/common":87,"./utils/strings":88,"./zlib/deflate.js":92,"./zlib/messages":97,"./zlib/zstream":99}],86:[function(require,module,exports){
 'use strict';
 
 
@@ -14934,7 +15096,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":86,"./utils/strings":87,"./zlib/constants":89,"./zlib/gzheader":92,"./zlib/inflate.js":94,"./zlib/messages":96,"./zlib/zstream":98}],86:[function(require,module,exports){
+},{"./utils/common":87,"./utils/strings":88,"./zlib/constants":90,"./zlib/gzheader":93,"./zlib/inflate.js":95,"./zlib/messages":97,"./zlib/zstream":99}],87:[function(require,module,exports){
 'use strict';
 
 
@@ -15038,7 +15200,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -15225,7 +15387,7 @@ exports.utf8border = function(buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":86}],88:[function(require,module,exports){
+},{"./common":87}],89:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -15259,7 +15421,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],89:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 module.exports = {
 
   /* Allowed flush values; see deflate() and inflate() below for details */
@@ -15308,7 +15470,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],90:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -15351,7 +15513,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],91:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -17118,7 +17280,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":86,"./adler32":88,"./crc32":90,"./messages":96,"./trees":97}],92:[function(require,module,exports){
+},{"../utils/common":87,"./adler32":89,"./crc32":91,"./messages":97,"./trees":98}],93:[function(require,module,exports){
 'use strict';
 
 
@@ -17160,7 +17322,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],93:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -17487,7 +17649,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],94:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 'use strict';
 
 
@@ -18992,7 +19154,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":86,"./adler32":88,"./crc32":90,"./inffast":93,"./inftrees":95}],95:[function(require,module,exports){
+},{"../utils/common":87,"./adler32":89,"./crc32":91,"./inffast":94,"./inftrees":96}],96:[function(require,module,exports){
 'use strict';
 
 
@@ -19321,7 +19483,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":86}],96:[function(require,module,exports){
+},{"../utils/common":87}],97:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -19336,7 +19498,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],97:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 'use strict';
 
 
@@ -20537,7 +20699,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":86}],98:[function(require,module,exports){
+},{"../utils/common":87}],99:[function(require,module,exports){
 'use strict';
 
 
@@ -20568,15 +20730,15 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],99:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 var zip = require('./zip');
 
-module.exports = function(gj) {
-    var content = zip(gj);
+module.exports = function(gj, options) {
+    var content = zip(gj, options);
     location.href = 'data:application/zip;base64,' + content;
 };
 
-},{"./zip":108}],100:[function(require,module,exports){
+},{"./zip":109}],101:[function(require,module,exports){
 module.exports.enlarge = function enlargeExtent(extent, pt) {
     if (pt[0] < extent.xmin) extent.xmin = pt[0];
     if (pt[0] > extent.xmax) extent.xmax = pt[0];
@@ -20602,7 +20764,7 @@ module.exports.blank = function() {
     };
 };
 
-},{}],101:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 var types = require('./types').jstypes;
 
 module.exports.geojson = geojson;
@@ -20632,7 +20794,7 @@ function obj(_) {
     return o;
 }
 
-},{"./types":106}],102:[function(require,module,exports){
+},{"./types":107}],103:[function(require,module,exports){
 module.exports.point = justType('Point', 'POINT');
 module.exports.line = justType('LineString', 'POLYLINE');
 module.exports.polygon = justType('Polygon', 'POLYGON');
@@ -20666,7 +20828,7 @@ function isType(t) {
     return function(f) { return f.geometry.type === t; };
 }
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(coordinates, extent, shpView, shxView) {
@@ -20713,7 +20875,7 @@ module.exports.shpLength = function(coordinates) {
     return coordinates.length * 28;
 };
 
-},{"./extent":100}],104:[function(require,module,exports){
+},{"./extent":101}],105:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
@@ -20738,7 +20900,7 @@ module.exports.write = function writePoints(geometries, extent, shpView, shxView
         shxView.setInt32(shxI + 4, contentLength / 2); // offset length
 
         shxI += 8;
-        shxOffset += contentLength;
+        shxOffset += contentLength + 8;
 
         shpView.setInt32(shpI, i + 1); // record number
         shpView.setInt32(shpI + 4, contentLength / 2); // length
@@ -20756,7 +20918,7 @@ module.exports.write = function writePoints(geometries, extent, shpView, shxView
             shpView.setFloat64(shpI + 56 + (i * 16) + 8, coords[1], true); // Y
         });
 
-        shpI += contentLength;
+        shpI += contentLength + 8;
     }
 };
 
@@ -20793,10 +20955,10 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":100}],105:[function(require,module,exports){
+},{"./extent":101}],106:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
-},{}],106:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 module.exports.geometries = {
     NULL: 0,
     POINT: 1,
@@ -20814,7 +20976,7 @@ module.exports.geometries = {
     MULTIPATCH: 31,
 };
 
-},{}],107:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 var types = require('./types'),
     dbf = require('dbf'),
     prj = require('./prj'),
@@ -20883,15 +21045,16 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":100,"./fields":101,"./points":103,"./poly":104,"./prj":105,"./types":106,"assert":3,"dbf":55}],108:[function(require,module,exports){
+},{"./extent":101,"./fields":102,"./points":104,"./poly":105,"./prj":106,"./types":107,"assert":3,"dbf":56}],109:[function(require,module,exports){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
     JSZip = require('jszip');
 
-module.exports = function(gj) {
+module.exports = function(gj, options) {
+    
     var zip = new JSZip(),
-        layers = zip.folder('layers');
+        layers = zip.folder(options && options.folder ? options.folder : 'layers');
 
     [geojson.point(gj), geojson.line(gj), geojson.polygon(gj)]
         .forEach(function(l) {
@@ -20904,10 +21067,11 @@ module.exports = function(gj) {
                 // geometries
                 l.geometries,
                 function(err, files) {
-                    layers.file(l.type + '.shp', files.shp.buffer, { binary: true });
-                    layers.file(l.type + '.shx', files.shx.buffer, { binary: true });
-                    layers.file(l.type + '.dbf', files.dbf.buffer, { binary: true });
-                    layers.file(l.type + '.prj', prj);
+                    var fileName = options && options.types[l.type.toLowerCase()] ? options.types[l.type.toLowerCase()] : l.type;
+                    layers.file(fileName + '.shp', files.shp.buffer, { binary: true });
+                    layers.file(fileName + '.shx', files.shx.buffer, { binary: true });
+                    layers.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
+                    layers.file(fileName + '.prj', prj);
                 });
         }
     });
@@ -20915,7 +21079,7 @@ module.exports = function(gj) {
     return zip.generate({compression:'STORE'});
 };
 
-},{"./geojson":102,"./prj":105,"./write":107,"jszip":68}],109:[function(require,module,exports){
+},{"./geojson":103,"./prj":106,"./write":108,"jszip":69}],110:[function(require,module,exports){
 (function (global){
 ;(function(win){
 	var store = {},
@@ -21083,7 +21247,7 @@ module.exports = function(gj) {
 })(this.window || global);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],110:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 (function (process){
 toGeoJSON = (function() {
     'use strict';
@@ -21322,7 +21486,7 @@ toGeoJSON = (function() {
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
 }).call(this,require("FWaASH"))
-},{"FWaASH":11,"xmldom":4}],111:[function(require,module,exports){
+},{"FWaASH":11,"xmldom":4}],112:[function(require,module,exports){
 var strxml = require('strxml'),
     tag = strxml.tag,
     encode = strxml.encode;
@@ -21519,7 +21683,7 @@ function pairs(_) {
     return o;
 }
 
-},{"strxml":112}],112:[function(require,module,exports){
+},{"strxml":113}],113:[function(require,module,exports){
 module.exports.attr = attr;
 module.exports.tagClose = tagClose;
 module.exports.tag = tag;
@@ -21578,7 +21742,7 @@ topojson.bind = require("./lib/topojson/bind");
 topojson.stitch = require("./lib/topojson/stitch");
 topojson.scale = require("./lib/topojson/scale");
 
-},{"./lib/topojson/bind":115,"./lib/topojson/clockwise":118,"./lib/topojson/filter":122,"./lib/topojson/prune":126,"./lib/topojson/scale":128,"./lib/topojson/simplify":129,"./lib/topojson/stitch":131,"./lib/topojson/topology":132,"./topojson":144}],115:[function(require,module,exports){
+},{"./lib/topojson/bind":116,"./lib/topojson/clockwise":119,"./lib/topojson/filter":123,"./lib/topojson/prune":127,"./lib/topojson/scale":129,"./lib/topojson/simplify":130,"./lib/topojson/stitch":132,"./lib/topojson/topology":133,"./topojson":145}],116:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -21608,7 +21772,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"BOmyIj","./type":143}],116:[function(require,module,exports){
+},{"../../":"BOmyIj","./type":144}],117:[function(require,module,exports){
 
 // Computes the bounding box of the specified hash of GeoJSON objects.
 module.exports = function(objects) {
@@ -21655,7 +21819,7 @@ module.exports = function(objects) {
   return [x0, y0, x1, y1];
 };
 
-},{}],117:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -21695,7 +21859,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],118:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -21786,7 +21950,7 @@ function clockwisePolygonSystem(ringArea, reverse) {
 
 function noop() {}
 
-},{"../../":"BOmyIj","./coordinate-systems":120,"./type":143}],119:[function(require,module,exports){
+},{"../../":"BOmyIj","./coordinate-systems":121,"./type":144}],120:[function(require,module,exports){
 // Given a hash of GeoJSON objects and an id function, invokes the id function
 // to compute a new id for each object that is a feature. The function is passed
 // the feature and is expected to return the new feature id, or null if the
@@ -21816,13 +21980,13 @@ module.exports = function(objects, id) {
   return objects;
 };
 
-},{}],120:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":117,"./spherical":130}],121:[function(require,module,exports){
+},{"./cartesian":118,"./spherical":131}],122:[function(require,module,exports){
 // Given a TopoJSON topology in absolute (quantized) coordinates,
 // converts to fixed-point delta encoding.
 // This is a destructive operation that modifies the given topology!
@@ -21853,7 +22017,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{}],122:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -21982,7 +22146,7 @@ function preserveNone() {
   return false;
 }
 
-},{"../../":"BOmyIj","./clockwise":118,"./coordinate-systems":120,"./prune":126,"./type":143}],123:[function(require,module,exports){
+},{"../../":"BOmyIj","./clockwise":119,"./coordinate-systems":121,"./prune":127,"./type":144}],124:[function(require,module,exports){
 // Given a hash of GeoJSON objects, replaces Features with geometry objects.
 // This is a destructive operation that modifies the input objects!
 module.exports = function(objects) {
@@ -22101,7 +22265,7 @@ module.exports = function(objects) {
   return objects;
 };
 
-},{}],124:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(topology, Q0, Q1) {
@@ -22149,7 +22313,7 @@ module.exports = function(topology, Q0, Q1) {
   return topology;
 };
 
-},{"./quantize":127}],125:[function(require,module,exports){
+},{"./quantize":128}],126:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(objects, bbox, Q0, Q1) {
@@ -22208,7 +22372,7 @@ module.exports = function(objects, bbox, Q0, Q1) {
   return q.transform;
 };
 
-},{"./quantize":127}],126:[function(require,module,exports){
+},{"./quantize":128}],127:[function(require,module,exports){
 module.exports = function(topology, options) {
   var verbose = false,
       objects = topology.objects,
@@ -22265,7 +22429,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{}],127:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 module.exports = function(dx, dy, kx, ky) {
 
   function quantizePoint(coordinates) {
@@ -22309,7 +22473,7 @@ module.exports = function(dx, dy, kx, ky) {
   };
 };
 
-},{}],128:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(topology, options) {
@@ -22389,7 +22553,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":143}],129:[function(require,module,exports){
+},{"./type":144}],130:[function(require,module,exports){
 var topojson = require("../../"),
     systems = require("./coordinate-systems");
 
@@ -22498,7 +22662,7 @@ module.exports = function(topology, options) {
   return topology;
 };
 
-},{"../../":"BOmyIj","./coordinate-systems":120}],130:[function(require,module,exports){
+},{"../../":"BOmyIj","./coordinate-systems":121}],131:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -22579,7 +22743,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],131:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, transform) {
@@ -22762,7 +22926,7 @@ module.exports = function(objects, transform) {
   }
 };
 
-},{"./type":143}],132:[function(require,module,exports){
+},{"./type":144}],133:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch"),
     systems = require("./coordinate-systems"),
@@ -22875,7 +23039,7 @@ module.exports = function(objects, options) {
   return topology;
 };
 
-},{"./bounds":116,"./compute-id":119,"./coordinate-systems":120,"./delta":121,"./geomify":123,"./post-quantize":124,"./pre-quantize":125,"./stitch":131,"./topology/index":138,"./transform-properties":142,"./type":143}],133:[function(require,module,exports){
+},{"./bounds":117,"./compute-id":120,"./coordinate-systems":121,"./delta":122,"./geomify":124,"./post-quantize":125,"./pre-quantize":126,"./stitch":132,"./topology/index":139,"./transform-properties":143,"./type":144}],134:[function(require,module,exports){
 var join = require("./join");
 
 // Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
@@ -22937,7 +23101,7 @@ function reverse(array, start, end) {
   }
 }
 
-},{"./join":139}],134:[function(require,module,exports){
+},{"./join":140}],135:[function(require,module,exports){
 var join = require("./join"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -23123,7 +23287,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{"./hashmap":136,"./join":139,"./point-equal":140,"./point-hash":141}],135:[function(require,module,exports){
+},{"./hashmap":137,"./join":140,"./point-equal":141,"./point-hash":142}],136:[function(require,module,exports){
 // Extracts the lines and rings from the specified hash of geometry objects.
 //
 // Returns an object with three properties:
@@ -23190,7 +23354,7 @@ module.exports = function(objects) {
   };
 };
 
-},{}],136:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   if (arguments.length === 3) {
     keyType = valueType = Array;
@@ -23265,7 +23429,7 @@ module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   };
 };
 
-},{}],137:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 module.exports = function(size, hash, equal, type, empty) {
   if (arguments.length === 3) {
     type = Array;
@@ -23322,7 +23486,7 @@ module.exports = function(size, hash, equal, type, empty) {
   };
 };
 
-},{}],138:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 var hashmap = require("./hashmap"),
     extract = require("./extract"),
     cut = require("./cut"),
@@ -23392,7 +23556,7 @@ function equalArc(arcA, arcB) {
   return ia === ib && ja === jb;
 }
 
-},{"./cut":133,"./dedup":134,"./extract":135,"./hashmap":136}],139:[function(require,module,exports){
+},{"./cut":134,"./dedup":135,"./extract":136,"./hashmap":137}],140:[function(require,module,exports){
 var hashset = require("./hashset"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -23507,12 +23671,12 @@ module.exports = function(topology) {
   return junctionByPoint;
 };
 
-},{"./hashmap":136,"./hashset":137,"./point-equal":140,"./point-hash":141}],140:[function(require,module,exports){
+},{"./hashmap":137,"./hashset":138,"./point-equal":141,"./point-hash":142}],141:[function(require,module,exports){
 module.exports = function(pointA, pointB) {
   return pointA[0] === pointB[0] && pointA[1] === pointB[1];
 };
 
-},{}],141:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 // TODO if quantized, use simpler Int32 hashing?
 
 var buffer = new ArrayBuffer(16),
@@ -23527,7 +23691,7 @@ module.exports = function(point) {
   return hash & 0x7fffffff;
 };
 
-},{}],142:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 // Given a hash of GeoJSON objects, transforms any properties on features using
 // the specified transform function. The function is invoked for each existing
 // property on the current feature, being passed the new properties hash, the
@@ -23572,7 +23736,7 @@ module.exports = function(objects, propertyTransform) {
   return objects;
 };
 
-},{}],143:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -23666,7 +23830,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],144:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 !function() {
   var topojson = {
     version: "1.6.8",
@@ -24200,7 +24364,7 @@ var typeObjects = {
   else this.topojson = topojson;
 }();
 
-},{}],145:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -24451,7 +24615,7 @@ function stringify(gj) {
     }
 }
 
-},{}],146:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -24470,7 +24634,7 @@ function extend() {
     return target
 }
 
-},{}],147:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 module.exports = function(hostname) {
     // Settings for geojson.io
     L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w';
@@ -24493,7 +24657,7 @@ module.exports = function(hostname) {
         };
     }
 };
-},{}],148:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 var clone = require('clone'),
     xtend = require('xtend'),
     config = require('../config.js')(location.hostname),
@@ -24784,7 +24948,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../config.js":147,"../source/gist":164,"../source/github":165,"../source/local":166,"clone":14,"xtend":146}],149:[function(require,module,exports){
+},{"../config.js":148,"../source/gist":165,"../source/github":166,"../source/local":167,"clone":14,"xtend":147}],150:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -24869,7 +25033,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/zoomextent":159,"../ui/flash":170,"qs-hash":53}],150:[function(require,module,exports){
+},{"../lib/zoomextent":160,"../ui/flash":171,"qs-hash":54}],151:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -24913,7 +25077,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":147}],151:[function(require,module,exports){
+},{"../config.js":148}],152:[function(require,module,exports){
 var qs = require('qs-hash'),
     xtend = require('xtend');
 
@@ -24980,7 +25144,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"qs-hash":53,"xtend":146}],152:[function(require,module,exports){
+},{"qs-hash":54,"xtend":147}],153:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -25068,7 +25232,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":147}],153:[function(require,module,exports){
+},{"../config.js":148}],154:[function(require,module,exports){
 var qs = require('qs-hash');
 require('leaflet-hash');
 
@@ -25107,7 +25271,7 @@ L.Hash.prototype.formatHash = function(map) {
 	return "#" + qs.qsString(query);
 };
 
-},{"leaflet-hash":44,"qs-hash":53}],154:[function(require,module,exports){
+},{"leaflet-hash":45,"qs-hash":54}],155:[function(require,module,exports){
 var escape = require('escape-html'),
     geojsonRandom = require('geojson-random'),
     geojsonExtent = require('geojson-extent'),
@@ -25150,7 +25314,7 @@ module.exports.flatten = function(context) {
     context.data.set({ map: geojsonFlatten(context.data.get('map')) });
 };
 
-},{"../lib/zoomextent":159,"escape-html":19,"geojson-extent":21,"geojson-flatten":26,"geojson-random":28}],155:[function(require,module,exports){
+},{"../lib/zoomextent":160,"escape-html":19,"geojson-extent":21,"geojson-flatten":27,"geojson-random":29}],156:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -25214,7 +25378,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],156:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     csv2geojson = require('csv2geojson'),
@@ -25396,7 +25560,7 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":15,"geojson-normalize":27,"osmtogeojson":46,"polytogeojson":52,"togeojson":110,"topojson":"BOmyIj"}],157:[function(require,module,exports){
+},{"csv2geojson":15,"geojson-normalize":28,"osmtogeojson":47,"polytogeojson":53,"togeojson":111,"topojson":"BOmyIj"}],158:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -25408,7 +25572,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],158:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -25469,13 +25633,13 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":31}],159:[function(require,module,exports){
+},{"geojsonhint":32}],160:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],160:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -25505,7 +25669,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":148,"./core/loader":149,"./core/repo":150,"./core/router":151,"./core/user":152,"./ui":167,"./ui/map":172,"store":109}],161:[function(require,module,exports){
+},{"./core/data":149,"./core/loader":150,"./core/repo":151,"./core/router":152,"./core/user":153,"./ui":168,"./ui/map":173,"store":110}],162:[function(require,module,exports){
 (function (Buffer){
 var fs = require('fs');
 var marked = require('marked');
@@ -25529,7 +25693,7 @@ module.exports = function(context) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":5,"fs":2,"marked":45}],162:[function(require,module,exports){
+},{"buffer":5,"fs":2,"marked":46}],163:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
@@ -25594,7 +25758,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":158,"../lib/zoomextent":159,"../ui/saver.js":176}],163:[function(require,module,exports){
+},{"../lib/validate":159,"../lib/zoomextent":160,"../ui/saver.js":177}],164:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -25666,7 +25830,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":157,"d3-metatable":18}],164:[function(require,module,exports){
+},{"../lib/smartzoom.js":158,"d3-metatable":18}],165:[function(require,module,exports){
 var fs = require('fs'),
     tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t', {\n    retinaVersion: 'tmcw.map-u8vb5w83',\n    detectRetina: true\n}).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
@@ -25780,7 +25944,7 @@ function loadRaw(url, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"../config.js":147,"fs":2}],165:[function(require,module,exports){
+},{"../config.js":148,"fs":2}],166:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -25912,7 +26076,7 @@ function shaUrl(parts, sha) {
         '/git/blobs/' + sha;
 }
 
-},{"../config.js":147}],166:[function(require,module,exports){
+},{"../config.js":148}],167:[function(require,module,exports){
 try {
     var fs = require('fs');
 } catch(e) { }
@@ -25935,7 +26099,7 @@ function save(context, callback) {
     });
 }
 
-},{}],167:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -26020,7 +26184,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":168,"./ui/file_bar":169,"./ui/layer_switch":171,"./ui/mode_buttons":175,"./ui/user":178}],168:[function(require,module,exports){
+},{"./ui/dnd":169,"./ui/file_bar":170,"./ui/layer_switch":172,"./ui/mode_buttons":176,"./ui/user":179}],169:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -26064,7 +26228,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":156,"../lib/zoomextent":159,"./flash.js":170}],169:[function(require,module,exports){
+},{"../lib/readfile.js":157,"../lib/zoomextent":160,"./flash.js":171}],170:[function(require,module,exports){
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     geojson2dsv = require('geojson2dsv'),
@@ -26567,7 +26731,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../config.js":147,"../lib/meta.js":154,"../lib/readfile":156,"../lib/zoomextent":159,"../ui/saver.js":176,"./flash":170,"./modal.js":174,"./share":177,"clone":14,"filesaver.js":20,"geojson-normalize":27,"geojson2dsv":29,"gist-map-browser":33,"github-file-browser":35,"shp-write":54,"tokml":111,"topojson":"BOmyIj","wellknown":145}],170:[function(require,module,exports){
+},{"../config.js":148,"../lib/meta.js":155,"../lib/readfile":157,"../lib/zoomextent":160,"../ui/saver.js":177,"./flash":171,"./modal.js":175,"./share":178,"clone":14,"filesaver.js":20,"geojson-normalize":28,"geojson2dsv":30,"gist-map-browser":34,"github-file-browser":36,"shp-write":55,"tokml":112,"topojson":"BOmyIj","wellknown":146}],171:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -26589,7 +26753,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":173}],171:[function(require,module,exports){
+},{"./message":174}],172:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -26656,7 +26820,7 @@ module.exports = function(context) {
 };
 
 
-},{}],172:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 require('qs-hash');
 require('../lib/custom_hash.js');
 
@@ -26924,7 +27088,7 @@ function bindPopup(l) {
     });
 }
 
-},{"../../data/maki.json":1,"../lib/custom_hash.js":153,"../lib/popup":155,"escape-html":19,"leaflet-geodesy":39,"qs-hash":53}],173:[function(require,module,exports){
+},{"../../data/maki.json":1,"../lib/custom_hash.js":154,"../lib/popup":156,"escape-html":19,"leaflet-geodesy":40,"qs-hash":54}],174:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -26965,7 +27129,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],174:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -27033,7 +27197,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],175:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -27085,7 +27249,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":161,"../panel/json":162,"../panel/table":163}],176:[function(require,module,exports){
+},{"../panel/help":162,"../panel/json":163,"../panel/table":164}],177:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -27153,7 +27317,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":170}],177:[function(require,module,exports){
+},{"./flash":171}],178:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -27210,7 +27374,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":164,"./modal":174}],178:[function(require,module,exports){
+},{"../source/gist":165,"./modal":175}],179:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};
@@ -27261,4 +27425,4 @@ module.exports = function(context) {
     };
 };
 
-},{"../config.js":147}]},{},[160])
+},{"../config.js":148}]},{},[161])
