@@ -23,7 +23,7 @@ module.exports = function(context, readonly) {
                 attributionControl: false
             })
             .setView([20, 0], 2)
-            .addControl(L.mapbox.geocoderControl('mapbox.places-permanent', {
+            .addControl(L.mapbox.geocoderControl('mapbox.places', {
                 position: 'topright'
             }));
 
