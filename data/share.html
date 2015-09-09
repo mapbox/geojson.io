@@ -29,9 +29,9 @@
     background-color:#f7f7f7;
 }
   </style>
-  <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.js'></script>
+  <script src='//api.tiles.mapbox.com/mapbox.js/v2.1.4/mapbox.js'></script>
   <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>
-  <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />
+  <link href='//api.tiles.mapbox.com/mapbox.js/v2.1.4/mapbox.css' rel='stylesheet' />
 </head>
 <body>
 <div id='map'></div>
@@ -39,8 +39,8 @@
 var map = L.mapbox.map('map');
 
 L.mapbox.tileLayer('tmcw.map-ajwqaq7t', {
-    retinaVersion: 'tmcw.map-u8vb5w83',
-    detectRetina: true
+    detectRetina: true,
+    accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w'
 }).addTo(map);
 
 $.getJSON('map.geojson', function(geojson) {
