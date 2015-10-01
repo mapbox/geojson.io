@@ -18,10 +18,10 @@ module.exports = function(context) {
         } else {
             layers = [{
                 title: 'Mapbox',
-                layer: L.mapbox.tileLayer('tmcw.map-7s15q36b')
+                layer: L.mapbox.tileLayer('mapbox.streets')
             }, {
                 title: 'Satellite',
-                layer: L.mapbox.tileLayer('tmcw.map-j5fsp01s')
+                layer: L.mapbox.tileLayer('mapbox.satellite')
             }, {
                 title: 'OCM',
                 layer: L.tileLayer('http://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png', {
@@ -62,4 +62,3 @@ module.exports = function(context) {
 
     };
 };
-
