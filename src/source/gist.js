@@ -1,5 +1,5 @@
-var fs = require('fs'),
-    tmpl = fs.readFileSync('data/share.html', 'utf8');
+var fs = require('fs');
+var tmpl = fs.readFileSync('data/share.html', 'utf8');
 
 var config = require('../config.js')(location.hostname);
 var githubBase = config.GithubAPI ? config.GithubAPI + '/api/v3': 'https://api.github.com';
