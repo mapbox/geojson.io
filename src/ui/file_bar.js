@@ -128,7 +128,7 @@ module.exports = function fileBar(context) {
                 children: [
                     {
                         title: 'File',
-                        alt: 'GeoJSON, TopoJSON, KML, CSV, GPX and OSM XML supported',
+                        alt: 'GeoJSON, TopoJSON, GTFS, KML, CSV, GPX and OSM XML supported',
                         action: blindImport
                     }, {
                         title: 'GitHub',
@@ -164,7 +164,7 @@ module.exports = function fileBar(context) {
         } else {
             actions.unshift({
                 title: 'Open',
-                alt: 'CSV, KML, GPX, and other filetypes',
+                alt: 'CSV, GTFS, KML, GPX, and other filetypes',
                 action: blindImport
             });
         }
