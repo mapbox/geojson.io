@@ -1,5 +1,6 @@
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
+    gtfs2geojson = require('gtfs2geojson'),
     csv2geojson = require('csv2geojson'),
     osmtogeojson = require('osmtogeojson'),
     polytogeojson = require('polytogeojson'),
@@ -82,7 +83,7 @@ function readAsText(f, callback) {
 
 function readFile(f, text, callback) {
 
-    var fileType = detectType(f);
+    var fileType = detectType(f, text);
 
     if (!fileType) {
         var filename = f.name ? f.name.toLowerCase() : '',
@@ -153,6 +154,12 @@ function readFile(f, text, callback) {
                 return callback(null, result);
             }
         });
+    } else if (fileType === 'gtfs') {
+        try {
+            return callback(null, gtfs2geojson(text));
+        } catch(e) {
+            return callback({ message: 'Invalid GTFS file' });
+        }
     } else if (fileType === 'poly') {
         callback(null, polytogeojson(text));
     }
@@ -161,7 +168,7 @@ function readFile(f, text, callback) {
         return (new DOMParser()).parseFromString(x, 'text/xml');
     }
 
-    function detectType(f) {
+    function detectType(f, text) {
         var filename = f.name ? f.name.toLowerCase() : '';
         function ext(_) {
             return filename.indexOf(_) !== -1;
@@ -176,5 +183,8 @@ function readFile(f, text, callback) {
         }
         if (ext('.xml') || ext('.osm')) return 'xml';
         if (ext('.poly')) return 'poly';
+        if (text && text.indexOf('shape_id,shape_pt_lat,shape_pt_lon') != -1) {
+          return 'gtfs';
+        }
     }
 }

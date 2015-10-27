@@ -5,6 +5,7 @@
   "main": "index.html",
   "dependencies": {
     "bowser": "0.3.2",
+    "brfs": "^1.0.2",
     "clean-css": "~2.0.7",
     "clone": "0.1.16",
     "csv2geojson": "3.6.1",
@@ -21,6 +22,7 @@
     "geojsonhint": "0.3.4",
     "gist-map-browser": "0.2.0",
     "github-file-browser": "0.6.1",
+    "gtfs2geojson": "^1.0.0",
     "jsonlint": "1.6.0",
     "leaflet-draw": "0.2.3",
     "leaflet-geodesy": "0.1.1",
