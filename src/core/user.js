@@ -67,7 +67,7 @@ module.exports = function(context) {
     }
 
     if (window.location.search && window.location.search.indexOf('?code') === 0) {
-        var code = window.location.search.replace('?code=', '');
+        var code = window.location.search.replace(/\?{0,1}code=([^\#\&]+).*$/g, '$1');
         d3.select('.map').classed('loading', true);
         d3.json(config.gatekeeper_url + '/authenticate/' + code)
             .on('load', function(l) {
