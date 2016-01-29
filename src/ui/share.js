@@ -35,14 +35,6 @@ function share(context) {
                     .attr('class', 'pad2')
                     .text('Could not share: an error occurred: ' + err);
             } else {
-                var container = content.append('div')
-                    .attr('class', 'pad2');
-                var input = container.append('input')
-                    .style('width', '100%')
-                    .property('value', '<iframe frameborder="0" width="100%" height="300" ' +
-                        'src="http://bl.ocks.org/d/' + res.id + '"></iframe>');
-                container.append('p')
-                    .text('This is an iframe embed, a snippet of HTML code you can copy and paste onto a webpage to add this map.');
                 var url = container.append('input')
                     .style('width', '100%')
                     .property('value', 'http://bl.ocks.org/d/' + res.id);
