@@ -27199,6 +27199,7 @@ function share(context) {
                     .attr('class', 'pad2')
                     .text('Could not share: an error occurred: ' + err);
             } else {
+                var container = content.append('div').attr('class', 'pad2');
                 var url = container.append('input')
                     .style('width', '100%')
                     .property('value', 'http://bl.ocks.org/d/' + res.id);
