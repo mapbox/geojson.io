@@ -3,20 +3,8 @@ var gist = require('../source/gist'),
 
 module.exports = share;
 
-function facebookUrl(_) {
-    return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(_);
-}
-
-function twitterUrl(_) {
-    return 'https://twitter.com/intent/tweet?source=webclient&text=' + encodeURIComponent(_);
-}
-
-function emailUrl(_) {
-    return 'mailto:?subject=' + encodeURIComponent('My Map on geojson.io') + '&body=Here\'s the link: ' + encodeURIComponent(_);
-}
-
 function share(context) {
-    return function(selection) {
+    return function() {
         gist.saveBlocks(context.data.get('map'), function(err, res) {
             var m = modal(d3.select('div.geojsonio'));
             m.select('.m')
@@ -36,7 +24,7 @@ function share(context) {
                     .text('Could not share: an error occurred: ' + err);
             } else {
                 var container = content.append('div').attr('class', 'pad2');
-                var url = container.append('input')
+                var input = container.append('input')
                     .style('width', '100%')
                     .property('value', 'http://bl.ocks.org/d/' + res.id);
                 container.append('p')

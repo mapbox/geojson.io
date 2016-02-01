@@ -19,13 +19,13 @@ module.exports = function(context, readonly) {
 
     function map(selection) {
         context.map = L.mapbox.map(selection.node(), null, {
-                infoControl: true,
-                attributionControl: false
-            })
-            .setView([20, 0], 2)
-            .addControl(L.mapbox.geocoderControl('mapbox.places', {
-                position: 'topright'
-            }));
+            infoControl: true,
+            attributionControl: false
+        })
+        .setView([20, 0], 2)
+        .addControl(L.mapbox.geocoderControl('mapbox.places', {
+            position: 'topright'
+        }));
 
         context.map.zoomControl.setPosition('topright');
 
@@ -248,7 +248,7 @@ function bindPopup(l) {
         className: 'geojsonio-feature'
     }, l).setContent(content));
 
-    l.on('popupopen', function(e){
+    l.on('popupopen', function() {
         if (showStyle === false) {
             d3.select('#show-style').property('checked', false);
               d3.selectAll('.style-row').style('display','none');

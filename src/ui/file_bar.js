@@ -144,23 +144,25 @@ module.exports = function fileBar(context) {
                 ]
             });
             actions[1].children.unshift({
-                    title: 'GitHub',
-                    alt: 'GeoJSON files in GitHub Repositories',
-                    authenticated: true,
-                    action: clickGitHubSave
-                }, {
-                    title: 'Gist',
-                    alt: 'GeoJSON files in GitHub Gists',
-                    authenticated: true,
-                    action: clickGistSave
-                });
+                title: 'GitHub',
+                alt: 'GeoJSON files in GitHub Repositories',
+                authenticated: true,
+                action: clickGitHubSave
+            }, {
+                title: 'Gist',
+                alt: 'GeoJSON files in GitHub Gists',
+                authenticated: true,
+                action: clickGistSave
+            });
 
-            if (mapboxAPI) actions.splice(3, 0, {
+            if (mapboxAPI) {
+                actions.splice(3, 0, {
                     title: 'Share',
                     action: function() {
                         context.container.call(share(context));
                     }
                 });
+            }
         } else {
             actions.unshift({
                 title: 'Open',
@@ -279,11 +281,11 @@ module.exports = function fileBar(context) {
                     if (last.type === 'blob') {
                         githubBrowser.request('/repos/' + d[1].full_name +
                             '/git/blobs/' + last.sha, function(err, blob) {
-                                d.content = JSON.parse(atob(blob[0].content));
-                                context.data.parse(d);
-                                zoomextent(context);
-                                m.close();
-                            });
+                            d.content = JSON.parse(atob(blob[0].content));
+                            context.data.parse(d);
+                            zoomextent(context);
+                            m.close();
+                        });
                     }
                 })
                 .appendTo(
@@ -464,7 +466,6 @@ module.exports = function fileBar(context) {
     function downloadKML() {
         if (d3.event) d3.event.preventDefault();
         var content = tokml(context.data.get('map'));
-        var meta = context.data.get('meta');
         saveAs(new Blob([content], {
             type: 'text/plain;charset=utf-8'
         }), 'map.kml');
@@ -482,11 +483,9 @@ module.exports = function fileBar(context) {
 
     function downloadWKT() {
         if (d3.event) d3.event.preventDefault();
-        var contentArray = [];
         var features = context.data.get('map').features;
         if (features.length === 0) return;
         var content = features.map(wellknown.stringify).join('\n');
-        var meta = context.data.get('meta');
         saveAs(new Blob([content], {
             type: 'text/plain;charset=utf-8'
         }), 'map.wkt');

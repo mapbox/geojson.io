@@ -3,8 +3,7 @@ var clone = require('clone'),
     config = require('../config.js')(location.hostname),
     source = {
         gist: require('../source/gist'),
-        github: require('../source/github'),
-        local: require('../source/local')
+        github: require('../source/github')
     };
 
 function _getData() {
@@ -72,8 +71,8 @@ module.exports = function(context) {
                 length = keys.length;
 
             for (var i = 0; i < length; i++) {
-                key = keys[i];
-                value = props[key];
+                var key = keys[i];
+                var value = props[key];
                 feature.properties[key] = losslessNumber(value);
             }
 
@@ -153,14 +152,13 @@ module.exports = function(context) {
         }
     };
 
-    data.parse = function(d, browser) {
+    data.parse = function(d) {
         var endpoint = config.GithubAPI || 'https://github.com/';
         var login,
             repo,
             branch,
             path,
-            chunked,
-            file;
+            chunked;
 
         if (d.files) d.type = 'gist';
         var type = d.length ? d[d.length - 1].type : d.type;
@@ -169,13 +167,6 @@ module.exports = function(context) {
             case 'commit':
                 data.set({
                     source: d.content
-                });
-                break;
-            case 'local':
-                data.set({
-                    type: 'local',
-                    map: d.content,
-                    path: d.path
                 });
                 break;
             case 'blob':
@@ -251,7 +242,7 @@ module.exports = function(context) {
                 try {
                     if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
                 } catch (e) {
-
+                    console.log('JSON could not be parsed');
                 }
                 data.set({
                     type: 'gist',
@@ -274,12 +265,6 @@ module.exports = function(context) {
             source.github.save(context, cb);
         } else if (type === 'gist') {
             source.gist.save(context, cb);
-        } else if (type === 'local') {
-            if (context.data.path) {
-                source.local.save(context, cb);
-            } else {
-                source.gist.save(context, cb);
-            }
         } else {
             source.gist.save(context, cb);
         }

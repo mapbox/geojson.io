@@ -45,21 +45,13 @@ module.exports = function(context) {
 
         }
 
-        context.dispatch.on('change.table', function(evt) {
+        context.dispatch.on('change.table', function() {
             rerender();
         });
 
         rerender();
 
         function getProperties(f) { return f.properties; }
-
-        function zoomToMap(p) {
-            var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
-            return layer;
-        }
     }
 
     render.off = function() {

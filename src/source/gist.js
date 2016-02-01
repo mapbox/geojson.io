@@ -1,5 +1,5 @@
 var fs = require('fs');
-var tmpl = fs.readFileSync('data/share.html', 'utf8');
+var tmpl = '';
 
 var config = require('../config.js')(location.hostname);
 var githubBase = config.GithubAPI ? config.GithubAPI + '/api/v3': 'https://api.github.com';
@@ -35,13 +35,9 @@ function saveBlocks(content, callback) {
 
 function save(context, callback) {
 
-    var source = context.data.get('source'),
-        meta = context.data.get('meta'),
+    var meta = context.data.get('meta'),
         name = (meta && meta.name) || 'map.geojson',
         map = context.data.get('map');
-
-    var description = (source && source.description) || 'via:geojson.io',
-        public = source ? !!source.public : false;
 
     context.user.details(onuser);
 
