@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/mapbox/geojson.io.svg)](https://travis-ci.org/mapbox/geojson.io)
+[![Circle CI](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages.svg?style=svg)](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages)
 
 # geojson.io
 
