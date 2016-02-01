@@ -1,4 +1,5 @@
-var json = require('../panel/json'),
+var table = require('../panel/table'),
+    json = require('../panel/json'),
     help = require('../panel/help');
 
 module.exports = function(context, pane) {
@@ -11,6 +12,11 @@ module.exports = function(context, pane) {
             title: ' JSON',
             alt: 'JSON Source',
             behavior: json
+        }, {
+            icon: 'table',
+            title: ' Table',
+            alt: 'Edit feature properties in a table',
+            behavior: table
         }, {
             icon: 'question',
             title: ' Help',

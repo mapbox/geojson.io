@@ -10,6 +10,7 @@
     "clone": "0.1.16",
     "csv2geojson": "3.6.1",
     "d3": "3.4.11",
+    "d3-metatable": "0.3.0",
     "detect-json-indent": "0.0.0",
     "escape-html": "^1.0.1",
     "filesaver.js": "0.1.0",
