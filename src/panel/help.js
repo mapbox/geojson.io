@@ -1,12 +1,10 @@
 var fs = require('fs');
 var marked = require('marked');
 
-module.exports = function(context) {
-    var html = fs.readFileSync('data/help.html') +
-        '<br><hr><br>' +
-        marked(fs.readFileSync('API.md', 'utf8'));
+module.exports = function() {
+    var html = '';
     function render(selection) {
-        var area = selection
+        selection
             .html('')
             .append('div')
             .attr('class', 'pad2 prose')

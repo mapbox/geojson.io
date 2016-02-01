@@ -4,8 +4,10 @@
   "description": "create and edit maps, on the internet",
   "main": "index.html",
   "dependencies": {
+    "babelify": "^7.2.0",
     "bowser": "0.3.2",
     "brfs": "^1.0.2",
+    "budo": "^8.0.2",
     "clean-css": "~2.0.7",
     "clone": "0.1.16",
     "csv2geojson": "3.6.1",
@@ -13,6 +15,7 @@
     "d3-metatable": "0.3.0",
     "detect-json-indent": "0.0.0",
     "escape-html": "^1.0.1",
+    "eslint": "^1.10.3",
     "filesaver.js": "0.1.0",
     "geojson-extent": "^0.3.1",
     "geojson-flatten": "~0.1.0",
@@ -23,6 +26,7 @@
     "gist-map-browser": "0.2.0",
     "github-file-browser": "0.6.1",
     "gtfs2geojson": "^1.0.0",
+    "immutable": "^3.7.6",
     "jsonlint": "1.6.0",
     "leaflet-draw": "0.2.3",
     "leaflet-geodesy": "0.1.1",
@@ -32,6 +36,8 @@
     "osmtogeojson": "2.0.5",
     "polytogeojson": "0.0.1",
     "qs-hash": "0.0.0",
+    "react": "^0.14.7",
+    "redux": "^3.1.7",
     "shp-write": "0.2.3",
     "smash": "0.0.11",
     "store": "1.3.14",
@@ -45,12 +51,14 @@
   "devDependencies": {
     "browserify": "4.1.11",
     "brfs": "1.0.2",
-    "tape": "~2.12.3",
-    "jshint": "2.5.1"
+    "tape": "~2.12.3"
+  },
+  "browserify": {
+    "transform": "babelify"
   },
   "scripts": {
-    "start": "nodewebkit",
-    "test": "jshint src",
+    "start": "budo src/index.js --serve dist/site.js --live",
+    "test": "eslint src",
     "test-browser": "browserify test/index.js | testling"
   },
   "repository": {

@@ -7,10 +7,9 @@ module.exports = function(context) {
         if (err) return flash(context.container, err.toString());
 
         var message,
-          url,
-          path,
-          commitMessage,
-          type = context.data.get('type');
+            url,
+            path,
+            type = context.data.get('type');
 
         if (type === 'gist' || res.type === 'gist') {
             // Saved as Gist
@@ -33,8 +32,7 @@ module.exports = function(context) {
         context.data.parse(res);
     }
 
-    var meta = context.data.get('meta'),
-        map = context.data.get('map'),
+    var map = context.data.get('map'),
         features = map && map.geometry || (map.features && map.features.length),
         type = context.data.get('type');
 

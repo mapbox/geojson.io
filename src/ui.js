@@ -13,7 +13,7 @@ function ui(context) {
             .append('div')
             .attr('class', 'container');
 
-        var map = container
+        container
             .append('div')
             .attr('class', 'map')
             .call(context.map)

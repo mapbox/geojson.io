@@ -14,7 +14,6 @@ function readDrop(callback) {
     return function() {
         var results = [];
         var errors = [];
-        var warnings = [];
         if (d3.event.dataTransfer && d3.event.dataTransfer &&
            d3.event.dataTransfer.files && d3.event.dataTransfer.files.length) {
             d3.event.stopPropagation();
@@ -69,7 +68,7 @@ function readAsText(f, callback) {
                 message: 'Dropped file could not be loaded'
             });
         };
-        reader.onerror = function(e) {
+        reader.onerror = function() {
             callback({
                 message: 'Dropped file was unreadable'
             });
@@ -86,8 +85,6 @@ function readFile(f, text, callback) {
     var fileType = detectType(f, text);
 
     if (!fileType) {
-        var filename = f.name ? f.name.toLowerCase() : '',
-            pts = filename.split('.');
         return callback({
             message: 'Could not detect file type'
         });
