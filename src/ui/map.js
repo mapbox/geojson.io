@@ -18,10 +18,7 @@ module.exports = function(context, readonly) {
     writable = !readonly;
 
     function map(selection) {
-        context.map = L.mapbox.map(selection.node(), null, {
-                infoControl: true,
-                attributionControl: false
-            })
+        context.map = L.mapbox.map(selection.node(), null)
             .setView([20, 0], 2)
             .addControl(L.mapbox.geocoderControl('mapbox.places', {
                 position: 'topright'
@@ -56,8 +53,7 @@ module.exports = function(context, readonly) {
             .on('draw:created', created)
             .on('popupopen', popup(context));
 
-        context.map.infoControl.addInfo('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Feedback</a>');
-        context.map.infoControl.addInfo('<a target="_blank" href="http://geojson.io/about.html">About</a>');
+        context.map.attributionControl.setPrefix('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Feedback</a> | <a target="_blank" href="http://geojson.io/about.html">About</a>');
 
         function update() {
             geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
