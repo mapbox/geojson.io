@@ -5,7 +5,7 @@ FAQ
 Q: **Why are my coordinates flipped?**
 
 A: In the [GeoJSON](http://geojson.org/) format, longitude comes first, before
-latitude, longitude.
+latitude.
 
 Q: **Isn't that wrong?**
 
