@@ -1234,8 +1234,6 @@ module.exports=[
 ]
 
 },{}],2:[function(require,module,exports){
-
-},{}],3:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -1597,9 +1595,507 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":13}],4:[function(require,module,exports){
-module.exports=require(2)
+},{"util/":140}],3:[function(require,module,exports){
+// Browser Request
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// UMD HEADER START 
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define([], factory);
+    } else if (typeof exports === 'object') {
+        // Node. Does not work with strict CommonJS, but
+        // only CommonJS-like enviroments that support module.exports,
+        // like Node.
+        module.exports = factory();
+    } else {
+        // Browser globals (root is window)
+        root.returnExports = factory();
+  }
+}(this, function () {
+// UMD HEADER END
+
+var XHR = XMLHttpRequest
+if (!XHR) throw new Error('missing XMLHttpRequest')
+request.log = {
+  'trace': noop, 'debug': noop, 'info': noop, 'warn': noop, 'error': noop
+}
+
+var DEFAULT_TIMEOUT = 3 * 60 * 1000 // 3 minutes
+
+//
+// request
+//
+
+function request(options, callback) {
+  // The entry-point to the API: prep the options object and pass the real work to run_xhr.
+  if(typeof callback !== 'function')
+    throw new Error('Bad callback given: ' + callback)
+
+  if(!options)
+    throw new Error('No options given')
+
+  var options_onResponse = options.onResponse; // Save this for later.
+
+  if(typeof options === 'string')
+    options = {'uri':options};
+  else
+    options = JSON.parse(JSON.stringify(options)); // Use a duplicate for mutating.
+
+  options.onResponse = options_onResponse // And put it back.
+
+  if (options.verbose) request.log = getLogger();
+
+  if(options.url) {
+    options.uri = options.url;
+    delete options.url;
+  }
+
+  if(!options.uri && options.uri !== "")
+    throw new Error("options.uri is a required argument");
+
+  if(typeof options.uri != "string")
+    throw new Error("options.uri must be a string");
+
+  var unsupported_options = ['proxy', '_redirectsFollowed', 'maxRedirects', 'followRedirect']
+  for (var i = 0; i < unsupported_options.length; i++)
+    if(options[ unsupported_options[i] ])
+      throw new Error("options." + unsupported_options[i] + " is not supported")
+
+  options.callback = callback
+  options.method = options.method || 'GET';
+  options.headers = options.headers || {};
+  options.body    = options.body || null
+  options.timeout = options.timeout || request.DEFAULT_TIMEOUT
+
+  if(options.headers.host)
+    throw new Error("Options.headers.host is not supported");
+
+  if(options.json) {
+    options.headers.accept = options.headers.accept || 'application/json'
+    if(options.method !== 'GET')
+      options.headers['content-type'] = 'application/json'
+
+    if(typeof options.json !== 'boolean')
+      options.body = JSON.stringify(options.json)
+    else if(typeof options.body !== 'string')
+      options.body = JSON.stringify(options.body)
+  }
+  
+  //BEGIN QS Hack
+  var serialize = function(obj) {
+    var str = [];
+    for(var p in obj)
+      if (obj.hasOwnProperty(p)) {
+        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+      }
+    return str.join("&");
+  }
+  
+  if(options.qs){
+    var qs = (typeof options.qs == 'string')? options.qs : serialize(options.qs);
+    if(options.uri.indexOf('?') !== -1){ //no get params
+        options.uri = options.uri+'&'+qs;
+    }else{ //existing get params
+        options.uri = options.uri+'?'+qs;
+    }
+  }
+  //END QS Hack
+  
+  //BEGIN FORM Hack
+  var multipart = function(obj) {
+    //todo: support file type (useful?)
+    var result = {};
+    result.boundry = '-------------------------------'+Math.floor(Math.random()*1000000000);
+    var lines = [];
+    for(var p in obj){
+        if (obj.hasOwnProperty(p)) {
+            lines.push(
+                '--'+result.boundry+"\n"+
+                'Content-Disposition: form-data; name="'+p+'"'+"\n"+
+                "\n"+
+                obj[p]+"\n"
+            );
+        }
+    }
+    lines.push( '--'+result.boundry+'--' );
+    result.body = lines.join('');
+    result.length = result.body.length;
+    result.type = 'multipart/form-data; boundary='+result.boundry;
+    return result;
+  }
+  
+  if(options.form){
+    if(typeof options.form == 'string') throw('form name unsupported');
+    if(options.method === 'POST'){
+        var encoding = (options.encoding || 'application/x-www-form-urlencoded').toLowerCase();
+        options.headers['content-type'] = encoding;
+        switch(encoding){
+            case 'application/x-www-form-urlencoded':
+                options.body = serialize(options.form).replace(/%20/g, "+");
+                break;
+            case 'multipart/form-data':
+                var multi = multipart(options.form);
+                //options.headers['content-length'] = multi.length;
+                options.body = multi.body;
+                options.headers['content-type'] = multi.type;
+                break;
+            default : throw new Error('unsupported encoding:'+encoding);
+        }
+    }
+  }
+  //END FORM Hack
+
+  // If onResponse is boolean true, call back immediately when the response is known,
+  // not when the full request is complete.
+  options.onResponse = options.onResponse || noop
+  if(options.onResponse === true) {
+    options.onResponse = callback
+    options.callback = noop
+  }
+
+  // XXX Browsers do not like this.
+  //if(options.body)
+  //  options.headers['content-length'] = options.body.length;
+
+  // HTTP basic authentication
+  if(!options.headers.authorization && options.auth)
+    options.headers.authorization = 'Basic ' + b64_enc(options.auth.username + ':' + options.auth.password);
+
+  return run_xhr(options)
+}
+
+var req_seq = 0
+function run_xhr(options) {
+  var xhr = new XHR
+    , timed_out = false
+    , is_cors = is_crossDomain(options.uri)
+    , supports_cors = ('withCredentials' in xhr)
+
+  req_seq += 1
+  xhr.seq_id = req_seq
+  xhr.id = req_seq + ': ' + options.method + ' ' + options.uri
+  xhr._id = xhr.id // I know I will type "_id" from habit all the time.
+
+  if(is_cors && !supports_cors) {
+    var cors_err = new Error('Browser does not support cross-origin request: ' + options.uri)
+    cors_err.cors = 'unsupported'
+    return options.callback(cors_err, xhr)
+  }
+
+  xhr.timeoutTimer = setTimeout(too_late, options.timeout)
+  function too_late() {
+    timed_out = true
+    var er = new Error('ETIMEDOUT')
+    er.code = 'ETIMEDOUT'
+    er.duration = options.timeout
+
+    request.log.error('Timeout', { 'id':xhr._id, 'milliseconds':options.timeout })
+    return options.callback(er, xhr)
+  }
+
+  // Some states can be skipped over, so remember what is still incomplete.
+  var did = {'response':false, 'loading':false, 'end':false}
+
+  xhr.onreadystatechange = on_state_change
+  xhr.open(options.method, options.uri, true) // asynchronous
+  if(is_cors)
+    xhr.withCredentials = !! options.withCredentials
+  xhr.send(options.body)
+  return xhr
+
+  function on_state_change(event) {
+    if(timed_out)
+      return request.log.debug('Ignoring timed out state change', {'state':xhr.readyState, 'id':xhr.id})
+
+    request.log.debug('State change', {'state':xhr.readyState, 'id':xhr.id, 'timed_out':timed_out})
+
+    if(xhr.readyState === XHR.OPENED) {
+      request.log.debug('Request started', {'id':xhr.id})
+      for (var key in options.headers)
+        xhr.setRequestHeader(key, options.headers[key])
+    }
+
+    else if(xhr.readyState === XHR.HEADERS_RECEIVED)
+      on_response()
+
+    else if(xhr.readyState === XHR.LOADING) {
+      on_response()
+      on_loading()
+    }
+
+    else if(xhr.readyState === XHR.DONE) {
+      on_response()
+      on_loading()
+      on_end()
+    }
+  }
+
+  function on_response() {
+    if(did.response)
+      return
+
+    did.response = true
+    request.log.debug('Got response', {'id':xhr.id, 'status':xhr.status})
+    clearTimeout(xhr.timeoutTimer)
+    xhr.statusCode = xhr.status // Node request compatibility
+
+    // Detect failed CORS requests.
+    if(is_cors && xhr.statusCode == 0) {
+      var cors_err = new Error('CORS request rejected: ' + options.uri)
+      cors_err.cors = 'rejected'
+
+      // Do not process this request further.
+      did.loading = true
+      did.end = true
+
+      return options.callback(cors_err, xhr)
+    }
+
+    options.onResponse(null, xhr)
+  }
+
+  function on_loading() {
+    if(did.loading)
+      return
+
+    did.loading = true
+    request.log.debug('Response body loading', {'id':xhr.id})
+    // TODO: Maybe simulate "data" events by watching xhr.responseText
+  }
+
+  function on_end() {
+    if(did.end)
+      return
+
+    did.end = true
+    request.log.debug('Request done', {'id':xhr.id})
+
+    xhr.body = xhr.responseText
+    if(options.json) {
+      try        { xhr.body = JSON.parse(xhr.responseText) }
+      catch (er) { return options.callback(er, xhr)        }
+    }
+
+    options.callback(null, xhr, xhr.body)
+  }
+
+} // request
+
+request.withCredentials = false;
+request.DEFAULT_TIMEOUT = DEFAULT_TIMEOUT;
+
+//
+// defaults
+//
+
+request.defaults = function(options, requester) {
+  var def = function (method) {
+    var d = function (params, callback) {
+      if(typeof params === 'string')
+        params = {'uri': params};
+      else {
+        params = JSON.parse(JSON.stringify(params));
+      }
+      for (var i in options) {
+        if (params[i] === undefined) params[i] = options[i]
+      }
+      return method(params, callback)
+    }
+    return d
+  }
+  var de = def(request)
+  de.get = def(request.get)
+  de.post = def(request.post)
+  de.put = def(request.put)
+  de.head = def(request.head)
+  return de
+}
+
+//
+// HTTP method shortcuts
+//
+
+var shortcuts = [ 'get', 'put', 'post', 'head' ];
+shortcuts.forEach(function(shortcut) {
+  var method = shortcut.toUpperCase();
+  var func   = shortcut.toLowerCase();
+
+  request[func] = function(opts) {
+    if(typeof opts === 'string')
+      opts = {'method':method, 'uri':opts};
+    else {
+      opts = JSON.parse(JSON.stringify(opts));
+      opts.method = method;
+    }
+
+    var args = [opts].concat(Array.prototype.slice.apply(arguments, [1]));
+    return request.apply(this, args);
+  }
+})
+
+//
+// CouchDB shortcut
+//
+
+request.couch = function(options, callback) {
+  if(typeof options === 'string')
+    options = {'uri':options}
+
+  // Just use the request API to do JSON.
+  options.json = true
+  if(options.body)
+    options.json = options.body
+  delete options.body
+
+  callback = callback || noop
+
+  var xhr = request(options, couch_handler)
+  return xhr
+
+  function couch_handler(er, resp, body) {
+    if(er)
+      return callback(er, resp, body)
+
+    if((resp.statusCode < 200 || resp.statusCode > 299) && body.error) {
+      // The body is a Couch JSON object indicating the error.
+      er = new Error('CouchDB error: ' + (body.error.reason || body.error.error))
+      for (var key in body)
+        er[key] = body[key]
+      return callback(er, resp, body);
+    }
+
+    return callback(er, resp, body);
+  }
+}
+
+//
+// Utility
+//
+
+function noop() {}
+
+function getLogger() {
+  var logger = {}
+    , levels = ['trace', 'debug', 'info', 'warn', 'error']
+    , level, i
+
+  for(i = 0; i < levels.length; i++) {
+    level = levels[i]
+
+    logger[level] = noop
+    if(typeof console !== 'undefined' && console && console[level])
+      logger[level] = formatted(console, level)
+  }
+
+  return logger
+}
+
+function formatted(obj, method) {
+  return formatted_logger
+
+  function formatted_logger(str, context) {
+    if(typeof context === 'object')
+      str += ' ' + JSON.stringify(context)
+
+    return obj[method].call(obj, str)
+  }
+}
+
+// Return whether a URL is a cross-domain request.
+function is_crossDomain(url) {
+  var rurl = /^([\w\+\.\-]+:)(?:\/\/([^\/?#:]*)(?::(\d+))?)?/
+
+  // jQuery #8138, IE may throw an exception when accessing
+  // a field from window.location if document.domain has been set
+  var ajaxLocation
+  try { ajaxLocation = location.href }
+  catch (e) {
+    // Use the href attribute of an A element since IE will modify it given document.location
+    ajaxLocation = document.createElement( "a" );
+    ajaxLocation.href = "";
+    ajaxLocation = ajaxLocation.href;
+  }
+
+  var ajaxLocParts = rurl.exec(ajaxLocation.toLowerCase()) || []
+    , parts = rurl.exec(url.toLowerCase() )
+
+  var result = !!(
+    parts &&
+    (  parts[1] != ajaxLocParts[1]
+    || parts[2] != ajaxLocParts[2]
+    || (parts[3] || (parts[1] === "http:" ? 80 : 443)) != (ajaxLocParts[3] || (ajaxLocParts[1] === "http:" ? 80 : 443))
+    )
+  )
+
+  //console.debug('is_crossDomain('+url+') -> ' + result)
+  return result
+}
+
+// MIT License from http://phpjs.org/functions/base64_encode:358
+function b64_enc (data) {
+    // Encodes string using MIME base64 algorithm
+    var b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    var o1, o2, o3, h1, h2, h3, h4, bits, i = 0, ac = 0, enc="", tmp_arr = [];
+
+    if (!data) {
+        return data;
+    }
+
+    // assume utf8 data
+    // data = this.utf8_encode(data+'');
+
+    do { // pack three octets into four hexets
+        o1 = data.charCodeAt(i++);
+        o2 = data.charCodeAt(i++);
+        o3 = data.charCodeAt(i++);
+
+        bits = o1<<16 | o2<<8 | o3;
+
+        h1 = bits>>18 & 0x3f;
+        h2 = bits>>12 & 0x3f;
+        h3 = bits>>6 & 0x3f;
+        h4 = bits & 0x3f;
+
+        // use hexets to index into b64, and append result to encoded string
+        tmp_arr[ac++] = b64.charAt(h1) + b64.charAt(h2) + b64.charAt(h3) + b64.charAt(h4);
+    } while (i < data.length);
+
+    enc = tmp_arr.join('');
+
+    switch (data.length % 3) {
+        case 1:
+            enc = enc.slice(0, -2) + '==';
+        break;
+        case 2:
+            enc = enc.slice(0, -1) + '=';
+        break;
+    }
+
+    return enc;
+}
+    return request;
+//UMD FOOTER START
+}));
+//UMD FOOTER END
+
+},{}],4:[function(require,module,exports){
+
 },{}],5:[function(require,module,exports){
+module.exports=require(4)
+},{}],6:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -2653,7 +3149,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":6,"ieee754":7,"is-array":8}],6:[function(require,module,exports){
+},{"base64-js":7,"ieee754":35,"is-array":37}],7:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -2775,1043 +3271,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],7:[function(require,module,exports){
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var nBits = -7
-  var i = isLE ? (nBytes - 1) : 0
-  var d = isLE ? -1 : 1
-  var s = buffer[offset + i]
-
-  i += d
-
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
-
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
-
-  if (e === 0) {
-    e = 1 - eBias
-  } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
-  } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
-  }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
-
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
-  var i = isLE ? 0 : (nBytes - 1)
-  var d = isLE ? 1 : -1
-  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
-
-  value = Math.abs(value)
-
-  if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
-  } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
-    if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
-    }
-    if (e + eBias >= 1) {
-      value += rt / c
-    } else {
-      value += rt * Math.pow(2, 1 - eBias)
-    }
-    if (value * c >= 2) {
-      e++
-      c /= 2
-    }
-
-    if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
-    } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
-      e = e + eBias
-    } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
-    }
-  }
-
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
-
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
-
-  buffer[offset + i - d] |= s * 128
-}
-
 },{}],8:[function(require,module,exports){
-
-/**
- * isArray
- */
-
-var isArray = Array.isArray;
-
-/**
- * toString
- */
-
-var str = Object.prototype.toString;
-
-/**
- * Whether or not the given `val`
- * is an array.
- *
- * example:
- *
- *        isArray([]);
- *        // > true
- *        isArray(arguments);
- *        // > false
- *        isArray('');
- *        // > false
- *
- * @param {mixed} val
- * @return {bool}
- */
-
-module.exports = isArray || function (val) {
-  return !! val && '[object Array]' == str.call(val);
-};
-
-},{}],9:[function(require,module,exports){
-if (typeof Object.create === 'function') {
-  // implementation from standard node.js 'util' module
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    ctor.prototype = Object.create(superCtor.prototype, {
-      constructor: {
-        value: ctor,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-  };
-} else {
-  // old school shim for old browsers
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    var TempCtor = function () {}
-    TempCtor.prototype = superCtor.prototype
-    ctor.prototype = new TempCtor()
-    ctor.prototype.constructor = ctor
-  }
-}
-
-},{}],10:[function(require,module,exports){
-(function (process){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-// resolves . and .. elements in a path array with directory names there
-// must be no slashes, empty elements, or device names (c:\) in the array
-// (so also no leading and trailing slashes - it does not distinguish
-// relative and absolute paths)
-function normalizeArray(parts, allowAboveRoot) {
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = parts.length - 1; i >= 0; i--) {
-    var last = parts[i];
-    if (last === '.') {
-      parts.splice(i, 1);
-    } else if (last === '..') {
-      parts.splice(i, 1);
-      up++;
-    } else if (up) {
-      parts.splice(i, 1);
-      up--;
-    }
-  }
-
-  // if the path is allowed to go above the root, restore leading ..s
-  if (allowAboveRoot) {
-    for (; up--; up) {
-      parts.unshift('..');
-    }
-  }
-
-  return parts;
-}
-
-// Split a filename into [root, dir, basename, ext], unix version
-// 'root' is just a slash, or nothing.
-var splitPathRe =
-    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
-var splitPath = function(filename) {
-  return splitPathRe.exec(filename).slice(1);
-};
-
-// path.resolve([from ...], to)
-// posix version
-exports.resolve = function() {
-  var resolvedPath = '',
-      resolvedAbsolute = false;
-
-  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-    var path = (i >= 0) ? arguments[i] : process.cwd();
-
-    // Skip empty and invalid entries
-    if (typeof path !== 'string') {
-      throw new TypeError('Arguments to path.resolve must be strings');
-    } else if (!path) {
-      continue;
-    }
-
-    resolvedPath = path + '/' + resolvedPath;
-    resolvedAbsolute = path.charAt(0) === '/';
-  }
-
-  // At this point the path should be resolved to a full absolute path, but
-  // handle relative paths to be safe (might happen when process.cwd() fails)
-
-  // Normalize the path
-  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
-    return !!p;
-  }), !resolvedAbsolute).join('/');
-
-  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
-};
-
-// path.normalize(path)
-// posix version
-exports.normalize = function(path) {
-  var isAbsolute = exports.isAbsolute(path),
-      trailingSlash = substr(path, -1) === '/';
-
-  // Normalize the path
-  path = normalizeArray(filter(path.split('/'), function(p) {
-    return !!p;
-  }), !isAbsolute).join('/');
-
-  if (!path && !isAbsolute) {
-    path = '.';
-  }
-  if (path && trailingSlash) {
-    path += '/';
-  }
-
-  return (isAbsolute ? '/' : '') + path;
-};
-
-// posix version
-exports.isAbsolute = function(path) {
-  return path.charAt(0) === '/';
-};
-
-// posix version
-exports.join = function() {
-  var paths = Array.prototype.slice.call(arguments, 0);
-  return exports.normalize(filter(paths, function(p, index) {
-    if (typeof p !== 'string') {
-      throw new TypeError('Arguments to path.join must be strings');
-    }
-    return p;
-  }).join('/'));
-};
-
-
-// path.relative(from, to)
-// posix version
-exports.relative = function(from, to) {
-  from = exports.resolve(from).substr(1);
-  to = exports.resolve(to).substr(1);
-
-  function trim(arr) {
-    var start = 0;
-    for (; start < arr.length; start++) {
-      if (arr[start] !== '') break;
-    }
-
-    var end = arr.length - 1;
-    for (; end >= 0; end--) {
-      if (arr[end] !== '') break;
-    }
-
-    if (start > end) return [];
-    return arr.slice(start, end - start + 1);
-  }
-
-  var fromParts = trim(from.split('/'));
-  var toParts = trim(to.split('/'));
-
-  var length = Math.min(fromParts.length, toParts.length);
-  var samePartsLength = length;
-  for (var i = 0; i < length; i++) {
-    if (fromParts[i] !== toParts[i]) {
-      samePartsLength = i;
-      break;
-    }
-  }
-
-  var outputParts = [];
-  for (var i = samePartsLength; i < fromParts.length; i++) {
-    outputParts.push('..');
-  }
-
-  outputParts = outputParts.concat(toParts.slice(samePartsLength));
-
-  return outputParts.join('/');
-};
-
-exports.sep = '/';
-exports.delimiter = ':';
-
-exports.dirname = function(path) {
-  var result = splitPath(path),
-      root = result[0],
-      dir = result[1];
-
-  if (!root && !dir) {
-    // No dirname whatsoever
-    return '.';
-  }
-
-  if (dir) {
-    // It has a dirname, strip trailing slash
-    dir = dir.substr(0, dir.length - 1);
-  }
-
-  return root + dir;
-};
-
-
-exports.basename = function(path, ext) {
-  var f = splitPath(path)[2];
-  // TODO: make this comparison case-insensitive on windows?
-  if (ext && f.substr(-1 * ext.length) === ext) {
-    f = f.substr(0, f.length - ext.length);
-  }
-  return f;
-};
-
-
-exports.extname = function(path) {
-  return splitPath(path)[3];
-};
-
-function filter (xs, f) {
-    if (xs.filter) return xs.filter(f);
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        if (f(xs[i], i, xs)) res.push(xs[i]);
-    }
-    return res;
-}
-
-// String.prototype.substr - negative index don't work in IE8
-var substr = 'ab'.substr(-1) === 'b'
-    ? function (str, start, len) { return str.substr(start, len) }
-    : function (str, start, len) {
-        if (start < 0) start = str.length + start;
-        return str.substr(start, len);
-    }
-;
-
-}).call(this,require("FWaASH"))
-},{"FWaASH":11}],11:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-}
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-
-},{}],12:[function(require,module,exports){
-module.exports = function isBuffer(arg) {
-  return arg && typeof arg === 'object'
-    && typeof arg.copy === 'function'
-    && typeof arg.fill === 'function'
-    && typeof arg.readUInt8 === 'function';
-}
-},{}],13:[function(require,module,exports){
-(function (process,global){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-var formatRegExp = /%[sdj%]/g;
-exports.format = function(f) {
-  if (!isString(f)) {
-    var objects = [];
-    for (var i = 0; i < arguments.length; i++) {
-      objects.push(inspect(arguments[i]));
-    }
-    return objects.join(' ');
-  }
-
-  var i = 1;
-  var args = arguments;
-  var len = args.length;
-  var str = String(f).replace(formatRegExp, function(x) {
-    if (x === '%%') return '%';
-    if (i >= len) return x;
-    switch (x) {
-      case '%s': return String(args[i++]);
-      case '%d': return Number(args[i++]);
-      case '%j':
-        try {
-          return JSON.stringify(args[i++]);
-        } catch (_) {
-          return '[Circular]';
-        }
-      default:
-        return x;
-    }
-  });
-  for (var x = args[i]; i < len; x = args[++i]) {
-    if (isNull(x) || !isObject(x)) {
-      str += ' ' + x;
-    } else {
-      str += ' ' + inspect(x);
-    }
-  }
-  return str;
-};
-
-
-// Mark that a method should not be used.
-// Returns a modified function which warns once by default.
-// If --no-deprecation is set, then it is a no-op.
-exports.deprecate = function(fn, msg) {
-  // Allow for deprecating things in the process of starting up.
-  if (isUndefined(global.process)) {
-    return function() {
-      return exports.deprecate(fn, msg).apply(this, arguments);
-    };
-  }
-
-  if (process.noDeprecation === true) {
-    return fn;
-  }
-
-  var warned = false;
-  function deprecated() {
-    if (!warned) {
-      if (process.throwDeprecation) {
-        throw new Error(msg);
-      } else if (process.traceDeprecation) {
-        console.trace(msg);
-      } else {
-        console.error(msg);
-      }
-      warned = true;
-    }
-    return fn.apply(this, arguments);
-  }
-
-  return deprecated;
-};
-
-
-var debugs = {};
-var debugEnviron;
-exports.debuglog = function(set) {
-  if (isUndefined(debugEnviron))
-    debugEnviron = process.env.NODE_DEBUG || '';
-  set = set.toUpperCase();
-  if (!debugs[set]) {
-    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
-      var pid = process.pid;
-      debugs[set] = function() {
-        var msg = exports.format.apply(exports, arguments);
-        console.error('%s %d: %s', set, pid, msg);
-      };
-    } else {
-      debugs[set] = function() {};
-    }
-  }
-  return debugs[set];
-};
-
-
-/**
- * Echos the value of a value. Trys to print the value out
- * in the best way possible given the different types.
- *
- * @param {Object} obj The object to print out.
- * @param {Object} opts Optional options object that alters the output.
- */
-/* legacy: obj, showHidden, depth, colors*/
-function inspect(obj, opts) {
-  // default options
-  var ctx = {
-    seen: [],
-    stylize: stylizeNoColor
-  };
-  // legacy...
-  if (arguments.length >= 3) ctx.depth = arguments[2];
-  if (arguments.length >= 4) ctx.colors = arguments[3];
-  if (isBoolean(opts)) {
-    // legacy...
-    ctx.showHidden = opts;
-  } else if (opts) {
-    // got an "options" object
-    exports._extend(ctx, opts);
-  }
-  // set default options
-  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
-  if (isUndefined(ctx.depth)) ctx.depth = 2;
-  if (isUndefined(ctx.colors)) ctx.colors = false;
-  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
-  if (ctx.colors) ctx.stylize = stylizeWithColor;
-  return formatValue(ctx, obj, ctx.depth);
-}
-exports.inspect = inspect;
-
-
-// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
-inspect.colors = {
-  'bold' : [1, 22],
-  'italic' : [3, 23],
-  'underline' : [4, 24],
-  'inverse' : [7, 27],
-  'white' : [37, 39],
-  'grey' : [90, 39],
-  'black' : [30, 39],
-  'blue' : [34, 39],
-  'cyan' : [36, 39],
-  'green' : [32, 39],
-  'magenta' : [35, 39],
-  'red' : [31, 39],
-  'yellow' : [33, 39]
-};
-
-// Don't use 'blue' not visible on cmd.exe
-inspect.styles = {
-  'special': 'cyan',
-  'number': 'yellow',
-  'boolean': 'yellow',
-  'undefined': 'grey',
-  'null': 'bold',
-  'string': 'green',
-  'date': 'magenta',
-  // "name": intentionally not styling
-  'regexp': 'red'
-};
-
-
-function stylizeWithColor(str, styleType) {
-  var style = inspect.styles[styleType];
-
-  if (style) {
-    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
-           '\u001b[' + inspect.colors[style][1] + 'm';
-  } else {
-    return str;
-  }
-}
-
-
-function stylizeNoColor(str, styleType) {
-  return str;
-}
-
-
-function arrayToHash(array) {
-  var hash = {};
-
-  array.forEach(function(val, idx) {
-    hash[val] = true;
-  });
-
-  return hash;
-}
-
-
-function formatValue(ctx, value, recurseTimes) {
-  // Provide a hook for user-specified inspect functions.
-  // Check that value is an object with an inspect function on it
-  if (ctx.customInspect &&
-      value &&
-      isFunction(value.inspect) &&
-      // Filter out the util module, it's inspect function is special
-      value.inspect !== exports.inspect &&
-      // Also filter out any prototype objects using the circular check.
-      !(value.constructor && value.constructor.prototype === value)) {
-    var ret = value.inspect(recurseTimes, ctx);
-    if (!isString(ret)) {
-      ret = formatValue(ctx, ret, recurseTimes);
-    }
-    return ret;
-  }
-
-  // Primitive types cannot have properties
-  var primitive = formatPrimitive(ctx, value);
-  if (primitive) {
-    return primitive;
-  }
-
-  // Look up the keys of the object.
-  var keys = Object.keys(value);
-  var visibleKeys = arrayToHash(keys);
-
-  if (ctx.showHidden) {
-    keys = Object.getOwnPropertyNames(value);
-  }
-
-  // IE doesn't make error fields non-enumerable
-  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
-  if (isError(value)
-      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
-    return formatError(value);
-  }
-
-  // Some type of object without properties can be shortcutted.
-  if (keys.length === 0) {
-    if (isFunction(value)) {
-      var name = value.name ? ': ' + value.name : '';
-      return ctx.stylize('[Function' + name + ']', 'special');
-    }
-    if (isRegExp(value)) {
-      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
-    }
-    if (isDate(value)) {
-      return ctx.stylize(Date.prototype.toString.call(value), 'date');
-    }
-    if (isError(value)) {
-      return formatError(value);
-    }
-  }
-
-  var base = '', array = false, braces = ['{', '}'];
-
-  // Make Array say that they are Array
-  if (isArray(value)) {
-    array = true;
-    braces = ['[', ']'];
-  }
-
-  // Make functions say that they are functions
-  if (isFunction(value)) {
-    var n = value.name ? ': ' + value.name : '';
-    base = ' [Function' + n + ']';
-  }
-
-  // Make RegExps say that they are RegExps
-  if (isRegExp(value)) {
-    base = ' ' + RegExp.prototype.toString.call(value);
-  }
-
-  // Make dates with properties first say the date
-  if (isDate(value)) {
-    base = ' ' + Date.prototype.toUTCString.call(value);
-  }
-
-  // Make error with message first say the error
-  if (isError(value)) {
-    base = ' ' + formatError(value);
-  }
-
-  if (keys.length === 0 && (!array || value.length == 0)) {
-    return braces[0] + base + braces[1];
-  }
-
-  if (recurseTimes < 0) {
-    if (isRegExp(value)) {
-      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
-    } else {
-      return ctx.stylize('[Object]', 'special');
-    }
-  }
-
-  ctx.seen.push(value);
-
-  var output;
-  if (array) {
-    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
-  } else {
-    output = keys.map(function(key) {
-      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
-    });
-  }
-
-  ctx.seen.pop();
-
-  return reduceToSingleString(output, base, braces);
-}
-
-
-function formatPrimitive(ctx, value) {
-  if (isUndefined(value))
-    return ctx.stylize('undefined', 'undefined');
-  if (isString(value)) {
-    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
-                                             .replace(/'/g, "\\'")
-                                             .replace(/\\"/g, '"') + '\'';
-    return ctx.stylize(simple, 'string');
-  }
-  if (isNumber(value))
-    return ctx.stylize('' + value, 'number');
-  if (isBoolean(value))
-    return ctx.stylize('' + value, 'boolean');
-  // For some reason typeof null is "object", so special case here.
-  if (isNull(value))
-    return ctx.stylize('null', 'null');
-}
-
-
-function formatError(value) {
-  return '[' + Error.prototype.toString.call(value) + ']';
-}
-
-
-function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
-  var output = [];
-  for (var i = 0, l = value.length; i < l; ++i) {
-    if (hasOwnProperty(value, String(i))) {
-      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
-          String(i), true));
-    } else {
-      output.push('');
-    }
-  }
-  keys.forEach(function(key) {
-    if (!key.match(/^\d+$/)) {
-      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
-          key, true));
-    }
-  });
-  return output;
-}
-
-
-function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
-  var name, str, desc;
-  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
-  if (desc.get) {
-    if (desc.set) {
-      str = ctx.stylize('[Getter/Setter]', 'special');
-    } else {
-      str = ctx.stylize('[Getter]', 'special');
-    }
-  } else {
-    if (desc.set) {
-      str = ctx.stylize('[Setter]', 'special');
-    }
-  }
-  if (!hasOwnProperty(visibleKeys, key)) {
-    name = '[' + key + ']';
-  }
-  if (!str) {
-    if (ctx.seen.indexOf(desc.value) < 0) {
-      if (isNull(recurseTimes)) {
-        str = formatValue(ctx, desc.value, null);
-      } else {
-        str = formatValue(ctx, desc.value, recurseTimes - 1);
-      }
-      if (str.indexOf('\n') > -1) {
-        if (array) {
-          str = str.split('\n').map(function(line) {
-            return '  ' + line;
-          }).join('\n').substr(2);
-        } else {
-          str = '\n' + str.split('\n').map(function(line) {
-            return '   ' + line;
-          }).join('\n');
-        }
-      }
-    } else {
-      str = ctx.stylize('[Circular]', 'special');
-    }
-  }
-  if (isUndefined(name)) {
-    if (array && key.match(/^\d+$/)) {
-      return str;
-    }
-    name = JSON.stringify('' + key);
-    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
-      name = name.substr(1, name.length - 2);
-      name = ctx.stylize(name, 'name');
-    } else {
-      name = name.replace(/'/g, "\\'")
-                 .replace(/\\"/g, '"')
-                 .replace(/(^"|"$)/g, "'");
-      name = ctx.stylize(name, 'string');
-    }
-  }
-
-  return name + ': ' + str;
-}
-
-
-function reduceToSingleString(output, base, braces) {
-  var numLinesEst = 0;
-  var length = output.reduce(function(prev, cur) {
-    numLinesEst++;
-    if (cur.indexOf('\n') >= 0) numLinesEst++;
-    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
-  }, 0);
-
-  if (length > 60) {
-    return braces[0] +
-           (base === '' ? '' : base + '\n ') +
-           ' ' +
-           output.join(',\n  ') +
-           ' ' +
-           braces[1];
-  }
-
-  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
-}
-
-
-// NOTE: These type checking functions intentionally don't use `instanceof`
-// because it is fragile and can be easily faked with `Object.create()`.
-function isArray(ar) {
-  return Array.isArray(ar);
-}
-exports.isArray = isArray;
-
-function isBoolean(arg) {
-  return typeof arg === 'boolean';
-}
-exports.isBoolean = isBoolean;
-
-function isNull(arg) {
-  return arg === null;
-}
-exports.isNull = isNull;
-
-function isNullOrUndefined(arg) {
-  return arg == null;
-}
-exports.isNullOrUndefined = isNullOrUndefined;
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-exports.isNumber = isNumber;
-
-function isString(arg) {
-  return typeof arg === 'string';
-}
-exports.isString = isString;
-
-function isSymbol(arg) {
-  return typeof arg === 'symbol';
-}
-exports.isSymbol = isSymbol;
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-exports.isUndefined = isUndefined;
-
-function isRegExp(re) {
-  return isObject(re) && objectToString(re) === '[object RegExp]';
-}
-exports.isRegExp = isRegExp;
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-exports.isObject = isObject;
-
-function isDate(d) {
-  return isObject(d) && objectToString(d) === '[object Date]';
-}
-exports.isDate = isDate;
-
-function isError(e) {
-  return isObject(e) &&
-      (objectToString(e) === '[object Error]' || e instanceof Error);
-}
-exports.isError = isError;
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-exports.isFunction = isFunction;
-
-function isPrimitive(arg) {
-  return arg === null ||
-         typeof arg === 'boolean' ||
-         typeof arg === 'number' ||
-         typeof arg === 'string' ||
-         typeof arg === 'symbol' ||  // ES6 symbol
-         typeof arg === 'undefined';
-}
-exports.isPrimitive = isPrimitive;
-
-exports.isBuffer = require('./support/isBuffer');
-
-function objectToString(o) {
-  return Object.prototype.toString.call(o);
-}
-
-
-function pad(n) {
-  return n < 10 ? '0' + n.toString(10) : n.toString(10);
-}
-
-
-var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-              'Oct', 'Nov', 'Dec'];
-
-// 26 Feb 16:19:34
-function timestamp() {
-  var d = new Date();
-  var time = [pad(d.getHours()),
-              pad(d.getMinutes()),
-              pad(d.getSeconds())].join(':');
-  return [d.getDate(), months[d.getMonth()], time].join(' ');
-}
-
-
-// log is just a thin wrapper to console.log that prepends a timestamp
-exports.log = function() {
-  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
-};
-
-
-/**
- * Inherit the prototype methods from one constructor into another.
- *
- * The Function.prototype.inherits from lang.js rewritten as a standalone
- * function (not on Function.prototype). NOTE: If this file is to be loaded
- * during bootstrapping this function needs to be rewritten using some native
- * functions as prototype setup using normal JavaScript does not work as
- * expected during bootstrapping (see mirror.js in r114903).
- *
- * @param {function} ctor Constructor function which needs to inherit the
- *     prototype.
- * @param {function} superCtor Constructor function to inherit prototype from.
- */
-exports.inherits = require('inherits');
-
-exports._extend = function(origin, add) {
-  // Don't do anything if add isn't an object
-  if (!add || !isObject(add)) return origin;
-
-  var keys = Object.keys(add);
-  var i = keys.length;
-  while (i--) {
-    origin[keys[i]] = add[keys[i]];
-  }
-  return origin;
-};
-
-function hasOwnProperty(obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-}).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":12,"FWaASH":11,"inherits":9}],14:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -3943,7 +3403,7 @@ clone.clonePrototype = function(parent) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":5}],15:[function(require,module,exports){
+},{"buffer":6}],9:[function(require,module,exports){
 var dsv = require('dsv'),
     sexagesimal = require('sexagesimal');
 
@@ -4130,26 +3590,7 @@ module.exports = {
     toPolygon: toPolygon
 };
 
-},{"dsv":16,"sexagesimal":17}],16:[function(require,module,exports){
-var fs = require("fs");
-
-module.exports = new Function("dsv.version = \"0.0.3\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.substring(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.substring(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.substring(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && !(a = f(a, n++))) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
-
-},{"fs":2}],17:[function(require,module,exports){
-module.exports = function(x, dims) {
-    if (!dims) dims = 'NSEW';
-    if (typeof x !== 'string') return null;
-    var r = /^([0-9.]+)°? *(?:([0-9.]+)['’′‘] *)?(?:([0-9.]+)(?:''|"|”|″) *)?([NSEW])?/,
-        m = x.match(r);
-    if (!m) return null;
-    else if (m[4] && dims.indexOf(m[4]) === -1) return null;
-    else return (((m[1]) ? parseFloat(m[1]) : 0) +
-        ((m[2] ? parseFloat(m[2]) / 60 : 0)) +
-        ((m[3] ? parseFloat(m[3]) / 3600 : 0))) *
-        ((m[4] && m[4] === 'S' || m[4] === 'W') ? -1 : 1);
-};
-
-},{}],18:[function(require,module,exports){
+},{"dsv":16,"sexagesimal":88}],10:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -4340,12 +3781,190 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],19:[function(require,module,exports){
-var fs = require("fs");
+},{}],11:[function(require,module,exports){
+module.exports.structure = require('./src/structure');
 
-module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
+},{"./src/structure":15}],12:[function(require,module,exports){
+var fieldSize = require('./fieldsize');
 
-},{"fs":2}],20:[function(require,module,exports){
+var types = {
+    string: 'C',
+    number: 'N',
+    boolean: 'L'
+};
+
+module.exports.multi = multi;
+module.exports.bytesPer = bytesPer;
+module.exports.obj = obj;
+
+function multi(features) {
+    var fields = {};
+    features.forEach(collect);
+    function collect(f) { inherit(fields, f); }
+    return obj(fields);
+}
+
+function inherit(a, b) {
+    for (var i in b) { a[i] = b[i]; }
+    return a;
+}
+
+function obj(_) {
+    var fields = {}, o = [];
+    for (var p in _) fields[p] = typeof _[p];
+    for (var n in fields) {
+        var t = types[fields[n]];
+        o.push({
+            name: n,
+            type: t,
+            size: fieldSize[t]
+        });
+    }
+    return o;
+}
+
+function bytesPer(fields) {
+    // deleted flag
+    return fields.reduce(function(memo, f) { return memo + f.size; }, 1);
+}
+
+},{"./fieldsize":13}],13:[function(require,module,exports){
+module.exports = {
+    // string
+    C: 254,
+    // boolean
+    L: 1,
+    // date
+    D: 8,
+    // number
+    N: 18,
+    // number
+    M: 18,
+    // number, float
+    F: 18,
+    // number
+    B: 8,
+};
+
+},{}],14:[function(require,module,exports){
+module.exports.lpad = function lpad(str, len, char) {
+    while (str.length < len) { str = char + str; } return str;
+};
+
+module.exports.rpad = function rpad(str, len, char) {
+    while (str.length < len) { str = str + char; } return str;
+};
+
+module.exports.writeField = function writeField(view, fieldLength, str, offset) {
+    for (var i = 0; i < fieldLength; i++) {
+        view.setUint8(offset, str.charCodeAt(i)); offset++;
+    }
+    return offset;
+};
+
+},{}],15:[function(require,module,exports){
+var fieldSize = require('./fieldsize'),
+    lib = require('./lib'),
+    fields = require('./fields');
+
+module.exports = function structure(data) {
+
+    var field_meta = fields.multi(data),
+        fieldDescLength = (32 * field_meta.length) + 1,
+        bytesPerRecord = fields.bytesPer(field_meta), // deleted flag
+        buffer = new ArrayBuffer(
+            // field header
+            fieldDescLength +
+            // header
+            32 +
+            // contents
+            (bytesPerRecord * data.length)
+        ),
+        now = new Date(),
+        view = new DataView(buffer);
+
+    // version number
+    view.setUint8(0, 3);
+    // date of last update
+    view.setUint8(1, now.getFullYear() - 1900);
+    view.setUint8(2, now.getMonth());
+    view.setUint8(3, now.getDate());
+    // number of records
+    view.setUint32(4, data.length, true);
+
+    // length of header
+    var headerLength = fieldDescLength + 32;
+    view.setUint16(8, headerLength, true);
+    // length of each record
+    view.setUint16(10, bytesPerRecord, true);
+
+    view.setInt8(fieldDescLength - 1, 13);
+
+    field_meta.forEach(function(f, i) {
+        // field name
+        f.name.split('').slice(0, 8).forEach(function(c, x) {
+            view.setInt8(32 + i * 32 + x, c.charCodeAt(0));
+        });
+        // field type
+        view.setInt8(32 + i * 32 + 11, f.type.charCodeAt(0));
+        // field length
+        view.setInt8(32 + i * 32 + 16, f.size);
+        if (f.type == 'N') view.setInt8(32 + i * 32 + 17, 0);
+    });
+
+    offset = fieldDescLength + 32;
+
+    data.forEach(function(row, num) {
+        // delete flag: this is not deleted
+        view.setUint8(offset, 32);
+        offset++;
+        field_meta.forEach(function(f) {
+            var val = row[f.name] || 0;
+
+            switch (f.type) {
+                // boolean
+                case 'L':
+                    view.setUint8(offset, val ? 84 : 70);
+                    offset++;
+                    break;
+
+                // decimal
+                case 'D':
+                    offset = lib.writeField(view, 8,
+                        lib.lpad(val.toString(), 8, ' '), offset);
+                    break;
+
+                // number
+                case 'N':
+                    offset = lib.writeField(view, f.size,
+                        lib.lpad(val.toString(), f.size, ' ').substr(0, 18),
+                        offset);
+                    break;
+
+                // string
+                case 'C':
+                    offset = lib.writeField(view, f.size,
+                        lib.rpad(val.toString(), f.size, ' '), offset);
+                    break;
+
+                default:
+                    throw new Error('Unknown field type');
+            }
+        });
+    });
+
+    // EOF flag
+    view.setUint8(offset - 1, 26);
+
+    return view;
+};
+
+},{"./fields":12,"./fieldsize":13,"./lib":14}],16:[function(require,module,exports){
+
+
+module.exports = new Function("dsv.version = \"0.0.3\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.substring(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.substring(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.substring(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && !(a = f(a, n++))) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
+
+},{}],17:[function(require,module,exports){
 /*!
  * escape-html
  * Copyright(c) 2012-2013 TJ Holowaychuk
@@ -4425,7 +4044,70 @@ function escapeHtml(string) {
     : html;
 }
 
-},{}],21:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
+module.exports = Extent;
+
+function Extent() {
+    if (!(this instanceof Extent)) {
+        return new Extent();
+    }
+    this._bbox = [Infinity, Infinity, -Infinity, -Infinity];
+    this._valid = false;
+}
+
+Extent.prototype.include = function(ll) {
+    this._valid = true;
+    this._bbox[0] = Math.min(this._bbox[0], ll[0]);
+    this._bbox[1] = Math.min(this._bbox[1], ll[1]);
+    this._bbox[2] = Math.max(this._bbox[2], ll[0]);
+    this._bbox[3] = Math.max(this._bbox[3], ll[1]);
+    return this;
+};
+
+Extent.prototype.union = function(other) {
+    this._valid = true;
+    this._bbox[0] = Math.min(this._bbox[0], other[0]);
+    this._bbox[1] = Math.min(this._bbox[1], other[1]);
+    this._bbox[2] = Math.max(this._bbox[2], other[2]);
+    this._bbox[3] = Math.max(this._bbox[3], other[3]);
+    return this;
+};
+
+Extent.prototype.bbox = function() {
+    if (!this._valid) return null;
+    return this._bbox;
+};
+
+Extent.prototype.contains = function(ll) {
+    if (!this._valid) return null;
+    return this._bbox[0] <= ll[0] &&
+        this._bbox[1] <= ll[1] &&
+        this._bbox[2] >= ll[0] &&
+        this._bbox[3] >= ll[1];
+};
+
+Extent.prototype.polygon = function() {
+    if (!this._valid) return null;
+    return {
+        type: 'Polygon',
+        coordinates: [
+            [
+                // W, S
+                [this._bbox[0], this._bbox[1]],
+                // E, S
+                [this._bbox[2], this._bbox[1]],
+                // E, N
+                [this._bbox[2], this._bbox[3]],
+                // W, N
+                [this._bbox[0], this._bbox[3]],
+                // W, S
+                [this._bbox[0], this._bbox[1]]
+            ]
+        ]
+    };
+};
+
+},{}],19:[function(require,module,exports){
 /* FileSaver.js
  *  A saveAs() FileSaver implementation.
  *  2014-05-27
@@ -4668,7 +4350,105 @@ if (typeof module !== "undefined" && module !== null) {
   });
 }
 
+},{}],20:[function(require,module,exports){
+var wgs84 = require('wgs84');
+
+module.exports = function(_) {
+    if (_.type === 'Polygon') return polygonArea(_.coordinates);
+    else if (_.type === 'MultiPolygon') {
+        var area = 0;
+        for (var i = 0; i < _.coordinates.length; i++) {
+            area += polygonArea(_.coordinates[i]);
+        }
+        return area;
+    } else {
+        return null;
+    }
+};
+
+function polygonArea(coords) {
+    var area = 0;
+    if (coords && coords.length > 0) {
+        area += Math.abs(ringArea(coords[0]));
+        for (var i = 1; i < coords.length; i++) {
+            area -= Math.abs(ringArea(coords[i]));
+        }
+    }
+    return area;
+}
+
+/**
+ * Calculate the approximate area of the polygon were it projected onto
+ *     the earth.  Note that this area will be positive if ring is oriented
+ *     clockwise, otherwise it will be negative.
+ *
+ * Reference:
+ * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for
+ *     Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
+ *     Laboratory, Pasadena, CA, June 2007 http://trs-new.jpl.nasa.gov/dspace/handle/2014/40409
+ *
+ * Returns:
+ * {float} The approximate signed geodesic area of the polygon in square
+ *     meters.
+ */
+function ringArea(coords) {
+    var area = 0;
+
+    if (coords.length > 2) {
+        var p1, p2;
+        for (var i = 0; i < coords.length - 1; i++) {
+            p1 = coords[i];
+            p2 = coords[i + 1];
+            area += rad(p2[0] - p1[0]) * (2 + Math.sin(rad(p1[1])) + Math.sin(rad(p2[1])));
+        }
+
+        area = area * wgs84.RADIUS * wgs84.RADIUS / 2;
+    }
+
+    return area;
+}
+
+function rad(_) {
+    return _ * Math.PI / 180;
+}
+
+},{"wgs84":142}],21:[function(require,module,exports){
+module.exports = function flatten(list, depth) {
+    return _flatten(list);
+
+    function _flatten(list) {
+        if (Array.isArray(list) && list.length &&
+            typeof list[0] === 'number') {
+            return [list];
+        }
+        return list.reduce(function (acc, item) {
+            if (Array.isArray(item) && Array.isArray(item[0])) {
+                return acc.concat(_flatten(item));
+            } else {
+                acc.push(item);
+                return acc;
+            }
+        }, []);
+    }
+};
+
 },{}],22:[function(require,module,exports){
+var geojsonNormalize = require('geojson-normalize'),
+    geojsonFlatten = require('geojson-flatten'),
+    flatten = require('./flatten');
+
+module.exports = function(_) {
+    if (!_) return [];
+    var normalized = geojsonFlatten(geojsonNormalize(_)),
+        coordinates = [];
+    normalized.features.forEach(function(feature) {
+        if (!feature.geometry) return;
+        coordinates = coordinates.concat(flatten(feature.geometry.coordinates));
+    });
+    return coordinates;
+};
+
+},{"./flatten":21,"geojson-flatten":24,"geojson-normalize":25}],23:[function(require,module,exports){
 var geojsonCoords = require('geojson-coords'),
     traverse = require('traverse'),
     extent = require('extent');
@@ -4698,106 +4478,48 @@ function getExtent(_) {
     return ext;
 }
 
-},{"extent":23,"geojson-coords":25,"traverse":27}],23:[function(require,module,exports){
-module.exports = Extent;
+},{"extent":18,"geojson-coords":22,"traverse":137}],24:[function(require,module,exports){
+module.exports = flatten;
 
-function Extent() {
-    if (!(this instanceof Extent)) {
-        return new Extent();
+function flatten(gj, up) {
+    switch ((gj && gj.type) || null) {
+        case 'FeatureCollection':
+            gj.features = gj.features.reduce(function(mem, feature) {
+                return mem.concat(flatten(feature));
+            }, []);
+            return gj;
+        case 'Feature':
+            return flatten(gj.geometry).map(function(geom) {
+                return {
+                    type: 'Feature',
+                    properties: JSON.parse(JSON.stringify(gj.properties)),
+                    geometry: geom
+                };
+            });
+        case 'MultiPoint':
+            return gj.coordinates.map(function(_) {
+                return { type: 'Point', coordinates: _ };
+            });
+        case 'MultiPolygon':
+            return gj.coordinates.map(function(_) {
+                return { type: 'Polygon', coordinates: _ };
+            });
+        case 'MultiLineString':
+            return gj.coordinates.map(function(_) {
+                return { type: 'LineString', coordinates: _ };
+            });
+        case 'GeometryCollection':
+            return gj.geometries;
+        case 'Point':
+        case 'Polygon':
+        case 'LineString':
+            return [gj];
+        default:
+            return gj;
     }
-    this._bbox = [Infinity, Infinity, -Infinity, -Infinity];
-    this._valid = false;
 }
 
-Extent.prototype.include = function(ll) {
-    this._valid = true;
-    this._bbox[0] = Math.min(this._bbox[0], ll[0]);
-    this._bbox[1] = Math.min(this._bbox[1], ll[1]);
-    this._bbox[2] = Math.max(this._bbox[2], ll[0]);
-    this._bbox[3] = Math.max(this._bbox[3], ll[1]);
-    return this;
-};
-
-Extent.prototype.union = function(other) {
-    this._valid = true;
-    this._bbox[0] = Math.min(this._bbox[0], other[0]);
-    this._bbox[1] = Math.min(this._bbox[1], other[1]);
-    this._bbox[2] = Math.max(this._bbox[2], other[2]);
-    this._bbox[3] = Math.max(this._bbox[3], other[3]);
-    return this;
-};
-
-Extent.prototype.bbox = function() {
-    if (!this._valid) return null;
-    return this._bbox;
-};
-
-Extent.prototype.contains = function(ll) {
-    if (!this._valid) return null;
-    return this._bbox[0] <= ll[0] &&
-        this._bbox[1] <= ll[1] &&
-        this._bbox[2] >= ll[0] &&
-        this._bbox[3] >= ll[1];
-};
-
-Extent.prototype.polygon = function() {
-    if (!this._valid) return null;
-    return {
-        type: 'Polygon',
-        coordinates: [
-            [
-                // W, S
-                [this._bbox[0], this._bbox[1]],
-                // E, S
-                [this._bbox[2], this._bbox[1]],
-                // E, N
-                [this._bbox[2], this._bbox[3]],
-                // W, N
-                [this._bbox[0], this._bbox[3]],
-                // W, S
-                [this._bbox[0], this._bbox[1]]
-            ]
-        ]
-    };
-};
-
-},{}],24:[function(require,module,exports){
-module.exports = function flatten(list, depth) {
-    return _flatten(list);
-
-    function _flatten(list) {
-        if (Array.isArray(list) && list.length &&
-            typeof list[0] === 'number') {
-            return [list];
-        }
-        return list.reduce(function (acc, item) {
-            if (Array.isArray(item) && Array.isArray(item[0])) {
-                return acc.concat(_flatten(item));
-            } else {
-                acc.push(item);
-                return acc;
-            }
-        }, []);
-    }
-};
-
 },{}],25:[function(require,module,exports){
-var geojsonNormalize = require('geojson-normalize'),
-    geojsonFlatten = require('geojson-flatten'),
-    flatten = require('./flatten');
-
-module.exports = function(_) {
-    if (!_) return [];
-    var normalized = geojsonFlatten(geojsonNormalize(_)),
-        coordinates = [];
-    normalized.features.forEach(function(feature) {
-        if (!feature.geometry) return;
-        coordinates = coordinates.concat(flatten(feature.geometry.coordinates));
-    });
-    return coordinates;
-};
-
-},{"./flatten":24,"geojson-flatten":28,"geojson-normalize":26}],26:[function(require,module,exports){
 module.exports = normalize;
 
 var types = {
@@ -4842,366 +4564,7 @@ function normalize(gj) {
     }
 }
 
-},{}],27:[function(require,module,exports){
-var traverse = module.exports = function (obj) {
-    return new Traverse(obj);
-};
-
-function Traverse (obj) {
-    this.value = obj;
-}
-
-Traverse.prototype.get = function (ps) {
-    var node = this.value;
-    for (var i = 0; i < ps.length; i ++) {
-        var key = ps[i];
-        if (!node || !hasOwnProperty.call(node, key)) {
-            node = undefined;
-            break;
-        }
-        node = node[key];
-    }
-    return node;
-};
-
-Traverse.prototype.has = function (ps) {
-    var node = this.value;
-    for (var i = 0; i < ps.length; i ++) {
-        var key = ps[i];
-        if (!node || !hasOwnProperty.call(node, key)) {
-            return false;
-        }
-        node = node[key];
-    }
-    return true;
-};
-
-Traverse.prototype.set = function (ps, value) {
-    var node = this.value;
-    for (var i = 0; i < ps.length - 1; i ++) {
-        var key = ps[i];
-        if (!hasOwnProperty.call(node, key)) node[key] = {};
-        node = node[key];
-    }
-    node[ps[i]] = value;
-    return value;
-};
-
-Traverse.prototype.map = function (cb) {
-    return walk(this.value, cb, true);
-};
-
-Traverse.prototype.forEach = function (cb) {
-    this.value = walk(this.value, cb, false);
-    return this.value;
-};
-
-Traverse.prototype.reduce = function (cb, init) {
-    var skip = arguments.length === 1;
-    var acc = skip ? this.value : init;
-    this.forEach(function (x) {
-        if (!this.isRoot || !skip) {
-            acc = cb.call(this, acc, x);
-        }
-    });
-    return acc;
-};
-
-Traverse.prototype.paths = function () {
-    var acc = [];
-    this.forEach(function (x) {
-        acc.push(this.path); 
-    });
-    return acc;
-};
-
-Traverse.prototype.nodes = function () {
-    var acc = [];
-    this.forEach(function (x) {
-        acc.push(this.node);
-    });
-    return acc;
-};
-
-Traverse.prototype.clone = function () {
-    var parents = [], nodes = [];
-    
-    return (function clone (src) {
-        for (var i = 0; i < parents.length; i++) {
-            if (parents[i] === src) {
-                return nodes[i];
-            }
-        }
-        
-        if (typeof src === 'object' && src !== null) {
-            var dst = copy(src);
-            
-            parents.push(src);
-            nodes.push(dst);
-            
-            forEach(objectKeys(src), function (key) {
-                dst[key] = clone(src[key]);
-            });
-            
-            parents.pop();
-            nodes.pop();
-            return dst;
-        }
-        else {
-            return src;
-        }
-    })(this.value);
-};
-
-function walk (root, cb, immutable) {
-    var path = [];
-    var parents = [];
-    var alive = true;
-    
-    return (function walker (node_) {
-        var node = immutable ? copy(node_) : node_;
-        var modifiers = {};
-        
-        var keepGoing = true;
-        
-        var state = {
-            node : node,
-            node_ : node_,
-            path : [].concat(path),
-            parent : parents[parents.length - 1],
-            parents : parents,
-            key : path.slice(-1)[0],
-            isRoot : path.length === 0,
-            level : path.length,
-            circular : null,
-            update : function (x, stopHere) {
-                if (!state.isRoot) {
-                    state.parent.node[state.key] = x;
-                }
-                state.node = x;
-                if (stopHere) keepGoing = false;
-            },
-            'delete' : function (stopHere) {
-                delete state.parent.node[state.key];
-                if (stopHere) keepGoing = false;
-            },
-            remove : function (stopHere) {
-                if (isArray(state.parent.node)) {
-                    state.parent.node.splice(state.key, 1);
-                }
-                else {
-                    delete state.parent.node[state.key];
-                }
-                if (stopHere) keepGoing = false;
-            },
-            keys : null,
-            before : function (f) { modifiers.before = f },
-            after : function (f) { modifiers.after = f },
-            pre : function (f) { modifiers.pre = f },
-            post : function (f) { modifiers.post = f },
-            stop : function () { alive = false },
-            block : function () { keepGoing = false }
-        };
-        
-        if (!alive) return state;
-        
-        function updateState() {
-            if (typeof state.node === 'object' && state.node !== null) {
-                if (!state.keys || state.node_ !== state.node) {
-                    state.keys = objectKeys(state.node)
-                }
-                
-                state.isLeaf = state.keys.length == 0;
-                
-                for (var i = 0; i < parents.length; i++) {
-                    if (parents[i].node_ === node_) {
-                        state.circular = parents[i];
-                        break;
-                    }
-                }
-            }
-            else {
-                state.isLeaf = true;
-                state.keys = null;
-            }
-            
-            state.notLeaf = !state.isLeaf;
-            state.notRoot = !state.isRoot;
-        }
-        
-        updateState();
-        
-        // use return values to update if defined
-        var ret = cb.call(state, state.node);
-        if (ret !== undefined && state.update) state.update(ret);
-        
-        if (modifiers.before) modifiers.before.call(state, state.node);
-        
-        if (!keepGoing) return state;
-        
-        if (typeof state.node == 'object'
-        && state.node !== null && !state.circular) {
-            parents.push(state);
-            
-            updateState();
-            
-            forEach(state.keys, function (key, i) {
-                path.push(key);
-                
-                if (modifiers.pre) modifiers.pre.call(state, state.node[key], key);
-                
-                var child = walker(state.node[key]);
-                if (immutable && hasOwnProperty.call(state.node, key)) {
-                    state.node[key] = child.node;
-                }
-                
-                child.isLast = i == state.keys.length - 1;
-                child.isFirst = i == 0;
-                
-                if (modifiers.post) modifiers.post.call(state, child);
-                
-                path.pop();
-            });
-            parents.pop();
-        }
-        
-        if (modifiers.after) modifiers.after.call(state, state.node);
-        
-        return state;
-    })(root).node;
-}
-
-function copy (src) {
-    if (typeof src === 'object' && src !== null) {
-        var dst;
-        
-        if (isArray(src)) {
-            dst = [];
-        }
-        else if (isDate(src)) {
-            dst = new Date(src.getTime ? src.getTime() : src);
-        }
-        else if (isRegExp(src)) {
-            dst = new RegExp(src);
-        }
-        else if (isError(src)) {
-            dst = { message: src.message };
-        }
-        else if (isBoolean(src)) {
-            dst = new Boolean(src);
-        }
-        else if (isNumber(src)) {
-            dst = new Number(src);
-        }
-        else if (isString(src)) {
-            dst = new String(src);
-        }
-        else if (Object.create && Object.getPrototypeOf) {
-            dst = Object.create(Object.getPrototypeOf(src));
-        }
-        else if (src.constructor === Object) {
-            dst = {};
-        }
-        else {
-            var proto =
-                (src.constructor && src.constructor.prototype)
-                || src.__proto__
-                || {}
-            ;
-            var T = function () {};
-            T.prototype = proto;
-            dst = new T;
-        }
-        
-        forEach(objectKeys(src), function (key) {
-            dst[key] = src[key];
-        });
-        return dst;
-    }
-    else return src;
-}
-
-var objectKeys = Object.keys || function keys (obj) {
-    var res = [];
-    for (var key in obj) res.push(key)
-    return res;
-};
-
-function toS (obj) { return Object.prototype.toString.call(obj) }
-function isDate (obj) { return toS(obj) === '[object Date]' }
-function isRegExp (obj) { return toS(obj) === '[object RegExp]' }
-function isError (obj) { return toS(obj) === '[object Error]' }
-function isBoolean (obj) { return toS(obj) === '[object Boolean]' }
-function isNumber (obj) { return toS(obj) === '[object Number]' }
-function isString (obj) { return toS(obj) === '[object String]' }
-
-var isArray = Array.isArray || function isArray (xs) {
-    return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-var forEach = function (xs, fn) {
-    if (xs.forEach) return xs.forEach(fn)
-    else for (var i = 0; i < xs.length; i++) {
-        fn(xs[i], i, xs);
-    }
-};
-
-forEach(objectKeys(Traverse.prototype), function (key) {
-    traverse[key] = function (obj) {
-        var args = [].slice.call(arguments, 1);
-        var t = new Traverse(obj);
-        return t[key].apply(t, args);
-    };
-});
-
-var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
-    return key in obj;
-};
-
-},{}],28:[function(require,module,exports){
-module.exports = flatten;
-
-function flatten(gj, up) {
-    switch ((gj && gj.type) || null) {
-        case 'FeatureCollection':
-            gj.features = gj.features.reduce(function(mem, feature) {
-                return mem.concat(flatten(feature));
-            }, []);
-            return gj;
-        case 'Feature':
-            return flatten(gj.geometry).map(function(geom) {
-                return {
-                    type: 'Feature',
-                    properties: JSON.parse(JSON.stringify(gj.properties)),
-                    geometry: geom
-                };
-            });
-        case 'MultiPoint':
-            return gj.coordinates.map(function(_) {
-                return { type: 'Point', coordinates: _ };
-            });
-        case 'MultiPolygon':
-            return gj.coordinates.map(function(_) {
-                return { type: 'Polygon', coordinates: _ };
-            });
-        case 'MultiLineString':
-            return gj.coordinates.map(function(_) {
-                return { type: 'LineString', coordinates: _ };
-            });
-        case 'GeometryCollection':
-            return gj.geometries;
-        case 'Point':
-        case 'Polygon':
-        case 'LineString':
-            return [gj];
-        default:
-            return gj;
-    }
-}
-
-},{}],29:[function(require,module,exports){
-module.exports=require(26)
-},{}],30:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = function(count, type) {
     switch (type) {
         case 'point':
@@ -5220,7 +4583,124 @@ function feature(geom) {
 }
 function collection(f) { return { type: 'FeatureCollection', features: f }; }
 
-},{}],31:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
+var geojsonArea = require('geojson-area');
+
+module.exports = rewind;
+
+function rewind(gj, outer) {
+    switch ((gj && gj.type) || null) {
+        case 'FeatureCollection':
+            gj.features = gj.features.map(curryOuter(rewind, outer));
+            return gj;
+        case 'Feature':
+            gj.geometry = rewind(gj.geometry, outer);
+            return gj;
+        case 'Polygon':
+        case 'MultiPolygon':
+            return correct(gj, outer);
+        default:
+            return gj;
+    }
+}
+
+function curryOuter(a, b) {
+    return function(_) { return a(_, b); };
+}
+
+function correct(_, outer) {
+    if (_.type === 'Polygon') {
+        _.coordinates = correctRings(_.coordinates, outer);
+    } else if (_.type === 'MultiPolygon') {
+        _.coordinates = _.coordinates.map(curryOuter(correctRings, outer));
+    }
+    return _;
+}
+
+function correctRings(_, outer) {
+    outer = !!outer;
+    _[0] = wind(_[0], !outer);
+    for (var i = 1; i < _.length; i++) {
+        _[i] = wind(_[i], outer);
+    }
+    return _;
+}
+
+function wind(_, dir) {
+    return cw(_) === dir ? _ : _.reverse();
+}
+
+function cw(_) {
+    return geojsonArea.ring(_) >= 0;
+}
+
+},{"geojson-area":28}],28:[function(require,module,exports){
+var wgs84 = require('wgs84');
+
+module.exports.geometry = geometry;
+module.exports.ring = ringArea;
+
+function geometry(_) {
+    if (_.type === 'Polygon') return polygonArea(_.coordinates);
+    else if (_.type === 'MultiPolygon') {
+        var area = 0;
+        for (var i = 0; i < _.coordinates.length; i++) {
+            area += polygonArea(_.coordinates[i]);
+        }
+        return area;
+    } else {
+        return null;
+    }
+}
+
+function polygonArea(coords) {
+    var area = 0;
+    if (coords && coords.length > 0) {
+        area += Math.abs(ringArea(coords[0]));
+        for (var i = 1; i < coords.length; i++) {
+            area -= Math.abs(ringArea(coords[i]));
+        }
+    }
+    return area;
+}
+
+/**
+ * Calculate the approximate area of the polygon were it projected onto
+ *     the earth.  Note that this area will be positive if ring is oriented
+ *     clockwise, otherwise it will be negative.
+ *
+ * Reference:
+ * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for
+ *     Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
+ *     Laboratory, Pasadena, CA, June 2007 http://trs-new.jpl.nasa.gov/dspace/handle/2014/40409
+ *
+ * Returns:
+ * {float} The approximate signed geodesic area of the polygon in square
+ *     meters.
+ */
+
+function ringArea(coords) {
+    var area = 0;
+
+    if (coords.length > 2) {
+        var p1, p2;
+        for (var i = 0; i < coords.length - 1; i++) {
+            p1 = coords[i];
+            p2 = coords[i + 1];
+            area += rad(p2[0] - p1[0]) * (2 + Math.sin(rad(p1[1])) + Math.sin(rad(p2[1])));
+        }
+
+        area = area * wgs84.RADIUS * wgs84.RADIUS / 2;
+    }
+
+    return area;
+}
+
+function rad(_) {
+    return _ * Math.PI / 180;
+}
+
+},{"wgs84":142}],29:[function(require,module,exports){
 var dsv = require('dsv');
 
 module.exports = function(_, delim) {
@@ -5247,9 +4727,7 @@ module.exports = function(_, delim) {
     }));
 };
 
-},{"dsv":32}],32:[function(require,module,exports){
-module.exports=require(16)
-},{"fs":2}],33:[function(require,module,exports){
+},{"dsv":16}],30:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -5568,7 +5046,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":34}],34:[function(require,module,exports){
+},{"jsonlint-lines":31}],31:[function(require,module,exports){
 (function (process){
 /* parser generated by jison 0.4.6 */
 /*
@@ -6224,8 +5702,8 @@ if (typeof module !== 'undefined' && require.main === module) {
   exports.main(process.argv.slice(1));
 }
 }
-}).call(this,require("FWaASH"))
-},{"FWaASH":11,"fs":2,"path":10}],35:[function(require,module,exports){
+}).call(this,require("g5I+bs"))
+},{"fs":5,"g5I+bs":85,"path":83}],32:[function(require,module,exports){
 var request = require('browser-request'),
     token;
 
@@ -6321,503 +5799,7 @@ function page(postfix, callback) {
     });
 }
 
-},{"browser-request":36}],36:[function(require,module,exports){
-// Browser Request
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// UMD HEADER START 
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define([], factory);
-    } else if (typeof exports === 'object') {
-        // Node. Does not work with strict CommonJS, but
-        // only CommonJS-like enviroments that support module.exports,
-        // like Node.
-        module.exports = factory();
-    } else {
-        // Browser globals (root is window)
-        root.returnExports = factory();
-  }
-}(this, function () {
-// UMD HEADER END
-
-var XHR = XMLHttpRequest
-if (!XHR) throw new Error('missing XMLHttpRequest')
-request.log = {
-  'trace': noop, 'debug': noop, 'info': noop, 'warn': noop, 'error': noop
-}
-
-var DEFAULT_TIMEOUT = 3 * 60 * 1000 // 3 minutes
-
-//
-// request
-//
-
-function request(options, callback) {
-  // The entry-point to the API: prep the options object and pass the real work to run_xhr.
-  if(typeof callback !== 'function')
-    throw new Error('Bad callback given: ' + callback)
-
-  if(!options)
-    throw new Error('No options given')
-
-  var options_onResponse = options.onResponse; // Save this for later.
-
-  if(typeof options === 'string')
-    options = {'uri':options};
-  else
-    options = JSON.parse(JSON.stringify(options)); // Use a duplicate for mutating.
-
-  options.onResponse = options_onResponse // And put it back.
-
-  if (options.verbose) request.log = getLogger();
-
-  if(options.url) {
-    options.uri = options.url;
-    delete options.url;
-  }
-
-  if(!options.uri && options.uri !== "")
-    throw new Error("options.uri is a required argument");
-
-  if(typeof options.uri != "string")
-    throw new Error("options.uri must be a string");
-
-  var unsupported_options = ['proxy', '_redirectsFollowed', 'maxRedirects', 'followRedirect']
-  for (var i = 0; i < unsupported_options.length; i++)
-    if(options[ unsupported_options[i] ])
-      throw new Error("options." + unsupported_options[i] + " is not supported")
-
-  options.callback = callback
-  options.method = options.method || 'GET';
-  options.headers = options.headers || {};
-  options.body    = options.body || null
-  options.timeout = options.timeout || request.DEFAULT_TIMEOUT
-
-  if(options.headers.host)
-    throw new Error("Options.headers.host is not supported");
-
-  if(options.json) {
-    options.headers.accept = options.headers.accept || 'application/json'
-    if(options.method !== 'GET')
-      options.headers['content-type'] = 'application/json'
-
-    if(typeof options.json !== 'boolean')
-      options.body = JSON.stringify(options.json)
-    else if(typeof options.body !== 'string')
-      options.body = JSON.stringify(options.body)
-  }
-  
-  //BEGIN QS Hack
-  var serialize = function(obj) {
-    var str = [];
-    for(var p in obj)
-      if (obj.hasOwnProperty(p)) {
-        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
-      }
-    return str.join("&");
-  }
-  
-  if(options.qs){
-    var qs = (typeof options.qs == 'string')? options.qs : serialize(options.qs);
-    if(options.uri.indexOf('?') !== -1){ //no get params
-        options.uri = options.uri+'&'+qs;
-    }else{ //existing get params
-        options.uri = options.uri+'?'+qs;
-    }
-  }
-  //END QS Hack
-  
-  //BEGIN FORM Hack
-  var multipart = function(obj) {
-    //todo: support file type (useful?)
-    var result = {};
-    result.boundry = '-------------------------------'+Math.floor(Math.random()*1000000000);
-    var lines = [];
-    for(var p in obj){
-        if (obj.hasOwnProperty(p)) {
-            lines.push(
-                '--'+result.boundry+"\n"+
-                'Content-Disposition: form-data; name="'+p+'"'+"\n"+
-                "\n"+
-                obj[p]+"\n"
-            );
-        }
-    }
-    lines.push( '--'+result.boundry+'--' );
-    result.body = lines.join('');
-    result.length = result.body.length;
-    result.type = 'multipart/form-data; boundary='+result.boundry;
-    return result;
-  }
-  
-  if(options.form){
-    if(typeof options.form == 'string') throw('form name unsupported');
-    if(options.method === 'POST'){
-        var encoding = (options.encoding || 'application/x-www-form-urlencoded').toLowerCase();
-        options.headers['content-type'] = encoding;
-        switch(encoding){
-            case 'application/x-www-form-urlencoded':
-                options.body = serialize(options.form).replace(/%20/g, "+");
-                break;
-            case 'multipart/form-data':
-                var multi = multipart(options.form);
-                //options.headers['content-length'] = multi.length;
-                options.body = multi.body;
-                options.headers['content-type'] = multi.type;
-                break;
-            default : throw new Error('unsupported encoding:'+encoding);
-        }
-    }
-  }
-  //END FORM Hack
-
-  // If onResponse is boolean true, call back immediately when the response is known,
-  // not when the full request is complete.
-  options.onResponse = options.onResponse || noop
-  if(options.onResponse === true) {
-    options.onResponse = callback
-    options.callback = noop
-  }
-
-  // XXX Browsers do not like this.
-  //if(options.body)
-  //  options.headers['content-length'] = options.body.length;
-
-  // HTTP basic authentication
-  if(!options.headers.authorization && options.auth)
-    options.headers.authorization = 'Basic ' + b64_enc(options.auth.username + ':' + options.auth.password);
-
-  return run_xhr(options)
-}
-
-var req_seq = 0
-function run_xhr(options) {
-  var xhr = new XHR
-    , timed_out = false
-    , is_cors = is_crossDomain(options.uri)
-    , supports_cors = ('withCredentials' in xhr)
-
-  req_seq += 1
-  xhr.seq_id = req_seq
-  xhr.id = req_seq + ': ' + options.method + ' ' + options.uri
-  xhr._id = xhr.id // I know I will type "_id" from habit all the time.
-
-  if(is_cors && !supports_cors) {
-    var cors_err = new Error('Browser does not support cross-origin request: ' + options.uri)
-    cors_err.cors = 'unsupported'
-    return options.callback(cors_err, xhr)
-  }
-
-  xhr.timeoutTimer = setTimeout(too_late, options.timeout)
-  function too_late() {
-    timed_out = true
-    var er = new Error('ETIMEDOUT')
-    er.code = 'ETIMEDOUT'
-    er.duration = options.timeout
-
-    request.log.error('Timeout', { 'id':xhr._id, 'milliseconds':options.timeout })
-    return options.callback(er, xhr)
-  }
-
-  // Some states can be skipped over, so remember what is still incomplete.
-  var did = {'response':false, 'loading':false, 'end':false}
-
-  xhr.onreadystatechange = on_state_change
-  xhr.open(options.method, options.uri, true) // asynchronous
-  if(is_cors)
-    xhr.withCredentials = !! options.withCredentials
-  xhr.send(options.body)
-  return xhr
-
-  function on_state_change(event) {
-    if(timed_out)
-      return request.log.debug('Ignoring timed out state change', {'state':xhr.readyState, 'id':xhr.id})
-
-    request.log.debug('State change', {'state':xhr.readyState, 'id':xhr.id, 'timed_out':timed_out})
-
-    if(xhr.readyState === XHR.OPENED) {
-      request.log.debug('Request started', {'id':xhr.id})
-      for (var key in options.headers)
-        xhr.setRequestHeader(key, options.headers[key])
-    }
-
-    else if(xhr.readyState === XHR.HEADERS_RECEIVED)
-      on_response()
-
-    else if(xhr.readyState === XHR.LOADING) {
-      on_response()
-      on_loading()
-    }
-
-    else if(xhr.readyState === XHR.DONE) {
-      on_response()
-      on_loading()
-      on_end()
-    }
-  }
-
-  function on_response() {
-    if(did.response)
-      return
-
-    did.response = true
-    request.log.debug('Got response', {'id':xhr.id, 'status':xhr.status})
-    clearTimeout(xhr.timeoutTimer)
-    xhr.statusCode = xhr.status // Node request compatibility
-
-    // Detect failed CORS requests.
-    if(is_cors && xhr.statusCode == 0) {
-      var cors_err = new Error('CORS request rejected: ' + options.uri)
-      cors_err.cors = 'rejected'
-
-      // Do not process this request further.
-      did.loading = true
-      did.end = true
-
-      return options.callback(cors_err, xhr)
-    }
-
-    options.onResponse(null, xhr)
-  }
-
-  function on_loading() {
-    if(did.loading)
-      return
-
-    did.loading = true
-    request.log.debug('Response body loading', {'id':xhr.id})
-    // TODO: Maybe simulate "data" events by watching xhr.responseText
-  }
-
-  function on_end() {
-    if(did.end)
-      return
-
-    did.end = true
-    request.log.debug('Request done', {'id':xhr.id})
-
-    xhr.body = xhr.responseText
-    if(options.json) {
-      try        { xhr.body = JSON.parse(xhr.responseText) }
-      catch (er) { return options.callback(er, xhr)        }
-    }
-
-    options.callback(null, xhr, xhr.body)
-  }
-
-} // request
-
-request.withCredentials = false;
-request.DEFAULT_TIMEOUT = DEFAULT_TIMEOUT;
-
-//
-// defaults
-//
-
-request.defaults = function(options, requester) {
-  var def = function (method) {
-    var d = function (params, callback) {
-      if(typeof params === 'string')
-        params = {'uri': params};
-      else {
-        params = JSON.parse(JSON.stringify(params));
-      }
-      for (var i in options) {
-        if (params[i] === undefined) params[i] = options[i]
-      }
-      return method(params, callback)
-    }
-    return d
-  }
-  var de = def(request)
-  de.get = def(request.get)
-  de.post = def(request.post)
-  de.put = def(request.put)
-  de.head = def(request.head)
-  return de
-}
-
-//
-// HTTP method shortcuts
-//
-
-var shortcuts = [ 'get', 'put', 'post', 'head' ];
-shortcuts.forEach(function(shortcut) {
-  var method = shortcut.toUpperCase();
-  var func   = shortcut.toLowerCase();
-
-  request[func] = function(opts) {
-    if(typeof opts === 'string')
-      opts = {'method':method, 'uri':opts};
-    else {
-      opts = JSON.parse(JSON.stringify(opts));
-      opts.method = method;
-    }
-
-    var args = [opts].concat(Array.prototype.slice.apply(arguments, [1]));
-    return request.apply(this, args);
-  }
-})
-
-//
-// CouchDB shortcut
-//
-
-request.couch = function(options, callback) {
-  if(typeof options === 'string')
-    options = {'uri':options}
-
-  // Just use the request API to do JSON.
-  options.json = true
-  if(options.body)
-    options.json = options.body
-  delete options.body
-
-  callback = callback || noop
-
-  var xhr = request(options, couch_handler)
-  return xhr
-
-  function couch_handler(er, resp, body) {
-    if(er)
-      return callback(er, resp, body)
-
-    if((resp.statusCode < 200 || resp.statusCode > 299) && body.error) {
-      // The body is a Couch JSON object indicating the error.
-      er = new Error('CouchDB error: ' + (body.error.reason || body.error.error))
-      for (var key in body)
-        er[key] = body[key]
-      return callback(er, resp, body);
-    }
-
-    return callback(er, resp, body);
-  }
-}
-
-//
-// Utility
-//
-
-function noop() {}
-
-function getLogger() {
-  var logger = {}
-    , levels = ['trace', 'debug', 'info', 'warn', 'error']
-    , level, i
-
-  for(i = 0; i < levels.length; i++) {
-    level = levels[i]
-
-    logger[level] = noop
-    if(typeof console !== 'undefined' && console && console[level])
-      logger[level] = formatted(console, level)
-  }
-
-  return logger
-}
-
-function formatted(obj, method) {
-  return formatted_logger
-
-  function formatted_logger(str, context) {
-    if(typeof context === 'object')
-      str += ' ' + JSON.stringify(context)
-
-    return obj[method].call(obj, str)
-  }
-}
-
-// Return whether a URL is a cross-domain request.
-function is_crossDomain(url) {
-  var rurl = /^([\w\+\.\-]+:)(?:\/\/([^\/?#:]*)(?::(\d+))?)?/
-
-  // jQuery #8138, IE may throw an exception when accessing
-  // a field from window.location if document.domain has been set
-  var ajaxLocation
-  try { ajaxLocation = location.href }
-  catch (e) {
-    // Use the href attribute of an A element since IE will modify it given document.location
-    ajaxLocation = document.createElement( "a" );
-    ajaxLocation.href = "";
-    ajaxLocation = ajaxLocation.href;
-  }
-
-  var ajaxLocParts = rurl.exec(ajaxLocation.toLowerCase()) || []
-    , parts = rurl.exec(url.toLowerCase() )
-
-  var result = !!(
-    parts &&
-    (  parts[1] != ajaxLocParts[1]
-    || parts[2] != ajaxLocParts[2]
-    || (parts[3] || (parts[1] === "http:" ? 80 : 443)) != (ajaxLocParts[3] || (ajaxLocParts[1] === "http:" ? 80 : 443))
-    )
-  )
-
-  //console.debug('is_crossDomain('+url+') -> ' + result)
-  return result
-}
-
-// MIT License from http://phpjs.org/functions/base64_encode:358
-function b64_enc (data) {
-    // Encodes string using MIME base64 algorithm
-    var b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-    var o1, o2, o3, h1, h2, h3, h4, bits, i = 0, ac = 0, enc="", tmp_arr = [];
-
-    if (!data) {
-        return data;
-    }
-
-    // assume utf8 data
-    // data = this.utf8_encode(data+'');
-
-    do { // pack three octets into four hexets
-        o1 = data.charCodeAt(i++);
-        o2 = data.charCodeAt(i++);
-        o3 = data.charCodeAt(i++);
-
-        bits = o1<<16 | o2<<8 | o3;
-
-        h1 = bits>>18 & 0x3f;
-        h2 = bits>>12 & 0x3f;
-        h3 = bits>>6 & 0x3f;
-        h4 = bits & 0x3f;
-
-        // use hexets to index into b64, and append result to encoded string
-        tmp_arr[ac++] = b64.charAt(h1) + b64.charAt(h2) + b64.charAt(h3) + b64.charAt(h4);
-    } while (i < data.length);
-
-    enc = tmp_arr.join('');
-
-    switch (data.length % 3) {
-        case 1:
-            enc = enc.slice(0, -2) + '==';
-        break;
-        case 2:
-            enc = enc.slice(0, -1) + '=';
-        break;
-    }
-
-    return enc;
-}
-    return request;
-//UMD FOOTER START
-}));
-//UMD FOOTER END
-
-},{}],37:[function(require,module,exports){
+},{"browser-request":3}],33:[function(require,module,exports){
 var queue = require('queue-async'),
     request = require('browser-request'),
     treeui = require('treeui'),
@@ -6952,190 +5934,7 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":38,"queue-async":39,"treeui":40}],38:[function(require,module,exports){
-module.exports=require(36)
-},{}],39:[function(require,module,exports){
-(function() {
-  var slice = [].slice;
-
-  function queue(parallelism) {
-    var q,
-        tasks = [],
-        started = 0, // number of tasks that have been started (and perhaps finished)
-        active = 0, // number of tasks currently being executed (started but not finished)
-        remaining = 0, // number of tasks not yet finished
-        popping, // inside a synchronous task callback?
-        error = null,
-        await = noop,
-        all;
-
-    if (!parallelism) parallelism = Infinity;
-
-    function pop() {
-      while (popping = started < tasks.length && active < parallelism) {
-        var i = started++,
-            t = tasks[i],
-            a = slice.call(t, 1);
-        a.push(callback(i));
-        ++active;
-        t[0].apply(null, a);
-      }
-    }
-
-    function callback(i) {
-      return function(e, r) {
-        --active;
-        if (error != null) return;
-        if (e != null) {
-          error = e; // ignore new tasks and squelch active callbacks
-          started = remaining = NaN; // stop queued tasks from starting
-          notify();
-        } else {
-          tasks[i] = r;
-          if (--remaining) popping || pop();
-          else notify();
-        }
-      };
-    }
-
-    function notify() {
-      if (error != null) await(error);
-      else if (all) await(error, tasks);
-      else await.apply(null, [error].concat(tasks));
-    }
-
-    return q = {
-      defer: function() {
-        if (!error) {
-          tasks.push(arguments);
-          ++remaining;
-          pop();
-        }
-        return q;
-      },
-      await: function(f) {
-        await = f;
-        all = false;
-        if (!remaining) notify();
-        return q;
-      },
-      awaitAll: function(f) {
-        await = f;
-        all = true;
-        if (!remaining) notify();
-        return q;
-      }
-    };
-  }
-
-  function noop() {}
-
-  queue.version = "1.0.7";
-  if (typeof define === "function" && define.amd) define(function() { return queue; });
-  else if (typeof module === "object" && module.exports) module.exports = queue;
-  else this.queue = queue;
-})();
-
-},{}],40:[function(require,module,exports){
-module.exports = function(request) {
-    var parent = ce('div', 'treeui'),
-        onclick = function() { };
-
-    var addItem = function(result) {
-        var item = ce('div', 'treeui-item');
-        item.level = JSON.stringify(result);
-
-        if (expandable(result)) {
-            var caret = append(item, ce('span', 'treeui-caret'));
-            caret.innerHTML = '▶';
-            caret.level = JSON.stringify(result);
-            ae(caret, 'click', toggle);
-        }
-
-        var description = append(item, ce('span', 'treeui-label'));
-        description.textContent = display(result);
-
-        ae(description, 'click', function(e) {
-            onclick(JSON.parse(e.target.parentNode.level), e);
-        });
-
-        return item;
-    };
-
-    var display = function(result) {
-        return result;
-    };
-
-    var expandable = function(result) {
-        return true;
-    };
-
-    function toggle(e) {
-        var elem = e.target,
-            parent = e.target.parentNode;
-        if (elem.classList.contains('open')) {
-            var subs = parent.getElementsByClassName('treeui-level');
-            for (var i = 0; i < subs.length; i++) {
-                subs[i].parentNode.removeChild(subs[i]);
-            }
-            elem.classList.remove('open');
-            elem.innerHTML = '▶';
-        } else {
-            load(JSON.parse(parent.level),
-                 append(parent, ce('div', 'treeui-level')));
-            elem.classList.add('open');
-            elem.innerHTML = '▼';
-        }
-    }
-
-    function load(level, parent) {
-        request(level, function(err, results) {
-            if (err) return;
-            results.forEach(function(result) {
-                append(parent, addItem(result));
-            });
-        });
-    }
-
-    load([], parent);
-
-    var treeui = {
-        appendTo: function(elem) {
-            elem.appendChild(parent);
-            return treeui;
-        },
-        onclick: function(_) {
-            onclick = _;
-            return treeui;
-        },
-        display: function(_) {
-            display = _;
-            return treeui;
-        },
-        expandable: function(_) {
-            expandable = _;
-            return treeui;
-        }
-    };
-
-    return treeui;
-};
-
-function ce(_, k) {
-    var elem = document.createElement(_);
-    if (k) elem.className = k;
-    return elem;
-}
-
-function append(x, y) {
-    return x.appendChild(y);
-}
-
-function ae(x, y, z) {
-    return x.addEventListener(y, z);
-}
-
-},{}],41:[function(require,module,exports){
+},{"browser-request":3,"queue-async":87,"treeui":138}],34:[function(require,module,exports){
 var parseCSV = require('dsv').csv.parse;
 
 /**
@@ -7177,7 +5976,2929 @@ function gtfs2geojson(gtfs) {
 
 module.exports = gtfs2geojson;
 
-},{"dsv":19}],42:[function(require,module,exports){
+},{"dsv":16}],35:[function(require,module,exports){
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = (value * c - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+},{}],36:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],37:[function(require,module,exports){
+
+/**
+ * isArray
+ */
+
+var isArray = Array.isArray;
+
+/**
+ * toString
+ */
+
+var str = Object.prototype.toString;
+
+/**
+ * Whether or not the given `val`
+ * is an array.
+ *
+ * example:
+ *
+ *        isArray([]);
+ *        // > true
+ *        isArray(arguments);
+ *        // > false
+ *        isArray('');
+ *        // > false
+ *
+ * @param {mixed} val
+ * @return {bool}
+ */
+
+module.exports = isArray || function (val) {
+  return !! val && '[object Array]' == str.call(val);
+};
+
+},{}],38:[function(require,module,exports){
+'use strict';
+// private property
+var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+
+
+// public method for encoding
+exports.encode = function(input, utf8) {
+    var output = "";
+    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+    var i = 0;
+
+    while (i < input.length) {
+
+        chr1 = input.charCodeAt(i++);
+        chr2 = input.charCodeAt(i++);
+        chr3 = input.charCodeAt(i++);
+
+        enc1 = chr1 >> 2;
+        enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+        enc4 = chr3 & 63;
+
+        if (isNaN(chr2)) {
+            enc3 = enc4 = 64;
+        }
+        else if (isNaN(chr3)) {
+            enc4 = 64;
+        }
+
+        output = output + _keyStr.charAt(enc1) + _keyStr.charAt(enc2) + _keyStr.charAt(enc3) + _keyStr.charAt(enc4);
+
+    }
+
+    return output;
+};
+
+// public method for decoding
+exports.decode = function(input, utf8) {
+    var output = "";
+    var chr1, chr2, chr3;
+    var enc1, enc2, enc3, enc4;
+    var i = 0;
+
+    input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+    while (i < input.length) {
+
+        enc1 = _keyStr.indexOf(input.charAt(i++));
+        enc2 = _keyStr.indexOf(input.charAt(i++));
+        enc3 = _keyStr.indexOf(input.charAt(i++));
+        enc4 = _keyStr.indexOf(input.charAt(i++));
+
+        chr1 = (enc1 << 2) | (enc2 >> 4);
+        chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+        chr3 = ((enc3 & 3) << 6) | enc4;
+
+        output = output + String.fromCharCode(chr1);
+
+        if (enc3 != 64) {
+            output = output + String.fromCharCode(chr2);
+        }
+        if (enc4 != 64) {
+            output = output + String.fromCharCode(chr3);
+        }
+
+    }
+
+    return output;
+
+};
+
+},{}],39:[function(require,module,exports){
+'use strict';
+function CompressedObject() {
+    this.compressedSize = 0;
+    this.uncompressedSize = 0;
+    this.crc32 = 0;
+    this.compressionMethod = null;
+    this.compressedContent = null;
+}
+
+CompressedObject.prototype = {
+    /**
+     * Return the decompressed content in an unspecified format.
+     * The format will depend on the decompressor.
+     * @return {Object} the decompressed content.
+     */
+    getContent: function() {
+        return null; // see implementation
+    },
+    /**
+     * Return the compressed content in an unspecified format.
+     * The format will depend on the compressed conten source.
+     * @return {Object} the compressed content.
+     */
+    getCompressedContent: function() {
+        return null; // see implementation
+    }
+};
+module.exports = CompressedObject;
+
+},{}],40:[function(require,module,exports){
+'use strict';
+exports.STORE = {
+    magic: "\x00\x00",
+    compress: function(content, compressionOptions) {
+        return content; // no compression
+    },
+    uncompress: function(content) {
+        return content; // no compression
+    },
+    compressInputType: null,
+    uncompressInputType: null
+};
+exports.DEFLATE = require('./flate');
+
+},{"./flate":45}],41:[function(require,module,exports){
+'use strict';
+
+var utils = require('./utils');
+
+var table = [
+    0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
+    0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
+    0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988,
+    0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91,
+    0x1DB71064, 0x6AB020F2, 0xF3B97148, 0x84BE41DE,
+    0x1ADAD47D, 0x6DDDE4EB, 0xF4D4B551, 0x83D385C7,
+    0x136C9856, 0x646BA8C0, 0xFD62F97A, 0x8A65C9EC,
+    0x14015C4F, 0x63066CD9, 0xFA0F3D63, 0x8D080DF5,
+    0x3B6E20C8, 0x4C69105E, 0xD56041E4, 0xA2677172,
+    0x3C03E4D1, 0x4B04D447, 0xD20D85FD, 0xA50AB56B,
+    0x35B5A8FA, 0x42B2986C, 0xDBBBC9D6, 0xACBCF940,
+    0x32D86CE3, 0x45DF5C75, 0xDCD60DCF, 0xABD13D59,
+    0x26D930AC, 0x51DE003A, 0xC8D75180, 0xBFD06116,
+    0x21B4F4B5, 0x56B3C423, 0xCFBA9599, 0xB8BDA50F,
+    0x2802B89E, 0x5F058808, 0xC60CD9B2, 0xB10BE924,
+    0x2F6F7C87, 0x58684C11, 0xC1611DAB, 0xB6662D3D,
+    0x76DC4190, 0x01DB7106, 0x98D220BC, 0xEFD5102A,
+    0x71B18589, 0x06B6B51F, 0x9FBFE4A5, 0xE8B8D433,
+    0x7807C9A2, 0x0F00F934, 0x9609A88E, 0xE10E9818,
+    0x7F6A0DBB, 0x086D3D2D, 0x91646C97, 0xE6635C01,
+    0x6B6B51F4, 0x1C6C6162, 0x856530D8, 0xF262004E,
+    0x6C0695ED, 0x1B01A57B, 0x8208F4C1, 0xF50FC457,
+    0x65B0D9C6, 0x12B7E950, 0x8BBEB8EA, 0xFCB9887C,
+    0x62DD1DDF, 0x15DA2D49, 0x8CD37CF3, 0xFBD44C65,
+    0x4DB26158, 0x3AB551CE, 0xA3BC0074, 0xD4BB30E2,
+    0x4ADFA541, 0x3DD895D7, 0xA4D1C46D, 0xD3D6F4FB,
+    0x4369E96A, 0x346ED9FC, 0xAD678846, 0xDA60B8D0,
+    0x44042D73, 0x33031DE5, 0xAA0A4C5F, 0xDD0D7CC9,
+    0x5005713C, 0x270241AA, 0xBE0B1010, 0xC90C2086,
+    0x5768B525, 0x206F85B3, 0xB966D409, 0xCE61E49F,
+    0x5EDEF90E, 0x29D9C998, 0xB0D09822, 0xC7D7A8B4,
+    0x59B33D17, 0x2EB40D81, 0xB7BD5C3B, 0xC0BA6CAD,
+    0xEDB88320, 0x9ABFB3B6, 0x03B6E20C, 0x74B1D29A,
+    0xEAD54739, 0x9DD277AF, 0x04DB2615, 0x73DC1683,
+    0xE3630B12, 0x94643B84, 0x0D6D6A3E, 0x7A6A5AA8,
+    0xE40ECF0B, 0x9309FF9D, 0x0A00AE27, 0x7D079EB1,
+    0xF00F9344, 0x8708A3D2, 0x1E01F268, 0x6906C2FE,
+    0xF762575D, 0x806567CB, 0x196C3671, 0x6E6B06E7,
+    0xFED41B76, 0x89D32BE0, 0x10DA7A5A, 0x67DD4ACC,
+    0xF9B9DF6F, 0x8EBEEFF9, 0x17B7BE43, 0x60B08ED5,
+    0xD6D6A3E8, 0xA1D1937E, 0x38D8C2C4, 0x4FDFF252,
+    0xD1BB67F1, 0xA6BC5767, 0x3FB506DD, 0x48B2364B,
+    0xD80D2BDA, 0xAF0A1B4C, 0x36034AF6, 0x41047A60,
+    0xDF60EFC3, 0xA867DF55, 0x316E8EEF, 0x4669BE79,
+    0xCB61B38C, 0xBC66831A, 0x256FD2A0, 0x5268E236,
+    0xCC0C7795, 0xBB0B4703, 0x220216B9, 0x5505262F,
+    0xC5BA3BBE, 0xB2BD0B28, 0x2BB45A92, 0x5CB36A04,
+    0xC2D7FFA7, 0xB5D0CF31, 0x2CD99E8B, 0x5BDEAE1D,
+    0x9B64C2B0, 0xEC63F226, 0x756AA39C, 0x026D930A,
+    0x9C0906A9, 0xEB0E363F, 0x72076785, 0x05005713,
+    0x95BF4A82, 0xE2B87A14, 0x7BB12BAE, 0x0CB61B38,
+    0x92D28E9B, 0xE5D5BE0D, 0x7CDCEFB7, 0x0BDBDF21,
+    0x86D3D2D4, 0xF1D4E242, 0x68DDB3F8, 0x1FDA836E,
+    0x81BE16CD, 0xF6B9265B, 0x6FB077E1, 0x18B74777,
+    0x88085AE6, 0xFF0F6A70, 0x66063BCA, 0x11010B5C,
+    0x8F659EFF, 0xF862AE69, 0x616BFFD3, 0x166CCF45,
+    0xA00AE278, 0xD70DD2EE, 0x4E048354, 0x3903B3C2,
+    0xA7672661, 0xD06016F7, 0x4969474D, 0x3E6E77DB,
+    0xAED16A4A, 0xD9D65ADC, 0x40DF0B66, 0x37D83BF0,
+    0xA9BCAE53, 0xDEBB9EC5, 0x47B2CF7F, 0x30B5FFE9,
+    0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6,
+    0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF,
+    0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94,
+    0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
+];
+
+/**
+ *
+ *  Javascript crc32
+ *  http://www.webtoolkit.info/
+ *
+ */
+module.exports = function crc32(input, crc) {
+    if (typeof input === "undefined" || !input.length) {
+        return 0;
+    }
+
+    var isArray = utils.getTypeOf(input) !== "string";
+
+    if (typeof(crc) == "undefined") {
+        crc = 0;
+    }
+    var x = 0;
+    var y = 0;
+    var b = 0;
+
+    crc = crc ^ (-1);
+    for (var i = 0, iTop = input.length; i < iTop; i++) {
+        b = isArray ? input[i] : input.charCodeAt(i);
+        y = (crc ^ b) & 0xFF;
+        x = table[y];
+        crc = (crc >>> 8) ^ x;
+    }
+
+    return crc ^ (-1);
+};
+// vim: set shiftwidth=4 softtabstop=4:
+
+},{"./utils":58}],42:[function(require,module,exports){
+'use strict';
+var utils = require('./utils');
+
+function DataReader(data) {
+    this.data = null; // type : see implementation
+    this.length = 0;
+    this.index = 0;
+}
+DataReader.prototype = {
+    /**
+     * Check that the offset will not go too far.
+     * @param {string} offset the additional offset to check.
+     * @throws {Error} an Error if the offset is out of bounds.
+     */
+    checkOffset: function(offset) {
+        this.checkIndex(this.index + offset);
+    },
+    /**
+     * Check that the specifed index will not be too far.
+     * @param {string} newIndex the index to check.
+     * @throws {Error} an Error if the index is out of bounds.
+     */
+    checkIndex: function(newIndex) {
+        if (this.length < newIndex || newIndex < 0) {
+            throw new Error("End of data reached (data length = " + this.length + ", asked index = " + (newIndex) + "). Corrupted zip ?");
+        }
+    },
+    /**
+     * Change the index.
+     * @param {number} newIndex The new index.
+     * @throws {Error} if the new index is out of the data.
+     */
+    setIndex: function(newIndex) {
+        this.checkIndex(newIndex);
+        this.index = newIndex;
+    },
+    /**
+     * Skip the next n bytes.
+     * @param {number} n the number of bytes to skip.
+     * @throws {Error} if the new index is out of the data.
+     */
+    skip: function(n) {
+        this.setIndex(this.index + n);
+    },
+    /**
+     * Get the byte at the specified index.
+     * @param {number} i the index to use.
+     * @return {number} a byte.
+     */
+    byteAt: function(i) {
+        // see implementations
+    },
+    /**
+     * Get the next number with a given byte size.
+     * @param {number} size the number of bytes to read.
+     * @return {number} the corresponding number.
+     */
+    readInt: function(size) {
+        var result = 0,
+            i;
+        this.checkOffset(size);
+        for (i = this.index + size - 1; i >= this.index; i--) {
+            result = (result << 8) + this.byteAt(i);
+        }
+        this.index += size;
+        return result;
+    },
+    /**
+     * Get the next string with a given byte size.
+     * @param {number} size the number of bytes to read.
+     * @return {string} the corresponding string.
+     */
+    readString: function(size) {
+        return utils.transformTo("string", this.readData(size));
+    },
+    /**
+     * Get raw data without conversion, <size> bytes.
+     * @param {number} size the number of bytes to read.
+     * @return {Object} the raw data, implementation specific.
+     */
+    readData: function(size) {
+        // see implementations
+    },
+    /**
+     * Find the last occurence of a zip signature (4 bytes).
+     * @param {string} sig the signature to find.
+     * @return {number} the index of the last occurence, -1 if not found.
+     */
+    lastIndexOfSignature: function(sig) {
+        // see implementations
+    },
+    /**
+     * Get the next date.
+     * @return {Date} the date.
+     */
+    readDate: function() {
+        var dostime = this.readInt(4);
+        return new Date(
+        ((dostime >> 25) & 0x7f) + 1980, // year
+        ((dostime >> 21) & 0x0f) - 1, // month
+        (dostime >> 16) & 0x1f, // day
+        (dostime >> 11) & 0x1f, // hour
+        (dostime >> 5) & 0x3f, // minute
+        (dostime & 0x1f) << 1); // second
+    }
+};
+module.exports = DataReader;
+
+},{"./utils":58}],43:[function(require,module,exports){
+'use strict';
+exports.base64 = false;
+exports.binary = false;
+exports.dir = false;
+exports.createFolders = false;
+exports.date = null;
+exports.compression = null;
+exports.compressionOptions = null;
+exports.comment = null;
+exports.unixPermissions = null;
+exports.dosPermissions = null;
+
+},{}],44:[function(require,module,exports){
+'use strict';
+var utils = require('./utils');
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.string2binary = function(str) {
+    return utils.string2binary(str);
+};
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.string2Uint8Array = function(str) {
+    return utils.transformTo("uint8array", str);
+};
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.uint8Array2String = function(array) {
+    return utils.transformTo("string", array);
+};
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.string2Blob = function(str) {
+    var buffer = utils.transformTo("arraybuffer", str);
+    return utils.arrayBuffer2Blob(buffer);
+};
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.arrayBuffer2Blob = function(buffer) {
+    return utils.arrayBuffer2Blob(buffer);
+};
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.transformTo = function(outputType, input) {
+    return utils.transformTo(outputType, input);
+};
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.getTypeOf = function(input) {
+    return utils.getTypeOf(input);
+};
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.checkSupport = function(type) {
+    return utils.checkSupport(type);
+};
+
+/**
+ * @deprecated
+ * This value will be removed in a future version without replacement.
+ */
+exports.MAX_VALUE_16BITS = utils.MAX_VALUE_16BITS;
+
+/**
+ * @deprecated
+ * This value will be removed in a future version without replacement.
+ */
+exports.MAX_VALUE_32BITS = utils.MAX_VALUE_32BITS;
+
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.pretty = function(str) {
+    return utils.pretty(str);
+};
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.findCompression = function(compressionMethod) {
+    return utils.findCompression(compressionMethod);
+};
+
+/**
+ * @deprecated
+ * This function will be removed in a future version without replacement.
+ */
+exports.isRegExp = function (object) {
+    return utils.isRegExp(object);
+};
+
+
+},{"./utils":58}],45:[function(require,module,exports){
+'use strict';
+var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
+
+var pako = require("pako");
+exports.uncompressInputType = USE_TYPEDARRAY ? "uint8array" : "array";
+exports.compressInputType = USE_TYPEDARRAY ? "uint8array" : "array";
+
+exports.magic = "\x08\x00";
+exports.compress = function(input, compressionOptions) {
+    return pako.deflateRaw(input, {
+        level : compressionOptions.level || -1 // default compression
+    });
+};
+exports.uncompress =  function(input) {
+    return pako.inflateRaw(input);
+};
+
+},{"pako":67}],46:[function(require,module,exports){
+'use strict';
+
+var base64 = require('./base64');
+
+/**
+Usage:
+   zip = new JSZip();
+   zip.file("hello.txt", "Hello, World!").file("tempfile", "nothing");
+   zip.folder("images").file("smile.gif", base64Data, {base64: true});
+   zip.file("Xmas.txt", "Ho ho ho !", {date : new Date("December 25, 2007 00:00:01")});
+   zip.remove("tempfile");
+
+   base64zip = zip.generate();
+
+**/
+
+/**
+ * Representation a of zip file in js
+ * @constructor
+ * @param {String=|ArrayBuffer=|Uint8Array=} data the data to load, if any (optional).
+ * @param {Object=} options the options for creating this objects (optional).
+ */
+function JSZip(data, options) {
+    // if this constructor is used without `new`, it adds `new` before itself:
+    if(!(this instanceof JSZip)) return new JSZip(data, options);
+
+    // object containing the files :
+    // {
+    //   "folder/" : {...},
+    //   "folder/data.txt" : {...}
+    // }
+    this.files = {};
+
+    this.comment = null;
+
+    // Where we are in the hierarchy
+    this.root = "";
+    if (data) {
+        this.load(data, options);
+    }
+    this.clone = function() {
+        var newObj = new JSZip();
+        for (var i in this) {
+            if (typeof this[i] !== "function") {
+                newObj[i] = this[i];
+            }
+        }
+        return newObj;
+    };
+}
+JSZip.prototype = require('./object');
+JSZip.prototype.load = require('./load');
+JSZip.support = require('./support');
+JSZip.defaults = require('./defaults');
+
+/**
+ * @deprecated
+ * This namespace will be removed in a future version without replacement.
+ */
+JSZip.utils = require('./deprecatedPublicUtils');
+
+JSZip.base64 = {
+    /**
+     * @deprecated
+     * This method will be removed in a future version without replacement.
+     */
+    encode : function(input) {
+        return base64.encode(input);
+    },
+    /**
+     * @deprecated
+     * This method will be removed in a future version without replacement.
+     */
+    decode : function(input) {
+        return base64.decode(input);
+    }
+};
+JSZip.compressions = require('./compressions');
+module.exports = JSZip;
+
+},{"./base64":38,"./compressions":40,"./defaults":43,"./deprecatedPublicUtils":44,"./load":47,"./object":50,"./support":54}],47:[function(require,module,exports){
+'use strict';
+var base64 = require('./base64');
+var ZipEntries = require('./zipEntries');
+module.exports = function(data, options) {
+    var files, zipEntries, i, input;
+    options = options || {};
+    if (options.base64) {
+        data = base64.decode(data);
+    }
+
+    zipEntries = new ZipEntries(data, options);
+    files = zipEntries.files;
+    for (i = 0; i < files.length; i++) {
+        input = files[i];
+        this.file(input.fileName, input.decompressed, {
+            binary: true,
+            optimizedBinaryString: true,
+            date: input.date,
+            dir: input.dir,
+            comment : input.fileComment.length ? input.fileComment : null,
+            unixPermissions : input.unixPermissions,
+            dosPermissions : input.dosPermissions,
+            createFolders: options.createFolders
+        });
+    }
+    if (zipEntries.zipComment.length) {
+        this.comment = zipEntries.zipComment;
+    }
+
+    return this;
+};
+
+},{"./base64":38,"./zipEntries":59}],48:[function(require,module,exports){
+(function (Buffer){
+'use strict';
+module.exports = function(data, encoding){
+    return new Buffer(data, encoding);
+};
+module.exports.test = function(b){
+    return Buffer.isBuffer(b);
+};
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":6}],49:[function(require,module,exports){
+'use strict';
+var Uint8ArrayReader = require('./uint8ArrayReader');
+
+function NodeBufferReader(data) {
+    this.data = data;
+    this.length = this.data.length;
+    this.index = 0;
+}
+NodeBufferReader.prototype = new Uint8ArrayReader();
+
+/**
+ * @see DataReader.readData
+ */
+NodeBufferReader.prototype.readData = function(size) {
+    this.checkOffset(size);
+    var result = this.data.slice(this.index, this.index + size);
+    this.index += size;
+    return result;
+};
+module.exports = NodeBufferReader;
+
+},{"./uint8ArrayReader":55}],50:[function(require,module,exports){
+'use strict';
+var support = require('./support');
+var utils = require('./utils');
+var crc32 = require('./crc32');
+var signature = require('./signature');
+var defaults = require('./defaults');
+var base64 = require('./base64');
+var compressions = require('./compressions');
+var CompressedObject = require('./compressedObject');
+var nodeBuffer = require('./nodeBuffer');
+var utf8 = require('./utf8');
+var StringWriter = require('./stringWriter');
+var Uint8ArrayWriter = require('./uint8ArrayWriter');
+
+/**
+ * Returns the raw data of a ZipObject, decompress the content if necessary.
+ * @param {ZipObject} file the file to use.
+ * @return {String|ArrayBuffer|Uint8Array|Buffer} the data.
+ */
+var getRawData = function(file) {
+    if (file._data instanceof CompressedObject) {
+        file._data = file._data.getContent();
+        file.options.binary = true;
+        file.options.base64 = false;
+
+        if (utils.getTypeOf(file._data) === "uint8array") {
+            var copy = file._data;
+            // when reading an arraybuffer, the CompressedObject mechanism will keep it and subarray() a Uint8Array.
+            // if we request a file in the same format, we might get the same Uint8Array or its ArrayBuffer (the original zip file).
+            file._data = new Uint8Array(copy.length);
+            // with an empty Uint8Array, Opera fails with a "Offset larger than array size"
+            if (copy.length !== 0) {
+                file._data.set(copy, 0);
+            }
+        }
+    }
+    return file._data;
+};
+
+/**
+ * Returns the data of a ZipObject in a binary form. If the content is an unicode string, encode it.
+ * @param {ZipObject} file the file to use.
+ * @return {String|ArrayBuffer|Uint8Array|Buffer} the data.
+ */
+var getBinaryData = function(file) {
+    var result = getRawData(file),
+        type = utils.getTypeOf(result);
+    if (type === "string") {
+        if (!file.options.binary) {
+            // unicode text !
+            // unicode string => binary string is a painful process, check if we can avoid it.
+            if (support.nodebuffer) {
+                return nodeBuffer(result, "utf-8");
+            }
+        }
+        return file.asBinary();
+    }
+    return result;
+};
+
+/**
+ * Transform this._data into a string.
+ * @param {function} filter a function String -> String, applied if not null on the result.
+ * @return {String} the string representing this._data.
+ */
+var dataToString = function(asUTF8) {
+    var result = getRawData(this);
+    if (result === null || typeof result === "undefined") {
+        return "";
+    }
+    // if the data is a base64 string, we decode it before checking the encoding !
+    if (this.options.base64) {
+        result = base64.decode(result);
+    }
+    if (asUTF8 && this.options.binary) {
+        // JSZip.prototype.utf8decode supports arrays as input
+        // skip to array => string step, utf8decode will do it.
+        result = out.utf8decode(result);
+    }
+    else {
+        // no utf8 transformation, do the array => string step.
+        result = utils.transformTo("string", result);
+    }
+
+    if (!asUTF8 && !this.options.binary) {
+        result = utils.transformTo("string", out.utf8encode(result));
+    }
+    return result;
+};
+/**
+ * A simple object representing a file in the zip file.
+ * @constructor
+ * @param {string} name the name of the file
+ * @param {String|ArrayBuffer|Uint8Array|Buffer} data the data
+ * @param {Object} options the options of the file
+ */
+var ZipObject = function(name, data, options) {
+    this.name = name;
+    this.dir = options.dir;
+    this.date = options.date;
+    this.comment = options.comment;
+    this.unixPermissions = options.unixPermissions;
+    this.dosPermissions = options.dosPermissions;
+
+    this._data = data;
+    this.options = options;
+
+    /*
+     * This object contains initial values for dir and date.
+     * With them, we can check if the user changed the deprecated metadata in
+     * `ZipObject#options` or not.
+     */
+    this._initialMetadata = {
+      dir : options.dir,
+      date : options.date
+    };
+};
+
+ZipObject.prototype = {
+    /**
+     * Return the content as UTF8 string.
+     * @return {string} the UTF8 string.
+     */
+    asText: function() {
+        return dataToString.call(this, true);
+    },
+    /**
+     * Returns the binary content.
+     * @return {string} the content as binary.
+     */
+    asBinary: function() {
+        return dataToString.call(this, false);
+    },
+    /**
+     * Returns the content as a nodejs Buffer.
+     * @return {Buffer} the content as a Buffer.
+     */
+    asNodeBuffer: function() {
+        var result = getBinaryData(this);
+        return utils.transformTo("nodebuffer", result);
+    },
+    /**
+     * Returns the content as an Uint8Array.
+     * @return {Uint8Array} the content as an Uint8Array.
+     */
+    asUint8Array: function() {
+        var result = getBinaryData(this);
+        return utils.transformTo("uint8array", result);
+    },
+    /**
+     * Returns the content as an ArrayBuffer.
+     * @return {ArrayBuffer} the content as an ArrayBufer.
+     */
+    asArrayBuffer: function() {
+        return this.asUint8Array().buffer;
+    }
+};
+
+/**
+ * Transform an integer into a string in hexadecimal.
+ * @private
+ * @param {number} dec the number to convert.
+ * @param {number} bytes the number of bytes to generate.
+ * @returns {string} the result.
+ */
+var decToHex = function(dec, bytes) {
+    var hex = "",
+        i;
+    for (i = 0; i < bytes; i++) {
+        hex += String.fromCharCode(dec & 0xff);
+        dec = dec >>> 8;
+    }
+    return hex;
+};
+
+/**
+ * Merge the objects passed as parameters into a new one.
+ * @private
+ * @param {...Object} var_args All objects to merge.
+ * @return {Object} a new object with the data of the others.
+ */
+var extend = function() {
+    var result = {}, i, attr;
+    for (i = 0; i < arguments.length; i++) { // arguments is not enumerable in some browsers
+        for (attr in arguments[i]) {
+            if (arguments[i].hasOwnProperty(attr) && typeof result[attr] === "undefined") {
+                result[attr] = arguments[i][attr];
+            }
+        }
+    }
+    return result;
+};
+
+/**
+ * Transforms the (incomplete) options from the user into the complete
+ * set of options to create a file.
+ * @private
+ * @param {Object} o the options from the user.
+ * @return {Object} the complete set of options.
+ */
+var prepareFileAttrs = function(o) {
+    o = o || {};
+    if (o.base64 === true && (o.binary === null || o.binary === undefined)) {
+        o.binary = true;
+    }
+    o = extend(o, defaults);
+    o.date = o.date || new Date();
+    if (o.compression !== null) o.compression = o.compression.toUpperCase();
+
+    return o;
+};
+
+/**
+ * Add a file in the current folder.
+ * @private
+ * @param {string} name the name of the file
+ * @param {String|ArrayBuffer|Uint8Array|Buffer} data the data of the file
+ * @param {Object} o the options of the file
+ * @return {Object} the new file.
+ */
+var fileAdd = function(name, data, o) {
+    // be sure sub folders exist
+    var dataType = utils.getTypeOf(data),
+        parent;
+
+    o = prepareFileAttrs(o);
+
+    if (typeof o.unixPermissions === "string") {
+        o.unixPermissions = parseInt(o.unixPermissions, 8);
+    }
+
+    // UNX_IFDIR  0040000 see zipinfo.c
+    if (o.unixPermissions && (o.unixPermissions & 0x4000)) {
+        o.dir = true;
+    }
+    // Bit 4    Directory
+    if (o.dosPermissions && (o.dosPermissions & 0x0010)) {
+        o.dir = true;
+    }
+
+    if (o.dir) {
+        name = forceTrailingSlash(name);
+    }
+
+    if (o.createFolders && (parent = parentFolder(name))) {
+        folderAdd.call(this, parent, true);
+    }
+
+    if (o.dir || data === null || typeof data === "undefined") {
+        o.base64 = false;
+        o.binary = false;
+        data = null;
+        dataType = null;
+    }
+    else if (dataType === "string") {
+        if (o.binary && !o.base64) {
+            // optimizedBinaryString == true means that the file has already been filtered with a 0xFF mask
+            if (o.optimizedBinaryString !== true) {
+                // this is a string, not in a base64 format.
+                // Be sure that this is a correct "binary string"
+                data = utils.string2binary(data);
+            }
+        }
+    }
+    else { // arraybuffer, uint8array, ...
+        o.base64 = false;
+        o.binary = true;
+
+        if (!dataType && !(data instanceof CompressedObject)) {
+            throw new Error("The data of '" + name + "' is in an unsupported format !");
+        }
+
+        // special case : it's way easier to work with Uint8Array than with ArrayBuffer
+        if (dataType === "arraybuffer") {
+            data = utils.transformTo("uint8array", data);
+        }
+    }
+
+    var object = new ZipObject(name, data, o);
+    this.files[name] = object;
+    return object;
+};
+
+/**
+ * Find the parent folder of the path.
+ * @private
+ * @param {string} path the path to use
+ * @return {string} the parent folder, or ""
+ */
+var parentFolder = function (path) {
+    if (path.slice(-1) == '/') {
+        path = path.substring(0, path.length - 1);
+    }
+    var lastSlash = path.lastIndexOf('/');
+    return (lastSlash > 0) ? path.substring(0, lastSlash) : "";
+};
+
+
+/**
+ * Returns the path with a slash at the end.
+ * @private
+ * @param {String} path the path to check.
+ * @return {String} the path with a trailing slash.
+ */
+var forceTrailingSlash = function(path) {
+    // Check the name ends with a /
+    if (path.slice(-1) != "/") {
+        path += "/"; // IE doesn't like substr(-1)
+    }
+    return path;
+};
+/**
+ * Add a (sub) folder in the current folder.
+ * @private
+ * @param {string} name the folder's name
+ * @param {boolean=} [createFolders] If true, automatically create sub
+ *  folders. Defaults to false.
+ * @return {Object} the new folder.
+ */
+var folderAdd = function(name, createFolders) {
+    createFolders = (typeof createFolders !== 'undefined') ? createFolders : false;
+
+    name = forceTrailingSlash(name);
+
+    // Does this folder already exist?
+    if (!this.files[name]) {
+        fileAdd.call(this, name, null, {
+            dir: true,
+            createFolders: createFolders
+        });
+    }
+    return this.files[name];
+};
+
+/**
+ * Generate a JSZip.CompressedObject for a given zipOject.
+ * @param {ZipObject} file the object to read.
+ * @param {JSZip.compression} compression the compression to use.
+ * @param {Object} compressionOptions the options to use when compressing.
+ * @return {JSZip.CompressedObject} the compressed result.
+ */
+var generateCompressedObjectFrom = function(file, compression, compressionOptions) {
+    var result = new CompressedObject(),
+        content;
+
+    // the data has not been decompressed, we might reuse things !
+    if (file._data instanceof CompressedObject) {
+        result.uncompressedSize = file._data.uncompressedSize;
+        result.crc32 = file._data.crc32;
+
+        if (result.uncompressedSize === 0 || file.dir) {
+            compression = compressions['STORE'];
+            result.compressedContent = "";
+            result.crc32 = 0;
+        }
+        else if (file._data.compressionMethod === compression.magic) {
+            result.compressedContent = file._data.getCompressedContent();
+        }
+        else {
+            content = file._data.getContent();
+            // need to decompress / recompress
+            result.compressedContent = compression.compress(utils.transformTo(compression.compressInputType, content), compressionOptions);
+        }
+    }
+    else {
+        // have uncompressed data
+        content = getBinaryData(file);
+        if (!content || content.length === 0 || file.dir) {
+            compression = compressions['STORE'];
+            content = "";
+        }
+        result.uncompressedSize = content.length;
+        result.crc32 = crc32(content);
+        result.compressedContent = compression.compress(utils.transformTo(compression.compressInputType, content), compressionOptions);
+    }
+
+    result.compressedSize = result.compressedContent.length;
+    result.compressionMethod = compression.magic;
+
+    return result;
+};
+
+
+
+
+/**
+ * Generate the UNIX part of the external file attributes.
+ * @param {Object} unixPermissions the unix permissions or null.
+ * @param {Boolean} isDir true if the entry is a directory, false otherwise.
+ * @return {Number} a 32 bit integer.
+ *
+ * adapted from http://unix.stackexchange.com/questions/14705/the-zip-formats-external-file-attribute :
+ *
+ * TTTTsstrwxrwxrwx0000000000ADVSHR
+ * ^^^^____________________________ file type, see zipinfo.c (UNX_*)
+ *     ^^^_________________________ setuid, setgid, sticky
+ *        ^^^^^^^^^________________ permissions
+ *                 ^^^^^^^^^^______ not used ?
+ *                           ^^^^^^ DOS attribute bits : Archive, Directory, Volume label, System file, Hidden, Read only
+ */
+var generateUnixExternalFileAttr = function (unixPermissions, isDir) {
+
+    var result = unixPermissions;
+    if (!unixPermissions) {
+        // I can't use octal values in strict mode, hence the hexa.
+        //  040775 => 0x41fd
+        // 0100664 => 0x81b4
+        result = isDir ? 0x41fd : 0x81b4;
+    }
+
+    return (result & 0xFFFF) << 16;
+};
+
+/**
+ * Generate the DOS part of the external file attributes.
+ * @param {Object} dosPermissions the dos permissions or null.
+ * @param {Boolean} isDir true if the entry is a directory, false otherwise.
+ * @return {Number} a 32 bit integer.
+ *
+ * Bit 0     Read-Only
+ * Bit 1     Hidden
+ * Bit 2     System
+ * Bit 3     Volume Label
+ * Bit 4     Directory
+ * Bit 5     Archive
+ */
+var generateDosExternalFileAttr = function (dosPermissions, isDir) {
+
+    // the dir flag is already set for compatibility
+
+    return (dosPermissions || 0)  & 0x3F;
+};
+
+/**
+ * Generate the various parts used in the construction of the final zip file.
+ * @param {string} name the file name.
+ * @param {ZipObject} file the file content.
+ * @param {JSZip.CompressedObject} compressedObject the compressed object.
+ * @param {number} offset the current offset from the start of the zip file.
+ * @param {String} platform let's pretend we are this platform (change platform dependents fields)
+ * @return {object} the zip parts.
+ */
+var generateZipParts = function(name, file, compressedObject, offset, platform) {
+    var data = compressedObject.compressedContent,
+        utfEncodedFileName = utils.transformTo("string", utf8.utf8encode(file.name)),
+        comment = file.comment || "",
+        utfEncodedComment = utils.transformTo("string", utf8.utf8encode(comment)),
+        useUTF8ForFileName = utfEncodedFileName.length !== file.name.length,
+        useUTF8ForComment = utfEncodedComment.length !== comment.length,
+        o = file.options,
+        dosTime,
+        dosDate,
+        extraFields = "",
+        unicodePathExtraField = "",
+        unicodeCommentExtraField = "",
+        dir, date;
+
+
+    // handle the deprecated options.dir
+    if (file._initialMetadata.dir !== file.dir) {
+        dir = file.dir;
+    } else {
+        dir = o.dir;
+    }
+
+    // handle the deprecated options.date
+    if(file._initialMetadata.date !== file.date) {
+        date = file.date;
+    } else {
+        date = o.date;
+    }
+
+    var extFileAttr = 0;
+    var versionMadeBy = 0;
+    if (dir) {
+        // dos or unix, we set the dos dir flag
+        extFileAttr |= 0x00010;
+    }
+    if(platform === "UNIX") {
+        versionMadeBy = 0x031E; // UNIX, version 3.0
+        extFileAttr |= generateUnixExternalFileAttr(file.unixPermissions, dir);
+    } else { // DOS or other, fallback to DOS
+        versionMadeBy = 0x0014; // DOS, version 2.0
+        extFileAttr |= generateDosExternalFileAttr(file.dosPermissions, dir);
+    }
+
+    // date
+    // @see http://www.delorie.com/djgpp/doc/rbinter/it/52/13.html
+    // @see http://www.delorie.com/djgpp/doc/rbinter/it/65/16.html
+    // @see http://www.delorie.com/djgpp/doc/rbinter/it/66/16.html
+
+    dosTime = date.getHours();
+    dosTime = dosTime << 6;
+    dosTime = dosTime | date.getMinutes();
+    dosTime = dosTime << 5;
+    dosTime = dosTime | date.getSeconds() / 2;
+
+    dosDate = date.getFullYear() - 1980;
+    dosDate = dosDate << 4;
+    dosDate = dosDate | (date.getMonth() + 1);
+    dosDate = dosDate << 5;
+    dosDate = dosDate | date.getDate();
+
+    if (useUTF8ForFileName) {
+        // set the unicode path extra field. unzip needs at least one extra
+        // field to correctly handle unicode path, so using the path is as good
+        // as any other information. This could improve the situation with
+        // other archive managers too.
+        // This field is usually used without the utf8 flag, with a non
+        // unicode path in the header (winrar, winzip). This helps (a bit)
+        // with the messy Windows' default compressed folders feature but
+        // breaks on p7zip which doesn't seek the unicode path extra field.
+        // So for now, UTF-8 everywhere !
+        unicodePathExtraField =
+            // Version
+            decToHex(1, 1) +
+            // NameCRC32
+            decToHex(crc32(utfEncodedFileName), 4) +
+            // UnicodeName
+            utfEncodedFileName;
+
+        extraFields +=
+            // Info-ZIP Unicode Path Extra Field
+            "\x75\x70" +
+            // size
+            decToHex(unicodePathExtraField.length, 2) +
+            // content
+            unicodePathExtraField;
+    }
+
+    if(useUTF8ForComment) {
+
+        unicodeCommentExtraField =
+            // Version
+            decToHex(1, 1) +
+            // CommentCRC32
+            decToHex(this.crc32(utfEncodedComment), 4) +
+            // UnicodeName
+            utfEncodedComment;
+
+        extraFields +=
+            // Info-ZIP Unicode Path Extra Field
+            "\x75\x63" +
+            // size
+            decToHex(unicodeCommentExtraField.length, 2) +
+            // content
+            unicodeCommentExtraField;
+    }
+
+    var header = "";
+
+    // version needed to extract
+    header += "\x0A\x00";
+    // general purpose bit flag
+    // set bit 11 if utf8
+    header += (useUTF8ForFileName || useUTF8ForComment) ? "\x00\x08" : "\x00\x00";
+    // compression method
+    header += compressedObject.compressionMethod;
+    // last mod file time
+    header += decToHex(dosTime, 2);
+    // last mod file date
+    header += decToHex(dosDate, 2);
+    // crc-32
+    header += decToHex(compressedObject.crc32, 4);
+    // compressed size
+    header += decToHex(compressedObject.compressedSize, 4);
+    // uncompressed size
+    header += decToHex(compressedObject.uncompressedSize, 4);
+    // file name length
+    header += decToHex(utfEncodedFileName.length, 2);
+    // extra field length
+    header += decToHex(extraFields.length, 2);
+
+
+    var fileRecord = signature.LOCAL_FILE_HEADER + header + utfEncodedFileName + extraFields;
+
+    var dirRecord = signature.CENTRAL_FILE_HEADER +
+    // version made by (00: DOS)
+    decToHex(versionMadeBy, 2) +
+    // file header (common to file and central directory)
+    header +
+    // file comment length
+    decToHex(utfEncodedComment.length, 2) +
+    // disk number start
+    "\x00\x00" +
+    // internal file attributes TODO
+    "\x00\x00" +
+    // external file attributes
+    decToHex(extFileAttr, 4) +
+    // relative offset of local header
+    decToHex(offset, 4) +
+    // file name
+    utfEncodedFileName +
+    // extra field
+    extraFields +
+    // file comment
+    utfEncodedComment;
+
+    return {
+        fileRecord: fileRecord,
+        dirRecord: dirRecord,
+        compressedObject: compressedObject
+    };
+};
+
+
+// return the actual prototype of JSZip
+var out = {
+    /**
+     * Read an existing zip and merge the data in the current JSZip object.
+     * The implementation is in jszip-load.js, don't forget to include it.
+     * @param {String|ArrayBuffer|Uint8Array|Buffer} stream  The stream to load
+     * @param {Object} options Options for loading the stream.
+     *  options.base64 : is the stream in base64 ? default : false
+     * @return {JSZip} the current JSZip object
+     */
+    load: function(stream, options) {
+        throw new Error("Load method is not defined. Is the file jszip-load.js included ?");
+    },
+
+    /**
+     * Filter nested files/folders with the specified function.
+     * @param {Function} search the predicate to use :
+     * function (relativePath, file) {...}
+     * It takes 2 arguments : the relative path and the file.
+     * @return {Array} An array of matching elements.
+     */
+    filter: function(search) {
+        var result = [],
+            filename, relativePath, file, fileClone;
+        for (filename in this.files) {
+            if (!this.files.hasOwnProperty(filename)) {
+                continue;
+            }
+            file = this.files[filename];
+            // return a new object, don't let the user mess with our internal objects :)
+            fileClone = new ZipObject(file.name, file._data, extend(file.options));
+            relativePath = filename.slice(this.root.length, filename.length);
+            if (filename.slice(0, this.root.length) === this.root && // the file is in the current root
+            search(relativePath, fileClone)) { // and the file matches the function
+                result.push(fileClone);
+            }
+        }
+        return result;
+    },
+
+    /**
+     * Add a file to the zip file, or search a file.
+     * @param   {string|RegExp} name The name of the file to add (if data is defined),
+     * the name of the file to find (if no data) or a regex to match files.
+     * @param   {String|ArrayBuffer|Uint8Array|Buffer} data  The file data, either raw or base64 encoded
+     * @param   {Object} o     File options
+     * @return  {JSZip|Object|Array} this JSZip object (when adding a file),
+     * a file (when searching by string) or an array of files (when searching by regex).
+     */
+    file: function(name, data, o) {
+        if (arguments.length === 1) {
+            if (utils.isRegExp(name)) {
+                var regexp = name;
+                return this.filter(function(relativePath, file) {
+                    return !file.dir && regexp.test(relativePath);
+                });
+            }
+            else { // text
+                return this.filter(function(relativePath, file) {
+                    return !file.dir && relativePath === name;
+                })[0] || null;
+            }
+        }
+        else { // more than one argument : we have data !
+            name = this.root + name;
+            fileAdd.call(this, name, data, o);
+        }
+        return this;
+    },
+
+    /**
+     * Add a directory to the zip file, or search.
+     * @param   {String|RegExp} arg The name of the directory to add, or a regex to search folders.
+     * @return  {JSZip} an object with the new directory as the root, or an array containing matching folders.
+     */
+    folder: function(arg) {
+        if (!arg) {
+            return this;
+        }
+
+        if (utils.isRegExp(arg)) {
+            return this.filter(function(relativePath, file) {
+                return file.dir && arg.test(relativePath);
+            });
+        }
+
+        // else, name is a new folder
+        var name = this.root + arg;
+        var newFolder = folderAdd.call(this, name);
+
+        // Allow chaining by returning a new object with this folder as the root
+        var ret = this.clone();
+        ret.root = newFolder.name;
+        return ret;
+    },
+
+    /**
+     * Delete a file, or a directory and all sub-files, from the zip
+     * @param {string} name the name of the file to delete
+     * @return {JSZip} this JSZip object
+     */
+    remove: function(name) {
+        name = this.root + name;
+        var file = this.files[name];
+        if (!file) {
+            // Look for any folders
+            if (name.slice(-1) != "/") {
+                name += "/";
+            }
+            file = this.files[name];
+        }
+
+        if (file && !file.dir) {
+            // file
+            delete this.files[name];
+        } else {
+            // maybe a folder, delete recursively
+            var kids = this.filter(function(relativePath, file) {
+                return file.name.slice(0, name.length) === name;
+            });
+            for (var i = 0; i < kids.length; i++) {
+                delete this.files[kids[i].name];
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Generate the complete zip file
+     * @param {Object} options the options to generate the zip file :
+     * - base64, (deprecated, use type instead) true to generate base64.
+     * - compression, "STORE" by default.
+     * - type, "base64" by default. Values are : string, base64, uint8array, arraybuffer, blob.
+     * @return {String|Uint8Array|ArrayBuffer|Buffer|Blob} the zip file
+     */
+    generate: function(options) {
+        options = extend(options || {}, {
+            base64: true,
+            compression: "STORE",
+            compressionOptions : null,
+            type: "base64",
+            platform: "DOS",
+            comment: null,
+            mimeType: 'application/zip'
+        });
+
+        utils.checkSupport(options.type);
+
+        // accept nodejs `process.platform`
+        if(
+          options.platform === 'darwin' ||
+          options.platform === 'freebsd' ||
+          options.platform === 'linux' ||
+          options.platform === 'sunos'
+        ) {
+          options.platform = "UNIX";
+        }
+        if (options.platform === 'win32') {
+          options.platform = "DOS";
+        }
+
+        var zipData = [],
+            localDirLength = 0,
+            centralDirLength = 0,
+            writer, i,
+            utfEncodedComment = utils.transformTo("string", this.utf8encode(options.comment || this.comment || ""));
+
+        // first, generate all the zip parts.
+        for (var name in this.files) {
+            if (!this.files.hasOwnProperty(name)) {
+                continue;
+            }
+            var file = this.files[name];
+
+            var compressionName = file.options.compression || options.compression.toUpperCase();
+            var compression = compressions[compressionName];
+            if (!compression) {
+                throw new Error(compressionName + " is not a valid compression method !");
+            }
+            var compressionOptions = file.options.compressionOptions || options.compressionOptions || {};
+
+            var compressedObject = generateCompressedObjectFrom.call(this, file, compression, compressionOptions);
+
+            var zipPart = generateZipParts.call(this, name, file, compressedObject, localDirLength, options.platform);
+            localDirLength += zipPart.fileRecord.length + compressedObject.compressedSize;
+            centralDirLength += zipPart.dirRecord.length;
+            zipData.push(zipPart);
+        }
+
+        var dirEnd = "";
+
+        // end of central dir signature
+        dirEnd = signature.CENTRAL_DIRECTORY_END +
+        // number of this disk
+        "\x00\x00" +
+        // number of the disk with the start of the central directory
+        "\x00\x00" +
+        // total number of entries in the central directory on this disk
+        decToHex(zipData.length, 2) +
+        // total number of entries in the central directory
+        decToHex(zipData.length, 2) +
+        // size of the central directory   4 bytes
+        decToHex(centralDirLength, 4) +
+        // offset of start of central directory with respect to the starting disk number
+        decToHex(localDirLength, 4) +
+        // .ZIP file comment length
+        decToHex(utfEncodedComment.length, 2) +
+        // .ZIP file comment
+        utfEncodedComment;
+
+
+        // we have all the parts (and the total length)
+        // time to create a writer !
+        var typeName = options.type.toLowerCase();
+        if(typeName==="uint8array"||typeName==="arraybuffer"||typeName==="blob"||typeName==="nodebuffer") {
+            writer = new Uint8ArrayWriter(localDirLength + centralDirLength + dirEnd.length);
+        }else{
+            writer = new StringWriter(localDirLength + centralDirLength + dirEnd.length);
+        }
+
+        for (i = 0; i < zipData.length; i++) {
+            writer.append(zipData[i].fileRecord);
+            writer.append(zipData[i].compressedObject.compressedContent);
+        }
+        for (i = 0; i < zipData.length; i++) {
+            writer.append(zipData[i].dirRecord);
+        }
+
+        writer.append(dirEnd);
+
+        var zip = writer.finalize();
+
+
+
+        switch(options.type.toLowerCase()) {
+            // case "zip is an Uint8Array"
+            case "uint8array" :
+            case "arraybuffer" :
+            case "nodebuffer" :
+               return utils.transformTo(options.type.toLowerCase(), zip);
+            case "blob" :
+               return utils.arrayBuffer2Blob(utils.transformTo("arraybuffer", zip), options.mimeType);
+            // case "zip is a string"
+            case "base64" :
+               return (options.base64) ? base64.encode(zip) : zip;
+            default : // case "string" :
+               return zip;
+         }
+
+    },
+
+    /**
+     * @deprecated
+     * This method will be removed in a future version without replacement.
+     */
+    crc32: function (input, crc) {
+        return crc32(input, crc);
+    },
+
+    /**
+     * @deprecated
+     * This method will be removed in a future version without replacement.
+     */
+    utf8encode: function (string) {
+        return utils.transformTo("string", utf8.utf8encode(string));
+    },
+
+    /**
+     * @deprecated
+     * This method will be removed in a future version without replacement.
+     */
+    utf8decode: function (input) {
+        return utf8.utf8decode(input);
+    }
+};
+module.exports = out;
+
+},{"./base64":38,"./compressedObject":39,"./compressions":40,"./crc32":41,"./defaults":43,"./nodeBuffer":48,"./signature":51,"./stringWriter":53,"./support":54,"./uint8ArrayWriter":56,"./utf8":57,"./utils":58}],51:[function(require,module,exports){
+'use strict';
+exports.LOCAL_FILE_HEADER = "PK\x03\x04";
+exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
+exports.CENTRAL_DIRECTORY_END = "PK\x05\x06";
+exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
+exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
+exports.DATA_DESCRIPTOR = "PK\x07\x08";
+
+},{}],52:[function(require,module,exports){
+'use strict';
+var DataReader = require('./dataReader');
+var utils = require('./utils');
+
+function StringReader(data, optimizedBinaryString) {
+    this.data = data;
+    if (!optimizedBinaryString) {
+        this.data = utils.string2binary(this.data);
+    }
+    this.length = this.data.length;
+    this.index = 0;
+}
+StringReader.prototype = new DataReader();
+/**
+ * @see DataReader.byteAt
+ */
+StringReader.prototype.byteAt = function(i) {
+    return this.data.charCodeAt(i);
+};
+/**
+ * @see DataReader.lastIndexOfSignature
+ */
+StringReader.prototype.lastIndexOfSignature = function(sig) {
+    return this.data.lastIndexOf(sig);
+};
+/**
+ * @see DataReader.readData
+ */
+StringReader.prototype.readData = function(size) {
+    this.checkOffset(size);
+    // this will work because the constructor applied the "& 0xff" mask.
+    var result = this.data.slice(this.index, this.index + size);
+    this.index += size;
+    return result;
+};
+module.exports = StringReader;
+
+},{"./dataReader":42,"./utils":58}],53:[function(require,module,exports){
+'use strict';
+
+var utils = require('./utils');
+
+/**
+ * An object to write any content to a string.
+ * @constructor
+ */
+var StringWriter = function() {
+    this.data = [];
+};
+StringWriter.prototype = {
+    /**
+     * Append any content to the current string.
+     * @param {Object} input the content to add.
+     */
+    append: function(input) {
+        input = utils.transformTo("string", input);
+        this.data.push(input);
+    },
+    /**
+     * Finalize the construction an return the result.
+     * @return {string} the generated string.
+     */
+    finalize: function() {
+        return this.data.join("");
+    }
+};
+
+module.exports = StringWriter;
+
+},{"./utils":58}],54:[function(require,module,exports){
+(function (Buffer){
+'use strict';
+exports.base64 = true;
+exports.array = true;
+exports.string = true;
+exports.arraybuffer = typeof ArrayBuffer !== "undefined" && typeof Uint8Array !== "undefined";
+// contains true if JSZip can read/generate nodejs Buffer, false otherwise.
+// Browserify will provide a Buffer implementation for browsers, which is
+// an augmented Uint8Array (i.e., can be used as either Buffer or U8).
+exports.nodebuffer = typeof Buffer !== "undefined";
+// contains true if JSZip can read/generate Uint8Array, false otherwise.
+exports.uint8array = typeof Uint8Array !== "undefined";
+
+if (typeof ArrayBuffer === "undefined") {
+    exports.blob = false;
+}
+else {
+    var buffer = new ArrayBuffer(0);
+    try {
+        exports.blob = new Blob([buffer], {
+            type: "application/zip"
+        }).size === 0;
+    }
+    catch (e) {
+        try {
+            var Builder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
+            var builder = new Builder();
+            builder.append(buffer);
+            exports.blob = builder.getBlob('application/zip').size === 0;
+        }
+        catch (e) {
+            exports.blob = false;
+        }
+    }
+}
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":6}],55:[function(require,module,exports){
+'use strict';
+var DataReader = require('./dataReader');
+
+function Uint8ArrayReader(data) {
+    if (data) {
+        this.data = data;
+        this.length = this.data.length;
+        this.index = 0;
+    }
+}
+Uint8ArrayReader.prototype = new DataReader();
+/**
+ * @see DataReader.byteAt
+ */
+Uint8ArrayReader.prototype.byteAt = function(i) {
+    return this.data[i];
+};
+/**
+ * @see DataReader.lastIndexOfSignature
+ */
+Uint8ArrayReader.prototype.lastIndexOfSignature = function(sig) {
+    var sig0 = sig.charCodeAt(0),
+        sig1 = sig.charCodeAt(1),
+        sig2 = sig.charCodeAt(2),
+        sig3 = sig.charCodeAt(3);
+    for (var i = this.length - 4; i >= 0; --i) {
+        if (this.data[i] === sig0 && this.data[i + 1] === sig1 && this.data[i + 2] === sig2 && this.data[i + 3] === sig3) {
+            return i;
+        }
+    }
+
+    return -1;
+};
+/**
+ * @see DataReader.readData
+ */
+Uint8ArrayReader.prototype.readData = function(size) {
+    this.checkOffset(size);
+    if(size === 0) {
+        // in IE10, when using subarray(idx, idx), we get the array [0x00] instead of [].
+        return new Uint8Array(0);
+    }
+    var result = this.data.subarray(this.index, this.index + size);
+    this.index += size;
+    return result;
+};
+module.exports = Uint8ArrayReader;
+
+},{"./dataReader":42}],56:[function(require,module,exports){
+'use strict';
+
+var utils = require('./utils');
+
+/**
+ * An object to write any content to an Uint8Array.
+ * @constructor
+ * @param {number} length The length of the array.
+ */
+var Uint8ArrayWriter = function(length) {
+    this.data = new Uint8Array(length);
+    this.index = 0;
+};
+Uint8ArrayWriter.prototype = {
+    /**
+     * Append any content to the current array.
+     * @param {Object} input the content to add.
+     */
+    append: function(input) {
+        if (input.length !== 0) {
+            // with an empty Uint8Array, Opera fails with a "Offset larger than array size"
+            input = utils.transformTo("uint8array", input);
+            this.data.set(input, this.index);
+            this.index += input.length;
+        }
+    },
+    /**
+     * Finalize the construction an return the result.
+     * @return {Uint8Array} the generated array.
+     */
+    finalize: function() {
+        return this.data;
+    }
+};
+
+module.exports = Uint8ArrayWriter;
+
+},{"./utils":58}],57:[function(require,module,exports){
+'use strict';
+
+var utils = require('./utils');
+var support = require('./support');
+var nodeBuffer = require('./nodeBuffer');
+
+/**
+ * The following functions come from pako, from pako/lib/utils/strings
+ * released under the MIT license, see pako https://github.com/nodeca/pako/
+ */
+
+// Table with utf8 lengths (calculated by first byte of sequence)
+// Note, that 5 & 6-byte values and some 4-byte values can not be represented in JS,
+// because max possible codepoint is 0x10ffff
+var _utf8len = new Array(256);
+for (var i=0; i<256; i++) {
+  _utf8len[i] = (i >= 252 ? 6 : i >= 248 ? 5 : i >= 240 ? 4 : i >= 224 ? 3 : i >= 192 ? 2 : 1);
+}
+_utf8len[254]=_utf8len[254]=1; // Invalid sequence start
+
+// convert string to array (typed, when possible)
+var string2buf = function (str) {
+    var buf, c, c2, m_pos, i, str_len = str.length, buf_len = 0;
+
+    // count binary size
+    for (m_pos = 0; m_pos < str_len; m_pos++) {
+        c = str.charCodeAt(m_pos);
+        if ((c & 0xfc00) === 0xd800 && (m_pos+1 < str_len)) {
+            c2 = str.charCodeAt(m_pos+1);
+            if ((c2 & 0xfc00) === 0xdc00) {
+                c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
+                m_pos++;
+            }
+        }
+        buf_len += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
+    }
+
+    // allocate buffer
+    if (support.uint8array) {
+        buf = new Uint8Array(buf_len);
+    } else {
+        buf = new Array(buf_len);
+    }
+
+    // convert
+    for (i=0, m_pos = 0; i < buf_len; m_pos++) {
+        c = str.charCodeAt(m_pos);
+        if ((c & 0xfc00) === 0xd800 && (m_pos+1 < str_len)) {
+            c2 = str.charCodeAt(m_pos+1);
+            if ((c2 & 0xfc00) === 0xdc00) {
+                c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
+                m_pos++;
+            }
+        }
+        if (c < 0x80) {
+            /* one byte */
+            buf[i++] = c;
+        } else if (c < 0x800) {
+            /* two bytes */
+            buf[i++] = 0xC0 | (c >>> 6);
+            buf[i++] = 0x80 | (c & 0x3f);
+        } else if (c < 0x10000) {
+            /* three bytes */
+            buf[i++] = 0xE0 | (c >>> 12);
+            buf[i++] = 0x80 | (c >>> 6 & 0x3f);
+            buf[i++] = 0x80 | (c & 0x3f);
+        } else {
+            /* four bytes */
+            buf[i++] = 0xf0 | (c >>> 18);
+            buf[i++] = 0x80 | (c >>> 12 & 0x3f);
+            buf[i++] = 0x80 | (c >>> 6 & 0x3f);
+            buf[i++] = 0x80 | (c & 0x3f);
+        }
+    }
+
+    return buf;
+};
+
+// Calculate max possible position in utf8 buffer,
+// that will not break sequence. If that's not possible
+// - (very small limits) return max size as is.
+//
+// buf[] - utf8 bytes array
+// max   - length limit (mandatory);
+var utf8border = function(buf, max) {
+    var pos;
+
+    max = max || buf.length;
+    if (max > buf.length) { max = buf.length; }
+
+    // go back from last position, until start of sequence found
+    pos = max-1;
+    while (pos >= 0 && (buf[pos] & 0xC0) === 0x80) { pos--; }
+
+    // Fuckup - very small and broken sequence,
+    // return max, because we should return something anyway.
+    if (pos < 0) { return max; }
+
+    // If we came to start of buffer - that means vuffer is too small,
+    // return max too.
+    if (pos === 0) { return max; }
+
+    return (pos + _utf8len[buf[pos]] > max) ? pos : max;
+};
+
+// convert array to string
+var buf2string = function (buf) {
+    var str, i, out, c, c_len;
+    var len = buf.length;
+
+    // Reserve max possible length (2 words per char)
+    // NB: by unknown reasons, Array is significantly faster for
+    //     String.fromCharCode.apply than Uint16Array.
+    var utf16buf = new Array(len*2);
+
+    for (out=0, i=0; i<len;) {
+        c = buf[i++];
+        // quick process ascii
+        if (c < 0x80) { utf16buf[out++] = c; continue; }
+
+        c_len = _utf8len[c];
+        // skip 5 & 6 byte codes
+        if (c_len > 4) { utf16buf[out++] = 0xfffd; i += c_len-1; continue; }
+
+        // apply mask on first byte
+        c &= c_len === 2 ? 0x1f : c_len === 3 ? 0x0f : 0x07;
+        // join the rest
+        while (c_len > 1 && i < len) {
+            c = (c << 6) | (buf[i++] & 0x3f);
+            c_len--;
+        }
+
+        // terminated by end of string?
+        if (c_len > 1) { utf16buf[out++] = 0xfffd; continue; }
+
+        if (c < 0x10000) {
+            utf16buf[out++] = c;
+        } else {
+            c -= 0x10000;
+            utf16buf[out++] = 0xd800 | ((c >> 10) & 0x3ff);
+            utf16buf[out++] = 0xdc00 | (c & 0x3ff);
+        }
+    }
+
+    // shrinkBuf(utf16buf, out)
+    if (utf16buf.length !== out) {
+        if(utf16buf.subarray) {
+            utf16buf = utf16buf.subarray(0, out);
+        } else {
+            utf16buf.length = out;
+        }
+    }
+
+    // return String.fromCharCode.apply(null, utf16buf);
+    return utils.applyFromCharCode(utf16buf);
+};
+
+
+// That's all for the pako functions.
+
+
+/**
+ * Transform a javascript string into an array (typed if possible) of bytes,
+ * UTF-8 encoded.
+ * @param {String} str the string to encode
+ * @return {Array|Uint8Array|Buffer} the UTF-8 encoded string.
+ */
+exports.utf8encode = function utf8encode(str) {
+    if (support.nodebuffer) {
+        return nodeBuffer(str, "utf-8");
+    }
+
+    return string2buf(str);
+};
+
+
+/**
+ * Transform a bytes array (or a representation) representing an UTF-8 encoded
+ * string into a javascript string.
+ * @param {Array|Uint8Array|Buffer} buf the data de decode
+ * @return {String} the decoded string.
+ */
+exports.utf8decode = function utf8decode(buf) {
+    if (support.nodebuffer) {
+        return utils.transformTo("nodebuffer", buf).toString("utf-8");
+    }
+
+    buf = utils.transformTo(support.uint8array ? "uint8array" : "array", buf);
+
+    // return buf2string(buf);
+    // Chrome prefers to work with "small" chunks of data
+    // for the method buf2string.
+    // Firefox and Chrome has their own shortcut, IE doesn't seem to really care.
+    var result = [], k = 0, len = buf.length, chunk = 65536;
+    while (k < len) {
+        var nextBoundary = utf8border(buf, Math.min(k + chunk, len));
+        if (support.uint8array) {
+            result.push(buf2string(buf.subarray(k, nextBoundary)));
+        } else {
+            result.push(buf2string(buf.slice(k, nextBoundary)));
+        }
+        k = nextBoundary;
+    }
+    return result.join("");
+
+};
+// vim: set shiftwidth=4 softtabstop=4:
+
+},{"./nodeBuffer":48,"./support":54,"./utils":58}],58:[function(require,module,exports){
+'use strict';
+var support = require('./support');
+var compressions = require('./compressions');
+var nodeBuffer = require('./nodeBuffer');
+/**
+ * Convert a string to a "binary string" : a string containing only char codes between 0 and 255.
+ * @param {string} str the string to transform.
+ * @return {String} the binary string.
+ */
+exports.string2binary = function(str) {
+    var result = "";
+    for (var i = 0; i < str.length; i++) {
+        result += String.fromCharCode(str.charCodeAt(i) & 0xff);
+    }
+    return result;
+};
+exports.arrayBuffer2Blob = function(buffer, mimeType) {
+    exports.checkSupport("blob");
+	mimeType = mimeType || 'application/zip';
+
+    try {
+        // Blob constructor
+        return new Blob([buffer], {
+            type: mimeType
+        });
+    }
+    catch (e) {
+
+        try {
+            // deprecated, browser only, old way
+            var Builder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
+            var builder = new Builder();
+            builder.append(buffer);
+            return builder.getBlob(mimeType);
+        }
+        catch (e) {
+
+            // well, fuck ?!
+            throw new Error("Bug : can't construct the Blob.");
+        }
+    }
+
+
+};
+/**
+ * The identity function.
+ * @param {Object} input the input.
+ * @return {Object} the same input.
+ */
+function identity(input) {
+    return input;
+}
+
+/**
+ * Fill in an array with a string.
+ * @param {String} str the string to use.
+ * @param {Array|ArrayBuffer|Uint8Array|Buffer} array the array to fill in (will be mutated).
+ * @return {Array|ArrayBuffer|Uint8Array|Buffer} the updated array.
+ */
+function stringToArrayLike(str, array) {
+    for (var i = 0; i < str.length; ++i) {
+        array[i] = str.charCodeAt(i) & 0xFF;
+    }
+    return array;
+}
+
+/**
+ * Transform an array-like object to a string.
+ * @param {Array|ArrayBuffer|Uint8Array|Buffer} array the array to transform.
+ * @return {String} the result.
+ */
+function arrayLikeToString(array) {
+    // Performances notes :
+    // --------------------
+    // String.fromCharCode.apply(null, array) is the fastest, see
+    // see http://jsperf.com/converting-a-uint8array-to-a-string/2
+    // but the stack is limited (and we can get huge arrays !).
+    //
+    // result += String.fromCharCode(array[i]); generate too many strings !
+    //
+    // This code is inspired by http://jsperf.com/arraybuffer-to-string-apply-performance/2
+    var chunk = 65536;
+    var result = [],
+        len = array.length,
+        type = exports.getTypeOf(array),
+        k = 0,
+        canUseApply = true;
+      try {
+         switch(type) {
+            case "uint8array":
+               String.fromCharCode.apply(null, new Uint8Array(0));
+               break;
+            case "nodebuffer":
+               String.fromCharCode.apply(null, nodeBuffer(0));
+               break;
+         }
+      } catch(e) {
+         canUseApply = false;
+      }
+
+      // no apply : slow and painful algorithm
+      // default browser on android 4.*
+      if (!canUseApply) {
+         var resultStr = "";
+         for(var i = 0; i < array.length;i++) {
+            resultStr += String.fromCharCode(array[i]);
+         }
+    return resultStr;
+    }
+    while (k < len && chunk > 1) {
+        try {
+            if (type === "array" || type === "nodebuffer") {
+                result.push(String.fromCharCode.apply(null, array.slice(k, Math.min(k + chunk, len))));
+            }
+            else {
+                result.push(String.fromCharCode.apply(null, array.subarray(k, Math.min(k + chunk, len))));
+            }
+            k += chunk;
+        }
+        catch (e) {
+            chunk = Math.floor(chunk / 2);
+        }
+    }
+    return result.join("");
+}
+
+exports.applyFromCharCode = arrayLikeToString;
+
+
+/**
+ * Copy the data from an array-like to an other array-like.
+ * @param {Array|ArrayBuffer|Uint8Array|Buffer} arrayFrom the origin array.
+ * @param {Array|ArrayBuffer|Uint8Array|Buffer} arrayTo the destination array which will be mutated.
+ * @return {Array|ArrayBuffer|Uint8Array|Buffer} the updated destination array.
+ */
+function arrayLikeToArrayLike(arrayFrom, arrayTo) {
+    for (var i = 0; i < arrayFrom.length; i++) {
+        arrayTo[i] = arrayFrom[i];
+    }
+    return arrayTo;
+}
+
+// a matrix containing functions to transform everything into everything.
+var transform = {};
+
+// string to ?
+transform["string"] = {
+    "string": identity,
+    "array": function(input) {
+        return stringToArrayLike(input, new Array(input.length));
+    },
+    "arraybuffer": function(input) {
+        return transform["string"]["uint8array"](input).buffer;
+    },
+    "uint8array": function(input) {
+        return stringToArrayLike(input, new Uint8Array(input.length));
+    },
+    "nodebuffer": function(input) {
+        return stringToArrayLike(input, nodeBuffer(input.length));
+    }
+};
+
+// array to ?
+transform["array"] = {
+    "string": arrayLikeToString,
+    "array": identity,
+    "arraybuffer": function(input) {
+        return (new Uint8Array(input)).buffer;
+    },
+    "uint8array": function(input) {
+        return new Uint8Array(input);
+    },
+    "nodebuffer": function(input) {
+        return nodeBuffer(input);
+    }
+};
+
+// arraybuffer to ?
+transform["arraybuffer"] = {
+    "string": function(input) {
+        return arrayLikeToString(new Uint8Array(input));
+    },
+    "array": function(input) {
+        return arrayLikeToArrayLike(new Uint8Array(input), new Array(input.byteLength));
+    },
+    "arraybuffer": identity,
+    "uint8array": function(input) {
+        return new Uint8Array(input);
+    },
+    "nodebuffer": function(input) {
+        return nodeBuffer(new Uint8Array(input));
+    }
+};
+
+// uint8array to ?
+transform["uint8array"] = {
+    "string": arrayLikeToString,
+    "array": function(input) {
+        return arrayLikeToArrayLike(input, new Array(input.length));
+    },
+    "arraybuffer": function(input) {
+        return input.buffer;
+    },
+    "uint8array": identity,
+    "nodebuffer": function(input) {
+        return nodeBuffer(input);
+    }
+};
+
+// nodebuffer to ?
+transform["nodebuffer"] = {
+    "string": arrayLikeToString,
+    "array": function(input) {
+        return arrayLikeToArrayLike(input, new Array(input.length));
+    },
+    "arraybuffer": function(input) {
+        return transform["nodebuffer"]["uint8array"](input).buffer;
+    },
+    "uint8array": function(input) {
+        return arrayLikeToArrayLike(input, new Uint8Array(input.length));
+    },
+    "nodebuffer": identity
+};
+
+/**
+ * Transform an input into any type.
+ * The supported output type are : string, array, uint8array, arraybuffer, nodebuffer.
+ * If no output type is specified, the unmodified input will be returned.
+ * @param {String} outputType the output type.
+ * @param {String|Array|ArrayBuffer|Uint8Array|Buffer} input the input to convert.
+ * @throws {Error} an Error if the browser doesn't support the requested output type.
+ */
+exports.transformTo = function(outputType, input) {
+    if (!input) {
+        // undefined, null, etc
+        // an empty string won't harm.
+        input = "";
+    }
+    if (!outputType) {
+        return input;
+    }
+    exports.checkSupport(outputType);
+    var inputType = exports.getTypeOf(input);
+    var result = transform[inputType][outputType](input);
+    return result;
+};
+
+/**
+ * Return the type of the input.
+ * The type will be in a format valid for JSZip.utils.transformTo : string, array, uint8array, arraybuffer.
+ * @param {Object} input the input to identify.
+ * @return {String} the (lowercase) type of the input.
+ */
+exports.getTypeOf = function(input) {
+    if (typeof input === "string") {
+        return "string";
+    }
+    if (Object.prototype.toString.call(input) === "[object Array]") {
+        return "array";
+    }
+    if (support.nodebuffer && nodeBuffer.test(input)) {
+        return "nodebuffer";
+    }
+    if (support.uint8array && input instanceof Uint8Array) {
+        return "uint8array";
+    }
+    if (support.arraybuffer && input instanceof ArrayBuffer) {
+        return "arraybuffer";
+    }
+};
+
+/**
+ * Throw an exception if the type is not supported.
+ * @param {String} type the type to check.
+ * @throws {Error} an Error if the browser doesn't support the requested type.
+ */
+exports.checkSupport = function(type) {
+    var supported = support[type.toLowerCase()];
+    if (!supported) {
+        throw new Error(type + " is not supported by this browser");
+    }
+};
+exports.MAX_VALUE_16BITS = 65535;
+exports.MAX_VALUE_32BITS = -1; // well, "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF" is parsed as -1
+
+/**
+ * Prettify a string read as binary.
+ * @param {string} str the string to prettify.
+ * @return {string} a pretty string.
+ */
+exports.pretty = function(str) {
+    var res = '',
+        code, i;
+    for (i = 0; i < (str || "").length; i++) {
+        code = str.charCodeAt(i);
+        res += '\\x' + (code < 16 ? "0" : "") + code.toString(16).toUpperCase();
+    }
+    return res;
+};
+
+/**
+ * Find a compression registered in JSZip.
+ * @param {string} compressionMethod the method magic to find.
+ * @return {Object|null} the JSZip compression object, null if none found.
+ */
+exports.findCompression = function(compressionMethod) {
+    for (var method in compressions) {
+        if (!compressions.hasOwnProperty(method)) {
+            continue;
+        }
+        if (compressions[method].magic === compressionMethod) {
+            return compressions[method];
+        }
+    }
+    return null;
+};
+/**
+* Cross-window, cross-Node-context regular expression detection
+* @param  {Object}  object Anything
+* @return {Boolean}        true if the object is a regular expression,
+* false otherwise
+*/
+exports.isRegExp = function (object) {
+    return Object.prototype.toString.call(object) === "[object RegExp]";
+};
+
+
+},{"./compressions":40,"./nodeBuffer":48,"./support":54}],59:[function(require,module,exports){
+'use strict';
+var StringReader = require('./stringReader');
+var NodeBufferReader = require('./nodeBufferReader');
+var Uint8ArrayReader = require('./uint8ArrayReader');
+var utils = require('./utils');
+var sig = require('./signature');
+var ZipEntry = require('./zipEntry');
+var support = require('./support');
+var jszipProto = require('./object');
+//  class ZipEntries {{{
+/**
+ * All the entries in the zip file.
+ * @constructor
+ * @param {String|ArrayBuffer|Uint8Array} data the binary stream to load.
+ * @param {Object} loadOptions Options for loading the stream.
+ */
+function ZipEntries(data, loadOptions) {
+    this.files = [];
+    this.loadOptions = loadOptions;
+    if (data) {
+        this.load(data);
+    }
+}
+ZipEntries.prototype = {
+    /**
+     * Check that the reader is on the speficied signature.
+     * @param {string} expectedSignature the expected signature.
+     * @throws {Error} if it is an other signature.
+     */
+    checkSignature: function(expectedSignature) {
+        var signature = this.reader.readString(4);
+        if (signature !== expectedSignature) {
+            throw new Error("Corrupted zip or bug : unexpected signature " + "(" + utils.pretty(signature) + ", expected " + utils.pretty(expectedSignature) + ")");
+        }
+    },
+    /**
+     * Read the end of the central directory.
+     */
+    readBlockEndOfCentral: function() {
+        this.diskNumber = this.reader.readInt(2);
+        this.diskWithCentralDirStart = this.reader.readInt(2);
+        this.centralDirRecordsOnThisDisk = this.reader.readInt(2);
+        this.centralDirRecords = this.reader.readInt(2);
+        this.centralDirSize = this.reader.readInt(4);
+        this.centralDirOffset = this.reader.readInt(4);
+
+        this.zipCommentLength = this.reader.readInt(2);
+        // warning : the encoding depends of the system locale
+        // On a linux machine with LANG=en_US.utf8, this field is utf8 encoded.
+        // On a windows machine, this field is encoded with the localized windows code page.
+        this.zipComment = this.reader.readString(this.zipCommentLength);
+        // To get consistent behavior with the generation part, we will assume that
+        // this is utf8 encoded.
+        this.zipComment = jszipProto.utf8decode(this.zipComment);
+    },
+    /**
+     * Read the end of the Zip 64 central directory.
+     * Not merged with the method readEndOfCentral :
+     * The end of central can coexist with its Zip64 brother,
+     * I don't want to read the wrong number of bytes !
+     */
+    readBlockZip64EndOfCentral: function() {
+        this.zip64EndOfCentralSize = this.reader.readInt(8);
+        this.versionMadeBy = this.reader.readString(2);
+        this.versionNeeded = this.reader.readInt(2);
+        this.diskNumber = this.reader.readInt(4);
+        this.diskWithCentralDirStart = this.reader.readInt(4);
+        this.centralDirRecordsOnThisDisk = this.reader.readInt(8);
+        this.centralDirRecords = this.reader.readInt(8);
+        this.centralDirSize = this.reader.readInt(8);
+        this.centralDirOffset = this.reader.readInt(8);
+
+        this.zip64ExtensibleData = {};
+        var extraDataSize = this.zip64EndOfCentralSize - 44,
+            index = 0,
+            extraFieldId,
+            extraFieldLength,
+            extraFieldValue;
+        while (index < extraDataSize) {
+            extraFieldId = this.reader.readInt(2);
+            extraFieldLength = this.reader.readInt(4);
+            extraFieldValue = this.reader.readString(extraFieldLength);
+            this.zip64ExtensibleData[extraFieldId] = {
+                id: extraFieldId,
+                length: extraFieldLength,
+                value: extraFieldValue
+            };
+        }
+    },
+    /**
+     * Read the end of the Zip 64 central directory locator.
+     */
+    readBlockZip64EndOfCentralLocator: function() {
+        this.diskWithZip64CentralDirStart = this.reader.readInt(4);
+        this.relativeOffsetEndOfZip64CentralDir = this.reader.readInt(8);
+        this.disksCount = this.reader.readInt(4);
+        if (this.disksCount > 1) {
+            throw new Error("Multi-volumes zip are not supported");
+        }
+    },
+    /**
+     * Read the local files, based on the offset read in the central part.
+     */
+    readLocalFiles: function() {
+        var i, file;
+        for (i = 0; i < this.files.length; i++) {
+            file = this.files[i];
+            this.reader.setIndex(file.localHeaderOffset);
+            this.checkSignature(sig.LOCAL_FILE_HEADER);
+            file.readLocalPart(this.reader);
+            file.handleUTF8();
+            file.processAttributes();
+        }
+    },
+    /**
+     * Read the central directory.
+     */
+    readCentralDir: function() {
+        var file;
+
+        this.reader.setIndex(this.centralDirOffset);
+        while (this.reader.readString(4) === sig.CENTRAL_FILE_HEADER) {
+            file = new ZipEntry({
+                zip64: this.zip64
+            }, this.loadOptions);
+            file.readCentralPart(this.reader);
+            this.files.push(file);
+        }
+    },
+    /**
+     * Read the end of central directory.
+     */
+    readEndOfCentral: function() {
+        var offset = this.reader.lastIndexOfSignature(sig.CENTRAL_DIRECTORY_END);
+        if (offset === -1) {
+            // Check if the content is a truncated zip or complete garbage.
+            // A "LOCAL_FILE_HEADER" is not required at the beginning (auto
+            // extractible zip for example) but it can give a good hint.
+            // If an ajax request was used without responseType, we will also
+            // get unreadable data.
+            var isGarbage = true;
+            try {
+                this.reader.setIndex(0);
+                this.checkSignature(sig.LOCAL_FILE_HEADER);
+                isGarbage = false;
+            } catch (e) {}
+
+            if (isGarbage) {
+                throw new Error("Can't find end of central directory : is this a zip file ? " +
+                                "If it is, see http://stuk.github.io/jszip/documentation/howto/read_zip.html");
+            } else {
+                throw new Error("Corrupted zip : can't find end of central directory");
+            }
+        }
+        this.reader.setIndex(offset);
+        this.checkSignature(sig.CENTRAL_DIRECTORY_END);
+        this.readBlockEndOfCentral();
+
+
+        /* extract from the zip spec :
+            4)  If one of the fields in the end of central directory
+                record is too small to hold required data, the field
+                should be set to -1 (0xFFFF or 0xFFFFFFFF) and the
+                ZIP64 format record should be created.
+            5)  The end of central directory record and the
+                Zip64 end of central directory locator record must
+                reside on the same disk when splitting or spanning
+                an archive.
+         */
+        if (this.diskNumber === utils.MAX_VALUE_16BITS || this.diskWithCentralDirStart === utils.MAX_VALUE_16BITS || this.centralDirRecordsOnThisDisk === utils.MAX_VALUE_16BITS || this.centralDirRecords === utils.MAX_VALUE_16BITS || this.centralDirSize === utils.MAX_VALUE_32BITS || this.centralDirOffset === utils.MAX_VALUE_32BITS) {
+            this.zip64 = true;
+
+            /*
+            Warning : the zip64 extension is supported, but ONLY if the 64bits integer read from
+            the zip file can fit into a 32bits integer. This cannot be solved : Javascript represents
+            all numbers as 64-bit double precision IEEE 754 floating point numbers.
+            So, we have 53bits for integers and bitwise operations treat everything as 32bits.
+            see https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Operators/Bitwise_Operators
+            and http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-262.pdf section 8.5
+            */
+
+            // should look for a zip64 EOCD locator
+            offset = this.reader.lastIndexOfSignature(sig.ZIP64_CENTRAL_DIRECTORY_LOCATOR);
+            if (offset === -1) {
+                throw new Error("Corrupted zip : can't find the ZIP64 end of central directory locator");
+            }
+            this.reader.setIndex(offset);
+            this.checkSignature(sig.ZIP64_CENTRAL_DIRECTORY_LOCATOR);
+            this.readBlockZip64EndOfCentralLocator();
+
+            // now the zip64 EOCD record
+            this.reader.setIndex(this.relativeOffsetEndOfZip64CentralDir);
+            this.checkSignature(sig.ZIP64_CENTRAL_DIRECTORY_END);
+            this.readBlockZip64EndOfCentral();
+        }
+    },
+    prepareReader: function(data) {
+        var type = utils.getTypeOf(data);
+        if (type === "string" && !support.uint8array) {
+            this.reader = new StringReader(data, this.loadOptions.optimizedBinaryString);
+        }
+        else if (type === "nodebuffer") {
+            this.reader = new NodeBufferReader(data);
+        }
+        else {
+            this.reader = new Uint8ArrayReader(utils.transformTo("uint8array", data));
+        }
+    },
+    /**
+     * Read a zip file and create ZipEntries.
+     * @param {String|ArrayBuffer|Uint8Array|Buffer} data the binary string representing a zip file.
+     */
+    load: function(data) {
+        this.prepareReader(data);
+        this.readEndOfCentral();
+        this.readCentralDir();
+        this.readLocalFiles();
+    }
+};
+// }}} end of ZipEntries
+module.exports = ZipEntries;
+
+},{"./nodeBufferReader":49,"./object":50,"./signature":51,"./stringReader":52,"./support":54,"./uint8ArrayReader":55,"./utils":58,"./zipEntry":60}],60:[function(require,module,exports){
+'use strict';
+var StringReader = require('./stringReader');
+var utils = require('./utils');
+var CompressedObject = require('./compressedObject');
+var jszipProto = require('./object');
+
+var MADE_BY_DOS = 0x00;
+var MADE_BY_UNIX = 0x03;
+
+// class ZipEntry {{{
+/**
+ * An entry in the zip file.
+ * @constructor
+ * @param {Object} options Options of the current file.
+ * @param {Object} loadOptions Options for loading the stream.
+ */
+function ZipEntry(options, loadOptions) {
+    this.options = options;
+    this.loadOptions = loadOptions;
+}
+ZipEntry.prototype = {
+    /**
+     * say if the file is encrypted.
+     * @return {boolean} true if the file is encrypted, false otherwise.
+     */
+    isEncrypted: function() {
+        // bit 1 is set
+        return (this.bitFlag & 0x0001) === 0x0001;
+    },
+    /**
+     * say if the file has utf-8 filename/comment.
+     * @return {boolean} true if the filename/comment is in utf-8, false otherwise.
+     */
+    useUTF8: function() {
+        // bit 11 is set
+        return (this.bitFlag & 0x0800) === 0x0800;
+    },
+    /**
+     * Prepare the function used to generate the compressed content from this ZipFile.
+     * @param {DataReader} reader the reader to use.
+     * @param {number} from the offset from where we should read the data.
+     * @param {number} length the length of the data to read.
+     * @return {Function} the callback to get the compressed content (the type depends of the DataReader class).
+     */
+    prepareCompressedContent: function(reader, from, length) {
+        return function() {
+            var previousIndex = reader.index;
+            reader.setIndex(from);
+            var compressedFileData = reader.readData(length);
+            reader.setIndex(previousIndex);
+
+            return compressedFileData;
+        };
+    },
+    /**
+     * Prepare the function used to generate the uncompressed content from this ZipFile.
+     * @param {DataReader} reader the reader to use.
+     * @param {number} from the offset from where we should read the data.
+     * @param {number} length the length of the data to read.
+     * @param {JSZip.compression} compression the compression used on this file.
+     * @param {number} uncompressedSize the uncompressed size to expect.
+     * @return {Function} the callback to get the uncompressed content (the type depends of the DataReader class).
+     */
+    prepareContent: function(reader, from, length, compression, uncompressedSize) {
+        return function() {
+
+            var compressedFileData = utils.transformTo(compression.uncompressInputType, this.getCompressedContent());
+            var uncompressedFileData = compression.uncompress(compressedFileData);
+
+            if (uncompressedFileData.length !== uncompressedSize) {
+                throw new Error("Bug : uncompressed data size mismatch");
+            }
+
+            return uncompressedFileData;
+        };
+    },
+    /**
+     * Read the local part of a zip file and add the info in this object.
+     * @param {DataReader} reader the reader to use.
+     */
+    readLocalPart: function(reader) {
+        var compression, localExtraFieldsLength;
+
+        // we already know everything from the central dir !
+        // If the central dir data are false, we are doomed.
+        // On the bright side, the local part is scary  : zip64, data descriptors, both, etc.
+        // The less data we get here, the more reliable this should be.
+        // Let's skip the whole header and dash to the data !
+        reader.skip(22);
+        // in some zip created on windows, the filename stored in the central dir contains \ instead of /.
+        // Strangely, the filename here is OK.
+        // I would love to treat these zip files as corrupted (see http://www.info-zip.org/FAQ.html#backslashes
+        // or APPNOTE#4.4.17.1, "All slashes MUST be forward slashes '/'") but there are a lot of bad zip generators...
+        // Search "unzip mismatching "local" filename continuing with "central" filename version" on
+        // the internet.
+        //
+        // I think I see the logic here : the central directory is used to display
+        // content and the local directory is used to extract the files. Mixing / and \
+        // may be used to display \ to windows users and use / when extracting the files.
+        // Unfortunately, this lead also to some issues : http://seclists.org/fulldisclosure/2009/Sep/394
+        this.fileNameLength = reader.readInt(2);
+        localExtraFieldsLength = reader.readInt(2); // can't be sure this will be the same as the central dir
+        this.fileName = reader.readString(this.fileNameLength);
+        reader.skip(localExtraFieldsLength);
+
+        if (this.compressedSize == -1 || this.uncompressedSize == -1) {
+            throw new Error("Bug or corrupted zip : didn't get enough informations from the central directory " + "(compressedSize == -1 || uncompressedSize == -1)");
+        }
+
+        compression = utils.findCompression(this.compressionMethod);
+        if (compression === null) { // no compression found
+            throw new Error("Corrupted zip : compression " + utils.pretty(this.compressionMethod) + " unknown (inner file : " + this.fileName + ")");
+        }
+        this.decompressed = new CompressedObject();
+        this.decompressed.compressedSize = this.compressedSize;
+        this.decompressed.uncompressedSize = this.uncompressedSize;
+        this.decompressed.crc32 = this.crc32;
+        this.decompressed.compressionMethod = this.compressionMethod;
+        this.decompressed.getCompressedContent = this.prepareCompressedContent(reader, reader.index, this.compressedSize, compression);
+        this.decompressed.getContent = this.prepareContent(reader, reader.index, this.compressedSize, compression, this.uncompressedSize);
+
+        // we need to compute the crc32...
+        if (this.loadOptions.checkCRC32) {
+            this.decompressed = utils.transformTo("string", this.decompressed.getContent());
+            if (jszipProto.crc32(this.decompressed) !== this.crc32) {
+                throw new Error("Corrupted zip : CRC32 mismatch");
+            }
+        }
+    },
+
+    /**
+     * Read the central part of a zip file and add the info in this object.
+     * @param {DataReader} reader the reader to use.
+     */
+    readCentralPart: function(reader) {
+        this.versionMadeBy = reader.readInt(2);
+        this.versionNeeded = reader.readInt(2);
+        this.bitFlag = reader.readInt(2);
+        this.compressionMethod = reader.readString(2);
+        this.date = reader.readDate();
+        this.crc32 = reader.readInt(4);
+        this.compressedSize = reader.readInt(4);
+        this.uncompressedSize = reader.readInt(4);
+        this.fileNameLength = reader.readInt(2);
+        this.extraFieldsLength = reader.readInt(2);
+        this.fileCommentLength = reader.readInt(2);
+        this.diskNumberStart = reader.readInt(2);
+        this.internalFileAttributes = reader.readInt(2);
+        this.externalFileAttributes = reader.readInt(4);
+        this.localHeaderOffset = reader.readInt(4);
+
+        if (this.isEncrypted()) {
+            throw new Error("Encrypted zip are not supported");
+        }
+
+        this.fileName = reader.readString(this.fileNameLength);
+        this.readExtraFields(reader);
+        this.parseZIP64ExtraField(reader);
+        this.fileComment = reader.readString(this.fileCommentLength);
+    },
+
+    /**
+     * Parse the external file attributes and get the unix/dos permissions.
+     */
+    processAttributes: function () {
+        this.unixPermissions = null;
+        this.dosPermissions = null;
+        var madeBy = this.versionMadeBy >> 8;
+
+        // Check if we have the DOS directory flag set.
+        // We look for it in the DOS and UNIX permissions
+        // but some unknown platform could set it as a compatibility flag.
+        this.dir = this.externalFileAttributes & 0x0010 ? true : false;
+
+        if(madeBy === MADE_BY_DOS) {
+            // first 6 bits (0 to 5)
+            this.dosPermissions = this.externalFileAttributes & 0x3F;
+        }
+
+        if(madeBy === MADE_BY_UNIX) {
+            this.unixPermissions = (this.externalFileAttributes >> 16) & 0xFFFF;
+            // the octal permissions are in (this.unixPermissions & 0x01FF).toString(8);
+        }
+
+        // fail safe : if the name ends with a / it probably means a folder
+        if (!this.dir && this.fileName.slice(-1) === '/') {
+            this.dir = true;
+        }
+    },
+
+    /**
+     * Parse the ZIP64 extra field and merge the info in the current ZipEntry.
+     * @param {DataReader} reader the reader to use.
+     */
+    parseZIP64ExtraField: function(reader) {
+
+        if (!this.extraFields[0x0001]) {
+            return;
+        }
+
+        // should be something, preparing the extra reader
+        var extraReader = new StringReader(this.extraFields[0x0001].value);
+
+        // I really hope that these 64bits integer can fit in 32 bits integer, because js
+        // won't let us have more.
+        if (this.uncompressedSize === utils.MAX_VALUE_32BITS) {
+            this.uncompressedSize = extraReader.readInt(8);
+        }
+        if (this.compressedSize === utils.MAX_VALUE_32BITS) {
+            this.compressedSize = extraReader.readInt(8);
+        }
+        if (this.localHeaderOffset === utils.MAX_VALUE_32BITS) {
+            this.localHeaderOffset = extraReader.readInt(8);
+        }
+        if (this.diskNumberStart === utils.MAX_VALUE_32BITS) {
+            this.diskNumberStart = extraReader.readInt(4);
+        }
+    },
+    /**
+     * Read the central part of a zip file and add the info in this object.
+     * @param {DataReader} reader the reader to use.
+     */
+    readExtraFields: function(reader) {
+        var start = reader.index,
+            extraFieldId,
+            extraFieldLength,
+            extraFieldValue;
+
+        this.extraFields = this.extraFields || {};
+
+        while (reader.index < start + this.extraFieldsLength) {
+            extraFieldId = reader.readInt(2);
+            extraFieldLength = reader.readInt(2);
+            extraFieldValue = reader.readString(extraFieldLength);
+
+            this.extraFields[extraFieldId] = {
+                id: extraFieldId,
+                length: extraFieldLength,
+                value: extraFieldValue
+            };
+        }
+    },
+    /**
+     * Apply an UTF8 transformation if needed.
+     */
+    handleUTF8: function() {
+        if (this.useUTF8()) {
+            this.fileName = jszipProto.utf8decode(this.fileName);
+            this.fileComment = jszipProto.utf8decode(this.fileComment);
+        } else {
+            var upath = this.findExtraFieldUnicodePath();
+            if (upath !== null) {
+                this.fileName = upath;
+            }
+            var ucomment = this.findExtraFieldUnicodeComment();
+            if (ucomment !== null) {
+                this.fileComment = ucomment;
+            }
+        }
+    },
+
+    /**
+     * Find the unicode path declared in the extra field, if any.
+     * @return {String} the unicode path, null otherwise.
+     */
+    findExtraFieldUnicodePath: function() {
+        var upathField = this.extraFields[0x7075];
+        if (upathField) {
+            var extraReader = new StringReader(upathField.value);
+
+            // wrong version
+            if (extraReader.readInt(1) !== 1) {
+                return null;
+            }
+
+            // the crc of the filename changed, this field is out of date.
+            if (jszipProto.crc32(this.fileName) !== extraReader.readInt(4)) {
+                return null;
+            }
+
+            return jszipProto.utf8decode(extraReader.readString(upathField.length - 5));
+        }
+        return null;
+    },
+
+    /**
+     * Find the unicode comment declared in the extra field, if any.
+     * @return {String} the unicode comment, null otherwise.
+     */
+    findExtraFieldUnicodeComment: function() {
+        var ucommentField = this.extraFields[0x6375];
+        if (ucommentField) {
+            var extraReader = new StringReader(ucommentField.value);
+
+            // wrong version
+            if (extraReader.readInt(1) !== 1) {
+                return null;
+            }
+
+            // the crc of the comment changed, this field is out of date.
+            if (jszipProto.crc32(this.fileComment) !== extraReader.readInt(4)) {
+                return null;
+            }
+
+            return jszipProto.utf8decode(extraReader.readString(ucommentField.length - 5));
+        }
+        return null;
+    }
+};
+module.exports = ZipEntry;
+
+},{"./compressedObject":39,"./object":50,"./stringReader":52,"./utils":58}],61:[function(require,module,exports){
 var spherical = require('spherical'),
     geojsonArea = require('geojson-area');
 
@@ -7222,130 +8943,7 @@ module.exports.area = function(layer) {
     return geojsonArea(gj.geometry);
 };
 
-},{"geojson-area":43,"spherical":45}],43:[function(require,module,exports){
-var wgs84 = require('wgs84');
-
-module.exports = function(_) {
-    if (_.type === 'Polygon') return polygonArea(_.coordinates);
-    else if (_.type === 'MultiPolygon') {
-        var area = 0;
-        for (var i = 0; i < _.coordinates.length; i++) {
-            area += polygonArea(_.coordinates[i]);
-        }
-        return area;
-    } else {
-        return null;
-    }
-};
-
-function polygonArea(coords) {
-    var area = 0;
-    if (coords && coords.length > 0) {
-        area += Math.abs(ringArea(coords[0]));
-        for (var i = 1; i < coords.length; i++) {
-            area -= Math.abs(ringArea(coords[i]));
-        }
-    }
-    return area;
-}
-
-/**
- * Calculate the approximate area of the polygon were it projected onto
- *     the earth.  Note that this area will be positive if ring is oriented
- *     clockwise, otherwise it will be negative.
- *
- * Reference:
- * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for
- *     Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
- *     Laboratory, Pasadena, CA, June 2007 http://trs-new.jpl.nasa.gov/dspace/handle/2014/40409
- *
- * Returns:
- * {float} The approximate signed geodesic area of the polygon in square
- *     meters.
- */
-function ringArea(coords) {
-    var area = 0;
-
-    if (coords.length > 2) {
-        var p1, p2;
-        for (var i = 0; i < coords.length - 1; i++) {
-            p1 = coords[i];
-            p2 = coords[i + 1];
-            area += rad(p2[0] - p1[0]) * (2 + Math.sin(rad(p1[1])) + Math.sin(rad(p2[1])));
-        }
-
-        area = area * wgs84.RADIUS * wgs84.RADIUS / 2;
-    }
-
-    return area;
-}
-
-function rad(_) {
-    return _ * Math.PI / 180;
-}
-
-},{"wgs84":44}],44:[function(require,module,exports){
-module.exports.RADIUS = 6378137;
-module.exports.FLATTENING = 1/298.257223563;
-module.exports.POLAR_RADIUS = 6356752.3142;
-
-},{}],45:[function(require,module,exports){
-var wgs84 = require('wgs84');
-
-module.exports.heading = function(from, to) {
-    var y = Math.sin(Math.PI * (from[0] - to[0]) / 180) * Math.cos(Math.PI * to[1] / 180);
-    var x = Math.cos(Math.PI * from[1] / 180) * Math.sin(Math.PI * to[1] / 180) -
-        Math.sin(Math.PI * from[1] / 180) * Math.cos(Math.PI * to[1] / 180) * Math.cos(Math.PI * (from[0] - to[0]) / 180);
-    return 180 * Math.atan2(y, x) / Math.PI;
-};
-
-module.exports.distance = function(from, to) {
-    var sinHalfDeltaLon = Math.sin(Math.PI * (to[0] - from[0]) / 360);
-    var sinHalfDeltaLat = Math.sin(Math.PI * (to[1] - from[1]) / 360);
-    var a = sinHalfDeltaLat * sinHalfDeltaLat +
-        sinHalfDeltaLon * sinHalfDeltaLon * Math.cos(Math.PI * from[1] / 180) * Math.cos(Math.PI * to[1] / 180);
-    return 2 * wgs84.RADIUS * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-};
-
-module.exports.radial = function(from, tc_deg, d_m) {
-    var tc = rad(tc_deg);
-    var d = d_m / wgs84.RADIUS;
-
-    var lon1 = rad(from[0]),
-        lat1 = rad(from[1]);
-
-    var lat = Math.asin(
-        Math.sin(lat1) *
-        Math.cos(d) +
-        Math.cos(lat1) *
-        Math.sin(d) *
-        Math.cos(tc));
-
-    var dlon = Math.atan2(
-        Math.sin(tc) *
-        Math.sin(d) *
-        Math.cos(lat1),
-        Math.cos(d) -
-        Math.sin(lat1) *
-        Math.sin(lat));
-
-    var lon = (lon1 - dlon + Math.PI) %
-        (2 * Math.PI) - Math.PI;
-
-    return [deg(lon), deg(lat)];
-};
-
-function rad(_) {
-    return _ * (Math.PI / 180);
-}
-
-function deg(_) {
-    return _ * (180 / Math.PI);
-}
-
-},{"wgs84":46}],46:[function(require,module,exports){
-module.exports=require(44)
-},{}],47:[function(require,module,exports){
+},{"geojson-area":20,"spherical":100}],62:[function(require,module,exports){
 (function(window) {
 	var HAS_HASHCHANGE = (function() {
 		var doc_mode = window.documentMode;
@@ -7509,7 +9107,7 @@ module.exports=require(44)
 	};
 })(window);
 
-},{}],48:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 (function (global){
 /**
  * marked - a markdown parser
@@ -8779,7 +10377,7 @@ if (typeof exports === 'object') {
 }());
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],49:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 var _ = require("./lodash.custom.js");
 var rewind = require("geojson-rewind");
 
@@ -9375,7 +10973,7 @@ osmtogeojson.toGeojson = osmtogeojson;
 
 module.exports = osmtogeojson;
 
-},{"./lodash.custom.js":50,"./polygon_features.json":54,"geojson-rewind":51}],50:[function(require,module,exports){
+},{"./lodash.custom.js":65,"./polygon_features.json":66,"geojson-rewind":27}],65:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -11173,126 +12771,7 @@ module.exports = osmtogeojson;
 }.call(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],51:[function(require,module,exports){
-var geojsonArea = require('geojson-area');
-
-module.exports = rewind;
-
-function rewind(gj, outer) {
-    switch ((gj && gj.type) || null) {
-        case 'FeatureCollection':
-            gj.features = gj.features.map(curryOuter(rewind, outer));
-            return gj;
-        case 'Feature':
-            gj.geometry = rewind(gj.geometry, outer);
-            return gj;
-        case 'Polygon':
-        case 'MultiPolygon':
-            return correct(gj, outer);
-        default:
-            return gj;
-    }
-}
-
-function curryOuter(a, b) {
-    return function(_) { return a(_, b); };
-}
-
-function correct(_, outer) {
-    if (_.type === 'Polygon') {
-        _.coordinates = correctRings(_.coordinates, outer);
-    } else if (_.type === 'MultiPolygon') {
-        _.coordinates = _.coordinates.map(curryOuter(correctRings, outer));
-    }
-    return _;
-}
-
-function correctRings(_, outer) {
-    outer = !!outer;
-    _[0] = wind(_[0], !outer);
-    for (var i = 1; i < _.length; i++) {
-        _[i] = wind(_[i], outer);
-    }
-    return _;
-}
-
-function wind(_, dir) {
-    return cw(_) === dir ? _ : _.reverse();
-}
-
-function cw(_) {
-    return geojsonArea.ring(_) >= 0;
-}
-
-},{"geojson-area":52}],52:[function(require,module,exports){
-var wgs84 = require('wgs84');
-
-module.exports.geometry = geometry;
-module.exports.ring = ringArea;
-
-function geometry(_) {
-    if (_.type === 'Polygon') return polygonArea(_.coordinates);
-    else if (_.type === 'MultiPolygon') {
-        var area = 0;
-        for (var i = 0; i < _.coordinates.length; i++) {
-            area += polygonArea(_.coordinates[i]);
-        }
-        return area;
-    } else {
-        return null;
-    }
-}
-
-function polygonArea(coords) {
-    var area = 0;
-    if (coords && coords.length > 0) {
-        area += Math.abs(ringArea(coords[0]));
-        for (var i = 1; i < coords.length; i++) {
-            area -= Math.abs(ringArea(coords[i]));
-        }
-    }
-    return area;
-}
-
-/**
- * Calculate the approximate area of the polygon were it projected onto
- *     the earth.  Note that this area will be positive if ring is oriented
- *     clockwise, otherwise it will be negative.
- *
- * Reference:
- * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for
- *     Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
- *     Laboratory, Pasadena, CA, June 2007 http://trs-new.jpl.nasa.gov/dspace/handle/2014/40409
- *
- * Returns:
- * {float} The approximate signed geodesic area of the polygon in square
- *     meters.
- */
-
-function ringArea(coords) {
-    var area = 0;
-
-    if (coords.length > 2) {
-        var p1, p2;
-        for (var i = 0; i < coords.length - 1; i++) {
-            p1 = coords[i];
-            p2 = coords[i + 1];
-            area += rad(p2[0] - p1[0]) * (2 + Math.sin(rad(p1[1])) + Math.sin(rad(p2[1])));
-        }
-
-        area = area * wgs84.RADIUS * wgs84.RADIUS / 2;
-    }
-
-    return area;
-}
-
-function rad(_) {
-    return _ * Math.PI / 180;
-}
-
-},{"wgs84":53}],53:[function(require,module,exports){
-module.exports=require(44)
-},{}],54:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 module.exports={
     "building": true,
     "highway": {
@@ -11373,3064 +12852,7 @@ module.exports={
     "area:highway": true,
     "craft": true
 }
-},{}],55:[function(require,module,exports){
-module.exports = function (data) {
-    var lines = data.split('\n'),
-                isNameLine = true,
-                isRingSection = false,
-                isInteriorRing = false,
-                coordinates = [],
-                currentPolygon = [],
-                currentRing = [],
-                gj = {
-                    type: 'FeatureCollection',
-                    features: []
-                };
-
-    for (var i = 1; i < lines.length; i++) {
-        if (isEndMarker(lines[i])) {
-            if (!isRingSection) {
-                coordinates.push(currentPolygon);
-                break;
-            }
-            isRingSection = false;
-            isNameLine = true;
-            if (currentRing.length > 0) {
-                currentPolygon.push(currentRing);
-                currentRing = [];
-            }
-        }
-        else if (isNameLine) {
-            isNameLine = false;
-            isRingSection = true;
-            isInteriorRing = lines[i].indexOf('!') === 0;
-            if (currentPolygon.length > 0 && !isInteriorRing) {
-                coordinates.push(currentPolygon);
-                currentPolygon = [];
-            }
-        }
-        else {
-            currentRing.push(getCoordinate(lines[i]));
-        }
-    }
-
-    gj.features.push({
-        type: 'Feature',
-        properties: {
-        },
-        geometry: {
-            type: getGeometryType(coordinates),
-            coordinates: getCoordinates(coordinates)
-        }
-    });
-    function getGeometryType(coordinates) {
-        return coordinates.length === 1 ? 'Polygon' : 'MultiPolygon';
-    }
-    function getCoordinates(coordinates) {
-        return coordinates.length === 1 ? coordinates[0] : coordinates;
-    }
-    function isEndMarker(line) {
-        return line.indexOf('END') === 0;
-    }
-    function getCoordinate(line) {
-        var coord = line.replace(/^\s*|\s*$/g, '').split(/\s+/);
-        return [parseFloat(coord[0]), parseFloat(coord[1])];
-    }
-    return gj;
-};
-
-},{}],56:[function(require,module,exports){
-/*
- * Given a querystring, return an object of that querystring's components.
- *
- * @param {String} str
- * @returns {Object} parsed querystring
- */
-module.exports.stringQs = function(str) {
-    return str.split('&').reduce(function(obj, pair){
-        var parts = pair.split('=');
-        if (parts.length === 2) {
-            obj[parts[0]] = (null === parts[1]) ? '' : decodeURIComponent(parts[1]);
-        }
-        return obj;
-    }, {});
-};
-/*
- * Given a parsed querystring as an object,
- * return a string representing it.
- *
- * @param {Object} obj parsed querystring
- * @param {Boolean} noencode skip URL-encoding querystring parameters
- * @returns {String} generated string
- */
-module.exports.qsString = function(obj, noencode) {
-    noencode = true;
-    function softEncode(s) { return ('' + s).replace('&', '%26'); }
-    return Object.keys(obj).sort().map(function(key) {
-        return encodeURIComponent(key) + '=' + (
-            noencode ? softEncode(obj[key]) : encodeURIComponent(obj[key]));
-    }).join('&');
-};
-
-},{}],57:[function(require,module,exports){
-module.exports.download = require('./src/download')
-module.exports.write = require('./src/write')
-module.exports.zip = require('./src/zip')
-},{"./src/download":102,"./src/write":110,"./src/zip":111}],58:[function(require,module,exports){
-module.exports.structure = require('./src/structure');
-
-},{"./src/structure":62}],59:[function(require,module,exports){
-var fieldSize = require('./fieldsize');
-
-var types = {
-    string: 'C',
-    number: 'N',
-    boolean: 'L'
-};
-
-module.exports.multi = multi;
-module.exports.bytesPer = bytesPer;
-module.exports.obj = obj;
-
-function multi(features) {
-    var fields = {};
-    features.forEach(collect);
-    function collect(f) { inherit(fields, f); }
-    return obj(fields);
-}
-
-function inherit(a, b) {
-    for (var i in b) { a[i] = b[i]; }
-    return a;
-}
-
-function obj(_) {
-    var fields = {}, o = [];
-    for (var p in _) fields[p] = typeof _[p];
-    for (var n in fields) {
-        var t = types[fields[n]];
-        o.push({
-            name: n,
-            type: t,
-            size: fieldSize[t]
-        });
-    }
-    return o;
-}
-
-function bytesPer(fields) {
-    // deleted flag
-    return fields.reduce(function(memo, f) { return memo + f.size; }, 1);
-}
-
-},{"./fieldsize":60}],60:[function(require,module,exports){
-module.exports = {
-    // string
-    C: 254,
-    // boolean
-    L: 1,
-    // date
-    D: 8,
-    // number
-    N: 18,
-    // number
-    M: 18,
-    // number, float
-    F: 18,
-    // number
-    B: 8,
-};
-
-},{}],61:[function(require,module,exports){
-module.exports.lpad = function lpad(str, len, char) {
-    while (str.length < len) { str = char + str; } return str;
-};
-
-module.exports.rpad = function rpad(str, len, char) {
-    while (str.length < len) { str = str + char; } return str;
-};
-
-module.exports.writeField = function writeField(view, fieldLength, str, offset) {
-    for (var i = 0; i < fieldLength; i++) {
-        view.setUint8(offset, str.charCodeAt(i)); offset++;
-    }
-    return offset;
-};
-
-},{}],62:[function(require,module,exports){
-var fieldSize = require('./fieldsize'),
-    lib = require('./lib'),
-    fields = require('./fields');
-
-module.exports = function structure(data) {
-
-    var field_meta = fields.multi(data),
-        fieldDescLength = (32 * field_meta.length) + 1,
-        bytesPerRecord = fields.bytesPer(field_meta), // deleted flag
-        buffer = new ArrayBuffer(
-            // field header
-            fieldDescLength +
-            // header
-            32 +
-            // contents
-            (bytesPerRecord * data.length)
-        ),
-        now = new Date(),
-        view = new DataView(buffer);
-
-    // version number
-    view.setUint8(0, 3);
-    // date of last update
-    view.setUint8(1, now.getFullYear() - 1900);
-    view.setUint8(2, now.getMonth());
-    view.setUint8(3, now.getDate());
-    // number of records
-    view.setUint32(4, data.length, true);
-
-    // length of header
-    var headerLength = fieldDescLength + 32;
-    view.setUint16(8, headerLength, true);
-    // length of each record
-    view.setUint16(10, bytesPerRecord, true);
-
-    view.setInt8(fieldDescLength - 1, 13);
-
-    field_meta.forEach(function(f, i) {
-        // field name
-        f.name.split('').slice(0, 8).forEach(function(c, x) {
-            view.setInt8(32 + i * 32 + x, c.charCodeAt(0));
-        });
-        // field type
-        view.setInt8(32 + i * 32 + 11, f.type.charCodeAt(0));
-        // field length
-        view.setInt8(32 + i * 32 + 16, f.size);
-        if (f.type == 'N') view.setInt8(32 + i * 32 + 17, 0);
-    });
-
-    offset = fieldDescLength + 32;
-
-    data.forEach(function(row, num) {
-        // delete flag: this is not deleted
-        view.setUint8(offset, 32);
-        offset++;
-        field_meta.forEach(function(f) {
-            var val = row[f.name] || 0;
-
-            switch (f.type) {
-                // boolean
-                case 'L':
-                    view.setUint8(offset, val ? 84 : 70);
-                    offset++;
-                    break;
-
-                // decimal
-                case 'D':
-                    offset = lib.writeField(view, 8,
-                        lib.lpad(val.toString(), 8, ' '), offset);
-                    break;
-
-                // number
-                case 'N':
-                    offset = lib.writeField(view, f.size,
-                        lib.lpad(val.toString(), f.size, ' ').substr(0, 18),
-                        offset);
-                    break;
-
-                // string
-                case 'C':
-                    offset = lib.writeField(view, f.size,
-                        lib.rpad(val.toString(), f.size, ' '), offset);
-                    break;
-
-                default:
-                    throw new Error('Unknown field type');
-            }
-        });
-    });
-
-    // EOF flag
-    view.setUint8(offset - 1, 26);
-
-    return view;
-};
-
-},{"./fields":59,"./fieldsize":60,"./lib":61}],63:[function(require,module,exports){
-'use strict';
-// private property
-var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-
-
-// public method for encoding
-exports.encode = function(input, utf8) {
-    var output = "";
-    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
-    var i = 0;
-
-    while (i < input.length) {
-
-        chr1 = input.charCodeAt(i++);
-        chr2 = input.charCodeAt(i++);
-        chr3 = input.charCodeAt(i++);
-
-        enc1 = chr1 >> 2;
-        enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-        enc4 = chr3 & 63;
-
-        if (isNaN(chr2)) {
-            enc3 = enc4 = 64;
-        }
-        else if (isNaN(chr3)) {
-            enc4 = 64;
-        }
-
-        output = output + _keyStr.charAt(enc1) + _keyStr.charAt(enc2) + _keyStr.charAt(enc3) + _keyStr.charAt(enc4);
-
-    }
-
-    return output;
-};
-
-// public method for decoding
-exports.decode = function(input, utf8) {
-    var output = "";
-    var chr1, chr2, chr3;
-    var enc1, enc2, enc3, enc4;
-    var i = 0;
-
-    input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
-
-    while (i < input.length) {
-
-        enc1 = _keyStr.indexOf(input.charAt(i++));
-        enc2 = _keyStr.indexOf(input.charAt(i++));
-        enc3 = _keyStr.indexOf(input.charAt(i++));
-        enc4 = _keyStr.indexOf(input.charAt(i++));
-
-        chr1 = (enc1 << 2) | (enc2 >> 4);
-        chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-        chr3 = ((enc3 & 3) << 6) | enc4;
-
-        output = output + String.fromCharCode(chr1);
-
-        if (enc3 != 64) {
-            output = output + String.fromCharCode(chr2);
-        }
-        if (enc4 != 64) {
-            output = output + String.fromCharCode(chr3);
-        }
-
-    }
-
-    return output;
-
-};
-
-},{}],64:[function(require,module,exports){
-'use strict';
-function CompressedObject() {
-    this.compressedSize = 0;
-    this.uncompressedSize = 0;
-    this.crc32 = 0;
-    this.compressionMethod = null;
-    this.compressedContent = null;
-}
-
-CompressedObject.prototype = {
-    /**
-     * Return the decompressed content in an unspecified format.
-     * The format will depend on the decompressor.
-     * @return {Object} the decompressed content.
-     */
-    getContent: function() {
-        return null; // see implementation
-    },
-    /**
-     * Return the compressed content in an unspecified format.
-     * The format will depend on the compressed conten source.
-     * @return {Object} the compressed content.
-     */
-    getCompressedContent: function() {
-        return null; // see implementation
-    }
-};
-module.exports = CompressedObject;
-
-},{}],65:[function(require,module,exports){
-'use strict';
-exports.STORE = {
-    magic: "\x00\x00",
-    compress: function(content, compressionOptions) {
-        return content; // no compression
-    },
-    uncompress: function(content) {
-        return content; // no compression
-    },
-    compressInputType: null,
-    uncompressInputType: null
-};
-exports.DEFLATE = require('./flate');
-
-},{"./flate":70}],66:[function(require,module,exports){
-'use strict';
-
-var utils = require('./utils');
-
-var table = [
-    0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
-    0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
-    0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988,
-    0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91,
-    0x1DB71064, 0x6AB020F2, 0xF3B97148, 0x84BE41DE,
-    0x1ADAD47D, 0x6DDDE4EB, 0xF4D4B551, 0x83D385C7,
-    0x136C9856, 0x646BA8C0, 0xFD62F97A, 0x8A65C9EC,
-    0x14015C4F, 0x63066CD9, 0xFA0F3D63, 0x8D080DF5,
-    0x3B6E20C8, 0x4C69105E, 0xD56041E4, 0xA2677172,
-    0x3C03E4D1, 0x4B04D447, 0xD20D85FD, 0xA50AB56B,
-    0x35B5A8FA, 0x42B2986C, 0xDBBBC9D6, 0xACBCF940,
-    0x32D86CE3, 0x45DF5C75, 0xDCD60DCF, 0xABD13D59,
-    0x26D930AC, 0x51DE003A, 0xC8D75180, 0xBFD06116,
-    0x21B4F4B5, 0x56B3C423, 0xCFBA9599, 0xB8BDA50F,
-    0x2802B89E, 0x5F058808, 0xC60CD9B2, 0xB10BE924,
-    0x2F6F7C87, 0x58684C11, 0xC1611DAB, 0xB6662D3D,
-    0x76DC4190, 0x01DB7106, 0x98D220BC, 0xEFD5102A,
-    0x71B18589, 0x06B6B51F, 0x9FBFE4A5, 0xE8B8D433,
-    0x7807C9A2, 0x0F00F934, 0x9609A88E, 0xE10E9818,
-    0x7F6A0DBB, 0x086D3D2D, 0x91646C97, 0xE6635C01,
-    0x6B6B51F4, 0x1C6C6162, 0x856530D8, 0xF262004E,
-    0x6C0695ED, 0x1B01A57B, 0x8208F4C1, 0xF50FC457,
-    0x65B0D9C6, 0x12B7E950, 0x8BBEB8EA, 0xFCB9887C,
-    0x62DD1DDF, 0x15DA2D49, 0x8CD37CF3, 0xFBD44C65,
-    0x4DB26158, 0x3AB551CE, 0xA3BC0074, 0xD4BB30E2,
-    0x4ADFA541, 0x3DD895D7, 0xA4D1C46D, 0xD3D6F4FB,
-    0x4369E96A, 0x346ED9FC, 0xAD678846, 0xDA60B8D0,
-    0x44042D73, 0x33031DE5, 0xAA0A4C5F, 0xDD0D7CC9,
-    0x5005713C, 0x270241AA, 0xBE0B1010, 0xC90C2086,
-    0x5768B525, 0x206F85B3, 0xB966D409, 0xCE61E49F,
-    0x5EDEF90E, 0x29D9C998, 0xB0D09822, 0xC7D7A8B4,
-    0x59B33D17, 0x2EB40D81, 0xB7BD5C3B, 0xC0BA6CAD,
-    0xEDB88320, 0x9ABFB3B6, 0x03B6E20C, 0x74B1D29A,
-    0xEAD54739, 0x9DD277AF, 0x04DB2615, 0x73DC1683,
-    0xE3630B12, 0x94643B84, 0x0D6D6A3E, 0x7A6A5AA8,
-    0xE40ECF0B, 0x9309FF9D, 0x0A00AE27, 0x7D079EB1,
-    0xF00F9344, 0x8708A3D2, 0x1E01F268, 0x6906C2FE,
-    0xF762575D, 0x806567CB, 0x196C3671, 0x6E6B06E7,
-    0xFED41B76, 0x89D32BE0, 0x10DA7A5A, 0x67DD4ACC,
-    0xF9B9DF6F, 0x8EBEEFF9, 0x17B7BE43, 0x60B08ED5,
-    0xD6D6A3E8, 0xA1D1937E, 0x38D8C2C4, 0x4FDFF252,
-    0xD1BB67F1, 0xA6BC5767, 0x3FB506DD, 0x48B2364B,
-    0xD80D2BDA, 0xAF0A1B4C, 0x36034AF6, 0x41047A60,
-    0xDF60EFC3, 0xA867DF55, 0x316E8EEF, 0x4669BE79,
-    0xCB61B38C, 0xBC66831A, 0x256FD2A0, 0x5268E236,
-    0xCC0C7795, 0xBB0B4703, 0x220216B9, 0x5505262F,
-    0xC5BA3BBE, 0xB2BD0B28, 0x2BB45A92, 0x5CB36A04,
-    0xC2D7FFA7, 0xB5D0CF31, 0x2CD99E8B, 0x5BDEAE1D,
-    0x9B64C2B0, 0xEC63F226, 0x756AA39C, 0x026D930A,
-    0x9C0906A9, 0xEB0E363F, 0x72076785, 0x05005713,
-    0x95BF4A82, 0xE2B87A14, 0x7BB12BAE, 0x0CB61B38,
-    0x92D28E9B, 0xE5D5BE0D, 0x7CDCEFB7, 0x0BDBDF21,
-    0x86D3D2D4, 0xF1D4E242, 0x68DDB3F8, 0x1FDA836E,
-    0x81BE16CD, 0xF6B9265B, 0x6FB077E1, 0x18B74777,
-    0x88085AE6, 0xFF0F6A70, 0x66063BCA, 0x11010B5C,
-    0x8F659EFF, 0xF862AE69, 0x616BFFD3, 0x166CCF45,
-    0xA00AE278, 0xD70DD2EE, 0x4E048354, 0x3903B3C2,
-    0xA7672661, 0xD06016F7, 0x4969474D, 0x3E6E77DB,
-    0xAED16A4A, 0xD9D65ADC, 0x40DF0B66, 0x37D83BF0,
-    0xA9BCAE53, 0xDEBB9EC5, 0x47B2CF7F, 0x30B5FFE9,
-    0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6,
-    0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF,
-    0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94,
-    0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
-];
-
-/**
- *
- *  Javascript crc32
- *  http://www.webtoolkit.info/
- *
- */
-module.exports = function crc32(input, crc) {
-    if (typeof input === "undefined" || !input.length) {
-        return 0;
-    }
-
-    var isArray = utils.getTypeOf(input) !== "string";
-
-    if (typeof(crc) == "undefined") {
-        crc = 0;
-    }
-    var x = 0;
-    var y = 0;
-    var b = 0;
-
-    crc = crc ^ (-1);
-    for (var i = 0, iTop = input.length; i < iTop; i++) {
-        b = isArray ? input[i] : input.charCodeAt(i);
-        y = (crc ^ b) & 0xFF;
-        x = table[y];
-        crc = (crc >>> 8) ^ x;
-    }
-
-    return crc ^ (-1);
-};
-// vim: set shiftwidth=4 softtabstop=4:
-
-},{"./utils":83}],67:[function(require,module,exports){
-'use strict';
-var utils = require('./utils');
-
-function DataReader(data) {
-    this.data = null; // type : see implementation
-    this.length = 0;
-    this.index = 0;
-}
-DataReader.prototype = {
-    /**
-     * Check that the offset will not go too far.
-     * @param {string} offset the additional offset to check.
-     * @throws {Error} an Error if the offset is out of bounds.
-     */
-    checkOffset: function(offset) {
-        this.checkIndex(this.index + offset);
-    },
-    /**
-     * Check that the specifed index will not be too far.
-     * @param {string} newIndex the index to check.
-     * @throws {Error} an Error if the index is out of bounds.
-     */
-    checkIndex: function(newIndex) {
-        if (this.length < newIndex || newIndex < 0) {
-            throw new Error("End of data reached (data length = " + this.length + ", asked index = " + (newIndex) + "). Corrupted zip ?");
-        }
-    },
-    /**
-     * Change the index.
-     * @param {number} newIndex The new index.
-     * @throws {Error} if the new index is out of the data.
-     */
-    setIndex: function(newIndex) {
-        this.checkIndex(newIndex);
-        this.index = newIndex;
-    },
-    /**
-     * Skip the next n bytes.
-     * @param {number} n the number of bytes to skip.
-     * @throws {Error} if the new index is out of the data.
-     */
-    skip: function(n) {
-        this.setIndex(this.index + n);
-    },
-    /**
-     * Get the byte at the specified index.
-     * @param {number} i the index to use.
-     * @return {number} a byte.
-     */
-    byteAt: function(i) {
-        // see implementations
-    },
-    /**
-     * Get the next number with a given byte size.
-     * @param {number} size the number of bytes to read.
-     * @return {number} the corresponding number.
-     */
-    readInt: function(size) {
-        var result = 0,
-            i;
-        this.checkOffset(size);
-        for (i = this.index + size - 1; i >= this.index; i--) {
-            result = (result << 8) + this.byteAt(i);
-        }
-        this.index += size;
-        return result;
-    },
-    /**
-     * Get the next string with a given byte size.
-     * @param {number} size the number of bytes to read.
-     * @return {string} the corresponding string.
-     */
-    readString: function(size) {
-        return utils.transformTo("string", this.readData(size));
-    },
-    /**
-     * Get raw data without conversion, <size> bytes.
-     * @param {number} size the number of bytes to read.
-     * @return {Object} the raw data, implementation specific.
-     */
-    readData: function(size) {
-        // see implementations
-    },
-    /**
-     * Find the last occurence of a zip signature (4 bytes).
-     * @param {string} sig the signature to find.
-     * @return {number} the index of the last occurence, -1 if not found.
-     */
-    lastIndexOfSignature: function(sig) {
-        // see implementations
-    },
-    /**
-     * Get the next date.
-     * @return {Date} the date.
-     */
-    readDate: function() {
-        var dostime = this.readInt(4);
-        return new Date(
-        ((dostime >> 25) & 0x7f) + 1980, // year
-        ((dostime >> 21) & 0x0f) - 1, // month
-        (dostime >> 16) & 0x1f, // day
-        (dostime >> 11) & 0x1f, // hour
-        (dostime >> 5) & 0x3f, // minute
-        (dostime & 0x1f) << 1); // second
-    }
-};
-module.exports = DataReader;
-
-},{"./utils":83}],68:[function(require,module,exports){
-'use strict';
-exports.base64 = false;
-exports.binary = false;
-exports.dir = false;
-exports.createFolders = false;
-exports.date = null;
-exports.compression = null;
-exports.compressionOptions = null;
-exports.comment = null;
-exports.unixPermissions = null;
-exports.dosPermissions = null;
-
-},{}],69:[function(require,module,exports){
-'use strict';
-var utils = require('./utils');
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.string2binary = function(str) {
-    return utils.string2binary(str);
-};
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.string2Uint8Array = function(str) {
-    return utils.transformTo("uint8array", str);
-};
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.uint8Array2String = function(array) {
-    return utils.transformTo("string", array);
-};
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.string2Blob = function(str) {
-    var buffer = utils.transformTo("arraybuffer", str);
-    return utils.arrayBuffer2Blob(buffer);
-};
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.arrayBuffer2Blob = function(buffer) {
-    return utils.arrayBuffer2Blob(buffer);
-};
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.transformTo = function(outputType, input) {
-    return utils.transformTo(outputType, input);
-};
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.getTypeOf = function(input) {
-    return utils.getTypeOf(input);
-};
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.checkSupport = function(type) {
-    return utils.checkSupport(type);
-};
-
-/**
- * @deprecated
- * This value will be removed in a future version without replacement.
- */
-exports.MAX_VALUE_16BITS = utils.MAX_VALUE_16BITS;
-
-/**
- * @deprecated
- * This value will be removed in a future version without replacement.
- */
-exports.MAX_VALUE_32BITS = utils.MAX_VALUE_32BITS;
-
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.pretty = function(str) {
-    return utils.pretty(str);
-};
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.findCompression = function(compressionMethod) {
-    return utils.findCompression(compressionMethod);
-};
-
-/**
- * @deprecated
- * This function will be removed in a future version without replacement.
- */
-exports.isRegExp = function (object) {
-    return utils.isRegExp(object);
-};
-
-
-},{"./utils":83}],70:[function(require,module,exports){
-'use strict';
-var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
-
-var pako = require("pako");
-exports.uncompressInputType = USE_TYPEDARRAY ? "uint8array" : "array";
-exports.compressInputType = USE_TYPEDARRAY ? "uint8array" : "array";
-
-exports.magic = "\x08\x00";
-exports.compress = function(input, compressionOptions) {
-    return pako.deflateRaw(input, {
-        level : compressionOptions.level || -1 // default compression
-    });
-};
-exports.uncompress =  function(input) {
-    return pako.inflateRaw(input);
-};
-
-},{"pako":86}],71:[function(require,module,exports){
-'use strict';
-
-var base64 = require('./base64');
-
-/**
-Usage:
-   zip = new JSZip();
-   zip.file("hello.txt", "Hello, World!").file("tempfile", "nothing");
-   zip.folder("images").file("smile.gif", base64Data, {base64: true});
-   zip.file("Xmas.txt", "Ho ho ho !", {date : new Date("December 25, 2007 00:00:01")});
-   zip.remove("tempfile");
-
-   base64zip = zip.generate();
-
-**/
-
-/**
- * Representation a of zip file in js
- * @constructor
- * @param {String=|ArrayBuffer=|Uint8Array=} data the data to load, if any (optional).
- * @param {Object=} options the options for creating this objects (optional).
- */
-function JSZip(data, options) {
-    // if this constructor is used without `new`, it adds `new` before itself:
-    if(!(this instanceof JSZip)) return new JSZip(data, options);
-
-    // object containing the files :
-    // {
-    //   "folder/" : {...},
-    //   "folder/data.txt" : {...}
-    // }
-    this.files = {};
-
-    this.comment = null;
-
-    // Where we are in the hierarchy
-    this.root = "";
-    if (data) {
-        this.load(data, options);
-    }
-    this.clone = function() {
-        var newObj = new JSZip();
-        for (var i in this) {
-            if (typeof this[i] !== "function") {
-                newObj[i] = this[i];
-            }
-        }
-        return newObj;
-    };
-}
-JSZip.prototype = require('./object');
-JSZip.prototype.load = require('./load');
-JSZip.support = require('./support');
-JSZip.defaults = require('./defaults');
-
-/**
- * @deprecated
- * This namespace will be removed in a future version without replacement.
- */
-JSZip.utils = require('./deprecatedPublicUtils');
-
-JSZip.base64 = {
-    /**
-     * @deprecated
-     * This method will be removed in a future version without replacement.
-     */
-    encode : function(input) {
-        return base64.encode(input);
-    },
-    /**
-     * @deprecated
-     * This method will be removed in a future version without replacement.
-     */
-    decode : function(input) {
-        return base64.decode(input);
-    }
-};
-JSZip.compressions = require('./compressions');
-module.exports = JSZip;
-
-},{"./base64":63,"./compressions":65,"./defaults":68,"./deprecatedPublicUtils":69,"./load":72,"./object":75,"./support":79}],72:[function(require,module,exports){
-'use strict';
-var base64 = require('./base64');
-var ZipEntries = require('./zipEntries');
-module.exports = function(data, options) {
-    var files, zipEntries, i, input;
-    options = options || {};
-    if (options.base64) {
-        data = base64.decode(data);
-    }
-
-    zipEntries = new ZipEntries(data, options);
-    files = zipEntries.files;
-    for (i = 0; i < files.length; i++) {
-        input = files[i];
-        this.file(input.fileName, input.decompressed, {
-            binary: true,
-            optimizedBinaryString: true,
-            date: input.date,
-            dir: input.dir,
-            comment : input.fileComment.length ? input.fileComment : null,
-            unixPermissions : input.unixPermissions,
-            dosPermissions : input.dosPermissions,
-            createFolders: options.createFolders
-        });
-    }
-    if (zipEntries.zipComment.length) {
-        this.comment = zipEntries.zipComment;
-    }
-
-    return this;
-};
-
-},{"./base64":63,"./zipEntries":84}],73:[function(require,module,exports){
-(function (Buffer){
-'use strict';
-module.exports = function(data, encoding){
-    return new Buffer(data, encoding);
-};
-module.exports.test = function(b){
-    return Buffer.isBuffer(b);
-};
-
-}).call(this,require("buffer").Buffer)
-},{"buffer":5}],74:[function(require,module,exports){
-'use strict';
-var Uint8ArrayReader = require('./uint8ArrayReader');
-
-function NodeBufferReader(data) {
-    this.data = data;
-    this.length = this.data.length;
-    this.index = 0;
-}
-NodeBufferReader.prototype = new Uint8ArrayReader();
-
-/**
- * @see DataReader.readData
- */
-NodeBufferReader.prototype.readData = function(size) {
-    this.checkOffset(size);
-    var result = this.data.slice(this.index, this.index + size);
-    this.index += size;
-    return result;
-};
-module.exports = NodeBufferReader;
-
-},{"./uint8ArrayReader":80}],75:[function(require,module,exports){
-'use strict';
-var support = require('./support');
-var utils = require('./utils');
-var crc32 = require('./crc32');
-var signature = require('./signature');
-var defaults = require('./defaults');
-var base64 = require('./base64');
-var compressions = require('./compressions');
-var CompressedObject = require('./compressedObject');
-var nodeBuffer = require('./nodeBuffer');
-var utf8 = require('./utf8');
-var StringWriter = require('./stringWriter');
-var Uint8ArrayWriter = require('./uint8ArrayWriter');
-
-/**
- * Returns the raw data of a ZipObject, decompress the content if necessary.
- * @param {ZipObject} file the file to use.
- * @return {String|ArrayBuffer|Uint8Array|Buffer} the data.
- */
-var getRawData = function(file) {
-    if (file._data instanceof CompressedObject) {
-        file._data = file._data.getContent();
-        file.options.binary = true;
-        file.options.base64 = false;
-
-        if (utils.getTypeOf(file._data) === "uint8array") {
-            var copy = file._data;
-            // when reading an arraybuffer, the CompressedObject mechanism will keep it and subarray() a Uint8Array.
-            // if we request a file in the same format, we might get the same Uint8Array or its ArrayBuffer (the original zip file).
-            file._data = new Uint8Array(copy.length);
-            // with an empty Uint8Array, Opera fails with a "Offset larger than array size"
-            if (copy.length !== 0) {
-                file._data.set(copy, 0);
-            }
-        }
-    }
-    return file._data;
-};
-
-/**
- * Returns the data of a ZipObject in a binary form. If the content is an unicode string, encode it.
- * @param {ZipObject} file the file to use.
- * @return {String|ArrayBuffer|Uint8Array|Buffer} the data.
- */
-var getBinaryData = function(file) {
-    var result = getRawData(file),
-        type = utils.getTypeOf(result);
-    if (type === "string") {
-        if (!file.options.binary) {
-            // unicode text !
-            // unicode string => binary string is a painful process, check if we can avoid it.
-            if (support.nodebuffer) {
-                return nodeBuffer(result, "utf-8");
-            }
-        }
-        return file.asBinary();
-    }
-    return result;
-};
-
-/**
- * Transform this._data into a string.
- * @param {function} filter a function String -> String, applied if not null on the result.
- * @return {String} the string representing this._data.
- */
-var dataToString = function(asUTF8) {
-    var result = getRawData(this);
-    if (result === null || typeof result === "undefined") {
-        return "";
-    }
-    // if the data is a base64 string, we decode it before checking the encoding !
-    if (this.options.base64) {
-        result = base64.decode(result);
-    }
-    if (asUTF8 && this.options.binary) {
-        // JSZip.prototype.utf8decode supports arrays as input
-        // skip to array => string step, utf8decode will do it.
-        result = out.utf8decode(result);
-    }
-    else {
-        // no utf8 transformation, do the array => string step.
-        result = utils.transformTo("string", result);
-    }
-
-    if (!asUTF8 && !this.options.binary) {
-        result = utils.transformTo("string", out.utf8encode(result));
-    }
-    return result;
-};
-/**
- * A simple object representing a file in the zip file.
- * @constructor
- * @param {string} name the name of the file
- * @param {String|ArrayBuffer|Uint8Array|Buffer} data the data
- * @param {Object} options the options of the file
- */
-var ZipObject = function(name, data, options) {
-    this.name = name;
-    this.dir = options.dir;
-    this.date = options.date;
-    this.comment = options.comment;
-    this.unixPermissions = options.unixPermissions;
-    this.dosPermissions = options.dosPermissions;
-
-    this._data = data;
-    this.options = options;
-
-    /*
-     * This object contains initial values for dir and date.
-     * With them, we can check if the user changed the deprecated metadata in
-     * `ZipObject#options` or not.
-     */
-    this._initialMetadata = {
-      dir : options.dir,
-      date : options.date
-    };
-};
-
-ZipObject.prototype = {
-    /**
-     * Return the content as UTF8 string.
-     * @return {string} the UTF8 string.
-     */
-    asText: function() {
-        return dataToString.call(this, true);
-    },
-    /**
-     * Returns the binary content.
-     * @return {string} the content as binary.
-     */
-    asBinary: function() {
-        return dataToString.call(this, false);
-    },
-    /**
-     * Returns the content as a nodejs Buffer.
-     * @return {Buffer} the content as a Buffer.
-     */
-    asNodeBuffer: function() {
-        var result = getBinaryData(this);
-        return utils.transformTo("nodebuffer", result);
-    },
-    /**
-     * Returns the content as an Uint8Array.
-     * @return {Uint8Array} the content as an Uint8Array.
-     */
-    asUint8Array: function() {
-        var result = getBinaryData(this);
-        return utils.transformTo("uint8array", result);
-    },
-    /**
-     * Returns the content as an ArrayBuffer.
-     * @return {ArrayBuffer} the content as an ArrayBufer.
-     */
-    asArrayBuffer: function() {
-        return this.asUint8Array().buffer;
-    }
-};
-
-/**
- * Transform an integer into a string in hexadecimal.
- * @private
- * @param {number} dec the number to convert.
- * @param {number} bytes the number of bytes to generate.
- * @returns {string} the result.
- */
-var decToHex = function(dec, bytes) {
-    var hex = "",
-        i;
-    for (i = 0; i < bytes; i++) {
-        hex += String.fromCharCode(dec & 0xff);
-        dec = dec >>> 8;
-    }
-    return hex;
-};
-
-/**
- * Merge the objects passed as parameters into a new one.
- * @private
- * @param {...Object} var_args All objects to merge.
- * @return {Object} a new object with the data of the others.
- */
-var extend = function() {
-    var result = {}, i, attr;
-    for (i = 0; i < arguments.length; i++) { // arguments is not enumerable in some browsers
-        for (attr in arguments[i]) {
-            if (arguments[i].hasOwnProperty(attr) && typeof result[attr] === "undefined") {
-                result[attr] = arguments[i][attr];
-            }
-        }
-    }
-    return result;
-};
-
-/**
- * Transforms the (incomplete) options from the user into the complete
- * set of options to create a file.
- * @private
- * @param {Object} o the options from the user.
- * @return {Object} the complete set of options.
- */
-var prepareFileAttrs = function(o) {
-    o = o || {};
-    if (o.base64 === true && (o.binary === null || o.binary === undefined)) {
-        o.binary = true;
-    }
-    o = extend(o, defaults);
-    o.date = o.date || new Date();
-    if (o.compression !== null) o.compression = o.compression.toUpperCase();
-
-    return o;
-};
-
-/**
- * Add a file in the current folder.
- * @private
- * @param {string} name the name of the file
- * @param {String|ArrayBuffer|Uint8Array|Buffer} data the data of the file
- * @param {Object} o the options of the file
- * @return {Object} the new file.
- */
-var fileAdd = function(name, data, o) {
-    // be sure sub folders exist
-    var dataType = utils.getTypeOf(data),
-        parent;
-
-    o = prepareFileAttrs(o);
-
-    if (typeof o.unixPermissions === "string") {
-        o.unixPermissions = parseInt(o.unixPermissions, 8);
-    }
-
-    // UNX_IFDIR  0040000 see zipinfo.c
-    if (o.unixPermissions && (o.unixPermissions & 0x4000)) {
-        o.dir = true;
-    }
-    // Bit 4    Directory
-    if (o.dosPermissions && (o.dosPermissions & 0x0010)) {
-        o.dir = true;
-    }
-
-    if (o.dir) {
-        name = forceTrailingSlash(name);
-    }
-
-    if (o.createFolders && (parent = parentFolder(name))) {
-        folderAdd.call(this, parent, true);
-    }
-
-    if (o.dir || data === null || typeof data === "undefined") {
-        o.base64 = false;
-        o.binary = false;
-        data = null;
-        dataType = null;
-    }
-    else if (dataType === "string") {
-        if (o.binary && !o.base64) {
-            // optimizedBinaryString == true means that the file has already been filtered with a 0xFF mask
-            if (o.optimizedBinaryString !== true) {
-                // this is a string, not in a base64 format.
-                // Be sure that this is a correct "binary string"
-                data = utils.string2binary(data);
-            }
-        }
-    }
-    else { // arraybuffer, uint8array, ...
-        o.base64 = false;
-        o.binary = true;
-
-        if (!dataType && !(data instanceof CompressedObject)) {
-            throw new Error("The data of '" + name + "' is in an unsupported format !");
-        }
-
-        // special case : it's way easier to work with Uint8Array than with ArrayBuffer
-        if (dataType === "arraybuffer") {
-            data = utils.transformTo("uint8array", data);
-        }
-    }
-
-    var object = new ZipObject(name, data, o);
-    this.files[name] = object;
-    return object;
-};
-
-/**
- * Find the parent folder of the path.
- * @private
- * @param {string} path the path to use
- * @return {string} the parent folder, or ""
- */
-var parentFolder = function (path) {
-    if (path.slice(-1) == '/') {
-        path = path.substring(0, path.length - 1);
-    }
-    var lastSlash = path.lastIndexOf('/');
-    return (lastSlash > 0) ? path.substring(0, lastSlash) : "";
-};
-
-
-/**
- * Returns the path with a slash at the end.
- * @private
- * @param {String} path the path to check.
- * @return {String} the path with a trailing slash.
- */
-var forceTrailingSlash = function(path) {
-    // Check the name ends with a /
-    if (path.slice(-1) != "/") {
-        path += "/"; // IE doesn't like substr(-1)
-    }
-    return path;
-};
-/**
- * Add a (sub) folder in the current folder.
- * @private
- * @param {string} name the folder's name
- * @param {boolean=} [createFolders] If true, automatically create sub
- *  folders. Defaults to false.
- * @return {Object} the new folder.
- */
-var folderAdd = function(name, createFolders) {
-    createFolders = (typeof createFolders !== 'undefined') ? createFolders : false;
-
-    name = forceTrailingSlash(name);
-
-    // Does this folder already exist?
-    if (!this.files[name]) {
-        fileAdd.call(this, name, null, {
-            dir: true,
-            createFolders: createFolders
-        });
-    }
-    return this.files[name];
-};
-
-/**
- * Generate a JSZip.CompressedObject for a given zipOject.
- * @param {ZipObject} file the object to read.
- * @param {JSZip.compression} compression the compression to use.
- * @param {Object} compressionOptions the options to use when compressing.
- * @return {JSZip.CompressedObject} the compressed result.
- */
-var generateCompressedObjectFrom = function(file, compression, compressionOptions) {
-    var result = new CompressedObject(),
-        content;
-
-    // the data has not been decompressed, we might reuse things !
-    if (file._data instanceof CompressedObject) {
-        result.uncompressedSize = file._data.uncompressedSize;
-        result.crc32 = file._data.crc32;
-
-        if (result.uncompressedSize === 0 || file.dir) {
-            compression = compressions['STORE'];
-            result.compressedContent = "";
-            result.crc32 = 0;
-        }
-        else if (file._data.compressionMethod === compression.magic) {
-            result.compressedContent = file._data.getCompressedContent();
-        }
-        else {
-            content = file._data.getContent();
-            // need to decompress / recompress
-            result.compressedContent = compression.compress(utils.transformTo(compression.compressInputType, content), compressionOptions);
-        }
-    }
-    else {
-        // have uncompressed data
-        content = getBinaryData(file);
-        if (!content || content.length === 0 || file.dir) {
-            compression = compressions['STORE'];
-            content = "";
-        }
-        result.uncompressedSize = content.length;
-        result.crc32 = crc32(content);
-        result.compressedContent = compression.compress(utils.transformTo(compression.compressInputType, content), compressionOptions);
-    }
-
-    result.compressedSize = result.compressedContent.length;
-    result.compressionMethod = compression.magic;
-
-    return result;
-};
-
-
-
-
-/**
- * Generate the UNIX part of the external file attributes.
- * @param {Object} unixPermissions the unix permissions or null.
- * @param {Boolean} isDir true if the entry is a directory, false otherwise.
- * @return {Number} a 32 bit integer.
- *
- * adapted from http://unix.stackexchange.com/questions/14705/the-zip-formats-external-file-attribute :
- *
- * TTTTsstrwxrwxrwx0000000000ADVSHR
- * ^^^^____________________________ file type, see zipinfo.c (UNX_*)
- *     ^^^_________________________ setuid, setgid, sticky
- *        ^^^^^^^^^________________ permissions
- *                 ^^^^^^^^^^______ not used ?
- *                           ^^^^^^ DOS attribute bits : Archive, Directory, Volume label, System file, Hidden, Read only
- */
-var generateUnixExternalFileAttr = function (unixPermissions, isDir) {
-
-    var result = unixPermissions;
-    if (!unixPermissions) {
-        // I can't use octal values in strict mode, hence the hexa.
-        //  040775 => 0x41fd
-        // 0100664 => 0x81b4
-        result = isDir ? 0x41fd : 0x81b4;
-    }
-
-    return (result & 0xFFFF) << 16;
-};
-
-/**
- * Generate the DOS part of the external file attributes.
- * @param {Object} dosPermissions the dos permissions or null.
- * @param {Boolean} isDir true if the entry is a directory, false otherwise.
- * @return {Number} a 32 bit integer.
- *
- * Bit 0     Read-Only
- * Bit 1     Hidden
- * Bit 2     System
- * Bit 3     Volume Label
- * Bit 4     Directory
- * Bit 5     Archive
- */
-var generateDosExternalFileAttr = function (dosPermissions, isDir) {
-
-    // the dir flag is already set for compatibility
-
-    return (dosPermissions || 0)  & 0x3F;
-};
-
-/**
- * Generate the various parts used in the construction of the final zip file.
- * @param {string} name the file name.
- * @param {ZipObject} file the file content.
- * @param {JSZip.CompressedObject} compressedObject the compressed object.
- * @param {number} offset the current offset from the start of the zip file.
- * @param {String} platform let's pretend we are this platform (change platform dependents fields)
- * @return {object} the zip parts.
- */
-var generateZipParts = function(name, file, compressedObject, offset, platform) {
-    var data = compressedObject.compressedContent,
-        utfEncodedFileName = utils.transformTo("string", utf8.utf8encode(file.name)),
-        comment = file.comment || "",
-        utfEncodedComment = utils.transformTo("string", utf8.utf8encode(comment)),
-        useUTF8ForFileName = utfEncodedFileName.length !== file.name.length,
-        useUTF8ForComment = utfEncodedComment.length !== comment.length,
-        o = file.options,
-        dosTime,
-        dosDate,
-        extraFields = "",
-        unicodePathExtraField = "",
-        unicodeCommentExtraField = "",
-        dir, date;
-
-
-    // handle the deprecated options.dir
-    if (file._initialMetadata.dir !== file.dir) {
-        dir = file.dir;
-    } else {
-        dir = o.dir;
-    }
-
-    // handle the deprecated options.date
-    if(file._initialMetadata.date !== file.date) {
-        date = file.date;
-    } else {
-        date = o.date;
-    }
-
-    var extFileAttr = 0;
-    var versionMadeBy = 0;
-    if (dir) {
-        // dos or unix, we set the dos dir flag
-        extFileAttr |= 0x00010;
-    }
-    if(platform === "UNIX") {
-        versionMadeBy = 0x031E; // UNIX, version 3.0
-        extFileAttr |= generateUnixExternalFileAttr(file.unixPermissions, dir);
-    } else { // DOS or other, fallback to DOS
-        versionMadeBy = 0x0014; // DOS, version 2.0
-        extFileAttr |= generateDosExternalFileAttr(file.dosPermissions, dir);
-    }
-
-    // date
-    // @see http://www.delorie.com/djgpp/doc/rbinter/it/52/13.html
-    // @see http://www.delorie.com/djgpp/doc/rbinter/it/65/16.html
-    // @see http://www.delorie.com/djgpp/doc/rbinter/it/66/16.html
-
-    dosTime = date.getHours();
-    dosTime = dosTime << 6;
-    dosTime = dosTime | date.getMinutes();
-    dosTime = dosTime << 5;
-    dosTime = dosTime | date.getSeconds() / 2;
-
-    dosDate = date.getFullYear() - 1980;
-    dosDate = dosDate << 4;
-    dosDate = dosDate | (date.getMonth() + 1);
-    dosDate = dosDate << 5;
-    dosDate = dosDate | date.getDate();
-
-    if (useUTF8ForFileName) {
-        // set the unicode path extra field. unzip needs at least one extra
-        // field to correctly handle unicode path, so using the path is as good
-        // as any other information. This could improve the situation with
-        // other archive managers too.
-        // This field is usually used without the utf8 flag, with a non
-        // unicode path in the header (winrar, winzip). This helps (a bit)
-        // with the messy Windows' default compressed folders feature but
-        // breaks on p7zip which doesn't seek the unicode path extra field.
-        // So for now, UTF-8 everywhere !
-        unicodePathExtraField =
-            // Version
-            decToHex(1, 1) +
-            // NameCRC32
-            decToHex(crc32(utfEncodedFileName), 4) +
-            // UnicodeName
-            utfEncodedFileName;
-
-        extraFields +=
-            // Info-ZIP Unicode Path Extra Field
-            "\x75\x70" +
-            // size
-            decToHex(unicodePathExtraField.length, 2) +
-            // content
-            unicodePathExtraField;
-    }
-
-    if(useUTF8ForComment) {
-
-        unicodeCommentExtraField =
-            // Version
-            decToHex(1, 1) +
-            // CommentCRC32
-            decToHex(this.crc32(utfEncodedComment), 4) +
-            // UnicodeName
-            utfEncodedComment;
-
-        extraFields +=
-            // Info-ZIP Unicode Path Extra Field
-            "\x75\x63" +
-            // size
-            decToHex(unicodeCommentExtraField.length, 2) +
-            // content
-            unicodeCommentExtraField;
-    }
-
-    var header = "";
-
-    // version needed to extract
-    header += "\x0A\x00";
-    // general purpose bit flag
-    // set bit 11 if utf8
-    header += (useUTF8ForFileName || useUTF8ForComment) ? "\x00\x08" : "\x00\x00";
-    // compression method
-    header += compressedObject.compressionMethod;
-    // last mod file time
-    header += decToHex(dosTime, 2);
-    // last mod file date
-    header += decToHex(dosDate, 2);
-    // crc-32
-    header += decToHex(compressedObject.crc32, 4);
-    // compressed size
-    header += decToHex(compressedObject.compressedSize, 4);
-    // uncompressed size
-    header += decToHex(compressedObject.uncompressedSize, 4);
-    // file name length
-    header += decToHex(utfEncodedFileName.length, 2);
-    // extra field length
-    header += decToHex(extraFields.length, 2);
-
-
-    var fileRecord = signature.LOCAL_FILE_HEADER + header + utfEncodedFileName + extraFields;
-
-    var dirRecord = signature.CENTRAL_FILE_HEADER +
-    // version made by (00: DOS)
-    decToHex(versionMadeBy, 2) +
-    // file header (common to file and central directory)
-    header +
-    // file comment length
-    decToHex(utfEncodedComment.length, 2) +
-    // disk number start
-    "\x00\x00" +
-    // internal file attributes TODO
-    "\x00\x00" +
-    // external file attributes
-    decToHex(extFileAttr, 4) +
-    // relative offset of local header
-    decToHex(offset, 4) +
-    // file name
-    utfEncodedFileName +
-    // extra field
-    extraFields +
-    // file comment
-    utfEncodedComment;
-
-    return {
-        fileRecord: fileRecord,
-        dirRecord: dirRecord,
-        compressedObject: compressedObject
-    };
-};
-
-
-// return the actual prototype of JSZip
-var out = {
-    /**
-     * Read an existing zip and merge the data in the current JSZip object.
-     * The implementation is in jszip-load.js, don't forget to include it.
-     * @param {String|ArrayBuffer|Uint8Array|Buffer} stream  The stream to load
-     * @param {Object} options Options for loading the stream.
-     *  options.base64 : is the stream in base64 ? default : false
-     * @return {JSZip} the current JSZip object
-     */
-    load: function(stream, options) {
-        throw new Error("Load method is not defined. Is the file jszip-load.js included ?");
-    },
-
-    /**
-     * Filter nested files/folders with the specified function.
-     * @param {Function} search the predicate to use :
-     * function (relativePath, file) {...}
-     * It takes 2 arguments : the relative path and the file.
-     * @return {Array} An array of matching elements.
-     */
-    filter: function(search) {
-        var result = [],
-            filename, relativePath, file, fileClone;
-        for (filename in this.files) {
-            if (!this.files.hasOwnProperty(filename)) {
-                continue;
-            }
-            file = this.files[filename];
-            // return a new object, don't let the user mess with our internal objects :)
-            fileClone = new ZipObject(file.name, file._data, extend(file.options));
-            relativePath = filename.slice(this.root.length, filename.length);
-            if (filename.slice(0, this.root.length) === this.root && // the file is in the current root
-            search(relativePath, fileClone)) { // and the file matches the function
-                result.push(fileClone);
-            }
-        }
-        return result;
-    },
-
-    /**
-     * Add a file to the zip file, or search a file.
-     * @param   {string|RegExp} name The name of the file to add (if data is defined),
-     * the name of the file to find (if no data) or a regex to match files.
-     * @param   {String|ArrayBuffer|Uint8Array|Buffer} data  The file data, either raw or base64 encoded
-     * @param   {Object} o     File options
-     * @return  {JSZip|Object|Array} this JSZip object (when adding a file),
-     * a file (when searching by string) or an array of files (when searching by regex).
-     */
-    file: function(name, data, o) {
-        if (arguments.length === 1) {
-            if (utils.isRegExp(name)) {
-                var regexp = name;
-                return this.filter(function(relativePath, file) {
-                    return !file.dir && regexp.test(relativePath);
-                });
-            }
-            else { // text
-                return this.filter(function(relativePath, file) {
-                    return !file.dir && relativePath === name;
-                })[0] || null;
-            }
-        }
-        else { // more than one argument : we have data !
-            name = this.root + name;
-            fileAdd.call(this, name, data, o);
-        }
-        return this;
-    },
-
-    /**
-     * Add a directory to the zip file, or search.
-     * @param   {String|RegExp} arg The name of the directory to add, or a regex to search folders.
-     * @return  {JSZip} an object with the new directory as the root, or an array containing matching folders.
-     */
-    folder: function(arg) {
-        if (!arg) {
-            return this;
-        }
-
-        if (utils.isRegExp(arg)) {
-            return this.filter(function(relativePath, file) {
-                return file.dir && arg.test(relativePath);
-            });
-        }
-
-        // else, name is a new folder
-        var name = this.root + arg;
-        var newFolder = folderAdd.call(this, name);
-
-        // Allow chaining by returning a new object with this folder as the root
-        var ret = this.clone();
-        ret.root = newFolder.name;
-        return ret;
-    },
-
-    /**
-     * Delete a file, or a directory and all sub-files, from the zip
-     * @param {string} name the name of the file to delete
-     * @return {JSZip} this JSZip object
-     */
-    remove: function(name) {
-        name = this.root + name;
-        var file = this.files[name];
-        if (!file) {
-            // Look for any folders
-            if (name.slice(-1) != "/") {
-                name += "/";
-            }
-            file = this.files[name];
-        }
-
-        if (file && !file.dir) {
-            // file
-            delete this.files[name];
-        } else {
-            // maybe a folder, delete recursively
-            var kids = this.filter(function(relativePath, file) {
-                return file.name.slice(0, name.length) === name;
-            });
-            for (var i = 0; i < kids.length; i++) {
-                delete this.files[kids[i].name];
-            }
-        }
-
-        return this;
-    },
-
-    /**
-     * Generate the complete zip file
-     * @param {Object} options the options to generate the zip file :
-     * - base64, (deprecated, use type instead) true to generate base64.
-     * - compression, "STORE" by default.
-     * - type, "base64" by default. Values are : string, base64, uint8array, arraybuffer, blob.
-     * @return {String|Uint8Array|ArrayBuffer|Buffer|Blob} the zip file
-     */
-    generate: function(options) {
-        options = extend(options || {}, {
-            base64: true,
-            compression: "STORE",
-            compressionOptions : null,
-            type: "base64",
-            platform: "DOS",
-            comment: null,
-            mimeType: 'application/zip'
-        });
-
-        utils.checkSupport(options.type);
-
-        // accept nodejs `process.platform`
-        if(
-          options.platform === 'darwin' ||
-          options.platform === 'freebsd' ||
-          options.platform === 'linux' ||
-          options.platform === 'sunos'
-        ) {
-          options.platform = "UNIX";
-        }
-        if (options.platform === 'win32') {
-          options.platform = "DOS";
-        }
-
-        var zipData = [],
-            localDirLength = 0,
-            centralDirLength = 0,
-            writer, i,
-            utfEncodedComment = utils.transformTo("string", this.utf8encode(options.comment || this.comment || ""));
-
-        // first, generate all the zip parts.
-        for (var name in this.files) {
-            if (!this.files.hasOwnProperty(name)) {
-                continue;
-            }
-            var file = this.files[name];
-
-            var compressionName = file.options.compression || options.compression.toUpperCase();
-            var compression = compressions[compressionName];
-            if (!compression) {
-                throw new Error(compressionName + " is not a valid compression method !");
-            }
-            var compressionOptions = file.options.compressionOptions || options.compressionOptions || {};
-
-            var compressedObject = generateCompressedObjectFrom.call(this, file, compression, compressionOptions);
-
-            var zipPart = generateZipParts.call(this, name, file, compressedObject, localDirLength, options.platform);
-            localDirLength += zipPart.fileRecord.length + compressedObject.compressedSize;
-            centralDirLength += zipPart.dirRecord.length;
-            zipData.push(zipPart);
-        }
-
-        var dirEnd = "";
-
-        // end of central dir signature
-        dirEnd = signature.CENTRAL_DIRECTORY_END +
-        // number of this disk
-        "\x00\x00" +
-        // number of the disk with the start of the central directory
-        "\x00\x00" +
-        // total number of entries in the central directory on this disk
-        decToHex(zipData.length, 2) +
-        // total number of entries in the central directory
-        decToHex(zipData.length, 2) +
-        // size of the central directory   4 bytes
-        decToHex(centralDirLength, 4) +
-        // offset of start of central directory with respect to the starting disk number
-        decToHex(localDirLength, 4) +
-        // .ZIP file comment length
-        decToHex(utfEncodedComment.length, 2) +
-        // .ZIP file comment
-        utfEncodedComment;
-
-
-        // we have all the parts (and the total length)
-        // time to create a writer !
-        var typeName = options.type.toLowerCase();
-        if(typeName==="uint8array"||typeName==="arraybuffer"||typeName==="blob"||typeName==="nodebuffer") {
-            writer = new Uint8ArrayWriter(localDirLength + centralDirLength + dirEnd.length);
-        }else{
-            writer = new StringWriter(localDirLength + centralDirLength + dirEnd.length);
-        }
-
-        for (i = 0; i < zipData.length; i++) {
-            writer.append(zipData[i].fileRecord);
-            writer.append(zipData[i].compressedObject.compressedContent);
-        }
-        for (i = 0; i < zipData.length; i++) {
-            writer.append(zipData[i].dirRecord);
-        }
-
-        writer.append(dirEnd);
-
-        var zip = writer.finalize();
-
-
-
-        switch(options.type.toLowerCase()) {
-            // case "zip is an Uint8Array"
-            case "uint8array" :
-            case "arraybuffer" :
-            case "nodebuffer" :
-               return utils.transformTo(options.type.toLowerCase(), zip);
-            case "blob" :
-               return utils.arrayBuffer2Blob(utils.transformTo("arraybuffer", zip), options.mimeType);
-            // case "zip is a string"
-            case "base64" :
-               return (options.base64) ? base64.encode(zip) : zip;
-            default : // case "string" :
-               return zip;
-         }
-
-    },
-
-    /**
-     * @deprecated
-     * This method will be removed in a future version without replacement.
-     */
-    crc32: function (input, crc) {
-        return crc32(input, crc);
-    },
-
-    /**
-     * @deprecated
-     * This method will be removed in a future version without replacement.
-     */
-    utf8encode: function (string) {
-        return utils.transformTo("string", utf8.utf8encode(string));
-    },
-
-    /**
-     * @deprecated
-     * This method will be removed in a future version without replacement.
-     */
-    utf8decode: function (input) {
-        return utf8.utf8decode(input);
-    }
-};
-module.exports = out;
-
-},{"./base64":63,"./compressedObject":64,"./compressions":65,"./crc32":66,"./defaults":68,"./nodeBuffer":73,"./signature":76,"./stringWriter":78,"./support":79,"./uint8ArrayWriter":81,"./utf8":82,"./utils":83}],76:[function(require,module,exports){
-'use strict';
-exports.LOCAL_FILE_HEADER = "PK\x03\x04";
-exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
-exports.CENTRAL_DIRECTORY_END = "PK\x05\x06";
-exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
-exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
-exports.DATA_DESCRIPTOR = "PK\x07\x08";
-
-},{}],77:[function(require,module,exports){
-'use strict';
-var DataReader = require('./dataReader');
-var utils = require('./utils');
-
-function StringReader(data, optimizedBinaryString) {
-    this.data = data;
-    if (!optimizedBinaryString) {
-        this.data = utils.string2binary(this.data);
-    }
-    this.length = this.data.length;
-    this.index = 0;
-}
-StringReader.prototype = new DataReader();
-/**
- * @see DataReader.byteAt
- */
-StringReader.prototype.byteAt = function(i) {
-    return this.data.charCodeAt(i);
-};
-/**
- * @see DataReader.lastIndexOfSignature
- */
-StringReader.prototype.lastIndexOfSignature = function(sig) {
-    return this.data.lastIndexOf(sig);
-};
-/**
- * @see DataReader.readData
- */
-StringReader.prototype.readData = function(size) {
-    this.checkOffset(size);
-    // this will work because the constructor applied the "& 0xff" mask.
-    var result = this.data.slice(this.index, this.index + size);
-    this.index += size;
-    return result;
-};
-module.exports = StringReader;
-
-},{"./dataReader":67,"./utils":83}],78:[function(require,module,exports){
-'use strict';
-
-var utils = require('./utils');
-
-/**
- * An object to write any content to a string.
- * @constructor
- */
-var StringWriter = function() {
-    this.data = [];
-};
-StringWriter.prototype = {
-    /**
-     * Append any content to the current string.
-     * @param {Object} input the content to add.
-     */
-    append: function(input) {
-        input = utils.transformTo("string", input);
-        this.data.push(input);
-    },
-    /**
-     * Finalize the construction an return the result.
-     * @return {string} the generated string.
-     */
-    finalize: function() {
-        return this.data.join("");
-    }
-};
-
-module.exports = StringWriter;
-
-},{"./utils":83}],79:[function(require,module,exports){
-(function (Buffer){
-'use strict';
-exports.base64 = true;
-exports.array = true;
-exports.string = true;
-exports.arraybuffer = typeof ArrayBuffer !== "undefined" && typeof Uint8Array !== "undefined";
-// contains true if JSZip can read/generate nodejs Buffer, false otherwise.
-// Browserify will provide a Buffer implementation for browsers, which is
-// an augmented Uint8Array (i.e., can be used as either Buffer or U8).
-exports.nodebuffer = typeof Buffer !== "undefined";
-// contains true if JSZip can read/generate Uint8Array, false otherwise.
-exports.uint8array = typeof Uint8Array !== "undefined";
-
-if (typeof ArrayBuffer === "undefined") {
-    exports.blob = false;
-}
-else {
-    var buffer = new ArrayBuffer(0);
-    try {
-        exports.blob = new Blob([buffer], {
-            type: "application/zip"
-        }).size === 0;
-    }
-    catch (e) {
-        try {
-            var Builder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-            var builder = new Builder();
-            builder.append(buffer);
-            exports.blob = builder.getBlob('application/zip').size === 0;
-        }
-        catch (e) {
-            exports.blob = false;
-        }
-    }
-}
-
-}).call(this,require("buffer").Buffer)
-},{"buffer":5}],80:[function(require,module,exports){
-'use strict';
-var DataReader = require('./dataReader');
-
-function Uint8ArrayReader(data) {
-    if (data) {
-        this.data = data;
-        this.length = this.data.length;
-        this.index = 0;
-    }
-}
-Uint8ArrayReader.prototype = new DataReader();
-/**
- * @see DataReader.byteAt
- */
-Uint8ArrayReader.prototype.byteAt = function(i) {
-    return this.data[i];
-};
-/**
- * @see DataReader.lastIndexOfSignature
- */
-Uint8ArrayReader.prototype.lastIndexOfSignature = function(sig) {
-    var sig0 = sig.charCodeAt(0),
-        sig1 = sig.charCodeAt(1),
-        sig2 = sig.charCodeAt(2),
-        sig3 = sig.charCodeAt(3);
-    for (var i = this.length - 4; i >= 0; --i) {
-        if (this.data[i] === sig0 && this.data[i + 1] === sig1 && this.data[i + 2] === sig2 && this.data[i + 3] === sig3) {
-            return i;
-        }
-    }
-
-    return -1;
-};
-/**
- * @see DataReader.readData
- */
-Uint8ArrayReader.prototype.readData = function(size) {
-    this.checkOffset(size);
-    if(size === 0) {
-        // in IE10, when using subarray(idx, idx), we get the array [0x00] instead of [].
-        return new Uint8Array(0);
-    }
-    var result = this.data.subarray(this.index, this.index + size);
-    this.index += size;
-    return result;
-};
-module.exports = Uint8ArrayReader;
-
-},{"./dataReader":67}],81:[function(require,module,exports){
-'use strict';
-
-var utils = require('./utils');
-
-/**
- * An object to write any content to an Uint8Array.
- * @constructor
- * @param {number} length The length of the array.
- */
-var Uint8ArrayWriter = function(length) {
-    this.data = new Uint8Array(length);
-    this.index = 0;
-};
-Uint8ArrayWriter.prototype = {
-    /**
-     * Append any content to the current array.
-     * @param {Object} input the content to add.
-     */
-    append: function(input) {
-        if (input.length !== 0) {
-            // with an empty Uint8Array, Opera fails with a "Offset larger than array size"
-            input = utils.transformTo("uint8array", input);
-            this.data.set(input, this.index);
-            this.index += input.length;
-        }
-    },
-    /**
-     * Finalize the construction an return the result.
-     * @return {Uint8Array} the generated array.
-     */
-    finalize: function() {
-        return this.data;
-    }
-};
-
-module.exports = Uint8ArrayWriter;
-
-},{"./utils":83}],82:[function(require,module,exports){
-'use strict';
-
-var utils = require('./utils');
-var support = require('./support');
-var nodeBuffer = require('./nodeBuffer');
-
-/**
- * The following functions come from pako, from pako/lib/utils/strings
- * released under the MIT license, see pako https://github.com/nodeca/pako/
- */
-
-// Table with utf8 lengths (calculated by first byte of sequence)
-// Note, that 5 & 6-byte values and some 4-byte values can not be represented in JS,
-// because max possible codepoint is 0x10ffff
-var _utf8len = new Array(256);
-for (var i=0; i<256; i++) {
-  _utf8len[i] = (i >= 252 ? 6 : i >= 248 ? 5 : i >= 240 ? 4 : i >= 224 ? 3 : i >= 192 ? 2 : 1);
-}
-_utf8len[254]=_utf8len[254]=1; // Invalid sequence start
-
-// convert string to array (typed, when possible)
-var string2buf = function (str) {
-    var buf, c, c2, m_pos, i, str_len = str.length, buf_len = 0;
-
-    // count binary size
-    for (m_pos = 0; m_pos < str_len; m_pos++) {
-        c = str.charCodeAt(m_pos);
-        if ((c & 0xfc00) === 0xd800 && (m_pos+1 < str_len)) {
-            c2 = str.charCodeAt(m_pos+1);
-            if ((c2 & 0xfc00) === 0xdc00) {
-                c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
-                m_pos++;
-            }
-        }
-        buf_len += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
-    }
-
-    // allocate buffer
-    if (support.uint8array) {
-        buf = new Uint8Array(buf_len);
-    } else {
-        buf = new Array(buf_len);
-    }
-
-    // convert
-    for (i=0, m_pos = 0; i < buf_len; m_pos++) {
-        c = str.charCodeAt(m_pos);
-        if ((c & 0xfc00) === 0xd800 && (m_pos+1 < str_len)) {
-            c2 = str.charCodeAt(m_pos+1);
-            if ((c2 & 0xfc00) === 0xdc00) {
-                c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00);
-                m_pos++;
-            }
-        }
-        if (c < 0x80) {
-            /* one byte */
-            buf[i++] = c;
-        } else if (c < 0x800) {
-            /* two bytes */
-            buf[i++] = 0xC0 | (c >>> 6);
-            buf[i++] = 0x80 | (c & 0x3f);
-        } else if (c < 0x10000) {
-            /* three bytes */
-            buf[i++] = 0xE0 | (c >>> 12);
-            buf[i++] = 0x80 | (c >>> 6 & 0x3f);
-            buf[i++] = 0x80 | (c & 0x3f);
-        } else {
-            /* four bytes */
-            buf[i++] = 0xf0 | (c >>> 18);
-            buf[i++] = 0x80 | (c >>> 12 & 0x3f);
-            buf[i++] = 0x80 | (c >>> 6 & 0x3f);
-            buf[i++] = 0x80 | (c & 0x3f);
-        }
-    }
-
-    return buf;
-};
-
-// Calculate max possible position in utf8 buffer,
-// that will not break sequence. If that's not possible
-// - (very small limits) return max size as is.
-//
-// buf[] - utf8 bytes array
-// max   - length limit (mandatory);
-var utf8border = function(buf, max) {
-    var pos;
-
-    max = max || buf.length;
-    if (max > buf.length) { max = buf.length; }
-
-    // go back from last position, until start of sequence found
-    pos = max-1;
-    while (pos >= 0 && (buf[pos] & 0xC0) === 0x80) { pos--; }
-
-    // Fuckup - very small and broken sequence,
-    // return max, because we should return something anyway.
-    if (pos < 0) { return max; }
-
-    // If we came to start of buffer - that means vuffer is too small,
-    // return max too.
-    if (pos === 0) { return max; }
-
-    return (pos + _utf8len[buf[pos]] > max) ? pos : max;
-};
-
-// convert array to string
-var buf2string = function (buf) {
-    var str, i, out, c, c_len;
-    var len = buf.length;
-
-    // Reserve max possible length (2 words per char)
-    // NB: by unknown reasons, Array is significantly faster for
-    //     String.fromCharCode.apply than Uint16Array.
-    var utf16buf = new Array(len*2);
-
-    for (out=0, i=0; i<len;) {
-        c = buf[i++];
-        // quick process ascii
-        if (c < 0x80) { utf16buf[out++] = c; continue; }
-
-        c_len = _utf8len[c];
-        // skip 5 & 6 byte codes
-        if (c_len > 4) { utf16buf[out++] = 0xfffd; i += c_len-1; continue; }
-
-        // apply mask on first byte
-        c &= c_len === 2 ? 0x1f : c_len === 3 ? 0x0f : 0x07;
-        // join the rest
-        while (c_len > 1 && i < len) {
-            c = (c << 6) | (buf[i++] & 0x3f);
-            c_len--;
-        }
-
-        // terminated by end of string?
-        if (c_len > 1) { utf16buf[out++] = 0xfffd; continue; }
-
-        if (c < 0x10000) {
-            utf16buf[out++] = c;
-        } else {
-            c -= 0x10000;
-            utf16buf[out++] = 0xd800 | ((c >> 10) & 0x3ff);
-            utf16buf[out++] = 0xdc00 | (c & 0x3ff);
-        }
-    }
-
-    // shrinkBuf(utf16buf, out)
-    if (utf16buf.length !== out) {
-        if(utf16buf.subarray) {
-            utf16buf = utf16buf.subarray(0, out);
-        } else {
-            utf16buf.length = out;
-        }
-    }
-
-    // return String.fromCharCode.apply(null, utf16buf);
-    return utils.applyFromCharCode(utf16buf);
-};
-
-
-// That's all for the pako functions.
-
-
-/**
- * Transform a javascript string into an array (typed if possible) of bytes,
- * UTF-8 encoded.
- * @param {String} str the string to encode
- * @return {Array|Uint8Array|Buffer} the UTF-8 encoded string.
- */
-exports.utf8encode = function utf8encode(str) {
-    if (support.nodebuffer) {
-        return nodeBuffer(str, "utf-8");
-    }
-
-    return string2buf(str);
-};
-
-
-/**
- * Transform a bytes array (or a representation) representing an UTF-8 encoded
- * string into a javascript string.
- * @param {Array|Uint8Array|Buffer} buf the data de decode
- * @return {String} the decoded string.
- */
-exports.utf8decode = function utf8decode(buf) {
-    if (support.nodebuffer) {
-        return utils.transformTo("nodebuffer", buf).toString("utf-8");
-    }
-
-    buf = utils.transformTo(support.uint8array ? "uint8array" : "array", buf);
-
-    // return buf2string(buf);
-    // Chrome prefers to work with "small" chunks of data
-    // for the method buf2string.
-    // Firefox and Chrome has their own shortcut, IE doesn't seem to really care.
-    var result = [], k = 0, len = buf.length, chunk = 65536;
-    while (k < len) {
-        var nextBoundary = utf8border(buf, Math.min(k + chunk, len));
-        if (support.uint8array) {
-            result.push(buf2string(buf.subarray(k, nextBoundary)));
-        } else {
-            result.push(buf2string(buf.slice(k, nextBoundary)));
-        }
-        k = nextBoundary;
-    }
-    return result.join("");
-
-};
-// vim: set shiftwidth=4 softtabstop=4:
-
-},{"./nodeBuffer":73,"./support":79,"./utils":83}],83:[function(require,module,exports){
-'use strict';
-var support = require('./support');
-var compressions = require('./compressions');
-var nodeBuffer = require('./nodeBuffer');
-/**
- * Convert a string to a "binary string" : a string containing only char codes between 0 and 255.
- * @param {string} str the string to transform.
- * @return {String} the binary string.
- */
-exports.string2binary = function(str) {
-    var result = "";
-    for (var i = 0; i < str.length; i++) {
-        result += String.fromCharCode(str.charCodeAt(i) & 0xff);
-    }
-    return result;
-};
-exports.arrayBuffer2Blob = function(buffer, mimeType) {
-    exports.checkSupport("blob");
-	mimeType = mimeType || 'application/zip';
-
-    try {
-        // Blob constructor
-        return new Blob([buffer], {
-            type: mimeType
-        });
-    }
-    catch (e) {
-
-        try {
-            // deprecated, browser only, old way
-            var Builder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-            var builder = new Builder();
-            builder.append(buffer);
-            return builder.getBlob(mimeType);
-        }
-        catch (e) {
-
-            // well, fuck ?!
-            throw new Error("Bug : can't construct the Blob.");
-        }
-    }
-
-
-};
-/**
- * The identity function.
- * @param {Object} input the input.
- * @return {Object} the same input.
- */
-function identity(input) {
-    return input;
-}
-
-/**
- * Fill in an array with a string.
- * @param {String} str the string to use.
- * @param {Array|ArrayBuffer|Uint8Array|Buffer} array the array to fill in (will be mutated).
- * @return {Array|ArrayBuffer|Uint8Array|Buffer} the updated array.
- */
-function stringToArrayLike(str, array) {
-    for (var i = 0; i < str.length; ++i) {
-        array[i] = str.charCodeAt(i) & 0xFF;
-    }
-    return array;
-}
-
-/**
- * Transform an array-like object to a string.
- * @param {Array|ArrayBuffer|Uint8Array|Buffer} array the array to transform.
- * @return {String} the result.
- */
-function arrayLikeToString(array) {
-    // Performances notes :
-    // --------------------
-    // String.fromCharCode.apply(null, array) is the fastest, see
-    // see http://jsperf.com/converting-a-uint8array-to-a-string/2
-    // but the stack is limited (and we can get huge arrays !).
-    //
-    // result += String.fromCharCode(array[i]); generate too many strings !
-    //
-    // This code is inspired by http://jsperf.com/arraybuffer-to-string-apply-performance/2
-    var chunk = 65536;
-    var result = [],
-        len = array.length,
-        type = exports.getTypeOf(array),
-        k = 0,
-        canUseApply = true;
-      try {
-         switch(type) {
-            case "uint8array":
-               String.fromCharCode.apply(null, new Uint8Array(0));
-               break;
-            case "nodebuffer":
-               String.fromCharCode.apply(null, nodeBuffer(0));
-               break;
-         }
-      } catch(e) {
-         canUseApply = false;
-      }
-
-      // no apply : slow and painful algorithm
-      // default browser on android 4.*
-      if (!canUseApply) {
-         var resultStr = "";
-         for(var i = 0; i < array.length;i++) {
-            resultStr += String.fromCharCode(array[i]);
-         }
-    return resultStr;
-    }
-    while (k < len && chunk > 1) {
-        try {
-            if (type === "array" || type === "nodebuffer") {
-                result.push(String.fromCharCode.apply(null, array.slice(k, Math.min(k + chunk, len))));
-            }
-            else {
-                result.push(String.fromCharCode.apply(null, array.subarray(k, Math.min(k + chunk, len))));
-            }
-            k += chunk;
-        }
-        catch (e) {
-            chunk = Math.floor(chunk / 2);
-        }
-    }
-    return result.join("");
-}
-
-exports.applyFromCharCode = arrayLikeToString;
-
-
-/**
- * Copy the data from an array-like to an other array-like.
- * @param {Array|ArrayBuffer|Uint8Array|Buffer} arrayFrom the origin array.
- * @param {Array|ArrayBuffer|Uint8Array|Buffer} arrayTo the destination array which will be mutated.
- * @return {Array|ArrayBuffer|Uint8Array|Buffer} the updated destination array.
- */
-function arrayLikeToArrayLike(arrayFrom, arrayTo) {
-    for (var i = 0; i < arrayFrom.length; i++) {
-        arrayTo[i] = arrayFrom[i];
-    }
-    return arrayTo;
-}
-
-// a matrix containing functions to transform everything into everything.
-var transform = {};
-
-// string to ?
-transform["string"] = {
-    "string": identity,
-    "array": function(input) {
-        return stringToArrayLike(input, new Array(input.length));
-    },
-    "arraybuffer": function(input) {
-        return transform["string"]["uint8array"](input).buffer;
-    },
-    "uint8array": function(input) {
-        return stringToArrayLike(input, new Uint8Array(input.length));
-    },
-    "nodebuffer": function(input) {
-        return stringToArrayLike(input, nodeBuffer(input.length));
-    }
-};
-
-// array to ?
-transform["array"] = {
-    "string": arrayLikeToString,
-    "array": identity,
-    "arraybuffer": function(input) {
-        return (new Uint8Array(input)).buffer;
-    },
-    "uint8array": function(input) {
-        return new Uint8Array(input);
-    },
-    "nodebuffer": function(input) {
-        return nodeBuffer(input);
-    }
-};
-
-// arraybuffer to ?
-transform["arraybuffer"] = {
-    "string": function(input) {
-        return arrayLikeToString(new Uint8Array(input));
-    },
-    "array": function(input) {
-        return arrayLikeToArrayLike(new Uint8Array(input), new Array(input.byteLength));
-    },
-    "arraybuffer": identity,
-    "uint8array": function(input) {
-        return new Uint8Array(input);
-    },
-    "nodebuffer": function(input) {
-        return nodeBuffer(new Uint8Array(input));
-    }
-};
-
-// uint8array to ?
-transform["uint8array"] = {
-    "string": arrayLikeToString,
-    "array": function(input) {
-        return arrayLikeToArrayLike(input, new Array(input.length));
-    },
-    "arraybuffer": function(input) {
-        return input.buffer;
-    },
-    "uint8array": identity,
-    "nodebuffer": function(input) {
-        return nodeBuffer(input);
-    }
-};
-
-// nodebuffer to ?
-transform["nodebuffer"] = {
-    "string": arrayLikeToString,
-    "array": function(input) {
-        return arrayLikeToArrayLike(input, new Array(input.length));
-    },
-    "arraybuffer": function(input) {
-        return transform["nodebuffer"]["uint8array"](input).buffer;
-    },
-    "uint8array": function(input) {
-        return arrayLikeToArrayLike(input, new Uint8Array(input.length));
-    },
-    "nodebuffer": identity
-};
-
-/**
- * Transform an input into any type.
- * The supported output type are : string, array, uint8array, arraybuffer, nodebuffer.
- * If no output type is specified, the unmodified input will be returned.
- * @param {String} outputType the output type.
- * @param {String|Array|ArrayBuffer|Uint8Array|Buffer} input the input to convert.
- * @throws {Error} an Error if the browser doesn't support the requested output type.
- */
-exports.transformTo = function(outputType, input) {
-    if (!input) {
-        // undefined, null, etc
-        // an empty string won't harm.
-        input = "";
-    }
-    if (!outputType) {
-        return input;
-    }
-    exports.checkSupport(outputType);
-    var inputType = exports.getTypeOf(input);
-    var result = transform[inputType][outputType](input);
-    return result;
-};
-
-/**
- * Return the type of the input.
- * The type will be in a format valid for JSZip.utils.transformTo : string, array, uint8array, arraybuffer.
- * @param {Object} input the input to identify.
- * @return {String} the (lowercase) type of the input.
- */
-exports.getTypeOf = function(input) {
-    if (typeof input === "string") {
-        return "string";
-    }
-    if (Object.prototype.toString.call(input) === "[object Array]") {
-        return "array";
-    }
-    if (support.nodebuffer && nodeBuffer.test(input)) {
-        return "nodebuffer";
-    }
-    if (support.uint8array && input instanceof Uint8Array) {
-        return "uint8array";
-    }
-    if (support.arraybuffer && input instanceof ArrayBuffer) {
-        return "arraybuffer";
-    }
-};
-
-/**
- * Throw an exception if the type is not supported.
- * @param {String} type the type to check.
- * @throws {Error} an Error if the browser doesn't support the requested type.
- */
-exports.checkSupport = function(type) {
-    var supported = support[type.toLowerCase()];
-    if (!supported) {
-        throw new Error(type + " is not supported by this browser");
-    }
-};
-exports.MAX_VALUE_16BITS = 65535;
-exports.MAX_VALUE_32BITS = -1; // well, "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF" is parsed as -1
-
-/**
- * Prettify a string read as binary.
- * @param {string} str the string to prettify.
- * @return {string} a pretty string.
- */
-exports.pretty = function(str) {
-    var res = '',
-        code, i;
-    for (i = 0; i < (str || "").length; i++) {
-        code = str.charCodeAt(i);
-        res += '\\x' + (code < 16 ? "0" : "") + code.toString(16).toUpperCase();
-    }
-    return res;
-};
-
-/**
- * Find a compression registered in JSZip.
- * @param {string} compressionMethod the method magic to find.
- * @return {Object|null} the JSZip compression object, null if none found.
- */
-exports.findCompression = function(compressionMethod) {
-    for (var method in compressions) {
-        if (!compressions.hasOwnProperty(method)) {
-            continue;
-        }
-        if (compressions[method].magic === compressionMethod) {
-            return compressions[method];
-        }
-    }
-    return null;
-};
-/**
-* Cross-window, cross-Node-context regular expression detection
-* @param  {Object}  object Anything
-* @return {Boolean}        true if the object is a regular expression,
-* false otherwise
-*/
-exports.isRegExp = function (object) {
-    return Object.prototype.toString.call(object) === "[object RegExp]";
-};
-
-
-},{"./compressions":65,"./nodeBuffer":73,"./support":79}],84:[function(require,module,exports){
-'use strict';
-var StringReader = require('./stringReader');
-var NodeBufferReader = require('./nodeBufferReader');
-var Uint8ArrayReader = require('./uint8ArrayReader');
-var utils = require('./utils');
-var sig = require('./signature');
-var ZipEntry = require('./zipEntry');
-var support = require('./support');
-var jszipProto = require('./object');
-//  class ZipEntries {{{
-/**
- * All the entries in the zip file.
- * @constructor
- * @param {String|ArrayBuffer|Uint8Array} data the binary stream to load.
- * @param {Object} loadOptions Options for loading the stream.
- */
-function ZipEntries(data, loadOptions) {
-    this.files = [];
-    this.loadOptions = loadOptions;
-    if (data) {
-        this.load(data);
-    }
-}
-ZipEntries.prototype = {
-    /**
-     * Check that the reader is on the speficied signature.
-     * @param {string} expectedSignature the expected signature.
-     * @throws {Error} if it is an other signature.
-     */
-    checkSignature: function(expectedSignature) {
-        var signature = this.reader.readString(4);
-        if (signature !== expectedSignature) {
-            throw new Error("Corrupted zip or bug : unexpected signature " + "(" + utils.pretty(signature) + ", expected " + utils.pretty(expectedSignature) + ")");
-        }
-    },
-    /**
-     * Read the end of the central directory.
-     */
-    readBlockEndOfCentral: function() {
-        this.diskNumber = this.reader.readInt(2);
-        this.diskWithCentralDirStart = this.reader.readInt(2);
-        this.centralDirRecordsOnThisDisk = this.reader.readInt(2);
-        this.centralDirRecords = this.reader.readInt(2);
-        this.centralDirSize = this.reader.readInt(4);
-        this.centralDirOffset = this.reader.readInt(4);
-
-        this.zipCommentLength = this.reader.readInt(2);
-        // warning : the encoding depends of the system locale
-        // On a linux machine with LANG=en_US.utf8, this field is utf8 encoded.
-        // On a windows machine, this field is encoded with the localized windows code page.
-        this.zipComment = this.reader.readString(this.zipCommentLength);
-        // To get consistent behavior with the generation part, we will assume that
-        // this is utf8 encoded.
-        this.zipComment = jszipProto.utf8decode(this.zipComment);
-    },
-    /**
-     * Read the end of the Zip 64 central directory.
-     * Not merged with the method readEndOfCentral :
-     * The end of central can coexist with its Zip64 brother,
-     * I don't want to read the wrong number of bytes !
-     */
-    readBlockZip64EndOfCentral: function() {
-        this.zip64EndOfCentralSize = this.reader.readInt(8);
-        this.versionMadeBy = this.reader.readString(2);
-        this.versionNeeded = this.reader.readInt(2);
-        this.diskNumber = this.reader.readInt(4);
-        this.diskWithCentralDirStart = this.reader.readInt(4);
-        this.centralDirRecordsOnThisDisk = this.reader.readInt(8);
-        this.centralDirRecords = this.reader.readInt(8);
-        this.centralDirSize = this.reader.readInt(8);
-        this.centralDirOffset = this.reader.readInt(8);
-
-        this.zip64ExtensibleData = {};
-        var extraDataSize = this.zip64EndOfCentralSize - 44,
-            index = 0,
-            extraFieldId,
-            extraFieldLength,
-            extraFieldValue;
-        while (index < extraDataSize) {
-            extraFieldId = this.reader.readInt(2);
-            extraFieldLength = this.reader.readInt(4);
-            extraFieldValue = this.reader.readString(extraFieldLength);
-            this.zip64ExtensibleData[extraFieldId] = {
-                id: extraFieldId,
-                length: extraFieldLength,
-                value: extraFieldValue
-            };
-        }
-    },
-    /**
-     * Read the end of the Zip 64 central directory locator.
-     */
-    readBlockZip64EndOfCentralLocator: function() {
-        this.diskWithZip64CentralDirStart = this.reader.readInt(4);
-        this.relativeOffsetEndOfZip64CentralDir = this.reader.readInt(8);
-        this.disksCount = this.reader.readInt(4);
-        if (this.disksCount > 1) {
-            throw new Error("Multi-volumes zip are not supported");
-        }
-    },
-    /**
-     * Read the local files, based on the offset read in the central part.
-     */
-    readLocalFiles: function() {
-        var i, file;
-        for (i = 0; i < this.files.length; i++) {
-            file = this.files[i];
-            this.reader.setIndex(file.localHeaderOffset);
-            this.checkSignature(sig.LOCAL_FILE_HEADER);
-            file.readLocalPart(this.reader);
-            file.handleUTF8();
-            file.processAttributes();
-        }
-    },
-    /**
-     * Read the central directory.
-     */
-    readCentralDir: function() {
-        var file;
-
-        this.reader.setIndex(this.centralDirOffset);
-        while (this.reader.readString(4) === sig.CENTRAL_FILE_HEADER) {
-            file = new ZipEntry({
-                zip64: this.zip64
-            }, this.loadOptions);
-            file.readCentralPart(this.reader);
-            this.files.push(file);
-        }
-    },
-    /**
-     * Read the end of central directory.
-     */
-    readEndOfCentral: function() {
-        var offset = this.reader.lastIndexOfSignature(sig.CENTRAL_DIRECTORY_END);
-        if (offset === -1) {
-            // Check if the content is a truncated zip or complete garbage.
-            // A "LOCAL_FILE_HEADER" is not required at the beginning (auto
-            // extractible zip for example) but it can give a good hint.
-            // If an ajax request was used without responseType, we will also
-            // get unreadable data.
-            var isGarbage = true;
-            try {
-                this.reader.setIndex(0);
-                this.checkSignature(sig.LOCAL_FILE_HEADER);
-                isGarbage = false;
-            } catch (e) {}
-
-            if (isGarbage) {
-                throw new Error("Can't find end of central directory : is this a zip file ? " +
-                                "If it is, see http://stuk.github.io/jszip/documentation/howto/read_zip.html");
-            } else {
-                throw new Error("Corrupted zip : can't find end of central directory");
-            }
-        }
-        this.reader.setIndex(offset);
-        this.checkSignature(sig.CENTRAL_DIRECTORY_END);
-        this.readBlockEndOfCentral();
-
-
-        /* extract from the zip spec :
-            4)  If one of the fields in the end of central directory
-                record is too small to hold required data, the field
-                should be set to -1 (0xFFFF or 0xFFFFFFFF) and the
-                ZIP64 format record should be created.
-            5)  The end of central directory record and the
-                Zip64 end of central directory locator record must
-                reside on the same disk when splitting or spanning
-                an archive.
-         */
-        if (this.diskNumber === utils.MAX_VALUE_16BITS || this.diskWithCentralDirStart === utils.MAX_VALUE_16BITS || this.centralDirRecordsOnThisDisk === utils.MAX_VALUE_16BITS || this.centralDirRecords === utils.MAX_VALUE_16BITS || this.centralDirSize === utils.MAX_VALUE_32BITS || this.centralDirOffset === utils.MAX_VALUE_32BITS) {
-            this.zip64 = true;
-
-            /*
-            Warning : the zip64 extension is supported, but ONLY if the 64bits integer read from
-            the zip file can fit into a 32bits integer. This cannot be solved : Javascript represents
-            all numbers as 64-bit double precision IEEE 754 floating point numbers.
-            So, we have 53bits for integers and bitwise operations treat everything as 32bits.
-            see https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Operators/Bitwise_Operators
-            and http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-262.pdf section 8.5
-            */
-
-            // should look for a zip64 EOCD locator
-            offset = this.reader.lastIndexOfSignature(sig.ZIP64_CENTRAL_DIRECTORY_LOCATOR);
-            if (offset === -1) {
-                throw new Error("Corrupted zip : can't find the ZIP64 end of central directory locator");
-            }
-            this.reader.setIndex(offset);
-            this.checkSignature(sig.ZIP64_CENTRAL_DIRECTORY_LOCATOR);
-            this.readBlockZip64EndOfCentralLocator();
-
-            // now the zip64 EOCD record
-            this.reader.setIndex(this.relativeOffsetEndOfZip64CentralDir);
-            this.checkSignature(sig.ZIP64_CENTRAL_DIRECTORY_END);
-            this.readBlockZip64EndOfCentral();
-        }
-    },
-    prepareReader: function(data) {
-        var type = utils.getTypeOf(data);
-        if (type === "string" && !support.uint8array) {
-            this.reader = new StringReader(data, this.loadOptions.optimizedBinaryString);
-        }
-        else if (type === "nodebuffer") {
-            this.reader = new NodeBufferReader(data);
-        }
-        else {
-            this.reader = new Uint8ArrayReader(utils.transformTo("uint8array", data));
-        }
-    },
-    /**
-     * Read a zip file and create ZipEntries.
-     * @param {String|ArrayBuffer|Uint8Array|Buffer} data the binary string representing a zip file.
-     */
-    load: function(data) {
-        this.prepareReader(data);
-        this.readEndOfCentral();
-        this.readCentralDir();
-        this.readLocalFiles();
-    }
-};
-// }}} end of ZipEntries
-module.exports = ZipEntries;
-
-},{"./nodeBufferReader":74,"./object":75,"./signature":76,"./stringReader":77,"./support":79,"./uint8ArrayReader":80,"./utils":83,"./zipEntry":85}],85:[function(require,module,exports){
-'use strict';
-var StringReader = require('./stringReader');
-var utils = require('./utils');
-var CompressedObject = require('./compressedObject');
-var jszipProto = require('./object');
-
-var MADE_BY_DOS = 0x00;
-var MADE_BY_UNIX = 0x03;
-
-// class ZipEntry {{{
-/**
- * An entry in the zip file.
- * @constructor
- * @param {Object} options Options of the current file.
- * @param {Object} loadOptions Options for loading the stream.
- */
-function ZipEntry(options, loadOptions) {
-    this.options = options;
-    this.loadOptions = loadOptions;
-}
-ZipEntry.prototype = {
-    /**
-     * say if the file is encrypted.
-     * @return {boolean} true if the file is encrypted, false otherwise.
-     */
-    isEncrypted: function() {
-        // bit 1 is set
-        return (this.bitFlag & 0x0001) === 0x0001;
-    },
-    /**
-     * say if the file has utf-8 filename/comment.
-     * @return {boolean} true if the filename/comment is in utf-8, false otherwise.
-     */
-    useUTF8: function() {
-        // bit 11 is set
-        return (this.bitFlag & 0x0800) === 0x0800;
-    },
-    /**
-     * Prepare the function used to generate the compressed content from this ZipFile.
-     * @param {DataReader} reader the reader to use.
-     * @param {number} from the offset from where we should read the data.
-     * @param {number} length the length of the data to read.
-     * @return {Function} the callback to get the compressed content (the type depends of the DataReader class).
-     */
-    prepareCompressedContent: function(reader, from, length) {
-        return function() {
-            var previousIndex = reader.index;
-            reader.setIndex(from);
-            var compressedFileData = reader.readData(length);
-            reader.setIndex(previousIndex);
-
-            return compressedFileData;
-        };
-    },
-    /**
-     * Prepare the function used to generate the uncompressed content from this ZipFile.
-     * @param {DataReader} reader the reader to use.
-     * @param {number} from the offset from where we should read the data.
-     * @param {number} length the length of the data to read.
-     * @param {JSZip.compression} compression the compression used on this file.
-     * @param {number} uncompressedSize the uncompressed size to expect.
-     * @return {Function} the callback to get the uncompressed content (the type depends of the DataReader class).
-     */
-    prepareContent: function(reader, from, length, compression, uncompressedSize) {
-        return function() {
-
-            var compressedFileData = utils.transformTo(compression.uncompressInputType, this.getCompressedContent());
-            var uncompressedFileData = compression.uncompress(compressedFileData);
-
-            if (uncompressedFileData.length !== uncompressedSize) {
-                throw new Error("Bug : uncompressed data size mismatch");
-            }
-
-            return uncompressedFileData;
-        };
-    },
-    /**
-     * Read the local part of a zip file and add the info in this object.
-     * @param {DataReader} reader the reader to use.
-     */
-    readLocalPart: function(reader) {
-        var compression, localExtraFieldsLength;
-
-        // we already know everything from the central dir !
-        // If the central dir data are false, we are doomed.
-        // On the bright side, the local part is scary  : zip64, data descriptors, both, etc.
-        // The less data we get here, the more reliable this should be.
-        // Let's skip the whole header and dash to the data !
-        reader.skip(22);
-        // in some zip created on windows, the filename stored in the central dir contains \ instead of /.
-        // Strangely, the filename here is OK.
-        // I would love to treat these zip files as corrupted (see http://www.info-zip.org/FAQ.html#backslashes
-        // or APPNOTE#4.4.17.1, "All slashes MUST be forward slashes '/'") but there are a lot of bad zip generators...
-        // Search "unzip mismatching "local" filename continuing with "central" filename version" on
-        // the internet.
-        //
-        // I think I see the logic here : the central directory is used to display
-        // content and the local directory is used to extract the files. Mixing / and \
-        // may be used to display \ to windows users and use / when extracting the files.
-        // Unfortunately, this lead also to some issues : http://seclists.org/fulldisclosure/2009/Sep/394
-        this.fileNameLength = reader.readInt(2);
-        localExtraFieldsLength = reader.readInt(2); // can't be sure this will be the same as the central dir
-        this.fileName = reader.readString(this.fileNameLength);
-        reader.skip(localExtraFieldsLength);
-
-        if (this.compressedSize == -1 || this.uncompressedSize == -1) {
-            throw new Error("Bug or corrupted zip : didn't get enough informations from the central directory " + "(compressedSize == -1 || uncompressedSize == -1)");
-        }
-
-        compression = utils.findCompression(this.compressionMethod);
-        if (compression === null) { // no compression found
-            throw new Error("Corrupted zip : compression " + utils.pretty(this.compressionMethod) + " unknown (inner file : " + this.fileName + ")");
-        }
-        this.decompressed = new CompressedObject();
-        this.decompressed.compressedSize = this.compressedSize;
-        this.decompressed.uncompressedSize = this.uncompressedSize;
-        this.decompressed.crc32 = this.crc32;
-        this.decompressed.compressionMethod = this.compressionMethod;
-        this.decompressed.getCompressedContent = this.prepareCompressedContent(reader, reader.index, this.compressedSize, compression);
-        this.decompressed.getContent = this.prepareContent(reader, reader.index, this.compressedSize, compression, this.uncompressedSize);
-
-        // we need to compute the crc32...
-        if (this.loadOptions.checkCRC32) {
-            this.decompressed = utils.transformTo("string", this.decompressed.getContent());
-            if (jszipProto.crc32(this.decompressed) !== this.crc32) {
-                throw new Error("Corrupted zip : CRC32 mismatch");
-            }
-        }
-    },
-
-    /**
-     * Read the central part of a zip file and add the info in this object.
-     * @param {DataReader} reader the reader to use.
-     */
-    readCentralPart: function(reader) {
-        this.versionMadeBy = reader.readInt(2);
-        this.versionNeeded = reader.readInt(2);
-        this.bitFlag = reader.readInt(2);
-        this.compressionMethod = reader.readString(2);
-        this.date = reader.readDate();
-        this.crc32 = reader.readInt(4);
-        this.compressedSize = reader.readInt(4);
-        this.uncompressedSize = reader.readInt(4);
-        this.fileNameLength = reader.readInt(2);
-        this.extraFieldsLength = reader.readInt(2);
-        this.fileCommentLength = reader.readInt(2);
-        this.diskNumberStart = reader.readInt(2);
-        this.internalFileAttributes = reader.readInt(2);
-        this.externalFileAttributes = reader.readInt(4);
-        this.localHeaderOffset = reader.readInt(4);
-
-        if (this.isEncrypted()) {
-            throw new Error("Encrypted zip are not supported");
-        }
-
-        this.fileName = reader.readString(this.fileNameLength);
-        this.readExtraFields(reader);
-        this.parseZIP64ExtraField(reader);
-        this.fileComment = reader.readString(this.fileCommentLength);
-    },
-
-    /**
-     * Parse the external file attributes and get the unix/dos permissions.
-     */
-    processAttributes: function () {
-        this.unixPermissions = null;
-        this.dosPermissions = null;
-        var madeBy = this.versionMadeBy >> 8;
-
-        // Check if we have the DOS directory flag set.
-        // We look for it in the DOS and UNIX permissions
-        // but some unknown platform could set it as a compatibility flag.
-        this.dir = this.externalFileAttributes & 0x0010 ? true : false;
-
-        if(madeBy === MADE_BY_DOS) {
-            // first 6 bits (0 to 5)
-            this.dosPermissions = this.externalFileAttributes & 0x3F;
-        }
-
-        if(madeBy === MADE_BY_UNIX) {
-            this.unixPermissions = (this.externalFileAttributes >> 16) & 0xFFFF;
-            // the octal permissions are in (this.unixPermissions & 0x01FF).toString(8);
-        }
-
-        // fail safe : if the name ends with a / it probably means a folder
-        if (!this.dir && this.fileName.slice(-1) === '/') {
-            this.dir = true;
-        }
-    },
-
-    /**
-     * Parse the ZIP64 extra field and merge the info in the current ZipEntry.
-     * @param {DataReader} reader the reader to use.
-     */
-    parseZIP64ExtraField: function(reader) {
-
-        if (!this.extraFields[0x0001]) {
-            return;
-        }
-
-        // should be something, preparing the extra reader
-        var extraReader = new StringReader(this.extraFields[0x0001].value);
-
-        // I really hope that these 64bits integer can fit in 32 bits integer, because js
-        // won't let us have more.
-        if (this.uncompressedSize === utils.MAX_VALUE_32BITS) {
-            this.uncompressedSize = extraReader.readInt(8);
-        }
-        if (this.compressedSize === utils.MAX_VALUE_32BITS) {
-            this.compressedSize = extraReader.readInt(8);
-        }
-        if (this.localHeaderOffset === utils.MAX_VALUE_32BITS) {
-            this.localHeaderOffset = extraReader.readInt(8);
-        }
-        if (this.diskNumberStart === utils.MAX_VALUE_32BITS) {
-            this.diskNumberStart = extraReader.readInt(4);
-        }
-    },
-    /**
-     * Read the central part of a zip file and add the info in this object.
-     * @param {DataReader} reader the reader to use.
-     */
-    readExtraFields: function(reader) {
-        var start = reader.index,
-            extraFieldId,
-            extraFieldLength,
-            extraFieldValue;
-
-        this.extraFields = this.extraFields || {};
-
-        while (reader.index < start + this.extraFieldsLength) {
-            extraFieldId = reader.readInt(2);
-            extraFieldLength = reader.readInt(2);
-            extraFieldValue = reader.readString(extraFieldLength);
-
-            this.extraFields[extraFieldId] = {
-                id: extraFieldId,
-                length: extraFieldLength,
-                value: extraFieldValue
-            };
-        }
-    },
-    /**
-     * Apply an UTF8 transformation if needed.
-     */
-    handleUTF8: function() {
-        if (this.useUTF8()) {
-            this.fileName = jszipProto.utf8decode(this.fileName);
-            this.fileComment = jszipProto.utf8decode(this.fileComment);
-        } else {
-            var upath = this.findExtraFieldUnicodePath();
-            if (upath !== null) {
-                this.fileName = upath;
-            }
-            var ucomment = this.findExtraFieldUnicodeComment();
-            if (ucomment !== null) {
-                this.fileComment = ucomment;
-            }
-        }
-    },
-
-    /**
-     * Find the unicode path declared in the extra field, if any.
-     * @return {String} the unicode path, null otherwise.
-     */
-    findExtraFieldUnicodePath: function() {
-        var upathField = this.extraFields[0x7075];
-        if (upathField) {
-            var extraReader = new StringReader(upathField.value);
-
-            // wrong version
-            if (extraReader.readInt(1) !== 1) {
-                return null;
-            }
-
-            // the crc of the filename changed, this field is out of date.
-            if (jszipProto.crc32(this.fileName) !== extraReader.readInt(4)) {
-                return null;
-            }
-
-            return jszipProto.utf8decode(extraReader.readString(upathField.length - 5));
-        }
-        return null;
-    },
-
-    /**
-     * Find the unicode comment declared in the extra field, if any.
-     * @return {String} the unicode comment, null otherwise.
-     */
-    findExtraFieldUnicodeComment: function() {
-        var ucommentField = this.extraFields[0x6375];
-        if (ucommentField) {
-            var extraReader = new StringReader(ucommentField.value);
-
-            // wrong version
-            if (extraReader.readInt(1) !== 1) {
-                return null;
-            }
-
-            // the crc of the comment changed, this field is out of date.
-            if (jszipProto.crc32(this.fileComment) !== extraReader.readInt(4)) {
-                return null;
-            }
-
-            return jszipProto.utf8decode(extraReader.readString(ucommentField.length - 5));
-        }
-        return null;
-    }
-};
-module.exports = ZipEntry;
-
-},{"./compressedObject":64,"./object":75,"./stringReader":77,"./utils":83}],86:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -14446,7 +12868,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":87,"./lib/inflate":88,"./lib/utils/common":89,"./lib/zlib/constants":92}],87:[function(require,module,exports){
+},{"./lib/deflate":68,"./lib/inflate":69,"./lib/utils/common":70,"./lib/zlib/constants":73}],68:[function(require,module,exports){
 'use strict';
 
 
@@ -14824,7 +13246,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":89,"./utils/strings":90,"./zlib/deflate.js":94,"./zlib/messages":99,"./zlib/zstream":101}],88:[function(require,module,exports){
+},{"./utils/common":70,"./utils/strings":71,"./zlib/deflate.js":75,"./zlib/messages":80,"./zlib/zstream":82}],69:[function(require,module,exports){
 'use strict';
 
 
@@ -15226,7 +13648,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":89,"./utils/strings":90,"./zlib/constants":92,"./zlib/gzheader":95,"./zlib/inflate.js":97,"./zlib/messages":99,"./zlib/zstream":101}],89:[function(require,module,exports){
+},{"./utils/common":70,"./utils/strings":71,"./zlib/constants":73,"./zlib/gzheader":76,"./zlib/inflate.js":78,"./zlib/messages":80,"./zlib/zstream":82}],70:[function(require,module,exports){
 'use strict';
 
 
@@ -15330,7 +13752,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],90:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -15517,7 +13939,7 @@ exports.utf8border = function(buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":89}],91:[function(require,module,exports){
+},{"./common":70}],72:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -15551,7 +13973,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],92:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = {
 
   /* Allowed flush values; see deflate() and inflate() below for details */
@@ -15600,7 +14022,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],93:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -15643,7 +14065,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],94:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -17410,7 +15832,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":89,"./adler32":91,"./crc32":93,"./messages":99,"./trees":100}],95:[function(require,module,exports){
+},{"../utils/common":70,"./adler32":72,"./crc32":74,"./messages":80,"./trees":81}],76:[function(require,module,exports){
 'use strict';
 
 
@@ -17452,7 +15874,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],96:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -17780,7 +16202,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],97:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 'use strict';
 
 
@@ -19285,7 +17707,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":89,"./adler32":91,"./crc32":93,"./inffast":96,"./inftrees":98}],98:[function(require,module,exports){
+},{"../utils/common":70,"./adler32":72,"./crc32":74,"./inffast":77,"./inftrees":79}],79:[function(require,module,exports){
 'use strict';
 
 
@@ -19614,7 +18036,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":89}],99:[function(require,module,exports){
+},{"../utils/common":70}],80:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -19629,7 +18051,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],100:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 'use strict';
 
 
@@ -20830,7 +19252,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":89}],101:[function(require,module,exports){
+},{"../utils/common":70}],82:[function(require,module,exports){
 'use strict';
 
 
@@ -20861,7 +19283,499 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],102:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
+(function (process){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
+
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
+  }
+
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
+  }
+
+  return root + dir;
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+}).call(this,require("g5I+bs"))
+},{"g5I+bs":85}],84:[function(require,module,exports){
+module.exports = function (data) {
+    var lines = data.split('\n'),
+                isNameLine = true,
+                isRingSection = false,
+                isInteriorRing = false,
+                coordinates = [],
+                currentPolygon = [],
+                currentRing = [],
+                gj = {
+                    type: 'FeatureCollection',
+                    features: []
+                };
+
+    for (var i = 1; i < lines.length; i++) {
+        if (isEndMarker(lines[i])) {
+            if (!isRingSection) {
+                coordinates.push(currentPolygon);
+                break;
+            }
+            isRingSection = false;
+            isNameLine = true;
+            if (currentRing.length > 0) {
+                currentPolygon.push(currentRing);
+                currentRing = [];
+            }
+        }
+        else if (isNameLine) {
+            isNameLine = false;
+            isRingSection = true;
+            isInteriorRing = lines[i].indexOf('!') === 0;
+            if (currentPolygon.length > 0 && !isInteriorRing) {
+                coordinates.push(currentPolygon);
+                currentPolygon = [];
+            }
+        }
+        else {
+            currentRing.push(getCoordinate(lines[i]));
+        }
+    }
+
+    gj.features.push({
+        type: 'Feature',
+        properties: {
+        },
+        geometry: {
+            type: getGeometryType(coordinates),
+            coordinates: getCoordinates(coordinates)
+        }
+    });
+    function getGeometryType(coordinates) {
+        return coordinates.length === 1 ? 'Polygon' : 'MultiPolygon';
+    }
+    function getCoordinates(coordinates) {
+        return coordinates.length === 1 ? coordinates[0] : coordinates;
+    }
+    function isEndMarker(line) {
+        return line.indexOf('END') === 0;
+    }
+    function getCoordinate(line) {
+        var coord = line.replace(/^\s*|\s*$/g, '').split(/\s+/);
+        return [parseFloat(coord[0]), parseFloat(coord[1])];
+    }
+    return gj;
+};
+
+},{}],85:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            var source = ev.source;
+            if ((source === window || source === null) && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}],86:[function(require,module,exports){
+/*
+ * Given a querystring, return an object of that querystring's components.
+ *
+ * @param {String} str
+ * @returns {Object} parsed querystring
+ */
+module.exports.stringQs = function(str) {
+    return str.split('&').reduce(function(obj, pair){
+        var parts = pair.split('=');
+        if (parts.length === 2) {
+            obj[parts[0]] = (null === parts[1]) ? '' : decodeURIComponent(parts[1]);
+        }
+        return obj;
+    }, {});
+};
+/*
+ * Given a parsed querystring as an object,
+ * return a string representing it.
+ *
+ * @param {Object} obj parsed querystring
+ * @param {Boolean} noencode skip URL-encoding querystring parameters
+ * @returns {String} generated string
+ */
+module.exports.qsString = function(obj, noencode) {
+    noencode = true;
+    function softEncode(s) { return ('' + s).replace('&', '%26'); }
+    return Object.keys(obj).sort().map(function(key) {
+        return encodeURIComponent(key) + '=' + (
+            noencode ? softEncode(obj[key]) : encodeURIComponent(obj[key]));
+    }).join('&');
+};
+
+},{}],87:[function(require,module,exports){
+(function() {
+  var slice = [].slice;
+
+  function queue(parallelism) {
+    var q,
+        tasks = [],
+        started = 0, // number of tasks that have been started (and perhaps finished)
+        active = 0, // number of tasks currently being executed (started but not finished)
+        remaining = 0, // number of tasks not yet finished
+        popping, // inside a synchronous task callback?
+        error = null,
+        await = noop,
+        all;
+
+    if (!parallelism) parallelism = Infinity;
+
+    function pop() {
+      while (popping = started < tasks.length && active < parallelism) {
+        var i = started++,
+            t = tasks[i],
+            a = slice.call(t, 1);
+        a.push(callback(i));
+        ++active;
+        t[0].apply(null, a);
+      }
+    }
+
+    function callback(i) {
+      return function(e, r) {
+        --active;
+        if (error != null) return;
+        if (e != null) {
+          error = e; // ignore new tasks and squelch active callbacks
+          started = remaining = NaN; // stop queued tasks from starting
+          notify();
+        } else {
+          tasks[i] = r;
+          if (--remaining) popping || pop();
+          else notify();
+        }
+      };
+    }
+
+    function notify() {
+      if (error != null) await(error);
+      else if (all) await(error, tasks);
+      else await.apply(null, [error].concat(tasks));
+    }
+
+    return q = {
+      defer: function() {
+        if (!error) {
+          tasks.push(arguments);
+          ++remaining;
+          pop();
+        }
+        return q;
+      },
+      await: function(f) {
+        await = f;
+        all = false;
+        if (!remaining) notify();
+        return q;
+      },
+      awaitAll: function(f) {
+        await = f;
+        all = true;
+        if (!remaining) notify();
+        return q;
+      }
+    };
+  }
+
+  function noop() {}
+
+  queue.version = "1.0.7";
+  if (typeof define === "function" && define.amd) define(function() { return queue; });
+  else if (typeof module === "object" && module.exports) module.exports = queue;
+  else this.queue = queue;
+})();
+
+},{}],88:[function(require,module,exports){
+module.exports = function(x, dims) {
+    if (!dims) dims = 'NSEW';
+    if (typeof x !== 'string') return null;
+    var r = /^([0-9.]+)°? *(?:([0-9.]+)['’′‘] *)?(?:([0-9.]+)(?:''|"|”|″) *)?([NSEW])?/,
+        m = x.match(r);
+    if (!m) return null;
+    else if (m[4] && dims.indexOf(m[4]) === -1) return null;
+    else return (((m[1]) ? parseFloat(m[1]) : 0) +
+        ((m[2] ? parseFloat(m[2]) / 60 : 0)) +
+        ((m[3] ? parseFloat(m[3]) / 3600 : 0))) *
+        ((m[4] && m[4] === 'S' || m[4] === 'W') ? -1 : 1);
+};
+
+},{}],89:[function(require,module,exports){
+module.exports.download = require('./src/download')
+module.exports.write = require('./src/write')
+module.exports.zip = require('./src/zip')
+},{"./src/download":90,"./src/write":98,"./src/zip":99}],90:[function(require,module,exports){
 var zip = require('./zip');
 
 module.exports = function(gj, options) {
@@ -20869,7 +19783,7 @@ module.exports = function(gj, options) {
     location.href = 'data:application/zip;base64,' + content;
 };
 
-},{"./zip":111}],103:[function(require,module,exports){
+},{"./zip":99}],91:[function(require,module,exports){
 module.exports.enlarge = function enlargeExtent(extent, pt) {
     if (pt[0] < extent.xmin) extent.xmin = pt[0];
     if (pt[0] > extent.xmax) extent.xmax = pt[0];
@@ -20895,7 +19809,7 @@ module.exports.blank = function() {
     };
 };
 
-},{}],104:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 var types = require('./types').jstypes;
 
 module.exports.geojson = geojson;
@@ -20925,7 +19839,7 @@ function obj(_) {
     return o;
 }
 
-},{"./types":109}],105:[function(require,module,exports){
+},{"./types":97}],93:[function(require,module,exports){
 module.exports.point = justType('Point', 'POINT');
 module.exports.line = justType('LineString', 'POLYLINE');
 module.exports.polygon = justType('Polygon', 'POLYGON');
@@ -20959,7 +19873,7 @@ function isType(t) {
     return function(f) { return f.geometry.type === t; };
 }
 
-},{}],106:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(coordinates, extent, shpView, shxView) {
@@ -21006,7 +19920,7 @@ module.exports.shpLength = function(coordinates) {
     return coordinates.length * 28;
 };
 
-},{"./extent":103}],107:[function(require,module,exports){
+},{"./extent":91}],95:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
@@ -21086,10 +20000,10 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":103}],108:[function(require,module,exports){
+},{"./extent":91}],96:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
-},{}],109:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 module.exports.geometries = {
     NULL: 0,
     POINT: 1,
@@ -21107,7 +20021,7 @@ module.exports.geometries = {
     MULTIPATCH: 31,
 };
 
-},{}],110:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 var types = require('./types'),
     dbf = require('dbf'),
     prj = require('./prj'),
@@ -21176,7 +20090,7 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":103,"./fields":104,"./points":106,"./poly":107,"./prj":108,"./types":109,"assert":3,"dbf":58}],111:[function(require,module,exports){
+},{"./extent":91,"./fields":92,"./points":94,"./poly":95,"./prj":96,"./types":97,"assert":2,"dbf":11}],99:[function(require,module,exports){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
@@ -21210,7 +20124,61 @@ module.exports = function(gj, options) {
     return zip.generate({compression:'STORE'});
 };
 
-},{"./geojson":105,"./prj":108,"./write":110,"jszip":71}],112:[function(require,module,exports){
+},{"./geojson":93,"./prj":96,"./write":98,"jszip":46}],100:[function(require,module,exports){
+var wgs84 = require('wgs84');
+
+module.exports.heading = function(from, to) {
+    var y = Math.sin(Math.PI * (from[0] - to[0]) / 180) * Math.cos(Math.PI * to[1] / 180);
+    var x = Math.cos(Math.PI * from[1] / 180) * Math.sin(Math.PI * to[1] / 180) -
+        Math.sin(Math.PI * from[1] / 180) * Math.cos(Math.PI * to[1] / 180) * Math.cos(Math.PI * (from[0] - to[0]) / 180);
+    return 180 * Math.atan2(y, x) / Math.PI;
+};
+
+module.exports.distance = function(from, to) {
+    var sinHalfDeltaLon = Math.sin(Math.PI * (to[0] - from[0]) / 360);
+    var sinHalfDeltaLat = Math.sin(Math.PI * (to[1] - from[1]) / 360);
+    var a = sinHalfDeltaLat * sinHalfDeltaLat +
+        sinHalfDeltaLon * sinHalfDeltaLon * Math.cos(Math.PI * from[1] / 180) * Math.cos(Math.PI * to[1] / 180);
+    return 2 * wgs84.RADIUS * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+module.exports.radial = function(from, tc_deg, d_m) {
+    var tc = rad(tc_deg);
+    var d = d_m / wgs84.RADIUS;
+
+    var lon1 = rad(from[0]),
+        lat1 = rad(from[1]);
+
+    var lat = Math.asin(
+        Math.sin(lat1) *
+        Math.cos(d) +
+        Math.cos(lat1) *
+        Math.sin(d) *
+        Math.cos(tc));
+
+    var dlon = Math.atan2(
+        Math.sin(tc) *
+        Math.sin(d) *
+        Math.cos(lat1),
+        Math.cos(d) -
+        Math.sin(lat1) *
+        Math.sin(lat));
+
+    var lon = (lon1 - dlon + Math.PI) %
+        (2 * Math.PI) - Math.PI;
+
+    return [deg(lon), deg(lat)];
+};
+
+function rad(_) {
+    return _ * (Math.PI / 180);
+}
+
+function deg(_) {
+    return _ * (180 / Math.PI);
+}
+
+},{"wgs84":142}],101:[function(require,module,exports){
 (function (global){
 ;(function(win){
 	var store = {},
@@ -21378,7 +20346,53 @@ module.exports = function(gj, options) {
 })(this.window || global);
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],113:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
+module.exports.attr = attr;
+module.exports.tagClose = tagClose;
+module.exports.tag = tag;
+module.exports.encode = encode;
+
+/**
+ * @param {array} _ an array of attributes
+ * @returns {string}
+ */
+function attr(_) {
+    return (_ && _.length) ? (' ' + _.map(function(a) {
+        return a[0] + '="' + a[1] + '"';
+    }).join(' ')) : '';
+}
+
+/**
+ * @param {string} el element name
+ * @param {array} attributes array of pairs
+ * @returns {string}
+ */
+function tagClose(el, attributes) {
+    return '<' + el + attr(attributes) + '/>';
+}
+
+/**
+ * @param {string} el element name
+ * @param {string} contents innerXML
+ * @param {array} attributes array of pairs
+ * @returns {string}
+ */
+function tag(el, contents, attributes) {
+    return '<' + el + attr(attributes) + '>' + contents + '</' + el + '>';
+}
+
+/**
+ * @param {string} _ a string of attribute
+ * @returns {string}
+ */
+function encode(_) {
+    return (_ === null ? '' : _.toString()).replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+},{}],103:[function(require,module,exports){
 (function (process){
 toGeoJSON = (function() {
     'use strict';
@@ -21616,8 +20630,8 @@ toGeoJSON = (function() {
 
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
-}).call(this,require("FWaASH"))
-},{"FWaASH":11,"xmldom":4}],114:[function(require,module,exports){
+}).call(this,require("g5I+bs"))
+},{"g5I+bs":85,"xmldom":4}],104:[function(require,module,exports){
 var strxml = require('strxml'),
     tag = strxml.tag,
     encode = strxml.encode;
@@ -21814,53 +20828,7 @@ function pairs(_) {
     return o;
 }
 
-},{"strxml":115}],115:[function(require,module,exports){
-module.exports.attr = attr;
-module.exports.tagClose = tagClose;
-module.exports.tag = tag;
-module.exports.encode = encode;
-
-/**
- * @param {array} _ an array of attributes
- * @returns {string}
- */
-function attr(_) {
-    return (_ && _.length) ? (' ' + _.map(function(a) {
-        return a[0] + '="' + a[1] + '"';
-    }).join(' ')) : '';
-}
-
-/**
- * @param {string} el element name
- * @param {array} attributes array of pairs
- * @returns {string}
- */
-function tagClose(el, attributes) {
-    return '<' + el + attr(attributes) + '/>';
-}
-
-/**
- * @param {string} el element name
- * @param {string} contents innerXML
- * @param {array} attributes array of pairs
- * @returns {string}
- */
-function tag(el, contents, attributes) {
-    return '<' + el + attr(attributes) + '>' + contents + '</' + el + '>';
-}
-
-/**
- * @param {string} _ a string of attribute
- * @returns {string}
- */
-function encode(_) {
-    return (_ === null ? '' : _.toString()).replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
-},{}],"topojson":[function(require,module,exports){
+},{"strxml":102}],"topojson":[function(require,module,exports){
 module.exports=require('BOmyIj');
 },{}],"BOmyIj":[function(require,module,exports){
 var topojson = module.exports = require("./topojson");
@@ -21873,7 +20841,7 @@ topojson.bind = require("./lib/topojson/bind");
 topojson.stitch = require("./lib/topojson/stitch");
 topojson.scale = require("./lib/topojson/scale");
 
-},{"./lib/topojson/bind":118,"./lib/topojson/clockwise":121,"./lib/topojson/filter":125,"./lib/topojson/prune":129,"./lib/topojson/scale":131,"./lib/topojson/simplify":132,"./lib/topojson/stitch":134,"./lib/topojson/topology":135,"./topojson":147}],118:[function(require,module,exports){
+},{"./lib/topojson/bind":107,"./lib/topojson/clockwise":110,"./lib/topojson/filter":114,"./lib/topojson/prune":118,"./lib/topojson/scale":120,"./lib/topojson/simplify":121,"./lib/topojson/stitch":123,"./lib/topojson/topology":124,"./topojson":136}],107:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -21903,7 +20871,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"BOmyIj","./type":146}],119:[function(require,module,exports){
+},{"../../":"BOmyIj","./type":135}],108:[function(require,module,exports){
 
 // Computes the bounding box of the specified hash of GeoJSON objects.
 module.exports = function(objects) {
@@ -21950,7 +20918,7 @@ module.exports = function(objects) {
   return [x0, y0, x1, y1];
 };
 
-},{}],120:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -21990,7 +20958,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],121:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -22081,7 +21049,7 @@ function clockwisePolygonSystem(ringArea, reverse) {
 
 function noop() {}
 
-},{"../../":"BOmyIj","./coordinate-systems":123,"./type":146}],122:[function(require,module,exports){
+},{"../../":"BOmyIj","./coordinate-systems":112,"./type":135}],111:[function(require,module,exports){
 // Given a hash of GeoJSON objects and an id function, invokes the id function
 // to compute a new id for each object that is a feature. The function is passed
 // the feature and is expected to return the new feature id, or null if the
@@ -22111,13 +21079,13 @@ module.exports = function(objects, id) {
   return objects;
 };
 
-},{}],123:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":120,"./spherical":133}],124:[function(require,module,exports){
+},{"./cartesian":109,"./spherical":122}],113:[function(require,module,exports){
 // Given a TopoJSON topology in absolute (quantized) coordinates,
 // converts to fixed-point delta encoding.
 // This is a destructive operation that modifies the given topology!
@@ -22148,7 +21116,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{}],125:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -22277,7 +21245,7 @@ function preserveNone() {
   return false;
 }
 
-},{"../../":"BOmyIj","./clockwise":121,"./coordinate-systems":123,"./prune":129,"./type":146}],126:[function(require,module,exports){
+},{"../../":"BOmyIj","./clockwise":110,"./coordinate-systems":112,"./prune":118,"./type":135}],115:[function(require,module,exports){
 // Given a hash of GeoJSON objects, replaces Features with geometry objects.
 // This is a destructive operation that modifies the input objects!
 module.exports = function(objects) {
@@ -22396,7 +21364,7 @@ module.exports = function(objects) {
   return objects;
 };
 
-},{}],127:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(topology, Q0, Q1) {
@@ -22444,7 +21412,7 @@ module.exports = function(topology, Q0, Q1) {
   return topology;
 };
 
-},{"./quantize":130}],128:[function(require,module,exports){
+},{"./quantize":119}],117:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(objects, bbox, Q0, Q1) {
@@ -22503,7 +21471,7 @@ module.exports = function(objects, bbox, Q0, Q1) {
   return q.transform;
 };
 
-},{"./quantize":130}],129:[function(require,module,exports){
+},{"./quantize":119}],118:[function(require,module,exports){
 module.exports = function(topology, options) {
   var verbose = false,
       objects = topology.objects,
@@ -22560,7 +21528,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{}],130:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 module.exports = function(dx, dy, kx, ky) {
 
   function quantizePoint(coordinates) {
@@ -22604,7 +21572,7 @@ module.exports = function(dx, dy, kx, ky) {
   };
 };
 
-},{}],131:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(topology, options) {
@@ -22684,7 +21652,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":146}],132:[function(require,module,exports){
+},{"./type":135}],121:[function(require,module,exports){
 var topojson = require("../../"),
     systems = require("./coordinate-systems");
 
@@ -22793,7 +21761,7 @@ module.exports = function(topology, options) {
   return topology;
 };
 
-},{"../../":"BOmyIj","./coordinate-systems":123}],133:[function(require,module,exports){
+},{"../../":"BOmyIj","./coordinate-systems":112}],122:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -22874,7 +21842,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],134:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, transform) {
@@ -23057,7 +22025,7 @@ module.exports = function(objects, transform) {
   }
 };
 
-},{"./type":146}],135:[function(require,module,exports){
+},{"./type":135}],124:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch"),
     systems = require("./coordinate-systems"),
@@ -23170,7 +22138,7 @@ module.exports = function(objects, options) {
   return topology;
 };
 
-},{"./bounds":119,"./compute-id":122,"./coordinate-systems":123,"./delta":124,"./geomify":126,"./post-quantize":127,"./pre-quantize":128,"./stitch":134,"./topology/index":141,"./transform-properties":145,"./type":146}],136:[function(require,module,exports){
+},{"./bounds":108,"./compute-id":111,"./coordinate-systems":112,"./delta":113,"./geomify":115,"./post-quantize":116,"./pre-quantize":117,"./stitch":123,"./topology/index":130,"./transform-properties":134,"./type":135}],125:[function(require,module,exports){
 var join = require("./join");
 
 // Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
@@ -23232,7 +22200,7 @@ function reverse(array, start, end) {
   }
 }
 
-},{"./join":142}],137:[function(require,module,exports){
+},{"./join":131}],126:[function(require,module,exports){
 var join = require("./join"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -23418,7 +22386,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{"./hashmap":139,"./join":142,"./point-equal":143,"./point-hash":144}],138:[function(require,module,exports){
+},{"./hashmap":128,"./join":131,"./point-equal":132,"./point-hash":133}],127:[function(require,module,exports){
 // Extracts the lines and rings from the specified hash of geometry objects.
 //
 // Returns an object with three properties:
@@ -23485,7 +22453,7 @@ module.exports = function(objects) {
   };
 };
 
-},{}],139:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   if (arguments.length === 3) {
     keyType = valueType = Array;
@@ -23560,7 +22528,7 @@ module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   };
 };
 
-},{}],140:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 module.exports = function(size, hash, equal, type, empty) {
   if (arguments.length === 3) {
     type = Array;
@@ -23617,7 +22585,7 @@ module.exports = function(size, hash, equal, type, empty) {
   };
 };
 
-},{}],141:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 var hashmap = require("./hashmap"),
     extract = require("./extract"),
     cut = require("./cut"),
@@ -23687,7 +22655,7 @@ function equalArc(arcA, arcB) {
   return ia === ib && ja === jb;
 }
 
-},{"./cut":136,"./dedup":137,"./extract":138,"./hashmap":139}],142:[function(require,module,exports){
+},{"./cut":125,"./dedup":126,"./extract":127,"./hashmap":128}],131:[function(require,module,exports){
 var hashset = require("./hashset"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -23802,12 +22770,12 @@ module.exports = function(topology) {
   return junctionByPoint;
 };
 
-},{"./hashmap":139,"./hashset":140,"./point-equal":143,"./point-hash":144}],143:[function(require,module,exports){
+},{"./hashmap":128,"./hashset":129,"./point-equal":132,"./point-hash":133}],132:[function(require,module,exports){
 module.exports = function(pointA, pointB) {
   return pointA[0] === pointB[0] && pointA[1] === pointB[1];
 };
 
-},{}],144:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 // TODO if quantized, use simpler Int32 hashing?
 
 var buffer = new ArrayBuffer(16),
@@ -23822,7 +22790,7 @@ module.exports = function(point) {
   return hash & 0x7fffffff;
 };
 
-},{}],145:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 // Given a hash of GeoJSON objects, transforms any properties on features using
 // the specified transform function. The function is invoked for each existing
 // property on the current feature, being passed the new properties hash, the
@@ -23867,7 +22835,7 @@ module.exports = function(objects, propertyTransform) {
   return objects;
 };
 
-},{}],146:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -23961,7 +22929,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],147:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 !function() {
   var topojson = {
     version: "1.6.8",
@@ -24495,7 +23463,1019 @@ var typeObjects = {
   else this.topojson = topojson;
 }();
 
-},{}],148:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
+var traverse = module.exports = function (obj) {
+    return new Traverse(obj);
+};
+
+function Traverse (obj) {
+    this.value = obj;
+}
+
+Traverse.prototype.get = function (ps) {
+    var node = this.value;
+    for (var i = 0; i < ps.length; i ++) {
+        var key = ps[i];
+        if (!node || !hasOwnProperty.call(node, key)) {
+            node = undefined;
+            break;
+        }
+        node = node[key];
+    }
+    return node;
+};
+
+Traverse.prototype.has = function (ps) {
+    var node = this.value;
+    for (var i = 0; i < ps.length; i ++) {
+        var key = ps[i];
+        if (!node || !hasOwnProperty.call(node, key)) {
+            return false;
+        }
+        node = node[key];
+    }
+    return true;
+};
+
+Traverse.prototype.set = function (ps, value) {
+    var node = this.value;
+    for (var i = 0; i < ps.length - 1; i ++) {
+        var key = ps[i];
+        if (!hasOwnProperty.call(node, key)) node[key] = {};
+        node = node[key];
+    }
+    node[ps[i]] = value;
+    return value;
+};
+
+Traverse.prototype.map = function (cb) {
+    return walk(this.value, cb, true);
+};
+
+Traverse.prototype.forEach = function (cb) {
+    this.value = walk(this.value, cb, false);
+    return this.value;
+};
+
+Traverse.prototype.reduce = function (cb, init) {
+    var skip = arguments.length === 1;
+    var acc = skip ? this.value : init;
+    this.forEach(function (x) {
+        if (!this.isRoot || !skip) {
+            acc = cb.call(this, acc, x);
+        }
+    });
+    return acc;
+};
+
+Traverse.prototype.paths = function () {
+    var acc = [];
+    this.forEach(function (x) {
+        acc.push(this.path); 
+    });
+    return acc;
+};
+
+Traverse.prototype.nodes = function () {
+    var acc = [];
+    this.forEach(function (x) {
+        acc.push(this.node);
+    });
+    return acc;
+};
+
+Traverse.prototype.clone = function () {
+    var parents = [], nodes = [];
+    
+    return (function clone (src) {
+        for (var i = 0; i < parents.length; i++) {
+            if (parents[i] === src) {
+                return nodes[i];
+            }
+        }
+        
+        if (typeof src === 'object' && src !== null) {
+            var dst = copy(src);
+            
+            parents.push(src);
+            nodes.push(dst);
+            
+            forEach(objectKeys(src), function (key) {
+                dst[key] = clone(src[key]);
+            });
+            
+            parents.pop();
+            nodes.pop();
+            return dst;
+        }
+        else {
+            return src;
+        }
+    })(this.value);
+};
+
+function walk (root, cb, immutable) {
+    var path = [];
+    var parents = [];
+    var alive = true;
+    
+    return (function walker (node_) {
+        var node = immutable ? copy(node_) : node_;
+        var modifiers = {};
+        
+        var keepGoing = true;
+        
+        var state = {
+            node : node,
+            node_ : node_,
+            path : [].concat(path),
+            parent : parents[parents.length - 1],
+            parents : parents,
+            key : path.slice(-1)[0],
+            isRoot : path.length === 0,
+            level : path.length,
+            circular : null,
+            update : function (x, stopHere) {
+                if (!state.isRoot) {
+                    state.parent.node[state.key] = x;
+                }
+                state.node = x;
+                if (stopHere) keepGoing = false;
+            },
+            'delete' : function (stopHere) {
+                delete state.parent.node[state.key];
+                if (stopHere) keepGoing = false;
+            },
+            remove : function (stopHere) {
+                if (isArray(state.parent.node)) {
+                    state.parent.node.splice(state.key, 1);
+                }
+                else {
+                    delete state.parent.node[state.key];
+                }
+                if (stopHere) keepGoing = false;
+            },
+            keys : null,
+            before : function (f) { modifiers.before = f },
+            after : function (f) { modifiers.after = f },
+            pre : function (f) { modifiers.pre = f },
+            post : function (f) { modifiers.post = f },
+            stop : function () { alive = false },
+            block : function () { keepGoing = false }
+        };
+        
+        if (!alive) return state;
+        
+        function updateState() {
+            if (typeof state.node === 'object' && state.node !== null) {
+                if (!state.keys || state.node_ !== state.node) {
+                    state.keys = objectKeys(state.node)
+                }
+                
+                state.isLeaf = state.keys.length == 0;
+                
+                for (var i = 0; i < parents.length; i++) {
+                    if (parents[i].node_ === node_) {
+                        state.circular = parents[i];
+                        break;
+                    }
+                }
+            }
+            else {
+                state.isLeaf = true;
+                state.keys = null;
+            }
+            
+            state.notLeaf = !state.isLeaf;
+            state.notRoot = !state.isRoot;
+        }
+        
+        updateState();
+        
+        // use return values to update if defined
+        var ret = cb.call(state, state.node);
+        if (ret !== undefined && state.update) state.update(ret);
+        
+        if (modifiers.before) modifiers.before.call(state, state.node);
+        
+        if (!keepGoing) return state;
+        
+        if (typeof state.node == 'object'
+        && state.node !== null && !state.circular) {
+            parents.push(state);
+            
+            updateState();
+            
+            forEach(state.keys, function (key, i) {
+                path.push(key);
+                
+                if (modifiers.pre) modifiers.pre.call(state, state.node[key], key);
+                
+                var child = walker(state.node[key]);
+                if (immutable && hasOwnProperty.call(state.node, key)) {
+                    state.node[key] = child.node;
+                }
+                
+                child.isLast = i == state.keys.length - 1;
+                child.isFirst = i == 0;
+                
+                if (modifiers.post) modifiers.post.call(state, child);
+                
+                path.pop();
+            });
+            parents.pop();
+        }
+        
+        if (modifiers.after) modifiers.after.call(state, state.node);
+        
+        return state;
+    })(root).node;
+}
+
+function copy (src) {
+    if (typeof src === 'object' && src !== null) {
+        var dst;
+        
+        if (isArray(src)) {
+            dst = [];
+        }
+        else if (isDate(src)) {
+            dst = new Date(src.getTime ? src.getTime() : src);
+        }
+        else if (isRegExp(src)) {
+            dst = new RegExp(src);
+        }
+        else if (isError(src)) {
+            dst = { message: src.message };
+        }
+        else if (isBoolean(src)) {
+            dst = new Boolean(src);
+        }
+        else if (isNumber(src)) {
+            dst = new Number(src);
+        }
+        else if (isString(src)) {
+            dst = new String(src);
+        }
+        else if (Object.create && Object.getPrototypeOf) {
+            dst = Object.create(Object.getPrototypeOf(src));
+        }
+        else if (src.constructor === Object) {
+            dst = {};
+        }
+        else {
+            var proto =
+                (src.constructor && src.constructor.prototype)
+                || src.__proto__
+                || {}
+            ;
+            var T = function () {};
+            T.prototype = proto;
+            dst = new T;
+        }
+        
+        forEach(objectKeys(src), function (key) {
+            dst[key] = src[key];
+        });
+        return dst;
+    }
+    else return src;
+}
+
+var objectKeys = Object.keys || function keys (obj) {
+    var res = [];
+    for (var key in obj) res.push(key)
+    return res;
+};
+
+function toS (obj) { return Object.prototype.toString.call(obj) }
+function isDate (obj) { return toS(obj) === '[object Date]' }
+function isRegExp (obj) { return toS(obj) === '[object RegExp]' }
+function isError (obj) { return toS(obj) === '[object Error]' }
+function isBoolean (obj) { return toS(obj) === '[object Boolean]' }
+function isNumber (obj) { return toS(obj) === '[object Number]' }
+function isString (obj) { return toS(obj) === '[object String]' }
+
+var isArray = Array.isArray || function isArray (xs) {
+    return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+var forEach = function (xs, fn) {
+    if (xs.forEach) return xs.forEach(fn)
+    else for (var i = 0; i < xs.length; i++) {
+        fn(xs[i], i, xs);
+    }
+};
+
+forEach(objectKeys(Traverse.prototype), function (key) {
+    traverse[key] = function (obj) {
+        var args = [].slice.call(arguments, 1);
+        var t = new Traverse(obj);
+        return t[key].apply(t, args);
+    };
+});
+
+var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
+    return key in obj;
+};
+
+},{}],138:[function(require,module,exports){
+module.exports = function(request) {
+    var parent = ce('div', 'treeui'),
+        onclick = function() { };
+
+    var addItem = function(result) {
+        var item = ce('div', 'treeui-item');
+        item.level = JSON.stringify(result);
+
+        if (expandable(result)) {
+            var caret = append(item, ce('span', 'treeui-caret'));
+            caret.innerHTML = '▶';
+            caret.level = JSON.stringify(result);
+            ae(caret, 'click', toggle);
+        }
+
+        var description = append(item, ce('span', 'treeui-label'));
+        description.textContent = display(result);
+
+        ae(description, 'click', function(e) {
+            onclick(JSON.parse(e.target.parentNode.level), e);
+        });
+
+        return item;
+    };
+
+    var display = function(result) {
+        return result;
+    };
+
+    var expandable = function(result) {
+        return true;
+    };
+
+    function toggle(e) {
+        var elem = e.target,
+            parent = e.target.parentNode;
+        if (elem.classList.contains('open')) {
+            var subs = parent.getElementsByClassName('treeui-level');
+            for (var i = 0; i < subs.length; i++) {
+                subs[i].parentNode.removeChild(subs[i]);
+            }
+            elem.classList.remove('open');
+            elem.innerHTML = '▶';
+        } else {
+            load(JSON.parse(parent.level),
+                 append(parent, ce('div', 'treeui-level')));
+            elem.classList.add('open');
+            elem.innerHTML = '▼';
+        }
+    }
+
+    function load(level, parent) {
+        request(level, function(err, results) {
+            if (err) return;
+            results.forEach(function(result) {
+                append(parent, addItem(result));
+            });
+        });
+    }
+
+    load([], parent);
+
+    var treeui = {
+        appendTo: function(elem) {
+            elem.appendChild(parent);
+            return treeui;
+        },
+        onclick: function(_) {
+            onclick = _;
+            return treeui;
+        },
+        display: function(_) {
+            display = _;
+            return treeui;
+        },
+        expandable: function(_) {
+            expandable = _;
+            return treeui;
+        }
+    };
+
+    return treeui;
+};
+
+function ce(_, k) {
+    var elem = document.createElement(_);
+    if (k) elem.className = k;
+    return elem;
+}
+
+function append(x, y) {
+    return x.appendChild(y);
+}
+
+function ae(x, y, z) {
+    return x.addEventListener(y, z);
+}
+
+},{}],139:[function(require,module,exports){
+module.exports = function isBuffer(arg) {
+  return arg && typeof arg === 'object'
+    && typeof arg.copy === 'function'
+    && typeof arg.fill === 'function'
+    && typeof arg.readUInt8 === 'function';
+}
+},{}],140:[function(require,module,exports){
+(function (process,global){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var formatRegExp = /%[sdj%]/g;
+exports.format = function(f) {
+  if (!isString(f)) {
+    var objects = [];
+    for (var i = 0; i < arguments.length; i++) {
+      objects.push(inspect(arguments[i]));
+    }
+    return objects.join(' ');
+  }
+
+  var i = 1;
+  var args = arguments;
+  var len = args.length;
+  var str = String(f).replace(formatRegExp, function(x) {
+    if (x === '%%') return '%';
+    if (i >= len) return x;
+    switch (x) {
+      case '%s': return String(args[i++]);
+      case '%d': return Number(args[i++]);
+      case '%j':
+        try {
+          return JSON.stringify(args[i++]);
+        } catch (_) {
+          return '[Circular]';
+        }
+      default:
+        return x;
+    }
+  });
+  for (var x = args[i]; i < len; x = args[++i]) {
+    if (isNull(x) || !isObject(x)) {
+      str += ' ' + x;
+    } else {
+      str += ' ' + inspect(x);
+    }
+  }
+  return str;
+};
+
+
+// Mark that a method should not be used.
+// Returns a modified function which warns once by default.
+// If --no-deprecation is set, then it is a no-op.
+exports.deprecate = function(fn, msg) {
+  // Allow for deprecating things in the process of starting up.
+  if (isUndefined(global.process)) {
+    return function() {
+      return exports.deprecate(fn, msg).apply(this, arguments);
+    };
+  }
+
+  if (process.noDeprecation === true) {
+    return fn;
+  }
+
+  var warned = false;
+  function deprecated() {
+    if (!warned) {
+      if (process.throwDeprecation) {
+        throw new Error(msg);
+      } else if (process.traceDeprecation) {
+        console.trace(msg);
+      } else {
+        console.error(msg);
+      }
+      warned = true;
+    }
+    return fn.apply(this, arguments);
+  }
+
+  return deprecated;
+};
+
+
+var debugs = {};
+var debugEnviron;
+exports.debuglog = function(set) {
+  if (isUndefined(debugEnviron))
+    debugEnviron = process.env.NODE_DEBUG || '';
+  set = set.toUpperCase();
+  if (!debugs[set]) {
+    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+      var pid = process.pid;
+      debugs[set] = function() {
+        var msg = exports.format.apply(exports, arguments);
+        console.error('%s %d: %s', set, pid, msg);
+      };
+    } else {
+      debugs[set] = function() {};
+    }
+  }
+  return debugs[set];
+};
+
+
+/**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
+ *
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
+ */
+/* legacy: obj, showHidden, depth, colors*/
+function inspect(obj, opts) {
+  // default options
+  var ctx = {
+    seen: [],
+    stylize: stylizeNoColor
+  };
+  // legacy...
+  if (arguments.length >= 3) ctx.depth = arguments[2];
+  if (arguments.length >= 4) ctx.colors = arguments[3];
+  if (isBoolean(opts)) {
+    // legacy...
+    ctx.showHidden = opts;
+  } else if (opts) {
+    // got an "options" object
+    exports._extend(ctx, opts);
+  }
+  // set default options
+  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+  if (isUndefined(ctx.depth)) ctx.depth = 2;
+  if (isUndefined(ctx.colors)) ctx.colors = false;
+  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+  if (ctx.colors) ctx.stylize = stylizeWithColor;
+  return formatValue(ctx, obj, ctx.depth);
+}
+exports.inspect = inspect;
+
+
+// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+inspect.colors = {
+  'bold' : [1, 22],
+  'italic' : [3, 23],
+  'underline' : [4, 24],
+  'inverse' : [7, 27],
+  'white' : [37, 39],
+  'grey' : [90, 39],
+  'black' : [30, 39],
+  'blue' : [34, 39],
+  'cyan' : [36, 39],
+  'green' : [32, 39],
+  'magenta' : [35, 39],
+  'red' : [31, 39],
+  'yellow' : [33, 39]
+};
+
+// Don't use 'blue' not visible on cmd.exe
+inspect.styles = {
+  'special': 'cyan',
+  'number': 'yellow',
+  'boolean': 'yellow',
+  'undefined': 'grey',
+  'null': 'bold',
+  'string': 'green',
+  'date': 'magenta',
+  // "name": intentionally not styling
+  'regexp': 'red'
+};
+
+
+function stylizeWithColor(str, styleType) {
+  var style = inspect.styles[styleType];
+
+  if (style) {
+    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
+           '\u001b[' + inspect.colors[style][1] + 'm';
+  } else {
+    return str;
+  }
+}
+
+
+function stylizeNoColor(str, styleType) {
+  return str;
+}
+
+
+function arrayToHash(array) {
+  var hash = {};
+
+  array.forEach(function(val, idx) {
+    hash[val] = true;
+  });
+
+  return hash;
+}
+
+
+function formatValue(ctx, value, recurseTimes) {
+  // Provide a hook for user-specified inspect functions.
+  // Check that value is an object with an inspect function on it
+  if (ctx.customInspect &&
+      value &&
+      isFunction(value.inspect) &&
+      // Filter out the util module, it's inspect function is special
+      value.inspect !== exports.inspect &&
+      // Also filter out any prototype objects using the circular check.
+      !(value.constructor && value.constructor.prototype === value)) {
+    var ret = value.inspect(recurseTimes, ctx);
+    if (!isString(ret)) {
+      ret = formatValue(ctx, ret, recurseTimes);
+    }
+    return ret;
+  }
+
+  // Primitive types cannot have properties
+  var primitive = formatPrimitive(ctx, value);
+  if (primitive) {
+    return primitive;
+  }
+
+  // Look up the keys of the object.
+  var keys = Object.keys(value);
+  var visibleKeys = arrayToHash(keys);
+
+  if (ctx.showHidden) {
+    keys = Object.getOwnPropertyNames(value);
+  }
+
+  // IE doesn't make error fields non-enumerable
+  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
+  if (isError(value)
+      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
+    return formatError(value);
+  }
+
+  // Some type of object without properties can be shortcutted.
+  if (keys.length === 0) {
+    if (isFunction(value)) {
+      var name = value.name ? ': ' + value.name : '';
+      return ctx.stylize('[Function' + name + ']', 'special');
+    }
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    }
+    if (isDate(value)) {
+      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+    }
+    if (isError(value)) {
+      return formatError(value);
+    }
+  }
+
+  var base = '', array = false, braces = ['{', '}'];
+
+  // Make Array say that they are Array
+  if (isArray(value)) {
+    array = true;
+    braces = ['[', ']'];
+  }
+
+  // Make functions say that they are functions
+  if (isFunction(value)) {
+    var n = value.name ? ': ' + value.name : '';
+    base = ' [Function' + n + ']';
+  }
+
+  // Make RegExps say that they are RegExps
+  if (isRegExp(value)) {
+    base = ' ' + RegExp.prototype.toString.call(value);
+  }
+
+  // Make dates with properties first say the date
+  if (isDate(value)) {
+    base = ' ' + Date.prototype.toUTCString.call(value);
+  }
+
+  // Make error with message first say the error
+  if (isError(value)) {
+    base = ' ' + formatError(value);
+  }
+
+  if (keys.length === 0 && (!array || value.length == 0)) {
+    return braces[0] + base + braces[1];
+  }
+
+  if (recurseTimes < 0) {
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    } else {
+      return ctx.stylize('[Object]', 'special');
+    }
+  }
+
+  ctx.seen.push(value);
+
+  var output;
+  if (array) {
+    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+  } else {
+    output = keys.map(function(key) {
+      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+    });
+  }
+
+  ctx.seen.pop();
+
+  return reduceToSingleString(output, base, braces);
+}
+
+
+function formatPrimitive(ctx, value) {
+  if (isUndefined(value))
+    return ctx.stylize('undefined', 'undefined');
+  if (isString(value)) {
+    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+                                             .replace(/'/g, "\\'")
+                                             .replace(/\\"/g, '"') + '\'';
+    return ctx.stylize(simple, 'string');
+  }
+  if (isNumber(value))
+    return ctx.stylize('' + value, 'number');
+  if (isBoolean(value))
+    return ctx.stylize('' + value, 'boolean');
+  // For some reason typeof null is "object", so special case here.
+  if (isNull(value))
+    return ctx.stylize('null', 'null');
+}
+
+
+function formatError(value) {
+  return '[' + Error.prototype.toString.call(value) + ']';
+}
+
+
+function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+  var output = [];
+  for (var i = 0, l = value.length; i < l; ++i) {
+    if (hasOwnProperty(value, String(i))) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          String(i), true));
+    } else {
+      output.push('');
+    }
+  }
+  keys.forEach(function(key) {
+    if (!key.match(/^\d+$/)) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          key, true));
+    }
+  });
+  return output;
+}
+
+
+function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+  var name, str, desc;
+  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+  if (desc.get) {
+    if (desc.set) {
+      str = ctx.stylize('[Getter/Setter]', 'special');
+    } else {
+      str = ctx.stylize('[Getter]', 'special');
+    }
+  } else {
+    if (desc.set) {
+      str = ctx.stylize('[Setter]', 'special');
+    }
+  }
+  if (!hasOwnProperty(visibleKeys, key)) {
+    name = '[' + key + ']';
+  }
+  if (!str) {
+    if (ctx.seen.indexOf(desc.value) < 0) {
+      if (isNull(recurseTimes)) {
+        str = formatValue(ctx, desc.value, null);
+      } else {
+        str = formatValue(ctx, desc.value, recurseTimes - 1);
+      }
+      if (str.indexOf('\n') > -1) {
+        if (array) {
+          str = str.split('\n').map(function(line) {
+            return '  ' + line;
+          }).join('\n').substr(2);
+        } else {
+          str = '\n' + str.split('\n').map(function(line) {
+            return '   ' + line;
+          }).join('\n');
+        }
+      }
+    } else {
+      str = ctx.stylize('[Circular]', 'special');
+    }
+  }
+  if (isUndefined(name)) {
+    if (array && key.match(/^\d+$/)) {
+      return str;
+    }
+    name = JSON.stringify('' + key);
+    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+      name = name.substr(1, name.length - 2);
+      name = ctx.stylize(name, 'name');
+    } else {
+      name = name.replace(/'/g, "\\'")
+                 .replace(/\\"/g, '"')
+                 .replace(/(^"|"$)/g, "'");
+      name = ctx.stylize(name, 'string');
+    }
+  }
+
+  return name + ': ' + str;
+}
+
+
+function reduceToSingleString(output, base, braces) {
+  var numLinesEst = 0;
+  var length = output.reduce(function(prev, cur) {
+    numLinesEst++;
+    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+  }, 0);
+
+  if (length > 60) {
+    return braces[0] +
+           (base === '' ? '' : base + '\n ') +
+           ' ' +
+           output.join(',\n  ') +
+           ' ' +
+           braces[1];
+  }
+
+  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+}
+
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+function isArray(ar) {
+  return Array.isArray(ar);
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) &&
+      (objectToString(e) === '[object Error]' || e instanceof Error);
+}
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+exports.isBuffer = require('./support/isBuffer');
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+              'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()),
+              pad(d.getMinutes()),
+              pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
+
+
+// log is just a thin wrapper to console.log that prepends a timestamp
+exports.log = function() {
+  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
+};
+
+
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
+ *
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
+ */
+exports.inherits = require('inherits');
+
+exports._extend = function(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || !isObject(add)) return origin;
+
+  var keys = Object.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+};
+
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+}).call(this,require("g5I+bs"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":139,"g5I+bs":85,"inherits":36}],141:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -24746,7 +24726,12 @@ function stringify(gj) {
     }
 }
 
-},{}],149:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
+module.exports.RADIUS = 6378137;
+module.exports.FLATTENING = 1/298.257223563;
+module.exports.POLAR_RADIUS = 6356752.3142;
+
+},{}],143:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -24765,14 +24750,14 @@ function extend() {
     return target
 }
 
-},{}],150:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 module.exports = function(hostname) {
     // Settings for geojson.io
     L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w';
     if (hostname === 'geojson.io') {
         return {
             client_id: '62c753fd0faf18392d85',
-            gatekeeper_url: 'https://geojsonioauth.herokuapp.com',
+            gatekeeper_url: 'https://geojsonioauth.herokuapp.com'
         };
     // Customize these settings for your own development/deployment
     // version of geojson.io.
@@ -24788,7 +24773,8 @@ module.exports = function(hostname) {
         };
     }
 };
-},{}],151:[function(require,module,exports){
+
+},{}],145:[function(require,module,exports){
 var clone = require('clone'),
     xtend = require('xtend'),
     config = require('../config.js')(location.hostname),
@@ -24863,8 +24849,8 @@ module.exports = function(context) {
                 length = keys.length;
 
             for (var i = 0; i < length; i++) {
-                key = keys[i];
-                value = props[key];
+                var key = keys[i];
+                var value = props[key];
                 feature.properties[key] = losslessNumber(value);
             }
 
@@ -25042,7 +25028,7 @@ module.exports = function(context) {
                 try {
                     if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
                 } catch (e) {
-
+                    console.error(e);
                 }
                 data.set({
                     type: 'gist',
@@ -25079,7 +25065,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../config.js":150,"../source/gist":167,"../source/github":168,"../source/local":169,"clone":14,"xtend":149}],152:[function(require,module,exports){
+},{"../config.js":144,"../source/gist":161,"../source/github":162,"../source/local":163,"clone":8,"xtend":143}],146:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -25164,7 +25150,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/zoomextent":162,"../ui/flash":173,"qs-hash":56}],153:[function(require,module,exports){
+},{"../lib/zoomextent":156,"../ui/flash":167,"qs-hash":86}],147:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -25208,7 +25194,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":150}],154:[function(require,module,exports){
+},{"../config.js":144}],148:[function(require,module,exports){
 var qs = require('qs-hash'),
     xtend = require('xtend');
 
@@ -25275,7 +25261,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"qs-hash":56,"xtend":149}],155:[function(require,module,exports){
+},{"qs-hash":86,"xtend":143}],149:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -25290,7 +25276,7 @@ module.exports = function(context) {
             callback(null, cached.data);
         } else {
             context.storage.remove('github_user_details');
-            var endpoint = !!config.GithubAPI ? config.GithubAPI + '/api/v3' : 'https://api.github.com';
+            var endpoint = config.GithubAPI ? config.GithubAPI + '/api/v3' : 'https://api.github.com';
 
             d3.json(endpoint + '/user')
                 .header('Authorization', 'token ' + context.storage.get('github_token'))
@@ -25363,7 +25349,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":150}],156:[function(require,module,exports){
+},{"../config.js":144}],150:[function(require,module,exports){
 var qs = require('qs-hash');
 require('leaflet-hash');
 
@@ -25371,38 +25357,38 @@ L.Hash.prototype.parseHash = function(hash) {
     var query = qs.stringQs(hash.substring(1));
     var map = query.map || '';
     var args = map.split('/');
-	if (args.length == 3) {
-		var zoom = parseInt(args[0], 10),
+    if (args.length == 3) {
+        var zoom = parseInt(args[0], 10),
             lat = parseFloat(args[1]),
-            lon = parseFloat(args[2]);
-		if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
-			return false;
-		} else {
-			return {
-				center: new L.LatLng(lat, lon),
-				zoom: zoom
-			};
-		}
-	} else {
-		return false;
-	}
+                lon = parseFloat(args[2]);
+                if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
+                    return false;
+                } else {
+                    return {
+                        center: new L.LatLng(lat, lon),
+                        zoom: zoom
+                    };
+                }
+    } else {
+        return false;
+    }
 };
 
 L.Hash.prototype.formatHash = function(map) {
     var query = qs.stringQs(location.hash.substring(1)),
-	    center = map.getCenter(),
-	    zoom = map.getZoom(),
-	    precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
+        center = map.getCenter(),
+            zoom = map.getZoom(),
+                precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
 
-    query.map = [zoom,
-		center.lat.toFixed(precision),
-		center.lng.toFixed(precision)
-	].join('/');
+                query.map = [zoom,
+                    center.lat.toFixed(precision),
+                    center.lng.toFixed(precision)
+                ].join('/');
 
-	return "#" + qs.qsString(query);
+                return '#' + qs.qsString(query);
 };
 
-},{"leaflet-hash":47,"qs-hash":56}],157:[function(require,module,exports){
+},{"leaflet-hash":62,"qs-hash":86}],151:[function(require,module,exports){
 var escape = require('escape-html'),
     geojsonRandom = require('geojson-random'),
     geojsonExtent = require('geojson-extent'),
@@ -25445,7 +25431,7 @@ module.exports.flatten = function(context) {
     context.data.set({ map: geojsonFlatten(context.data.get('map')) });
 };
 
-},{"../lib/zoomextent":162,"escape-html":20,"geojson-extent":22,"geojson-flatten":28,"geojson-random":30}],158:[function(require,module,exports){
+},{"../lib/zoomextent":156,"escape-html":17,"geojson-extent":23,"geojson-flatten":24,"geojson-random":26}],152:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -25509,7 +25495,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],159:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     gtfs2geojson = require('gtfs2geojson'),
@@ -25701,7 +25687,7 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":15,"geojson-normalize":29,"gtfs2geojson":41,"osmtogeojson":49,"polytogeojson":55,"togeojson":113,"topojson":"BOmyIj"}],160:[function(require,module,exports){
+},{"csv2geojson":9,"geojson-normalize":25,"gtfs2geojson":34,"osmtogeojson":64,"polytogeojson":84,"togeojson":103,"topojson":"BOmyIj"}],154:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -25713,7 +25699,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],161:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -25774,13 +25760,13 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":33}],162:[function(require,module,exports){
+},{"geojsonhint":30}],156:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],163:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -25810,9 +25796,9 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":151,"./core/loader":152,"./core/repo":153,"./core/router":154,"./core/user":155,"./ui":170,"./ui/map":175,"store":112}],164:[function(require,module,exports){
+},{"./core/data":145,"./core/loader":146,"./core/repo":147,"./core/router":148,"./core/user":149,"./ui":164,"./ui/map":169,"store":101}],158:[function(require,module,exports){
 (function (Buffer){
-var fs = require('fs');
+
 var marked = require('marked');
 
 module.exports = function(context) {
@@ -25834,7 +25820,7 @@ module.exports = function(context) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":5,"fs":2,"marked":48}],165:[function(require,module,exports){
+},{"buffer":6,"marked":63}],159:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
@@ -25899,7 +25885,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":161,"../lib/zoomextent":162,"../ui/saver.js":179}],166:[function(require,module,exports){
+},{"../lib/validate":155,"../lib/zoomextent":156,"../ui/saver.js":173}],160:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -25957,9 +25943,9 @@ module.exports = function(context) {
 
         function zoomToMap(p) {
             var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
+            // layers.eachLayer(function(l) {
+            //     if (p == l.feature.properties) layer = l;
+            // });
             return layer;
         }
     }
@@ -25971,8 +25957,8 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":160,"d3-metatable":18}],167:[function(require,module,exports){
-var fs = require('fs');
+},{"../lib/smartzoom.js":154,"d3-metatable":10}],161:[function(require,module,exports){
+
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6IlpIdEpjOHcifQ.Cldl4wq_T5KOgxhLvbjE-w';\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('tmcw.map-ajwqaq7t').addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.geoJson(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties, table = '';\n    for (var key in properties) {\n        table += '<tr><th>' + key + '</th>' +\n            '<td>' + properties[key] + '</td></tr>';\n    }\n    if (table) l.bindPopup('<table class=\"marker-properties display\">' + table + '</table>');\n}\n</script>\n</body>\n</html>\n";
 
 var config = require('../config.js')(location.hostname);
@@ -26085,7 +26071,7 @@ function loadRaw(url, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"../config.js":150,"fs":2}],168:[function(require,module,exports){
+},{"../config.js":144}],162:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -26123,7 +26109,7 @@ function save(context, callback) {
 
             endpoint = source.url;
             method = 'PUT';
-            data = {
+            var data = {
                 message: commitMessage,
                 branch: meta.branch,
                 content: Base64.toBase64(JSON.stringify(map, null, 2))
@@ -26217,10 +26203,12 @@ function shaUrl(parts, sha) {
         '/git/blobs/' + sha;
 }
 
-},{"../config.js":150}],169:[function(require,module,exports){
+},{"../config.js":144}],163:[function(require,module,exports){
 try {
-    var fs = require('fs');
-} catch(e) { }
+    
+} catch(e) {
+    console.warn(e);
+}
 
 module.exports.save = save;
 
@@ -26240,7 +26228,7 @@ function save(context, callback) {
     });
 }
 
-},{}],170:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -26325,7 +26313,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":171,"./ui/file_bar":172,"./ui/layer_switch":174,"./ui/mode_buttons":178,"./ui/user":181}],171:[function(require,module,exports){
+},{"./ui/dnd":165,"./ui/file_bar":166,"./ui/layer_switch":168,"./ui/mode_buttons":172,"./ui/user":175}],165:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -26369,7 +26357,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":159,"../lib/zoomextent":162,"./flash.js":173}],172:[function(require,module,exports){
+},{"../lib/readfile.js":153,"../lib/zoomextent":156,"./flash.js":167}],166:[function(require,module,exports){
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     geojson2dsv = require('geojson2dsv'),
@@ -26872,7 +26860,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../config.js":150,"../lib/meta.js":157,"../lib/readfile":159,"../lib/zoomextent":162,"../ui/saver.js":179,"./flash":173,"./modal.js":177,"./share":180,"clone":14,"filesaver.js":21,"geojson-normalize":29,"geojson2dsv":31,"gist-map-browser":35,"github-file-browser":37,"shp-write":57,"tokml":114,"topojson":"BOmyIj","wellknown":148}],173:[function(require,module,exports){
+},{"../config.js":144,"../lib/meta.js":151,"../lib/readfile":153,"../lib/zoomextent":156,"../ui/saver.js":173,"./flash":167,"./modal.js":171,"./share":174,"clone":8,"filesaver.js":19,"geojson-normalize":25,"geojson2dsv":29,"gist-map-browser":32,"github-file-browser":33,"shp-write":89,"tokml":104,"topojson":"BOmyIj","wellknown":141}],167:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -26894,7 +26882,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":176}],174:[function(require,module,exports){
+},{"./message":170}],168:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -26921,12 +26909,12 @@ module.exports = function(context) {
                 layer: L.mapbox.tileLayer('mapbox.satellite')
             }, {
                 title: 'OCM',
-                layer: L.tileLayer('http://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png', {
+                layer: L.tileLayer('https://a.tile.thunderforest.com/cycle/{z}/{x}/{y}.png', {
                    attribution: 'Maps &copy; <a href="http://www.thunderforest.com/">Thunderforest</a>, Data &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 })
             }, {
                 title: 'OSM',
-                layer: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                layer: L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 })
             }];
@@ -26960,7 +26948,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],175:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 require('qs-hash');
 require('../lib/custom_hash.js');
 
@@ -27224,7 +27212,7 @@ function bindPopup(l) {
     });
 }
 
-},{"../../data/maki.json":1,"../lib/custom_hash.js":156,"../lib/popup":158,"escape-html":20,"leaflet-geodesy":42,"qs-hash":56}],176:[function(require,module,exports){
+},{"../../data/maki.json":1,"../lib/custom_hash.js":150,"../lib/popup":152,"escape-html":17,"leaflet-geodesy":61,"qs-hash":86}],170:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -27265,7 +27253,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],177:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -27333,7 +27321,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],178:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -27385,7 +27373,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":164,"../panel/json":165,"../panel/table":166}],179:[function(require,module,exports){
+},{"../panel/help":158,"../panel/json":159,"../panel/table":160}],173:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -27453,7 +27441,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":173}],180:[function(require,module,exports){
+},{"./flash":167}],174:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -27497,13 +27485,12 @@ function share(context) {
                     .property('value', 'http://bl.ocks.org/d/' + res.id);
                 container.append('p')
                     .text('URL to the full-screen map in that embed');
-                input.node().select();
             }
         });
     };
 }
 
-},{"../source/gist":167,"./modal":177}],181:[function(require,module,exports){
+},{"../source/gist":161,"./modal":171}],175:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};
@@ -27554,4 +27541,4 @@ module.exports = function(context) {
     };
 };
 
-},{"../config.js":150}]},{},[163])
+},{"../config.js":144}]},{},[157])
