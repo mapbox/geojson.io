@@ -24,6 +24,59 @@
   <![endif]-->
   <script src='lib/mapbox.js/latest/mapbox.js'></script>
   <script src='lib/raven.min.js'></script>
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src
+      'self'
+      ;
+    child-src
+      'self'
+      blob:
+      ;
+    connect-src
+      'self'
+      https://www.mapbox.com
+      https://localhostauth.herokuapp.com/
+      https://geojsonioauth.herokuapp.com/
+      https://api.github.com/
+      https://*.tiles.mapbox.com
+      https://api.mapbox.com
+      https://api.segment.io
+      https://app.getsentry.com
+      ;
+    font-src
+      'self'
+      ;
+    frame-src
+      'self'
+      ;
+    img-src
+      'self'
+      data:
+      blob:
+      https://www.mapbox.com
+      https://*.tiles.mapbox.com
+      https://api.mapbox.com
+      https://www.gravatar.com
+      https://secure.gaug.es
+      https://app.getsentry.com
+      https://a.tile.thunderforest.com/
+      https://a.tile.openstreetmap.org/
+      https://www.google-analytics.com
+      ;
+    script-src
+      'self'
+      'unsafe-eval'
+      'unsafe-inline'
+      https://cdn.segment.com
+      https://assets.customer.io
+      https://secure.gaug.es
+      https://www.google-analytics.com
+      ;
+    style-src
+      'self'
+      'unsafe-inline'
+      ;
+  ">
   <script>
   if (/a\.tiles\.mapbox\.com/.test(L.mapbox.config.HTTP_URL)) {
     Raven.config('https://c2d096c944dd4150ab7e44b0881b4a46@app.getsentry.com/11480', {
@@ -35,11 +88,24 @@
     }).install();
   }
   </script>
+  <style>
+  /*
+   * http://seclab.stanford.edu/websec/framebusting/framebust.pdf
+   */
+  body { display: none; }
+  </style>
 </head>
 <body id='geojsonio-body'>
 
 <div class='geojsonio'></div>
 
+<script>
+if (self == top) {
+  document.getElementsByTagName ("body")[0].style.display = 'block';
+} else {
+  top.location = self.location;
+}
+</script>
 <script src='dist/delegate.js'></script>
 <script src='dist/lib.js'></script>
 <script src='dist/site.js'></script>
@@ -52,7 +118,7 @@ if (/a\.tiles\.mapbox\.com/.test(L.mapbox.config.HTTP_URL)) {
     t.async = true;
     t.id    = 'gauges-tracker';
     t.setAttribute('data-site-id', '51eee846108d7b2871000081');
-    t.src = '//secure.gaug.es/track.js';
+    t.src = 'https://secure.gaug.es/track.js';
     var s = document.getElementsByTagName('script')[0];
     s.parentNode.insertBefore(t, s);
   })();
