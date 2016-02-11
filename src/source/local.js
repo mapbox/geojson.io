@@ -1,6 +1,8 @@
 try {
     var fs = require('fs');
-} catch(e) { }
+} catch(e) {
+    console.warn(e);
+}
 
 module.exports.save = save;
 

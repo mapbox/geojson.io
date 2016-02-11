@@ -4,7 +4,7 @@ module.exports = function(hostname) {
     if (hostname === 'geojson.io') {
         return {
             client_id: '62c753fd0faf18392d85',
-            gatekeeper_url: 'https://geojsonioauth.herokuapp.com',
+            gatekeeper_url: 'https://geojsonioauth.herokuapp.com'
         };
     // Customize these settings for your own development/deployment
     // version of geojson.io.

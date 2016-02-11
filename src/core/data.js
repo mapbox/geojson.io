@@ -72,8 +72,8 @@ module.exports = function(context) {
                 length = keys.length;
 
             for (var i = 0; i < length; i++) {
-                key = keys[i];
-                value = props[key];
+                var key = keys[i];
+                var value = props[key];
                 feature.properties[key] = losslessNumber(value);
             }
 
@@ -251,7 +251,7 @@ module.exports = function(context) {
                 try {
                     if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
                 } catch (e) {
-
+                    console.error(e);
                 }
                 data.set({
                     type: 'gist',

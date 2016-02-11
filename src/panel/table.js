@@ -55,9 +55,9 @@ module.exports = function(context) {
 
         function zoomToMap(p) {
             var layer;
-            layers.eachLayer(function(l) {
-                if (p == l.feature.properties) layer = l;
-            });
+            // layers.eachLayer(function(l) {
+            //     if (p == l.feature.properties) layer = l;
+            // });
             return layer;
         }
     }

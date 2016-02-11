@@ -41,7 +41,6 @@ function share(context) {
                     .property('value', 'http://bl.ocks.org/d/' + res.id);
                 container.append('p')
                     .text('URL to the full-screen map in that embed');
-                input.node().select();
             }
         });
     };

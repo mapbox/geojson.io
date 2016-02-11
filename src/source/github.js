@@ -35,7 +35,7 @@ function save(context, callback) {
 
             endpoint = source.url;
             method = 'PUT';
-            data = {
+            var data = {
                 message: commitMessage,
                 branch: meta.branch,
                 content: Base64.toBase64(JSON.stringify(map, null, 2))
