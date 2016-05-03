@@ -109,7 +109,12 @@ function bindPopup(l) {
     // Steer clear of XSS
     for (var k in props) {
         var e = escape(k);
-        properties[e] = escape(props[k]);
+        // users don't want to see "[object Object]"
+        if (typeof props[k] === 'object') {
+          properties[e] = escape(JSON.stringify(props[k]));
+        } else {
+          properties[e] = escape(props[k]);
+        }
     }
 
     if (!properties) return;
