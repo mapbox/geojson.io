@@ -11,6 +11,12 @@ function api(context) {
     console.log('%c- window.api.map: the leaflet map object', 'font-weight:bold;');
     console.log('%O', context.map);
 
+    console.log('%c- window.api.mapLayer: the leaflet mapLayer object', 'font-weight:bold;');
+    console.log('%O', context.mapLayer);
+
+    console.log('%c- window.api.drawControl: the leaflet.draw control', 'font-weight:bold;');
+    console.log('%O', context.drawControl);
+
     console.log('');
 
     console.log('%c- window.api.data: the data model', 'font-weight:bold;');
@@ -26,6 +32,8 @@ function api(context) {
 
     window.api = {
         map: context.map,
+        mapLayer: context.mapLayer,
+        drawControl: context.drawControl,
         data: context.data
     };
 }

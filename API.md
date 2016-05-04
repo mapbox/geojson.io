@@ -94,3 +94,23 @@ The data model. See the [code to get an idea of how it works](https://github.com
 you'll want to use stuff like `data.set({ map: { .. your geojson map information .. })`
 and `data.get('map')` and `data.mergeFeatures([arrayoffeatures])` to do your
 dirty business.
+
+## `window.api.mapLayer`
+
+This is the Leaflet featureGroup that gets filled with features as you draw
+them. You can operate on this directly to do advanced stuff like
+selecting a feature with its id:
+
+```js
+var layers = [];
+window.api.mapLayer.eachLayer(l => { layers.push(l); });
+layers.find(l => l.feature.id == 'a').openPopup();
+```
+
+That example uses [arrow functions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions)
+which are supported in Chrome & Firefox.
+
+## `window.api.drawControl`
+
+Exposes the [Leaflet.Draw](https://github.com/Leaflet/Leaflet.draw) control
+instance in the console.
