@@ -24,6 +24,7 @@ module.exports = function(context, readonly) {
                 position: 'topright'
             }));
 
+        L.control.scale().setPosition('bottomright').addTo(context.map);
         context.map.zoomControl.setPosition('topright');
 
         L.hash(context.map);
