@@ -45,6 +45,7 @@ module.exports = function(context) {
 
     function loadUrl(data) {
         d3.json(data)
+            .header('Accept', 'application/vnd.geo+json')
             .on('load', onload)
             .on('error', onerror)
             .get();
