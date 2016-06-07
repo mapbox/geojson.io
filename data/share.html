@@ -55,13 +55,29 @@ $.getJSON('map.geojson', function(geojson) {
 });
 
 function showProperties(l) {
-    var properties = l.toGeoJSON().properties, table = '';
+    var properties = l.toGeoJSON().properties;
+    var table = document.createElement('table');
+    table.setAttribute('class', 'marker-properties display')
     for (var key in properties) {
-        table += '<tr><th>' + key + '</th>' +
-            '<td>' + properties[key] + '</td></tr>';
+        var tr = createTableRows(key, properties[key]);
+        table.appendChild(tr);
     }
-    if (table) l.bindPopup('<table class="marker-properties display">' + table + '</table>');
+    if (table) l.bindPopup(table);
 }
+
+function createTableRows(key, value) {
+    var tr = document.createElement('tr');
+    var th = document.createElement('th');
+    var td = document.createElement('td');
+    key = document.createTextNode(key);
+    value = document.createTextNode(value);
+    th.appendChild(key);
+    td.appendChild(value);
+    tr.appendChild(th);
+    tr.appendChild(td);
+    return tr
+}
+
 </script>
 </body>
 </html>
