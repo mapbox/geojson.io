@@ -20,7 +20,7 @@
     "geojson-random": "0.1.0",
     "geojson2dsv": "0.0.0",
     "geojsonhint": "0.3.4",
-    "gist-map-browser": "0.2.0",
+    "gist-map-browser": "0.2.1",
     "github-file-browser": "0.6.1",
     "gtfs2geojson": "^1.0.0",
     "jsonlint": "1.6.0",
