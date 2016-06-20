@@ -42,7 +42,7 @@ var map = L.mapbox.map('map');
 L.mapbox.tileLayer('tmcw.map-ajwqaq7t').addTo(map);
 
 $.getJSON('map.geojson', function(geojson) {
-    var geojsonLayer = L.geoJson(geojson).addTo(map);
+    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);
     var bounds = geojsonLayer.getBounds();
     if (bounds.isValid()) {
         map.fitBounds(geojsonLayer.getBounds());
