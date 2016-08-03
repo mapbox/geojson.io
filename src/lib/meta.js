@@ -6,7 +6,9 @@ var escape = require('escape-html'),
 
 module.exports.adduserlayer = function(context, _url, _name) {
     var url = escape(_url), name = escape(_name);
-    var layer = L.tileLayer(url);
+    var layer = L.tileLayer(url, {
+        maxZoom: context.map.getMaxZoom()
+    });
     if (context.layerControl) {
         context.map.addLayer(layer);
         context.layerControl.addOverlay(layer, name);
