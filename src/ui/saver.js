@@ -22,7 +22,7 @@ module.exports = function(context) {
             message = 'Changes committed to GitHub: ';
             url = res.commit.html_url;
             path = res.commit.sha.substring(0, 10);
-        } else if (type==="geofenceapi" && res.type === 'geofenceapi') {
+        } else if (type === 'geofenceapi' && res.type === 'geofenceapi') {
             message = 'Geofence created.';
             url = res.login_url;
             path = 'Open geofence editor';
