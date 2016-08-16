@@ -153,6 +153,11 @@ module.exports = function fileBar(context) {
                     alt: 'GeoJSON files in GitHub Gists',
                     authenticated: true,
                     action: clickGistSave
+                }, {
+                    title: 'GeofenceAPI',
+                    alt: 'GeoJSON files as geofences',
+                    authenticated: true,
+                    action: clickGeofenceApiSave
                 });
 
             if (mapboxAPI) actions.splice(3, 0, {
@@ -210,6 +215,12 @@ module.exports = function fileBar(context) {
         function clickGistSave() {
             if (d3.event) d3.event.preventDefault();
             context.data.set({ type: 'gist' });
+            saver(context);
+        }
+
+        function clickGeofenceApiSave() {
+            if (d3.event) d3.event.preventDefault();
+            context.data.set({ type: 'geofenceapi' });
             saver(context);
         }
 
