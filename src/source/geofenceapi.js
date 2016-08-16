@@ -1,6 +1,3 @@
-var fs = require('fs');
-var tmpl = fs.readFileSync('data/share.html', 'utf8');
-
 var geofenceApiBase = 'https://api.geofenceapi.org';
 
 module.exports.save = save;
@@ -11,10 +8,6 @@ function save(context, callback) {
         meta = context.data.get('meta'),
         name = (meta && meta.name) || 'map.geojson',
         map = context.data.get('map');
-
-    var description = (source && source.description) || 'via:geojson.io',
-        public = source ? !!source.public : false;
-
 
     var method = 'POST',
         files = {};
