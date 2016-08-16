@@ -17,7 +17,6 @@ function save(context, callback) {
 
 
     var method = 'POST',
-        source = context.data.get('source'),
         files = {};
     var endpoint = geofenceApiBase + '/v1/geojsonio';
 
@@ -31,8 +30,7 @@ function save(context, callback) {
             callback(null, data);
         })
         .on('error', function(err) {
-            message = 'Sorry, an error occurred';
-            callback(message);
+            callback('Sorry, an error occurred');
         })
         .send(method, JSON.stringify({
             files: files
