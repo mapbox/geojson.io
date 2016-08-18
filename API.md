@@ -3,6 +3,7 @@ You can interact with geojson.io programmatically in two ways:
 
 * [URL parameters](#url-api)
 * [Browser console](#console-api)
+* [Protips](#protips)
 
 ## URL API
 You can do a few interesting things with just URLs and geojson.io. Here are the
@@ -114,3 +115,12 @@ which are supported in Chrome & Firefox.
 
 Exposes the [Leaflet.Draw](https://github.com/Leaflet/Leaflet.draw) control
 instance in the console.
+
+## Protips
+
+To include `turf` from [turf](https://github.com/turfjs/turf) so you can manipulate features
+with its GIS features, run this in the CLI, which will download the script and evaluate it.
+
+```js
+fetch('https://npmcdn.com/@turf/turf@3.1.1/turf.js').then(t => t.text()).then(t => eval(t))
+```
