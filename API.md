@@ -122,5 +122,5 @@ To include `turf` from [turf](https://github.com/turfjs/turf) so you can manipul
 with its GIS features, run this in the CLI, which will download the script and evaluate it.
 
 ```js
-fetch('https://npmcdn.com/@turf/turf@3.1.1/turf.js').then(t => t.text()).then(t => eval(t))
+fetch('https://npmcdn.com/@turf/turf@3.1.1/turf.js').then(t => t.text()).then(eval)
 ```
