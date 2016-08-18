@@ -4,6 +4,7 @@ var clone = require('clone'),
     source = {
         gist: require('../source/gist'),
         github: require('../source/github'),
+        geofenceapi: require('../source/geofenceapi'),
         local: require('../source/local')
     };
 
@@ -274,6 +275,8 @@ module.exports = function(context) {
             source.github.save(context, cb);
         } else if (type === 'gist') {
             source.gist.save(context, cb);
+        } else if (type === 'geofenceapi') {
+            source.geofenceapi.save(context, cb);
         } else if (type === 'local') {
             if (context.data.path) {
                 source.local.save(context, cb);
