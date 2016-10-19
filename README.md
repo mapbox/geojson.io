@@ -59,6 +59,7 @@ This is made up of small reusable chunks:
 * <a href='http://github.com/mapbox/csv2geojson'>mapbox/csv2geojson</a>
 * <a href='http://github.com/mapbox/togeojson'>mapbox/togeojson</a>
 * <a href='https://github.com/tyrasd/osmtogeojson'>tyrasd/osmtogeojson</a>
+* <a href='https://github.com/w8r/Leaflet.draw.drag'>w8r/Leaflet.draw.drag</a>
 
 ## See Also
 
