@@ -49,6 +49,7 @@ dist/lib.js: dist dist/d3.js $(LIBS)
 		lib/d3.trigger.js \
 		lib/d3-compat.js \
 		lib/draw/leaflet.draw-src.js \
+		lib/drag/leaflet.drag.js \
 		lib/codemirror/lib/codemirror.js \
 		lib/codemirror/mode/javascript/javascript.js > dist/lib.js
 
