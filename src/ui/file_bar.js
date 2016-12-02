@@ -4,8 +4,8 @@ var shpwrite = require('shp-write'),
     topojson = require('topojson'),
     saveAs = require('filesaver.js'),
     tokml = require('tokml'),
-    githubBrowser = require('github-file-browser'),
-    gistBrowser = require('gist-map-browser'),
+    githubBrowser = require('@mapbox/github-file-browser'),
+    gistBrowser = require('@mapbox/gist-map-browser'),
     geojsonNormalize = require('geojson-normalize'),
     wellknown = require('wellknown');
 
