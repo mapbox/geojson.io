@@ -290,7 +290,7 @@ module.exports = function fileBar(context) {
                     if (last.type === 'blob') {
                         githubBrowser.request('/repos/' + d[1].full_name +
                             '/git/blobs/' + last.sha, function(err, blob) {
-                                d.content = JSON.parse(atob(blob[0].content));
+                                d.content = JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(blob[0].content), function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join('')));
                                 context.data.parse(d);
                                 zoomextent(context);
                                 m.close();
