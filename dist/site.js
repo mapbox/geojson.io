@@ -26812,7 +26812,10 @@ module.exports = function fileBar(context) {
                 .onclick(function(d) {
                     if (!d || !d.length) return;
                     var last = d[d.length - 1];
-                    if (last.type === 'new') {
+
+                    // New file
+                    if (last.type === 'new') 
+                    {
                         var filename = prompt('New file name');
                         if (!filename) {
                             m.close();
@@ -26841,8 +26844,35 @@ module.exports = function fileBar(context) {
                         context.data.set({ newpath: partial + filename });
                         m.close();
                         saver(context);
-                    } else {
-                        alert('overwriting existing files is not yet supported');
+                    }
+                    // Update a file 
+                    else if ( last.type === 'blob' )
+                    {
+                        // Build the path
+                        var pathparts = d.slice(3);
+                        var partial = pathparts.map(function(p) {
+                            return p.path;
+                        }).join('/');
+
+
+                        context.data.set(
+                        {
+                            source: {
+                                url: githubBase + '/repos/' +
+                                    d[0].login + '/' + d[1].name +
+                                        '/contents/' + partial +
+                                        '?ref=' + d[2].name,
+                                sha: last.sha
+                            },
+                            type: 'github',
+                            meta: {
+                                branch: d[2].name,
+                                login: d[0].login,
+                                repo: d[1].name
+                            }
+                        });
+                        m.close();
+                        saver(context);
                     }
                 })
                 .appendTo(
