@@ -38,7 +38,7 @@ function save(context, callback) {
             var data = {
                 message: commitMessage,
                 branch: meta.branch,
-                content: Base64.toBase64(JSON.stringify(map, null, 2))
+                content: btoa(encodeURIComponent(JSON.stringify(map, null, 2)).replace(/%([0-9A-F]{2})/g, function(match, p1) { return String.fromCharCode('0x' + p1);
             };
 
             // creating a file
