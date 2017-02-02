@@ -4,8 +4,10 @@
   "description": "create and edit maps, on the internet",
   "main": "index.html",
   "dependencies": {
+    "@mapbox/gist-map-browser": "0.2.1",
+    "@mapbox/github-file-browser": "0.6.1",
     "bowser": "0.3.2",
-    "brfs": "^1.0.2",
+    "brfs": "^1.4.3",
     "clean-css": "~2.0.7",
     "clone": "0.1.16",
     "csv2geojson": "3.6.1",
@@ -20,8 +22,6 @@
     "geojson-random": "0.1.0",
     "geojson2dsv": "0.0.0",
     "geojsonhint": "0.3.4",
-    "gist-map-browser": "0.2.1",
-    "github-file-browser": "0.6.1",
     "gtfs2geojson": "^1.0.0",
     "jsonlint": "1.6.0",
     "leaflet-draw": "0.2.3",
@@ -43,8 +43,7 @@
     "xtend": "3.0.0"
   },
   "devDependencies": {
-    "brfs": "1.0.2",
-    "browserify": "4.1.11",
+    "browserify": "^14.0.0",
     "eslint": "^1.10.3",
     "tape": "~2.12.3"
   },
@@ -58,7 +57,7 @@
     "url": "git://github.com/mapbox/geojson.io.git"
   },
   "author": "MapBox",
-  "license": "BSD",
+  "license": "ISC",
   "bugs": {
     "url": "https://github.com/mapbox/geojson.io/issues"
   },
