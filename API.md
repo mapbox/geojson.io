@@ -116,6 +116,10 @@ which are supported in Chrome & Firefox.
 Exposes the [Leaflet.Draw](https://github.com/Leaflet/Leaflet.draw) control
 instance in the console.
 
+## `window.api.on(event, fn)`
+
+Exposes d3 events, including `change`.
+
 ## Protips
 
 To include `turf` from [turf](https://github.com/turfjs/turf) so you can manipulate features

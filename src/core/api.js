@@ -36,4 +36,6 @@ function api(context) {
         drawControl: context.drawControl,
         data: context.data
     };
+
+    d3.rebind(window.api, context.dispatch, 'on');
 }
