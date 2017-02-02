@@ -323,19 +323,20 @@ module.exports = function fileBar(context) {
                 .onclick(function(d) {
                     if (!d || !d.length) return;
                     var last = d[d.length - 1];
+                    var pathparts;
+                    var partial;
 
                     // New file
-                    if (last.type === 'new') 
-                    {
+                    if (last.type === 'new')  {
                         var filename = prompt('New file name');
                         if (!filename) {
                             m.close();
                             return;
                         }
-                        var pathparts = d.slice(3);
+                        pathparts = d.slice(3);
                         pathparts.pop();
                         pathparts.push({ path: filename });
-                        var partial = pathparts.map(function(p) {
+                        partial = pathparts.map(function(p) {
                             return p.path;
                         }).join('/');
                         context.data.set({
@@ -357,11 +358,10 @@ module.exports = function fileBar(context) {
                         saver(context);
                     }
                     // Update a file 
-                    else if ( last.type === 'blob' )
-                    {
+                    else if (last.type === 'blob') {
                         // Build the path
-                        var pathparts = d.slice(3);
-                        var partial = pathparts.map(function(p) {
+                        pathparts = d.slice(3);
+                        partial = pathparts.map(function(p) {
                             return p.path;
                         }).join('/');
 
