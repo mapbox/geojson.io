@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "brfs": "1.0.2",
-    "browserify": "4.1.11",
+    "browserify": "^14.0.0",
     "eslint": "^1.10.3",
     "tape": "~2.12.3"
   },
@@ -58,7 +58,7 @@
     "url": "git://github.com/mapbox/geojson.io.git"
   },
   "author": "MapBox",
-  "license": "BSD",
+  "license": "ISC",
   "bugs": {
     "url": "https://github.com/mapbox/geojson.io/issues"
   },
