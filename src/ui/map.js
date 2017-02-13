@@ -4,6 +4,7 @@ require('../lib/custom_hash.js');
 var popup = require('../lib/popup'),
     escape = require('escape-html'),
     LGeo = require('leaflet-geodesy'),
+    geojsonRewind = require('geojson-rewind'),
     writable = false,
     showStyle = true,
     makiValues = require('../../data/maki.json'),
@@ -57,7 +58,9 @@ module.exports = function(context, readonly) {
         context.map.attributionControl.setPrefix('<a target="_blank" href="http://tmcw.wufoo.com/forms/z7x4m1/">Feedback</a> | <a target="_blank" href="http://geojson.io/about.html">About</a>');
 
         function update() {
-            geojsonToLayer(context.mapLayer.toGeoJSON(), context.mapLayer);
+            var geojson = context.mapLayer.toGeoJSON();
+            geojson = geojsonRewind(geojson);
+            geojsonToLayer(geojson, context.mapLayer);
             context.data.set({map: layerToGeoJSON(context.mapLayer)}, 'map');
         }
 
