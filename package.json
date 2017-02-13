@@ -20,6 +20,7 @@
     "geojson-flatten": "~0.1.0",
     "geojson-normalize": "0.0.0",
     "geojson-random": "0.1.0",
+    "geojson-rewind": "^0.2.0",
     "geojson2dsv": "0.0.0",
     "geojsonhint": "0.3.4",
     "gtfs2geojson": "^1.0.0",
