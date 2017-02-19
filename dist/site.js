@@ -25851,7 +25851,6 @@ var clone = require('clone'),
     source = {
         gist: require('../source/gist'),
         github: require('../source/github'),
-        geofenceapi: require('../source/geofenceapi'),
         local: require('../source/local')
     };
 
@@ -26122,8 +26121,6 @@ module.exports = function(context) {
             source.github.save(context, cb);
         } else if (type === 'gist') {
             source.gist.save(context, cb);
-        } else if (type === 'geofenceapi') {
-            source.geofenceapi.save(context, cb);
         } else if (type === 'local') {
             if (context.data.path) {
                 source.local.save(context, cb);
@@ -26138,7 +26135,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../config.js":142,"../source/geofenceapi":161,"../source/gist":162,"../source/github":163,"../source/local":164,"clone":10,"xtend":141}],145:[function(require,module,exports){
+},{"../config.js":142,"../source/gist":161,"../source/github":162,"../source/local":163,"clone":10,"xtend":141}],145:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -26224,7 +26221,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/zoomextent":157,"../ui/flash":168,"qs-hash":85}],146:[function(require,module,exports){
+},{"../lib/zoomextent":157,"../ui/flash":167,"qs-hash":85}],146:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('qs-hash');
 
@@ -26501,7 +26498,7 @@ function geojsonIO() {
 }
 
 
-},{"./core/api":143,"./core/data":144,"./core/loader":145,"./core/recovery":146,"./core/repo":147,"./core/router":148,"./core/user":149,"./ui":165,"./ui/map":170,"store":100}],151:[function(require,module,exports){
+},{"./core/api":143,"./core/data":144,"./core/loader":145,"./core/recovery":146,"./core/repo":147,"./core/router":148,"./core/user":149,"./ui":164,"./ui/map":169,"store":100}],151:[function(require,module,exports){
 var qs = require('qs-hash');
 require('leaflet-hash');
 
@@ -27009,7 +27006,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":156,"../lib/zoomextent":157,"../ui/saver.js":174}],160:[function(require,module,exports){
+},{"../lib/validate":156,"../lib/zoomextent":157,"../ui/saver.js":173}],160:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -27082,39 +27079,6 @@ module.exports = function(context) {
 };
 
 },{"../lib/smartzoom.js":155,"d3-metatable":12}],161:[function(require,module,exports){
-var geofenceApiBase = 'https://api.geofenceapi.org';
-
-module.exports.save = save;
-
-function save(context, callback) {
-
-    var source = context.data.get('source'),
-        meta = context.data.get('meta'),
-        name = (meta && meta.name) || 'map.geojson',
-        map = context.data.get('map');
-
-    var method = 'POST',
-        files = {};
-    var endpoint = geofenceApiBase + '/v1/geojsonio';
-
-    files[name] = {
-        content: JSON.stringify(map, null, 2)
-    };
-
-    d3.json(endpoint)
-        .on('load', function(data) {
-            data.type = 'geofenceapi';
-            callback(null, data);
-        })
-        .on('error', function(err) {
-            callback('Sorry, an error occurred');
-        })
-        .send(method, JSON.stringify({
-            files: files
-        }));
-}
-
-},{}],162:[function(require,module,exports){
 
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('mapbox.streets').addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties;\n    var table = document.createElement('table');\n    table.setAttribute('class', 'marker-properties display')\n    for (var key in properties) {\n        var tr = createTableRows(key, properties[key]);\n        table.appendChild(tr);\n    }\n    if (table) l.bindPopup(table);\n}\n\nfunction createTableRows(key, value) {\n    var tr = document.createElement('tr');\n    var th = document.createElement('th');\n    var td = document.createElement('td');\n    key = document.createTextNode(key);\n    value = document.createTextNode(value);\n    th.appendChild(key);\n    td.appendChild(value);\n    tr.appendChild(th);\n    tr.appendChild(td);\n    return tr\n}\n\n</script>\n</body>\n</html>\n";
 
@@ -27228,7 +27192,7 @@ function loadRaw(url, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"../config.js":142}],163:[function(require,module,exports){
+},{"../config.js":142}],162:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -27360,7 +27324,7 @@ function shaUrl(parts, sha) {
         '/git/blobs/' + sha;
 }
 
-},{"../config.js":142}],164:[function(require,module,exports){
+},{"../config.js":142}],163:[function(require,module,exports){
 try {
     
 } catch(e) {
@@ -27385,7 +27349,7 @@ function save(context, callback) {
     });
 }
 
-},{}],165:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -27470,7 +27434,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":166,"./ui/file_bar":167,"./ui/layer_switch":169,"./ui/mode_buttons":173,"./ui/user":176}],166:[function(require,module,exports){
+},{"./ui/dnd":165,"./ui/file_bar":166,"./ui/layer_switch":168,"./ui/mode_buttons":172,"./ui/user":175}],165:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -27514,7 +27478,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":154,"../lib/zoomextent":157,"./flash.js":168}],167:[function(require,module,exports){
+},{"../lib/readfile.js":154,"../lib/zoomextent":157,"./flash.js":167}],166:[function(require,module,exports){
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     geojson2dsv = require('geojson2dsv'),
@@ -27670,11 +27634,6 @@ module.exports = function fileBar(context) {
                     alt: 'GeoJSON files in GitHub Gists',
                     authenticated: true,
                     action: clickGistSave
-                }, {
-                    title: 'GeofenceAPI',
-                    alt: 'GeoJSON files as geofences',
-                    authenticated: true,
-                    action: clickGeofenceApiSave
                 });
 
             if (mapboxAPI) actions.splice(3, 0, {
@@ -27732,12 +27691,6 @@ module.exports = function fileBar(context) {
         function clickGistSave() {
             if (d3.event) d3.event.preventDefault();
             context.data.set({ type: 'gist' });
-            saver(context);
-        }
-
-        function clickGeofenceApiSave() {
-            if (d3.event) d3.event.preventDefault();
-            context.data.set({ type: 'geofenceapi' });
             saver(context);
         }
 
@@ -28058,7 +28011,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../config.js":142,"../lib/meta.js":152,"../lib/readfile":154,"../lib/zoomextent":157,"../ui/saver.js":174,"./flash":168,"./modal.js":172,"./share":175,"@mapbox/gist-map-browser":2,"@mapbox/github-file-browser":3,"clone":10,"filesaver.js":21,"geojson-normalize":27,"geojson2dsv":31,"shp-write":88,"tokml":103,"topojson":"topojson","wellknown":139}],168:[function(require,module,exports){
+},{"../config.js":142,"../lib/meta.js":152,"../lib/readfile":154,"../lib/zoomextent":157,"../ui/saver.js":173,"./flash":167,"./modal.js":171,"./share":174,"@mapbox/gist-map-browser":2,"@mapbox/github-file-browser":3,"clone":10,"filesaver.js":21,"geojson-normalize":27,"geojson2dsv":31,"shp-write":88,"tokml":103,"topojson":"topojson","wellknown":139}],167:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -28080,7 +28033,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":171}],169:[function(require,module,exports){
+},{"./message":170}],168:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -28146,7 +28099,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],170:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 require('qs-hash');
 require('../lib/custom_hash.js');
 
@@ -28419,7 +28372,7 @@ function bindPopup(l) {
     });
 }
 
-},{"../../data/maki.json":1,"../lib/custom_hash.js":151,"../lib/popup":153,"escape-html":19,"geojson-rewind":29,"leaflet-geodesy":60,"qs-hash":85}],171:[function(require,module,exports){
+},{"../../data/maki.json":1,"../lib/custom_hash.js":151,"../lib/popup":153,"escape-html":19,"geojson-rewind":29,"leaflet-geodesy":60,"qs-hash":85}],170:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -28460,7 +28413,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],172:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -28528,7 +28481,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],173:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -28580,7 +28533,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":158,"../panel/json":159,"../panel/table":160}],174:[function(require,module,exports){
+},{"../panel/help":158,"../panel/json":159,"../panel/table":160}],173:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -28605,10 +28558,6 @@ module.exports = function(context) {
             message = 'Changes committed to GitHub: ';
             url = res.commit.html_url;
             path = res.commit.sha.substring(0, 10);
-        } else if (type === 'geofenceapi' && res.type === 'geofenceapi') {
-            message = 'Geofence created.';
-            url = res.login_url;
-            path = 'Open geofence editor';
         } else {
             // Saved as a file
             message = 'Changes saved to disk.';
@@ -28652,7 +28601,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":168}],175:[function(require,module,exports){
+},{"./flash":167}],174:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -28701,7 +28650,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":162,"./modal":172}],176:[function(require,module,exports){
+},{"../source/gist":161,"./modal":171}],175:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};
