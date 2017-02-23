@@ -31,6 +31,7 @@
     "mapbox.js": "2.2.2",
     "marked": "0.3.2",
     "osmtogeojson": "2.0.5",
+    "polyline": "^0.2.0",
     "polytogeojson": "0.0.1",
     "qs-hash": "0.0.0",
     "shp-write": "0.2.3",

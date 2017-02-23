@@ -2,6 +2,7 @@ var escape = require('escape-html'),
     geojsonRandom = require('geojson-random'),
     geojsonExtent = require('geojson-extent'),
     geojsonFlatten = require('geojson-flatten'),
+    polyline = require('polyline'),
     zoomextent = require('../lib/zoomextent');
 
 module.exports.adduserlayer = function(context, _url, _name) {
@@ -40,4 +41,14 @@ module.exports.bboxify = function(context) {
 
 module.exports.flatten = function(context) {
     context.data.set({ map: geojsonFlatten(context.data.get('map')) });
+};
+
+module.exports.polyline = function(context) {
+    var input = prompt('Enter your polyline');
+    try {
+        var decoded = polyline.toGeoJSON(input);
+        context.data.set({ map: decoded });
+    } catch(e) {
+        alert('Sorry, we were unable to decode that polyline');
+    }
 };
