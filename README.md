@@ -61,7 +61,6 @@ This is made up of small reusable chunks:
 * <a href='https://github.com/tyrasd/osmtogeojson'>tyrasd/osmtogeojson</a>
 * <a href='https://github.com/w8r/Leaflet.draw.drag'>w8r/Leaflet.draw.drag</a>
 * <a href='https://github.com/cschwarz/wkx'>cschwarz/wkx</a>
-* <a href='https://github.com/feross/buffer'>feross/buffer</a>
 
 
 ## See Also
