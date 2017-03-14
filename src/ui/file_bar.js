@@ -131,6 +131,12 @@ module.exports = function fileBar(context) {
                         meta.wkxBase64(context);
                     }
                 }, {
+                    title: 'Load WKB Hex Encoded String',
+                    alt: 'Decode and show WKX data',
+                    action: function() {
+                        meta.wkxHex(context);
+                    }
+                }, {
                     title: 'Load WKT String',
                     alt: 'Decode and show WKX data',
                     action: function() {
