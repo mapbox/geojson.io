@@ -124,6 +124,24 @@ module.exports = function fileBar(context) {
                     action: function() {
                         meta.polyline(context);
                     }
+                }, {
+                    title: 'Load WKB Base64 Encoded String',
+                    alt: 'Decode and show WKX data',
+                    action: function() {
+                        meta.wkxBase64(context);
+                    }
+                }, {
+                    title: 'Load WKB Hex Encoded String',
+                    alt: 'Decode and show WKX data',
+                    action: function() {
+                        meta.wkxHex(context);
+                    }
+                }, {
+                    title: 'Load WKT String',
+                    alt: 'Decode and show WKX data',
+                    action: function() {
+                        meta.wkxString(context);
+                    }
                 }
             ]
         }];
@@ -352,7 +370,7 @@ module.exports = function fileBar(context) {
                         m.close();
                         saver(context);
                     }
-                    // Update a file 
+                    // Update a file
                     else if (last.type === 'blob') {
                         // Build the path
                         pathparts = d.slice(3);
