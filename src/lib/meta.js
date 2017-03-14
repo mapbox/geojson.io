@@ -50,7 +50,6 @@ module.exports.polyline = function(context) {
     try {
         var decoded = polyline.toGeoJSON(input);
         context.data.set({ map: decoded });
-        zoomextent(context);
     } catch(e) {
         alert('Sorry, we were unable to decode that polyline');
     }
@@ -85,6 +84,7 @@ module.exports.wkxString = function(context) {
     try {
         var decoded = wkx.Geometry.parse(input);
         context.data.set({ map: decoded.toGeoJSON() });
+        zoomextent(context);
     } catch(e) {
         console.error(e)
         alert('Sorry, we were unable to decode that WKT data');
