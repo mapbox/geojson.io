@@ -3,6 +3,8 @@ var escape = require('escape-html'),
     geojsonExtent = require('geojson-extent'),
     geojsonFlatten = require('geojson-flatten'),
     polyline = require('polyline'),
+    wkx = require('wkx'),
+    Buffer = require('buffer/').Buffer,
     zoomextent = require('../lib/zoomextent');
 
 module.exports.adduserlayer = function(context, _url, _name) {
@@ -48,7 +50,43 @@ module.exports.polyline = function(context) {
     try {
         var decoded = polyline.toGeoJSON(input);
         context.data.set({ map: decoded });
+        zoomextent(context);
     } catch(e) {
         alert('Sorry, we were unable to decode that polyline');
+    }
+};
+
+module.exports.wkxBase64 = function(context) {
+    var input = prompt('Enter your Base64 encoded WKB/EWKB');
+    try {
+        var decoded = wkx.Geometry.parse(Buffer.from(input,'base64'));
+        context.data.set({ map: decoded.toGeoJSON() });
+        zoomextent(context);
+    } catch(e) {
+        console.error(e)
+        alert('Sorry, we were unable to decode that Base64 encoded WKX data');
+    }
+};
+
+module.exports.wkxHex = function(context) {
+    var input = prompt('Enter your Hex encoded WKB/EWKB');
+    try {
+        var decoded = wkx.Geometry.parse(Buffer.from(input,'hex'));
+        context.data.set({ map: decoded.toGeoJSON() });
+        zoomextent(context);
+    } catch(e) {
+        console.error(e)
+        alert('Sorry, we were unable to decode that Base64 encoded WKX data');
+    }
+};
+
+module.exports.wkxString = function(context) {
+    var input = prompt('Enter your WKT/EWKT String');
+    try {
+        var decoded = wkx.Geometry.parse(input);
+        context.data.set({ map: decoded.toGeoJSON() });
+    } catch(e) {
+        console.error(e)
+        alert('Sorry, we were unable to decode that WKT data');
     }
 };
