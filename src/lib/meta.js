@@ -4,7 +4,6 @@ var escape = require('escape-html'),
     geojsonFlatten = require('geojson-flatten'),
     polyline = require('polyline'),
     wkx = require('wkx'),
-    Buffer = require('buffer/').Buffer,
     zoomextent = require('../lib/zoomextent');
 
 module.exports.adduserlayer = function(context, _url, _name) {
@@ -75,7 +74,7 @@ module.exports.wkxHex = function(context) {
         zoomextent(context);
     } catch(e) {
         console.error(e)
-        alert('Sorry, we were unable to decode that Base64 encoded WKX data');
+        alert('Sorry, we were unable to decode that Hex encoded WKX data');
     }
 };
 
