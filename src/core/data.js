@@ -67,6 +67,9 @@ module.exports = function(context) {
 
     data.mergeFeatures = function(features, src) {
         function coerceNum(feature) {
+            if(feature.properties === undefined) {
+                return feature;
+            }
             var props = feature.properties,
                 keys = Object.keys(props),
                 length = keys.length;
