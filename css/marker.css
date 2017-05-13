@@ -111,3 +111,28 @@ datalist {
     cursor: pointer;
     color: #199CF4;
 }
+
+
+/* Editable Points
+------------------------------------------------------- */
+
+.leaflet-editing-icon:before {
+    content: "";
+    display: block;
+    width: 525%;
+    height: 525%;
+    outline: 1px solid red;
+    z-index: 2;
+    position: relative;
+    margin-left: -212%;
+    margin-top: -212%;
+}
+
+.leaflet-editing-icon:hover {
+    border: 2px #464646 solid;
+    height: 10px !important;
+    width: 10px !important;
+    margin-top: -5px !important;
+    margin-left: -5px !important;
+    border-radius: 5px;
+}
