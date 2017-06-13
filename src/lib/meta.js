@@ -61,7 +61,7 @@ module.exports.wkxBase64 = function(context) {
         context.data.set({ map: decoded.toGeoJSON() });
         zoomextent(context);
     } catch(e) {
-        console.error(e)
+        console.error(e);
         alert('Sorry, we were unable to decode that Base64 encoded WKX data');
     }
 };
@@ -73,7 +73,7 @@ module.exports.wkxHex = function(context) {
         context.data.set({ map: decoded.toGeoJSON() });
         zoomextent(context);
     } catch(e) {
-        console.error(e)
+        console.error(e);
         alert('Sorry, we were unable to decode that Hex encoded WKX data');
     }
 };
@@ -85,7 +85,7 @@ module.exports.wkxString = function(context) {
         context.data.set({ map: decoded.toGeoJSON() });
         zoomextent(context);
     } catch(e) {
-        console.error(e)
+        console.error(e);
         alert('Sorry, we were unable to decode that WKT data');
     }
 };
