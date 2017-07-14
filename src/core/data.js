@@ -117,9 +117,9 @@ module.exports = function(context) {
 
                     var f = d.files[file];
                     if (f.truncated === true) {
-                        source.gist.loadRaw(f.raw_url, context, function(err, content) {
+                        source.gist.loadRaw(f.raw_url, function(err, content) {
                             if (err) return cb(err);
-                            return cb(err, xtend(d, { file: f.filename, content: JSON.parse(content) }));
+                            return cb(err, xtend(d, { file: f.filename, content: content }));
                         });
                     } else {
                         return cb(err, xtend(d, { file: f.filename, content: JSON.parse(f.content) }));
@@ -249,7 +249,17 @@ module.exports = function(context) {
                 var name = mapFile(d);
 
                 try {
-                    if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
+                    var f = d.files[name];
+                    if(f.content) {
+                        if (f.truncated === true) {
+                            source.gist.loadRaw(f.raw_url, function(err, content) {
+                                if (err) throw err;
+                                data.set( { map: content });
+                            });
+                        } else {
+                            data.set( { map: JSON.parse(f.content) });
+                        }
+                    }
                 } catch (e) {
                     console.error(e);
                 }

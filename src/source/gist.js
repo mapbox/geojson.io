@@ -101,12 +101,16 @@ function load(id, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-function loadRaw(url, context, callback) {
-    context.user.signXHR(d3.text(url))
-        .on('load', onLoad)
-        .on('error', onError)
-        .get();
-
-    function onLoad(file) { callback(null, file); }
-    function onError(err) { callback(err, null); }
+function loadRaw(url, callback) {
+    $.ajax({
+        dataType: 'json',
+        url: url,
+        success: function (response) {
+            return callback(undefined, response);
+        },
+        error: function(jqXHR, e) {
+            console.error(e);
+            return callback(e);
+        }
+    });
 }
