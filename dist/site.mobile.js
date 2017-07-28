@@ -1329,7 +1329,7 @@ function page(postfix, callback) {
     });
 }
 
-},{"browser-request":6}],3:[function(require,module,exports){
+},{"browser-request":5}],3:[function(require,module,exports){
 var queue = require('queue-async'),
     request = require('browser-request'),
     treeui = require('treeui'),
@@ -1464,7 +1464,7 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":6,"queue-async":90,"treeui":139}],4:[function(require,module,exports){
+},{"browser-request":5,"queue-async":89,"treeui":138}],4:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1958,123 +1958,7 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"util/":142}],5:[function(require,module,exports){
-'use strict'
-
-exports.byteLength = byteLength
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-for (var i = 0, len = code.length; i < len; ++i) {
-  lookup[i] = code[i]
-  revLookup[code.charCodeAt(i)] = i
-}
-
-revLookup['-'.charCodeAt(0)] = 62
-revLookup['_'.charCodeAt(0)] = 63
-
-function placeHoldersCount (b64) {
-  var len = b64.length
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // the number of equal signs (place holders)
-  // if there are two placeholders, than the two characters before it
-  // represent one byte
-  // if there is only one, then the three characters before it represent 2 bytes
-  // this is just a cheap hack to not do indexOf twice
-  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
-}
-
-function byteLength (b64) {
-  // base64 is 4/3 + up to two characters of the original data
-  return b64.length * 3 / 4 - placeHoldersCount(b64)
-}
-
-function toByteArray (b64) {
-  var i, j, l, tmp, placeHolders, arr
-  var len = b64.length
-  placeHolders = placeHoldersCount(b64)
-
-  arr = new Arr(len * 3 / 4 - placeHolders)
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  l = placeHolders > 0 ? len - 4 : len
-
-  var L = 0
-
-  for (i = 0, j = 0; i < l; i += 4, j += 3) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
-    arr[L++] = (tmp >> 16) & 0xFF
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  if (placeHolders === 2) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[L++] = tmp & 0xFF
-  } else if (placeHolders === 1) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var output = ''
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    output += lookup[tmp >> 2]
-    output += lookup[(tmp << 4) & 0x3F]
-    output += '=='
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
-    output += lookup[tmp >> 10]
-    output += lookup[(tmp >> 4) & 0x3F]
-    output += lookup[(tmp << 2) & 0x3F]
-    output += '='
-  }
-
-  parts.push(output)
-
-  return parts.join('')
-}
-
-},{}],6:[function(require,module,exports){
+},{"util/":141}],5:[function(require,module,exports){
 // Browser Request
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -2570,11 +2454,11 @@ function b64_enc (data) {
 }));
 //UMD FOOTER END
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 
-},{}],8:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7}],9:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"dup":6}],8:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -2611,10 +2495,12 @@ exports.kMaxLength = K_MAX_LENGTH
  */
 Buffer.TYPED_ARRAY_SUPPORT = typedArraySupport()
 
-if (!Buffer.TYPED_ARRAY_SUPPORT) {
+if (!Buffer.TYPED_ARRAY_SUPPORT && typeof console !== 'undefined' &&
+    typeof console.error === 'function') {
   console.error(
     'This browser lacks typed array (Uint8Array) support which is required by ' +
-    '`buffer` v5.x. Use `buffer` v4.x if you require old browser support.')
+    '`buffer` v5.x. Use `buffer` v4.x if you require old browser support.'
+  )
 }
 
 function typedArraySupport () {
@@ -2679,7 +2565,7 @@ function from (value, encodingOrOffset, length) {
     throw new TypeError('"value" argument must not be a number')
   }
 
-  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+  if (value instanceof ArrayBuffer) {
     return fromArrayBuffer(value, encodingOrOffset, length)
   }
 
@@ -2791,8 +2677,6 @@ function fromArrayLike (array) {
 }
 
 function fromArrayBuffer (array, byteOffset, length) {
-  array.byteLength // this throws if `array` is not a valid ArrayBuffer
-
   if (byteOffset < 0 || array.byteLength < byteOffset) {
     throw new RangeError('\'offset\' is out of bounds')
   }
@@ -2829,9 +2713,8 @@ function fromObject (obj) {
   }
 
   if (obj) {
-    if ((typeof ArrayBuffer !== 'undefined' &&
-        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
-      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+    if (isArrayBufferView(obj) || 'length' in obj) {
+      if (typeof obj.length !== 'number' || numberIsNaN(obj.length)) {
         return createBuffer(0)
       }
       return fromArrayLike(obj)
@@ -2863,7 +2746,7 @@ function SlowBuffer (length) {
 }
 
 Buffer.isBuffer = function isBuffer (b) {
-  return !!(b != null && b._isBuffer)
+  return b != null && b._isBuffer === true
 }
 
 Buffer.compare = function compare (a, b) {
@@ -2942,8 +2825,7 @@ function byteLength (string, encoding) {
   if (Buffer.isBuffer(string)) {
     return string.length
   }
-  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
-      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+  if (isArrayBufferView(string) || string instanceof ArrayBuffer) {
     return string.byteLength
   }
   if (typeof string !== 'string') {
@@ -3053,8 +2935,12 @@ function slowToString (encoding, start, end) {
   }
 }
 
-// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
-// Buffer instances.
+// This property is used by `Buffer.isBuffer` (and the `is-buffer` npm package)
+// to detect a Buffer instance. It's not possible to use `instanceof Buffer`
+// reliably in a browserify context because there could be multiple different
+// copies of the 'buffer' package in use. This method works even for Buffer
+// instances that were created from another copy of the `buffer` package.
+// See: https://github.com/feross/buffer/issues/154
 Buffer.prototype._isBuffer = true
 
 function swap (b, n, m) {
@@ -3205,7 +3091,7 @@ function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
     byteOffset = -0x80000000
   }
   byteOffset = +byteOffset  // Coerce to Number.
-  if (isNaN(byteOffset)) {
+  if (numberIsNaN(byteOffset)) {
     // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
     byteOffset = dir ? 0 : (buffer.length - 1)
   }
@@ -3336,7 +3222,7 @@ function hexWrite (buf, string, offset, length) {
   }
   for (var i = 0; i < length; ++i) {
     var parsed = parseInt(string.substr(i * 2, 2), 16)
-    if (isNaN(parsed)) return i
+    if (numberIsNaN(parsed)) return i
     buf[offset + i] = parsed
   }
   return i
@@ -3383,7 +3269,6 @@ Buffer.prototype.write = function write (string, offset, length, encoding) {
       encoding = length
       length = undefined
     }
-  // legacy write(string, encoding, offset, length) - remove in v0.13
   } else {
     throw new Error(
       'Buffer.write(string, encoding, offset[, length]) is no longer supported'
@@ -3582,7 +3467,7 @@ function utf16leSlice (buf, start, end) {
   var bytes = buf.slice(start, end)
   var res = ''
   for (var i = 0; i < bytes.length; i += 2) {
-    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+    res += String.fromCharCode(bytes[i] + (bytes[i + 1] * 256))
   }
   return res
 }
@@ -3888,7 +3773,7 @@ Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, no
   value = +value
   offset = offset >>> 0
   if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
+    var limit = Math.pow(2, (8 * byteLength) - 1)
 
     checkInt(this, value, offset, byteLength, limit - 1, -limit)
   }
@@ -3911,7 +3796,7 @@ Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, no
   value = +value
   offset = offset >>> 0
   if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
+    var limit = Math.pow(2, (8 * byteLength) - 1)
 
     checkInt(this, value, offset, byteLength, limit - 1, -limit)
   }
@@ -4140,7 +4025,7 @@ var INVALID_BASE64_RE = /[^+/0-9A-Za-z-_]/g
 
 function base64clean (str) {
   // Node strips out invalid characters like \n and \t from the string, base64-js does not
-  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  str = str.trim().replace(INVALID_BASE64_RE, '')
   // Node converts strings with length < 2 to ''
   if (str.length < 2) return ''
   // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
@@ -4148,11 +4033,6 @@ function base64clean (str) {
     str = str + '='
   }
   return str
-}
-
-function stringtrim (str) {
-  if (str.trim) return str.trim()
-  return str.replace(/^\s+|\s+$/g, '')
 }
 
 function toHex (n) {
@@ -4277,11 +4157,132 @@ function blitBuffer (src, dst, offset, length) {
   return i
 }
 
-function isnan (val) {
-  return val !== val // eslint-disable-line no-self-compare
+// Node 0.10 supports `ArrayBuffer` but lacks `ArrayBuffer.isView`
+function isArrayBufferView (obj) {
+  return (typeof ArrayBuffer.isView === 'function') && ArrayBuffer.isView(obj)
 }
 
-},{"base64-js":5,"ieee754":35}],10:[function(require,module,exports){
+function numberIsNaN (obj) {
+  return obj !== obj // eslint-disable-line no-self-compare
+}
+
+},{"base64-js":9,"ieee754":35}],9:[function(require,module,exports){
+'use strict'
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function placeHoldersCount (b64) {
+  var len = b64.length
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // the number of equal signs (place holders)
+  // if there are two placeholders, than the two characters before it
+  // represent one byte
+  // if there is only one, then the three characters before it represent 2 bytes
+  // this is just a cheap hack to not do indexOf twice
+  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+}
+
+function byteLength (b64) {
+  // base64 is 4/3 + up to two characters of the original data
+  return b64.length * 3 / 4 - placeHoldersCount(b64)
+}
+
+function toByteArray (b64) {
+  var i, j, l, tmp, placeHolders, arr
+  var len = b64.length
+  placeHolders = placeHoldersCount(b64)
+
+  arr = new Arr(len * 3 / 4 - placeHolders)
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  l = placeHolders > 0 ? len - 4 : len
+
+  var L = 0
+
+  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
+    arr[L++] = (tmp >> 16) & 0xFF
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  if (placeHolders === 2) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[L++] = tmp & 0xFF
+  } else if (placeHolders === 1) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var output = ''
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    output += lookup[tmp >> 2]
+    output += lookup[(tmp << 4) & 0x3F]
+    output += '=='
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
+    output += lookup[tmp >> 10]
+    output += lookup[(tmp >> 4) & 0x3F]
+    output += lookup[(tmp << 2) & 0x3F]
+    output += '='
+  }
+
+  parts.push(output)
+
+  return parts.join('')
+}
+
+},{}],10:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -4413,7 +4414,7 @@ clone.clonePrototype = function(parent) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":9}],11:[function(require,module,exports){
+},{"buffer":8}],11:[function(require,module,exports){
 var dsv = require('dsv'),
     sexagesimal = require('sexagesimal');
 
@@ -4600,7 +4601,7 @@ module.exports = {
     toPolygon: toPolygon
 };
 
-},{"dsv":18,"sexagesimal":91}],12:[function(require,module,exports){
+},{"dsv":18,"sexagesimal":90}],12:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -5363,7 +5364,10 @@ if (typeof module !== "undefined" && module !== null) {
 },{}],22:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
-module.exports = function(_) {
+module.exports.geometry = geometry;
+module.exports.ring = ringArea;
+
+function geometry(_) {
     if (_.type === 'Polygon') return polygonArea(_.coordinates);
     else if (_.type === 'MultiPolygon') {
         var area = 0;
@@ -5374,7 +5378,7 @@ module.exports = function(_) {
     } else {
         return null;
     }
-};
+}
 
 function polygonArea(coords) {
     var area = 0;
@@ -5401,6 +5405,7 @@ function polygonArea(coords) {
  * {float} The approximate signed geodesic area of the polygon in square
  *     meters.
  */
+
 function ringArea(coords) {
     var area = 0;
 
@@ -5422,7 +5427,7 @@ function rad(_) {
     return _ * Math.PI / 180;
 }
 
-},{"wgs84":144}],23:[function(require,module,exports){
+},{"wgs84":143}],23:[function(require,module,exports){
 module.exports = function flatten(list, depth) {
     return _flatten(list);
 
@@ -5488,7 +5493,7 @@ function getExtent(_) {
     return ext;
 }
 
-},{"extent":20,"geojson-coords":24,"traverse":138}],26:[function(require,module,exports){
+},{"extent":20,"geojson-coords":24,"traverse":137}],26:[function(require,module,exports){
 module.exports = flatten;
 
 function flatten(gj, up) {
@@ -5644,73 +5649,7 @@ function cw(_) {
     return geojsonArea.ring(_) >= 0;
 }
 
-},{"geojson-area":30}],30:[function(require,module,exports){
-var wgs84 = require('wgs84');
-
-module.exports.geometry = geometry;
-module.exports.ring = ringArea;
-
-function geometry(_) {
-    if (_.type === 'Polygon') return polygonArea(_.coordinates);
-    else if (_.type === 'MultiPolygon') {
-        var area = 0;
-        for (var i = 0; i < _.coordinates.length; i++) {
-            area += polygonArea(_.coordinates[i]);
-        }
-        return area;
-    } else {
-        return null;
-    }
-}
-
-function polygonArea(coords) {
-    var area = 0;
-    if (coords && coords.length > 0) {
-        area += Math.abs(ringArea(coords[0]));
-        for (var i = 1; i < coords.length; i++) {
-            area -= Math.abs(ringArea(coords[i]));
-        }
-    }
-    return area;
-}
-
-/**
- * Calculate the approximate area of the polygon were it projected onto
- *     the earth.  Note that this area will be positive if ring is oriented
- *     clockwise, otherwise it will be negative.
- *
- * Reference:
- * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for
- *     Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
- *     Laboratory, Pasadena, CA, June 2007 http://trs-new.jpl.nasa.gov/dspace/handle/2014/40409
- *
- * Returns:
- * {float} The approximate signed geodesic area of the polygon in square
- *     meters.
- */
-
-function ringArea(coords) {
-    var area = 0;
-
-    if (coords.length > 2) {
-        var p1, p2;
-        for (var i = 0; i < coords.length - 1; i++) {
-            p1 = coords[i];
-            p2 = coords[i + 1];
-            area += rad(p2[0] - p1[0]) * (2 + Math.sin(rad(p1[1])) + Math.sin(rad(p2[1])));
-        }
-
-        area = area * wgs84.RADIUS * wgs84.RADIUS / 2;
-    }
-
-    return area;
-}
-
-function rad(_) {
-    return _ * Math.PI / 180;
-}
-
-},{"wgs84":144}],31:[function(require,module,exports){
+},{"geojson-area":22}],30:[function(require,module,exports){
 var dsv = require('dsv');
 
 module.exports = function(_, delim) {
@@ -5737,7 +5676,7 @@ module.exports = function(_, delim) {
     }));
 };
 
-},{"dsv":18}],32:[function(require,module,exports){
+},{"dsv":18}],31:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -6056,163 +5995,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":37}],33:[function(require,module,exports){
-var parseCSV = require('dsv').csv.parse;
-
-/**
- * Parse GTFS data given as a string and return a GeoJSON FeatureCollection
- * of features with LineString geometries.
- *
- * @param {string} gtfs csv content of shapes.txt
- * @returns {Object} geojson featurecollection
- */
-function gtfs2geojson(gtfs) {
-  var shapes = parseCSV(gtfs).reduce(function(memo, row) {
-    memo[row.shape_id] = (memo[row.shape_id] || []).concat(row);
-    return memo;
-  }, {});
-  return {
-    type: 'FeatureCollection',
-    features: Object.keys(shapes).map(function(id) {
-      return {
-        type: 'Feature',
-        id: id,
-        properties: {
-          shape_id: id
-        },
-        geometry: {
-          type: 'LineString',
-          coordinates: shapes[id].sort(function(a, b) {
-            return +a.shape_pt_sequence - b.shape_pt_sequence;
-          }).map(function(coord) {
-            return [
-              parseFloat(coord.shape_pt_lon),
-              parseFloat(coord.shape_pt_lat)
-            ];
-          })
-        }
-      };
-    })
-  };
-}
-
-module.exports = gtfs2geojson;
-
-},{"dsv":34}],34:[function(require,module,exports){
-
-
-module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
-
-},{}],35:[function(require,module,exports){
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var nBits = -7
-  var i = isLE ? (nBytes - 1) : 0
-  var d = isLE ? -1 : 1
-  var s = buffer[offset + i]
-
-  i += d
-
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
-
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
-
-  if (e === 0) {
-    e = 1 - eBias
-  } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
-  } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
-  }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
-
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
-  var i = isLE ? 0 : (nBytes - 1)
-  var d = isLE ? 1 : -1
-  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
-
-  value = Math.abs(value)
-
-  if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
-  } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
-    if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
-    }
-    if (e + eBias >= 1) {
-      value += rt / c
-    } else {
-      value += rt * Math.pow(2, 1 - eBias)
-    }
-    if (value * c >= 2) {
-      e++
-      c /= 2
-    }
-
-    if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
-    } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
-      e = e + eBias
-    } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
-    }
-  }
-
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
-
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
-
-  buffer[offset + i - d] |= s * 128
-}
-
-},{}],36:[function(require,module,exports){
-/*!
- * Determine if an object is a Buffer
- *
- * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * @license  MIT
- */
-
-// The _isBuffer check is for Safari 5-7 support, because it's missing
-// Object.prototype.constructor. Remove this eventually
-module.exports = function (obj) {
-  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
-}
-
-function isBuffer (obj) {
-  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
-}
-
-// For Node v0.10 support. Remove this eventually.
-function isSlowBuffer (obj) {
-  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
-}
-
-},{}],37:[function(require,module,exports){
+},{"jsonlint-lines":32}],32:[function(require,module,exports){
 (function (process){
 /* parser generated by jison 0.4.6 */
 /*
@@ -6869,7 +6652,163 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 }).call(this,require('_process'))
-},{"_process":88,"fs":8,"path":85}],38:[function(require,module,exports){
+},{"_process":87,"fs":7,"path":84}],33:[function(require,module,exports){
+var parseCSV = require('dsv').csv.parse;
+
+/**
+ * Parse GTFS data given as a string and return a GeoJSON FeatureCollection
+ * of features with LineString geometries.
+ *
+ * @param {string} gtfs csv content of shapes.txt
+ * @returns {Object} geojson featurecollection
+ */
+function gtfs2geojson(gtfs) {
+  var shapes = parseCSV(gtfs).reduce(function(memo, row) {
+    memo[row.shape_id] = (memo[row.shape_id] || []).concat(row);
+    return memo;
+  }, {});
+  return {
+    type: 'FeatureCollection',
+    features: Object.keys(shapes).map(function(id) {
+      return {
+        type: 'Feature',
+        id: id,
+        properties: {
+          shape_id: id
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: shapes[id].sort(function(a, b) {
+            return +a.shape_pt_sequence - b.shape_pt_sequence;
+          }).map(function(coord) {
+            return [
+              parseFloat(coord.shape_pt_lon),
+              parseFloat(coord.shape_pt_lat)
+            ];
+          })
+        }
+      };
+    })
+  };
+}
+
+module.exports = gtfs2geojson;
+
+},{"dsv":34}],34:[function(require,module,exports){
+
+
+module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
+
+},{}],35:[function(require,module,exports){
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = (value * c - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+},{}],36:[function(require,module,exports){
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
+ */
+
+// The _isBuffer check is for Safari 5-7 support, because it's missing
+// Object.prototype.constructor. Remove this eventually
+module.exports = function (obj) {
+  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
+}
+
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// For Node v0.10 support. Remove this eventually.
+function isSlowBuffer (obj) {
+  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
+}
+
+},{}],37:[function(require,module,exports){
 'use strict';
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -6941,7 +6880,7 @@ exports.decode = function(input, utf8) {
 
 };
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 function CompressedObject() {
     this.compressedSize = 0;
@@ -6971,7 +6910,7 @@ CompressedObject.prototype = {
 };
 module.exports = CompressedObject;
 
-},{}],40:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 exports.STORE = {
     magic: "\x00\x00",
@@ -6986,7 +6925,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":45}],41:[function(require,module,exports){
+},{"./flate":44}],40:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -7090,7 +7029,7 @@ module.exports = function crc32(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":58}],42:[function(require,module,exports){
+},{"./utils":57}],41:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -7199,7 +7138,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"./utils":58}],43:[function(require,module,exports){
+},{"./utils":57}],42:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -7212,7 +7151,7 @@ exports.comment = null;
 exports.unixPermissions = null;
 exports.dosPermissions = null;
 
-},{}],44:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -7319,7 +7258,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./utils":58}],45:[function(require,module,exports){
+},{"./utils":57}],44:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -7337,7 +7276,7 @@ exports.uncompress =  function(input) {
     return pako.inflateRaw(input);
 };
 
-},{"pako":69}],46:[function(require,module,exports){
+},{"pako":68}],45:[function(require,module,exports){
 'use strict';
 
 var base64 = require('./base64');
@@ -7418,7 +7357,7 @@ JSZip.base64 = {
 JSZip.compressions = require('./compressions');
 module.exports = JSZip;
 
-},{"./base64":38,"./compressions":40,"./defaults":43,"./deprecatedPublicUtils":44,"./load":47,"./object":50,"./support":54}],47:[function(require,module,exports){
+},{"./base64":37,"./compressions":39,"./defaults":42,"./deprecatedPublicUtils":43,"./load":46,"./object":49,"./support":53}],46:[function(require,module,exports){
 'use strict';
 var base64 = require('./base64');
 var ZipEntries = require('./zipEntries');
@@ -7451,7 +7390,7 @@ module.exports = function(data, options) {
     return this;
 };
 
-},{"./base64":38,"./zipEntries":59}],48:[function(require,module,exports){
+},{"./base64":37,"./zipEntries":58}],47:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 module.exports = function(data, encoding){
@@ -7462,7 +7401,7 @@ module.exports.test = function(b){
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":9}],49:[function(require,module,exports){
+},{"buffer":8}],48:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./uint8ArrayReader');
 
@@ -7484,7 +7423,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"./uint8ArrayReader":55}],50:[function(require,module,exports){
+},{"./uint8ArrayReader":54}],49:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var utils = require('./utils');
@@ -8369,7 +8308,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./base64":38,"./compressedObject":39,"./compressions":40,"./crc32":41,"./defaults":43,"./nodeBuffer":48,"./signature":51,"./stringWriter":53,"./support":54,"./uint8ArrayWriter":56,"./utf8":57,"./utils":58}],51:[function(require,module,exports){
+},{"./base64":37,"./compressedObject":38,"./compressions":39,"./crc32":40,"./defaults":42,"./nodeBuffer":47,"./signature":50,"./stringWriter":52,"./support":53,"./uint8ArrayWriter":55,"./utf8":56,"./utils":57}],50:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -8378,7 +8317,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],52:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 var utils = require('./utils');
@@ -8416,7 +8355,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"./dataReader":42,"./utils":58}],53:[function(require,module,exports){
+},{"./dataReader":41,"./utils":57}],52:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -8448,7 +8387,7 @@ StringWriter.prototype = {
 
 module.exports = StringWriter;
 
-},{"./utils":58}],54:[function(require,module,exports){
+},{"./utils":57}],53:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 exports.base64 = true;
@@ -8486,7 +8425,7 @@ else {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":9}],55:[function(require,module,exports){
+},{"buffer":8}],54:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 
@@ -8535,7 +8474,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"./dataReader":42}],56:[function(require,module,exports){
+},{"./dataReader":41}],55:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -8573,7 +8512,7 @@ Uint8ArrayWriter.prototype = {
 
 module.exports = Uint8ArrayWriter;
 
-},{"./utils":58}],57:[function(require,module,exports){
+},{"./utils":57}],56:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -8782,7 +8721,7 @@ exports.utf8decode = function utf8decode(buf) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./nodeBuffer":48,"./support":54,"./utils":58}],58:[function(require,module,exports){
+},{"./nodeBuffer":47,"./support":53,"./utils":57}],57:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var compressions = require('./compressions');
@@ -9110,7 +9049,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./compressions":40,"./nodeBuffer":48,"./support":54}],59:[function(require,module,exports){
+},{"./compressions":39,"./nodeBuffer":47,"./support":53}],58:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var NodeBufferReader = require('./nodeBufferReader');
@@ -9333,7 +9272,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./nodeBufferReader":49,"./object":50,"./signature":51,"./stringReader":52,"./support":54,"./uint8ArrayReader":55,"./utils":58,"./zipEntry":60}],60:[function(require,module,exports){
+},{"./nodeBufferReader":48,"./object":49,"./signature":50,"./stringReader":51,"./support":53,"./uint8ArrayReader":54,"./utils":57,"./zipEntry":59}],59:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var utils = require('./utils');
@@ -9645,7 +9584,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":39,"./object":50,"./stringReader":52,"./utils":58}],61:[function(require,module,exports){
+},{"./compressedObject":38,"./object":49,"./stringReader":51,"./utils":57}],60:[function(require,module,exports){
 var spherical = require('spherical'),
     geojsonArea = require('geojson-area');
 
@@ -9690,7 +9629,69 @@ module.exports.area = function(layer) {
     return geojsonArea(gj.geometry);
 };
 
-},{"geojson-area":22,"spherical":103}],62:[function(require,module,exports){
+},{"geojson-area":61,"spherical":102}],61:[function(require,module,exports){
+var wgs84 = require('wgs84');
+
+module.exports = function(_) {
+    if (_.type === 'Polygon') return polygonArea(_.coordinates);
+    else if (_.type === 'MultiPolygon') {
+        var area = 0;
+        for (var i = 0; i < _.coordinates.length; i++) {
+            area += polygonArea(_.coordinates[i]);
+        }
+        return area;
+    } else {
+        return null;
+    }
+};
+
+function polygonArea(coords) {
+    var area = 0;
+    if (coords && coords.length > 0) {
+        area += Math.abs(ringArea(coords[0]));
+        for (var i = 1; i < coords.length; i++) {
+            area -= Math.abs(ringArea(coords[i]));
+        }
+    }
+    return area;
+}
+
+/**
+ * Calculate the approximate area of the polygon were it projected onto
+ *     the earth.  Note that this area will be positive if ring is oriented
+ *     clockwise, otherwise it will be negative.
+ *
+ * Reference:
+ * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for
+ *     Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
+ *     Laboratory, Pasadena, CA, June 2007 http://trs-new.jpl.nasa.gov/dspace/handle/2014/40409
+ *
+ * Returns:
+ * {float} The approximate signed geodesic area of the polygon in square
+ *     meters.
+ */
+function ringArea(coords) {
+    var area = 0;
+
+    if (coords.length > 2) {
+        var p1, p2;
+        for (var i = 0; i < coords.length - 1; i++) {
+            p1 = coords[i];
+            p2 = coords[i + 1];
+            area += rad(p2[0] - p1[0]) * (2 + Math.sin(rad(p1[1])) + Math.sin(rad(p2[1])));
+        }
+
+        area = area * wgs84.RADIUS * wgs84.RADIUS / 2;
+    }
+
+    return area;
+}
+
+function rad(_) {
+    return _ * Math.PI / 180;
+}
+
+},{"wgs84":143}],62:[function(require,module,exports){
 (function(window) {
 	var HAS_HASHCHANGE = (function() {
 		var doc_mode = window.documentMode;
@@ -11720,7 +11721,7 @@ osmtogeojson.toGeojson = osmtogeojson;
 
 module.exports = osmtogeojson;
 
-},{"./lodash.custom.js":65,"./polygon_features.json":68,"geojson-rewind":67}],65:[function(require,module,exports){
+},{"./lodash.custom.js":65,"./polygon_features.json":67,"geojson-rewind":66}],65:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -13519,8 +13520,6 @@ module.exports = osmtogeojson;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],66:[function(require,module,exports){
-arguments[4][30][0].apply(exports,arguments)
-},{"dup":30,"wgs84":144}],67:[function(require,module,exports){
 var geojsonArea = require('geojson-area');
 
 module.exports = rewind;
@@ -13571,7 +13570,7 @@ function cw(_) {
     return geojsonArea.ring(_) >= 0;
 }
 
-},{"geojson-area":66}],68:[function(require,module,exports){
+},{"geojson-area":22}],67:[function(require,module,exports){
 module.exports={
     "building": true,
     "highway": {
@@ -13652,7 +13651,7 @@ module.exports={
     "area:highway": true,
     "craft": true
 }
-},{}],69:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -13668,7 +13667,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":70,"./lib/inflate":71,"./lib/utils/common":72,"./lib/zlib/constants":75}],70:[function(require,module,exports){
+},{"./lib/deflate":69,"./lib/inflate":70,"./lib/utils/common":71,"./lib/zlib/constants":74}],69:[function(require,module,exports){
 'use strict';
 
 
@@ -14070,7 +14069,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":72,"./utils/strings":73,"./zlib/deflate":77,"./zlib/messages":82,"./zlib/zstream":84}],71:[function(require,module,exports){
+},{"./utils/common":71,"./utils/strings":72,"./zlib/deflate":76,"./zlib/messages":81,"./zlib/zstream":83}],70:[function(require,module,exports){
 'use strict';
 
 
@@ -14490,7 +14489,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":72,"./utils/strings":73,"./zlib/constants":75,"./zlib/gzheader":78,"./zlib/inflate":80,"./zlib/messages":82,"./zlib/zstream":84}],72:[function(require,module,exports){
+},{"./utils/common":71,"./utils/strings":72,"./zlib/constants":74,"./zlib/gzheader":77,"./zlib/inflate":79,"./zlib/messages":81,"./zlib/zstream":83}],71:[function(require,module,exports){
 'use strict';
 
 
@@ -14594,7 +14593,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],73:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -14781,7 +14780,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":72}],74:[function(require,module,exports){
+},{"./common":71}],73:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -14815,7 +14814,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],75:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 'use strict';
 
 
@@ -14867,7 +14866,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],76:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -14910,7 +14909,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],77:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -16767,7 +16766,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":72,"./adler32":74,"./crc32":76,"./messages":82,"./trees":83}],78:[function(require,module,exports){
+},{"../utils/common":71,"./adler32":73,"./crc32":75,"./messages":81,"./trees":82}],77:[function(require,module,exports){
 'use strict';
 
 
@@ -16809,7 +16808,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],79:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -17137,7 +17136,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],80:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 'use strict';
 
 
@@ -18677,7 +18676,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":72,"./adler32":74,"./crc32":76,"./inffast":79,"./inftrees":81}],81:[function(require,module,exports){
+},{"../utils/common":71,"./adler32":73,"./crc32":75,"./inffast":78,"./inftrees":80}],80:[function(require,module,exports){
 'use strict';
 
 
@@ -19006,7 +19005,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":72}],82:[function(require,module,exports){
+},{"../utils/common":71}],81:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -19021,7 +19020,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],83:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 'use strict';
 
 
@@ -20225,7 +20224,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":72}],84:[function(require,module,exports){
+},{"../utils/common":71}],83:[function(require,module,exports){
 'use strict';
 
 
@@ -20256,7 +20255,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],85:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -20484,7 +20483,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":88}],86:[function(require,module,exports){
+},{"_process":87}],85:[function(require,module,exports){
 'use strict';
 
 /**
@@ -20639,7 +20638,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = polyline;
 }
 
-},{}],87:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 module.exports = function (data) {
     var lines = data.split('\n'),
                 isNameLine = true,
@@ -20705,7 +20704,7 @@ module.exports = function (data) {
     return gj;
 };
 
-},{}],88:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -20876,6 +20875,10 @@ process.off = noop;
 process.removeListener = noop;
 process.removeAllListeners = noop;
 process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
@@ -20887,7 +20890,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],89:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 /*
  * Given a querystring, return an object of that querystring's components.
  *
@@ -20920,7 +20923,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],90:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 (function() {
   var slice = [].slice;
 
@@ -21002,7 +21005,7 @@ module.exports.qsString = function(obj, noencode) {
   else this.queue = queue;
 })();
 
-},{}],91:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 module.exports = function(x, dims) {
     if (!dims) dims = 'NSEW';
     if (typeof x !== 'string') return null;
@@ -21016,11 +21019,11 @@ module.exports = function(x, dims) {
         ((m[4] && m[4] === 'S' || m[4] === 'W') ? -1 : 1);
 };
 
-},{}],92:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 module.exports.download = require('./src/download')
 module.exports.write = require('./src/write')
 module.exports.zip = require('./src/zip')
-},{"./src/download":93,"./src/write":101,"./src/zip":102}],93:[function(require,module,exports){
+},{"./src/download":92,"./src/write":100,"./src/zip":101}],92:[function(require,module,exports){
 var zip = require('./zip');
 
 module.exports = function(gj, options) {
@@ -21028,7 +21031,7 @@ module.exports = function(gj, options) {
     location.href = 'data:application/zip;base64,' + content;
 };
 
-},{"./zip":102}],94:[function(require,module,exports){
+},{"./zip":101}],93:[function(require,module,exports){
 module.exports.enlarge = function enlargeExtent(extent, pt) {
     if (pt[0] < extent.xmin) extent.xmin = pt[0];
     if (pt[0] > extent.xmax) extent.xmax = pt[0];
@@ -21054,7 +21057,7 @@ module.exports.blank = function() {
     };
 };
 
-},{}],95:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 var types = require('./types').jstypes;
 
 module.exports.geojson = geojson;
@@ -21084,7 +21087,7 @@ function obj(_) {
     return o;
 }
 
-},{"./types":100}],96:[function(require,module,exports){
+},{"./types":99}],95:[function(require,module,exports){
 module.exports.point = justType('Point', 'POINT');
 module.exports.line = justType('LineString', 'POLYLINE');
 module.exports.polygon = justType('Polygon', 'POLYGON');
@@ -21118,7 +21121,7 @@ function isType(t) {
     return function(f) { return f.geometry.type === t; };
 }
 
-},{}],97:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(coordinates, extent, shpView, shxView) {
@@ -21165,7 +21168,7 @@ module.exports.shpLength = function(coordinates) {
     return coordinates.length * 28;
 };
 
-},{"./extent":94}],98:[function(require,module,exports){
+},{"./extent":93}],97:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
@@ -21245,10 +21248,10 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":94}],99:[function(require,module,exports){
+},{"./extent":93}],98:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
-},{}],100:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 module.exports.geometries = {
     NULL: 0,
     POINT: 1,
@@ -21266,7 +21269,7 @@ module.exports.geometries = {
     MULTIPATCH: 31,
 };
 
-},{}],101:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 var types = require('./types'),
     dbf = require('dbf'),
     prj = require('./prj'),
@@ -21335,7 +21338,7 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":94,"./fields":95,"./points":97,"./poly":98,"./prj":99,"./types":100,"assert":4,"dbf":13}],102:[function(require,module,exports){
+},{"./extent":93,"./fields":94,"./points":96,"./poly":97,"./prj":98,"./types":99,"assert":4,"dbf":13}],101:[function(require,module,exports){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
@@ -21369,7 +21372,7 @@ module.exports = function(gj, options) {
     return zip.generate({compression:'STORE'});
 };
 
-},{"./geojson":96,"./prj":99,"./write":101,"jszip":46}],103:[function(require,module,exports){
+},{"./geojson":95,"./prj":98,"./write":100,"jszip":45}],102:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports.heading = function(from, to) {
@@ -21423,7 +21426,7 @@ function deg(_) {
     return _ * (180 / Math.PI);
 }
 
-},{"wgs84":144}],104:[function(require,module,exports){
+},{"wgs84":143}],103:[function(require,module,exports){
 (function (global){
 ;(function(win){
 	var store = {},
@@ -21591,7 +21594,7 @@ function deg(_) {
 })(this.window || global);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],105:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 module.exports.attr = attr;
 module.exports.tagClose = tagClose;
 module.exports.tag = tag;
@@ -21637,7 +21640,7 @@ function encode(_) {
         .replace(/"/g, '&quot;');
 }
 
-},{}],106:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 (function (process){
 toGeoJSON = (function() {
     'use strict';
@@ -21876,7 +21879,7 @@ toGeoJSON = (function() {
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
 }).call(this,require('_process'))
-},{"_process":88,"xmldom":7}],107:[function(require,module,exports){
+},{"_process":87,"xmldom":6}],106:[function(require,module,exports){
 var strxml = require('strxml'),
     tag = strxml.tag,
     encode = strxml.encode;
@@ -22073,7 +22076,7 @@ function pairs(_) {
     return o;
 }
 
-},{"strxml":105}],108:[function(require,module,exports){
+},{"strxml":104}],107:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -22103,7 +22106,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"topojson","./type":136}],109:[function(require,module,exports){
+},{"../../":"topojson","./type":135}],108:[function(require,module,exports){
 
 // Computes the bounding box of the specified hash of GeoJSON objects.
 module.exports = function(objects) {
@@ -22150,7 +22153,7 @@ module.exports = function(objects) {
   return [x0, y0, x1, y1];
 };
 
-},{}],110:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -22190,7 +22193,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],111:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -22281,7 +22284,7 @@ function clockwisePolygonSystem(ringArea, reverse) {
 
 function noop() {}
 
-},{"../../":"topojson","./coordinate-systems":113,"./type":136}],112:[function(require,module,exports){
+},{"../../":"topojson","./coordinate-systems":112,"./type":135}],111:[function(require,module,exports){
 // Given a hash of GeoJSON objects and an id function, invokes the id function
 // to compute a new id for each object that is a feature. The function is passed
 // the feature and is expected to return the new feature id, or null if the
@@ -22311,13 +22314,13 @@ module.exports = function(objects, id) {
   return objects;
 };
 
-},{}],113:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":110,"./spherical":123}],114:[function(require,module,exports){
+},{"./cartesian":109,"./spherical":122}],113:[function(require,module,exports){
 // Given a TopoJSON topology in absolute (quantized) coordinates,
 // converts to fixed-point delta encoding.
 // This is a destructive operation that modifies the given topology!
@@ -22348,7 +22351,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{}],115:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -22477,7 +22480,7 @@ function preserveNone() {
   return false;
 }
 
-},{"../../":"topojson","./clockwise":111,"./coordinate-systems":113,"./prune":119,"./type":136}],116:[function(require,module,exports){
+},{"../../":"topojson","./clockwise":110,"./coordinate-systems":112,"./prune":118,"./type":135}],115:[function(require,module,exports){
 // Given a hash of GeoJSON objects, replaces Features with geometry objects.
 // This is a destructive operation that modifies the input objects!
 module.exports = function(objects) {
@@ -22596,7 +22599,7 @@ module.exports = function(objects) {
   return objects;
 };
 
-},{}],117:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(topology, Q0, Q1) {
@@ -22644,7 +22647,7 @@ module.exports = function(topology, Q0, Q1) {
   return topology;
 };
 
-},{"./quantize":120}],118:[function(require,module,exports){
+},{"./quantize":119}],117:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(objects, bbox, Q0, Q1) {
@@ -22703,7 +22706,7 @@ module.exports = function(objects, bbox, Q0, Q1) {
   return q.transform;
 };
 
-},{"./quantize":120}],119:[function(require,module,exports){
+},{"./quantize":119}],118:[function(require,module,exports){
 module.exports = function(topology, options) {
   var verbose = false,
       objects = topology.objects,
@@ -22760,7 +22763,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{}],120:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 module.exports = function(dx, dy, kx, ky) {
 
   function quantizePoint(coordinates) {
@@ -22804,7 +22807,7 @@ module.exports = function(dx, dy, kx, ky) {
   };
 };
 
-},{}],121:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(topology, options) {
@@ -22884,7 +22887,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":136}],122:[function(require,module,exports){
+},{"./type":135}],121:[function(require,module,exports){
 var topojson = require("../../"),
     systems = require("./coordinate-systems");
 
@@ -22993,7 +22996,7 @@ module.exports = function(topology, options) {
   return topology;
 };
 
-},{"../../":"topojson","./coordinate-systems":113}],123:[function(require,module,exports){
+},{"../../":"topojson","./coordinate-systems":112}],122:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -23074,7 +23077,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],124:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, transform) {
@@ -23257,7 +23260,7 @@ module.exports = function(objects, transform) {
   }
 };
 
-},{"./type":136}],125:[function(require,module,exports){
+},{"./type":135}],124:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch"),
     systems = require("./coordinate-systems"),
@@ -23370,7 +23373,7 @@ module.exports = function(objects, options) {
   return topology;
 };
 
-},{"./bounds":109,"./compute-id":112,"./coordinate-systems":113,"./delta":114,"./geomify":116,"./post-quantize":117,"./pre-quantize":118,"./stitch":124,"./topology/index":131,"./transform-properties":135,"./type":136}],126:[function(require,module,exports){
+},{"./bounds":108,"./compute-id":111,"./coordinate-systems":112,"./delta":113,"./geomify":115,"./post-quantize":116,"./pre-quantize":117,"./stitch":123,"./topology/index":130,"./transform-properties":134,"./type":135}],125:[function(require,module,exports){
 var join = require("./join");
 
 // Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
@@ -23432,7 +23435,7 @@ function reverse(array, start, end) {
   }
 }
 
-},{"./join":132}],127:[function(require,module,exports){
+},{"./join":131}],126:[function(require,module,exports){
 var join = require("./join"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -23618,7 +23621,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{"./hashmap":129,"./join":132,"./point-equal":133,"./point-hash":134}],128:[function(require,module,exports){
+},{"./hashmap":128,"./join":131,"./point-equal":132,"./point-hash":133}],127:[function(require,module,exports){
 // Extracts the lines and rings from the specified hash of geometry objects.
 //
 // Returns an object with three properties:
@@ -23685,7 +23688,7 @@ module.exports = function(objects) {
   };
 };
 
-},{}],129:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   if (arguments.length === 3) {
     keyType = valueType = Array;
@@ -23760,7 +23763,7 @@ module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   };
 };
 
-},{}],130:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 module.exports = function(size, hash, equal, type, empty) {
   if (arguments.length === 3) {
     type = Array;
@@ -23817,7 +23820,7 @@ module.exports = function(size, hash, equal, type, empty) {
   };
 };
 
-},{}],131:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 var hashmap = require("./hashmap"),
     extract = require("./extract"),
     cut = require("./cut"),
@@ -23887,7 +23890,7 @@ function equalArc(arcA, arcB) {
   return ia === ib && ja === jb;
 }
 
-},{"./cut":126,"./dedup":127,"./extract":128,"./hashmap":129}],132:[function(require,module,exports){
+},{"./cut":125,"./dedup":126,"./extract":127,"./hashmap":128}],131:[function(require,module,exports){
 var hashset = require("./hashset"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -24002,12 +24005,12 @@ module.exports = function(topology) {
   return junctionByPoint;
 };
 
-},{"./hashmap":129,"./hashset":130,"./point-equal":133,"./point-hash":134}],133:[function(require,module,exports){
+},{"./hashmap":128,"./hashset":129,"./point-equal":132,"./point-hash":133}],132:[function(require,module,exports){
 module.exports = function(pointA, pointB) {
   return pointA[0] === pointB[0] && pointA[1] === pointB[1];
 };
 
-},{}],134:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 // TODO if quantized, use simpler Int32 hashing?
 
 var buffer = new ArrayBuffer(16),
@@ -24022,7 +24025,7 @@ module.exports = function(point) {
   return hash & 0x7fffffff;
 };
 
-},{}],135:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 // Given a hash of GeoJSON objects, transforms any properties on features using
 // the specified transform function. The function is invoked for each existing
 // property on the current feature, being passed the new properties hash, the
@@ -24067,7 +24070,7 @@ module.exports = function(objects, propertyTransform) {
   return objects;
 };
 
-},{}],136:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -24161,7 +24164,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],137:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 !function() {
   var topojson = {
     version: "1.6.8",
@@ -24695,7 +24698,7 @@ var typeObjects = {
   else this.topojson = topojson;
 }();
 
-},{}],138:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -25011,7 +25014,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],139:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 module.exports = function(request) {
     var parent = ce('div', 'treeui'),
         onclick = function() { };
@@ -25110,7 +25113,7 @@ function ae(x, y, z) {
     return x.addEventListener(y, z);
 }
 
-},{}],140:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -25135,14 +25138,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],141:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],142:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -25732,7 +25735,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":141,"_process":88,"inherits":140}],143:[function(require,module,exports){
+},{"./support/isBuffer":140,"_process":87,"inherits":139}],142:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -25983,12 +25986,12 @@ function stringify(gj) {
     }
 }
 
-},{}],144:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 module.exports.RADIUS = 6378137;
 module.exports.FLATTENING = 1/298.257223563;
 module.exports.POLAR_RADIUS = 6356752.3142;
 
-},{}],145:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 (function (Buffer){
 module.exports = BinaryReader;
 
@@ -26039,7 +26042,7 @@ BinaryReader.prototype.readVarInt = function () {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":9}],146:[function(require,module,exports){
+},{"buffer":8}],145:[function(require,module,exports){
 (function (Buffer){
 module.exports = BinaryWriter;
 
@@ -26108,7 +26111,7 @@ BinaryWriter.prototype.ensureSize = function (size) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":9}],147:[function(require,module,exports){
+},{"buffer":8}],146:[function(require,module,exports){
 (function (Buffer){
 module.exports = Geometry;
 
@@ -26489,7 +26492,7 @@ Geometry.prototype.toGeoJSON = function (options) {
 };
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":36,"./binaryreader":145,"./binarywriter":146,"./geometrycollection":148,"./linestring":149,"./multilinestring":150,"./multipoint":151,"./multipolygon":152,"./point":153,"./polygon":154,"./types":155,"./wktparser":156,"./zigzag.js":158}],148:[function(require,module,exports){
+},{"../../is-buffer/index.js":36,"./binaryreader":144,"./binarywriter":145,"./geometrycollection":147,"./linestring":148,"./multilinestring":149,"./multipoint":150,"./multipolygon":151,"./point":152,"./polygon":153,"./types":154,"./wktparser":155,"./zigzag.js":157}],147:[function(require,module,exports){
 module.exports = GeometryCollection;
 
 var util = require('util');
@@ -26659,7 +26662,7 @@ GeometryCollection.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":146,"./geometry":147,"./types":155,"util":142}],149:[function(require,module,exports){
+},{"./binarywriter":145,"./geometry":146,"./types":154,"util":141}],148:[function(require,module,exports){
 module.exports = LineString;
 
 var util = require('util');
@@ -26838,7 +26841,7 @@ LineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":146,"./geometry":147,"./point":153,"./types":155,"util":142}],150:[function(require,module,exports){
+},{"./binarywriter":145,"./geometry":146,"./point":152,"./types":154,"util":141}],149:[function(require,module,exports){
 module.exports = MultiLineString;
 
 var util = require('util');
@@ -27028,7 +27031,7 @@ MultiLineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":146,"./geometry":147,"./linestring":149,"./point":153,"./types":155,"util":142}],151:[function(require,module,exports){
+},{"./binarywriter":145,"./geometry":146,"./linestring":148,"./point":152,"./types":154,"util":141}],150:[function(require,module,exports){
 module.exports = MultiPoint;
 
 var util = require('util');
@@ -27201,7 +27204,7 @@ MultiPoint.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":146,"./geometry":147,"./point":153,"./types":155,"util":142}],152:[function(require,module,exports){
+},{"./binarywriter":145,"./geometry":146,"./point":152,"./types":154,"util":141}],151:[function(require,module,exports){
 module.exports = MultiPolygon;
 
 var util = require('util');
@@ -27428,7 +27431,7 @@ MultiPolygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":146,"./geometry":147,"./point":153,"./polygon":154,"./types":155,"util":142}],153:[function(require,module,exports){
+},{"./binarywriter":145,"./geometry":146,"./point":152,"./polygon":153,"./types":154,"util":141}],152:[function(require,module,exports){
 module.exports = Point;
 
 var util = require('util');
@@ -27646,7 +27649,7 @@ Point.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":146,"./geometry":147,"./types":155,"./zigzag.js":158,"util":142}],154:[function(require,module,exports){
+},{"./binarywriter":145,"./geometry":146,"./types":154,"./zigzag.js":157,"util":141}],153:[function(require,module,exports){
 module.exports = Polygon;
 
 var util = require('util');
@@ -27935,7 +27938,7 @@ Polygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":146,"./geometry":147,"./point":153,"./types":155,"util":142}],155:[function(require,module,exports){
+},{"./binarywriter":145,"./geometry":146,"./point":152,"./types":154,"util":141}],154:[function(require,module,exports){
 module.exports = {
     wkt: {
         Point: 'POINT',
@@ -27966,7 +27969,7 @@ module.exports = {
     }
 };
 
-},{}],156:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 module.exports = WktParser;
 
 var Types = require('./types');
@@ -28092,7 +28095,7 @@ WktParser.prototype.skipWhitespaces = function () {
         this.position++;
 };
 
-},{"./point":153,"./types":155}],157:[function(require,module,exports){
+},{"./point":152,"./types":154}],156:[function(require,module,exports){
 exports.Types = require('./types');
 exports.Geometry = require('./geometry');
 exports.Point = require('./point');
@@ -28102,7 +28105,7 @@ exports.MultiPoint = require('./multipoint');
 exports.MultiLineString = require('./multilinestring');
 exports.MultiPolygon = require('./multipolygon');
 exports.GeometryCollection = require('./geometrycollection');
-},{"./geometry":147,"./geometrycollection":148,"./linestring":149,"./multilinestring":150,"./multipoint":151,"./multipolygon":152,"./point":153,"./polygon":154,"./types":155}],158:[function(require,module,exports){
+},{"./geometry":146,"./geometrycollection":147,"./linestring":148,"./multilinestring":149,"./multipoint":150,"./multipolygon":151,"./point":152,"./polygon":153,"./types":154}],157:[function(require,module,exports){
 module.exports = {
     encode: function (value) {
         return (value << 1) ^ (value >> 31);
@@ -28112,7 +28115,7 @@ module.exports = {
     }
 };
 
-},{}],159:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -28131,7 +28134,7 @@ function extend() {
     return target
 }
 
-},{}],160:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 module.exports = function(hostname) {
     // Settings for geojson.io
     L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
@@ -28156,7 +28159,7 @@ module.exports = function(hostname) {
     }
 };
 
-},{}],161:[function(require,module,exports){
+},{}],160:[function(require,module,exports){
 var clone = require('clone'),
     xtend = require('xtend'),
     config = require('../config.js')(location.hostname),
@@ -28447,7 +28450,7 @@ module.exports = function(context) {
     return data;
 };
 
-},{"../config.js":160,"../source/gist":177,"../source/github":178,"../source/local":179,"clone":10,"xtend":159}],162:[function(require,module,exports){
+},{"../config.js":159,"../source/gist":176,"../source/github":177,"../source/local":178,"clone":10,"xtend":158}],161:[function(require,module,exports){
 var qs = require('qs-hash'),
     zoomextent = require('../lib/zoomextent'),
     flash = require('../ui/flash');
@@ -28533,7 +28536,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../lib/zoomextent":172,"../ui/flash":183,"qs-hash":89}],163:[function(require,module,exports){
+},{"../lib/zoomextent":171,"../ui/flash":182,"qs-hash":88}],162:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -28577,7 +28580,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":160}],164:[function(require,module,exports){
+},{"../config.js":159}],163:[function(require,module,exports){
 var qs = require('qs-hash'),
     xtend = require('xtend');
 
@@ -28644,7 +28647,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"qs-hash":89,"xtend":159}],165:[function(require,module,exports){
+},{"qs-hash":88,"xtend":158}],164:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -28732,7 +28735,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":160}],166:[function(require,module,exports){
+},{"../config.js":159}],165:[function(require,module,exports){
 var qs = require('qs-hash');
 require('leaflet-hash');
 
@@ -28771,7 +28774,7 @@ L.Hash.prototype.formatHash = function(map) {
                 return '#' + qs.qsString(query);
 };
 
-},{"leaflet-hash":62,"qs-hash":89}],167:[function(require,module,exports){
+},{"leaflet-hash":62,"qs-hash":88}],166:[function(require,module,exports){
 (function (Buffer){
 var escape = require('escape-html'),
     geojsonRandom = require('geojson-random'),
@@ -28836,7 +28839,7 @@ module.exports.wkxBase64 = function(context) {
         context.data.set({ map: decoded.toGeoJSON() });
         zoomextent(context);
     } catch(e) {
-        console.error(e)
+        console.error(e);
         alert('Sorry, we were unable to decode that Base64 encoded WKX data');
     }
 };
@@ -28848,7 +28851,7 @@ module.exports.wkxHex = function(context) {
         context.data.set({ map: decoded.toGeoJSON() });
         zoomextent(context);
     } catch(e) {
-        console.error(e)
+        console.error(e);
         alert('Sorry, we were unable to decode that Hex encoded WKX data');
     }
 };
@@ -28860,13 +28863,13 @@ module.exports.wkxString = function(context) {
         context.data.set({ map: decoded.toGeoJSON() });
         zoomextent(context);
     } catch(e) {
-        console.error(e)
+        console.error(e);
         alert('Sorry, we were unable to decode that WKT data');
     }
 };
 
 }).call(this,require("buffer").Buffer)
-},{"../lib/zoomextent":172,"buffer":9,"escape-html":19,"geojson-extent":25,"geojson-flatten":26,"geojson-random":28,"polyline":86,"wkx":157}],168:[function(require,module,exports){
+},{"../lib/zoomextent":171,"buffer":8,"escape-html":19,"geojson-extent":25,"geojson-flatten":26,"geojson-random":28,"polyline":85,"wkx":156}],167:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
         var sel = d3.select(e.popup._contentNode);
@@ -28930,7 +28933,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],169:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     gtfs2geojson = require('gtfs2geojson'),
@@ -29122,7 +29125,7 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":11,"geojson-normalize":27,"gtfs2geojson":33,"osmtogeojson":64,"polytogeojson":87,"togeojson":106,"topojson":"topojson"}],170:[function(require,module,exports){
+},{"csv2geojson":11,"geojson-normalize":27,"gtfs2geojson":33,"osmtogeojson":64,"polytogeojson":86,"togeojson":105,"topojson":"topojson"}],169:[function(require,module,exports){
 module.exports = function(map, feature, bounds) {
     var zoomLevel;
 
@@ -29134,7 +29137,7 @@ module.exports = function(map, feature, bounds) {
     }
 };
 
-},{}],171:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -29195,13 +29198,13 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":32}],172:[function(require,module,exports){
+},{"geojsonhint":31}],171:[function(require,module,exports){
 module.exports = function(context) {
     var bounds = context.mapLayer.getBounds();
     if (bounds.isValid()) context.map.fitBounds(bounds);
 };
 
-},{}],173:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -29231,7 +29234,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":161,"./core/loader":162,"./core/repo":163,"./core/router":164,"./core/user":165,"./ui":180,"./ui/map":185,"store":104}],174:[function(require,module,exports){
+},{"./core/data":160,"./core/loader":161,"./core/repo":162,"./core/router":163,"./core/user":164,"./ui":179,"./ui/map":184,"store":103}],173:[function(require,module,exports){
 (function (Buffer){
 
 var marked = require('marked');
@@ -29255,7 +29258,7 @@ module.exports = function(context) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":9,"marked":63}],175:[function(require,module,exports){
+},{"buffer":8,"marked":63}],174:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
@@ -29320,7 +29323,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":171,"../lib/zoomextent":172,"../ui/saver.js":189}],176:[function(require,module,exports){
+},{"../lib/validate":170,"../lib/zoomextent":171,"../ui/saver.js":188}],175:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
     smartZoom = require('../lib/smartzoom.js');
 
@@ -29392,7 +29395,7 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/smartzoom.js":170,"d3-metatable":12}],177:[function(require,module,exports){
+},{"../lib/smartzoom.js":169,"d3-metatable":12}],176:[function(require,module,exports){
 
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';\nvar map = L.mapbox.map('map');\n\nL.mapbox.tileLayer('mapbox.streets').addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties;\n    var table = document.createElement('table');\n    table.setAttribute('class', 'marker-properties display')\n    for (var key in properties) {\n        var tr = createTableRows(key, properties[key]);\n        table.appendChild(tr);\n    }\n    if (table) l.bindPopup(table);\n}\n\nfunction createTableRows(key, value) {\n    var tr = document.createElement('tr');\n    var th = document.createElement('th');\n    var td = document.createElement('td');\n    key = document.createTextNode(key);\n    value = document.createTextNode(value);\n    th.appendChild(key);\n    td.appendChild(value);\n    tr.appendChild(th);\n    tr.appendChild(td);\n    return tr\n}\n\n</script>\n</body>\n</html>\n";
 
@@ -29506,7 +29509,7 @@ function loadRaw(url, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"../config.js":160}],178:[function(require,module,exports){
+},{"../config.js":159}],177:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -29638,7 +29641,7 @@ function shaUrl(parts, sha) {
         '/git/blobs/' + sha;
 }
 
-},{"../config.js":160}],179:[function(require,module,exports){
+},{"../config.js":159}],178:[function(require,module,exports){
 try {
     
 } catch(e) {
@@ -29663,7 +29666,7 @@ function save(context, callback) {
     });
 }
 
-},{}],180:[function(require,module,exports){
+},{}],179:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
     file_bar = require('./ui/file_bar'),
     dnd = require('./ui/dnd'),
@@ -29748,7 +29751,7 @@ function ui(context) {
     };
 }
 
-},{"./ui/dnd":181,"./ui/file_bar":182,"./ui/layer_switch":184,"./ui/mode_buttons":188,"./ui/user":191}],181:[function(require,module,exports){
+},{"./ui/dnd":180,"./ui/file_bar":181,"./ui/layer_switch":183,"./ui/mode_buttons":187,"./ui/user":190}],180:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -29792,7 +29795,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":169,"../lib/zoomextent":172,"./flash.js":183}],182:[function(require,module,exports){
+},{"../lib/readfile.js":168,"../lib/zoomextent":171,"./flash.js":182}],181:[function(require,module,exports){
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     geojson2dsv = require('geojson2dsv'),
@@ -30349,7 +30352,7 @@ module.exports = function fileBar(context) {
     return bar;
 };
 
-},{"../config.js":160,"../lib/meta.js":167,"../lib/readfile":169,"../lib/zoomextent":172,"../ui/saver.js":189,"./flash":183,"./modal.js":187,"./share":190,"@mapbox/gist-map-browser":2,"@mapbox/github-file-browser":3,"clone":10,"filesaver.js":21,"geojson-normalize":27,"geojson2dsv":31,"shp-write":92,"tokml":107,"topojson":"topojson","wellknown":143}],183:[function(require,module,exports){
+},{"../config.js":159,"../lib/meta.js":166,"../lib/readfile":168,"../lib/zoomextent":171,"../ui/saver.js":188,"./flash":182,"./modal.js":186,"./share":189,"@mapbox/gist-map-browser":2,"@mapbox/github-file-browser":3,"clone":10,"filesaver.js":21,"geojson-normalize":27,"geojson2dsv":30,"shp-write":91,"tokml":106,"topojson":"topojson","wellknown":142}],182:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -30371,7 +30374,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":186}],184:[function(require,module,exports){
+},{"./message":185}],183:[function(require,module,exports){
 module.exports = function(context) {
 
     return function(selection) {
@@ -30406,6 +30409,11 @@ module.exports = function(context) {
                 layer: L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 })
+            }, {
+                title: 'HERE',
+                layer: L.tileLayer('http://1.base.maps.cit.api.here.com/maptile/2.1/maptile/newest/normal.day/{z}/{x}/{y}/256/png8?app_id=xWVIueSv6JL0aJ5xqTxb&app_code=djPZyynKsbTjIUDOBcHZ2g', {
+                   attribution: '&copy; <a href="https://developer.here.com/terms-and-conditions">HERE</a> contributors'
+                })
             }];
         }
 
@@ -30437,7 +30445,7 @@ module.exports = function(context) {
     };
 };
 
-},{}],185:[function(require,module,exports){
+},{}],184:[function(require,module,exports){
 require('qs-hash');
 require('../lib/custom_hash.js');
 
@@ -30710,7 +30718,7 @@ function bindPopup(l) {
     });
 }
 
-},{"../../data/maki.json":1,"../lib/custom_hash.js":166,"../lib/popup":168,"escape-html":19,"geojson-rewind":29,"leaflet-geodesy":61,"qs-hash":89}],186:[function(require,module,exports){
+},{"../../data/maki.json":1,"../lib/custom_hash.js":165,"../lib/popup":167,"escape-html":19,"geojson-rewind":29,"leaflet-geodesy":60,"qs-hash":88}],185:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -30751,7 +30759,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],187:[function(require,module,exports){
+},{}],186:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -30819,7 +30827,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],188:[function(require,module,exports){
+},{}],187:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -30871,7 +30879,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":174,"../panel/json":175,"../panel/table":176}],189:[function(require,module,exports){
+},{"../panel/help":173,"../panel/json":174,"../panel/table":175}],188:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -30939,7 +30947,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":183}],190:[function(require,module,exports){
+},{"./flash":182}],189:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -30988,7 +30996,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":177,"./modal":187}],191:[function(require,module,exports){
+},{"../source/gist":176,"./modal":186}],190:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};
@@ -31039,7 +31047,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../config.js":160}],"topojson":[function(require,module,exports){
+},{"../config.js":159}],"topojson":[function(require,module,exports){
 var topojson = module.exports = require("./topojson");
 topojson.topology = require("./lib/topojson/topology");
 topojson.simplify = require("./lib/topojson/simplify");
@@ -31050,4 +31058,4 @@ topojson.bind = require("./lib/topojson/bind");
 topojson.stitch = require("./lib/topojson/stitch");
 topojson.scale = require("./lib/topojson/scale");
 
-},{"./lib/topojson/bind":108,"./lib/topojson/clockwise":111,"./lib/topojson/filter":115,"./lib/topojson/prune":119,"./lib/topojson/scale":121,"./lib/topojson/simplify":122,"./lib/topojson/stitch":124,"./lib/topojson/topology":125,"./topojson":137}]},{},[173]);
+},{"./lib/topojson/bind":107,"./lib/topojson/clockwise":110,"./lib/topojson/filter":114,"./lib/topojson/prune":118,"./lib/topojson/scale":120,"./lib/topojson/simplify":121,"./lib/topojson/stitch":123,"./lib/topojson/topology":124,"./topojson":136}]},{},[172]);
