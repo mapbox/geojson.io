@@ -32,6 +32,11 @@ module.exports = function(context) {
                 layer: L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 })
+            }, {
+                title: 'HERE',
+                layer: L.tileLayer('http://1.base.maps.cit.api.here.com/maptile/2.1/maptile/newest/normal.day/{z}/{x}/{y}/256/png8?app_id=xWVIueSv6JL0aJ5xqTxb&app_code=djPZyynKsbTjIUDOBcHZ2g', {
+                   attribution: '&copy; <a href="https://developer.here.com/terms-and-conditions">HERE</a> contributors'
+                })
             }];
         }
 
