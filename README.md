@@ -1,4 +1,5 @@
 [![Circle CI](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages.svg?style=svg)](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io?ref=badge_shield)
 
 # geojson.io
 
@@ -68,3 +69,6 @@ This is made up of small reusable chunks:
 * [TileMill](http://www.mapbox.com/tilemill/) for styling maps
 * [MapBox](http://www.mapbox.com/) for all of the APIs used in geojson.io
 * [uMap](https://umap.openstreetmap.fr) is a similar tool with its own data storage
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io.svg?type=large)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io?ref=badge_large)
