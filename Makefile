@@ -1,5 +1,4 @@
 BROWSERIFY = node_modules/.bin/browserify
-SMASH = node_modules/.bin/smash
 CLEANCSS = node_modules/.bin/cleancss
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
@@ -13,27 +12,17 @@ dist:
 	mkdir -p dist
 
 dist/d3.js: node_modules node_modules/d3/*
-	$(SMASH) node_modules/d3/src/start.js \
-		node_modules/d3/src/arrays/entries.js \
-		node_modules/d3/src/arrays/set.js \
-		node_modules/d3/src/arrays/pairs.js \
-		node_modules/d3/src/arrays/range.js \
-		node_modules/d3/src/behavior/drag.js \
-		node_modules/d3/src/core/rebind.js \
-		node_modules/d3/src/core/functor.js \
-		node_modules/d3/src/event/dispatch.js \
-		node_modules/d3/src/event/event.js \
-		node_modules/d3/src/selection/select.js \
-		node_modules/d3/src/selection/transition.js \
-		node_modules/d3/src/transition/each.js \
-		node_modules/d3/src/xhr/json.js \
-		node_modules/d3/src/xhr/json.js \
-		node_modules/d3/src/time/time.js \
-		node_modules/d3/src/time/format.js \
-		node_modules/d3/src/xhr/text.js \
-		node_modules/d3/src/geo/mercator.js \
-		node_modules/d3/src/geo/path.js \
-		node_modules/d3/src/end.js > dist/d3.js
+	cat node_modules/d3-selection/build/d3-selection.js \
+	  node_modules/d3-dispatch/build/d3-dispatch.js \
+	  node_modules/d3-array/build/d3-array.js \
+	  node_modules/d3-collection/build/d3-collection.js \
+	  node_modules/d3-metatable/build/d3-metatable.js \
+	  node_modules/d3-ease/build/d3-ease.js \
+	  node_modules/d3-transition/build/d3-transition.js \
+	  node_modules/d3-timer/build/d3-timer.js \
+	  node_modules/d3-color/build/d3-color.js \
+	  node_modules/d3-interpolate/build/d3-interpolate.js \
+	  node_modules/d3-request/build/d3-request.js > dist/d3.js
 
 dist/d3.min.js: dist/d3.js
 	$(UGLIFY) dist/d3.js > dist/d3.min.js

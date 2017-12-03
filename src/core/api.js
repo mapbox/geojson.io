@@ -37,5 +37,8 @@ function api(context) {
         data: context.data
     };
 
-    d3.rebind(window.api, context.dispatch, 'on');
+    window.api.on = function() {
+      var value = context.dispatch.on.apply(context.dispatch, arguments);
+      return value === context.dispatch ? window.api : value;
+    };
 }

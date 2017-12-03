@@ -54,7 +54,7 @@ module.exports = function(context) {
             _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
         }
         if (obj.dirty !== false) data.dirty = true;
-        context.dispatch.change({
+        context.dispatch.call('change', data, {
             obj: obj,
             source: src
         });

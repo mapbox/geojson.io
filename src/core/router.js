@@ -7,7 +7,7 @@ module.exports = function(context) {
     router.on = function() {
         d3.select(window).on('hashchange.router', route);
         context.dispatch.on('change.route', unroute);
-        context.dispatch.route(getQuery());
+        context.dispatch.call('route', router, getQuery());
         return router;
     };
 
@@ -23,7 +23,7 @@ module.exports = function(context) {
             newQuery = qs.stringQs(newHash);
 
         if (isOld(oldHash)) return upgrade(oldHash);
-        if (newQuery.id !== oldQuery.id) context.dispatch.route(newQuery);
+        if (newQuery.id !== oldQuery.id) context.dispatch.call('route', router, newQuery);
     }
 
     function isOld(id) {

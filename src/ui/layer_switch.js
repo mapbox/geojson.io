@@ -51,12 +51,14 @@ module.exports = function(context) {
         var layerButtons = selection.append('div')
             .attr('class', 'layer-switch')
             .selectAll('button')
-            .data(layers)
-            .enter()
+            .data(layers);
+
+        layerButtons = layerButtons.enter()
             .append('button')
             .attr('class', 'pad0x')
             .on('click', layerSwap)
-            .text(function(d) { return d.title; });
+            .text(function(d) { return d.title; })
+            .merge(layerButtons);
 
         layerButtons.filter(function(d, i) { return i === 0; }).call(layerSwap);
 
