@@ -1,6 +1,7 @@
 var shpwrite = require('shp-write'),
     clone = require('clone'),
     geojson2dsv = require('geojson2dsv'),
+    togpx = require('togpx'),
     topojson = require('topojson'),
     saveAs = require('filesaver.js'),
     tokml = require('tokml'),
@@ -36,6 +37,9 @@ module.exports = function fileBar(context) {
     }, {
         title: 'TopoJSON',
         action: downloadTopo
+    }, {
+        title: 'GPX',
+        action: downloadGPX
     }, {
         title: 'CSV',
         action: downloadDSV
@@ -496,6 +500,15 @@ module.exports = function fileBar(context) {
             type: 'text/plain;charset=utf-8'
         }), 'map.topojson');
 
+    }
+
+    function downloadGPX() {
+        var content = togpx(clone(context.data.get('map')), 
+             {'creator': 'geojson.io'});
+
+        saveAs(new Blob([content], {
+            type: 'text/xml;charset=utf-8'
+        }), 'map.gpx');
     }
 
     function downloadGeoJSON() {
