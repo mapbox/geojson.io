@@ -28144,7 +28144,7 @@ function extend() {
 
 },{}],159:[function(require,module,exports){
 module.exports = function(hostname) {
-    // Settings for geojson.io
+    // Settings for geojson.net
     L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
     if (hostname === 'geojson.net') {
         L.mapbox.config.FORCE_HTTPS = true;
@@ -28152,7 +28152,7 @@ module.exports = function(hostname) {
             authService: 'https://geojsonnet-auth.now.sh'
         };
     // Customize these settings for your own development/deployment
-    // version of geojson.io.
+    // version of geojson.net.
     } else {
         L.mapbox.config.HTTP_URL = 'http://a.tiles.mapbox.com/v4';
         L.mapbox.config.HTTPS_URL = 'https://a.tiles.mapbox.com/v4';
@@ -28171,8 +28171,8 @@ module.exports = api;
 function api(context) {
     if (typeof console === 'undefined' || !console || !console.log) return;
 
-    console.log('%c⚛ geojson.io api ⚛', 'font-family:monospace;font-size:20px;color:darkblue;');
-    console.log('%cfrom here, you can customize geojson.io to your liking by mucking around with the internals', 'font-family:monospace;font-size:14px;color:darkblue;');
+    console.log('%c⚛ geojson.net api ⚛', 'font-family:monospace;font-size:20px;color:darkblue;');
+    console.log('%cfrom here, you can customize geojson.net to your liking by mucking around with the internals', 'font-family:monospace;font-size:14px;color:darkblue;');
     console.log('%chere\'s what\'s available ↓', 'color:blue;');
     console.log('');
 
@@ -29507,7 +29507,7 @@ function saveBlocks(content, callback) {
             callback(message);
         })
         .send('POST', JSON.stringify({
-            description: 'via:geojson.io',
+            description: 'via:geojson.net',
             public: false,
             files: {
                 'index.html': { content: tmpl },
@@ -29523,7 +29523,7 @@ function save(context, callback) {
         name = (meta && meta.name) || 'map.geojson',
         map = context.data.get('map');
 
-    var description = (source && source.description) || 'via:geojson.io',
+    var description = (source && source.description) || 'via:geojson.net',
         public = source ? !!source.public : false;
 
     context.user.details(onuser);
@@ -29611,7 +29611,7 @@ function save(context, callback) {
 
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
+            'Please use a modern browser to enjoy the full featureset of geojson.net');
     }
 
     if (!localStorage.github_token) {
@@ -29957,7 +29957,7 @@ module.exports = function fileBar(context) {
                     title: 'Add map layer',
                     alt: 'Add a custom tile layer',
                     action: function() {
-                        var layerURL = prompt('Layer URL \n(http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)');
+                        var layerURL = prompt('Layer URL \n(https://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)');
                         if (layerURL === null) return;
                         var layerName = prompt('Layer name');
                         if (layerName === null) return;
@@ -30487,7 +30487,7 @@ module.exports = function(context) {
             }, {
                 title: 'OSM',
                 layer: L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
                 })
             }
             // OCM tiles from Thunderforest require an API key. Add your key and uncomment the lines
@@ -30588,7 +30588,7 @@ module.exports = function(context, readonly) {
             .on('draw:created', created)
             .on('popupopen', popup(context));
 
-        context.map.attributionControl.setPrefix('<a target="_blank" href="http://geojson.io/about.html">About</a>');
+        context.map.attributionControl.setPrefix('<a target="_blank" href="http://geojson.net/about.html">About</a>');
 
         function update() {
             var geojson = context.mapLayer.toGeoJSON();
@@ -31047,7 +31047,7 @@ function twitterUrl(_) {
 }
 
 function emailUrl(_) {
-    return 'mailto:?subject=' + encodeURIComponent('My Map on geojson.io') + '&body=Here\'s the link: ' + encodeURIComponent(_);
+    return 'mailto:?subject=' + encodeURIComponent('My Map on geojson.net') + '&body=Here\'s the link: ' + encodeURIComponent(_);
 }
 
 function share(context) {

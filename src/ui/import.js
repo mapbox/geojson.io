@@ -57,7 +57,7 @@ module.exports = function(context) {
         } else {
             wrap.append('p')
                 .attr('class', 'blank-banner center')
-                .text('Sorry, geojson.io supports importing GeoJSON, TopoJSON, KML, CSV, GPX, and OSM XML files, but ' +
+                .text('Sorry, geojson.net supports importing GeoJSON, TopoJSON, KML, CSV, GPX, and OSM XML files, but ' +
                       'your browser isn\'t compatible. Please use Google Chrome, Safari 6, IE10, Firefox, or Opera for an optimal experience.');
         }
 

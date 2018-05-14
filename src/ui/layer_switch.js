@@ -25,7 +25,7 @@ module.exports = function(context) {
             }, {
                 title: 'OSM',
                 layer: L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
                 })
             }
             // OCM tiles from Thunderforest require an API key. Add your key and uncomment the lines

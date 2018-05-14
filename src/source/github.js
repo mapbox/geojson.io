@@ -14,7 +14,7 @@ function save(context, callback) {
 
     if (navigator.appVersion.indexOf('MSIE 9') !== -1 || !window.XMLHttpRequest) {
         return alert('Sorry, saving and sharing is not supported in IE9 and lower. ' +
-            'Please use a modern browser to enjoy the full featureset of geojson.io');
+            'Please use a modern browser to enjoy the full featureset of geojson.net');
     }
 
     if (!localStorage.github_token) {
