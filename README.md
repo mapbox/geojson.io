@@ -1,4 +1,4 @@
-[![Circle CI](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages.svg?style=svg)](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages)
+[![Circle CI](https://circleci.com/gh/tmcw/geojson.net/tree/gh-pages.svg?style=svg)](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages)
 
 # geojson.net
 
