@@ -51,20 +51,16 @@
     "tape": "~2.12.3"
   },
   "scripts": {
-    "start": "nodewebkit",
     "test": "eslint src",
     "test-browser": "browserify test/index.js | testling"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/mapbox/geojson.io.git"
+    "url": "git://github.com/tmcw/geojson.net.git"
   },
   "author": "MapBox",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/mapbox/geojson.io/issues"
-  },
-  "window": {
-    "toolbar": false
+    "url": "https://github.com/tmcw/geojson.net/issues"
   }
 }
