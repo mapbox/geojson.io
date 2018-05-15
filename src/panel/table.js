@@ -1,5 +1,4 @@
-var metatable = require('d3-metatable')(d3),
-    smartZoom = require('../lib/smartzoom.js');
+var smartZoom = require('../lib/smartzoom.js');
 
 module.exports = function(context) {
     function render(selection) {
@@ -23,7 +22,7 @@ module.exports = function(context) {
                 selection.select('.blank-banner').remove();
                 selection
                     .data([props])
-                    .call(metatable()
+                    .call(d3.metatable()
                         .on('change', function(row, i) {
                             var geojson = context.data.get('map');
                             if (geojson.geometry) {

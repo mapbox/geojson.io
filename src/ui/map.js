@@ -55,7 +55,7 @@ module.exports = function(context, readonly) {
             .on('draw:created', created)
             .on('popupopen', popup(context));
 
-        context.map.attributionControl.setPrefix('<a target="_blank" href="http://geojson.io/about.html">About</a>');
+        context.map.attributionControl.setPrefix('<a target="_blank" href="http://geojson.net/about.html">About</a>');
 
         function update() {
             var geojson = context.mapLayer.toGeoJSON();

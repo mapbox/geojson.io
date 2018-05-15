@@ -1,11 +1,8 @@
-[![Circle CI](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages.svg?style=svg)](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages)
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io?ref=badge_shield)
+[![Circle CI](https://circleci.com/gh/tmcw/geojson.net/tree/gh-pages.svg?style=svg)](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages)
 
-# geojson.io
+# geojson.net
 
-### Follow [@geojsonio](https://twitter.com/geojsonio) to keep up with geojson.io's evolution
-
-![](http://i.cloudup.com/kz3BAF7Hnx.png)
+_Son of geojson.io_
 
 A fast, simple editor for map data. Read more on [Mapbox](http://www.mapbox.com/blog/geojsonio-announce/),
 [macwright.org](http://macwright.org/2013/07/26/geojsonio.html).
@@ -49,26 +46,7 @@ Port 8080 is recommended because by default geojson.io will use a
 [prose/gatekeeper](https://github.com/prose/gatekeeper) auth server that redirects
 back to `http://localhost:8080/` for GitHub OAuth.
 
-## Libraries
-
-This is made up of small reusable chunks:
-
-* <a href='http://github.com/mapbox/d3-metatable'>mapbox/d3-metatable</a>
-* <a href='http://github.com/mapbox/geojsonhint'>mapbox/geojsonhint</a>
-* <a href='http://github.com/mapbox/d3-bucket-ui'>mapbox/d3-bucket-ui</a>
-* <a href='http://github.com/mapbox/geocode-many'>mapbox/geocode-many</a>
-* <a href='http://github.com/mapbox/csv2geojson'>mapbox/csv2geojson</a>
-* <a href='http://github.com/mapbox/togeojson'>mapbox/togeojson</a>
-* <a href='https://github.com/tyrasd/osmtogeojson'>tyrasd/osmtogeojson</a>
-* <a href='https://github.com/w8r/Leaflet.draw.drag'>w8r/Leaflet.draw.drag</a>
-* <a href='https://github.com/cschwarz/wkx'>cschwarz/wkx</a>
-
-
 ## See Also
 
-* [TileMill](http://www.mapbox.com/tilemill/) for styling maps
-* [MapBox](http://www.mapbox.com/) for all of the APIs used in geojson.io
+* [MapBox](https://www.mapbox.com/) for all of the APIs used in geojson.io
 * [uMap](https://umap.openstreetmap.fr) is a similar tool with its own data storage
-
-## License
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io.svg?type=large)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io?ref=badge_large)

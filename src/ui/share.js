@@ -12,7 +12,7 @@ function twitterUrl(_) {
 }
 
 function emailUrl(_) {
-    return 'mailto:?subject=' + encodeURIComponent('My Map on geojson.io') + '&body=Here\'s the link: ' + encodeURIComponent(_);
+    return 'mailto:?subject=' + encodeURIComponent('My Map on geojson.net') + '&body=Here\'s the link: ' + encodeURIComponent(_);
 }
 
 function share(context) {

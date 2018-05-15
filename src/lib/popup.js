@@ -36,9 +36,10 @@ module.exports = function(context) {
             var table = sel.select('table.marker-properties');
             table.selectAll('tr').each(collectRow);
             function collectRow() {
-                if (d3.select(this).selectAll('input')[0][0].value) {
-                    obj[d3.select(this).selectAll('input')[0][0].value] =
-                        losslessNumber(d3.select(this).selectAll('input')[0][1].value);
+                var inputNodes = d3.select(this).selectAll('input').nodes();
+                var leftValue = d3.select(inputNodes[0]).property('value');
+                if (leftValue) {
+                    obj[leftValue] = losslessNumber(d3.select(inputNodes[1]).property('value'));
                 }
             }
             e.popup._source.feature.properties = obj;
