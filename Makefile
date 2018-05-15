@@ -12,7 +12,7 @@ dist:
 	mkdir -p dist
 
 dist/d3.js: node_modules node_modules/d3/*
-	cat node_modules/d3-selection/build/d3-selection.js \
+	cat node_modules/d3-selection/dist/d3-selection.js \
 	  node_modules/d3-dispatch/build/d3-dispatch.js \
 	  node_modules/d3-array/build/d3-array.js \
 	  node_modules/d3-collection/build/d3-collection.js \

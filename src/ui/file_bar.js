@@ -74,7 +74,7 @@ module.exports = function fileBar(context) {
                     title: 'Add map layer',
                     alt: 'Add a custom tile layer',
                     action: function() {
-                        var layerURL = prompt('Layer URL \n(http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)');
+                        var layerURL = prompt('Layer URL \n(https://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)');
                         if (layerURL === null) return;
                         var layerName = prompt('Layer name');
                         if (layerName === null) return;

@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Next Release
+
+* OpenCycleMap requires an API key and the layer is disabled by default (#577, #604).
+
 ## 2014-10-13
 
 * Updated `shp-write`: shapefile writing should work again.
