@@ -2,9 +2,9 @@
 
 This is a fork of geojson.io, aimed at continuing the original ethos of the project:
 
-- Change slow
 - Be useful
-- Don't break things
+- Change slow
+- Be as generic as possible
 
 Unfortunately, geojson.io has been slowly breaking simply due to the web moving
 forward and the site not keeping up. Most notably, GitHub authentication broke

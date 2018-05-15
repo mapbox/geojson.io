@@ -55,7 +55,7 @@ table {
 
 body#geojsonio-body {
     margin:0; padding:0;
-    font-family: 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, Ubuntu, roboto, noto, segoe ui, arial, sans-serif;
     font-size:15px;
     line-height:20px;
     color:#222;
@@ -255,5 +255,5 @@ input[type=text] {
   height:40px;
   border-radius:50%;
   opacity:0.25;
-  background:#444 url(spinner.gif) 50% 50% no-repeat;
+  background:#444 url("./spinner.gif") 50% 50% no-repeat;
 }
