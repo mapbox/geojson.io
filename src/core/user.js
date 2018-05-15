@@ -43,9 +43,7 @@ module.exports = function(context) {
     };
 
     user.authenticate = function() {
-        window.location.href = (config.GithubAPI || 'https://github.com') + '/login/oauth/authorize?client_id=' +
-            config.client_id +
-            '&scope=gist,repo';
+        window.location.href = config.authService + '/login';
     };
 
     user.token = function(callback) {
@@ -61,25 +59,15 @@ module.exports = function(context) {
     };
 
     function killTokenUrl() {
-        if (window.location.href.indexOf('?code') !== -1) {
-            window.location.href = window.location.href.replace(/\?code=.*$/, '');
+        if (window.location.href.indexOf('?access_token') !== -1) {
+            window.location.href = window.location.href.replace(/\?access_token=.*$/, '');
         }
     }
 
-    if (window.location.search && window.location.search.indexOf('?code') === 0) {
-        var code = window.location.search.replace(/\?{0,1}code=([^\#\&]+).*$/g, '$1');
-        d3.select('.map').classed('loading', true);
-        d3.json(config.gatekeeper_url + '/authenticate/' + code)
-            .on('load', function(l) {
-                d3.select('.map').classed('loading', false);
-                if (l.token) window.localStorage.github_token = l.token;
-                killTokenUrl();
-            })
-            .on('error', function() {
-                d3.select('.map').classed('loading', false);
-                alert('Authentication with GitHub failed');
-            })
-            .get();
+    if (window.location.search && window.location.search.indexOf('?access_token') === 0) {
+        var accessToken = window.location.search.replace(/\?{0,1}access_token=([^\#\&]+).*$/g, '$1');
+        window.localStorage.github_token = accessToken;
+        killTokenUrl();
     }
 
     return user;

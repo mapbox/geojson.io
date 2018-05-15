@@ -3,8 +3,8 @@ module.exports = api;
 function api(context) {
     if (typeof console === 'undefined' || !console || !console.log) return;
 
-    console.log('%c⚛ geojson.io api ⚛', 'font-family:monospace;font-size:20px;color:darkblue;');
-    console.log('%cfrom here, you can customize geojson.io to your liking by mucking around with the internals', 'font-family:monospace;font-size:14px;color:darkblue;');
+    console.log('%c⚛ geojson.net api ⚛', 'font-family:monospace;font-size:20px;color:darkblue;');
+    console.log('%cfrom here, you can customize geojson.net to your liking by mucking around with the internals', 'font-family:monospace;font-size:14px;color:darkblue;');
     console.log('%chere\'s what\'s available ↓', 'color:blue;');
     console.log('');
 
@@ -37,5 +37,8 @@ function api(context) {
         data: context.data
     };
 
-    d3.rebind(window.api, context.dispatch, 'on');
+    window.api.on = function() {
+      var value = context.dispatch.on.apply(context.dispatch, arguments);
+      return value === context.dispatch ? window.api : value;
+    };
 }

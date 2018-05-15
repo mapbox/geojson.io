@@ -24,7 +24,7 @@ function saveBlocks(content, callback) {
             callback(message);
         })
         .send('POST', JSON.stringify({
-            description: 'via:geojson.io',
+            description: 'via:geojson.net',
             public: false,
             files: {
                 'index.html': { content: tmpl },
@@ -40,7 +40,7 @@ function save(context, callback) {
         name = (meta && meta.name) || 'map.geojson',
         map = context.data.get('map');
 
-    var description = (source && source.description) || 'via:geojson.io',
+    var description = (source && source.description) || 'via:geojson.net',
         public = source ? !!source.public : false;
 
     context.user.details(onuser);

@@ -123,22 +123,23 @@ function readFile(f, text, callback) {
     } else if (fileType === 'gpx') {
         callback(null, toGeoJSON.gpx(toDom(text)));
     } else if (fileType === 'geojson') {
+        var gj;
         try {
-            var gj = JSON.parse(text);
-            if (gj && gj.type === 'Topology' && gj.objects) {
-                var collection = { type: 'FeatureCollection', features: [] };
-                for (var o in gj.objects) {
-                    var ft = topojson.feature(gj, gj.objects[o]);
-                    if (ft.features) collection.features = collection.features.concat(ft.features);
-                    else collection.features = collection.features.concat([ft]);
-                }
-                return callback(null, collection);
-            } else {
-                return callback(null, gj);
-            }
+          gj = JSON.parse(text);
         } catch(err) {
-            alert('Invalid JSON file: ' + err);
-            return;
+          alert('Invalid JSON file: ' + err);
+          return;
+        }
+        if (gj && gj.type === 'Topology' && gj.objects) {
+            var collection = { type: 'FeatureCollection', features: [] };
+            for (var o in gj.objects) {
+                var ft = topojson.feature(gj, gj.objects[o]);
+                if (ft.features) collection.features = collection.features.concat(ft.features);
+                else collection.features = collection.features.concat([ft]);
+            }
+            return callback(null, collection);
+        } else {
+            return callback(null, gj);
         }
     } else if (fileType === 'dsv') {
         csv2geojson.csv2geojson(text, {

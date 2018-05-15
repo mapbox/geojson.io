@@ -78,7 +78,7 @@ module.exports = function fileBar(context) {
                     title: 'Add map layer',
                     alt: 'Add a custom tile layer',
                     action: function() {
-                        var layerURL = prompt('Layer URL \n(http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)');
+                        var layerURL = prompt('Layer URL \n(https://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)');
                         if (layerURL === null) return;
                         var layerName = prompt('Layer name');
                         if (layerName === null) return;
@@ -200,10 +200,12 @@ module.exports = function fileBar(context) {
         var items = selection.append('div')
             .attr('class', 'inline')
             .selectAll('div.item')
-            .data(actions)
-            .enter()
+            .data(actions);
+
+        items = items.enter()
             .append('div')
-            .attr('class', 'item');
+            .attr('class', 'item')
+            .merge(items);
 
         var buttons = items.append('a')
             .attr('class', 'parent')
@@ -469,6 +471,13 @@ module.exports = function fileBar(context) {
         }
 
         function onImport(err, gj, warning) {
+            if (err) {
+                if (err.message) {
+                    flash(context.container, err.message)
+                        .classed('error', 'true');
+                }
+                return;
+            }
             gj = geojsonNormalize(gj);
             if (gj) {
                 context.data.mergeFeatures(gj.features);
