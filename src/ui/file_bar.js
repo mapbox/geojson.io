@@ -196,10 +196,12 @@ module.exports = function fileBar(context) {
         var items = selection.append('div')
             .attr('class', 'inline')
             .selectAll('div.item')
-            .data(actions)
-            .enter()
+            .data(actions);
+
+        items = items.enter()
             .append('div')
-            .attr('class', 'item');
+            .attr('class', 'item')
+            .merge(items);
 
         var buttons = items.append('a')
             .attr('class', 'parent')
@@ -465,6 +467,13 @@ module.exports = function fileBar(context) {
         }
 
         function onImport(err, gj, warning) {
+            if (err) {
+                if (err.message) {
+                    flash(context.container, err.message)
+                        .classed('error', 'true');
+                }
+                return;
+            }
             gj = geojsonNormalize(gj);
             if (gj) {
                 context.data.mergeFeatures(gj.features);

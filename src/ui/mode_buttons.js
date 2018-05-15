@@ -38,6 +38,8 @@ module.exports = function(context, pane) {
             .append('span')
             .text(function(d) { return d.title; });
 
+        buttons = enter.merge(buttons);
+
         d3.select(buttons.node()).trigger('click');
 
         function buttonClick(d) {
