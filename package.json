@@ -1,5 +1,5 @@
 {
-  "name": "geojson.io",
+  "name": "geojson-net",
   "version": "0.1.1",
   "description": "create and edit maps, on the internet",
   "main": "index.html",

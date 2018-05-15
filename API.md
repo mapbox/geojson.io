@@ -1,12 +1,12 @@
 ## Geojson.io API
-You can interact with geojson.io programmatically in two ways:
+You can interact with geojson.net programmatically in two ways:
 
 * [URL parameters](#url-api)
 * [Browser console](#console-api)
 * [Protips](#protips)
 
 ## URL API
-You can do a few interesting things with just URLs and geojson.io. Here are the
+You can do a few interesting things with just URLs and geojson.net. Here are the
 current URL formats.
 
 ### `map`
@@ -16,7 +16,7 @@ in the form `zoom/latitude/longitude`.
 
 #### Example:
 
-http://geojson.io/#map=2/20.0/0.0
+http://geojson.net/#map=2/20.0/0.0
 
 
 ### `data=data:application/json,`
@@ -27,7 +27,7 @@ as per `encodeURIComponent(JSON.stringify(geojson_data))`.
 
 #### Example:
 
-http://geojson.io/#data=data:application/json,%7B%22type%22%3A%22LineString%22%2C%22coordinates%22%3A%5B%5B0%2C0%5D%2C%5B10%2C10%5D%5D%7D
+http://geojson.net/#data=data:application/json,%7B%22type%22%3A%22LineString%22%2C%22coordinates%22%3A%5B%5B0%2C0%5D%2C%5B10%2C10%5D%5D%7D
 
 
 ### `data=data:text/x-url,`
@@ -43,7 +43,7 @@ The URL should be encoded as per `encodeURIComponent(url)`.
 
 #### Example:
 
-http://geojson.io/#data=data:text/x-url,http%3A%2F%2Fapi.tiles.mapbox.com%2Fv3%2Ftmcw.map-gdv4cswo%2Fmarkers.geojson
+http://geojson.net/#data=data:text/x-url,http%3A%2F%2Fapi.tiles.mapbox.com%2Fv3%2Ftmcw.map-gdv4cswo%2Fmarkers.geojson
 
 
 ### `id=gist:`
@@ -54,7 +54,7 @@ contain a file with a `.geojson` extension that is valid GeoJSON.
 
 #### Example:
 
-http://geojson.io/#id=gist:tmcw/e9a29ad54dbaa83dee08&map=8/39.198/-76.981
+http://geojson.net/#id=gist:tmcw/e9a29ad54dbaa83dee08&map=8/39.198/-76.981
 
 
 ### `id=github:`
@@ -68,12 +68,12 @@ The url is in the form:
 
 #### Example:
 
-http://geojson.io/#id=github:benbalter/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302
+http://geojson.net/#id=github:benbalter/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302
 
 ## Console API
 
 [Pop open your browser console](http://debugbrowser.com/) and see the beautiful
-examples: geojson.io has started to expose a subset of its inner workings for
+examples: geojson.net has started to expose a subset of its inner workings for
 you to mess around with:
 
 
@@ -91,7 +91,7 @@ window.api.map.addLayer(L.tileLayer('http://tile.stamen.com/watercolor/{z}/{x}/{
 
 ### `window.api.data`
 
-The data model. See the [code to get an idea of how it works](https://github.com/mapbox/geojson.io/blob/gh-pages/src/core/data.js#L48-L90) -
+The data model. See the [code to get an idea of how it works](https://github.com/mapbox/geojson.net/blob/gh-pages/src/core/data.js#L48-L90) -
 you'll want to use stuff like `data.set({ map: { .. your geojson map information .. })`
 and `data.get('map')` and `data.mergeFeatures([arrayoffeatures])` to do your
 dirty business.

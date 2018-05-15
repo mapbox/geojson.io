@@ -513,7 +513,7 @@ module.exports = function fileBar(context) {
 
     function downloadGPX() {
         var content = togpx(clone(context.data.get('map')), 
-             {'creator': 'geojson.io'});
+             {'creator': 'geojson.net'});
 
         saveAs(new Blob([content], {
             type: 'text/xml;charset=utf-8'
