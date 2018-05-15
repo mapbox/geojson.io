@@ -1,6 +1,8 @@
 var d3 = require("d3");
 var Draw = require("leaflet-draw");
 var L = require("leaflet");
+var marker = require("./marker");
+var simplestyle = require("./simplestyle");
 require("qs-hash");
 require("../lib/custom_hash.js");
 
@@ -51,7 +53,7 @@ module.exports = function(context, readonly) {
               navigator.language !== "en-us" && navigator.language !== "en-US"
           },
           marker: {
-            // icon: L.mapbox.marker.icon({})
+            icon: marker.icon({})
           }
         }
       }).addTo(context.map);
@@ -100,10 +102,10 @@ module.exports = function(context, readonly) {
 function geojsonToLayer(geojson, layer) {
   layer.clearLayers();
   L.geoJson(geojson, {
-    style: L.mapbox.simplestyle.style,
+    style: simplestyle,
     pointToLayer: function(feature, latlon) {
       if (!feature.properties) feature.properties = {};
-      return L.mapbox.marker.style(feature, latlon);
+      return marker.style(feature, latlon);
     }
   }).eachLayer(add);
   function add(l) {
