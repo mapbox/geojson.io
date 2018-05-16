@@ -1,26 +1,22 @@
-var CodeMirror = require("codemirror");
-var jsMode = require("codemirror/mode/javascript/javascript");
-var validate = require("../lib/validate"),
-  zoomextent = require("../lib/zoomextent"),
-  saver = require("../ui/saver.js");
+import React from "react";
+import CodeMirror from "codemirror";
+import jsMode from "codemirror/mode/javascript/javascript";
+import validate from "../lib/validate";
+import zoomextent from "../lib/zoomextent";
+import saver from "../ui/saver.js";
 
-module.exports = function(context) {
-  CodeMirror.keyMap.tabSpace = {
-    Tab: function(cm) {
-      var spaces = new Array(cm.getOption("indentUnit") + 1).join(" ");
-      cm.replaceSelection(spaces, "end", "+input");
-    },
-    "Ctrl-S": saveAction,
-    "Cmd-S": saveAction,
-    fallthrough: ["default"]
-  };
+CodeMirror.keyMap.tabSpace = {
+  Tab: function(cm) {
+    var spaces = new Array(cm.getOption("indentUnit") + 1).join(" ");
+    cm.replaceSelection(spaces, "end", "+input");
+  },
+  // "Ctrl-S": saveAction,
+  // "Cmd-S": saveAction,
+  fallthrough: ["default"]
+};
 
-  function saveAction() {
-    saver(context);
-    return false;
-  }
-
-  function render(selection) {
+export class Code extends React.Component {
+  render(selection) {
     var textarea = selection.html("").append("textarea");
 
     var editor = CodeMirror.fromTextArea(textarea.node(), {
@@ -53,10 +49,4 @@ module.exports = function(context) {
 
     editor.setValue(JSON.stringify(context.data.get("map"), null, 2));
   }
-
-  render.off = function() {
-    context.dispatch.on("change.json", null);
-  };
-
-  return render;
-};
+}

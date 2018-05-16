@@ -1,34 +1,35 @@
-var d3 = require("d3");
-var ui = require("./ui.js"),
-  map = require("./ui/map"),
-  data = require("./core/data"),
-  loader = require("./core/loader"),
-  router = require("./core/router"),
-  recovery = require("./core/recovery"),
-  repo = require("./core/repo"),
-  user = require("./core/user"),
-  api = require("./core/api"),
-  store = require("store");
+import React from "react";
+import ReactDOM from "react-dom";
+import { Provider, Subscribe } from "unstated";
+import Help from "./panel/help";
+import LayerSwitch from "./ui/layer_switch";
+import FileBar from "./ui/file_bar";
+import ModeButtons from "./ui/mode_buttons";
+import User from "./ui/user";
+import Map from "./ui/map";
+import Panel from "./panel/index";
+import StateContainer from "./state";
 
-var gjIO = geojsonIO(),
-  gjUI = ui(gjIO).write;
-
-d3.select(".geojsonio").call(gjUI);
-
-gjIO.recovery = recovery(gjIO);
-gjIO.router.on();
-
-api(gjIO);
-
-function geojsonIO() {
-  var context = {};
-  context.dispatch = d3.dispatch("change", "route");
-  context.storage = store;
-  context.map = map(context);
-  context.data = data(context);
-  context.dispatch.on("route", loader(context));
-  context.repo = repo(context);
-  context.router = router(context);
-  context.user = user(context);
-  return context;
-}
+ReactDOM.render(
+  <Provider>
+    <div className="vh-100 flex sans-serif black-70">
+      <div className="w-50 flex flex-column">
+        <div className="bg-white pt2 ph2 flex justify-between">
+          <FileBar />
+        </div>
+        <Subscribe to={[StateContainer]}>
+          {({ state: { layer } }) => <Map layer={layer} />}
+        </Subscribe>
+        <LayerSwitch />
+      </div>
+      <div className="w-50 bl b--black-10 bg-light-gray">
+        <div className="bg-white pt2 ph2 flex justify-between">
+          <ModeButtons />
+          <User />
+        </div>
+        <Panel />
+      </div>
+    </div>
+  </Provider>,
+  document.getElementById("geojsonio")
+);
