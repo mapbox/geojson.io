@@ -404,36 +404,6 @@ function saveNoun(_) {
     .text(_);
 }
 
-function submenu(children) {
-  return function(selection) {
-    selection
-      .selectAll("a")
-      .data(children)
-      .enter()
-      .append("a")
-      .attr("title", function(d) {
-        if (
-          d.title == "File" ||
-          d.title == "GitHub" ||
-          d.title == "Gist" ||
-          d.title == "Add map layer" ||
-          d.title == "Zoom to features" ||
-          d.title == "Clear" ||
-          d.title == "Random: Points" ||
-          d.title == "Add bboxes" ||
-          d.title == "Flatten Multi Features"
-        )
-          return d.alt;
-      })
-      .text(function(d) {
-        return d.title;
-      })
-      .on("click", function(d) {
-        d.action.apply(this, d);
-      });
-  };
-}
-
 function clickGitHubOpen() {
   if (!context.user.token())
     return flash(context.container, "You must authenticate to use this API.");
