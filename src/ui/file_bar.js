@@ -21,18 +21,6 @@ const githubBase = githubAPI
   ? config.GithubAPI + "/api/v3"
   : "https://api.github.com";
 
-// if (shpSupport) {
-//   exportFormats.push({
-//     title: "Shapefile",
-//     action: downloadShp
-//   });
-// }
-
-/**
- * This module provides the file picking & status bar above the map interface.
- * It dispatches to source implementations that interface with specific
- * sources, like GitHub.
- */
 export default class FileBar extends React.Component {
   constructor(props) {
     super(props);
@@ -55,14 +43,19 @@ export default class FileBar extends React.Component {
     put.remove();
   };
 
-  downloadTopo() {
+  downloadTopo = () => {
     const { geojson } = this.props;
     var content = JSON.stringify(
       topojson.topology(
         {
           collection: clone(geojson)
         },
-        { "property-transform": allProperties }
+        {
+          "property-transform": function(properties, key, value) {
+            properties[key] = value;
+            return true;
+          }
+        }
       )
     );
 
@@ -72,7 +65,7 @@ export default class FileBar extends React.Component {
       }),
       "map.topojson"
     );
-  }
+  };
 
   downloadGPX = () => {
     var content = togpx(clone(context.data.get("map")), {
@@ -348,7 +341,7 @@ export default class FileBar extends React.Component {
                     top: 24
                   }}
                 >
-                  {item.children.map(child => {
+                  {item.children.map((child, i) => {
                     return (
                       <div
                         onClick={child.action}
@@ -661,17 +654,4 @@ function onImport(err, gj, warning) {
     }
     zoomextent(context);
   }
-}
-
-// d3.select(document).call(
-//   keybinding("file_bar")
-//     .on("⌘+o", function() {
-//       blindImport();
-//     })
-//     .on("⌘+s", saveAction)
-// );
-
-function allProperties(properties, key, value) {
-  properties[key] = value;
-  return true;
 }

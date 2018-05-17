@@ -12,4 +12,7 @@ export default class StateContainer extends Container {
   setLayer = layer => {
     this.setState({ layer });
   };
+  setGeojson = geojson => {
+    this.setState({ geojson });
+  };
 }

@@ -20,8 +20,8 @@ ReactDOM.render(
           </Subscribe>
         </div>
         <Subscribe to={[StateContainer]}>
-          {({ state: { layer, geojson } }) => (
-            <Map layer={layer} geojson={geojson} />
+          {({ state: { layer, geojson }, setGeojson }) => (
+            <Map layer={layer} geojson={geojson} setGeojson={setGeojson} />
           )}
         </Subscribe>
         <LayerSwitch />

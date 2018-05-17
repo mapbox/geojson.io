@@ -3,6 +3,7 @@ import Draw from "leaflet-draw";
 import L from "leaflet";
 import marker from "../map/marker";
 import { layers } from "../layers";
+import geojsonRewind from "geojson-rewind";
 // var simplestyle = require("./simplestyle");
 // require("qs-hash");
 // require("../lib/custom_hash.js");
@@ -10,11 +11,6 @@ import { layers } from "../layers";
 // var popup = require("../lib/popup"),
 //   escape = require("escape-html"),
 //   LGeo = require("leaflet-geodesy"),
-//   geojsonRewind = require("geojson-rewind"),
-//   writable = false,
-//   showStyle = true,
-//   makiValues = require("../../data/maki.json"),
-//   maki = "";
 //
 // for (var i = 0; i < makiValues.length; i++) {
 //   maki += '<option value="' + makiValues[i].icon + '">';
@@ -56,11 +52,27 @@ export default class Map extends React.Component {
     map.setView([20, 0], 2);
     const baseLayerGroup = L.layerGroup().addTo(map);
     layers.find(({ id }) => id === layer).layer.addTo(baseLayerGroup);
+    map
+      .on("draw:edited", this.updateFromMap)
+      .on("draw:deleted", this.updateFromMap)
+      .on("draw:created", this.createFromMap);
     this.setState({
       map,
-      baseLayerGroup
+      baseLayerGroup,
+      mapLayer
     });
   }
+  createFromMap = e => {
+    const { mapLayer } = this.state;
+    mapLayer.addLayer(e.layer);
+    this.updateFromMap();
+  };
+  updateFromMap = () => {
+    const { setGeojson } = this.props;
+    const { mapLayer } = this.state;
+    let geojson = geojsonRewind(mapLayer.toGeoJSON());
+    setGeojson(geojson);
+  };
   componentDidUpdate(prevProps, prevState) {
     const { layer } = this.props;
     const { baseLayerGroup, map } = this.state;
@@ -97,21 +109,10 @@ export default class Map extends React.Component {
 //       '<a target="_blank" href="http://geojson.net/about.html">About</a>'
 //     );
 //
-//     function update() {
-//       var geojson = context.mapLayer.toGeoJSON();
-//       geojson = geojsonRewind(geojson);
-//       geojsonToLayer(geojson, context.mapLayer);
-//       context.data.set({ map: layerToGeoJSON(context.mapLayer) }, "map");
-//     }
-//
 //     context.dispatch.on("change.map", function() {
 //       geojsonToLayer(context.data.get("map"), context.mapLayer);
 //     });
 //
-//     function created(e) {
-//       context.mapLayer.addLayer(e.layer);
-//       update();
-//     }
 //   }
 //
 //   function layerToGeoJSON(layer) {
