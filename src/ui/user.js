@@ -1,3 +1,28 @@
 import React from "react";
+import { Query } from "react-apollo";
+import gql from "graphql-tag";
 
-export default () => <div>user</div>;
+export default () => (
+  <Query
+    query={gql`
+      {
+        viewer {
+          login
+          avatarUrl
+        }
+      }
+    `}
+  >
+    {({ loading, error, data }) => {
+      if (loading) return <p>Loading...</p>;
+      if (error) return <p>Error :(</p>;
+
+      return (
+        <div className="inline-flex">
+          <img src={data.viewer.avatarUrl} className="w1 h1 mr1" />
+          {data.viewer.login}
+        </div>
+      );
+    }}
+  </Query>
+);

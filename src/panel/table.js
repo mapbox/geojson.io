@@ -1,74 +1,40 @@
-import metatable from "d3-metatable";
-var smartZoom = require("../lib/smartzoom.js");
+import React from "react";
+import ReactTable from "react-table";
 
-console.log(metatable);
-
-module.exports = function(context) {
-  function render(selection) {
-    selection.html("");
-
-    function rerender() {
-      var geojson = context.data.get("map");
-      var props;
-
-      if (
-        !geojson ||
-        (!geojson.geometry && (!geojson.features || !geojson.features.length))
-      ) {
-        selection
-          .html("")
-          .append("div")
-          .attr("class", "blank-banner center")
-          .text("no features");
-      } else {
-        props = geojson.geometry
-          ? [geojson.properties]
-          : geojson.features.map(getProperties);
-        selection.select(".blank-banner").remove();
-        selection.data([props]).call(
-          metatable()
-            .on("change", function(row, i) {
-              var geojson = context.data.get("map");
-              if (geojson.geometry) {
-                geojson.properties = row;
-              } else {
-                geojson.features[i].properties = row;
-              }
-              context.data.set("map", geojson);
-            })
-            .on("rowfocus", function(row, i) {
-              var bounds = context.mapLayer.getBounds();
-              var j = 0;
-              context.mapLayer.eachLayer(function(l) {
-                if (i === j++) smartZoom(context.map, l, bounds);
-              });
-            })
-        );
+export default class Table extends React.Component {
+  render() {
+    const data = [
+      {
+        name: "Tanner Linsley",
+        age: 26,
+        friend: {
+          name: "Jason Maurer",
+          age: 23
+        }
       }
-    }
+    ];
 
-    context.dispatch.on("change.table", function(evt) {
-      rerender();
-    });
+    const columns = [
+      {
+        Header: "Name",
+        accessor: "name" // String-based value accessors!
+      },
+      {
+        Header: "Age",
+        accessor: "age",
+        Cell: props => <span className="number">{props.value}</span> // Custom cell components!
+      },
+      {
+        id: "friendName", // Required because our accessor is not a string
+        Header: "Friend Name",
+        accessor: d => d.friend.name // Custom value accessors!
+      },
+      {
+        Header: props => <span>Friend Age</span>, // Custom header components!
+        accessor: "friend.age"
+      }
+    ];
 
-    rerender();
-
-    function getProperties(f) {
-      return f.properties;
-    }
-
-    function zoomToMap(p) {
-      var layer;
-      // layers.eachLayer(function(l) {
-      //     if (p == l.feature.properties) layer = l;
-      // });
-      return layer;
-    }
+    return <ReactTable data={data} columns={columns} />;
   }
-
-  render.off = function() {
-    context.dispatch.on("change.table", null);
-  };
-
-  return render;
-};
+}

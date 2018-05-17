@@ -3,6 +3,7 @@ import { Subscribe } from "unstated";
 import StateContainer from "../state";
 import Help from "./help";
 import Code from "./json";
+import Table from "./table";
 
 export default () => {
   return (
@@ -11,7 +12,7 @@ export default () => {
         mode === "code" ? (
           <Code geojson={geojson} />
         ) : mode === "table" ? (
-          "table"
+          <Table geojson={geojson} />
         ) : (
           <Help />
         )

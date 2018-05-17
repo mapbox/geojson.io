@@ -13,6 +13,7 @@ import gistBrowser from "@mapbox/gist-map-browser";
 import geojsonNormalize from "geojson-normalize";
 import wellknown from "wellknown";
 import config from "../config.js";
+import readFile from "../lib/readfile";
 
 const shpSupport = typeof ArrayBuffer !== "undefined";
 
@@ -30,17 +31,21 @@ export default class FileBar extends React.Component {
     this.fileInputRef.current.click();
   };
   onFileInputChange = e => {
-    var files = e.target.files;
+    const { setGeojson } = this.props;
+    const { files } = e.target;
     if (!(files && files[0])) return;
     readFile.readAsText(files[0], function(err, text) {
-      readFile.readFile(files[0], text, onImport);
+      const result = readFile.readFile(files[0], text);
+      if (result instanceof Error) {
+      } else {
+        setGeojson(result);
+      }
       if (files[0].path) {
         // context.data.set({
         //   path: files[0].path
         // });
       }
     });
-    put.remove();
   };
 
   downloadTopo = () => {
@@ -59,57 +64,50 @@ export default class FileBar extends React.Component {
       )
     );
 
+    this.download(content, "map.topojson", "text/plain;charset=utf-8");
+  };
+
+  download = (content, filename, type) => {
     saveAs(
       new Blob([content], {
-        type: "text/plain;charset=utf-8"
+        type
       }),
-      "map.topojson"
+      filename
     );
   };
 
   downloadGPX = () => {
-    var content = togpx(clone(context.data.get("map")), {
-      creator: "geojson.net"
-    });
-
-    saveAs(
-      new Blob([content], {
-        type: "text/xml;charset=utf-8"
+    const { geojson } = this.props;
+    this.download(
+      togpx(geojson, {
+        creator: "geojson.net"
       }),
-      "map.gpx"
+      "map.gpx",
+      "text/xml;charset=utf-8"
     );
   };
 
   downloadGeoJSON = () => {
     const { geojson } = this.props;
-    saveAs(
-      new Blob([JSON.stringify(geojson, null, 2)], {
-        type: "text/plain;charset=utf-8"
-      }),
-      "map.geojson"
+    this.download(
+      JSON.stringify(geojson, null, 2),
+      "map.geojson",
+      "text/plain;charset=utf-8"
     );
   };
 
   downloadDSV = () => {
     const { geojson } = this.props;
-    var content = geojson2dsv(geojson);
-    saveAs(
-      new Blob([content], {
-        type: "text/plain;charset=utf-8"
-      }),
-      "points.csv"
+    this.download(
+      geojson2dsv(geojson),
+      "points.csv",
+      "text/plain;charset=utf-8"
     );
   };
 
   downloadKML = () => {
     const { geojson } = this.props;
-    var content = tokml(geojson);
-    saveAs(
-      new Blob([content], {
-        type: "text/plain;charset=utf-8"
-      }),
-      "map.kml"
-    );
+    this.download(tokml(geojson), "map.kml", "text/plain;charset=utf-8");
   };
 
   downloadShp = () => {
@@ -331,7 +329,7 @@ export default class FileBar extends React.Component {
               key={i}
               style={{ zIndex: 999 }}
               onClick={item.action}
-              className="db bn pv1 ph2 br2 br--top outline-0 hide-child relative pointer black-50 hover-black f6"
+              className="db bn pv1 ph2 br2 br--top outline-0 disappear-child relative pointer black-50 hover-black f6"
             >
               {item.title}
               {item.children ? (

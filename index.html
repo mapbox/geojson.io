@@ -9,7 +9,17 @@
   <link href='./node_modules/leaflet-draw/dist/leaflet.draw.css' rel='stylesheet' />
   <link href='./node_modules/codemirror/lib/codemirror.css' rel='stylesheet' />
   <link href='./node_modules/codemirror/theme/neat.css' rel='stylesheet' />
+  <link href='./node_modules/react-table/react-table.css' rel='stylesheet' />
   <style>
+
+.disappear-child .child {
+  display: none;
+}
+.disappear-child:hover  .child,
+.disappear-child:focus  .child,
+.disappear-child:active .child {
+  display: block;
+}
   .CodeMirror {
     font-family: Menlo, Consolas, Monaco, Liberation Mono, Lucida Console, monospace;
     font-size: 14px;
@@ -17,6 +27,39 @@
     height: auto;
     flex: 1 1 auto;
   }
+
+  .error-marker {
+    width:10px;
+    height:1.5em;
+    background:#EAB;
+    transition:all 100ms;
+    -webkit-transition:all 100ms;
+}
+
+.error-marker:hover {
+    background:#D68;
+}
+
+.error-marker:before {
+    opacity:0;
+    pointer-events:none;
+    content:attr(message);
+    transition:all 100ms;
+    -webkit-transition:all 100ms;
+    content:attr(message);
+    width:300px;
+    font-size:10px;
+    padding:5px;
+    border:1px solid #000;
+    position:absolute;
+    background:#fff;
+    z-index:999;
+}
+
+.error-marker:hover:before {
+    opacity:1;
+    margin-left:35px;
+}
   </style>
   <link rel='icon' type='image/x-icon' href='./img/favicon.png' />
   <meta name='description' content='simply edit geojson map data' />

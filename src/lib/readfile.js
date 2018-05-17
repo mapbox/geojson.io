@@ -1,11 +1,10 @@
-var d3 = require("d3");
-var topojson = require("topojson"),
-  toGeoJSON = require("togeojson"),
-  gtfs2geojson = require("gtfs2geojson"),
-  csv2geojson = require("csv2geojson"),
-  osmtogeojson = require("osmtogeojson"),
-  polytogeojson = require("polytogeojson"),
-  geojsonNormalize = require("geojson-normalize");
+import topojson from "topojson";
+import toGeoJSON from "togeojson";
+import gtfs2geojson from "gtfs2geojson";
+import csv2geojson from "csv2geojson";
+import osmtogeojson from "osmtogeojson";
+import polytogeojson from "polytogeojson";
+import geojsonNormalize from "geojson-normalize";
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
@@ -98,15 +97,11 @@ function readFile(f, text, callback) {
   if (!fileType) {
     var filename = f.name ? f.name.toLowerCase() : "",
       pts = filename.split(".");
-    return callback({
-      message: "Could not detect file type"
-    });
+    return new Error("Could not detect file type");
   } else if (fileType === "kml") {
     var kmldom = toDom(text);
     if (!kmldom) {
-      return callback({
-        message: "Invalid KML file: not valid XML"
-      });
+      return new Error("Invalid KML file: not valid XML");
     }
     var warning;
     if (kmldom.getElementsByTagName("NetworkLink").length) {
@@ -121,18 +116,16 @@ function readFile(f, text, callback) {
     var xmldom = toDom(text),
       result;
     if (!xmldom) {
-      return callback({
-        message: "Invalid XML file: not valid XML"
-      });
+      return new Error("Invalid XML file: not valid XML");
     }
     result = osmtogeojson.toGeojson(xmldom);
     // only keep object tags as properties
     result.features.forEach(function(feature) {
       feature.properties = feature.properties.tags;
     });
-    callback(null, result);
+    return result;
   } else if (fileType === "gpx") {
-    callback(null, toGeoJSON.gpx(toDom(text)));
+    return toGeoJSON.gpx(toDom(text));
   } else if (fileType === "geojson") {
     var gj;
     try {
@@ -149,9 +142,9 @@ function readFile(f, text, callback) {
           collection.features = collection.features.concat(ft.features);
         else collection.features = collection.features.concat([ft]);
       }
-      return callback(null, collection);
+      return collection;
     } else {
-      return callback(null, gj);
+      return gj;
     }
   } else if (fileType === "dsv") {
     csv2geojson.csv2geojson(
@@ -173,19 +166,16 @@ function readFile(f, text, callback) {
     );
   } else if (fileType === "gtfs") {
     try {
-      return callback(null, gtfs2geojson(text));
+      return gtfs2geojson(text);
     } catch (e) {
-      return callback({ message: "Invalid GTFS file" });
+      return new Error("Invalid GTFS file" );
     }
   } else if (fileType === "poly") {
-    callback(null, polytogeojson(text));
+    return polytogeojson(text);
   }
+}
 
-  function toDom(x) {
-    return new DOMParser().parseFromString(x, "text/xml");
-  }
-
-  function detectType(f, text) {
+function detectType(f, text) {
     var filename = f.name ? f.name.toLowerCase() : "";
     function ext(_) {
       return filename.indexOf(_) !== -1;
@@ -204,4 +194,7 @@ function readFile(f, text, callback) {
       return "gtfs";
     }
   }
-}
+
+  function toDom(x) {
+    return new DOMParser().parseFromString(x, "text/xml");
+  }
