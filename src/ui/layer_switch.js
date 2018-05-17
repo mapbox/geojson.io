@@ -12,7 +12,7 @@ export default () => (
           <button
             key={id}
             onClick={() => setLayer(id)}
-            className={`pointer bn pv1 ph2 br2 br--bottom outline-0 ${
+            className={`pointer bn pv1 ph2 br2 br--bottom outline-0 f6 ${
               layer === id ? "bg-light-gray black" : "bg-white black-50"
             }`}
           >

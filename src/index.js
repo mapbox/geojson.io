@@ -15,15 +15,24 @@ ReactDOM.render(
     <div className="vh-100 flex sans-serif black-70">
       <div className="w-50 flex flex-column">
         <div className="bg-white pt2 ph2 flex justify-between">
-          <FileBar />
+          <Subscribe to={[StateContainer]}>
+            {({ state: { geojson } }) => <FileBar geojson={geojson} />}
+          </Subscribe>
         </div>
         <Subscribe to={[StateContainer]}>
-          {({ state: { layer } }) => <Map layer={layer} />}
+          {({ state: { layer, geojson } }) => (
+            <Map layer={layer} geojson={geojson} />
+          )}
         </Subscribe>
         <LayerSwitch />
       </div>
-      <div className="w-50 bl b--black-10 bg-light-gray">
-        <div className="bg-white pt2 ph2 flex justify-between">
+      <div className="w-50 bl b--black-10 bg-light-gray flex flex-column">
+        <div
+          className="bg-white pt2 ph2 flex justify-between bb b--black-20"
+          style={{
+            flexShrink: 0
+          }}
+        >
           <ModeButtons />
           <User />
         </div>

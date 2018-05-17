@@ -5,48 +5,45 @@ import validate from "../lib/validate";
 import zoomextent from "../lib/zoomextent";
 import saver from "../ui/saver.js";
 
-CodeMirror.keyMap.tabSpace = {
-  Tab: function(cm) {
-    var spaces = new Array(cm.getOption("indentUnit") + 1).join(" ");
-    cm.replaceSelection(spaces, "end", "+input");
-  },
-  // "Ctrl-S": saveAction,
-  // "Cmd-S": saveAction,
-  fallthrough: ["default"]
-};
+export default class Code extends React.Component {
+  constructor(props) {
+    super(props);
+    this.codeMirrorContainer = React.createRef();
+  }
+  componentDidMount() {
+    const { geojson } = this.props;
+    const node = this.codeMirrorContainer.current;
 
-export class Code extends React.Component {
-  render(selection) {
-    var textarea = selection.html("").append("textarea");
-
-    var editor = CodeMirror.fromTextArea(textarea.node(), {
+    CodeMirror.keyMap.tabSpace = {
+      Tab: cm => {
+        var spaces = new Array(cm.getOption("indentUnit") + 1).join(" ");
+        cm.replaceSelection(spaces, "end", "+input");
+      },
+      // "Ctrl-S": saveAction,
+      // "Cmd-S": saveAction,
+      fallthrough: ["default"]
+    };
+    const editor = new CodeMirror(node, {
       mode: "application/json",
       matchBrackets: true,
       tabSize: 2,
       gutters: ["error"],
-      theme: "eclipse",
       autofocus: window === window.top,
       keyMap: "tabSpace",
-      lineNumbers: true
+      lineNumbers: true,
+      theme: "neat"
     });
-
-    editor.on("change", validate(changeValidated));
-
-    function changeValidated(err, data, zoom) {
-      if (!err) {
-        context.data.set({ map: data }, "json");
-        if (zoom) zoomextent(context);
-      }
-    }
-
-    context.dispatch.on("change.json", function(event) {
-      if (event.source !== "json") {
-        var scrollInfo = editor.getScrollInfo();
-        editor.setValue(JSON.stringify(context.data.get("map"), null, 2));
-        editor.scrollTo(scrollInfo.left, scrollInfo.top);
-      }
+    editor.setValue(JSON.stringify(geojson, null, 2));
+    this.setState({
+      editor
     });
-
-    editor.setValue(JSON.stringify(context.data.get("map"), null, 2));
+  }
+  componentDidUpdate() {
+    const { geojson } = this.props;
+    const { editor } = this.state;
+    editor.setValue(JSON.stringify(geojson, null, 2));
+  }
+  render() {
+    return <div className="flex-auto flex" ref={this.codeMirrorContainer} />;
   }
 }

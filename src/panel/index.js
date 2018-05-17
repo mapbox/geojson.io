@@ -7,10 +7,10 @@ import Code from "./json";
 export default () => {
   return (
     <Subscribe to={[StateContainer]}>
-      {state =>
-        state.state.mode === "code" ? (
-          "code"
-        ) : state.state.mode === "table" ? (
+      {({ state: { mode, geojson } }) =>
+        mode === "code" ? (
+          <Code geojson={geojson} />
+        ) : mode === "table" ? (
           "table"
         ) : (
           <Help />

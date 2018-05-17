@@ -1,7 +1,11 @@
 import { Container } from "unstated";
 
 export default class StateContainer extends Container {
-  state = { mode: "code", layer: "mapbox" };
+  state = {
+    mode: "code",
+    layer: "mapbox",
+    geojson: { type: "FeatureCollection", features: [] }
+  };
   setMode = mode => {
     this.setState({ mode });
   };

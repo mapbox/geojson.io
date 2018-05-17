@@ -1,8 +1,8 @@
 import React from "react";
 
 export default () => (
-  <div className="lh-copy pa4">
-    <div className="overflow-auto">
+  <div className="flex-auto lh-copy pa4 overflow-auto">
+    <div>
       <h2>Help</h2>
 
       <p>

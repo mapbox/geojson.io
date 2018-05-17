@@ -20,11 +20,11 @@ const buttons = [
 export default () => (
   <Subscribe to={[StateContainer]}>
     {({ state: { mode }, setMode }) => (
-      <div>
+      <div className="inline-flex">
         {buttons.map((button, i) => (
           <button
             key={i}
-            className={`bn pv1 ph2 br2 br--top outline-0
+            className={`db bn pv1 ph2 br2 br--top f6 outline-0 pointer
                   ${
                     mode == button.mode
                       ? "bg-light-gray black"
