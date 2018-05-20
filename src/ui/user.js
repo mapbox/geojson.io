@@ -14,9 +14,8 @@ export default () => (
     `}
   >
     {({ loading, error, data }) => {
-      if (loading) return <p>Loading...</p>;
-      if (error) return <p>Error :(</p>;
-
+      if (loading) return <span>...</span>;
+      if (error) return <a href={`${config.authService}/login`}>log in</a>;
       return (
         <div className="inline-flex">
           <img src={data.viewer.avatarUrl} className="w1 h1 mr1" />

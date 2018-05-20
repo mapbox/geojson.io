@@ -14,6 +14,9 @@ import geojsonNormalize from "geojson-normalize";
 import wellknown from "wellknown";
 import config from "../config.js";
 import readFile from "../lib/readfile";
+import geojsonRandom from "geojson-random";
+import geojsonExtent from "geojson-extent";
+import geojsonFlatten from "geojson-flatten";
 
 const shpSupport = typeof ArrayBuffer !== "undefined";
 
@@ -132,7 +135,24 @@ export default class FileBar extends React.Component {
     );
   };
 
+  polyline = () => {
+    const { setGeojson } = this.props;
+    const input = prompt("Enter your polyline");
+    try {
+      const decoded = polyline.toGeoJSON(input);
+      setGeojson(decoded);
+    } catch (e) {
+      alert("Sorry, we were unable to decode that polyline");
+    }
+  };
+
+  flatten = () => {
+    const { setGeojson, geojson } = this.props;
+    setGeojson(geojsonFlatten(geojson));
+  };
+
   render() {
+    const { setGeojson } = this.props;
     const exportFormats = [
       {
         title: "GeoJSON",
@@ -200,49 +220,52 @@ export default class FileBar extends React.Component {
           {
             title: "Clear",
             alt: "Delete all features from the map",
-            action: function() {
+            action: () => {
               if (
                 confirm(
                   "Are you sure you want to delete all features from this map?"
                 )
               ) {
-                meta.clear(context);
+                setGeojson({ type: "FeatureCollection", features: [] });
               }
             }
           },
           {
             title: "Random: Points",
             alt: "Add random points to your map",
-            action: function() {
+            action: () => {
+              const { setGeojson, geojson } = this.props;
               var response = prompt("Number of points (default: 100)");
               if (response === null) return;
               var count = parseInt(response, 10);
               if (isNaN(count)) count = 100;
-              meta.random(context, count, "point");
+              const fc = geojsonNormalize(geojson);
+              fc.features.push.apply(
+                fc.features,
+                geojsonRandom(count, type).features
+              );
+              setGeojson(fc);
             }
           },
           {
             title: "Add bboxes",
             alt: "Add bounding box members to all applicable GeoJSON objects",
-            action: function() {
-              meta.bboxify(context);
+            action: () => {
+              const { setGeojson, geojson } = this.props;
+              setGeojson(geojsonExtent.bboxify(geojson));
             }
           },
           {
             title: "Flatten Multi Features",
             alt:
               "Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries",
-            action: function() {
-              meta.flatten(context);
-            }
+            action: this.flatten
           },
           {
             title: "Load encoded polyline",
             alt:
               "Decode and show an encoded polyline. Precision 5 is supported.",
-            action: function() {
-              meta.polyline(context);
-            }
+            action: this.polyline
           },
           {
             title: "Load WKB Base64 Encoded String",

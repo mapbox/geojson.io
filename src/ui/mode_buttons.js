@@ -1,6 +1,4 @@
 import React from "react";
-import { Subscribe } from "unstated";
-import StateContainer from "../state";
 
 const buttons = [
   {
@@ -17,25 +15,21 @@ const buttons = [
   }
 ];
 
-export default () => (
-  <Subscribe to={[StateContainer]}>
-    {({ state: { mode }, setMode }) => (
-      <div className="inline-flex">
-        {buttons.map((button, i) => (
-          <button
-            key={i}
-            className={`db bn pv1 ph2 br2 br--top f6 outline-0 pointer
+export default ({ mode, setMode }) => (
+  <div className="inline-flex">
+    {buttons.map((button, i) => (
+      <button
+        key={i}
+        className={`db bn pv1 ph2 br2 br--top f6 outline-0 pointer
                   ${
                     mode == button.mode
                       ? "bg-light-gray black"
                       : "bg-white black-50"
                   }`}
-            onClick={() => setMode(button.mode)}
-          >
-            {button.title}
-          </button>
-        ))}
-      </div>
-    )}
-  </Subscribe>
+        onClick={() => setMode(button.mode)}
+      >
+        {button.title}
+      </button>
+    ))}
+  </div>
 );

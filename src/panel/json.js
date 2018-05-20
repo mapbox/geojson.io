@@ -14,6 +14,7 @@ export default class Code extends React.Component {
     this.codeMirrorContainer = React.createRef();
   }
   maybeChange = (editor, changeObj) => {
+    const { setGeojson } = this.props;
     const val = editor.getValue();
     const err = hint(val);
     editor.clearGutter("error");
@@ -27,10 +28,11 @@ export default class Code extends React.Component {
         changeObj.from.ch === 0 &&
         changeObj.from.line === 0 &&
         changeObj.origin == "paste";
-      const gj = JSON.parse(val);
       try {
-        return callback(null, gj, zoom);
+        const gj = JSON.parse(val);
+        return setGeojson(gj);
       } catch (e) {
+        console.error(e);
         this.setState({
           error: {
             class: "icon-circle-blank",
@@ -110,7 +112,9 @@ export default class Code extends React.Component {
   componentDidUpdate() {
     const { geojson } = this.props;
     const { editor } = this.state;
-    // editor.setValue(JSON.stringify(geojson, null, 2));
+    editor.off("change", this.maybeChange);
+    editor.setValue(JSON.stringify(geojson, null, 2));
+    editor.on("change", this.maybeChange);
   }
   render() {
     return <div className="flex-auto flex" ref={this.codeMirrorContainer} />;

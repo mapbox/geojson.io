@@ -8,7 +8,6 @@ import ModeButtons from "./ui/mode_buttons";
 import User from "./ui/user";
 import Map from "./ui/map";
 import Panel from "./panel/index";
-import StateContainer from "./state";
 import ApolloClient from "apollo-client";
 import { createHttpLink } from "apollo-link-http";
 import { ApolloLink } from "apollo-link";
@@ -46,40 +45,50 @@ const client = new ApolloClient({
 //     }
 //   }
 // ]);
+class App extends React.Component {
+  state = {
+    mode: "code",
+    layer: "mapbox",
+    geojson: { type: "FeatureCollection", features: [] }
+  };
+  setMode = mode => {
+    this.setState({ mode });
+  };
+  setLayer = layer => {
+    this.setState({ layer });
+  };
+  setGeojson = geojson => {
+    this.setState({ geojson });
+  };
+  render() {
+    const { geojson, layer, map, mode } = this.state;
+    const { setGeojson, setLayer, setMode } = this;
+    return (
+      <ApolloProvider client={client}>
+        <div className="vh-100 flex sans-serif black-70">
+          <div className="w-50 flex flex-column">
+            <div className="bg-white pt2 ph2 flex justify-between">
+              <FileBar geojson={geojson} setGeojson={setGeojson} />
+            </div>
+            <Map layer={layer} geojson={geojson} setGeojson={setGeojson} />
+            <LayerSwitch layer={layer} setLayer={setLayer} />
+          </div>
+          <div className="w-50 bl b--black-10 bg-light-gray flex flex-column">
+            <div
+              className="bg-white pt2 ph2 flex justify-between bb b--black-20"
+              style={{
+                flexShrink: 0
+              }}
+            >
+              <ModeButtons mode={mode} setMode={setMode} />
+              <User />
+            </div>
+            <Panel mode={mode} geojson={geojson} setGeojson={setGeojson} />
+          </div>
+        </div>
+      </ApolloProvider>
+    );
+  }
+}
 
-ReactDOM.render(
-  <Provider>
-    <ApolloProvider client={client}>
-      <div className="vh-100 flex sans-serif black-70">
-        <div className="w-50 flex flex-column">
-          <div className="bg-white pt2 ph2 flex justify-between">
-            <Subscribe to={[StateContainer]}>
-              {({ state: { geojson }, setGeojson }) => (
-                <FileBar geojson={geojson} setGeojson={setGeojson} />
-              )}
-            </Subscribe>
-          </div>
-          <Subscribe to={[StateContainer]}>
-            {({ state: { layer, geojson }, setGeojson }) => (
-              <Map layer={layer} geojson={geojson} setGeojson={setGeojson} />
-            )}
-          </Subscribe>
-          <LayerSwitch />
-        </div>
-        <div className="w-50 bl b--black-10 bg-light-gray flex flex-column">
-          <div
-            className="bg-white pt2 ph2 flex justify-between bb b--black-20"
-            style={{
-              flexShrink: 0
-            }}
-          >
-            <ModeButtons />
-            <User />
-          </div>
-          <Panel />
-        </div>
-      </div>
-    </ApolloProvider>
-  </Provider>,
-  document.getElementById("geojsonio")
-);
+ReactDOM.render(<App />, document.getElementById("geojsonio"));

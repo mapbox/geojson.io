@@ -1,8 +1,5 @@
 var L = require("leaflet");
 var escape = require("escape-html"),
-  geojsonRandom = require("geojson-random"),
-  geojsonExtent = require("geojson-extent"),
-  geojsonFlatten = require("geojson-flatten"),
   polyline = require("polyline"),
   wkx = require("wkx"),
   zoomextent = require("../lib/zoomextent");
@@ -36,30 +33,8 @@ module.exports.zoomextent = function(context) {
   zoomextent(context);
 };
 
-module.exports.clear = function(context) {
-  context.data.clear();
-};
-
 module.exports.random = function(context, count, type) {
   context.data.mergeFeatures(geojsonRandom(count, type).features, "meta");
-};
-
-module.exports.bboxify = function(context) {
-  context.data.set({ map: geojsonExtent.bboxify(context.data.get("map")) });
-};
-
-module.exports.flatten = function(context) {
-  context.data.set({ map: geojsonFlatten(context.data.get("map")) });
-};
-
-module.exports.polyline = function(context) {
-  var input = prompt("Enter your polyline");
-  try {
-    var decoded = polyline.toGeoJSON(input);
-    context.data.set({ map: decoded });
-  } catch (e) {
-    alert("Sorry, we were unable to decode that polyline");
-  }
 };
 
 module.exports.wkxBase64 = function(context) {

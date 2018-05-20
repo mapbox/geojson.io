@@ -81,6 +81,7 @@ export default class Map extends React.Component {
     setGeojson(geojson);
   };
   componentDidUpdate(prevProps, prevState) {
+    console.log("map -> componentDidUpdate");
     const { layer, geojson } = this.props;
     const { baseLayerGroup, mapLayer, map } = this.state;
     if (prevProps.layer !== layer) {
@@ -108,9 +109,11 @@ function layerToGeoJSON(layer) {
 
 function geojsonToLayer(geojson, layer) {
   layer.clearLayers();
+  console.log("setting to ma", geojson);
   L.geoJson(geojson, {
     style: simplestyle,
     pointToLayer: function(feature, latlon) {
+      console.log(feature, latlon);
       if (!feature.properties) feature.properties = {};
       return marker.style(feature, latlon);
     }
