@@ -109,11 +109,9 @@ function layerToGeoJSON(layer) {
 
 function geojsonToLayer(geojson, layer) {
   layer.clearLayers();
-  console.log("setting to ma", geojson);
   L.geoJson(geojson, {
     style: simplestyle,
     pointToLayer: function(feature, latlon) {
-      console.log(feature, latlon);
       if (!feature.properties) feature.properties = {};
       return marker.style(feature, latlon);
     }

@@ -136,22 +136,6 @@ export default class FileBar extends React.Component {
     );
   };
 
-  polyline = () => {
-    const { setGeojson } = this.props;
-    const input = prompt("Enter your polyline");
-    try {
-      const decoded = polyline.toGeoJSON(input);
-      setGeojson(decoded);
-    } catch (e) {
-      alert("Sorry, we were unable to decode that polyline");
-    }
-  };
-
-  flatten = () => {
-    const { setGeojson, geojson } = this.props;
-    setGeojson(geojsonFlatten(geojson));
-  };
-
   render() {
     const { setGeojson } = this.props;
     const exportFormats = [
@@ -243,7 +227,7 @@ export default class FileBar extends React.Component {
               const fc = geojsonNormalize(geojson);
               fc.features.push.apply(
                 fc.features,
-                geojsonRandom(count, type).features
+                geojsonRandom(count, "point").features
               );
               setGeojson(fc);
             }
@@ -260,13 +244,25 @@ export default class FileBar extends React.Component {
             title: "Flatten Multi Features",
             alt:
               "Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries",
-            action: this.flatten
+            action: () => {
+              const { setGeojson, geojson } = this.props;
+              setGeojson(geojsonFlatten(geojson));
+            }
           },
           {
             title: "Load encoded polyline",
             alt:
               "Decode and show an encoded polyline. Precision 5 is supported.",
-            action: this.polyline
+            action: () => {
+              const { setGeojson } = this.props;
+              const input = prompt("Enter your polyline");
+              try {
+                const decoded = polyline.toGeoJSON(input);
+                setGeojson(decoded);
+              } catch (e) {
+                alert("Sorry, we were unable to decode that polyline");
+              }
+            }
           },
           {
             title: "Load WKB Base64 Encoded String",

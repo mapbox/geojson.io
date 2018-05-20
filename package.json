@@ -63,12 +63,13 @@
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
+    "jest": "^22.4.4",
     "parcel-bundler": "^1.8.1"
   },
   "scripts": {
     "start": "parcel index.html",
     "build": "parcel build index.html",
-    "test": "eslint src"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
