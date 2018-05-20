@@ -1,5 +1,4 @@
 import React from "react";
-import { Subscribe } from "unstated";
 import Help from "./help";
 import Code from "./json";
 import Table from "./table";

@@ -6,6 +6,7 @@ import wkx from "wkx";
 import clone from "clone";
 import geojson2dsv from "geojson2dsv";
 import togpx from "togpx";
+import polyline from "@mapbox/polyline";
 import topojson from "topojson";
 import { saveAs } from "file-saver";
 import tokml from "tokml";
@@ -182,26 +183,28 @@ export default class FileBar extends React.Component {
         title: "Meta",
         action: function() {},
         children: [
-          {
-            title: "Add map layer",
-            alt: "Add a custom tile layer",
-            action: function() {
-              var layerURL = prompt(
-                "Layer URL \n(https://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)"
-              );
-              if (layerURL === null) return;
-              var layerName = prompt("Layer name");
-              if (layerName === null) return;
-              meta.adduserlayer(context, layerURL, layerName);
-            }
-          },
-          {
-            title: "Zoom to features",
-            alt: "Zoom to the extent of all features",
-            action: function() {
-              meta.zoomextent(context);
-            }
-          },
+          // TODO
+          // {
+          //   title: "Add map layer",
+          //   alt: "Add a custom tile layer",
+          //   action: function() {
+          //     var layerURL = prompt(
+          //       "Layer URL \n(https://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)"
+          //     );
+          //     if (layerURL === null) return;
+          //     var layerName = prompt("Layer name");
+          //     if (layerName === null) return;
+          //     meta.adduserlayer(context, layerURL, layerName);
+          //   }
+          // },
+          // TODO
+          // {
+          //   title: "Zoom to features",
+          //   alt: "Zoom to the extent of all features",
+          //   action: function() {
+          //     meta.zoomextent(context);
+          //   }
+          // },
           {
             title: "Clear",
             alt: "Delete all features from the map",
@@ -249,6 +252,7 @@ export default class FileBar extends React.Component {
               setGeojson(geojsonFlatten(geojson));
             }
           },
+          // https://developers.google.com/maps/documentation/utilities/polylinealgorithm
           {
             title: "Load encoded polyline",
             alt:
@@ -273,7 +277,7 @@ export default class FileBar extends React.Component {
                 // TODO: base64 in browser
                 var decoded = wkx.Geometry.parse(Buffer.from(input, "base64"));
                 setGeojson(decoded.toGeoJSON());
-                zoomextent(context);
+                // zoomextent(context); TODO
               } catch (e) {
                 console.error(e);
                 alert(
@@ -290,7 +294,7 @@ export default class FileBar extends React.Component {
               try {
                 var decoded = wkx.Geometry.parse(Buffer.from(input, "hex"));
                 setGeojson(decoded.toGeoJSON());
-                zoomextent(context);
+                // zoomextent(context); TODO
               } catch (e) {
                 console.error(e);
                 alert(
@@ -307,7 +311,7 @@ export default class FileBar extends React.Component {
               try {
                 var decoded = wkx.Geometry.parse(input);
                 setGeojson(decoded.toGeoJSON());
-                zoomextent(context);
+                // zoomextent(context); TODO
               } catch (e) {
                 console.error(e);
                 alert("Sorry, we were unable to decode that WKT data");

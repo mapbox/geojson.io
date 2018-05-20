@@ -118,7 +118,7 @@ function geojsonToLayer(geojson, layer) {
   }).eachLayer(add);
 
   function add(l) {
-    bindPopup(l);
+    // bindPopup(l);
     l.addTo(layer);
   }
 }

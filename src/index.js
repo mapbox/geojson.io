@@ -1,6 +1,5 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { Provider, Subscribe } from "unstated";
 import Help from "./panel/help";
 import LayerSwitch from "./ui/layer_switch";
 import FileBar from "./ui/file_bar";
