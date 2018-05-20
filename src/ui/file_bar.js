@@ -2,6 +2,7 @@ import React from "react";
 import L from "leaflet";
 import keybinding from "../../lib/d3.keybinding";
 import shpwrite from "shp-write";
+import wkx from "wkx";
 import clone from "clone";
 import geojson2dsv from "geojson2dsv";
 import togpx from "togpx";
@@ -270,22 +271,51 @@ export default class FileBar extends React.Component {
           {
             title: "Load WKB Base64 Encoded String",
             alt: "Decode and show WKX data",
-            action: function() {
-              meta.wkxBase64(context);
+            action: () => {
+              const input = prompt("Enter your Base64 encoded WKB/EWKB");
+              try {
+                // TODO: base64 in browser
+                var decoded = wkx.Geometry.parse(Buffer.from(input, "base64"));
+                setGeojson(decoded.toGeoJSON());
+                zoomextent(context);
+              } catch (e) {
+                console.error(e);
+                alert(
+                  "Sorry, we were unable to decode that Base64 encoded WKX data"
+                );
+              }
             }
           },
           {
             title: "Load WKB Hex Encoded String",
             alt: "Decode and show WKX data",
             action: function() {
-              meta.wkxHex(context);
+              const input = prompt("Enter your Hex encoded WKB/EWKB");
+              try {
+                var decoded = wkx.Geometry.parse(Buffer.from(input, "hex"));
+                setGeojson(decoded.toGeoJSON());
+                zoomextent(context);
+              } catch (e) {
+                console.error(e);
+                alert(
+                  "Sorry, we were unable to decode that Hex encoded WKX data"
+                );
+              }
             }
           },
           {
             title: "Load WKT String",
             alt: "Decode and show WKX data",
             action: function() {
-              meta.wkxString(context);
+              const input = prompt("Enter your WKT/EWKT String");
+              try {
+                var decoded = wkx.Geometry.parse(input);
+                setGeojson(decoded.toGeoJSON());
+                zoomextent(context);
+              } catch (e) {
+                console.error(e);
+                alert("Sorry, we were unable to decode that WKT data");
+              }
             }
           }
         ]
