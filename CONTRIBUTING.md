@@ -1,4 +1,4 @@
-# geojson.io Contributing
+# Contributing
 
 FAQ
 

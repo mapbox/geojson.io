@@ -1,49 +1,27 @@
-module.exports = function(context) {
-    if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
-        return function() {};
-    }
-    return function(selection) {
-        var name = selection.append('a')
-            .attr('target', '_blank');
+import React from "react";
+import { Query } from "react-apollo";
+import gql from "graphql-tag";
 
-        selection.append('span').text(' | ');
-
-        var action = selection.append('a')
-            .attr('href', '#');
-
-        function nextLogin() {
-            action.text('login').on('click', login);
-            name
-                .text('anon')
-                .attr('href', '#')
-                .on('click', function() { d3.event.preventDefault(); });
+export default () => (
+  <Query
+    query={gql`
+      {
+        viewer {
+          login
+          avatarUrl
         }
-
-        function nextLogout() {
-            name.on('click', null);
-            action.text('logout').on('click', logout);
-        }
-
-        function login() {
-            d3.event.preventDefault();
-            context.user.authenticate();
-        }
-
-        function logout() {
-            d3.event.preventDefault();
-            context.user.logout();
-            nextLogin();
-        }
-
-        nextLogin();
-
-        if (context.user.token()) {
-            context.user.details(function(err, d) {
-                if (err) return;
-                name.text(d.login);
-                name.attr('href', d.html_url);
-                nextLogout();
-            });
-        }
-    };
-};
+      }
+    `}
+  >
+    {({ loading, error, data }) => {
+      if (loading) return <span>...</span>;
+      if (error) return <a href={`${config.authService}/login`}>log in</a>;
+      return (
+        <div className="inline-flex">
+          <img src={data.viewer.avatarUrl} className="w1 h1 mr1" />
+          {data.viewer.login}
+        </div>
+      );
+    }}
+  </Query>
+);

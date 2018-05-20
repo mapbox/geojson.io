@@ -3,27 +3,68 @@
 <head>
   <meta charset='utf-8'>
   <meta http-equiv='X-UA-Compatible' content='IE=Edge'>
-  <link href='lib/mapbox.js/latest/mapbox.css' rel='stylesheet' />
-  <link rel='stylesheet' href='css/font-awesome/css/font-awesome.min.css'>
-  <link rel='stylesheet' href='css/fonts/mplus.css'>
-  <title>geojson.io</title>
-  <link href='lib/draw/leaflet.draw.css' rel='stylesheet' />
-  <link href='lib/codemirror/lib/codemirror.css' rel='stylesheet' />
-  <link href='css/base.css' rel='stylesheet' />
-  <link href='css/marker.css' rel='stylesheet' />
-  <link href='css/github_browse.css' rel='stylesheet' />
-  <link href='css/site.css' rel='stylesheet' />
-  <link href='css/theme.css' rel='stylesheet' />
-  <link rel='icon' type='image/x-icon' href='/img/favicon.png' />
-  <meta name='author' content='MapBox' />
+  <title>geojson.net</title>
+  <link href='./node_modules/tachyons/src/tachyons.css' rel='stylesheet' />
+  <link href='./node_modules/leaflet/dist/leaflet.css' rel='stylesheet' />
+  <link href='./node_modules/leaflet-draw/dist/leaflet.draw.css' rel='stylesheet' />
+  <link href='./node_modules/codemirror/lib/codemirror.css' rel='stylesheet' />
+  <link href='./node_modules/codemirror/theme/neat.css' rel='stylesheet' />
+  <link href='./node_modules/react-table/react-table.css' rel='stylesheet' />
+  <style>
+
+.disappear-child .child {
+  display: none;
+}
+.disappear-child:hover  .child,
+.disappear-child:focus  .child,
+.disappear-child:active .child {
+  display: block;
+}
+  .CodeMirror {
+    font-family: Menlo, Consolas, Monaco, Liberation Mono, Lucida Console, monospace;
+    font-size: 14px;
+    line-height: 20px;
+    height: auto;
+    flex: 1 1 auto;
+  }
+
+  .error-marker {
+    width:10px;
+    height:1.5em;
+    background:#EAB;
+    transition:all 100ms;
+    -webkit-transition:all 100ms;
+}
+
+.error-marker:hover {
+    background:#D68;
+}
+
+.error-marker:before {
+    opacity:0;
+    pointer-events:none;
+    content:attr(message);
+    transition:all 100ms;
+    -webkit-transition:all 100ms;
+    content:attr(message);
+    width:300px;
+    font-size:10px;
+    padding:5px;
+    border:1px solid #000;
+    position:absolute;
+    background:#fff;
+    z-index:999;
+}
+
+.error-marker:hover:before {
+    opacity:1;
+    margin-left:35px;
+}
+  </style>
+  <link rel='icon' type='image/x-icon' href='./img/favicon.png' />
   <meta name='description' content='simply edit geojson map data' />
-  <meta property='og:site_name' content='geojson.io'/>
+  <meta property='og:site_name' content='geojson.net'/>
   <meta name='viewport' content='initial-scale=1,maximum-scale=1'>
-  <!--[if lt IE 9]>
-    <script type='text/javascript' src='lib/aight.min.js'></script>
-  <![endif]-->
-  <script src='lib/mapbox.js/latest/mapbox.js'></script>
-  <script src='lib/raven.min.js'></script>
   <meta http-equiv="Content-Security-Policy" content="
     default-src
       'self'
@@ -51,27 +92,12 @@
       'self'
       'unsafe-eval'
       'unsafe-inline'
-      https://cdn.segment.com
-      https://assets.customer.io
-      https://secure.gaug.es
-      https://www.google-analytics.com
       ;
     style-src
       'self'
       'unsafe-inline'
       ;
   ">
-  <script>
-  if (/a\.tiles\.mapbox\.com/.test(L.mapbox.config.HTTP_URL)) {
-    Raven.config('https://c2d096c944dd4150ab7e44b0881b4a46@app.getsentry.com/11480', {
-      whitelistUrls: [/geojson\.io/],
-      ignoreErrors: [
-          'Uncaught Error: Error connecting to extension ckibcdccnfeookdmbahgiakhnjcddpki',
-          'Uncaught Error: Error connecting to extension pioclpoplcdbaefihamjohnefbikjilc'
-      ]
-    }).install();
-  }
-  </script>
   <style>
   /*
    * http://seclab.stanford.edu/websec/framebusting/framebust.pdf
@@ -81,7 +107,7 @@
 </head>
 <body id='geojsonio-body'>
 
-<div class='geojsonio'></div>
+<div id='geojsonio'></div>
 
 <script>
 if (self == top) {
@@ -90,20 +116,6 @@ if (self == top) {
   top.location = self.location;
 }
 </script>
-<script src='dist/delegate.js'></script>
-<script src='dist/lib.js'></script>
-<script src='dist/site.js'></script>
-<script type='text/javascript'>
-if (/a\.tiles\.mapbox\.com/.test(L.mapbox.config.HTTP_URL)) {
-  var _gauges = _gauges || [];
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-12158002-18', 'auto');
-  ga('send', 'pageview');
-}
-</script>
+<script src='./src/index.js'></script>
 </body>
 </html>

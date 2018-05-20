@@ -310,6 +310,7 @@ th button:hover {
     position:absolute;
     bottom:0px;
     left:0px;
+    z-index: 999;
 }
 
 .blank-banner {
@@ -335,6 +336,7 @@ textarea.full-width {
     height:40px;
     box-sizing:border-box;
     line-height:40px;
+    z-index: 999;
 }
 
 .file-bar .name {
