@@ -1,5 +1,7 @@
 # geojson.io Contributing
 
+Note: development of geojson.io is currently paused. You may be interested in the new fork at https://geojson.net. Until development restarts, please refrain from adding issues to the tracker.
+
 FAQ
 
 Q: **Why are my coordinates flipped?**
