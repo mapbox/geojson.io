@@ -1,6 +1,12 @@
 # geojson.io Contributing
 
+Note: development of geojson.io is currently paused. You may be interested in the new fork at https://geojson.net.
+
 FAQ
+
+Q: **Why are issues closed?**
+
+A: Because development of geojson.io is paused and we don't want to waste your time. We will reopen the tracker when development resumes.
 
 Q: **Why are my coordinates flipped?**
 
