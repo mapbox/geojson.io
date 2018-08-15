@@ -1,0 +1,130 @@
+{
+	"Save": {
+		"en": "Save",
+		"vn": "Lưu"
+	},
+	"New": {
+		"en": "New",
+		"vn": "Tạo mới"
+	},
+	"Add map layer": {
+		"en": "Add map layer",
+		"vn": "Thêm lớp bản đồ"
+	},
+	"Add a custom tile layer": {
+		"en": "Add a custom tile layer",
+		"vn": "Thêm lớp nền"
+	},	
+	"Zoom to features": {
+		"en": "Zoom to features",
+		"vn": "Thu phóng tới các đặc tính "
+	},
+	"Zoom to the extent of all features": {
+		"en": "Zoom to the extent of all features",
+		"vn": "Thu phóng tới mức độ các đặc tính"
+	},
+	"Clear": {
+		"en": "Clear",
+		"vn": "Xóa"
+	},
+	"Delete all features from the map": {
+		"en": "Delete all features from the map",
+		"vn": "Xóa tất cả các đặc tính trên bản đồ"
+	},
+	"Are you sure you want to delete all features from this map?": {
+		"en": "Are you sure you want to delete all features from this map?",
+		"vn": "Bạn có chắc muốn xóa tất cả các đặc tính trên bản đồ?"
+	},
+	"Random: Points": {
+		"en": "Random: Points",
+		"vn": "Điểm ngẫu nhiên"
+	},
+	"Add random points to your map": {
+		"en": "Add random points to your map",
+		"vn": "Thêm điểm ngẫu nhiên vào bản đồ"
+	},
+	"Number of points (default: 100)": {
+		"en": "Number of points (default: 100)",
+		"vn": "Số điểm (mặc định: 100)"
+	},
+	"Add bboxes": {
+		"en": "Add bboxes",
+		"vn": "Thêm bboxes"
+	},
+	"Add bounding box members to all applicable GeoJSON objects": {
+		"en": "Add bounding box members to all applicable GeoJSON objects",
+		"vn": "Thêm bounding box members to all applicable GeoJSON objects"
+	},
+	"Flatten Multi Features": {
+		"en": "Flatten Multi Features",
+		"vn": "Flatten Multi Features"
+	},	
+	"Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries": {
+		"en": "Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries",
+		"vn": "Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries"
+	},	
+	"Load encoded polyline": {
+		"en": "Load encoded polyline",
+		"vn": "Tải polyline mã hóa"
+	},	
+	"Decode and show an encoded polyline. Precision 5 is supported.": {
+		"en": "Decode and show an encoded polyline. Precision 5 is supported.",
+		"vn": "Giải mã và hiển thị một polyline được mã hóa. Độ chính xác 5 được hỗ trợ."
+	},	
+	"Load WKB Base64 Encoded String": {
+		"en": "Load WKB Base64 Encoded String",
+		"vn": "Load WKB mã hóa base64"
+	},	
+	"Decode and show WKX data": {
+		"en": "Decode and show WKX data",
+		"vn": "Decode and show WKX data"
+	},	
+	"Load WKB Hex Encoded String": {
+		"en": "Load WKB Hex Encoded String",
+		"vn": "Load WKB Hex Encoded String"
+	},	
+	"Decode and show WKX data": {
+		"en": "Decode and show WKX data",
+		"vn": "Decode and show WKX data"
+	},	
+	"Load WKT String": {
+		"en": "Load WKT String",
+		"vn": "Load WKT String"
+	},	
+	"Decode and show WKX data": {
+		"en": "Decode and show WKX data",
+		"vn": "Decode and show WKX data"
+	},	
+	"Open": {
+		"en": "Open",
+		"vn": "Mở"
+	},	
+	"File": {
+		"en": "File",
+		"vn": "File"
+	},	
+	"GeoJSON, TopoJSON, GTFS, KML, CSV, GPX and OSM XML supported": {
+		"en": "GeoJSON, TopoJSON, GTFS, KML, CSV, GPX and OSM XML supported",
+		"vn": "GeoJSON, TopoJSON, GTFS, KML, CSV, GPX and OSM XML supported"
+	},	
+	"CSV, GTFS, KML, GPX, and other filetypes": {
+		"en": "CSV, GTFS, KML, GPX, and other filetypes",
+		"vn": "CSV, GTFS, KML, GPX, and other filetypes"
+	},	
+	"unsaved": {
+		"en": "unsaved",
+		"vn": "chưa lưu"
+	},
+	"Commit": {
+		"en": "Commit",
+		"vn": "Commit"
+	},
+	"You must authenticate to use this API.": {
+		"en": "You must authenticate to use this API.",
+		"vn": "Bạn phải đăng nhập để sử dụng API này"
+	},
+	"New file name": {
+		"en": "New file name",
+		"vn": "Tên file mới"
+	}
+}

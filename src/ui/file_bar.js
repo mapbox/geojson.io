@@ -7,7 +7,8 @@ var shpwrite = require('shp-write'),
     githubBrowser = require('@mapbox/github-file-browser'),
     gistBrowser = require('@mapbox/gist-map-browser'),
     geojsonNormalize = require('geojson-normalize'),
-    wellknown = require('wellknown');
+    wellknown = require('wellknown'),
+    i18n_module = require('i18n-nodejs-browserify');
 
 var share = require('./share'),
     modal = require('./modal.js'),
@@ -17,6 +18,8 @@ var share = require('./share'),
     meta = require('../lib/meta.js'),
     saver = require('../ui/saver.js'),
     config = require('../config.js')(location.hostname);
+
+var locale = require('../locale.json');
 
 /**
  * This module provides the file picking & status bar above the map interface.
@@ -29,6 +32,8 @@ module.exports = function fileBar(context) {
     var mapboxAPI = /a\.tiles\.mapbox.com/.test(L.mapbox.config.HTTP_URL);
     var githubAPI = !!config.GithubAPI;
     var githubBase = githubAPI ? config.GithubAPI + '/api/v3': 'https://api.github.com';
+
+    var i18n = new i18n_module(context.lang, locale);
 
     var exportFormats = [{
         title: 'GeoJSON',
@@ -57,11 +62,11 @@ module.exports = function fileBar(context) {
     function bar(selection) {
 
         var actions = [{
-            title: 'Save',
+            title: i18n.__('Save'),
             action: (mapboxAPI || githubAPI) ? saveAction : function() {},
             children: exportFormats
         }, {
-            title: 'New',
+            title: i18n.__('New'),
             action: function() {
                 window.open(window.location.origin +
                     window.location.pathname + '#new');
@@ -71,8 +76,8 @@ module.exports = function fileBar(context) {
             action: function() {},
             children: [
                 {
-                    title: 'Add map layer',
-                    alt: 'Add a custom tile layer',
+                    title: i18n.__('Add map layer'),
+                    alt: i18n.__('Add a custom tile layer'),
                     action: function() {
                         var layerURL = prompt('Layer URL \n(http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)');
                         if (layerURL === null) return;
@@ -82,63 +87,63 @@ module.exports = function fileBar(context) {
                     }
                 },
                 {
-                    title: 'Zoom to features',
-                    alt: 'Zoom to the extent of all features',
+                    title: i18n.__('Zoom to features'),
+                    alt: i18n.__('Zoom to the extent of all features'),
                     action: function() {
                         meta.zoomextent(context);
                     }
                 },
                 {
-                    title: 'Clear',
-                    alt: 'Delete all features from the map',
+                    title: i18n.__('Clear'),
+                    alt: i18n.__('Delete all features from the map'),
                     action: function() {
-                        if (confirm('Are you sure you want to delete all features from this map?')) {
+                        if (confirm(i18n.__('Are you sure you want to delete all features from this map?'))) {
                             meta.clear(context);
                         }
                     }
                 }, {
-                    title: 'Random: Points',
-                    alt: 'Add random points to your map',
+                    title: i18n.__('Random: Points'),
+                    alt: i18n.__('Add random points to your map'),
                     action: function() {
-                        var response = prompt('Number of points (default: 100)');
+                        var response = prompt(i18n.__('Number of points (default: 100)'));
                         if (response === null) return;
                         var count = parseInt(response, 10);
                         if (isNaN(count)) count = 100;
                         meta.random(context, count, 'point');
                     }
                 }, {
-                    title: 'Add bboxes',
-                    alt: 'Add bounding box members to all applicable GeoJSON objects',
+                    title: i18n.__('Add bboxes'),
+                    alt: i18n.__('Add bounding box members to all applicable GeoJSON objects'),
                     action: function() {
                         meta.bboxify(context);
                     }
                 }, {
-                    title: 'Flatten Multi Features',
-                    alt: 'Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries',
+                    title: i18n.__('Flatten Multi Features'),
+                    alt: i18n.__('Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries'),
                     action: function() {
                         meta.flatten(context);
                     }
                 }, {
-                    title: 'Load encoded polyline',
-                    alt: 'Decode and show an encoded polyline. Precision 5 is supported.',
+                    title: i18n.__('Load encoded polyline'),
+                    alt: i18n.__('Decode and show an encoded polyline. Precision 5 is supported.'),
                     action: function() {
                         meta.polyline(context);
                     }
                 }, {
-                    title: 'Load WKB Base64 Encoded String',
-                    alt: 'Decode and show WKX data',
+                    title: i18n.__('Load WKB Base64 Encoded String'),
+                    alt: i18n.__('Decode and show WKX data'),
                     action: function() {
                         meta.wkxBase64(context);
                     }
                 }, {
-                    title: 'Load WKB Hex Encoded String',
-                    alt: 'Decode and show WKX data',
+                    title: i18n.__('Load WKB Hex Encoded String'),
+                    alt: i18n.__('Decode and show WKX data'),
                     action: function() {
                         meta.wkxHex(context);
                     }
                 }, {
-                    title: 'Load WKT String',
-                    alt: 'Decode and show WKX data',
+                    title: i18n.__('Load WKT String'),
+                    alt: i18n.__('Decode and show WKX data'),
                     action: function() {
                         meta.wkxString(context);
                     }
@@ -148,47 +153,20 @@ module.exports = function fileBar(context) {
 
         if (mapboxAPI || githubAPI) {
             actions.unshift({
-                title: 'Open',
+                title: i18n.__('Open'),
                 children: [
                     {
-                        title: 'File',
-                        alt: 'GeoJSON, TopoJSON, GTFS, KML, CSV, GPX and OSM XML supported',
+                        title: i18n.__('File'),
+                        alt: i18n.__('GeoJSON, TopoJSON, GTFS, KML, CSV, GPX and OSM XML supported'),
                         action: blindImport
-                    }, {
-                        title: 'GitHub',
-                        alt: 'GeoJSON files in GitHub Repositories',
-                        authenticated: true,
-                        action: clickGitHubOpen
-                    }, {
-                        title: 'Gist',
-                        alt: 'GeoJSON files in GitHub Gists',
-                        authenticated: true,
-                        action: clickGist
                     }
                 ]
             });
-            actions[1].children.unshift({
-                    title: 'GitHub',
-                    alt: 'GeoJSON files in GitHub Repositories',
-                    authenticated: true,
-                    action: clickGitHubSave
-                }, {
-                    title: 'Gist',
-                    alt: 'GeoJSON files in GitHub Gists',
-                    authenticated: true,
-                    action: clickGistSave
-                });
-
-            if (mapboxAPI) actions.splice(3, 0, {
-                    title: 'Share',
-                    action: function() {
-                        context.container.call(share(context));
-                    }
-                });
+            
         } else {
             actions.unshift({
-                title: 'Open',
-                alt: 'CSV, GTFS, KML, GPX, and other filetypes',
+                title: i18n.__('Open'),
+                alt: i18n.__('CSV, GTFS, KML, GPX, and other filetypes'),
                 action: blindImport
             });
         }
@@ -228,7 +206,7 @@ module.exports = function fileBar(context) {
 
             var filename = name.append('span')
                 .attr('class', 'filename')
-                .text('unsaved');
+                .text(i18n.__('unsaved'));
         }
 
         function clickGistSave() {
@@ -250,7 +228,7 @@ module.exports = function fileBar(context) {
 
         function saveNoun(_) {
             buttons.filter(function(b) {
-                return b.title === 'Save';
+                return b.title === i18n.__('Save');
             }).select('span.title').text(_);
         }
 
@@ -262,7 +240,7 @@ module.exports = function fileBar(context) {
                     .enter()
                     .append('a')
                     .attr('title', function(d) {
-                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist' || d.title == 'Add map layer' || d.title == 'Zoom to features' || d.title == 'Clear' || d.title == 'Random: Points' || d.title == 'Add bboxes' || d.title == 'Flatten Multi Features') return d.alt;
+                        if (d.title == i18n.__('File') || d.title == 'GitHub' || d.title == 'Gist' || d.title == i18n.__('Add map layer') || d.title == i18n.__('Zoom to features') || d.title == i18n.__('Clear') || d.title == i18n.__('Random: Points') || d.title == i18n.__('Add bboxes') || d.title == i18n.__('Flatten Multi Features')) return d.alt;
                     })
                     .text(function(d) {
                         return d.title;
@@ -276,7 +254,7 @@ module.exports = function fileBar(context) {
         context.dispatch.on('change.filebar', onchange);
 
         function clickGitHubOpen() {
-            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
+            if (!context.user.token()) return flash(context.container, i18n.__('You must authenticate to use this API.'));
 
             var m = modal(d3.select('div.geojsonio'));
 
@@ -298,7 +276,7 @@ module.exports = function fileBar(context) {
                         throw new Error('last is invalid: ' + JSON.stringify(last));
                     }
                     if (!last.path.match(/\.(geo)?json/i)) {
-                        return alert('only GeoJSON files are supported from GitHub');
+                        return alert(i18n.__('only GeoJSON files are supported from GitHub'));
                     }
                     if (last.type === 'blob') {
                         githubBrowser.request('/repos/' + d[1].full_name +
@@ -318,7 +296,7 @@ module.exports = function fileBar(context) {
         }
 
         function clickGitHubSave() {
-            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
+            if (!context.user.token()) return flash(context.container, i18n.__('You must authenticate to use this API.'));
 
             var m = modal(d3.select('div.geojsonio'));
 
@@ -341,7 +319,7 @@ module.exports = function fileBar(context) {
 
                     // New file
                     if (last.type === 'new')  {
-                        var filename = prompt('New file name');
+                        var filename = prompt(i18n.__('New file name'));
                         if (!filename) {
                             m.close();
                             return;
@@ -407,7 +385,7 @@ module.exports = function fileBar(context) {
         }
 
         function clickGist() {
-            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
+            if (!context.user.token()) return flash(context.container, i18n.__('You must authenticate to use this API.'));
 
             var m = modal(d3.select('div.geojsonio'));
 
@@ -433,12 +411,12 @@ module.exports = function fileBar(context) {
                 type = data.type,
                 path = data.path;
             if (mapboxAPI || githubAPI) filename
-                .text(path ? path : 'unsaved')
+                .text(path ? path : i18n.__('unsaved'))
                 .classed('deemphasize', context.data.dirty);
             if (mapboxAPI || githubAPI) filetype
                 .attr('href', data.url)
                 .attr('class', sourceIcon(type));
-            saveNoun(type == 'github' ? 'Commit' : 'Save');
+            saveNoun(type == 'github' ? i18n.__('Commit') : i18n.__('Save'));
         }
 
         function blindImport() {
