@@ -66,5 +66,6 @@
   },
   "window": {
     "toolbar": false
-  }
+  },
+  "engines" : { "node" : "<8" }
 }
