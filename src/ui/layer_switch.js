@@ -6,22 +6,22 @@ module.exports = function(context) {
         if (!(/a\.tiles\.mapbox.com/).test(L.mapbox.config.HTTP_URL)) {
             layers = [{
                 title: 'Mapbox',
-                layer: L.mapbox.tileLayer('mapbox.osm-bright')
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken)
             }, {
                 title: 'Mapbox Outdoors',
-                layer: L.mapbox.tileLayer('mapbox.mapbox-outdoors')
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken)
             }, {
                 title: 'Satellite',
-                layer: L.mapbox.tileLayer('mapbox.satellite-full')
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken)
             }];
 
         } else {
             layers = [{
                 title: 'Mapbox',
-                layer: L.mapbox.tileLayer('mapbox.streets')
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken)
             }, {
                 title: 'Satellite',
-                layer: L.mapbox.tileLayer('mapbox.satellite')
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken)
             }, {
                 title: 'OSM',
                 layer: L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -30,7 +30,7 @@ module.exports = function(context) {
             }
             // OCM tiles from Thunderforest require an API key. Add your key and uncomment the lines
             // below to enable the OCM layer.
-            //       
+            //
             // , {
             //    title: 'OCM',
             //    layer: L.tileLayer('https://a.tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=<insert-your-apikey-here>', {

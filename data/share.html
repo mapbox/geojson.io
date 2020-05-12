@@ -39,7 +39,7 @@
 L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
 var map = L.mapbox.map('map');
 
-L.mapbox.tileLayer('mapbox.streets').addTo(map);
+L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken).addTo(map);
 
 $.getJSON('map.geojson', function(geojson) {
     var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);
