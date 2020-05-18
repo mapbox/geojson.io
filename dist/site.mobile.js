@@ -30717,22 +30717,22 @@ module.exports = function(context) {
         if (!(/a\.tiles\.mapbox.com/).test(L.mapbox.config.HTTP_URL)) {
             layers = [{
                 title: 'Mapbox',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken)
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22})
             }, {
                 title: 'Mapbox Outdoors',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken)
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22})
             }, {
                 title: 'Satellite',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken)
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22})
             }];
 
         } else {
             layers = [{
                 title: 'Mapbox',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken)
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22})
             }, {
                 title: 'Satellite',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken)
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22})
             }, {
                 title: 'OSM',
                 layer: L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
