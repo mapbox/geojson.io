@@ -6,26 +6,26 @@ module.exports = function(context) {
         if (!(/a\.tiles\.mapbox.com/).test(L.mapbox.config.HTTP_URL)) {
             layers = [{
                 title: 'Mapbox',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22})
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22, attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'})
             }, {
                 title: 'Mapbox Outdoors',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22})
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22,  attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'})
             }, {
                 title: 'Satellite',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22})
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22, attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.maxar.com/">Maxar</a>'})
             }];
 
         } else {
             layers = [{
                 title: 'Mapbox',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22})
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22, attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'})
             }, {
                 title: 'Satellite',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22})
+                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22, attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.maxar.com/">Maxar</a>'})
             }, {
                 title: 'OSM',
                 layer: L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
                 })
             }
             // OCM tiles from Thunderforest require an API key. Add your key and uncomment the lines
