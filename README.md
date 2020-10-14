@@ -3,7 +3,7 @@
 
 # geojson.io
 
-Note: development of geojson.io is currently paused. You may be interested in the new fork at https://geojson.net. Until development restarts, please refrain from adding issues to the tracker.
+Note: development of geojson.io is currently paused. Until development restarts, please refrain from adding issues to the tracker.
 
 ![](http://i.cloudup.com/kz3BAF7Hnx.png)
 
