@@ -2,6 +2,7 @@
   "name": "geojson.io",
   "version": "0.1.1",
   "description": "create and edit maps, on the internet",
+  "homepage": "https://geojson.io",
   "main": "index.html",
   "dependencies": {
     "@mapbox/gist-map-browser": "0.2.1",
