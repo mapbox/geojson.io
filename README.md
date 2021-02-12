@@ -7,8 +7,8 @@ Note: development of geojson.io is currently paused. Until development restarts,
 
 ![](http://i.cloudup.com/kz3BAF7Hnx.png)
 
-A fast, simple editor for map data. Read more on [Mapbox](http://www.mapbox.com/blog/geojsonio-announce/),
-[macwright.org](http://macwright.org/2013/07/26/geojsonio.html).
+A fast, simple editor for map data. Read more on [Mapbox](https://www.mapbox.com/blog/geojsonio-announce/),
+[macwright.org](https://macwright.org/2013/07/26/geojsonio.html).
 
 ## Goes Great With!
 
@@ -53,12 +53,12 @@ back to `http://localhost:8080/` for GitHub OAuth.
 
 This is made up of small reusable chunks:
 
-* <a href='http://github.com/mapbox/d3-metatable'>mapbox/d3-metatable</a>
-* <a href='http://github.com/mapbox/geojsonhint'>mapbox/geojsonhint</a>
-* <a href='http://github.com/mapbox/d3-bucket-ui'>mapbox/d3-bucket-ui</a>
-* <a href='http://github.com/mapbox/geocode-many'>mapbox/geocode-many</a>
-* <a href='http://github.com/mapbox/csv2geojson'>mapbox/csv2geojson</a>
-* <a href='http://github.com/mapbox/togeojson'>mapbox/togeojson</a>
+* <a href='https://github.com/mapbox/d3-metatable'>mapbox/d3-metatable</a>
+* <a href='https://github.com/mapbox/geojsonhint'>mapbox/geojsonhint</a>
+* <a href='https://github.com/mapbox/d3-bucket-ui'>mapbox/d3-bucket-ui</a>
+* <a href='https://github.com/mapbox/geocode-many'>mapbox/geocode-many</a>
+* <a href='https://github.com/mapbox/csv2geojson'>mapbox/csv2geojson</a>
+* <a href='https://github.com/mapbox/togeojson'>mapbox/togeojson</a>
 * <a href='https://github.com/tyrasd/osmtogeojson'>tyrasd/osmtogeojson</a>
 * <a href='https://github.com/w8r/Leaflet.draw.drag'>w8r/Leaflet.draw.drag</a>
 * <a href='https://github.com/cschwarz/wkx'>cschwarz/wkx</a>
@@ -66,8 +66,8 @@ This is made up of small reusable chunks:
 
 ## See Also
 
-* [TileMill](http://www.mapbox.com/tilemill/) for styling maps
-* [Mapbox](http://www.mapbox.com/) for all of the APIs used in geojson.io
+* [TileMill](https://www.mapbox.com/tilemill/) for styling maps
+* [Mapbox](https://www.mapbox.com/) for all of the APIs used in geojson.io
 * [uMap](https://umap.openstreetmap.fr) is a similar tool with its own data storage
 
 ## License
