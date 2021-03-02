@@ -66,7 +66,7 @@ This is made up of small reusable chunks:
 
 ## See Also
 
-* [TileMill](https://www.mapbox.com/tilemill/) for styling maps
+* [Mapbox Studio](https://docs.mapbox.com/help/glossary/mapbox-studio/) for styling maps
 * [Mapbox](https://www.mapbox.com/) for all of the APIs used in geojson.io
 * [uMap](https://umap.openstreetmap.fr) is a similar tool with its own data storage
 
