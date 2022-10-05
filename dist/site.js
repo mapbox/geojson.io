@@ -1465,7 +1465,7 @@ function req(postfix, callback) {
 }
 
 },{"browser-request":8,"queue-async":93,"treeui":142}],4:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 'use strict';
 
 var objectAssign = require('object-assign');
@@ -1973,7 +1973,7 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"object-assign":67,"util/":7}],5:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
@@ -2007,7 +2007,7 @@ module.exports = function isBuffer(arg) {
     && typeof arg.readUInt8 === 'function';
 }
 },{}],7:[function(require,module,exports){
-(function (process,global){
+(function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -2595,7 +2595,7 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./support/isBuffer":6,"_process":91,"inherits":5}],8:[function(require,module,exports){
 // Browser Request
 //
@@ -3097,7 +3097,7 @@ function b64_enc (data) {
 },{}],10:[function(require,module,exports){
 arguments[4][9][0].apply(exports,arguments)
 },{"dup":9}],11:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -3111,8 +3111,8 @@ arguments[4][9][0].apply(exports,arguments)
 var base64 = require('base64-js')
 var ieee754 = require('ieee754')
 var customInspectSymbol =
-  (typeof Symbol === 'function' && typeof Symbol.for === 'function')
-    ? Symbol.for('nodejs.util.inspect.custom')
+  (typeof Symbol === 'function' && typeof Symbol['for'] === 'function') // eslint-disable-line dot-notation
+    ? Symbol['for']('nodejs.util.inspect.custom') // eslint-disable-line dot-notation
     : null
 
 exports.Buffer = Buffer
@@ -3216,7 +3216,7 @@ function from (value, encodingOrOffset, length) {
   }
 
   if (ArrayBuffer.isView(value)) {
-    return fromArrayLike(value)
+    return fromArrayView(value)
   }
 
   if (value == null) {
@@ -3297,7 +3297,7 @@ function alloc (size, fill, encoding) {
   if (fill !== undefined) {
     // Only pay attention to encoding if it's a string. This
     // prevents accidentally sending in a number that would
-    // be interpretted as a start offset.
+    // be interpreted as a start offset.
     return typeof encoding === 'string'
       ? createBuffer(size).fill(fill, encoding)
       : createBuffer(size).fill(fill)
@@ -3362,6 +3362,14 @@ function fromArrayLike (array) {
     buf[i] = array[i] & 255
   }
   return buf
+}
+
+function fromArrayView (arrayView) {
+  if (isInstance(arrayView, Uint8Array)) {
+    var copy = new Uint8Array(arrayView)
+    return fromArrayBuffer(copy.buffer, copy.byteOffset, copy.byteLength)
+  }
+  return fromArrayLike(arrayView)
 }
 
 function fromArrayBuffer (array, byteOffset, length) {
@@ -3503,12 +3511,20 @@ Buffer.concat = function concat (list, length) {
   for (i = 0; i < list.length; ++i) {
     var buf = list[i]
     if (isInstance(buf, Uint8Array)) {
-      buf = Buffer.from(buf)
-    }
-    if (!Buffer.isBuffer(buf)) {
+      if (pos + buf.length > buffer.length) {
+        Buffer.from(buf).copy(buffer, pos)
+      } else {
+        Uint8Array.prototype.set.call(
+          buffer,
+          buf,
+          pos
+        )
+      }
+    } else if (!Buffer.isBuffer(buf)) {
       throw new TypeError('"list" argument must be an Array of Buffers')
+    } else {
+      buf.copy(buffer, pos)
     }
-    buf.copy(buffer, pos)
     pos += buf.length
   }
   return buffer
@@ -3590,7 +3606,7 @@ function slowToString (encoding, start, end) {
     return ''
   }
 
-  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+  // Force coercion to uint32. This will also coerce falsey/NaN values to 0.
   end >>>= 0
   start >>>= 0
 
@@ -3941,10 +3957,6 @@ function asciiWrite (buf, string, offset, length) {
   return blitBuffer(asciiToBytes(string), buf, offset, length)
 }
 
-function latin1Write (buf, string, offset, length) {
-  return asciiWrite(buf, string, offset, length)
-}
-
 function base64Write (buf, string, offset, length) {
   return blitBuffer(base64ToBytes(string), buf, offset, length)
 }
@@ -4000,11 +4012,9 @@ Buffer.prototype.write = function write (string, offset, length, encoding) {
         return utf8Write(this, string, offset, length)
 
       case 'ascii':
-        return asciiWrite(this, string, offset, length)
-
       case 'latin1':
       case 'binary':
-        return latin1Write(this, string, offset, length)
+        return asciiWrite(this, string, offset, length)
 
       case 'base64':
         // Warning: maxLength not taken into account in base64Write
@@ -4047,10 +4057,13 @@ function utf8Slice (buf, start, end) {
   while (i < end) {
     var firstByte = buf[i]
     var codePoint = null
-    var bytesPerSequence = (firstByte > 0xEF) ? 4
-      : (firstByte > 0xDF) ? 3
-        : (firstByte > 0xBF) ? 2
-          : 1
+    var bytesPerSequence = (firstByte > 0xEF)
+      ? 4
+      : (firstByte > 0xDF)
+          ? 3
+          : (firstByte > 0xBF)
+              ? 2
+              : 1
 
     if (i + bytesPerSequence <= end) {
       var secondByte, thirdByte, fourthByte, tempCodePoint
@@ -4171,7 +4184,8 @@ function hexSlice (buf, start, end) {
 function utf16leSlice (buf, start, end) {
   var bytes = buf.slice(start, end)
   var res = ''
-  for (var i = 0; i < bytes.length; i += 2) {
+  // If bytes.length is odd, the last 8 bits must be ignored (same as node.js)
+  for (var i = 0; i < bytes.length - 1; i += 2) {
     res += String.fromCharCode(bytes[i] + (bytes[i + 1] * 256))
   }
   return res
@@ -4213,6 +4227,7 @@ function checkOffset (offset, ext, length) {
   if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
 }
 
+Buffer.prototype.readUintLE =
 Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
   offset = offset >>> 0
   byteLength = byteLength >>> 0
@@ -4228,6 +4243,7 @@ Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert)
   return val
 }
 
+Buffer.prototype.readUintBE =
 Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
   offset = offset >>> 0
   byteLength = byteLength >>> 0
@@ -4244,24 +4260,28 @@ Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert)
   return val
 }
 
+Buffer.prototype.readUint8 =
 Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
   offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 1, this.length)
   return this[offset]
 }
 
+Buffer.prototype.readUint16LE =
 Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
   offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   return this[offset] | (this[offset + 1] << 8)
 }
 
+Buffer.prototype.readUint16BE =
 Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
   offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   return (this[offset] << 8) | this[offset + 1]
 }
 
+Buffer.prototype.readUint32LE =
 Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
   offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
@@ -4272,6 +4292,7 @@ Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
       (this[offset + 3] * 0x1000000)
 }
 
+Buffer.prototype.readUint32BE =
 Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
   offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
@@ -4389,6 +4410,7 @@ function checkInt (buf, value, offset, ext, max, min) {
   if (offset + ext > buf.length) throw new RangeError('Index out of range')
 }
 
+Buffer.prototype.writeUintLE =
 Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4408,6 +4430,7 @@ Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, 
   return offset + byteLength
 }
 
+Buffer.prototype.writeUintBE =
 Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4427,6 +4450,7 @@ Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, 
   return offset + byteLength
 }
 
+Buffer.prototype.writeUint8 =
 Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4435,6 +4459,7 @@ Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
   return offset + 1
 }
 
+Buffer.prototype.writeUint16LE =
 Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4444,6 +4469,7 @@ Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert
   return offset + 2
 }
 
+Buffer.prototype.writeUint16BE =
 Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4453,6 +4479,7 @@ Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert
   return offset + 2
 }
 
+Buffer.prototype.writeUint32LE =
 Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4464,6 +4491,7 @@ Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert
   return offset + 4
 }
 
+Buffer.prototype.writeUint32BE =
 Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4643,11 +4671,6 @@ Buffer.prototype.copy = function copy (target, targetStart, start, end) {
   if (this === target && typeof Uint8Array.prototype.copyWithin === 'function') {
     // Use built-in when available, missing from IE11
     this.copyWithin(targetStart, start, end)
-  } else if (this === target && start < targetStart && targetStart < end) {
-    // descending copy from end
-    for (var i = len - 1; i >= 0; --i) {
-      target[i + targetStart] = this[i + start]
-    }
   } else {
     Uint8Array.prototype.set.call(
       target,
@@ -4893,7 +4916,7 @@ var hexSliceLookupTable = (function () {
   return table
 })()
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 },{"base64-js":12,"buffer":11,"ieee754":38}],12:[function(require,module,exports){
 'use strict'
 
@@ -5022,9 +5045,7 @@ function fromByteArray (uint8) {
 
   // go through the array every three bytes, we'll deal with trailing stuff later
   for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(
-      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
-    ))
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
   }
 
   // pad the end with zeros, but make sure to not forget the extra bytes
@@ -5049,7 +5070,7 @@ function fromByteArray (uint8) {
 }
 
 },{}],13:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 'use strict';
 
 function objectToString(o) {
@@ -5179,7 +5200,7 @@ clone.clonePrototype = function(parent) {
   return new c();
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 },{"buffer":11}],14:[function(require,module,exports){
 var dsv = require('dsv'),
     sexagesimal = require('sexagesimal');
@@ -6762,7 +6783,7 @@ function hint(str) {
 module.exports.hint = hint;
 
 },{"jsonlint-lines":35}],35:[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 /* parser generated by jison 0.4.6 */
 /*
   Returns a Parser object of the following structure:
@@ -7417,7 +7438,7 @@ if (typeof module !== 'undefined' && require.main === module) {
   exports.main(process.argv.slice(1));
 }
 }
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 },{"_process":91,"fs":10,"path":88}],36:[function(require,module,exports){
 var parseCSV = require('dsv').csv.parse;
 
@@ -7466,6 +7487,7 @@ module.exports = gtfs2geojson;
 module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
 },{}],38:[function(require,module,exports){
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -8157,7 +8179,7 @@ module.exports = function(data, options) {
 };
 
 },{"./base64":40,"./zipEntries":61}],50:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 'use strict';
 module.exports = function(data, encoding){
     return new Buffer(data, encoding);
@@ -8166,7 +8188,7 @@ module.exports.test = function(b){
     return Buffer.isBuffer(b);
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 },{"buffer":11}],51:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./uint8ArrayReader');
@@ -9154,7 +9176,7 @@ StringWriter.prototype = {
 module.exports = StringWriter;
 
 },{"./utils":60}],56:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 'use strict';
 exports.base64 = true;
 exports.array = true;
@@ -9190,7 +9212,7 @@ else {
     }
 }
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 },{"buffer":11}],57:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
@@ -10622,7 +10644,7 @@ function rad(_) {
 })(window);
 
 },{}],66:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 /**
  * marked - a markdown parser
  * Copyright (c) 2011-2014, Christopher Jeffrey. (MIT Licensed)
@@ -11890,7 +11912,7 @@ if (typeof exports === 'object') {
   return this || (typeof window !== 'undefined' ? window : global);
 }());
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],67:[function(require,module,exports){
 /*
 object-assign
@@ -12580,7 +12602,7 @@ osmtogeojson.toGeojson = osmtogeojson;
 module.exports = osmtogeojson;
 
 },{"./lodash.custom.js":69,"./polygon_features.json":71,"geojson-rewind":70}],69:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 /**
  * @license
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -14376,7 +14398,7 @@ module.exports = osmtogeojson;
 
 }.call(this));
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],70:[function(require,module,exports){
 var geojsonArea = require('geojson-area');
 
@@ -21114,7 +21136,7 @@ function ZStream() {
 module.exports = ZStream;
 
 },{}],88:[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 // .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
 // backported and transplited with Babel, with backwards-compat fixes
 
@@ -21418,7 +21440,7 @@ var substr = 'ab'.substr(-1) === 'b'
     }
 ;
 
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 },{"_process":91}],89:[function(require,module,exports){
 'use strict';
 
@@ -22363,7 +22385,7 @@ function deg(_) {
 }
 
 },{"wgs84":147}],107:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 ;(function(win){
 	var store = {},
 		doc = win.document,
@@ -22529,7 +22551,7 @@ function deg(_) {
 	
 })(this.window || global);
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],108:[function(require,module,exports){
 module.exports.attr = attr;
 module.exports.tagClose = tagClose;
@@ -22577,7 +22599,7 @@ function encode(_) {
 }
 
 },{}],109:[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 toGeoJSON = (function() {
     'use strict';
 
@@ -22814,7 +22836,7 @@ toGeoJSON = (function() {
 
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 },{"_process":91,"xmldom":9}],110:[function(require,module,exports){
 var strxml = require('strxml'),
     tag = strxml.tag,
@@ -26312,7 +26334,7 @@ module.exports.FLATTENING = 1/298.257223563;
 module.exports.POLAR_RADIUS = 6356752.3142;
 
 },{}],148:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 module.exports = BinaryReader;
 
 function BinaryReader(buffer, isBigEndian) {
@@ -26361,9 +26383,9 @@ BinaryReader.prototype.readVarInt = function () {
     return result;
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 },{"buffer":11}],149:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 module.exports = BinaryWriter;
 
 function BinaryWriter(size, allowResize) {
@@ -26430,9 +26452,9 @@ BinaryWriter.prototype.ensureSize = function (size) {
     }
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 },{"buffer":11}],150:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 module.exports = Geometry;
 
 var Types = require('./types');
@@ -26818,7 +26840,7 @@ Geometry.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
+}).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
 },{"../../is-buffer/index.js":39,"./binaryreader":148,"./binarywriter":149,"./geometrycollection":151,"./linestring":152,"./multilinestring":153,"./multipoint":154,"./multipolygon":155,"./point":156,"./polygon":157,"./types":158,"./wktparser":159,"./zigzag.js":161}],151:[function(require,module,exports){
 module.exports = GeometryCollection;
 
@@ -29230,7 +29252,7 @@ L.Hash.prototype.formatHash = function(map) {
 };
 
 },{"leaflet-hash":65,"qs-hash":92}],173:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 var escape = require('escape-html'),
     geojsonRandom = require('geojson-random'),
     geojsonExtent = require('geojson-extent'),
@@ -29323,7 +29345,7 @@ module.exports.wkxString = function(context) {
     }
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 },{"../lib/zoomextent":178,"buffer":11,"escape-html":22,"geojson-extent":28,"geojson-flatten":29,"geojson-random":31,"polyline":89,"wkx":160}],174:[function(require,module,exports){
 module.exports = function(context) {
     return function(e) {
@@ -29660,7 +29682,7 @@ module.exports = function(context) {
 };
 
 },{}],179:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 
 var marked = require('marked');
 
@@ -29682,7 +29704,7 @@ module.exports = function(context) {
     return render;
 };
 
-}).call(this,require("buffer").Buffer)
+}).call(this)}).call(this,require("buffer").Buffer)
 },{"buffer":11,"marked":66}],180:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
@@ -30105,7 +30127,7 @@ function ui(context) {
 
         var container = selection
             .append('div')
-            .attr('class', 'container');
+            .attr('class', 'ui-container flex-grow relative');
 
         var map = container
             .append('div')

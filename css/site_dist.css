@@ -1,0 +1,1348 @@
+/*
+! tailwindcss v3.1.8 | MIT License | https://tailwindcss.com
+*/
+
+/*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  /* 1 */
+  border-width: 0;
+  /* 2 */
+  border-style: solid;
+  /* 2 */
+  border-color: #e5e7eb;
+  /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+*/
+
+html {
+  line-height: 1.5;
+  /* 1 */
+  -webkit-text-size-adjust: 100%;
+  /* 2 */
+  -moz-tab-size: 4;
+  /* 3 */
+  -o-tab-size: 4;
+     tab-size: 4;
+  /* 3 */
+  font-family: "Open Sans", sans-serif;
+  /* 4 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0;
+  /* 1 */
+  line-height: inherit;
+  /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0;
+  /* 1 */
+  color: inherit;
+  /* 2 */
+  border-top-width: 1px;
+  /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  -webkit-text-decoration: underline dotted;
+          text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font family by default.
+2. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* 1 */
+  font-size: 1em;
+  /* 2 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0;
+  /* 1 */
+  border-color: inherit;
+  /* 2 */
+  border-collapse: collapse;
+  /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  /* 1 */
+  font-size: 100%;
+  /* 1 */
+  font-weight: inherit;
+  /* 1 */
+  line-height: inherit;
+  /* 1 */
+  color: inherit;
+  /* 1 */
+  margin: 0;
+  /* 2 */
+  padding: 0;
+  /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  -webkit-appearance: button;
+  /* 1 */
+  background-color: transparent;
+  /* 2 */
+  background-image: none;
+  /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield;
+  /* 1 */
+  outline-offset: -2px;
+  /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button;
+  /* 1 */
+  font: inherit;
+  /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::-moz-placeholder, textarea::-moz-placeholder {
+  opacity: 1;
+  /* 1 */
+  color: #9ca3af;
+  /* 2 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1;
+  /* 1 */
+  color: #9ca3af;
+  /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  /* 1 */
+  vertical-align: middle;
+  /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+}
+
+::-webkit-backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+}
+
+.container {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1536px;
+  }
+}
+
+.absolute {
+  position: absolute;
+}
+
+.relative {
+  position: relative;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
+.block {
+  display: block;
+}
+
+.inline {
+  display: inline;
+}
+
+.flex {
+  display: flex;
+}
+
+.table {
+  display: table;
+}
+
+.hidden {
+  display: none;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.rounded {
+  border-radius: 0.25rem;
+}
+
+.border-l {
+  border-left-width: 1px;
+}
+
+.border-solid {
+  border-style: solid;
+}
+
+.border-gray-700 {
+  --tw-border-opacity: 1;
+  border-color: rgb(55 65 81 / var(--tw-border-opacity));
+}
+
+.bg-mb-gray-dark {
+  --tw-bg-opacity: 1;
+  background-color: rgb(14 33 39 / var(--tw-bg-opacity));
+}
+
+.bg-mb-purple-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(66 100 251 / var(--tw-bg-opacity));
+}
+
+.bg-center {
+  background-position: center;
+}
+
+.bg-no-repeat {
+  background-repeat: no-repeat;
+}
+
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.pr-3 {
+  padding-right: 0.75rem;
+}
+
+.pl-3 {
+  padding-left: 0.75rem;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.font-sans {
+  font-family: "Open Sans", sans-serif;
+}
+
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.font-extrabold {
+  font-weight: 800;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.tracking-wide {
+  letter-spacing: 0.025em;
+}
+
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition {
+  transition-property: color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-200 {
+  transition-duration: 200ms;
+}
+
+html {
+  height: 100%;
+}
+
+.fillD {
+  background: #ebebeb;
+}
+
+.inline {
+  display: inline-block;
+}
+
+.pad0x {
+  padding: 2px 5px;
+}
+
+/* Utility classes */
+
+.map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 40%;
+}
+
+.right {
+  overflow-x: hidden;
+  position: absolute;
+  bottom: 0;
+  top: 0;
+  right: 0;
+  width: 40%;
+  min-width: 400px;
+  box-sizing: border-box;
+  background: #fff;
+  transition: all 200ms;
+  -webkit-transition: all 200ms;
+  box-shadow: rgba(0, 0, 0, 0.1) -2px 0px 0px;
+}
+
+body.fullscreen .map {
+  right: 0;
+}
+
+body.fullscreen .right {
+  height: 40px;
+  bottom: auto;
+  border-bottom: 1px solid #d9d9d9;
+  overflow-y: hidden;
+}
+
+body.fullscreen .right .top .buttons,
+body.fullscreen .file-bar .fr {
+  display: none;
+}
+
+body.fullscreen .leaflet-control-mapbox-geocoder {
+  margin-top: 50px;
+}
+
+.deemphasize {
+  color: #888;
+}
+
+p.intro-hint {
+  margin: 10px auto;
+  opacity: 0.5;
+  font-size: small;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 1px;
+}
+
+p.intro-hint:hover {
+  opacity: 1;
+}
+
+.right .pane {
+  position: absolute;
+  top: 40px;
+  bottom: 0;
+  width: 100%;
+  overflow: auto;
+}
+
+/*
+ * .right ---------------------------------------------------------------------
+ */
+
+.top {
+  background: #eee;
+}
+
+.top .info {
+  line-height: 40px;
+  text-align: center;
+  width: 40px;
+  color: #222;
+}
+
+.top .info:hover {
+  background: #ccc;
+}
+
+.top .buttons {
+  margin-left: 28px;
+  height: 40px;
+}
+
+/*
+ * buttons --------------------------------------------------------------------
+ */
+
+button {
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-sizing: border-box;
+}
+
+button.active {
+  background: #34495e;
+  color: #fff;
+}
+
+button.major {
+  padding: 5px;
+  border-radius: 3px;
+  color: white;
+  background: #34495e;
+}
+
+button.major:hover {
+  background: #2980b9;
+}
+
+button.minor {
+  padding: 5px;
+  border-radius: 3px;
+  background: #eee;
+}
+
+button.minor:hover {
+  background: #f7f7f7;
+}
+
+.pill button:first-child {
+  border-radius: 3px 0 0 3px;
+}
+
+.pill button:last-child {
+  border-radius: 0 3px 3px 0;
+}
+
+button.delete-invert {
+  color: #b81b1b;
+}
+
+button.delete-invert:hover {
+  color: #e25353;
+}
+
+.top .collapse-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 40px;
+  line-height: 30px;
+  text-align: center;
+  border: none;
+}
+
+.top .buttons button {
+  padding: 10px 15px;
+  font-weight: normal;
+  height: 40px;
+  border: 0;
+  vertical-align: top;
+}
+
+.top .buttons button span.icon {
+  font-size: 16px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+/*
+ * CodeMirror & Markers -------------------------------------------------------
+ */
+
+.right .CodeMirror {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  top: 0;
+  height: auto !important;
+  background: #fff;
+  font-family: "m_1regular", monospace;
+  line-height: 1.5em;
+}
+
+.error-marker {
+  width: 10px;
+  height: 1.5em;
+  background: #eab;
+  transition: all 100ms;
+  -webkit-transition: all 100ms;
+}
+
+.error-marker:hover {
+  background: #d68;
+}
+
+.error-marker:before {
+  opacity: 0;
+  pointer-events: none;
+  transition: all 100ms;
+  -webkit-transition: all 100ms;
+  content: attr(message);
+  width: 300px;
+  font-size: 10px;
+  padding: 5px;
+  border: 1px solid #000;
+  position: absolute;
+  background: #fff;
+  z-index: 999;
+}
+
+.error-marker:hover:before {
+  opacity: 1;
+  margin-left: 35px;
+}
+
+.right .edit-pane .CodeMirror-linenumber {
+  color: #666;
+  font-size: 75%;
+}
+
+#geojsonio-body .leaflet-bar a {
+  border: 0;
+  border-radius: 0;
+}
+
+#geojsonio-body .leaflet-bar {
+  border-radius: 0;
+}
+
+.leaflet-container .leaflet-control-attribution {
+  background: none;
+  box-shadow: none;
+}
+
+.leaflet-popup-content-wrapper table input {
+  width: 100%;
+  background: transparent;
+}
+
+.leaflet-popup-content-wrapper input[type="color"] {
+  height: 29px;
+}
+
+.leaflet-control-attribution.leaflet-control a {
+  font-size: 12px;
+  color: #555;
+}
+
+.leaflet-control-attribution.leaflet-control a:hover {
+  color: #000;
+}
+
+/*
+ * table ----------------------------------------------------------------------
+ */
+
+.controls {
+  padding: 10px;
+}
+
+body.dragover {
+  opacity: 0.6;
+}
+
+.modal-message {
+  display: none;
+}
+
+body.dragover .modal-message {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  text-align: center;
+}
+
+.right table {
+  margin: 10px;
+}
+
+th button {
+  background: #fff;
+  float: right;
+  padding: 4px;
+  color: #999;
+}
+
+th button:hover {
+  color: #222;
+}
+
+/*
+ * layer_switch ---------------------------------------------------------------
+ */
+
+.layer-switch {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+}
+
+.blank-banner {
+  font-size: 20px;
+  padding: 80px 20px;
+  color: #888;
+}
+
+textarea.full-width {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px;
+  height: 60px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  font: inherit;
+}
+
+.file-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 40px;
+  box-sizing: border-box;
+  line-height: 40px;
+}
+
+.file-bar .name {
+  padding: 0 10px;
+  display: inline-block;
+  vertical-align: top;
+  background: #fff;
+}
+
+.file-bar .name .filename {
+  margin-left: 10px;
+}
+
+.clickable:hover,
+.clickable.active {
+  background: #eee;
+}
+
+/* modal, flash */
+
+.message {
+  background: #fffce4;
+  position: absolute;
+  z-index: 9999;
+  top: 50px;
+  left: 10px;
+}
+
+.message.error {
+  background: #ffe3e3;
+}
+
+.message.success {
+  background: #e3ffe9;
+}
+
+.pre-icon {
+  margin-right: 5px;
+}
+
+body.dragover:after {
+  content: "drop files to import";
+}
+
+.file-bar div.item {
+  display: inline-block;
+}
+
+.file-bar div.item a.parent {
+  padding: 0 10px;
+  height: 40px;
+  display: inline-block;
+  background: #fff;
+}
+
+.file-bar a:hover {
+  cursor: pointer;
+  background: #34495e;
+  color: #fff;
+}
+
+.file-bar div.item:hover a.parent {
+  background: #34495e;
+  color: #fff;
+}
+
+.file-bar div.item:hover div.children {
+  display: block;
+}
+
+div.children {
+  display: none;
+  position: absolute;
+  margin-top: -1px;
+}
+
+div.children a {
+  display: block;
+  padding: 5px 10px;
+  line-height: 20px;
+  background: #fff;
+}
+
+/*
+ * Help -----------------------------------------------------------------------
+ */
+
+.prose h2 {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.prose h3 {
+  font-weight: bold;
+  margin-top: 14px;
+}
+
+.prose h4 {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.prose ul {
+  margin: 20px 0;
+  border: 1px solid #ccc;
+}
+
+.prose ul li {
+  line-height: 200%;
+  padding: 5px 5px;
+  border-top: 1px solid #ccc;
+}
+
+.prose ul li:first-child {
+  border-top: none;
+}
+
+.prose strong {
+  font-weight: bold;
+}
+
+.prose code {
+  font-family: Menlo, Bitstream Vera Sans Mono, Monaco, Consolas, monospace;
+  white-space: pre-wrap;
+  background: rgba(0, 0, 0, 0.025);
+  font-size: 14px;
+  line-height: 20px;
+  padding: 3px;
+  border-radius: 3px;
+}
+
+.prose h3 code {
+  font-size: 16px;
+}
+
+/* Modals
+------------------------------------------------------- */
+
+.modal {
+  display: inline-block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: auto;
+  z-index: 2000;
+  overflow-x: hidden;
+  overflow-y: auto;
+  bottom: 20px;
+}
+
+.modal .loader {
+  margin-bottom: 10px;
+}
+
+.modal .description {
+  text-align: center;
+}
+
+.modal .content {
+  background: #fff;
+}
+
+.modal .header h1 {
+  font-size: 30px;
+}
+
+.shaded {
+  z-index: 9999999;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: auto;
+}
+
+.shaded:before {
+  content: "";
+  background: rgba(0, 0, 0, 0.75);
+  position: fixed;
+  left: 0px;
+  right: 0px;
+  top: 0px;
+  bottom: 0px;
+}
+
+.modal-section {
+  padding: 20px;
+  border-bottom: 1px solid #ccc;
+}
+
+.modal-section:last-child {
+  border-bottom: 0;
+}
+
+.loading-modal {
+  text-align: center;
+}
+
+.modal-actions button,
+.save-success a.button {
+  font-weight: normal;
+  color: #7092ff;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+  height: 160px;
+  text-align: center;
+  display: inline-block;
+}
+
+@media screen and (max-width: 1100px) {
+  .file-bar .button-wrap button span.title {
+    display: none;
+  }
+
+  .share,
+  .download,
+  .map {
+    right: 50%;
+  }
+
+  .right {
+    width: 50%;
+  }
+
+  .file-bar {
+    right: 50%;
+  }
+}
+
+.metadata {
+  width: 100%;
+}
+
+.metadata td {
+  padding: 5px;
+}
+
+.hover\:bg-mb-purple-700:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(15 56 191 / var(--tw-bg-opacity));
+}
+
+.hover\:text-white:hover {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity));
+}

@@ -1,9 +1,6 @@
-[![Circle CI](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages.svg?style=svg)](https://circleci.com/gh/mapbox/geojson.io/tree/gh-pages)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io?ref=badge_shield)
 
 # geojson.io
-
-Note: development of geojson.io is currently paused. Until development restarts, please refrain from adding issues to the tracker.
 
 ![](http://i.cloudup.com/kz3BAF7Hnx.png)
 
@@ -41,13 +38,14 @@ Browserify libraries, concat other libraries, build minimal d3:
 
     make
 
-Run a local server with [visionmedia/serve](https://github.com/visionmedia/serve):
+Run a local server to preview your changes.
 
-    serve -p 8080
+### VSCode Development
 
-Port 8080 is recommended because by default geojson.io will use a
-[prose/gatekeeper](https://github.com/prose/gatekeeper) auth server that redirects
-back to `http://localhost:8080/` for GitHub OAuth.
+A streamlined dev workflow is possible with the `Live Server` and `Run on Save` VS Code extensions.
+
+- Start a live server using `Live Server's` "Go Live" button
+- `Run on Save` reads it settings from `./vscode/settings.json` and will listen for changes to any file, then run both the `make` command and build `css/site_dist.css` (the tailwind build)
 
 ## Libraries
 

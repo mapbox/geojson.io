@@ -48,6 +48,7 @@
   "devDependencies": {
     "browserify": "^14.0.0",
     "eslint": "^1.10.3",
+    "tailwindcss": "^3.1.8",
     "tape": "~2.12.3"
   },
   "scripts": {
@@ -67,5 +68,7 @@
   "window": {
     "toolbar": false
   },
-  "engines" : { "node" : "<8" }
+  "engines": {
+    "node": "<8"
+  }
 }
