@@ -1,0 +1,11 @@
+{
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": ".*",
+        "isAsync": true,
+        "cmd": "make && npx tailwindcss -i ./css/site_src.css -o ./css/site_dist.css"
+      }
+    ]
+  }
+}

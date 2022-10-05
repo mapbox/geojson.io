@@ -11,7 +11,7 @@ function ui(context) {
 
         var container = selection
             .append('div')
-            .attr('class', 'container');
+            .attr('class', 'ui-container flex-grow relative');
 
         var map = container
             .append('div')
