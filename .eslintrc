@@ -1,6 +1,8 @@
 {
     "rules": {
-        "no-console": [0],
+        "no-console": [
+            0
+        ],
         "quotes": [
             2,
             "single"
@@ -13,7 +15,13 @@
             2,
             "always"
         ],
-        "no-unused-vars": [0]
+        "no-unused-vars": [
+            0
+        ],
+        "indent": [
+            "error",
+            2
+        ]
     },
     "env": {
         "es6": true,
@@ -21,10 +29,16 @@
         "browser": true
     },
     "globals": {
-        "L": true,
+        "mapboxgl": true,
+        "MapboxGeocoder": true,
+        "MapboxDraw": true,
+        "turf": true,
         "CodeMirror": true,
         "Base64": true,
         "d3": true
     },
-    "extends": "eslint:recommended"
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 9
+    }
 }

@@ -1,1239 +1,4 @@
 require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-module.exports=[
-    {
-        "name": "Circle stroked",
-        "tags": [
-            "circle",
-            "disc",
-            "shape",
-            "shapes",
-            "geometric",
-            "stroke",
-            "round"
-        ],
-        "icon": "circle-stroked"
-    },
-    {
-        "name": "Circle solid",
-        "tags": [
-            "circle",
-            "shape",
-            "shapes",
-            "geometric",
-            "round"
-        ],
-        "icon": "circle"
-    },
-    {
-        "name": "Square stroked",
-        "tags": [
-            "box",
-            "square",
-            "shapes",
-            "shape",
-            "geometric",
-            "stroke"
-        ],
-        "icon": "square-stroked"
-    },
-    {
-        "name": "Square solid",
-        "tags": [
-            "box",
-            "square",
-            "shape",
-            "shapes",
-            "geometric"
-        ],
-        "icon": "square"
-    },
-    {
-        "name": "Triangle stroked",
-        "tags": [
-            "triangle",
-            "shape",
-            "shapes",
-            "geometric",
-            "stroke"
-        ],
-        "icon": "triangle-stroked"
-    },
-    {
-        "name": "Triangle solid",
-        "tags": [
-            "triangle",
-            "shape",
-            "shapes",
-            "geometric"
-        ],
-        "icon": "triangle"
-    },
-    {
-        "name": "Star stroked",
-        "tags": [
-            "star",
-            "shape",
-            "shapes",
-            "geometric",
-            "stroke"
-        ],
-        "icon": "star-stroked"
-    },
-    {
-        "name": "Star solid",
-        "tags": [
-            "star",
-            "shape",
-            "shapes",
-            "geometric"
-        ],
-        "icon": "star"
-    },
-    {
-        "name": "Cross",
-        "tags": [
-            "cross",
-            "x",
-            "ex",
-            "shape",
-            "shapes",
-            "geometric"
-        ],
-        "icon": "cross"
-    },
-    {
-        "name": "Marker Stroke",
-        "tags": [
-            "marker",
-            "point",
-            "shape",
-            "shapes",
-            "stroke"
-        ],
-        "icon": "marker-stroked"
-    },
-    {
-        "name": "Marker Solid",
-        "tags": [
-            "marker",
-            "point",
-            "shape",
-            "shapes"
-        ],
-        "icon": "marker"
-    },
-    {
-        "name": "Religious Jewish",
-        "tags": [
-            "jewish",
-            "judaism",
-            "hebrew",
-            "star",
-            "david",
-            "religious",
-            "religion",
-            "temple",
-            "synagogue"
-        ],
-        "icon": "religious-jewish"
-    },
-    {
-        "name": "Religious Christian",
-        "tags": [
-            "christian",
-            "cross",
-            "religious",
-            "religion",
-            "church",
-            "cathedral"
-        ],
-        "icon": "religious-christian"
-    },
-    {
-        "name": "Religious Muslim",
-        "tags": [
-            "muslim",
-            "crescent",
-            "star",
-            "religious",
-            "religion",
-            "mosque"
-        ],
-        "icon": "religious-muslim"
-    },
-    {
-        "name": "Cemetery",
-        "tags": [
-            "cemetery",
-            "graveyard",
-            "funeral",
-            "religious",
-            "religion",
-            "memorial"
-        ],
-        "icon": "cemetery"
-    },
-    {
-        "name": "Rocket",
-        "tags": [
-            "rocket",
-            "space",
-            "launch",
-            "transportation"
-        ],
-        "icon": "rocket"
-    },
-    {
-        "name": "Airport",
-        "tags": [
-            "airplane",
-            "plane",
-            "airport",
-            "transportation"
-        ],
-        "icon": "airport"
-    },
-    {
-        "name": "Heliport",
-        "tags": [
-            "heliport",
-            "helicopter",
-            "transportation"
-        ],
-        "icon": "heliport"
-    },
-    {
-        "name": "Rail",
-        "tags": [
-            "rail",
-            "train",
-            "transportation"
-        ],
-        "icon": "rail"
-    },
-    {
-        "name": "Rail Metro",
-        "tags": [
-            "rail",
-            "train",
-            "metro",
-            "subway",
-            "rapid-transit",
-            "transportation"
-        ],
-        "icon": "rail-metro"
-    },
-    {
-        "name": "Rail Light",
-        "tags": [
-            "rail",
-            "train",
-            "light-rail",
-            "transportation"
-        ],
-        "icon": "rail-light"
-    },
-    {
-        "name": "Bus",
-        "tags": [
-            "vehicle",
-            "bus",
-            "transportation"
-        ],
-        "icon": "bus"
-    },
-    {
-        "name": "Fuel",
-        "tags": [
-            "petrol",
-            "fuel",
-            "gas",
-            "transportation",
-            "station"
-        ],
-        "icon": "fuel"
-    },
-    {
-        "name": "Parking",
-        "tags": [
-            "parking",
-            "transportation"
-        ],
-        "icon": "parking"
-    },
-    {
-        "name": "Parking Garage",
-        "tags": [
-            "parking",
-            "transportation",
-            "garage"
-        ],
-        "icon": "parking-garage"
-    },
-    {
-        "name": "Airfield",
-        "tags": [
-            "airfield",
-            "airport",
-            "plane",
-            "landing strip"
-        ],
-        "icon": "airfield"
-    },
-    {
-        "name": "Roadblock",
-        "tags": [
-            "roadblock",
-            "stop",
-            "warning",
-            "dead end"
-        ],
-        "icon": "roadblock"
-    },
-    {
-        "name": "Ferry",
-        "tags": [
-            "ship",
-            "boat",
-            "water",
-            "ferry",
-            "transportation"
-        ],
-        "icon": "ferry"
-    },
-    {
-        "name": "Harbor",
-        "tags": [
-            "marine",
-            "dock",
-            "water",
-            "wharf"
-        ],
-        "icon": "harbor"
-    },
-    {
-        "name": "Bicycle",
-        "tags": [
-            "cycling",
-            "cycle",
-            "transportation"
-        ],
-        "icon": "bicycle"
-    },
-    {
-        "name": "Park",
-        "tags": [
-            "recreation",
-            "park",
-            "forest",
-            "tree",
-            "green",
-            "woods",
-            "nature"
-        ],
-        "icon": "park"
-    },
-    {
-        "name": "Park 2",
-        "tags": [
-            "recreation",
-            "park",
-            "forest",
-            "tree",
-            "green",
-            "woods",
-            "nature"
-        ],
-        "icon": "park2"
-    },
-    {
-        "name": "Museum",
-        "tags": [
-            "recreation",
-            "museum",
-            "tourism"
-        ],
-        "icon": "museum"
-    },
-    {
-        "name": "Lodging",
-        "tags": [
-            "lodging",
-            "hotel",
-            "recreation",
-            "motel",
-            "tourism"
-        ],
-        "icon": "lodging"
-    },
-    {
-        "name": "Monument",
-        "tags": [
-            "recreation",
-            "statue",
-            "monument",
-            "tourism"
-        ],
-        "icon": "monument"
-    },
-    {
-        "name": "Zoo",
-        "tags": [
-            "recreation",
-            "zoo",
-            "animal",
-            "giraffe"
-        ],
-        "icon": "zoo"
-    },
-    {
-        "name": "Garden",
-        "tags": [
-            "recreation",
-            "garden",
-            "park",
-            "flower",
-            "nature"
-        ],
-        "icon": "garden"
-    },
-    {
-        "name": "Campsite",
-        "tags": [
-            "recreation",
-            "campsite",
-            "camp",
-            "camping",
-            "tent",
-            "nature"
-        ],
-        "icon": "campsite"
-    },
-    {
-        "name": "Theatre",
-        "tags": [
-            "recreation",
-            "theatre",
-            "theater",
-            "entertainment",
-            "play",
-            "performance"
-        ],
-        "icon": "theatre"
-    },
-    {
-        "name": "Art gallery",
-        "tags": [
-            "art",
-            "center",
-            "museum",
-            "gallery",
-            "creative",
-            "recreation",
-            "entertainment",
-            "studio"
-        ],
-        "icon": "art-gallery"
-    },
-    {
-        "name": "Pitch",
-        "tags": [
-            "pitch",
-            "track",
-            "athletic",
-            "sports",
-            "field"
-        ],
-        "icon": "pitch"
-    },
-    {
-        "name": "Soccer",
-        "tags": [
-            "soccer",
-            "sports"
-        ],
-        "icon": "soccer"
-    },
-    {
-        "name": "American Football",
-        "tags": [
-            "football",
-            "sports"
-        ],
-        "icon": "america-football"
-    },
-    {
-        "name": "Tennis",
-        "tags": [
-            "tennis",
-            "court",
-            "ball",
-            "sports"
-        ],
-        "icon": "tennis"
-    },
-    {
-        "name": "Basketball",
-        "tags": [
-            "basketball",
-            "ball",
-            "sports"
-        ],
-        "icon": "basketball"
-    },
-    {
-        "name": "Baseball",
-        "tags": [
-            "baseball",
-            "softball",
-            "ball",
-            "sports"
-        ],
-        "icon": "baseball"
-    },
-    {
-        "name": "Golf",
-        "tags": [
-            "golf",
-            "sports",
-            "course"
-        ],
-        "icon": "golf"
-    },
-    {
-        "name": "Swimming",
-        "tags": [
-            "swimming",
-            "water",
-            "swim",
-            "sports"
-        ],
-        "icon": "swimming"
-    },
-    {
-        "name": "Cricket",
-        "tags": [
-            "cricket",
-            "sports"
-        ],
-        "icon": "cricket"
-    },
-    {
-        "name": "Skiing",
-        "tags": [
-            "winter",
-            "skiing",
-            "ski",
-            "sports"
-        ],
-        "icon": "skiing"
-    },
-    {
-        "name": "School",
-        "tags": [
-            "school",
-            "highschool",
-            "elementary",
-            "children",
-            "amenity",
-            "middle"
-        ],
-        "icon": "school"
-    },
-    {
-        "name": "College",
-        "tags": [
-            "college",
-            "school",
-            "amenity",
-            "university"
-        ],
-        "icon": "college"
-    },
-    {
-        "name": "Library",
-        "tags": [
-            "library",
-            "books",
-            "amenity"
-        ],
-        "icon": "library"
-    },
-    {
-        "name": "Post",
-        "tags": [
-            "post",
-            "office",
-            "amenity",
-            "mail",
-            "letter"
-        ],
-        "icon": "post"
-    },
-    {
-        "name": "Fire station",
-        "tags": [
-            "fire",
-            "station",
-            "amenity"
-        ],
-        "icon": "fire-station"
-    },
-    {
-        "name": "Town hall",
-        "tags": [
-            "townhall",
-            "mayor",
-            "building",
-            "amenity",
-            "government"
-        ],
-        "icon": "town-hall"
-    },
-    {
-        "name": "Police",
-        "tags": [
-            "police",
-            "jail",
-            "arrest",
-            "amenity",
-            "station"
-        ],
-        "icon": "police"
-    },
-    {
-        "name": "Prison",
-        "tags": [
-            "prison",
-            "jail",
-            "amenity"
-        ],
-        "icon": "prison"
-    },
-    {
-        "name": "Embassy",
-        "tags": [
-            "embassy",
-            "diplomacy",
-            "consulate",
-            "amenity",
-            "flag"
-        ],
-        "icon": "embassy"
-    },
-    {
-        "name": "Beer",
-        "tags": [
-            "bar",
-            "beer",
-            "drink",
-            "commercial",
-            "biergarten",
-            "pub"
-        ],
-        "icon": "beer"
-    },
-    {
-        "name": "Restaurant",
-        "tags": [
-            "restaurant",
-            "commercial"
-        ],
-        "icon": "restaurant"
-    },
-    {
-        "name": "Cafe",
-        "tags": [
-            "cafe",
-            "coffee",
-            "commercial",
-            "tea"
-        ],
-        "icon": "cafe"
-    },
-    {
-        "name": "Shop",
-        "tags": [
-            "shop",
-            "mall",
-            "commercial",
-            "store"
-        ],
-        "icon": "shop"
-    },
-    {
-        "name": "Fast Food",
-        "tags": [
-            "food",
-            "fast",
-            "commercial",
-            "burger",
-            "drive-through"
-        ],
-        "icon": "fast-food"
-    },
-    {
-        "name": "Bar",
-        "tags": [
-            "bar",
-            "drink",
-            "commercial",
-            "club",
-            "martini",
-            "lounge"
-        ],
-        "icon": "bar"
-    },
-    {
-        "name": "Bank",
-        "tags": [
-            "bank",
-            "atm",
-            "commercial",
-            "money"
-        ],
-        "icon": "bank"
-    },
-    {
-        "name": "Grocery",
-        "tags": [
-            "food",
-            "grocery",
-            "commercial",
-            "store",
-            "market"
-        ],
-        "icon": "grocery"
-    },
-    {
-        "name": "Cinema",
-        "tags": [
-            "cinema",
-            "theatre",
-            "film",
-            "movie",
-            "commercial",
-            "theater",
-            "entertainment"
-        ],
-        "icon": "cinema"
-    },
-    {
-        "name": "Pharmacy",
-        "tags": [
-            "pharmacy",
-            "drugs",
-            "medication",
-            "social",
-            "medicine",
-            "prescription"
-        ],
-        "icon": "pharmacy"
-    },
-    {
-        "name": "Hospital",
-        "tags": [
-            "hospital",
-            "health",
-            "medication",
-            "social",
-            "medicine",
-            "medical",
-            "clinic"
-        ],
-        "icon": "hospital"
-    },
-    {
-        "name": "Danger",
-        "tags": [
-            "minefield",
-            "landmine",
-            "disaster",
-            "dangerous",
-            "hazard"
-        ],
-        "icon": "danger"
-    },
-    {
-        "name": "Industrial",
-        "tags": [
-            "industrial",
-            "factory",
-            "property",
-            "building"
-        ],
-        "icon": "industrial"
-    },
-    {
-        "name": "Warehouse",
-        "tags": [
-            "warehouse",
-            "property",
-            "storage",
-            "building"
-        ],
-        "icon": "warehouse"
-    },
-    {
-        "name": "Commercial",
-        "tags": [
-            "commercial",
-            "property",
-            "business",
-            "building"
-        ],
-        "icon": "commercial"
-    },
-    {
-        "name": "Building",
-        "tags": [
-            "building",
-            "property",
-            "structure",
-            "business",
-            "building"
-        ],
-        "icon": "building"
-    },
-    {
-        "name": "Place of worship",
-        "tags": [
-            "religion",
-            "ceremony",
-            "religious",
-            "nondenominational",
-            "church",
-            "temple"
-        ],
-        "icon": "place-of-worship"
-    },
-    {
-        "name": "Alcohol shop",
-        "tags": [
-            "alcohol",
-            "liquor",
-            "store",
-            "shop",
-            "beer",
-            "wine",
-            "vodka"
-        ],
-        "icon": "alcohol-shop"
-    },
-    {
-        "name": "Logging",
-        "tags": [
-            "logger",
-            "chainsaw",
-            "woods",
-            "industry"
-        ],
-        "icon": "logging"
-    },
-    {
-        "name": "Oil well",
-        "tags": [
-            "oil",
-            "natural",
-            "environment",
-            "industry",
-            "resources"
-        ],
-        "icon": "oil-well"
-    },
-    {
-        "name": "Slaughterhouse",
-        "tags": [
-            "cows",
-            "cattle",
-            "food",
-            "meat",
-            "industry",
-            "resources"
-        ],
-        "icon": "slaughterhouse"
-    },
-    {
-        "name": "Dam",
-        "tags": [
-            "water",
-            "natural",
-            "hydro",
-            "hydroelectric",
-            "energy",
-            "environment",
-            "industry",
-            "resources"
-        ],
-        "icon": "dam"
-    },
-    {
-    "name": "Water",
-    "tags": [
-        "water",
-        "natural",
-        "hydro",
-        "lake",
-        "river",
-        "ocean",
-        "resources"
-    ],
-    "icon": "water"
-    },
-    {
-    "name": "Wetland",
-    "tags": [
-        "water",
-        "swamp",
-        "natural"
-    ],
-    "icon": "wetland"
-    },
-    {
-    "name": "Disability",
-    "tags": [
-        "handicap",
-        "wheelchair",
-        "access"
-    ],
-    "icon": "disability"
-    },
-    {
-    "name": "Telephone",
-    "tags": [
-        "payphone",
-        "call"
-    ],
-    "icon": "telephone"
-    },
-    {
-    "name": "Emergency Telephone",
-    "tags": [
-        "payphone",
-        "danger",
-        "safety",
-        "call"
-    ],
-    "icon": "emergency-telephone"
-    },
-    {
-    "name": "Toilets",
-    "tags": [
-        "bathroom",
-        "men",
-        "women",
-        "sink",
-        "washroom",
-        "lavatory"
-    ],
-    "icon": "toilets"
-    },
-    {
-    "name": "Waste Basket",
-    "tags": [
-        "trash",
-        "rubbish",
-        "bin",
-        "garbage"
-    ],
-    "icon": "waste-basket"
-    },
-    {
-    "name": "Music",
-    "tags": [
-        "stage",
-        "performance",
-        "band",
-        "concert",
-        "venue"
-    ],
-    "icon": "music"
-    },
-    {
-    "name": "Land Use",
-    "tags": [
-        "zoning",
-        "usage",
-        "area"
-    ],
-    "icon": "land-use"
-    },
-    {
-    "name": "City",
-    "tags": [
-        "area",
-        "point",
-        "place",
-        "urban"
-    ],
-    "icon": "city"
-    },
-    {
-    "name": "Town",
-    "tags": [
-        "area",
-        "point",
-        "place",
-        "small"
-    ],
-    "icon": "town"
-    },
-    {
-    "name": "Village",
-    "tags": [
-        "area",
-        "point",
-        "place",
-        "small",
-        "rural"
-    ],
-    "icon": "village"
-    },
-    {
-    "name": "Farm",
-    "tags": [
-        "building",
-        "farming",
-        "crops",
-        "plants",
-        "agriculture",
-        "rural"
-    ],
-    "icon": "farm"
-    },
-    {
-    "name": "Bakery",
-    "tags": [
-        "bakery",
-        "pastry",
-        "croissant",
-        "food",
-        "shop",
-        "bread"
-    ],
-    "icon": "bakery"
-    },
-	{
-    "name": "Dog Park",
-    "tags": [
-        "dog",
-        "pet"
-    ],
-    "icon": "dog-park"
-    },
-   {
-    "name": "Lighthouse",
-    "tags": [
-        "building",
-        "navigation",
-        "nautical",
-        "ocean",
-        "logistics"
-    ],
-    "icon": "lighthouse"
-    },
-    {
-    "name": "Clothing Store",
-    "tags": [
-        "clothing",
-        "store",
-        "shop"
-    ],
-    "icon": "clothing-store"
-    },
-    {
-    "name": "Polling Place",
-    "tags": [
-        "poll",
-        "polling",
-        "vote"
-    ],
-    "icon": "polling-place"
-    },
-    {
-    "name": "Playground",
-    "tags": [
-        "playground",
-        "play",
-        "park",
-        "children"
-    ],
-    "icon": "playground"
-    },
-    {
-    "name": "Entrance",
-    "tags": [
-        "entrance",
-        "enter",
-        "subway",
-        "rail"
-    ],
-    "icon": "entrance"
-    },
-    {
-    "name": "Heart",
-    "tags": [
-        "heart",
-        "love",
-        "shape",
-        "shapes",
-        "wedding"
-    ],
-    "icon": "heart"
-    },
-    {
-    "name": "London Underground",
-    "tags": [
-        "deprecated"
-    ],
-    "icon": "london-underground"
-    },
-    {
-    "name": "Minefield",
-    "tags": [
-        "deprecated"
-    ],
-    "icon": "minefield"
-    },
-    {
-    "name": "Rail Underground",
-    "tags": [
-        "deprecated"
-    ],
-    "icon": "rail-underground"
-    },
-    {
-    "name": "Rail Above",
-    "tags": [
-        "deprecated"
-    ],
-    "icon": "rail-above"
-    },
-    {
-     "name": "Camera",
-     "tags": [
-         "camera",
-         "photo",
-         "commercial",
-         "shop"
-     ],
-     "icon": "camera"
-    },
-    {
-    "name": "Laundry",
-    "tags": [
-        "laundry",
-        "washing machine",
-        "dry_cleaning",
-        "commercial",
-        "store"
-    ],
-    "icon": "laundry"
-    },
-    {
-        "name": "Car",
-        "tags": [
-            "car",
-            "auto",
-            "vehicle",
-            "transportation"
-        ],
-        "icon": "car"
-    },
-    {
-    "name": "Suitcase",
-    "tags": [
-      "suitcase",
-      "travel",
-      "travel agency",
-      "commercial",
-      "store"
-    ],
-    "icon": "suitcase"
-    },
-    {
-    "name": "Hairdresser",
-    "tags": [
-      "scissors",
-      "barber shop",
-      "barber",
-      "stylist",
-      "hair",
-      "cut",
-      "salon"
-    ],
-    "icon": "hairdresser"
-    },
-    {
-    "name": "Chemist",
-    "tags": [
-      "shop",
-      "science",
-      "chemistry",
-      "experiment",
-      "research",
-      "pharmacy"
-    ],
-    "icon": "chemist"
-    },
-    {
-    "name": "Mobile phone",
-    "tags": [
-      "phone",
-      "cellphone",
-      "communication",
-      "mobile"
-    ],
-    "icon": "mobilephone"
-    },
-    {
-    "name": "Scooter",
-    "tags": [
-      "bike",
-      "transportation",
-      "vehicle",
-      "route",
-      "moped",
-      "motorcycle"
-    ],
-    "icon": "scooter"
-    },
-    {
-    "name": "Gift",
-    "tags": [
-      "gift",
-      "shop",
-      "commercial",
-      "store"
-    ],
-    "icon": "gift"
-    },
-    {
-    "name": "Ice cream",
-    "tags": [
-      "ice",
-      "sweets",
-      "food",
-      "shop"
-    ],
-    "icon": "ice-cream"
-    },
-    {
-    "name": "Dentist",
-    "tags": [
-      "dentist",
-      "tooth",
-      "health",
-      "medication",
-      "social",
-      "medicine",
-      "medical"
-    ],
-    "icon": "dentist"
-    }
-]
-
-},{}],2:[function(require,module,exports){
 var request = require('browser-request'),
     token;
 
@@ -1329,7 +94,7 @@ function page(postfix, callback) {
     });
 }
 
-},{"browser-request":8}],3:[function(require,module,exports){
+},{"browser-request":9}],2:[function(require,module,exports){
 var queue = require('queue-async'),
     request = require('browser-request'),
     treeui = require('treeui'),
@@ -1464,7 +229,7 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":8,"queue-async":93,"treeui":142}],4:[function(require,module,exports){
+},{"browser-request":9,"queue-async":108,"treeui":157}],3:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -1974,7 +739,7 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"object-assign":67,"util/":7}],5:[function(require,module,exports){
+},{"object-assign":98,"util/":6}],4:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1999,14 +764,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],6:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2596,7 +1361,190 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"_process":91,"inherits":5}],8:[function(require,module,exports){
+},{"./support/isBuffer":5,"_process":106,"inherits":4}],7:[function(require,module,exports){
+(function (global){(function (){
+'use strict';
+
+var possibleNames = [
+	'BigInt64Array',
+	'BigUint64Array',
+	'Float32Array',
+	'Float64Array',
+	'Int16Array',
+	'Int32Array',
+	'Int8Array',
+	'Uint16Array',
+	'Uint32Array',
+	'Uint8Array',
+	'Uint8ClampedArray'
+];
+
+var g = typeof globalThis === 'undefined' ? global : globalThis;
+
+module.exports = function availableTypedArrays() {
+	var out = [];
+	for (var i = 0; i < possibleNames.length; i++) {
+		if (typeof g[possibleNames[i]] === 'function') {
+			out[out.length] = possibleNames[i];
+		}
+	}
+	return out;
+};
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],8:[function(require,module,exports){
+'use strict'
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function getLens (b64) {
+  var len = b64.length
+
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
+}
+
+// base64 is 4/3 + up to two characters of the original data
+function byteLength (b64) {
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function toByteArray (b64) {
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
+
+  var i
+  for (i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
+  }
+
+  return parts.join('')
+}
+
+},{}],9:[function(require,module,exports){
 // Browser Request
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -3092,11 +2040,11 @@ function b64_enc (data) {
 }));
 //UMD FOOTER END
 
-},{}],9:[function(require,module,exports){
-
 },{}],10:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],11:[function(require,module,exports){
+
+},{}],11:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],12:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -3110,10 +2058,6 @@ arguments[4][9][0].apply(exports,arguments)
 
 var base64 = require('base64-js')
 var ieee754 = require('ieee754')
-var customInspectSymbol =
-  (typeof Symbol === 'function' && typeof Symbol['for'] === 'function') // eslint-disable-line dot-notation
-    ? Symbol['for']('nodejs.util.inspect.custom') // eslint-disable-line dot-notation
-    : null
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -3150,9 +2094,7 @@ function typedArraySupport () {
   // Can typed array instances can be augmented?
   try {
     var arr = new Uint8Array(1)
-    var proto = { foo: function () { return 42 } }
-    Object.setPrototypeOf(proto, Uint8Array.prototype)
-    Object.setPrototypeOf(arr, proto)
+    arr.__proto__ = { __proto__: Uint8Array.prototype, foo: function () { return 42 } }
     return arr.foo() === 42
   } catch (e) {
     return false
@@ -3181,7 +2123,7 @@ function createBuffer (length) {
   }
   // Return an augmented `Uint8Array` instance
   var buf = new Uint8Array(length)
-  Object.setPrototypeOf(buf, Buffer.prototype)
+  buf.__proto__ = Buffer.prototype
   return buf
 }
 
@@ -3208,6 +2150,17 @@ function Buffer (arg, encodingOrOffset, length) {
   return from(arg, encodingOrOffset, length)
 }
 
+// Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+if (typeof Symbol !== 'undefined' && Symbol.species != null &&
+    Buffer[Symbol.species] === Buffer) {
+  Object.defineProperty(Buffer, Symbol.species, {
+    value: null,
+    configurable: true,
+    enumerable: false,
+    writable: false
+  })
+}
+
 Buffer.poolSize = 8192 // not used by this implementation
 
 function from (value, encodingOrOffset, length) {
@@ -3216,11 +2169,11 @@ function from (value, encodingOrOffset, length) {
   }
 
   if (ArrayBuffer.isView(value)) {
-    return fromArrayView(value)
+    return fromArrayLike(value)
   }
 
   if (value == null) {
-    throw new TypeError(
+    throw TypeError(
       'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
       'or Array-like Object. Received type ' + (typeof value)
     )
@@ -3228,12 +2181,6 @@ function from (value, encodingOrOffset, length) {
 
   if (isInstance(value, ArrayBuffer) ||
       (value && isInstance(value.buffer, ArrayBuffer))) {
-    return fromArrayBuffer(value, encodingOrOffset, length)
-  }
-
-  if (typeof SharedArrayBuffer !== 'undefined' &&
-      (isInstance(value, SharedArrayBuffer) ||
-      (value && isInstance(value.buffer, SharedArrayBuffer)))) {
     return fromArrayBuffer(value, encodingOrOffset, length)
   }
 
@@ -3278,8 +2225,8 @@ Buffer.from = function (value, encodingOrOffset, length) {
 
 // Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
 // https://github.com/feross/buffer/pull/148
-Object.setPrototypeOf(Buffer.prototype, Uint8Array.prototype)
-Object.setPrototypeOf(Buffer, Uint8Array)
+Buffer.prototype.__proto__ = Uint8Array.prototype
+Buffer.__proto__ = Uint8Array
 
 function assertSize (size) {
   if (typeof size !== 'number') {
@@ -3297,7 +2244,7 @@ function alloc (size, fill, encoding) {
   if (fill !== undefined) {
     // Only pay attention to encoding if it's a string. This
     // prevents accidentally sending in a number that would
-    // be interpreted as a start offset.
+    // be interpretted as a start offset.
     return typeof encoding === 'string'
       ? createBuffer(size).fill(fill, encoding)
       : createBuffer(size).fill(fill)
@@ -3364,14 +2311,6 @@ function fromArrayLike (array) {
   return buf
 }
 
-function fromArrayView (arrayView) {
-  if (isInstance(arrayView, Uint8Array)) {
-    var copy = new Uint8Array(arrayView)
-    return fromArrayBuffer(copy.buffer, copy.byteOffset, copy.byteLength)
-  }
-  return fromArrayLike(arrayView)
-}
-
 function fromArrayBuffer (array, byteOffset, length) {
   if (byteOffset < 0 || array.byteLength < byteOffset) {
     throw new RangeError('"offset" is outside of buffer bounds')
@@ -3391,8 +2330,7 @@ function fromArrayBuffer (array, byteOffset, length) {
   }
 
   // Return an augmented `Uint8Array` instance
-  Object.setPrototypeOf(buf, Buffer.prototype)
-
+  buf.__proto__ = Buffer.prototype
   return buf
 }
 
@@ -3511,20 +2449,12 @@ Buffer.concat = function concat (list, length) {
   for (i = 0; i < list.length; ++i) {
     var buf = list[i]
     if (isInstance(buf, Uint8Array)) {
-      if (pos + buf.length > buffer.length) {
-        Buffer.from(buf).copy(buffer, pos)
-      } else {
-        Uint8Array.prototype.set.call(
-          buffer,
-          buf,
-          pos
-        )
-      }
-    } else if (!Buffer.isBuffer(buf)) {
-      throw new TypeError('"list" argument must be an Array of Buffers')
-    } else {
-      buf.copy(buffer, pos)
+      buf = Buffer.from(buf)
     }
+    if (!Buffer.isBuffer(buf)) {
+      throw new TypeError('"list" argument must be an Array of Buffers')
+    }
+    buf.copy(buffer, pos)
     pos += buf.length
   }
   return buffer
@@ -3606,7 +2536,7 @@ function slowToString (encoding, start, end) {
     return ''
   }
 
-  // Force coercion to uint32. This will also coerce falsey/NaN values to 0.
+  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
   end >>>= 0
   start >>>= 0
 
@@ -3721,9 +2651,6 @@ Buffer.prototype.inspect = function inspect () {
   str = this.toString('hex', 0, max).replace(/(.{2})/g, '$1 ').trim()
   if (this.length > max) str += ' ... '
   return '<Buffer ' + str + '>'
-}
-if (customInspectSymbol) {
-  Buffer.prototype[customInspectSymbol] = Buffer.prototype.inspect
 }
 
 Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
@@ -3850,7 +2777,7 @@ function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
         return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
       }
     }
-    return arrayIndexOf(buffer, [val], byteOffset, encoding, dir)
+    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
   }
 
   throw new TypeError('val must be string, number or Buffer')
@@ -3957,6 +2884,10 @@ function asciiWrite (buf, string, offset, length) {
   return blitBuffer(asciiToBytes(string), buf, offset, length)
 }
 
+function latin1Write (buf, string, offset, length) {
+  return asciiWrite(buf, string, offset, length)
+}
+
 function base64Write (buf, string, offset, length) {
   return blitBuffer(base64ToBytes(string), buf, offset, length)
 }
@@ -4012,9 +2943,11 @@ Buffer.prototype.write = function write (string, offset, length, encoding) {
         return utf8Write(this, string, offset, length)
 
       case 'ascii':
+        return asciiWrite(this, string, offset, length)
+
       case 'latin1':
       case 'binary':
-        return asciiWrite(this, string, offset, length)
+        return latin1Write(this, string, offset, length)
 
       case 'base64':
         // Warning: maxLength not taken into account in base64Write
@@ -4057,13 +2990,10 @@ function utf8Slice (buf, start, end) {
   while (i < end) {
     var firstByte = buf[i]
     var codePoint = null
-    var bytesPerSequence = (firstByte > 0xEF)
-      ? 4
-      : (firstByte > 0xDF)
-          ? 3
-          : (firstByte > 0xBF)
-              ? 2
-              : 1
+    var bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+        : (firstByte > 0xBF) ? 2
+          : 1
 
     if (i + bytesPerSequence <= end) {
       var secondByte, thirdByte, fourthByte, tempCodePoint
@@ -4176,7 +3106,7 @@ function hexSlice (buf, start, end) {
 
   var out = ''
   for (var i = start; i < end; ++i) {
-    out += hexSliceLookupTable[buf[i]]
+    out += toHex(buf[i])
   }
   return out
 }
@@ -4184,8 +3114,7 @@ function hexSlice (buf, start, end) {
 function utf16leSlice (buf, start, end) {
   var bytes = buf.slice(start, end)
   var res = ''
-  // If bytes.length is odd, the last 8 bits must be ignored (same as node.js)
-  for (var i = 0; i < bytes.length - 1; i += 2) {
+  for (var i = 0; i < bytes.length; i += 2) {
     res += String.fromCharCode(bytes[i] + (bytes[i + 1] * 256))
   }
   return res
@@ -4214,8 +3143,7 @@ Buffer.prototype.slice = function slice (start, end) {
 
   var newBuf = this.subarray(start, end)
   // Return an augmented `Uint8Array` instance
-  Object.setPrototypeOf(newBuf, Buffer.prototype)
-
+  newBuf.__proto__ = Buffer.prototype
   return newBuf
 }
 
@@ -4227,7 +3155,6 @@ function checkOffset (offset, ext, length) {
   if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
 }
 
-Buffer.prototype.readUintLE =
 Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
   offset = offset >>> 0
   byteLength = byteLength >>> 0
@@ -4243,7 +3170,6 @@ Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert)
   return val
 }
 
-Buffer.prototype.readUintBE =
 Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
   offset = offset >>> 0
   byteLength = byteLength >>> 0
@@ -4260,28 +3186,24 @@ Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert)
   return val
 }
 
-Buffer.prototype.readUint8 =
 Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
   offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 1, this.length)
   return this[offset]
 }
 
-Buffer.prototype.readUint16LE =
 Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
   offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   return this[offset] | (this[offset + 1] << 8)
 }
 
-Buffer.prototype.readUint16BE =
 Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
   offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   return (this[offset] << 8) | this[offset + 1]
 }
 
-Buffer.prototype.readUint32LE =
 Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
   offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
@@ -4292,7 +3214,6 @@ Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
       (this[offset + 3] * 0x1000000)
 }
 
-Buffer.prototype.readUint32BE =
 Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
   offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
@@ -4410,7 +3331,6 @@ function checkInt (buf, value, offset, ext, max, min) {
   if (offset + ext > buf.length) throw new RangeError('Index out of range')
 }
 
-Buffer.prototype.writeUintLE =
 Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4430,7 +3350,6 @@ Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, 
   return offset + byteLength
 }
 
-Buffer.prototype.writeUintBE =
 Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4450,7 +3369,6 @@ Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, 
   return offset + byteLength
 }
 
-Buffer.prototype.writeUint8 =
 Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4459,7 +3377,6 @@ Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
   return offset + 1
 }
 
-Buffer.prototype.writeUint16LE =
 Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4469,7 +3386,6 @@ Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert
   return offset + 2
 }
 
-Buffer.prototype.writeUint16BE =
 Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4479,7 +3395,6 @@ Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert
   return offset + 2
 }
 
-Buffer.prototype.writeUint32LE =
 Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4491,7 +3406,6 @@ Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert
   return offset + 4
 }
 
-Buffer.prototype.writeUint32BE =
 Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
@@ -4671,6 +3585,11 @@ Buffer.prototype.copy = function copy (target, targetStart, start, end) {
   if (this === target && typeof Uint8Array.prototype.copyWithin === 'function') {
     // Use built-in when available, missing from IE11
     this.copyWithin(targetStart, start, end)
+  } else if (this === target && start < targetStart && targetStart < end) {
+    // descending copy from end
+    for (var i = len - 1; i >= 0; --i) {
+      target[i + targetStart] = this[i + start]
+    }
   } else {
     Uint8Array.prototype.set.call(
       target,
@@ -4713,8 +3632,6 @@ Buffer.prototype.fill = function fill (val, start, end, encoding) {
     }
   } else if (typeof val === 'number') {
     val = val & 255
-  } else if (typeof val === 'boolean') {
-    val = Number(val)
   }
 
   // Invalid ranges are not set to a default, so can range check early.
@@ -4770,6 +3687,11 @@ function base64clean (str) {
     str = str + '='
   }
   return str
+}
+
+function toHex (n) {
+  if (n < 16) return '0' + n.toString(16)
+  return n.toString(16)
 }
 
 function utf8ToBytes (string, units) {
@@ -4902,174 +3824,74 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-// Create lookup table for `toString('hex')`
-// See: https://github.com/feross/buffer/issues/219
-var hexSliceLookupTable = (function () {
-  var alphabet = '0123456789abcdef'
-  var table = new Array(256)
-  for (var i = 0; i < 16; ++i) {
-    var i16 = i * 16
-    for (var j = 0; j < 16; ++j) {
-      table[i16 + j] = alphabet[i] + alphabet[j]
-    }
-  }
-  return table
-})()
-
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":12,"buffer":11,"ieee754":38}],12:[function(require,module,exports){
-'use strict'
+},{"base64-js":8,"buffer":12,"ieee754":48}],13:[function(require,module,exports){
+'use strict';
 
-exports.byteLength = byteLength
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
+var GetIntrinsic = require('get-intrinsic');
 
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+var callBind = require('./');
 
-var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-for (var i = 0, len = code.length; i < len; ++i) {
-  lookup[i] = code[i]
-  revLookup[code.charCodeAt(i)] = i
+var $indexOf = callBind(GetIntrinsic('String.prototype.indexOf'));
+
+module.exports = function callBoundIntrinsic(name, allowMissing) {
+	var intrinsic = GetIntrinsic(name, !!allowMissing);
+	if (typeof intrinsic === 'function' && $indexOf(name, '.prototype.') > -1) {
+		return callBind(intrinsic);
+	}
+	return intrinsic;
+};
+
+},{"./":14,"get-intrinsic":41}],14:[function(require,module,exports){
+'use strict';
+
+var bind = require('function-bind');
+var GetIntrinsic = require('get-intrinsic');
+
+var $apply = GetIntrinsic('%Function.prototype.apply%');
+var $call = GetIntrinsic('%Function.prototype.call%');
+var $reflectApply = GetIntrinsic('%Reflect.apply%', true) || bind.call($call, $apply);
+
+var $gOPD = GetIntrinsic('%Object.getOwnPropertyDescriptor%', true);
+var $defineProperty = GetIntrinsic('%Object.defineProperty%', true);
+var $max = GetIntrinsic('%Math.max%');
+
+if ($defineProperty) {
+	try {
+		$defineProperty({}, 'a', { value: 1 });
+	} catch (e) {
+		// IE 8 has a broken defineProperty
+		$defineProperty = null;
+	}
 }
 
-// Support decoding URL-safe base64 strings, as Node.js does.
-// See: https://en.wikipedia.org/wiki/Base64#URL_applications
-revLookup['-'.charCodeAt(0)] = 62
-revLookup['_'.charCodeAt(0)] = 63
+module.exports = function callBind(originalFunction) {
+	var func = $reflectApply(bind, $call, arguments);
+	if ($gOPD && $defineProperty) {
+		var desc = $gOPD(func, 'length');
+		if (desc.configurable) {
+			// original length, plus the receiver, minus any additional arguments (after the receiver)
+			$defineProperty(
+				func,
+				'length',
+				{ value: 1 + $max(0, originalFunction.length - (arguments.length - 1)) }
+			);
+		}
+	}
+	return func;
+};
 
-function getLens (b64) {
-  var len = b64.length
+var applyBind = function applyBind() {
+	return $reflectApply(bind, $apply, arguments);
+};
 
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // Trim off extra bytes after placeholder bytes are found
-  // See: https://github.com/beatgammit/base64-js/issues/42
-  var validLen = b64.indexOf('=')
-  if (validLen === -1) validLen = len
-
-  var placeHoldersLen = validLen === len
-    ? 0
-    : 4 - (validLen % 4)
-
-  return [validLen, placeHoldersLen]
+if ($defineProperty) {
+	$defineProperty(module.exports, 'apply', { value: applyBind });
+} else {
+	module.exports.apply = applyBind;
 }
 
-// base64 is 4/3 + up to two characters of the original data
-function byteLength (b64) {
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function _byteLength (b64, validLen, placeHoldersLen) {
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function toByteArray (b64) {
-  var tmp
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-
-  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
-
-  var curByte = 0
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  var len = placeHoldersLen > 0
-    ? validLen - 4
-    : validLen
-
-  var i
-  for (i = 0; i < len; i += 4) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 18) |
-      (revLookup[b64.charCodeAt(i + 1)] << 12) |
-      (revLookup[b64.charCodeAt(i + 2)] << 6) |
-      revLookup[b64.charCodeAt(i + 3)]
-    arr[curByte++] = (tmp >> 16) & 0xFF
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 2) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 2) |
-      (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 1) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 10) |
-      (revLookup[b64.charCodeAt(i + 1)] << 4) |
-      (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] +
-    lookup[num >> 12 & 0x3F] +
-    lookup[num >> 6 & 0x3F] +
-    lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp =
-      ((uint8[i] << 16) & 0xFF0000) +
-      ((uint8[i + 1] << 8) & 0xFF00) +
-      (uint8[i + 2] & 0xFF)
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 2] +
-      lookup[(tmp << 4) & 0x3F] +
-      '=='
-    )
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 10] +
-      lookup[(tmp >> 4) & 0x3F] +
-      lookup[(tmp << 2) & 0x3F] +
-      '='
-    )
-  }
-
-  return parts.join('')
-}
-
-},{}],13:[function(require,module,exports){
+},{"function-bind":30,"get-intrinsic":41}],15:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 
@@ -5201,7 +4023,7 @@ clone.clonePrototype = function(parent) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":11}],14:[function(require,module,exports){
+},{"buffer":12}],16:[function(require,module,exports){
 var dsv = require('dsv'),
     sexagesimal = require('sexagesimal');
 
@@ -5388,7 +4210,7 @@ module.exports = {
     toPolygon: toPolygon
 };
 
-},{"dsv":21,"sexagesimal":94}],15:[function(require,module,exports){
+},{"dsv":23,"sexagesimal":109}],17:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -5579,10 +4401,10 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 module.exports.structure = require('./src/structure');
 
-},{"./src/structure":20}],17:[function(require,module,exports){
+},{"./src/structure":22}],19:[function(require,module,exports){
 var fieldSize = require('./fieldsize');
 
 var types = {
@@ -5626,7 +4448,7 @@ function bytesPer(fields) {
     return fields.reduce(function(memo, f) { return memo + f.size; }, 1);
 }
 
-},{"./fieldsize":18}],18:[function(require,module,exports){
+},{"./fieldsize":20}],20:[function(require,module,exports){
 module.exports = {
     // string
     C: 254,
@@ -5644,7 +4466,7 @@ module.exports = {
     B: 8,
 };
 
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 module.exports.lpad = function lpad(str, len, char) {
     while (str.length < len) { str = char + str; } return str;
 };
@@ -5660,7 +4482,7 @@ module.exports.writeField = function writeField(view, fieldLength, str, offset) 
     return offset;
 };
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var fieldSize = require('./fieldsize'),
     lib = require('./lib'),
     fields = require('./fields');
@@ -5757,12 +4579,29 @@ module.exports = function structure(data) {
     return view;
 };
 
-},{"./fields":17,"./fieldsize":18,"./lib":19}],21:[function(require,module,exports){
+},{"./fields":19,"./fieldsize":20,"./lib":21}],23:[function(require,module,exports){
 
 
 module.exports = new Function("dsv.version = \"0.0.3\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.substring(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.substring(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.substring(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && !(a = f(a, n++))) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
+'use strict';
+
+var GetIntrinsic = require('get-intrinsic');
+
+var $gOPD = GetIntrinsic('%Object.getOwnPropertyDescriptor%', true);
+if ($gOPD) {
+	try {
+		$gOPD([], 'length');
+	} catch (e) {
+		// IE 8 has a broken gOPD
+		$gOPD = null;
+	}
+}
+
+module.exports = $gOPD;
+
+},{"get-intrinsic":41}],25:[function(require,module,exports){
 /*!
  * escape-html
  * Copyright(c) 2012-2013 TJ Holowaychuk
@@ -5842,7 +4681,7 @@ function escapeHtml(string) {
     : html;
 }
 
-},{}],23:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = Extent;
 
 function Extent() {
@@ -5905,7 +4744,7 @@ Extent.prototype.polygon = function() {
     };
 };
 
-},{}],24:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /* FileSaver.js
  *  A saveAs() FileSaver implementation.
  *  2014-05-27
@@ -6148,7 +4987,132 @@ if (typeof module !== "undefined" && module !== null) {
   });
 }
 
-},{}],25:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
+'use strict';
+
+var isCallable = require('is-callable');
+
+var toStr = Object.prototype.toString;
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+var forEachArray = function forEachArray(array, iterator, receiver) {
+    for (var i = 0, len = array.length; i < len; i++) {
+        if (hasOwnProperty.call(array, i)) {
+            if (receiver == null) {
+                iterator(array[i], i, array);
+            } else {
+                iterator.call(receiver, array[i], i, array);
+            }
+        }
+    }
+};
+
+var forEachString = function forEachString(string, iterator, receiver) {
+    for (var i = 0, len = string.length; i < len; i++) {
+        // no such thing as a sparse string.
+        if (receiver == null) {
+            iterator(string.charAt(i), i, string);
+        } else {
+            iterator.call(receiver, string.charAt(i), i, string);
+        }
+    }
+};
+
+var forEachObject = function forEachObject(object, iterator, receiver) {
+    for (var k in object) {
+        if (hasOwnProperty.call(object, k)) {
+            if (receiver == null) {
+                iterator(object[k], k, object);
+            } else {
+                iterator.call(receiver, object[k], k, object);
+            }
+        }
+    }
+};
+
+var forEach = function forEach(list, iterator, thisArg) {
+    if (!isCallable(iterator)) {
+        throw new TypeError('iterator must be a function');
+    }
+
+    var receiver;
+    if (arguments.length >= 3) {
+        receiver = thisArg;
+    }
+
+    if (toStr.call(list) === '[object Array]') {
+        forEachArray(list, iterator, receiver);
+    } else if (typeof list === 'string') {
+        forEachString(list, iterator, receiver);
+    } else {
+        forEachObject(list, iterator, receiver);
+    }
+};
+
+module.exports = forEach;
+
+},{"is-callable":52}],29:[function(require,module,exports){
+'use strict';
+
+/* eslint no-invalid-this: 1 */
+
+var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
+var slice = Array.prototype.slice;
+var toStr = Object.prototype.toString;
+var funcType = '[object Function]';
+
+module.exports = function bind(that) {
+    var target = this;
+    if (typeof target !== 'function' || toStr.call(target) !== funcType) {
+        throw new TypeError(ERROR_MESSAGE + target);
+    }
+    var args = slice.call(arguments, 1);
+
+    var bound;
+    var binder = function () {
+        if (this instanceof bound) {
+            var result = target.apply(
+                this,
+                args.concat(slice.call(arguments))
+            );
+            if (Object(result) === result) {
+                return result;
+            }
+            return this;
+        } else {
+            return target.apply(
+                that,
+                args.concat(slice.call(arguments))
+            );
+        }
+    };
+
+    var boundLength = Math.max(0, target.length - args.length);
+    var boundArgs = [];
+    for (var i = 0; i < boundLength; i++) {
+        boundArgs.push('$' + i);
+    }
+
+    bound = Function('binder', 'return function (' + boundArgs.join(',') + '){ return binder.apply(this,arguments); }')(binder);
+
+    if (target.prototype) {
+        var Empty = function Empty() {};
+        Empty.prototype = target.prototype;
+        bound.prototype = new Empty();
+        Empty.prototype = null;
+    }
+
+    return bound;
+};
+
+},{}],30:[function(require,module,exports){
+'use strict';
+
+var implementation = require('./implementation');
+
+module.exports = Function.prototype.bind || implementation;
+
+},{"./implementation":29}],31:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports.geometry = geometry;
@@ -6214,7 +5178,7 @@ function rad(_) {
     return _ * Math.PI / 180;
 }
 
-},{"wgs84":147}],26:[function(require,module,exports){
+},{"wgs84":162}],32:[function(require,module,exports){
 module.exports = function flatten(list, depth) {
     return _flatten(list);
 
@@ -6234,7 +5198,7 @@ module.exports = function flatten(list, depth) {
     }
 };
 
-},{}],27:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 var geojsonNormalize = require('geojson-normalize'),
     geojsonFlatten = require('geojson-flatten'),
     flatten = require('./flatten');
@@ -6250,7 +5214,7 @@ module.exports = function(_) {
     return coordinates;
 };
 
-},{"./flatten":26,"geojson-flatten":29,"geojson-normalize":30}],28:[function(require,module,exports){
+},{"./flatten":32,"geojson-flatten":35,"geojson-normalize":36}],34:[function(require,module,exports){
 var geojsonCoords = require('geojson-coords'),
     traverse = require('traverse'),
     extent = require('extent');
@@ -6280,7 +5244,7 @@ function getExtent(_) {
     return ext;
 }
 
-},{"extent":23,"geojson-coords":27,"traverse":141}],29:[function(require,module,exports){
+},{"extent":26,"geojson-coords":33,"traverse":156}],35:[function(require,module,exports){
 module.exports = flatten;
 
 function flatten(gj, up) {
@@ -6321,7 +5285,7 @@ function flatten(gj, up) {
     }
 }
 
-},{}],30:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = normalize;
 
 var types = {
@@ -6366,7 +5330,7 @@ function normalize(gj) {
     }
 }
 
-},{}],31:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = function(count, type) {
     switch (type) {
         case 'point':
@@ -6385,7 +5349,7 @@ function feature(geom) {
 }
 function collection(f) { return { type: 'FeatureCollection', features: f }; }
 
-},{}],32:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var geojsonArea = require('geojson-area');
 
 module.exports = rewind;
@@ -6436,7 +5400,7 @@ function cw(_) {
     return geojsonArea.ring(_) >= 0;
 }
 
-},{"geojson-area":25}],33:[function(require,module,exports){
+},{"geojson-area":31}],39:[function(require,module,exports){
 var dsv = require('dsv');
 
 module.exports = function(_, delim) {
@@ -6463,7 +5427,7 @@ module.exports = function(_, delim) {
     }));
 };
 
-},{"dsv":21}],34:[function(require,module,exports){
+},{"dsv":23}],40:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -6782,7 +5746,846 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":35}],35:[function(require,module,exports){
+},{"jsonlint-lines":55}],41:[function(require,module,exports){
+'use strict';
+
+var undefined;
+
+var $SyntaxError = SyntaxError;
+var $Function = Function;
+var $TypeError = TypeError;
+
+// eslint-disable-next-line consistent-return
+var getEvalledConstructor = function (expressionSyntax) {
+	try {
+		return $Function('"use strict"; return (' + expressionSyntax + ').constructor;')();
+	} catch (e) {}
+};
+
+var $gOPD = Object.getOwnPropertyDescriptor;
+if ($gOPD) {
+	try {
+		$gOPD({}, '');
+	} catch (e) {
+		$gOPD = null; // this is IE 8, which has a broken gOPD
+	}
+}
+
+var throwTypeError = function () {
+	throw new $TypeError();
+};
+var ThrowTypeError = $gOPD
+	? (function () {
+		try {
+			// eslint-disable-next-line no-unused-expressions, no-caller, no-restricted-properties
+			arguments.callee; // IE 8 does not throw here
+			return throwTypeError;
+		} catch (calleeThrows) {
+			try {
+				// IE 8 throws on Object.getOwnPropertyDescriptor(arguments, '')
+				return $gOPD(arguments, 'callee').get;
+			} catch (gOPDthrows) {
+				return throwTypeError;
+			}
+		}
+	}())
+	: throwTypeError;
+
+var hasSymbols = require('has-symbols')();
+
+var getProto = Object.getPrototypeOf || function (x) { return x.__proto__; }; // eslint-disable-line no-proto
+
+var needsEval = {};
+
+var TypedArray = typeof Uint8Array === 'undefined' ? undefined : getProto(Uint8Array);
+
+var INTRINSICS = {
+	'%AggregateError%': typeof AggregateError === 'undefined' ? undefined : AggregateError,
+	'%Array%': Array,
+	'%ArrayBuffer%': typeof ArrayBuffer === 'undefined' ? undefined : ArrayBuffer,
+	'%ArrayIteratorPrototype%': hasSymbols ? getProto([][Symbol.iterator]()) : undefined,
+	'%AsyncFromSyncIteratorPrototype%': undefined,
+	'%AsyncFunction%': needsEval,
+	'%AsyncGenerator%': needsEval,
+	'%AsyncGeneratorFunction%': needsEval,
+	'%AsyncIteratorPrototype%': needsEval,
+	'%Atomics%': typeof Atomics === 'undefined' ? undefined : Atomics,
+	'%BigInt%': typeof BigInt === 'undefined' ? undefined : BigInt,
+	'%Boolean%': Boolean,
+	'%DataView%': typeof DataView === 'undefined' ? undefined : DataView,
+	'%Date%': Date,
+	'%decodeURI%': decodeURI,
+	'%decodeURIComponent%': decodeURIComponent,
+	'%encodeURI%': encodeURI,
+	'%encodeURIComponent%': encodeURIComponent,
+	'%Error%': Error,
+	'%eval%': eval, // eslint-disable-line no-eval
+	'%EvalError%': EvalError,
+	'%Float32Array%': typeof Float32Array === 'undefined' ? undefined : Float32Array,
+	'%Float64Array%': typeof Float64Array === 'undefined' ? undefined : Float64Array,
+	'%FinalizationRegistry%': typeof FinalizationRegistry === 'undefined' ? undefined : FinalizationRegistry,
+	'%Function%': $Function,
+	'%GeneratorFunction%': needsEval,
+	'%Int8Array%': typeof Int8Array === 'undefined' ? undefined : Int8Array,
+	'%Int16Array%': typeof Int16Array === 'undefined' ? undefined : Int16Array,
+	'%Int32Array%': typeof Int32Array === 'undefined' ? undefined : Int32Array,
+	'%isFinite%': isFinite,
+	'%isNaN%': isNaN,
+	'%IteratorPrototype%': hasSymbols ? getProto(getProto([][Symbol.iterator]())) : undefined,
+	'%JSON%': typeof JSON === 'object' ? JSON : undefined,
+	'%Map%': typeof Map === 'undefined' ? undefined : Map,
+	'%MapIteratorPrototype%': typeof Map === 'undefined' || !hasSymbols ? undefined : getProto(new Map()[Symbol.iterator]()),
+	'%Math%': Math,
+	'%Number%': Number,
+	'%Object%': Object,
+	'%parseFloat%': parseFloat,
+	'%parseInt%': parseInt,
+	'%Promise%': typeof Promise === 'undefined' ? undefined : Promise,
+	'%Proxy%': typeof Proxy === 'undefined' ? undefined : Proxy,
+	'%RangeError%': RangeError,
+	'%ReferenceError%': ReferenceError,
+	'%Reflect%': typeof Reflect === 'undefined' ? undefined : Reflect,
+	'%RegExp%': RegExp,
+	'%Set%': typeof Set === 'undefined' ? undefined : Set,
+	'%SetIteratorPrototype%': typeof Set === 'undefined' || !hasSymbols ? undefined : getProto(new Set()[Symbol.iterator]()),
+	'%SharedArrayBuffer%': typeof SharedArrayBuffer === 'undefined' ? undefined : SharedArrayBuffer,
+	'%String%': String,
+	'%StringIteratorPrototype%': hasSymbols ? getProto(''[Symbol.iterator]()) : undefined,
+	'%Symbol%': hasSymbols ? Symbol : undefined,
+	'%SyntaxError%': $SyntaxError,
+	'%ThrowTypeError%': ThrowTypeError,
+	'%TypedArray%': TypedArray,
+	'%TypeError%': $TypeError,
+	'%Uint8Array%': typeof Uint8Array === 'undefined' ? undefined : Uint8Array,
+	'%Uint8ClampedArray%': typeof Uint8ClampedArray === 'undefined' ? undefined : Uint8ClampedArray,
+	'%Uint16Array%': typeof Uint16Array === 'undefined' ? undefined : Uint16Array,
+	'%Uint32Array%': typeof Uint32Array === 'undefined' ? undefined : Uint32Array,
+	'%URIError%': URIError,
+	'%WeakMap%': typeof WeakMap === 'undefined' ? undefined : WeakMap,
+	'%WeakRef%': typeof WeakRef === 'undefined' ? undefined : WeakRef,
+	'%WeakSet%': typeof WeakSet === 'undefined' ? undefined : WeakSet
+};
+
+var doEval = function doEval(name) {
+	var value;
+	if (name === '%AsyncFunction%') {
+		value = getEvalledConstructor('async function () {}');
+	} else if (name === '%GeneratorFunction%') {
+		value = getEvalledConstructor('function* () {}');
+	} else if (name === '%AsyncGeneratorFunction%') {
+		value = getEvalledConstructor('async function* () {}');
+	} else if (name === '%AsyncGenerator%') {
+		var fn = doEval('%AsyncGeneratorFunction%');
+		if (fn) {
+			value = fn.prototype;
+		}
+	} else if (name === '%AsyncIteratorPrototype%') {
+		var gen = doEval('%AsyncGenerator%');
+		if (gen) {
+			value = getProto(gen.prototype);
+		}
+	}
+
+	INTRINSICS[name] = value;
+
+	return value;
+};
+
+var LEGACY_ALIASES = {
+	'%ArrayBufferPrototype%': ['ArrayBuffer', 'prototype'],
+	'%ArrayPrototype%': ['Array', 'prototype'],
+	'%ArrayProto_entries%': ['Array', 'prototype', 'entries'],
+	'%ArrayProto_forEach%': ['Array', 'prototype', 'forEach'],
+	'%ArrayProto_keys%': ['Array', 'prototype', 'keys'],
+	'%ArrayProto_values%': ['Array', 'prototype', 'values'],
+	'%AsyncFunctionPrototype%': ['AsyncFunction', 'prototype'],
+	'%AsyncGenerator%': ['AsyncGeneratorFunction', 'prototype'],
+	'%AsyncGeneratorPrototype%': ['AsyncGeneratorFunction', 'prototype', 'prototype'],
+	'%BooleanPrototype%': ['Boolean', 'prototype'],
+	'%DataViewPrototype%': ['DataView', 'prototype'],
+	'%DatePrototype%': ['Date', 'prototype'],
+	'%ErrorPrototype%': ['Error', 'prototype'],
+	'%EvalErrorPrototype%': ['EvalError', 'prototype'],
+	'%Float32ArrayPrototype%': ['Float32Array', 'prototype'],
+	'%Float64ArrayPrototype%': ['Float64Array', 'prototype'],
+	'%FunctionPrototype%': ['Function', 'prototype'],
+	'%Generator%': ['GeneratorFunction', 'prototype'],
+	'%GeneratorPrototype%': ['GeneratorFunction', 'prototype', 'prototype'],
+	'%Int8ArrayPrototype%': ['Int8Array', 'prototype'],
+	'%Int16ArrayPrototype%': ['Int16Array', 'prototype'],
+	'%Int32ArrayPrototype%': ['Int32Array', 'prototype'],
+	'%JSONParse%': ['JSON', 'parse'],
+	'%JSONStringify%': ['JSON', 'stringify'],
+	'%MapPrototype%': ['Map', 'prototype'],
+	'%NumberPrototype%': ['Number', 'prototype'],
+	'%ObjectPrototype%': ['Object', 'prototype'],
+	'%ObjProto_toString%': ['Object', 'prototype', 'toString'],
+	'%ObjProto_valueOf%': ['Object', 'prototype', 'valueOf'],
+	'%PromisePrototype%': ['Promise', 'prototype'],
+	'%PromiseProto_then%': ['Promise', 'prototype', 'then'],
+	'%Promise_all%': ['Promise', 'all'],
+	'%Promise_reject%': ['Promise', 'reject'],
+	'%Promise_resolve%': ['Promise', 'resolve'],
+	'%RangeErrorPrototype%': ['RangeError', 'prototype'],
+	'%ReferenceErrorPrototype%': ['ReferenceError', 'prototype'],
+	'%RegExpPrototype%': ['RegExp', 'prototype'],
+	'%SetPrototype%': ['Set', 'prototype'],
+	'%SharedArrayBufferPrototype%': ['SharedArrayBuffer', 'prototype'],
+	'%StringPrototype%': ['String', 'prototype'],
+	'%SymbolPrototype%': ['Symbol', 'prototype'],
+	'%SyntaxErrorPrototype%': ['SyntaxError', 'prototype'],
+	'%TypedArrayPrototype%': ['TypedArray', 'prototype'],
+	'%TypeErrorPrototype%': ['TypeError', 'prototype'],
+	'%Uint8ArrayPrototype%': ['Uint8Array', 'prototype'],
+	'%Uint8ClampedArrayPrototype%': ['Uint8ClampedArray', 'prototype'],
+	'%Uint16ArrayPrototype%': ['Uint16Array', 'prototype'],
+	'%Uint32ArrayPrototype%': ['Uint32Array', 'prototype'],
+	'%URIErrorPrototype%': ['URIError', 'prototype'],
+	'%WeakMapPrototype%': ['WeakMap', 'prototype'],
+	'%WeakSetPrototype%': ['WeakSet', 'prototype']
+};
+
+var bind = require('function-bind');
+var hasOwn = require('has');
+var $concat = bind.call(Function.call, Array.prototype.concat);
+var $spliceApply = bind.call(Function.apply, Array.prototype.splice);
+var $replace = bind.call(Function.call, String.prototype.replace);
+var $strSlice = bind.call(Function.call, String.prototype.slice);
+var $exec = bind.call(Function.call, RegExp.prototype.exec);
+
+/* adapted from https://github.com/lodash/lodash/blob/4.17.15/dist/lodash.js#L6735-L6744 */
+var rePropName = /[^%.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|%$))/g;
+var reEscapeChar = /\\(\\)?/g; /** Used to match backslashes in property paths. */
+var stringToPath = function stringToPath(string) {
+	var first = $strSlice(string, 0, 1);
+	var last = $strSlice(string, -1);
+	if (first === '%' && last !== '%') {
+		throw new $SyntaxError('invalid intrinsic syntax, expected closing `%`');
+	} else if (last === '%' && first !== '%') {
+		throw new $SyntaxError('invalid intrinsic syntax, expected opening `%`');
+	}
+	var result = [];
+	$replace(string, rePropName, function (match, number, quote, subString) {
+		result[result.length] = quote ? $replace(subString, reEscapeChar, '$1') : number || match;
+	});
+	return result;
+};
+/* end adaptation */
+
+var getBaseIntrinsic = function getBaseIntrinsic(name, allowMissing) {
+	var intrinsicName = name;
+	var alias;
+	if (hasOwn(LEGACY_ALIASES, intrinsicName)) {
+		alias = LEGACY_ALIASES[intrinsicName];
+		intrinsicName = '%' + alias[0] + '%';
+	}
+
+	if (hasOwn(INTRINSICS, intrinsicName)) {
+		var value = INTRINSICS[intrinsicName];
+		if (value === needsEval) {
+			value = doEval(intrinsicName);
+		}
+		if (typeof value === 'undefined' && !allowMissing) {
+			throw new $TypeError('intrinsic ' + name + ' exists, but is not available. Please file an issue!');
+		}
+
+		return {
+			alias: alias,
+			name: intrinsicName,
+			value: value
+		};
+	}
+
+	throw new $SyntaxError('intrinsic ' + name + ' does not exist!');
+};
+
+module.exports = function GetIntrinsic(name, allowMissing) {
+	if (typeof name !== 'string' || name.length === 0) {
+		throw new $TypeError('intrinsic name must be a non-empty string');
+	}
+	if (arguments.length > 1 && typeof allowMissing !== 'boolean') {
+		throw new $TypeError('"allowMissing" argument must be a boolean');
+	}
+
+	if ($exec(/^%?[^%]*%?$/, name) === null) {
+		throw new $SyntaxError('`%` may not be present anywhere but at the beginning and end of the intrinsic name');
+	}
+	var parts = stringToPath(name);
+	var intrinsicBaseName = parts.length > 0 ? parts[0] : '';
+
+	var intrinsic = getBaseIntrinsic('%' + intrinsicBaseName + '%', allowMissing);
+	var intrinsicRealName = intrinsic.name;
+	var value = intrinsic.value;
+	var skipFurtherCaching = false;
+
+	var alias = intrinsic.alias;
+	if (alias) {
+		intrinsicBaseName = alias[0];
+		$spliceApply(parts, $concat([0, 1], alias));
+	}
+
+	for (var i = 1, isOwn = true; i < parts.length; i += 1) {
+		var part = parts[i];
+		var first = $strSlice(part, 0, 1);
+		var last = $strSlice(part, -1);
+		if (
+			(
+				(first === '"' || first === "'" || first === '`')
+				|| (last === '"' || last === "'" || last === '`')
+			)
+			&& first !== last
+		) {
+			throw new $SyntaxError('property names with quotes must have matching quotes');
+		}
+		if (part === 'constructor' || !isOwn) {
+			skipFurtherCaching = true;
+		}
+
+		intrinsicBaseName += '.' + part;
+		intrinsicRealName = '%' + intrinsicBaseName + '%';
+
+		if (hasOwn(INTRINSICS, intrinsicRealName)) {
+			value = INTRINSICS[intrinsicRealName];
+		} else if (value != null) {
+			if (!(part in value)) {
+				if (!allowMissing) {
+					throw new $TypeError('base intrinsic for ' + name + ' exists, but the property is not available.');
+				}
+				return void undefined;
+			}
+			if ($gOPD && (i + 1) >= parts.length) {
+				var desc = $gOPD(value, part);
+				isOwn = !!desc;
+
+				// By convention, when a data property is converted to an accessor
+				// property to emulate a data property that does not suffer from
+				// the override mistake, that accessor's getter is marked with
+				// an `originalValue` property. Here, when we detect this, we
+				// uphold the illusion by pretending to see that original data
+				// property, i.e., returning the value rather than the getter
+				// itself.
+				if (isOwn && 'get' in desc && !('originalValue' in desc.get)) {
+					value = desc.get;
+				} else {
+					value = value[part];
+				}
+			} else {
+				isOwn = hasOwn(value, part);
+				value = value[part];
+			}
+
+			if (isOwn && !skipFurtherCaching) {
+				INTRINSICS[intrinsicRealName] = value;
+			}
+		}
+	}
+	return value;
+};
+
+},{"function-bind":30,"has":47,"has-symbols":44}],42:[function(require,module,exports){
+var parseCSV = require('dsv').csv.parse;
+
+/**
+ * Parse GTFS data given as a string and return a GeoJSON FeatureCollection
+ * of features with LineString geometries.
+ *
+ * @param {string} gtfs csv content of shapes.txt
+ * @returns {Object} geojson featurecollection
+ */
+function gtfs2geojson(gtfs) {
+  var shapes = parseCSV(gtfs).reduce(function(memo, row) {
+    memo[row.shape_id] = (memo[row.shape_id] || []).concat(row);
+    return memo;
+  }, {});
+  return {
+    type: 'FeatureCollection',
+    features: Object.keys(shapes).map(function(id) {
+      return {
+        type: 'Feature',
+        id: id,
+        properties: {
+          shape_id: id
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: shapes[id].sort(function(a, b) {
+            return +a.shape_pt_sequence - b.shape_pt_sequence;
+          }).map(function(coord) {
+            return [
+              parseFloat(coord.shape_pt_lon),
+              parseFloat(coord.shape_pt_lat)
+            ];
+          })
+        }
+      };
+    })
+  };
+}
+
+module.exports = gtfs2geojson;
+
+},{"dsv":43}],43:[function(require,module,exports){
+
+
+module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
+
+},{}],44:[function(require,module,exports){
+'use strict';
+
+var origSymbol = typeof Symbol !== 'undefined' && Symbol;
+var hasSymbolSham = require('./shams');
+
+module.exports = function hasNativeSymbols() {
+	if (typeof origSymbol !== 'function') { return false; }
+	if (typeof Symbol !== 'function') { return false; }
+	if (typeof origSymbol('foo') !== 'symbol') { return false; }
+	if (typeof Symbol('bar') !== 'symbol') { return false; }
+
+	return hasSymbolSham();
+};
+
+},{"./shams":45}],45:[function(require,module,exports){
+'use strict';
+
+/* eslint complexity: [2, 18], max-statements: [2, 33] */
+module.exports = function hasSymbols() {
+	if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
+	if (typeof Symbol.iterator === 'symbol') { return true; }
+
+	var obj = {};
+	var sym = Symbol('test');
+	var symObj = Object(sym);
+	if (typeof sym === 'string') { return false; }
+
+	if (Object.prototype.toString.call(sym) !== '[object Symbol]') { return false; }
+	if (Object.prototype.toString.call(symObj) !== '[object Symbol]') { return false; }
+
+	// temp disabled per https://github.com/ljharb/object.assign/issues/17
+	// if (sym instanceof Symbol) { return false; }
+	// temp disabled per https://github.com/WebReflection/get-own-property-symbols/issues/4
+	// if (!(symObj instanceof Symbol)) { return false; }
+
+	// if (typeof Symbol.prototype.toString !== 'function') { return false; }
+	// if (String(sym) !== Symbol.prototype.toString.call(sym)) { return false; }
+
+	var symVal = 42;
+	obj[sym] = symVal;
+	for (sym in obj) { return false; } // eslint-disable-line no-restricted-syntax, no-unreachable-loop
+	if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
+
+	if (typeof Object.getOwnPropertyNames === 'function' && Object.getOwnPropertyNames(obj).length !== 0) { return false; }
+
+	var syms = Object.getOwnPropertySymbols(obj);
+	if (syms.length !== 1 || syms[0] !== sym) { return false; }
+
+	if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
+
+	if (typeof Object.getOwnPropertyDescriptor === 'function') {
+		var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
+		if (descriptor.value !== symVal || descriptor.enumerable !== true) { return false; }
+	}
+
+	return true;
+};
+
+},{}],46:[function(require,module,exports){
+'use strict';
+
+var hasSymbols = require('has-symbols/shams');
+
+module.exports = function hasToStringTagShams() {
+	return hasSymbols() && !!Symbol.toStringTag;
+};
+
+},{"has-symbols/shams":45}],47:[function(require,module,exports){
+'use strict';
+
+var bind = require('function-bind');
+
+module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
+
+},{"function-bind":30}],48:[function(require,module,exports){
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = ((value * c) - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+},{}],49:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    if (superCtor) {
+      ctor.super_ = superCtor
+      ctor.prototype = Object.create(superCtor.prototype, {
+        constructor: {
+          value: ctor,
+          enumerable: false,
+          writable: true,
+          configurable: true
+        }
+      })
+    }
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    if (superCtor) {
+      ctor.super_ = superCtor
+      var TempCtor = function () {}
+      TempCtor.prototype = superCtor.prototype
+      ctor.prototype = new TempCtor()
+      ctor.prototype.constructor = ctor
+    }
+  }
+}
+
+},{}],50:[function(require,module,exports){
+'use strict';
+
+var hasToStringTag = require('has-tostringtag/shams')();
+var callBound = require('call-bind/callBound');
+
+var $toString = callBound('Object.prototype.toString');
+
+var isStandardArguments = function isArguments(value) {
+	if (hasToStringTag && value && typeof value === 'object' && Symbol.toStringTag in value) {
+		return false;
+	}
+	return $toString(value) === '[object Arguments]';
+};
+
+var isLegacyArguments = function isArguments(value) {
+	if (isStandardArguments(value)) {
+		return true;
+	}
+	return value !== null &&
+		typeof value === 'object' &&
+		typeof value.length === 'number' &&
+		value.length >= 0 &&
+		$toString(value) !== '[object Array]' &&
+		$toString(value.callee) === '[object Function]';
+};
+
+var supportsStandardArguments = (function () {
+	return isStandardArguments(arguments);
+}());
+
+isStandardArguments.isLegacyArguments = isLegacyArguments; // for tests
+
+module.exports = supportsStandardArguments ? isStandardArguments : isLegacyArguments;
+
+},{"call-bind/callBound":13,"has-tostringtag/shams":46}],51:[function(require,module,exports){
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+// The _isBuffer check is for Safari 5-7 support, because it's missing
+// Object.prototype.constructor. Remove this eventually
+module.exports = function (obj) {
+  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
+}
+
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// For Node v0.10 support. Remove this eventually.
+function isSlowBuffer (obj) {
+  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
+}
+
+},{}],52:[function(require,module,exports){
+'use strict';
+
+var fnToStr = Function.prototype.toString;
+var reflectApply = typeof Reflect === 'object' && Reflect !== null && Reflect.apply;
+var badArrayLike;
+var isCallableMarker;
+if (typeof reflectApply === 'function' && typeof Object.defineProperty === 'function') {
+	try {
+		badArrayLike = Object.defineProperty({}, 'length', {
+			get: function () {
+				throw isCallableMarker;
+			}
+		});
+		isCallableMarker = {};
+		// eslint-disable-next-line no-throw-literal
+		reflectApply(function () { throw 42; }, null, badArrayLike);
+	} catch (_) {
+		if (_ !== isCallableMarker) {
+			reflectApply = null;
+		}
+	}
+} else {
+	reflectApply = null;
+}
+
+var constructorRegex = /^\s*class\b/;
+var isES6ClassFn = function isES6ClassFunction(value) {
+	try {
+		var fnStr = fnToStr.call(value);
+		return constructorRegex.test(fnStr);
+	} catch (e) {
+		return false; // not a function
+	}
+};
+
+var tryFunctionObject = function tryFunctionToStr(value) {
+	try {
+		if (isES6ClassFn(value)) { return false; }
+		fnToStr.call(value);
+		return true;
+	} catch (e) {
+		return false;
+	}
+};
+var toStr = Object.prototype.toString;
+var objectClass = '[object Object]';
+var fnClass = '[object Function]';
+var genClass = '[object GeneratorFunction]';
+var ddaClass = '[object HTMLAllCollection]'; // IE 11
+var ddaClass2 = '[object HTML document.all class]';
+var ddaClass3 = '[object HTMLCollection]'; // IE 9-10
+var hasToStringTag = typeof Symbol === 'function' && !!Symbol.toStringTag; // better: use `has-tostringtag`
+
+var isIE68 = !(0 in [,]); // eslint-disable-line no-sparse-arrays, comma-spacing
+
+var isDDA = function isDocumentDotAll() { return false; };
+if (typeof document === 'object') {
+	// Firefox 3 canonicalizes DDA to undefined when it's not accessed directly
+	var all = document.all;
+	if (toStr.call(all) === toStr.call(document.all)) {
+		isDDA = function isDocumentDotAll(value) {
+			/* globals document: false */
+			// in IE 6-8, typeof document.all is "object" and it's truthy
+			if ((isIE68 || !value) && (typeof value === 'undefined' || typeof value === 'object')) {
+				try {
+					var str = toStr.call(value);
+					return (
+						str === ddaClass
+						|| str === ddaClass2
+						|| str === ddaClass3 // opera 12.16
+						|| str === objectClass // IE 6-8
+					) && value('') == null; // eslint-disable-line eqeqeq
+				} catch (e) { /**/ }
+			}
+			return false;
+		};
+	}
+}
+
+module.exports = reflectApply
+	? function isCallable(value) {
+		if (isDDA(value)) { return true; }
+		if (!value) { return false; }
+		if (typeof value !== 'function' && typeof value !== 'object') { return false; }
+		try {
+			reflectApply(value, null, badArrayLike);
+		} catch (e) {
+			if (e !== isCallableMarker) { return false; }
+		}
+		return !isES6ClassFn(value) && tryFunctionObject(value);
+	}
+	: function isCallable(value) {
+		if (isDDA(value)) { return true; }
+		if (!value) { return false; }
+		if (typeof value !== 'function' && typeof value !== 'object') { return false; }
+		if (hasToStringTag) { return tryFunctionObject(value); }
+		if (isES6ClassFn(value)) { return false; }
+		var strClass = toStr.call(value);
+		if (strClass !== fnClass && strClass !== genClass && !(/^\[object HTML/).test(strClass)) { return false; }
+		return tryFunctionObject(value);
+	};
+
+},{}],53:[function(require,module,exports){
+'use strict';
+
+var toStr = Object.prototype.toString;
+var fnToStr = Function.prototype.toString;
+var isFnRegex = /^\s*(?:function)?\*/;
+var hasToStringTag = require('has-tostringtag/shams')();
+var getProto = Object.getPrototypeOf;
+var getGeneratorFunc = function () { // eslint-disable-line consistent-return
+	if (!hasToStringTag) {
+		return false;
+	}
+	try {
+		return Function('return function*() {}')();
+	} catch (e) {
+	}
+};
+var GeneratorFunction;
+
+module.exports = function isGeneratorFunction(fn) {
+	if (typeof fn !== 'function') {
+		return false;
+	}
+	if (isFnRegex.test(fnToStr.call(fn))) {
+		return true;
+	}
+	if (!hasToStringTag) {
+		var str = toStr.call(fn);
+		return str === '[object GeneratorFunction]';
+	}
+	if (!getProto) {
+		return false;
+	}
+	if (typeof GeneratorFunction === 'undefined') {
+		var generatorFunc = getGeneratorFunc();
+		GeneratorFunction = generatorFunc ? getProto(generatorFunc) : false;
+	}
+	return getProto(fn) === GeneratorFunction;
+};
+
+},{"has-tostringtag/shams":46}],54:[function(require,module,exports){
+(function (global){(function (){
+'use strict';
+
+var forEach = require('for-each');
+var availableTypedArrays = require('available-typed-arrays');
+var callBound = require('call-bind/callBound');
+
+var $toString = callBound('Object.prototype.toString');
+var hasToStringTag = require('has-tostringtag/shams')();
+
+var g = typeof globalThis === 'undefined' ? global : globalThis;
+var typedArrays = availableTypedArrays();
+
+var $indexOf = callBound('Array.prototype.indexOf', true) || function indexOf(array, value) {
+	for (var i = 0; i < array.length; i += 1) {
+		if (array[i] === value) {
+			return i;
+		}
+	}
+	return -1;
+};
+var $slice = callBound('String.prototype.slice');
+var toStrTags = {};
+var gOPD = require('es-abstract/helpers/getOwnPropertyDescriptor');
+var getPrototypeOf = Object.getPrototypeOf; // require('getprototypeof');
+if (hasToStringTag && gOPD && getPrototypeOf) {
+	forEach(typedArrays, function (typedArray) {
+		var arr = new g[typedArray]();
+		if (Symbol.toStringTag in arr) {
+			var proto = getPrototypeOf(arr);
+			var descriptor = gOPD(proto, Symbol.toStringTag);
+			if (!descriptor) {
+				var superProto = getPrototypeOf(proto);
+				descriptor = gOPD(superProto, Symbol.toStringTag);
+			}
+			toStrTags[typedArray] = descriptor.get;
+		}
+	});
+}
+
+var tryTypedArrays = function tryAllTypedArrays(value) {
+	var anyTrue = false;
+	forEach(toStrTags, function (getter, typedArray) {
+		if (!anyTrue) {
+			try {
+				anyTrue = getter.call(value) === typedArray;
+			} catch (e) { /**/ }
+		}
+	});
+	return anyTrue;
+};
+
+module.exports = function isTypedArray(value) {
+	if (!value || typeof value !== 'object') { return false; }
+	if (!hasToStringTag || !(Symbol.toStringTag in value)) {
+		var tag = $slice($toString(value), 8, -1);
+		return $indexOf(typedArrays, tag) > -1;
+	}
+	if (!gOPD) { return false; }
+	return tryTypedArrays(value);
+};
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"available-typed-arrays":7,"call-bind/callBound":13,"es-abstract/helpers/getOwnPropertyDescriptor":24,"for-each":28,"has-tostringtag/shams":46}],55:[function(require,module,exports){
 (function (process){(function (){
 /* parser generated by jison 0.4.6 */
 /*
@@ -7439,164 +7242,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 }).call(this)}).call(this,require('_process'))
-},{"_process":91,"fs":10,"path":88}],36:[function(require,module,exports){
-var parseCSV = require('dsv').csv.parse;
-
-/**
- * Parse GTFS data given as a string and return a GeoJSON FeatureCollection
- * of features with LineString geometries.
- *
- * @param {string} gtfs csv content of shapes.txt
- * @returns {Object} geojson featurecollection
- */
-function gtfs2geojson(gtfs) {
-  var shapes = parseCSV(gtfs).reduce(function(memo, row) {
-    memo[row.shape_id] = (memo[row.shape_id] || []).concat(row);
-    return memo;
-  }, {});
-  return {
-    type: 'FeatureCollection',
-    features: Object.keys(shapes).map(function(id) {
-      return {
-        type: 'Feature',
-        id: id,
-        properties: {
-          shape_id: id
-        },
-        geometry: {
-          type: 'LineString',
-          coordinates: shapes[id].sort(function(a, b) {
-            return +a.shape_pt_sequence - b.shape_pt_sequence;
-          }).map(function(coord) {
-            return [
-              parseFloat(coord.shape_pt_lon),
-              parseFloat(coord.shape_pt_lat)
-            ];
-          })
-        }
-      };
-    })
-  };
-}
-
-module.exports = gtfs2geojson;
-
-},{"dsv":37}],37:[function(require,module,exports){
-
-
-module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
-
-},{}],38:[function(require,module,exports){
-/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m
-  var eLen = (nBytes * 8) - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var nBits = -7
-  var i = isLE ? (nBytes - 1) : 0
-  var d = isLE ? -1 : 1
-  var s = buffer[offset + i]
-
-  i += d
-
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
-
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
-
-  if (e === 0) {
-    e = 1 - eBias
-  } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
-  } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
-  }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
-
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c
-  var eLen = (nBytes * 8) - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
-  var i = isLE ? 0 : (nBytes - 1)
-  var d = isLE ? 1 : -1
-  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
-
-  value = Math.abs(value)
-
-  if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
-  } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
-    if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
-    }
-    if (e + eBias >= 1) {
-      value += rt / c
-    } else {
-      value += rt * Math.pow(2, 1 - eBias)
-    }
-    if (value * c >= 2) {
-      e++
-      c /= 2
-    }
-
-    if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
-    } else if (e + eBias >= 1) {
-      m = ((value * c) - 1) * Math.pow(2, mLen)
-      e = e + eBias
-    } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
-    }
-  }
-
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
-
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
-
-  buffer[offset + i - d] |= s * 128
-}
-
-},{}],39:[function(require,module,exports){
-/*!
- * Determine if an object is a Buffer
- *
- * @author   Feross Aboukhadijeh <https://feross.org>
- * @license  MIT
- */
-
-// The _isBuffer check is for Safari 5-7 support, because it's missing
-// Object.prototype.constructor. Remove this eventually
-module.exports = function (obj) {
-  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
-}
-
-function isBuffer (obj) {
-  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
-}
-
-// For Node v0.10 support. Remove this eventually.
-function isSlowBuffer (obj) {
-  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
-}
-
-},{}],40:[function(require,module,exports){
+},{"_process":106,"fs":11,"path":103}],56:[function(require,module,exports){
 'use strict';
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -7668,7 +7314,7 @@ exports.decode = function(input, utf8) {
 
 };
 
-},{}],41:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 'use strict';
 function CompressedObject() {
     this.compressedSize = 0;
@@ -7698,7 +7344,7 @@ CompressedObject.prototype = {
 };
 module.exports = CompressedObject;
 
-},{}],42:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 'use strict';
 exports.STORE = {
     magic: "\x00\x00",
@@ -7713,7 +7359,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":47}],43:[function(require,module,exports){
+},{"./flate":63}],59:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -7817,7 +7463,7 @@ module.exports = function crc32(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":60}],44:[function(require,module,exports){
+},{"./utils":76}],60:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -7926,7 +7572,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"./utils":60}],45:[function(require,module,exports){
+},{"./utils":76}],61:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -7939,7 +7585,7 @@ exports.comment = null;
 exports.unixPermissions = null;
 exports.dosPermissions = null;
 
-},{}],46:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -8046,7 +7692,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./utils":60}],47:[function(require,module,exports){
+},{"./utils":76}],63:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -8064,7 +7710,7 @@ exports.uncompress =  function(input) {
     return pako.inflateRaw(input);
 };
 
-},{"pako":72}],48:[function(require,module,exports){
+},{"pako":79}],64:[function(require,module,exports){
 'use strict';
 
 var base64 = require('./base64');
@@ -8145,7 +7791,7 @@ JSZip.base64 = {
 JSZip.compressions = require('./compressions');
 module.exports = JSZip;
 
-},{"./base64":40,"./compressions":42,"./defaults":45,"./deprecatedPublicUtils":46,"./load":49,"./object":52,"./support":56}],49:[function(require,module,exports){
+},{"./base64":56,"./compressions":58,"./defaults":61,"./deprecatedPublicUtils":62,"./load":65,"./object":68,"./support":72}],65:[function(require,module,exports){
 'use strict';
 var base64 = require('./base64');
 var ZipEntries = require('./zipEntries');
@@ -8178,7 +7824,7 @@ module.exports = function(data, options) {
     return this;
 };
 
-},{"./base64":40,"./zipEntries":61}],50:[function(require,module,exports){
+},{"./base64":56,"./zipEntries":77}],66:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 module.exports = function(data, encoding){
@@ -8189,7 +7835,7 @@ module.exports.test = function(b){
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":11}],51:[function(require,module,exports){
+},{"buffer":12}],67:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./uint8ArrayReader');
 
@@ -8211,7 +7857,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"./uint8ArrayReader":57}],52:[function(require,module,exports){
+},{"./uint8ArrayReader":73}],68:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var utils = require('./utils');
@@ -9096,7 +8742,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./base64":40,"./compressedObject":41,"./compressions":42,"./crc32":43,"./defaults":45,"./nodeBuffer":50,"./signature":53,"./stringWriter":55,"./support":56,"./uint8ArrayWriter":58,"./utf8":59,"./utils":60}],53:[function(require,module,exports){
+},{"./base64":56,"./compressedObject":57,"./compressions":58,"./crc32":59,"./defaults":61,"./nodeBuffer":66,"./signature":69,"./stringWriter":71,"./support":72,"./uint8ArrayWriter":74,"./utf8":75,"./utils":76}],69:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -9105,7 +8751,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],54:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 var utils = require('./utils');
@@ -9143,7 +8789,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"./dataReader":44,"./utils":60}],55:[function(require,module,exports){
+},{"./dataReader":60,"./utils":76}],71:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -9175,7 +8821,7 @@ StringWriter.prototype = {
 
 module.exports = StringWriter;
 
-},{"./utils":60}],56:[function(require,module,exports){
+},{"./utils":76}],72:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 exports.base64 = true;
@@ -9213,7 +8859,7 @@ else {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":11}],57:[function(require,module,exports){
+},{"buffer":12}],73:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 
@@ -9262,7 +8908,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"./dataReader":44}],58:[function(require,module,exports){
+},{"./dataReader":60}],74:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -9300,7 +8946,7 @@ Uint8ArrayWriter.prototype = {
 
 module.exports = Uint8ArrayWriter;
 
-},{"./utils":60}],59:[function(require,module,exports){
+},{"./utils":76}],75:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -9509,7 +9155,7 @@ exports.utf8decode = function utf8decode(buf) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./nodeBuffer":50,"./support":56,"./utils":60}],60:[function(require,module,exports){
+},{"./nodeBuffer":66,"./support":72,"./utils":76}],76:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var compressions = require('./compressions');
@@ -9837,7 +9483,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./compressions":42,"./nodeBuffer":50,"./support":56}],61:[function(require,module,exports){
+},{"./compressions":58,"./nodeBuffer":66,"./support":72}],77:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var NodeBufferReader = require('./nodeBufferReader');
@@ -10060,7 +9706,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./nodeBufferReader":51,"./object":52,"./signature":53,"./stringReader":54,"./support":56,"./uint8ArrayReader":57,"./utils":60,"./zipEntry":62}],62:[function(require,module,exports){
+},{"./nodeBufferReader":67,"./object":68,"./signature":69,"./stringReader":70,"./support":72,"./uint8ArrayReader":73,"./utils":76,"./zipEntry":78}],78:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var utils = require('./utils');
@@ -10372,4166 +10018,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":41,"./object":52,"./stringReader":54,"./utils":60}],63:[function(require,module,exports){
-var spherical = require('spherical'),
-    geojsonArea = require('geojson-area');
-
-module.exports.circle = function(center, radius, opt) {
-    center = L.latLng(center);
-    opt = opt || {};
-    var parts = opt.parts || 20;
-
-    function generate(center) {
-        var lls = [];
-        for (var i = 0; i < parts + 1; i++) {
-            lls.push(spherical.radial(
-                [center.lng, center.lat],
-                (i / parts) * 360, radius).reverse());
-        }
-        return lls;
-    }
-
-    var poly = L.polygon(generate(center), opt);
-
-    poly.setLatLng = function(_) {
-        center = _;
-        poly.setLatLngs(generate(center));
-        return poly;
-    };
-
-    poly.getRadius = function(_) {
-        return radius;
-    };
-
-    poly.setRadius = function(_) {
-        radius = _;
-        poly.setLatLngs(generate(center));
-        return poly;
-    };
-
-    return poly;
-};
-
-module.exports.area = function(layer) {
-    var gj = layer.toGeoJSON();
-    return geojsonArea(gj.geometry);
-};
-
-},{"geojson-area":64,"spherical":106}],64:[function(require,module,exports){
-var wgs84 = require('wgs84');
-
-module.exports = function(_) {
-    if (_.type === 'Polygon') return polygonArea(_.coordinates);
-    else if (_.type === 'MultiPolygon') {
-        var area = 0;
-        for (var i = 0; i < _.coordinates.length; i++) {
-            area += polygonArea(_.coordinates[i]);
-        }
-        return area;
-    } else {
-        return null;
-    }
-};
-
-function polygonArea(coords) {
-    var area = 0;
-    if (coords && coords.length > 0) {
-        area += Math.abs(ringArea(coords[0]));
-        for (var i = 1; i < coords.length; i++) {
-            area -= Math.abs(ringArea(coords[i]));
-        }
-    }
-    return area;
-}
-
-/**
- * Calculate the approximate area of the polygon were it projected onto
- *     the earth.  Note that this area will be positive if ring is oriented
- *     clockwise, otherwise it will be negative.
- *
- * Reference:
- * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for
- *     Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
- *     Laboratory, Pasadena, CA, June 2007 http://trs-new.jpl.nasa.gov/dspace/handle/2014/40409
- *
- * Returns:
- * {float} The approximate signed geodesic area of the polygon in square
- *     meters.
- */
-function ringArea(coords) {
-    var area = 0;
-
-    if (coords.length > 2) {
-        var p1, p2;
-        for (var i = 0; i < coords.length - 1; i++) {
-            p1 = coords[i];
-            p2 = coords[i + 1];
-            area += rad(p2[0] - p1[0]) * (2 + Math.sin(rad(p1[1])) + Math.sin(rad(p2[1])));
-        }
-
-        area = area * wgs84.RADIUS * wgs84.RADIUS / 2;
-    }
-
-    return area;
-}
-
-function rad(_) {
-    return _ * Math.PI / 180;
-}
-
-},{"wgs84":147}],65:[function(require,module,exports){
-(function(window) {
-	var HAS_HASHCHANGE = (function() {
-		var doc_mode = window.documentMode;
-		return ('onhashchange' in window) &&
-			(doc_mode === undefined || doc_mode > 7);
-	})();
-
-	L.Hash = function(map) {
-		this.onHashChange = L.Util.bind(this.onHashChange, this);
-
-		if (map) {
-			this.init(map);
-		}
-	};
-
-	L.Hash.parseHash = function(hash) {
-		if(hash.indexOf('#') === 0) {
-			hash = hash.substr(1);
-		}
-		var args = hash.split("/");
-		if (args.length == 3) {
-			var zoom = parseInt(args[0], 10),
-			lat = parseFloat(args[1]),
-			lon = parseFloat(args[2]);
-			if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
-				return false;
-			} else {
-				return {
-					center: new L.LatLng(lat, lon),
-					zoom: zoom
-				};
-			}
-		} else {
-			return false;
-		}
-	};
-
-	L.Hash.formatHash = function(map) {
-		var center = map.getCenter(),
-		    zoom = map.getZoom(),
-		    precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
-
-		return "#" + [zoom,
-			center.lat.toFixed(precision),
-			center.lng.toFixed(precision)
-		].join("/");
-	},
-
-	L.Hash.prototype = {
-		map: null,
-		lastHash: null,
-
-		parseHash: L.Hash.parseHash,
-		formatHash: L.Hash.formatHash,
-
-		init: function(map) {
-			this.map = map;
-
-			// reset the hash
-			this.lastHash = null;
-			this.onHashChange();
-
-			if (!this.isListening) {
-				this.startListening();
-			}
-		},
-
-		removeFrom: function(map) {
-			if (this.changeTimeout) {
-				clearTimeout(this.changeTimeout);
-			}
-
-			if (this.isListening) {
-				this.stopListening();
-			}
-
-			this.map = null;
-		},
-
-		onMapMove: function() {
-			// bail if we're moving the map (updating from a hash),
-			// or if the map is not yet loaded
-
-			if (this.movingMap || !this.map._loaded) {
-				return false;
-			}
-
-			var hash = this.formatHash(this.map);
-			if (this.lastHash != hash) {
-				location.replace(hash);
-				this.lastHash = hash;
-			}
-		},
-
-		movingMap: false,
-		update: function() {
-			var hash = location.hash;
-			if (hash === this.lastHash) {
-				return;
-			}
-			var parsed = this.parseHash(hash);
-			if (parsed) {
-				this.movingMap = true;
-
-				this.map.setView(parsed.center, parsed.zoom);
-
-				this.movingMap = false;
-			} else {
-				this.onMapMove(this.map);
-			}
-		},
-
-		// defer hash change updates every 100ms
-		changeDefer: 100,
-		changeTimeout: null,
-		onHashChange: function() {
-			// throttle calls to update() so that they only happen every
-			// `changeDefer` ms
-			if (!this.changeTimeout) {
-				var that = this;
-				this.changeTimeout = setTimeout(function() {
-					that.update();
-					that.changeTimeout = null;
-				}, this.changeDefer);
-			}
-		},
-
-		isListening: false,
-		hashChangeInterval: null,
-		startListening: function() {
-			this.map.on("moveend", this.onMapMove, this);
-
-			if (HAS_HASHCHANGE) {
-				L.DomEvent.addListener(window, "hashchange", this.onHashChange);
-			} else {
-				clearInterval(this.hashChangeInterval);
-				this.hashChangeInterval = setInterval(this.onHashChange, 50);
-			}
-			this.isListening = true;
-		},
-
-		stopListening: function() {
-			this.map.off("moveend", this.onMapMove, this);
-
-			if (HAS_HASHCHANGE) {
-				L.DomEvent.removeListener(window, "hashchange", this.onHashChange);
-			} else {
-				clearInterval(this.hashChangeInterval);
-			}
-			this.isListening = false;
-		}
-	};
-	L.hash = function(map) {
-		return new L.Hash(map);
-	};
-	L.Map.prototype.addHash = function() {
-		this._hash = L.hash(this);
-	};
-	L.Map.prototype.removeHash = function() {
-		this._hash.removeFrom();
-	};
-})(window);
-
-},{}],66:[function(require,module,exports){
-(function (global){(function (){
-/**
- * marked - a markdown parser
- * Copyright (c) 2011-2014, Christopher Jeffrey. (MIT Licensed)
- * https://github.com/chjj/marked
- */
-
-;(function() {
-
-/**
- * Block-Level Grammar
- */
-
-var block = {
-  newline: /^\n+/,
-  code: /^( {4}[^\n]+\n*)+/,
-  fences: noop,
-  hr: /^( *[-*_]){3,} *(?:\n+|$)/,
-  heading: /^ *(#{1,6}) *([^\n]+?) *#* *(?:\n+|$)/,
-  nptable: noop,
-  lheading: /^([^\n]+)\n *(=|-){2,} *(?:\n+|$)/,
-  blockquote: /^( *>[^\n]+(\n(?!def)[^\n]+)*\n*)+/,
-  list: /^( *)(bull) [\s\S]+?(?:hr|def|\n{2,}(?! )(?!\1bull )\n*|\s*$)/,
-  html: /^ *(?:comment|closed|closing) *(?:\n{2,}|\s*$)/,
-  def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +["(]([^\n]+)[")])? *(?:\n+|$)/,
-  table: noop,
-  paragraph: /^((?:[^\n]+\n?(?!hr|heading|lheading|blockquote|tag|def))+)\n*/,
-  text: /^[^\n]+/
-};
-
-block.bullet = /(?:[*+-]|\d+\.)/;
-block.item = /^( *)(bull) [^\n]*(?:\n(?!\1bull )[^\n]*)*/;
-block.item = replace(block.item, 'gm')
-  (/bull/g, block.bullet)
-  ();
-
-block.list = replace(block.list)
-  (/bull/g, block.bullet)
-  ('hr', '\\n+(?=\\1?(?:[-*_] *){3,}(?:\\n+|$))')
-  ('def', '\\n+(?=' + block.def.source + ')')
-  ();
-
-block.blockquote = replace(block.blockquote)
-  ('def', block.def)
-  ();
-
-block._tag = '(?!(?:'
-  + 'a|em|strong|small|s|cite|q|dfn|abbr|data|time|code'
-  + '|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo'
-  + '|span|br|wbr|ins|del|img)\\b)\\w+(?!:/|[^\\w\\s@]*@)\\b';
-
-block.html = replace(block.html)
-  ('comment', /<!--[\s\S]*?-->/)
-  ('closed', /<(tag)[\s\S]+?<\/\1>/)
-  ('closing', /<tag(?:"[^"]*"|'[^']*'|[^'">])*?>/)
-  (/tag/g, block._tag)
-  ();
-
-block.paragraph = replace(block.paragraph)
-  ('hr', block.hr)
-  ('heading', block.heading)
-  ('lheading', block.lheading)
-  ('blockquote', block.blockquote)
-  ('tag', '<' + block._tag)
-  ('def', block.def)
-  ();
-
-/**
- * Normal Block Grammar
- */
-
-block.normal = merge({}, block);
-
-/**
- * GFM Block Grammar
- */
-
-block.gfm = merge({}, block.normal, {
-  fences: /^ *(`{3,}|~{3,}) *(\S+)? *\n([\s\S]+?)\s*\1 *(?:\n+|$)/,
-  paragraph: /^/
-});
-
-block.gfm.paragraph = replace(block.paragraph)
-  ('(?!', '(?!'
-    + block.gfm.fences.source.replace('\\1', '\\2') + '|'
-    + block.list.source.replace('\\1', '\\3') + '|')
-  ();
-
-/**
- * GFM + Tables Block Grammar
- */
-
-block.tables = merge({}, block.gfm, {
-  nptable: /^ *(\S.*\|.*)\n *([-:]+ *\|[-| :]*)\n((?:.*\|.*(?:\n|$))*)\n*/,
-  table: /^ *\|(.+)\n *\|( *[-:]+[-| :]*)\n((?: *\|.*(?:\n|$))*)\n*/
-});
-
-/**
- * Block Lexer
- */
-
-function Lexer(options) {
-  this.tokens = [];
-  this.tokens.links = {};
-  this.options = options || marked.defaults;
-  this.rules = block.normal;
-
-  if (this.options.gfm) {
-    if (this.options.tables) {
-      this.rules = block.tables;
-    } else {
-      this.rules = block.gfm;
-    }
-  }
-}
-
-/**
- * Expose Block Rules
- */
-
-Lexer.rules = block;
-
-/**
- * Static Lex Method
- */
-
-Lexer.lex = function(src, options) {
-  var lexer = new Lexer(options);
-  return lexer.lex(src);
-};
-
-/**
- * Preprocessing
- */
-
-Lexer.prototype.lex = function(src) {
-  src = src
-    .replace(/\r\n|\r/g, '\n')
-    .replace(/\t/g, '    ')
-    .replace(/\u00a0/g, ' ')
-    .replace(/\u2424/g, '\n');
-
-  return this.token(src, true);
-};
-
-/**
- * Lexing
- */
-
-Lexer.prototype.token = function(src, top, bq) {
-  var src = src.replace(/^ +$/gm, '')
-    , next
-    , loose
-    , cap
-    , bull
-    , b
-    , item
-    , space
-    , i
-    , l;
-
-  while (src) {
-    // newline
-    if (cap = this.rules.newline.exec(src)) {
-      src = src.substring(cap[0].length);
-      if (cap[0].length > 1) {
-        this.tokens.push({
-          type: 'space'
-        });
-      }
-    }
-
-    // code
-    if (cap = this.rules.code.exec(src)) {
-      src = src.substring(cap[0].length);
-      cap = cap[0].replace(/^ {4}/gm, '');
-      this.tokens.push({
-        type: 'code',
-        text: !this.options.pedantic
-          ? cap.replace(/\n+$/, '')
-          : cap
-      });
-      continue;
-    }
-
-    // fences (gfm)
-    if (cap = this.rules.fences.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'code',
-        lang: cap[2],
-        text: cap[3]
-      });
-      continue;
-    }
-
-    // heading
-    if (cap = this.rules.heading.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'heading',
-        depth: cap[1].length,
-        text: cap[2]
-      });
-      continue;
-    }
-
-    // table no leading pipe (gfm)
-    if (top && (cap = this.rules.nptable.exec(src))) {
-      src = src.substring(cap[0].length);
-
-      item = {
-        type: 'table',
-        header: cap[1].replace(/^ *| *\| *$/g, '').split(/ *\| */),
-        align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
-        cells: cap[3].replace(/\n$/, '').split('\n')
-      };
-
-      for (i = 0; i < item.align.length; i++) {
-        if (/^ *-+: *$/.test(item.align[i])) {
-          item.align[i] = 'right';
-        } else if (/^ *:-+: *$/.test(item.align[i])) {
-          item.align[i] = 'center';
-        } else if (/^ *:-+ *$/.test(item.align[i])) {
-          item.align[i] = 'left';
-        } else {
-          item.align[i] = null;
-        }
-      }
-
-      for (i = 0; i < item.cells.length; i++) {
-        item.cells[i] = item.cells[i].split(/ *\| */);
-      }
-
-      this.tokens.push(item);
-
-      continue;
-    }
-
-    // lheading
-    if (cap = this.rules.lheading.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'heading',
-        depth: cap[2] === '=' ? 1 : 2,
-        text: cap[1]
-      });
-      continue;
-    }
-
-    // hr
-    if (cap = this.rules.hr.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'hr'
-      });
-      continue;
-    }
-
-    // blockquote
-    if (cap = this.rules.blockquote.exec(src)) {
-      src = src.substring(cap[0].length);
-
-      this.tokens.push({
-        type: 'blockquote_start'
-      });
-
-      cap = cap[0].replace(/^ *> ?/gm, '');
-
-      // Pass `top` to keep the current
-      // "toplevel" state. This is exactly
-      // how markdown.pl works.
-      this.token(cap, top, true);
-
-      this.tokens.push({
-        type: 'blockquote_end'
-      });
-
-      continue;
-    }
-
-    // list
-    if (cap = this.rules.list.exec(src)) {
-      src = src.substring(cap[0].length);
-      bull = cap[2];
-
-      this.tokens.push({
-        type: 'list_start',
-        ordered: bull.length > 1
-      });
-
-      // Get each top-level item.
-      cap = cap[0].match(this.rules.item);
-
-      next = false;
-      l = cap.length;
-      i = 0;
-
-      for (; i < l; i++) {
-        item = cap[i];
-
-        // Remove the list item's bullet
-        // so it is seen as the next token.
-        space = item.length;
-        item = item.replace(/^ *([*+-]|\d+\.) +/, '');
-
-        // Outdent whatever the
-        // list item contains. Hacky.
-        if (~item.indexOf('\n ')) {
-          space -= item.length;
-          item = !this.options.pedantic
-            ? item.replace(new RegExp('^ {1,' + space + '}', 'gm'), '')
-            : item.replace(/^ {1,4}/gm, '');
-        }
-
-        // Determine whether the next list item belongs here.
-        // Backpedal if it does not belong in this list.
-        if (this.options.smartLists && i !== l - 1) {
-          b = block.bullet.exec(cap[i + 1])[0];
-          if (bull !== b && !(bull.length > 1 && b.length > 1)) {
-            src = cap.slice(i + 1).join('\n') + src;
-            i = l - 1;
-          }
-        }
-
-        // Determine whether item is loose or not.
-        // Use: /(^|\n)(?! )[^\n]+\n\n(?!\s*$)/
-        // for discount behavior.
-        loose = next || /\n\n(?!\s*$)/.test(item);
-        if (i !== l - 1) {
-          next = item.charAt(item.length - 1) === '\n';
-          if (!loose) loose = next;
-        }
-
-        this.tokens.push({
-          type: loose
-            ? 'loose_item_start'
-            : 'list_item_start'
-        });
-
-        // Recurse.
-        this.token(item, false, bq);
-
-        this.tokens.push({
-          type: 'list_item_end'
-        });
-      }
-
-      this.tokens.push({
-        type: 'list_end'
-      });
-
-      continue;
-    }
-
-    // html
-    if (cap = this.rules.html.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: this.options.sanitize
-          ? 'paragraph'
-          : 'html',
-        pre: cap[1] === 'pre' || cap[1] === 'script' || cap[1] === 'style',
-        text: cap[0]
-      });
-      continue;
-    }
-
-    // def
-    if ((!bq && top) && (cap = this.rules.def.exec(src))) {
-      src = src.substring(cap[0].length);
-      this.tokens.links[cap[1].toLowerCase()] = {
-        href: cap[2],
-        title: cap[3]
-      };
-      continue;
-    }
-
-    // table (gfm)
-    if (top && (cap = this.rules.table.exec(src))) {
-      src = src.substring(cap[0].length);
-
-      item = {
-        type: 'table',
-        header: cap[1].replace(/^ *| *\| *$/g, '').split(/ *\| */),
-        align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
-        cells: cap[3].replace(/(?: *\| *)?\n$/, '').split('\n')
-      };
-
-      for (i = 0; i < item.align.length; i++) {
-        if (/^ *-+: *$/.test(item.align[i])) {
-          item.align[i] = 'right';
-        } else if (/^ *:-+: *$/.test(item.align[i])) {
-          item.align[i] = 'center';
-        } else if (/^ *:-+ *$/.test(item.align[i])) {
-          item.align[i] = 'left';
-        } else {
-          item.align[i] = null;
-        }
-      }
-
-      for (i = 0; i < item.cells.length; i++) {
-        item.cells[i] = item.cells[i]
-          .replace(/^ *\| *| *\| *$/g, '')
-          .split(/ *\| */);
-      }
-
-      this.tokens.push(item);
-
-      continue;
-    }
-
-    // top-level paragraph
-    if (top && (cap = this.rules.paragraph.exec(src))) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'paragraph',
-        text: cap[1].charAt(cap[1].length - 1) === '\n'
-          ? cap[1].slice(0, -1)
-          : cap[1]
-      });
-      continue;
-    }
-
-    // text
-    if (cap = this.rules.text.exec(src)) {
-      // Top-level should never reach here.
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'text',
-        text: cap[0]
-      });
-      continue;
-    }
-
-    if (src) {
-      throw new
-        Error('Infinite loop on byte: ' + src.charCodeAt(0));
-    }
-  }
-
-  return this.tokens;
-};
-
-/**
- * Inline-Level Grammar
- */
-
-var inline = {
-  escape: /^\\([\\`*{}\[\]()#+\-.!_>])/,
-  autolink: /^<([^ >]+(@|:\/)[^ >]+)>/,
-  url: noop,
-  tag: /^<!--[\s\S]*?-->|^<\/?\w+(?:"[^"]*"|'[^']*'|[^'">])*?>/,
-  link: /^!?\[(inside)\]\(href\)/,
-  reflink: /^!?\[(inside)\]\s*\[([^\]]*)\]/,
-  nolink: /^!?\[((?:\[[^\]]*\]|[^\[\]])*)\]/,
-  strong: /^__([\s\S]+?)__(?!_)|^\*\*([\s\S]+?)\*\*(?!\*)/,
-  em: /^\b_((?:__|[\s\S])+?)_\b|^\*((?:\*\*|[\s\S])+?)\*(?!\*)/,
-  code: /^(`+)\s*([\s\S]*?[^`])\s*\1(?!`)/,
-  br: /^ {2,}\n(?!\s*$)/,
-  del: noop,
-  text: /^[\s\S]+?(?=[\\<!\[_*`]| {2,}\n|$)/
-};
-
-inline._inside = /(?:\[[^\]]*\]|[^\[\]]|\](?=[^\[]*\]))*/;
-inline._href = /\s*<?([\s\S]*?)>?(?:\s+['"]([\s\S]*?)['"])?\s*/;
-
-inline.link = replace(inline.link)
-  ('inside', inline._inside)
-  ('href', inline._href)
-  ();
-
-inline.reflink = replace(inline.reflink)
-  ('inside', inline._inside)
-  ();
-
-/**
- * Normal Inline Grammar
- */
-
-inline.normal = merge({}, inline);
-
-/**
- * Pedantic Inline Grammar
- */
-
-inline.pedantic = merge({}, inline.normal, {
-  strong: /^__(?=\S)([\s\S]*?\S)__(?!_)|^\*\*(?=\S)([\s\S]*?\S)\*\*(?!\*)/,
-  em: /^_(?=\S)([\s\S]*?\S)_(?!_)|^\*(?=\S)([\s\S]*?\S)\*(?!\*)/
-});
-
-/**
- * GFM Inline Grammar
- */
-
-inline.gfm = merge({}, inline.normal, {
-  escape: replace(inline.escape)('])', '~|])')(),
-  url: /^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/,
-  del: /^~~(?=\S)([\s\S]*?\S)~~/,
-  text: replace(inline.text)
-    (']|', '~]|')
-    ('|', '|https?://|')
-    ()
-});
-
-/**
- * GFM + Line Breaks Inline Grammar
- */
-
-inline.breaks = merge({}, inline.gfm, {
-  br: replace(inline.br)('{2,}', '*')(),
-  text: replace(inline.gfm.text)('{2,}', '*')()
-});
-
-/**
- * Inline Lexer & Compiler
- */
-
-function InlineLexer(links, options) {
-  this.options = options || marked.defaults;
-  this.links = links;
-  this.rules = inline.normal;
-  this.renderer = this.options.renderer || new Renderer;
-  this.renderer.options = this.options;
-
-  if (!this.links) {
-    throw new
-      Error('Tokens array requires a `links` property.');
-  }
-
-  if (this.options.gfm) {
-    if (this.options.breaks) {
-      this.rules = inline.breaks;
-    } else {
-      this.rules = inline.gfm;
-    }
-  } else if (this.options.pedantic) {
-    this.rules = inline.pedantic;
-  }
-}
-
-/**
- * Expose Inline Rules
- */
-
-InlineLexer.rules = inline;
-
-/**
- * Static Lexing/Compiling Method
- */
-
-InlineLexer.output = function(src, links, options) {
-  var inline = new InlineLexer(links, options);
-  return inline.output(src);
-};
-
-/**
- * Lexing/Compiling
- */
-
-InlineLexer.prototype.output = function(src) {
-  var out = ''
-    , link
-    , text
-    , href
-    , cap;
-
-  while (src) {
-    // escape
-    if (cap = this.rules.escape.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += cap[1];
-      continue;
-    }
-
-    // autolink
-    if (cap = this.rules.autolink.exec(src)) {
-      src = src.substring(cap[0].length);
-      if (cap[2] === '@') {
-        text = cap[1].charAt(6) === ':'
-          ? this.mangle(cap[1].substring(7))
-          : this.mangle(cap[1]);
-        href = this.mangle('mailto:') + text;
-      } else {
-        text = escape(cap[1]);
-        href = text;
-      }
-      out += this.renderer.link(href, null, text);
-      continue;
-    }
-
-    // url (gfm)
-    if (!this.inLink && (cap = this.rules.url.exec(src))) {
-      src = src.substring(cap[0].length);
-      text = escape(cap[1]);
-      href = text;
-      out += this.renderer.link(href, null, text);
-      continue;
-    }
-
-    // tag
-    if (cap = this.rules.tag.exec(src)) {
-      if (!this.inLink && /^<a /i.test(cap[0])) {
-        this.inLink = true;
-      } else if (this.inLink && /^<\/a>/i.test(cap[0])) {
-        this.inLink = false;
-      }
-      src = src.substring(cap[0].length);
-      out += this.options.sanitize
-        ? escape(cap[0])
-        : cap[0];
-      continue;
-    }
-
-    // link
-    if (cap = this.rules.link.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.inLink = true;
-      out += this.outputLink(cap, {
-        href: cap[2],
-        title: cap[3]
-      });
-      this.inLink = false;
-      continue;
-    }
-
-    // reflink, nolink
-    if ((cap = this.rules.reflink.exec(src))
-        || (cap = this.rules.nolink.exec(src))) {
-      src = src.substring(cap[0].length);
-      link = (cap[2] || cap[1]).replace(/\s+/g, ' ');
-      link = this.links[link.toLowerCase()];
-      if (!link || !link.href) {
-        out += cap[0].charAt(0);
-        src = cap[0].substring(1) + src;
-        continue;
-      }
-      this.inLink = true;
-      out += this.outputLink(cap, link);
-      this.inLink = false;
-      continue;
-    }
-
-    // strong
-    if (cap = this.rules.strong.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += this.renderer.strong(this.output(cap[2] || cap[1]));
-      continue;
-    }
-
-    // em
-    if (cap = this.rules.em.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += this.renderer.em(this.output(cap[2] || cap[1]));
-      continue;
-    }
-
-    // code
-    if (cap = this.rules.code.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += this.renderer.codespan(escape(cap[2], true));
-      continue;
-    }
-
-    // br
-    if (cap = this.rules.br.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += this.renderer.br();
-      continue;
-    }
-
-    // del (gfm)
-    if (cap = this.rules.del.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += this.renderer.del(this.output(cap[1]));
-      continue;
-    }
-
-    // text
-    if (cap = this.rules.text.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += escape(this.smartypants(cap[0]));
-      continue;
-    }
-
-    if (src) {
-      throw new
-        Error('Infinite loop on byte: ' + src.charCodeAt(0));
-    }
-  }
-
-  return out;
-};
-
-/**
- * Compile Link
- */
-
-InlineLexer.prototype.outputLink = function(cap, link) {
-  var href = escape(link.href)
-    , title = link.title ? escape(link.title) : null;
-
-  return cap[0].charAt(0) !== '!'
-    ? this.renderer.link(href, title, this.output(cap[1]))
-    : this.renderer.image(href, title, escape(cap[1]));
-};
-
-/**
- * Smartypants Transformations
- */
-
-InlineLexer.prototype.smartypants = function(text) {
-  if (!this.options.smartypants) return text;
-  return text
-    // em-dashes
-    .replace(/--/g, '\u2014')
-    // opening singles
-    .replace(/(^|[-\u2014/(\[{"\s])'/g, '$1\u2018')
-    // closing singles & apostrophes
-    .replace(/'/g, '\u2019')
-    // opening doubles
-    .replace(/(^|[-\u2014/(\[{\u2018\s])"/g, '$1\u201c')
-    // closing doubles
-    .replace(/"/g, '\u201d')
-    // ellipses
-    .replace(/\.{3}/g, '\u2026');
-};
-
-/**
- * Mangle Links
- */
-
-InlineLexer.prototype.mangle = function(text) {
-  var out = ''
-    , l = text.length
-    , i = 0
-    , ch;
-
-  for (; i < l; i++) {
-    ch = text.charCodeAt(i);
-    if (Math.random() > 0.5) {
-      ch = 'x' + ch.toString(16);
-    }
-    out += '&#' + ch + ';';
-  }
-
-  return out;
-};
-
-/**
- * Renderer
- */
-
-function Renderer(options) {
-  this.options = options || {};
-}
-
-Renderer.prototype.code = function(code, lang, escaped) {
-  if (this.options.highlight) {
-    var out = this.options.highlight(code, lang);
-    if (out != null && out !== code) {
-      escaped = true;
-      code = out;
-    }
-  }
-
-  if (!lang) {
-    return '<pre><code>'
-      + (escaped ? code : escape(code, true))
-      + '\n</code></pre>';
-  }
-
-  return '<pre><code class="'
-    + this.options.langPrefix
-    + escape(lang, true)
-    + '">'
-    + (escaped ? code : escape(code, true))
-    + '\n</code></pre>\n';
-};
-
-Renderer.prototype.blockquote = function(quote) {
-  return '<blockquote>\n' + quote + '</blockquote>\n';
-};
-
-Renderer.prototype.html = function(html) {
-  return html;
-};
-
-Renderer.prototype.heading = function(text, level, raw) {
-  return '<h'
-    + level
-    + ' id="'
-    + this.options.headerPrefix
-    + raw.toLowerCase().replace(/[^\w]+/g, '-')
-    + '">'
-    + text
-    + '</h'
-    + level
-    + '>\n';
-};
-
-Renderer.prototype.hr = function() {
-  return this.options.xhtml ? '<hr/>\n' : '<hr>\n';
-};
-
-Renderer.prototype.list = function(body, ordered) {
-  var type = ordered ? 'ol' : 'ul';
-  return '<' + type + '>\n' + body + '</' + type + '>\n';
-};
-
-Renderer.prototype.listitem = function(text) {
-  return '<li>' + text + '</li>\n';
-};
-
-Renderer.prototype.paragraph = function(text) {
-  return '<p>' + text + '</p>\n';
-};
-
-Renderer.prototype.table = function(header, body) {
-  return '<table>\n'
-    + '<thead>\n'
-    + header
-    + '</thead>\n'
-    + '<tbody>\n'
-    + body
-    + '</tbody>\n'
-    + '</table>\n';
-};
-
-Renderer.prototype.tablerow = function(content) {
-  return '<tr>\n' + content + '</tr>\n';
-};
-
-Renderer.prototype.tablecell = function(content, flags) {
-  var type = flags.header ? 'th' : 'td';
-  var tag = flags.align
-    ? '<' + type + ' style="text-align:' + flags.align + '">'
-    : '<' + type + '>';
-  return tag + content + '</' + type + '>\n';
-};
-
-// span level renderer
-Renderer.prototype.strong = function(text) {
-  return '<strong>' + text + '</strong>';
-};
-
-Renderer.prototype.em = function(text) {
-  return '<em>' + text + '</em>';
-};
-
-Renderer.prototype.codespan = function(text) {
-  return '<code>' + text + '</code>';
-};
-
-Renderer.prototype.br = function() {
-  return this.options.xhtml ? '<br/>' : '<br>';
-};
-
-Renderer.prototype.del = function(text) {
-  return '<del>' + text + '</del>';
-};
-
-Renderer.prototype.link = function(href, title, text) {
-  if (this.options.sanitize) {
-    try {
-      var prot = decodeURIComponent(unescape(href))
-        .replace(/[^\w:]/g, '')
-        .toLowerCase();
-    } catch (e) {
-      return '';
-    }
-    if (prot.indexOf('javascript:') === 0) {
-      return '';
-    }
-  }
-  var out = '<a href="' + href + '"';
-  if (title) {
-    out += ' title="' + title + '"';
-  }
-  out += '>' + text + '</a>';
-  return out;
-};
-
-Renderer.prototype.image = function(href, title, text) {
-  var out = '<img src="' + href + '" alt="' + text + '"';
-  if (title) {
-    out += ' title="' + title + '"';
-  }
-  out += this.options.xhtml ? '/>' : '>';
-  return out;
-};
-
-/**
- * Parsing & Compiling
- */
-
-function Parser(options) {
-  this.tokens = [];
-  this.token = null;
-  this.options = options || marked.defaults;
-  this.options.renderer = this.options.renderer || new Renderer;
-  this.renderer = this.options.renderer;
-  this.renderer.options = this.options;
-}
-
-/**
- * Static Parse Method
- */
-
-Parser.parse = function(src, options, renderer) {
-  var parser = new Parser(options, renderer);
-  return parser.parse(src);
-};
-
-/**
- * Parse Loop
- */
-
-Parser.prototype.parse = function(src) {
-  this.inline = new InlineLexer(src.links, this.options, this.renderer);
-  this.tokens = src.reverse();
-
-  var out = '';
-  while (this.next()) {
-    out += this.tok();
-  }
-
-  return out;
-};
-
-/**
- * Next Token
- */
-
-Parser.prototype.next = function() {
-  return this.token = this.tokens.pop();
-};
-
-/**
- * Preview Next Token
- */
-
-Parser.prototype.peek = function() {
-  return this.tokens[this.tokens.length - 1] || 0;
-};
-
-/**
- * Parse Text Tokens
- */
-
-Parser.prototype.parseText = function() {
-  var body = this.token.text;
-
-  while (this.peek().type === 'text') {
-    body += '\n' + this.next().text;
-  }
-
-  return this.inline.output(body);
-};
-
-/**
- * Parse Current Token
- */
-
-Parser.prototype.tok = function() {
-  switch (this.token.type) {
-    case 'space': {
-      return '';
-    }
-    case 'hr': {
-      return this.renderer.hr();
-    }
-    case 'heading': {
-      return this.renderer.heading(
-        this.inline.output(this.token.text),
-        this.token.depth,
-        this.token.text);
-    }
-    case 'code': {
-      return this.renderer.code(this.token.text,
-        this.token.lang,
-        this.token.escaped);
-    }
-    case 'table': {
-      var header = ''
-        , body = ''
-        , i
-        , row
-        , cell
-        , flags
-        , j;
-
-      // header
-      cell = '';
-      for (i = 0; i < this.token.header.length; i++) {
-        flags = { header: true, align: this.token.align[i] };
-        cell += this.renderer.tablecell(
-          this.inline.output(this.token.header[i]),
-          { header: true, align: this.token.align[i] }
-        );
-      }
-      header += this.renderer.tablerow(cell);
-
-      for (i = 0; i < this.token.cells.length; i++) {
-        row = this.token.cells[i];
-
-        cell = '';
-        for (j = 0; j < row.length; j++) {
-          cell += this.renderer.tablecell(
-            this.inline.output(row[j]),
-            { header: false, align: this.token.align[j] }
-          );
-        }
-
-        body += this.renderer.tablerow(cell);
-      }
-      return this.renderer.table(header, body);
-    }
-    case 'blockquote_start': {
-      var body = '';
-
-      while (this.next().type !== 'blockquote_end') {
-        body += this.tok();
-      }
-
-      return this.renderer.blockquote(body);
-    }
-    case 'list_start': {
-      var body = ''
-        , ordered = this.token.ordered;
-
-      while (this.next().type !== 'list_end') {
-        body += this.tok();
-      }
-
-      return this.renderer.list(body, ordered);
-    }
-    case 'list_item_start': {
-      var body = '';
-
-      while (this.next().type !== 'list_item_end') {
-        body += this.token.type === 'text'
-          ? this.parseText()
-          : this.tok();
-      }
-
-      return this.renderer.listitem(body);
-    }
-    case 'loose_item_start': {
-      var body = '';
-
-      while (this.next().type !== 'list_item_end') {
-        body += this.tok();
-      }
-
-      return this.renderer.listitem(body);
-    }
-    case 'html': {
-      var html = !this.token.pre && !this.options.pedantic
-        ? this.inline.output(this.token.text)
-        : this.token.text;
-      return this.renderer.html(html);
-    }
-    case 'paragraph': {
-      return this.renderer.paragraph(this.inline.output(this.token.text));
-    }
-    case 'text': {
-      return this.renderer.paragraph(this.parseText());
-    }
-  }
-};
-
-/**
- * Helpers
- */
-
-function escape(html, encode) {
-  return html
-    .replace(!encode ? /&(?!#?\w+;)/g : /&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function unescape(html) {
-  return html.replace(/&([#\w]+);/g, function(_, n) {
-    n = n.toLowerCase();
-    if (n === 'colon') return ':';
-    if (n.charAt(0) === '#') {
-      return n.charAt(1) === 'x'
-        ? String.fromCharCode(parseInt(n.substring(2), 16))
-        : String.fromCharCode(+n.substring(1));
-    }
-    return '';
-  });
-}
-
-function replace(regex, opt) {
-  regex = regex.source;
-  opt = opt || '';
-  return function self(name, val) {
-    if (!name) return new RegExp(regex, opt);
-    val = val.source || val;
-    val = val.replace(/(^|[^\[])\^/g, '$1');
-    regex = regex.replace(name, val);
-    return self;
-  };
-}
-
-function noop() {}
-noop.exec = noop;
-
-function merge(obj) {
-  var i = 1
-    , target
-    , key;
-
-  for (; i < arguments.length; i++) {
-    target = arguments[i];
-    for (key in target) {
-      if (Object.prototype.hasOwnProperty.call(target, key)) {
-        obj[key] = target[key];
-      }
-    }
-  }
-
-  return obj;
-}
-
-
-/**
- * Marked
- */
-
-function marked(src, opt, callback) {
-  if (callback || typeof opt === 'function') {
-    if (!callback) {
-      callback = opt;
-      opt = null;
-    }
-
-    opt = merge({}, marked.defaults, opt || {});
-
-    var highlight = opt.highlight
-      , tokens
-      , pending
-      , i = 0;
-
-    try {
-      tokens = Lexer.lex(src, opt)
-    } catch (e) {
-      return callback(e);
-    }
-
-    pending = tokens.length;
-
-    var done = function() {
-      var out, err;
-
-      try {
-        out = Parser.parse(tokens, opt);
-      } catch (e) {
-        err = e;
-      }
-
-      opt.highlight = highlight;
-
-      return err
-        ? callback(err)
-        : callback(null, out);
-    };
-
-    if (!highlight || highlight.length < 3) {
-      return done();
-    }
-
-    delete opt.highlight;
-
-    if (!pending) return done();
-
-    for (; i < tokens.length; i++) {
-      (function(token) {
-        if (token.type !== 'code') {
-          return --pending || done();
-        }
-        return highlight(token.text, token.lang, function(err, code) {
-          if (code == null || code === token.text) {
-            return --pending || done();
-          }
-          token.text = code;
-          token.escaped = true;
-          --pending || done();
-        });
-      })(tokens[i]);
-    }
-
-    return;
-  }
-  try {
-    if (opt) opt = merge({}, marked.defaults, opt);
-    return Parser.parse(Lexer.lex(src, opt), opt);
-  } catch (e) {
-    e.message += '\nPlease report this to https://github.com/chjj/marked.';
-    if ((opt || marked.defaults).silent) {
-      return '<p>An error occured:</p><pre>'
-        + escape(e.message + '', true)
-        + '</pre>';
-    }
-    throw e;
-  }
-}
-
-/**
- * Options
- */
-
-marked.options =
-marked.setOptions = function(opt) {
-  merge(marked.defaults, opt);
-  return marked;
-};
-
-marked.defaults = {
-  gfm: true,
-  tables: true,
-  breaks: false,
-  pedantic: false,
-  sanitize: false,
-  smartLists: false,
-  silent: false,
-  highlight: null,
-  langPrefix: 'lang-',
-  smartypants: false,
-  headerPrefix: '',
-  renderer: new Renderer,
-  xhtml: false
-};
-
-/**
- * Expose
- */
-
-marked.Parser = Parser;
-marked.parser = Parser.parse;
-
-marked.Renderer = Renderer;
-
-marked.Lexer = Lexer;
-marked.lexer = Lexer.lex;
-
-marked.InlineLexer = InlineLexer;
-marked.inlineLexer = InlineLexer.output;
-
-marked.parse = marked;
-
-if (typeof exports === 'object') {
-  module.exports = marked;
-} else if (typeof define === 'function' && define.amd) {
-  define(function() { return marked; });
-} else {
-  this.marked = marked;
-}
-
-}).call(function() {
-  return this || (typeof window !== 'undefined' ? window : global);
-}());
-
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],67:[function(require,module,exports){
-/*
-object-assign
-(c) Sindre Sorhus
-@license MIT
-*/
-
-'use strict';
-/* eslint-disable no-unused-vars */
-var getOwnPropertySymbols = Object.getOwnPropertySymbols;
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-var propIsEnumerable = Object.prototype.propertyIsEnumerable;
-
-function toObject(val) {
-	if (val === null || val === undefined) {
-		throw new TypeError('Object.assign cannot be called with null or undefined');
-	}
-
-	return Object(val);
-}
-
-function shouldUseNative() {
-	try {
-		if (!Object.assign) {
-			return false;
-		}
-
-		// Detect buggy property enumeration order in older V8 versions.
-
-		// https://bugs.chromium.org/p/v8/issues/detail?id=4118
-		var test1 = new String('abc');  // eslint-disable-line no-new-wrappers
-		test1[5] = 'de';
-		if (Object.getOwnPropertyNames(test1)[0] === '5') {
-			return false;
-		}
-
-		// https://bugs.chromium.org/p/v8/issues/detail?id=3056
-		var test2 = {};
-		for (var i = 0; i < 10; i++) {
-			test2['_' + String.fromCharCode(i)] = i;
-		}
-		var order2 = Object.getOwnPropertyNames(test2).map(function (n) {
-			return test2[n];
-		});
-		if (order2.join('') !== '0123456789') {
-			return false;
-		}
-
-		// https://bugs.chromium.org/p/v8/issues/detail?id=3056
-		var test3 = {};
-		'abcdefghijklmnopqrst'.split('').forEach(function (letter) {
-			test3[letter] = letter;
-		});
-		if (Object.keys(Object.assign({}, test3)).join('') !==
-				'abcdefghijklmnopqrst') {
-			return false;
-		}
-
-		return true;
-	} catch (err) {
-		// We don't expect any of the above to throw, but better to be safe.
-		return false;
-	}
-}
-
-module.exports = shouldUseNative() ? Object.assign : function (target, source) {
-	var from;
-	var to = toObject(target);
-	var symbols;
-
-	for (var s = 1; s < arguments.length; s++) {
-		from = Object(arguments[s]);
-
-		for (var key in from) {
-			if (hasOwnProperty.call(from, key)) {
-				to[key] = from[key];
-			}
-		}
-
-		if (getOwnPropertySymbols) {
-			symbols = getOwnPropertySymbols(from);
-			for (var i = 0; i < symbols.length; i++) {
-				if (propIsEnumerable.call(from, symbols[i])) {
-					to[symbols[i]] = from[symbols[i]];
-				}
-			}
-		}
-	}
-
-	return to;
-};
-
-},{}],68:[function(require,module,exports){
-var _ = require("./lodash.custom.js");
-var rewind = require("geojson-rewind");
-
-// see https://wiki.openstreetmap.org/wiki/Overpass_turbo/Polygon_Features
-var polygonFeatures = require("./polygon_features.json");
-
-var osmtogeojson = {};
-
-osmtogeojson = function( data, options ) {
-
-  options = _.merge(
-    {
-      flatProperties: false,
-      uninterestingTags: {
-        "source": true,
-        "source_ref": true,
-        "source:ref": true,
-        "history": true,
-        "attribution": true,
-        "created_by": true,
-        "tiger:county": true,
-        "tiger:tlid": true,
-        "tiger:upload_uuid": true
-      },
-      polygonFeatures: polygonFeatures,
-    },
-    options
-  );
-
-  var result;
-  if ( ((typeof XMLDocument !== "undefined") && data instanceof XMLDocument ||
-        (typeof XMLDocument === "undefined") && data.childNodes) )
-    result = _osmXML2geoJSON(data);
-  else
-    result = _overpassJSON2geoJSON(data);
-  return result;
-
-  function _overpassJSON2geoJSON(json) {
-    // sort elements
-    var nodes = new Array();
-    var ways  = new Array();
-    var rels  = new Array();
-    // create copies of individual json objects to make sure the original data doesn't get altered
-    // todo: cloning is slow: see if this can be done differently!
-    for (var i=0;i<json.elements.length;i++) {
-      switch (json.elements[i].type) {
-      case "node":
-        var node = json.elements[i];
-        nodes.push(node);
-      break;
-      case "way":
-        var way = _.clone(json.elements[i]);
-        way.nodes = _.clone(way.nodes);
-        ways.push(way);
-      break;
-      case "relation":
-        var rel = _.clone(json.elements[i]);
-        rel.members = _.clone(rel.members);
-        rels.push(rel);
-      break;
-      default:
-      // type=area (from coord-query) is an example for this case.
-      }
-    }
-    return _convert2geoJSON(nodes,ways,rels);
-  }
-  function _osmXML2geoJSON(xml) {
-    // helper function
-    function copy_attribute( x, o, attr ) {
-      if (x.hasAttribute(attr))
-        o[attr] = x.getAttribute(attr);
-    }
-    // sort elements
-    var nodes = new Array();
-    var ways  = new Array();
-    var rels  = new Array();
-    // nodes
-    _.each( xml.getElementsByTagName('node'), function( node, i ) {
-      var tags = {};
-      _.each( node.getElementsByTagName('tag'), function( tag ) {
-        tags[tag.getAttribute('k')] = tag.getAttribute('v');
-      });
-      nodes[i] = {
-        'type': 'node'
-      };
-      copy_attribute( node, nodes[i], 'id' );
-      copy_attribute( node, nodes[i], 'lat' );
-      copy_attribute( node, nodes[i], 'lon' );
-      copy_attribute( node, nodes[i], 'version' );
-      copy_attribute( node, nodes[i], 'timestamp' );
-      copy_attribute( node, nodes[i], 'changeset' );
-      copy_attribute( node, nodes[i], 'uid' );
-      copy_attribute( node, nodes[i], 'user' );
-      if (!_.isEmpty(tags))
-        nodes[i].tags = tags;
-    });
-    // ways
-    _.each( xml.getElementsByTagName('way'), function( way, i ) {
-      var tags = {};
-      var wnodes = [];
-      _.each( way.getElementsByTagName('tag'), function( tag ) {
-        tags[tag.getAttribute('k')] = tag.getAttribute('v');
-      });
-      _.each( way.getElementsByTagName('nd'), function( nd, i ) {
-        wnodes[i] = nd.getAttribute('ref');
-      });
-      ways[i] = {
-        "type": "way"
-      };
-      copy_attribute( way, ways[i], 'id' );
-      copy_attribute( way, ways[i], 'version' );
-      copy_attribute( way, ways[i], 'timestamp' );
-      copy_attribute( way, ways[i], 'changeset' );
-      copy_attribute( way, ways[i], 'uid' );
-      copy_attribute( way, ways[i], 'user' );
-      if (wnodes.length > 0)
-        ways[i].nodes = wnodes;
-      if (!_.isEmpty(tags))
-        ways[i].tags = tags;
-    });
-    // relations
-    _.each( xml.getElementsByTagName('relation'), function( relation, i ) {
-      var tags = {};
-      var members = [];
-      _.each( relation.getElementsByTagName('tag'), function( tag ) {
-        tags[tag.getAttribute('k')] = tag.getAttribute('v');
-      });
-      _.each( relation.getElementsByTagName('member'), function( member, i ) {
-        members[i] = {};
-        copy_attribute( member, members[i], 'ref' );
-        copy_attribute( member, members[i], 'role' );
-        copy_attribute( member, members[i], 'type' );
-      });
-      rels[i] = {
-        "type": "relation"
-      }
-      copy_attribute( relation, rels[i], 'id' );
-      copy_attribute( relation, rels[i], 'version' );
-      copy_attribute( relation, rels[i], 'timestamp' );
-      copy_attribute( relation, rels[i], 'changeset' );
-      copy_attribute( relation, rels[i], 'uid' );
-      copy_attribute( relation, rels[i], 'user' );
-      if (members.length > 0)
-        rels[i].members = members;
-      if (!_.isEmpty(tags))
-        rels[i].tags = tags;
-    });
-    return _convert2geoJSON(nodes,ways,rels);
-  }
-  function _convert2geoJSON(nodes,ways,rels) {
-
-    // helper function that checks if there are any tags other than "created_by", "source", etc. or any tag provided in ignore_tags
-    function has_interesting_tags(t, ignore_tags) {
-      if (typeof ignore_tags !== "object")
-        ignore_tags={};
-      if (typeof options.uninterestingTags === "function")
-        return !options.uninterestingTags(t, ignore_tags);
-      for (var k in t)
-        if (!(options.uninterestingTags[k]===true) &&
-            !(ignore_tags[k]===true || ignore_tags[k]===t[k]))
-          return true;
-      return false;
-    };
-    // helper function to extract meta information
-    function build_meta_information(object) {
-      var res = {
-        "timestamp": object.timestamp,
-        "version": object.version,
-        "changeset": object.changeset,
-        "user": object.user,
-        "uid": object.uid
-      };
-      for (k in res)
-        if (res[k] === undefined)
-          delete res[k];
-      return res;
-    }
-
-    // some data processing (e.g. filter nodes only used for ways)
-    var nodeids = new Object();
-    for (var i=0;i<nodes.length;i++) {
-      if (nodes[i].lat === undefined)
-        continue; // ignore nodes without coordinates (e.g. returned by an ids_only query)
-      nodeids[nodes[i].id] = nodes[i];
-    }
-    var poinids = new Object();
-    for (var i=0;i<nodes.length;i++) {
-      if (typeof nodes[i].tags != 'undefined' &&
-          has_interesting_tags(nodes[i].tags)) // this checks if the node has any tags other than "created_by"
-        poinids[nodes[i].id] = true;
-    }
-    for (var i=0;i<rels.length;i++) {
-      if (!_.isArray(rels[i].members))
-        continue; // ignore relations without members (e.g. returned by an ids_only query)
-      for (var j=0;j<rels[i].members.length;j++) {
-        if (rels[i].members[j].type == "node")
-          poinids[rels[i].members[j].ref] = true;
-      }
-    }
-    var wayids = new Object();
-    var waynids = new Object();
-    for (var i=0;i<ways.length;i++) {
-      if (!_.isArray(ways[i].nodes))
-        continue; // ignore ways without nodes (e.g. returned by an ids_only query)
-      wayids[ways[i].id] = ways[i];
-      for (var j=0;j<ways[i].nodes.length;j++) {
-        waynids[ways[i].nodes[j]] = true;
-        ways[i].nodes[j] = nodeids[ways[i].nodes[j]];
-      }
-    }
-    var pois = new Array();
-    for (var i=0;i<nodes.length;i++) {
-      if ((!waynids[nodes[i].id]) ||
-          (poinids[nodes[i].id]))
-        pois.push(nodes[i]);
-    }
-    var relids = new Array();
-    for (var i=0;i<rels.length;i++) {
-      if (!_.isArray(rels[i].members))
-        continue; // ignore relations without members (e.g. returned by an ids_only query)
-      relids[rels[i].id] = rels[i];
-    }
-    var relsmap = {node: {}, way: {}, relation: {}};
-    for (var i=0;i<rels.length;i++) {
-      if (!_.isArray(rels[i].members))
-        continue; // ignore relations without members (e.g. returned by an ids_only query)
-      for (var j=0;j<rels[i].members.length;j++) {
-        var m;
-        switch (rels[i].members[j].type) {
-          case "node":
-            m = nodeids[rels[i].members[j].ref];
-          break;
-          case "way":
-            m = wayids[rels[i].members[j].ref];
-          break;
-          case "relation":
-            m = relids[rels[i].members[j].ref];
-          break;
-        }
-        if (!m) continue;
-        var m_type = rels[i].members[j].type;
-        var m_ref = rels[i].members[j].ref;
-        if (typeof relsmap[m_type][m_ref] === "undefined")
-          relsmap[m_type][m_ref] = [];
-        relsmap[m_type][m_ref].push({
-          "role" : rels[i].members[j].role,
-          "rel" : rels[i].id,
-          "reltags" : rels[i].tags,
-        });
-      }
-    }
-    // construct geojson
-    var geojson;
-    var geojsonnodes = {
-      "type"     : "FeatureCollection",
-      "features" : new Array()};
-    for (i=0;i<pois.length;i++) {
-      if (typeof pois[i].lon == "undefined" || typeof pois[i].lat == "undefined")
-        continue; // lon and lat are required for showing a point
-      geojsonnodes.features.push({
-        "type"       : "Feature",
-        "id"         : "node/"+pois[i].id,
-        "properties" : {
-          "type" : "node",
-          "id"   : pois[i].id,
-          "tags" : pois[i].tags || {},
-          "relations" : relsmap["node"][pois[i].id] || [],
-          "meta": build_meta_information(pois[i])
-        },
-        "geometry"   : {
-          "type" : "Point",
-          "coordinates" : [+pois[i].lon, +pois[i].lat],
-        }
-      });
-    }
-    var geojsonlines = {
-      "type"     : "FeatureCollection",
-      "features" : new Array()};
-    var geojsonpolygons = {
-      "type"     : "FeatureCollection",
-      "features" : new Array()};
-    // process multipolygons
-    for (var i=0;i<rels.length;i++) {
-      if ((typeof rels[i].tags != "undefined") &&
-          (rels[i].tags["type"] == "multipolygon" || rels[i].tags["type"] == "boundary")) {
-        if (!_.isArray(rels[i].members))
-          continue; // ignore relations without members (e.g. returned by an ids_only query)
-        var outer_count = 0;
-        for (var j=0;j<rels[i].members.length;j++)
-          if (rels[i].members[j].role == "outer")
-            outer_count++;
-        rels[i].members.forEach(function(m) {
-          if (wayids[m.ref]) {
-            // this even works in the following corner case:
-            // a multipolygon amenity=xxx with outer line tagged amenity=yyy
-            // see https://github.com/tyrasd/osmtogeojson/issues/7
-            if (m.role==="outer" && !has_interesting_tags(wayids[m.ref].tags,rels[i].tags))
-              wayids[m.ref].is_multipolygon_outline = true;
-            if (m.role==="inner" && !has_interesting_tags(wayids[m.ref].tags))
-              wayids[m.ref].is_multipolygon_outline = true;
-          }
-        });
-        if (outer_count == 0)
-          continue; // ignore multipolygons without outer ways
-        var simple_mp = false;
-        if (outer_count == 1 && !has_interesting_tags(rels[i].tags, {"type":true}))
-          simple_mp = true;
-        var feature = null;
-        if (!simple_mp) {
-          feature = construct_multipolygon(rels[i], rels[i]);
-        } else {
-          // simple multipolygon
-          var outer_way = rels[i].members.filter(function(m) {return m.role === "outer";})[0];
-          outer_way = wayids[outer_way.ref];
-          if (outer_way === undefined)
-            continue; // abort if outer way object is not present
-          outer_way.is_multipolygon_outline = true;
-          feature = construct_multipolygon(outer_way, rels[i]);
-        }
-        if (feature === false)
-          continue; // abort if feature could not be constructed
-        geojsonpolygons.features.push(feature);
-        function construct_multipolygon(tag_object, rel) {
-          var is_tainted = false;
-          // prepare mp members
-          var members;
-          members = rel.members.filter(function(m) {return m.type === "way";});
-          members = members.map(function(m) {
-            var way = wayids[m.ref];
-            if (way === undefined) { // check for missing ways
-              is_tainted = true;
-              return;
-            }
-            return { // TODO: this is slow! :(
-              id: m.ref,
-              role: m.role || "outer",
-              way: way,
-              nodes: way.nodes.filter(function(n) {
-                if (n !== undefined)
-                  return true;
-                is_tainted = true;
-                return false;
-              })
-            };
-          });
-          members = _.compact(members);
-          // construct outer and inner rings
-          var outers, inners;
-          function join(ways) {
-            var _first = function(arr) {return arr[0]};
-            var _last  = function(arr) {return arr[arr.length-1]};
-            // stolen from iD/relation.js
-            var joined = [], current, first, last, i, how, what;
-            while (ways.length) {
-              current = ways.pop().nodes.slice();
-              joined.push(current);
-              while (ways.length && _first(current) !== _last(current)) {
-                first = _first(current);
-                last  = _last(current);
-                for (i = 0; i < ways.length; i++) {
-                  what = ways[i].nodes;
-                  if (last === _first(what)) {
-                    how  = current.push;
-                    what = what.slice(1);
-                    break;
-                  } else if (last === _last(what)) {
-                    how  = current.push;
-                    what = what.slice(0, -1).reverse();
-                    break;
-                  } else if (first == _last(what)) {
-                    how  = current.unshift;
-                    what = what.slice(0, -1);
-                    break;
-                  } else if (first == _first(what)) {
-                    how  = current.unshift;
-                    what = what.slice(1).reverse();
-                    break;
-                  } else {
-                    what = how = null;
-                  }
-                }
-                if (!what)
-                  break; // Invalid geometry (dangling way, unclosed ring)
-                ways.splice(i, 1);
-                how.apply(current, what);
-              }
-            }
-            return joined;
-          }
-          outers = join(members.filter(function(m) {return m.role==="outer";}));
-          inners = join(members.filter(function(m) {return m.role==="inner";}));
-          // sort rings
-          var mp;
-          function findOuter(inner) {
-            var polygonIntersectsPolygon = function(outer, inner) {
-              for (var i=0; i<inner.length; i++)
-                if (pointInPolygon(inner[i], outer))
-                  return true;
-              return false;
-            }
-            var mapCoordinates = function(from) {
-              return from.map(function(n) {
-                return [+n.lat,+n.lon];
-              });
-            }
-            // stolen from iD/geo.js, 
-            // based on https://github.com/substack/point-in-polygon, 
-            // ray-casting algorithm based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-            var pointInPolygon = function(point, polygon) {
-              var x = point[0], y = point[1], inside = false;
-              for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-                var xi = polygon[i][0], yi = polygon[i][1];
-                var xj = polygon[j][0], yj = polygon[j][1];
-                var intersect = ((yi > y) != (yj > y)) &&
-                  (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-                if (intersect) inside = !inside;
-              }
-              return inside;
-            };
-            // stolen from iD/relation.js
-            var o, outer;
-            // todo: all this coordinate mapping makes this unneccesarily slow.
-            // see the "todo: this is slow! :(" above.
-            inner = mapCoordinates(inner);
-            /*for (o = 0; o < outers.length; o++) {
-              outer = mapCoordinates(outers[o]);
-              if (polygonContainsPolygon(outer, inner))
-                return o;
-            }*/
-            for (o = 0; o < outers.length; o++) {
-              outer = mapCoordinates(outers[o]);
-              if (polygonIntersectsPolygon(outer, inner))
-                return o;
-            }
-          }
-          mp = outers.map(function(o) {return [o];});
-          for (var j=0; j<inners.length; j++) {
-            var o = findOuter(inners[j]);
-            if (o !== undefined)
-              mp[o].push(inners[j]);
-            else
-              // so, no outer ring for this inner ring is found.
-              // We're going to ignore holes in empty space.
-              ;
-          }
-          // sanitize mp-coordinates (remove empty clusters or rings, {lat,lon,...} to [lon,lat]
-          var mp_coords = [];
-          mp_coords = _.compact(mp.map(function(cluster) { 
-            var cl = _.compact(cluster.map(function(ring) {
-              if (ring.length < 4) // todo: is this correct: ring.length < 4 ?
-                return;
-              return _.compact(ring.map(function(node) {
-                return [+node.lon,+node.lat];
-              }));
-            }));
-            if (cl.length == 0)
-              return;
-            return cl;
-          }));
-
-          if (mp_coords.length == 0)
-            return false; // ignore multipolygons without coordinates
-          var mp_type = "MultiPolygon";
-          if (mp_coords.length === 1) {
-            mp_type = "Polygon";
-            mp_coords = mp_coords[0];
-          }
-          // mp parsed, now construct the geoJSON
-          var feature = {
-            "type"       : "Feature",
-            "id"         : tag_object.type+"/"+tag_object.id,
-            "properties" : {
-              "type" : tag_object.type,
-              "id"   : tag_object.id,
-              "tags" : tag_object.tags || {},
-              "relations" :  relsmap[tag_object.type][tag_object.id] || [],
-              "meta": build_meta_information(tag_object)
-            },
-            "geometry"   : {
-              "type" : mp_type,
-              "coordinates" : mp_coords,
-            }
-          }
-          if (is_tainted)
-            feature.properties["tainted"] = true;
-          return feature;
-        }
-      }
-    }
-    // process lines and polygons
-    for (var i=0;i<ways.length;i++) {
-      if (!_.isArray(ways[i].nodes))
-        continue; // ignore ways without nodes (e.g. returned by an ids_only query)
-      if (ways[i].is_multipolygon_outline)
-        continue; // ignore ways which are already rendered as (part of) a multipolygon
-      ways[i].tainted = false;
-      ways[i].hidden = false;
-      coords = new Array();
-      for (j=0;j<ways[i].nodes.length;j++) {
-        if (typeof ways[i].nodes[j] == "object")
-          coords.push([+ways[i].nodes[j].lon, +ways[i].nodes[j].lat]);
-        else
-          ways[i].tainted = true;
-      }
-      if (coords.length <= 1) // invalid way geometry
-        continue;
-      var way_type = "LineString"; // default
-      if (typeof ways[i].nodes[0] != "undefined" && // way has its nodes loaded
-        ways[i].nodes[0] === ways[i].nodes[ways[i].nodes.length-1] && // ... and forms a closed ring
-        typeof ways[i].tags != "undefined" && // ... and has tags
-        _isPolygonFeature(ways[i].tags) // ... and tags say it is a polygon
-      ) {
-        way_type = "Polygon";
-        coords = [coords];
-      }
-      var feature = {
-        "type"       : "Feature",
-        "id"         : "way/"+ways[i].id,
-        "properties" : {
-          "type" : "way",
-          "id"   : ways[i].id,
-          "tags" : ways[i].tags || {},
-          "relations" : relsmap["way"][ways[i].id] || [],
-          "meta": build_meta_information(ways[i])
-        },
-        "geometry"   : {
-          "type" : way_type,
-          "coordinates" : coords,
-        }
-      }
-      if (ways[i].tainted)
-        feature.properties["tainted"] = true;
-      if (way_type == "LineString")
-        geojsonlines.features.push(feature);
-      else
-        geojsonpolygons.features.push(feature);
-    }
-
-    geojson = {
-      "type": "FeatureCollection",
-      "features": []
-    };
-    geojson.features = geojson.features.concat(geojsonpolygons.features);
-    geojson.features = geojson.features.concat(geojsonlines.features);
-    geojson.features = geojson.features.concat(geojsonnodes.features);
-    // optionally, flatten properties
-    if (options.flatProperties) {
-      geojson.features.forEach(function(f) {
-        f.properties = _.merge(
-          f.properties.meta,
-          f.properties.tags,
-          {id: f.properties.type+"/"+f.properties.id}
-        );
-      });
-    }
-    // fix polygon winding
-    geojson = rewind(geojson, true /*remove for geojson-rewind >0.1.0*/);
-    return geojson;
-  }
-  function _isPolygonFeature( tags ) {
-    var polygonFeatures = options.polygonFeatures;
-    if (typeof polygonFeatures === "function")
-      return polygonFeatures(tags);
-    // explicitely tagged non-areas
-    if ( tags['area'] === 'no' )
-      return false;
-    // assuming that a typical OSM way has in average less tags than
-    // the polygonFeatures list, this way around should be faster
-    for ( var key in tags ) {
-      var val = tags[key];
-      var pfk = polygonFeatures[key];
-      // continue with next if tag is unknown or not "categorizing"
-      if ( typeof pfk === 'undefined' )
-        continue;
-      // continue with next if tag is explicitely un-set ("building=no")
-      if ( val === 'no' )
-        continue;
-      // check polygon features for: general acceptance, included or excluded values
-      if ( pfk === true )
-        return true;
-      if ( pfk.included_values && pfk.included_values[val] === true )
-        return true;
-      if ( pfk.excluded_values && pfk.excluded_values[val] !== true )
-        return true;
-    }
-    // if no tags matched, this ain't no area. 
-    return false;
-  }
-};
-
-// for backwards compatibility
-osmtogeojson.toGeojson = osmtogeojson;
-
-module.exports = osmtogeojson;
-
-},{"./lodash.custom.js":69,"./polygon_features.json":71,"geojson-rewind":70}],69:[function(require,module,exports){
-(function (global){(function (){
-/**
- * @license
- * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
- * Build: `lodash exports="node" include="clone,merge,isEmpty,isArray,compact,each" -d`
- * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
- * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
- * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- * Available under MIT license <http://lodash.com/license>
- */
-;(function() {
-
-  /** Used to pool arrays and objects used internally */
-  var arrayPool = [];
-
-  /** Used internally to indicate various things */
-  var indicatorObject = {};
-
-  /** Used as the max size of the `arrayPool` and `objectPool` */
-  var maxPoolSize = 40;
-
-  /** Used to match regexp flags from their coerced string values */
-  var reFlags = /\w*$/;
-
-  /** Used to detected named functions */
-  var reFuncName = /^\s*function[ \n\r\t]+\w/;
-
-  /** Used to detect functions containing a `this` reference */
-  var reThis = /\bthis\b/;
-
-  /** Used to fix the JScript [[DontEnum]] bug */
-  var shadowedProps = [
-    'constructor', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable',
-    'toLocaleString', 'toString', 'valueOf'
-  ];
-
-  /** `Object#toString` result shortcuts */
-  var argsClass = '[object Arguments]',
-      arrayClass = '[object Array]',
-      boolClass = '[object Boolean]',
-      dateClass = '[object Date]',
-      errorClass = '[object Error]',
-      funcClass = '[object Function]',
-      numberClass = '[object Number]',
-      objectClass = '[object Object]',
-      regexpClass = '[object RegExp]',
-      stringClass = '[object String]';
-
-  /** Used to identify object classifications that `_.clone` supports */
-  var cloneableClasses = {};
-  cloneableClasses[funcClass] = false;
-  cloneableClasses[argsClass] = cloneableClasses[arrayClass] =
-  cloneableClasses[boolClass] = cloneableClasses[dateClass] =
-  cloneableClasses[numberClass] = cloneableClasses[objectClass] =
-  cloneableClasses[regexpClass] = cloneableClasses[stringClass] = true;
-
-  /** Used as the property descriptor for `__bindData__` */
-  var descriptor = {
-    'configurable': false,
-    'enumerable': false,
-    'value': null,
-    'writable': false
-  };
-
-  /** Used as the data object for `iteratorTemplate` */
-  var iteratorData = {
-    'args': '',
-    'array': null,
-    'bottom': '',
-    'firstArg': '',
-    'init': '',
-    'keys': null,
-    'loop': '',
-    'shadowedProps': null,
-    'support': null,
-    'top': '',
-    'useHas': false
-  };
-
-  /** Used to determine if values are of the language type Object */
-  var objectTypes = {
-    'boolean': false,
-    'function': true,
-    'object': true,
-    'number': false,
-    'string': false,
-    'undefined': false
-  };
-
-  /** Used as a reference to the global object */
-  var root = (objectTypes[typeof window] && window) || this;
-
-  /** Detect free variable `exports` */
-  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;
-
-  /** Detect free variable `module` */
-  var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;
-
-  /** Detect the popular CommonJS extension `module.exports` */
-  var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;
-
-  /** Detect free variable `global` from Node.js or Browserified code and use it as `root` */
-  var freeGlobal = objectTypes[typeof global] && global;
-  if (freeGlobal && (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal)) {
-    root = freeGlobal;
-  }
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Gets an array from the array pool or creates a new one if the pool is empty.
-   *
-   * @private
-   * @returns {Array} The array from the pool.
-   */
-  function getArray() {
-    return arrayPool.pop() || [];
-  }
-
-  /**
-   * Checks if `value` is a DOM node in IE < 9.
-   *
-   * @private
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a DOM node, else `false`.
-   */
-  function isNode(value) {
-    // IE < 9 presents DOM nodes as `Object` objects except they have `toString`
-    // methods that are `typeof` "string" and still can coerce nodes to strings
-    return typeof value.toString != 'function' && typeof (value + '') == 'string';
-  }
-
-  /**
-   * Releases the given array back to the array pool.
-   *
-   * @private
-   * @param {Array} [array] The array to release.
-   */
-  function releaseArray(array) {
-    array.length = 0;
-    if (arrayPool.length < maxPoolSize) {
-      arrayPool.push(array);
-    }
-  }
-
-  /**
-   * Slices the `collection` from the `start` index up to, but not including,
-   * the `end` index.
-   *
-   * Note: This function is used instead of `Array#slice` to support node lists
-   * in IE < 9 and to ensure dense arrays are returned.
-   *
-   * @private
-   * @param {Array|Object|string} collection The collection to slice.
-   * @param {number} start The start index.
-   * @param {number} end The end index.
-   * @returns {Array} Returns the new array.
-   */
-  function slice(array, start, end) {
-    start || (start = 0);
-    if (typeof end == 'undefined') {
-      end = array ? array.length : 0;
-    }
-    var index = -1,
-        length = end - start || 0,
-        result = Array(length < 0 ? 0 : length);
-
-    while (++index < length) {
-      result[index] = array[start + index];
-    }
-    return result;
-  }
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Used for `Array` method references.
-   *
-   * Normally `Array.prototype` would suffice, however, using an array literal
-   * avoids issues in Narwhal.
-   */
-  var arrayRef = [];
-
-  /** Used for native method references */
-  var errorProto = Error.prototype,
-      objectProto = Object.prototype,
-      stringProto = String.prototype;
-
-  /** Used to resolve the internal [[Class]] of values */
-  var toString = objectProto.toString;
-
-  /** Used to detect if a method is native */
-  var reNative = RegExp('^' +
-    String(toString)
-      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      .replace(/toString| for [^\]]+/g, '.*?') + '$'
-  );
-
-  /** Native method shortcuts */
-  var fnToString = Function.prototype.toString,
-      getPrototypeOf = isNative(getPrototypeOf = Object.getPrototypeOf) && getPrototypeOf,
-      hasOwnProperty = objectProto.hasOwnProperty,
-      push = arrayRef.push,
-      propertyIsEnumerable = objectProto.propertyIsEnumerable,
-      unshift = arrayRef.unshift;
-
-  /** Used to set meta data on functions */
-  var defineProperty = (function() {
-    // IE 8 only accepts DOM elements
-    try {
-      var o = {},
-          func = isNative(func = Object.defineProperty) && func,
-          result = func(o, o, o) && func;
-    } catch(e) { }
-    return result;
-  }());
-
-  /* Native method shortcuts for methods with the same name as other `lodash` methods */
-  var nativeCreate = isNative(nativeCreate = Object.create) && nativeCreate,
-      nativeIsArray = isNative(nativeIsArray = Array.isArray) && nativeIsArray,
-      nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys;
-
-  /** Used to lookup a built-in constructor by [[Class]] */
-  var ctorByClass = {};
-  ctorByClass[arrayClass] = Array;
-  ctorByClass[boolClass] = Boolean;
-  ctorByClass[dateClass] = Date;
-  ctorByClass[funcClass] = Function;
-  ctorByClass[objectClass] = Object;
-  ctorByClass[numberClass] = Number;
-  ctorByClass[regexpClass] = RegExp;
-  ctorByClass[stringClass] = String;
-
-  /** Used to avoid iterating non-enumerable properties in IE < 9 */
-  var nonEnumProps = {};
-  nonEnumProps[arrayClass] = nonEnumProps[dateClass] = nonEnumProps[numberClass] = { 'constructor': true, 'toLocaleString': true, 'toString': true, 'valueOf': true };
-  nonEnumProps[boolClass] = nonEnumProps[stringClass] = { 'constructor': true, 'toString': true, 'valueOf': true };
-  nonEnumProps[errorClass] = nonEnumProps[funcClass] = nonEnumProps[regexpClass] = { 'constructor': true, 'toString': true };
-  nonEnumProps[objectClass] = { 'constructor': true };
-
-  (function() {
-    var length = shadowedProps.length;
-    while (length--) {
-      var key = shadowedProps[length];
-      for (var className in nonEnumProps) {
-        if (hasOwnProperty.call(nonEnumProps, className) && !hasOwnProperty.call(nonEnumProps[className], key)) {
-          nonEnumProps[className][key] = false;
-        }
-      }
-    }
-  }());
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Creates a `lodash` object which wraps the given value to enable intuitive
-   * method chaining.
-   *
-   * In addition to Lo-Dash methods, wrappers also have the following `Array` methods:
-   * `concat`, `join`, `pop`, `push`, `reverse`, `shift`, `slice`, `sort`, `splice`,
-   * and `unshift`
-   *
-   * Chaining is supported in custom builds as long as the `value` method is
-   * implicitly or explicitly included in the build.
-   *
-   * The chainable wrapper functions are:
-   * `after`, `assign`, `bind`, `bindAll`, `bindKey`, `chain`, `compact`,
-   * `compose`, `concat`, `countBy`, `create`, `createCallback`, `curry`,
-   * `debounce`, `defaults`, `defer`, `delay`, `difference`, `filter`, `flatten`,
-   * `forEach`, `forEachRight`, `forIn`, `forInRight`, `forOwn`, `forOwnRight`,
-   * `functions`, `groupBy`, `indexBy`, `initial`, `intersection`, `invert`,
-   * `invoke`, `keys`, `map`, `max`, `memoize`, `merge`, `min`, `object`, `omit`,
-   * `once`, `pairs`, `partial`, `partialRight`, `pick`, `pluck`, `pull`, `push`,
-   * `range`, `reject`, `remove`, `rest`, `reverse`, `shuffle`, `slice`, `sort`,
-   * `sortBy`, `splice`, `tap`, `throttle`, `times`, `toArray`, `transform`,
-   * `union`, `uniq`, `unshift`, `unzip`, `values`, `where`, `without`, `wrap`,
-   * and `zip`
-   *
-   * The non-chainable wrapper functions are:
-   * `clone`, `cloneDeep`, `contains`, `escape`, `every`, `find`, `findIndex`,
-   * `findKey`, `findLast`, `findLastIndex`, `findLastKey`, `has`, `identity`,
-   * `indexOf`, `isArguments`, `isArray`, `isBoolean`, `isDate`, `isElement`,
-   * `isEmpty`, `isEqual`, `isFinite`, `isFunction`, `isNaN`, `isNull`, `isNumber`,
-   * `isObject`, `isPlainObject`, `isRegExp`, `isString`, `isUndefined`, `join`,
-   * `lastIndexOf`, `mixin`, `noConflict`, `parseInt`, `pop`, `random`, `reduce`,
-   * `reduceRight`, `result`, `shift`, `size`, `some`, `sortedIndex`, `runInContext`,
-   * `template`, `unescape`, `uniqueId`, and `value`
-   *
-   * The wrapper functions `first` and `last` return wrapped values when `n` is
-   * provided, otherwise they return unwrapped values.
-   *
-   * Explicit chaining can be enabled by using the `_.chain` method.
-   *
-   * @name _
-   * @constructor
-   * @category Chaining
-   * @param {*} value The value to wrap in a `lodash` instance.
-   * @returns {Object} Returns a `lodash` instance.
-   * @example
-   *
-   * var wrapped = _([1, 2, 3]);
-   *
-   * // returns an unwrapped value
-   * wrapped.reduce(function(sum, num) {
-   *   return sum + num;
-   * });
-   * // => 6
-   *
-   * // returns a wrapped value
-   * var squares = wrapped.map(function(num) {
-   *   return num * num;
-   * });
-   *
-   * _.isArray(squares);
-   * // => false
-   *
-   * _.isArray(squares.value());
-   * // => true
-   */
-  function lodash() {
-    // no operation performed
-  }
-
-  /**
-   * An object used to flag environments features.
-   *
-   * @static
-   * @memberOf _
-   * @type Object
-   */
-  var support = lodash.support = {};
-
-  (function() {
-    var ctor = function() { this.x = 1; },
-        object = { '0': 1, 'length': 1 },
-        props = [];
-
-    ctor.prototype = { 'valueOf': 1, 'y': 1 };
-    for (var key in new ctor) { props.push(key); }
-    for (key in arguments) { }
-
-    /**
-     * Detect if an `arguments` object's [[Class]] is resolvable (all but Firefox < 4, IE < 9).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.argsClass = toString.call(arguments) == argsClass;
-
-    /**
-     * Detect if `arguments` objects are `Object` objects (all but Narwhal and Opera < 10.5).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.argsObject = arguments.constructor == Object && !(arguments instanceof Array);
-
-    /**
-     * Detect if `name` or `message` properties of `Error.prototype` are
-     * enumerable by default. (IE < 9, Safari < 5.1)
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.enumErrorProps = propertyIsEnumerable.call(errorProto, 'message') || propertyIsEnumerable.call(errorProto, 'name');
-
-    /**
-     * Detect if `prototype` properties are enumerable by default.
-     *
-     * Firefox < 3.6, Opera > 9.50 - Opera < 11.60, and Safari < 5.1
-     * (if the prototype or a property on the prototype has been set)
-     * incorrectly sets a function's `prototype` property [[Enumerable]]
-     * value to `true`.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.enumPrototypes = propertyIsEnumerable.call(ctor, 'prototype');
-
-    /**
-     * Detect if functions can be decompiled by `Function#toString`
-     * (all but PS3 and older Opera mobile browsers & avoided in Windows 8 apps).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.funcDecomp = !isNative(root.WinRTError) && reThis.test(function() { return this; });
-
-    /**
-     * Detect if `Function#name` is supported (all but IE).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.funcNames = typeof Function.name == 'string';
-
-    /**
-     * Detect if `arguments` object indexes are non-enumerable
-     * (Firefox < 4, IE < 9, PhantomJS, Safari < 5.1).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.nonEnumArgs = key != 0;
-
-    /**
-     * Detect if properties shadowing those on `Object.prototype` are non-enumerable.
-     *
-     * In IE < 9 an objects own properties, shadowing non-enumerable ones, are
-     * made non-enumerable as well (a.k.a the JScript [[DontEnum]] bug).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.nonEnumShadows = !/valueOf/.test(props);
-
-    /**
-     * Detect if own properties are iterated after inherited properties (all but IE < 9).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.ownLast = props[0] != 'x';
-
-    /**
-     * Detect if `Array#shift` and `Array#splice` augment array-like objects correctly.
-     *
-     * Firefox < 10, IE compatibility mode, and IE < 9 have buggy Array `shift()`
-     * and `splice()` functions that fail to remove the last element, `value[0]`,
-     * of array-like objects even though the `length` property is set to `0`.
-     * The `shift()` method is buggy in IE 8 compatibility mode, while `splice()`
-     * is buggy regardless of mode in IE < 9 and buggy in compatibility mode in IE 9.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.spliceObjects = (arrayRef.splice.call(object, 0, 1), !object[0]);
-
-    /**
-     * Detect lack of support for accessing string characters by index.
-     *
-     * IE < 8 can't access characters by index and IE 8 can only access
-     * characters by index on string literals.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.unindexedChars = ('x'[0] + Object('x')[0]) != 'xx';
-
-    /**
-     * Detect if a DOM node's [[Class]] is resolvable (all but IE < 9)
-     * and that the JS engine errors when attempting to coerce an object to
-     * a string without a `toString` function.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    try {
-      support.nodeClass = !(toString.call(document) == objectClass && !({ 'toString': 0 } + ''));
-    } catch(e) {
-      support.nodeClass = true;
-    }
-  }(1));
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * The template used to create iterator functions.
-   *
-   * @private
-   * @param {Object} data The data object used to populate the text.
-   * @returns {string} Returns the interpolated text.
-   */
-  var iteratorTemplate = function(obj) {
-
-    var __p = 'var index, iterable = ' +
-    (obj.firstArg) +
-    ', result = ' +
-    (obj.init) +
-    ';\nif (!iterable) return result;\n' +
-    (obj.top) +
-    ';';
-     if (obj.array) {
-    __p += '\nvar length = iterable.length; index = -1;\nif (' +
-    (obj.array) +
-    ') {  ';
-     if (support.unindexedChars) {
-    __p += '\n  if (isString(iterable)) {\n    iterable = iterable.split(\'\')\n  }  ';
-     }
-    __p += '\n  while (++index < length) {\n    ' +
-    (obj.loop) +
-    ';\n  }\n}\nelse {  ';
-     } else if (support.nonEnumArgs) {
-    __p += '\n  var length = iterable.length; index = -1;\n  if (length && isArguments(iterable)) {\n    while (++index < length) {\n      index += \'\';\n      ' +
-    (obj.loop) +
-    ';\n    }\n  } else {  ';
-     }
-
-     if (support.enumPrototypes) {
-    __p += '\n  var skipProto = typeof iterable == \'function\';\n  ';
-     }
-
-     if (support.enumErrorProps) {
-    __p += '\n  var skipErrorProps = iterable === errorProto || iterable instanceof Error;\n  ';
-     }
-
-        var conditions = [];    if (support.enumPrototypes) { conditions.push('!(skipProto && index == "prototype")'); }    if (support.enumErrorProps)  { conditions.push('!(skipErrorProps && (index == "message" || index == "name"))'); }
-
-     if (obj.useHas && obj.keys) {
-    __p += '\n  var ownIndex = -1,\n      ownProps = objectTypes[typeof iterable] && keys(iterable),\n      length = ownProps ? ownProps.length : 0;\n\n  while (++ownIndex < length) {\n    index = ownProps[ownIndex];\n';
-        if (conditions.length) {
-    __p += '    if (' +
-    (conditions.join(' && ')) +
-    ') {\n  ';
-     }
-    __p +=
-    (obj.loop) +
-    ';    ';
-     if (conditions.length) {
-    __p += '\n    }';
-     }
-    __p += '\n  }  ';
-     } else {
-    __p += '\n  for (index in iterable) {\n';
-        if (obj.useHas) { conditions.push("hasOwnProperty.call(iterable, index)"); }    if (conditions.length) {
-    __p += '    if (' +
-    (conditions.join(' && ')) +
-    ') {\n  ';
-     }
-    __p +=
-    (obj.loop) +
-    ';    ';
-     if (conditions.length) {
-    __p += '\n    }';
-     }
-    __p += '\n  }    ';
-     if (support.nonEnumShadows) {
-    __p += '\n\n  if (iterable !== objectProto) {\n    var ctor = iterable.constructor,\n        isProto = iterable === (ctor && ctor.prototype),\n        className = iterable === stringProto ? stringClass : iterable === errorProto ? errorClass : toString.call(iterable),\n        nonEnum = nonEnumProps[className];\n      ';
-     for (k = 0; k < 7; k++) {
-    __p += '\n    index = \'' +
-    (obj.shadowedProps[k]) +
-    '\';\n    if ((!(isProto && nonEnum[index]) && hasOwnProperty.call(iterable, index))';
-            if (!obj.useHas) {
-    __p += ' || (!nonEnum[index] && iterable[index] !== objectProto[index])';
-     }
-    __p += ') {\n      ' +
-    (obj.loop) +
-    ';\n    }      ';
-     }
-    __p += '\n  }    ';
-     }
-
-     }
-
-     if (obj.array || support.nonEnumArgs) {
-    __p += '\n}';
-     }
-    __p +=
-    (obj.bottom) +
-    ';\nreturn result';
-
-    return __p
-  };
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * The base implementation of `_.bind` that creates the bound function and
-   * sets its meta data.
-   *
-   * @private
-   * @param {Array} bindData The bind data array.
-   * @returns {Function} Returns the new bound function.
-   */
-  function baseBind(bindData) {
-    var func = bindData[0],
-        partialArgs = bindData[2],
-        thisArg = bindData[4];
-
-    function bound() {
-      // `Function#bind` spec
-      // http://es5.github.io/#x15.3.4.5
-      if (partialArgs) {
-        // avoid `arguments` object deoptimizations by using `slice` instead
-        // of `Array.prototype.slice.call` and not assigning `arguments` to a
-        // variable as a ternary expression
-        var args = slice(partialArgs);
-        push.apply(args, arguments);
-      }
-      // mimic the constructor's `return` behavior
-      // http://es5.github.io/#x13.2.2
-      if (this instanceof bound) {
-        // ensure `new bound` is an instance of `func`
-        var thisBinding = baseCreate(func.prototype),
-            result = func.apply(thisBinding, args || arguments);
-        return isObject(result) ? result : thisBinding;
-      }
-      return func.apply(thisArg, args || arguments);
-    }
-    setBindData(bound, bindData);
-    return bound;
-  }
-
-  /**
-   * The base implementation of `_.clone` without argument juggling or support
-   * for `thisArg` binding.
-   *
-   * @private
-   * @param {*} value The value to clone.
-   * @param {boolean} [isDeep=false] Specify a deep clone.
-   * @param {Function} [callback] The function to customize cloning values.
-   * @param {Array} [stackA=[]] Tracks traversed source objects.
-   * @param {Array} [stackB=[]] Associates clones with source counterparts.
-   * @returns {*} Returns the cloned value.
-   */
-  function baseClone(value, isDeep, callback, stackA, stackB) {
-    if (callback) {
-      var result = callback(value);
-      if (typeof result != 'undefined') {
-        return result;
-      }
-    }
-    // inspect [[Class]]
-    var isObj = isObject(value);
-    if (isObj) {
-      var className = toString.call(value);
-      if (!cloneableClasses[className] || (!support.nodeClass && isNode(value))) {
-        return value;
-      }
-      var ctor = ctorByClass[className];
-      switch (className) {
-        case boolClass:
-        case dateClass:
-          return new ctor(+value);
-
-        case numberClass:
-        case stringClass:
-          return new ctor(value);
-
-        case regexpClass:
-          result = ctor(value.source, reFlags.exec(value));
-          result.lastIndex = value.lastIndex;
-          return result;
-      }
-    } else {
-      return value;
-    }
-    var isArr = isArray(value);
-    if (isDeep) {
-      // check for circular references and return corresponding clone
-      var initedStack = !stackA;
-      stackA || (stackA = getArray());
-      stackB || (stackB = getArray());
-
-      var length = stackA.length;
-      while (length--) {
-        if (stackA[length] == value) {
-          return stackB[length];
-        }
-      }
-      result = isArr ? ctor(value.length) : {};
-    }
-    else {
-      result = isArr ? slice(value) : assign({}, value);
-    }
-    // add array properties assigned by `RegExp#exec`
-    if (isArr) {
-      if (hasOwnProperty.call(value, 'index')) {
-        result.index = value.index;
-      }
-      if (hasOwnProperty.call(value, 'input')) {
-        result.input = value.input;
-      }
-    }
-    // exit for shallow clone
-    if (!isDeep) {
-      return result;
-    }
-    // add the source value to the stack of traversed objects
-    // and associate it with its clone
-    stackA.push(value);
-    stackB.push(result);
-
-    // recursively populate clone (susceptible to call stack limits)
-    (isArr ? baseEach : forOwn)(value, function(objValue, key) {
-      result[key] = baseClone(objValue, isDeep, callback, stackA, stackB);
-    });
-
-    if (initedStack) {
-      releaseArray(stackA);
-      releaseArray(stackB);
-    }
-    return result;
-  }
-
-  /**
-   * The base implementation of `_.create` without support for assigning
-   * properties to the created object.
-   *
-   * @private
-   * @param {Object} prototype The object to inherit from.
-   * @returns {Object} Returns the new object.
-   */
-  function baseCreate(prototype, properties) {
-    return isObject(prototype) ? nativeCreate(prototype) : {};
-  }
-  // fallback for browsers without `Object.create`
-  if (!nativeCreate) {
-    baseCreate = (function() {
-      function Object() {}
-      return function(prototype) {
-        if (isObject(prototype)) {
-          Object.prototype = prototype;
-          var result = new Object;
-          Object.prototype = null;
-        }
-        return result || root.Object();
-      };
-    }());
-  }
-
-  /**
-   * The base implementation of `_.createCallback` without support for creating
-   * "_.pluck" or "_.where" style callbacks.
-   *
-   * @private
-   * @param {*} [func=identity] The value to convert to a callback.
-   * @param {*} [thisArg] The `this` binding of the created callback.
-   * @param {number} [argCount] The number of arguments the callback accepts.
-   * @returns {Function} Returns a callback function.
-   */
-  function baseCreateCallback(func, thisArg, argCount) {
-    if (typeof func != 'function') {
-      return identity;
-    }
-    // exit early for no `thisArg` or already bound by `Function#bind`
-    if (typeof thisArg == 'undefined' || !('prototype' in func)) {
-      return func;
-    }
-    var bindData = func.__bindData__;
-    if (typeof bindData == 'undefined') {
-      if (support.funcNames) {
-        bindData = !func.name;
-      }
-      bindData = bindData || !support.funcDecomp;
-      if (!bindData) {
-        var source = fnToString.call(func);
-        if (!support.funcNames) {
-          bindData = !reFuncName.test(source);
-        }
-        if (!bindData) {
-          // checks if `func` references the `this` keyword and stores the result
-          bindData = reThis.test(source);
-          setBindData(func, bindData);
-        }
-      }
-    }
-    // exit early if there are no `this` references or `func` is bound
-    if (bindData === false || (bindData !== true && bindData[1] & 1)) {
-      return func;
-    }
-    switch (argCount) {
-      case 1: return function(value) {
-        return func.call(thisArg, value);
-      };
-      case 2: return function(a, b) {
-        return func.call(thisArg, a, b);
-      };
-      case 3: return function(value, index, collection) {
-        return func.call(thisArg, value, index, collection);
-      };
-      case 4: return function(accumulator, value, index, collection) {
-        return func.call(thisArg, accumulator, value, index, collection);
-      };
-    }
-    return bind(func, thisArg);
-  }
-
-  /**
-   * The base implementation of `createWrapper` that creates the wrapper and
-   * sets its meta data.
-   *
-   * @private
-   * @param {Array} bindData The bind data array.
-   * @returns {Function} Returns the new function.
-   */
-  function baseCreateWrapper(bindData) {
-    var func = bindData[0],
-        bitmask = bindData[1],
-        partialArgs = bindData[2],
-        partialRightArgs = bindData[3],
-        thisArg = bindData[4],
-        arity = bindData[5];
-
-    var isBind = bitmask & 1,
-        isBindKey = bitmask & 2,
-        isCurry = bitmask & 4,
-        isCurryBound = bitmask & 8,
-        key = func;
-
-    function bound() {
-      var thisBinding = isBind ? thisArg : this;
-      if (partialArgs) {
-        var args = slice(partialArgs);
-        push.apply(args, arguments);
-      }
-      if (partialRightArgs || isCurry) {
-        args || (args = slice(arguments));
-        if (partialRightArgs) {
-          push.apply(args, partialRightArgs);
-        }
-        if (isCurry && args.length < arity) {
-          bitmask |= 16 & ~32;
-          return baseCreateWrapper([func, (isCurryBound ? bitmask : bitmask & ~3), args, null, thisArg, arity]);
-        }
-      }
-      args || (args = arguments);
-      if (isBindKey) {
-        func = thisBinding[key];
-      }
-      if (this instanceof bound) {
-        thisBinding = baseCreate(func.prototype);
-        var result = func.apply(thisBinding, args);
-        return isObject(result) ? result : thisBinding;
-      }
-      return func.apply(thisBinding, args);
-    }
-    setBindData(bound, bindData);
-    return bound;
-  }
-
-  /**
-   * The base implementation of `_.merge` without argument juggling or support
-   * for `thisArg` binding.
-   *
-   * @private
-   * @param {Object} object The destination object.
-   * @param {Object} source The source object.
-   * @param {Function} [callback] The function to customize merging properties.
-   * @param {Array} [stackA=[]] Tracks traversed source objects.
-   * @param {Array} [stackB=[]] Associates values with source counterparts.
-   */
-  function baseMerge(object, source, callback, stackA, stackB) {
-    (isArray(source) ? forEach : forOwn)(source, function(source, key) {
-      var found,
-          isArr,
-          result = source,
-          value = object[key];
-
-      if (source && ((isArr = isArray(source)) || isPlainObject(source))) {
-        // avoid merging previously merged cyclic sources
-        var stackLength = stackA.length;
-        while (stackLength--) {
-          if ((found = stackA[stackLength] == source)) {
-            value = stackB[stackLength];
-            break;
-          }
-        }
-        if (!found) {
-          var isShallow;
-          if (callback) {
-            result = callback(value, source);
-            if ((isShallow = typeof result != 'undefined')) {
-              value = result;
-            }
-          }
-          if (!isShallow) {
-            value = isArr
-              ? (isArray(value) ? value : [])
-              : (isPlainObject(value) ? value : {});
-          }
-          // add `source` and associated `value` to the stack of traversed objects
-          stackA.push(source);
-          stackB.push(value);
-
-          // recursively merge objects and arrays (susceptible to call stack limits)
-          if (!isShallow) {
-            baseMerge(value, source, callback, stackA, stackB);
-          }
-        }
-      }
-      else {
-        if (callback) {
-          result = callback(value, source);
-          if (typeof result == 'undefined') {
-            result = source;
-          }
-        }
-        if (typeof result != 'undefined') {
-          value = result;
-        }
-      }
-      object[key] = value;
-    });
-  }
-
-  /**
-   * Creates a function that, when called, either curries or invokes `func`
-   * with an optional `this` binding and partially applied arguments.
-   *
-   * @private
-   * @param {Function|string} func The function or method name to reference.
-   * @param {number} bitmask The bitmask of method flags to compose.
-   *  The bitmask may be composed of the following flags:
-   *  1 - `_.bind`
-   *  2 - `_.bindKey`
-   *  4 - `_.curry`
-   *  8 - `_.curry` (bound)
-   *  16 - `_.partial`
-   *  32 - `_.partialRight`
-   * @param {Array} [partialArgs] An array of arguments to prepend to those
-   *  provided to the new function.
-   * @param {Array} [partialRightArgs] An array of arguments to append to those
-   *  provided to the new function.
-   * @param {*} [thisArg] The `this` binding of `func`.
-   * @param {number} [arity] The arity of `func`.
-   * @returns {Function} Returns the new function.
-   */
-  function createWrapper(func, bitmask, partialArgs, partialRightArgs, thisArg, arity) {
-    var isBind = bitmask & 1,
-        isBindKey = bitmask & 2,
-        isCurry = bitmask & 4,
-        isCurryBound = bitmask & 8,
-        isPartial = bitmask & 16,
-        isPartialRight = bitmask & 32;
-
-    if (!isBindKey && !isFunction(func)) {
-      throw new TypeError;
-    }
-    if (isPartial && !partialArgs.length) {
-      bitmask &= ~16;
-      isPartial = partialArgs = false;
-    }
-    if (isPartialRight && !partialRightArgs.length) {
-      bitmask &= ~32;
-      isPartialRight = partialRightArgs = false;
-    }
-    var bindData = func && func.__bindData__;
-    if (bindData && bindData !== true) {
-      // clone `bindData`
-      bindData = slice(bindData);
-      if (bindData[2]) {
-        bindData[2] = slice(bindData[2]);
-      }
-      if (bindData[3]) {
-        bindData[3] = slice(bindData[3]);
-      }
-      // set `thisBinding` is not previously bound
-      if (isBind && !(bindData[1] & 1)) {
-        bindData[4] = thisArg;
-      }
-      // set if previously bound but not currently (subsequent curried functions)
-      if (!isBind && bindData[1] & 1) {
-        bitmask |= 8;
-      }
-      // set curried arity if not yet set
-      if (isCurry && !(bindData[1] & 4)) {
-        bindData[5] = arity;
-      }
-      // append partial left arguments
-      if (isPartial) {
-        push.apply(bindData[2] || (bindData[2] = []), partialArgs);
-      }
-      // append partial right arguments
-      if (isPartialRight) {
-        unshift.apply(bindData[3] || (bindData[3] = []), partialRightArgs);
-      }
-      // merge flags
-      bindData[1] |= bitmask;
-      return createWrapper.apply(null, bindData);
-    }
-    // fast path for `_.bind`
-    var creater = (bitmask == 1 || bitmask === 17) ? baseBind : baseCreateWrapper;
-    return creater([func, bitmask, partialArgs, partialRightArgs, thisArg, arity]);
-  }
-
-  /**
-   * Creates compiled iteration functions.
-   *
-   * @private
-   * @param {...Object} [options] The compile options object(s).
-   * @param {string} [options.array] Code to determine if the iterable is an array or array-like.
-   * @param {boolean} [options.useHas] Specify using `hasOwnProperty` checks in the object loop.
-   * @param {Function} [options.keys] A reference to `_.keys` for use in own property iteration.
-   * @param {string} [options.args] A comma separated string of iteration function arguments.
-   * @param {string} [options.top] Code to execute before the iteration branches.
-   * @param {string} [options.loop] Code to execute in the object loop.
-   * @param {string} [options.bottom] Code to execute after the iteration branches.
-   * @returns {Function} Returns the compiled function.
-   */
-  function createIterator() {
-    // data properties
-    iteratorData.shadowedProps = shadowedProps;
-
-    // iterator options
-    iteratorData.array = iteratorData.bottom = iteratorData.loop = iteratorData.top = '';
-    iteratorData.init = 'iterable';
-    iteratorData.useHas = true;
-
-    // merge options into a template data object
-    for (var object, index = 0; object = arguments[index]; index++) {
-      for (var key in object) {
-        iteratorData[key] = object[key];
-      }
-    }
-    var args = iteratorData.args;
-    iteratorData.firstArg = /^[^,]+/.exec(args)[0];
-
-    // create the function factory
-    var factory = Function(
-        'baseCreateCallback, errorClass, errorProto, hasOwnProperty, ' +
-        'indicatorObject, isArguments, isArray, isString, keys, objectProto, ' +
-        'objectTypes, nonEnumProps, stringClass, stringProto, toString',
-      'return function(' + args + ') {\n' + iteratorTemplate(iteratorData) + '\n}'
-    );
-
-    // return the compiled function
-    return factory(
-      baseCreateCallback, errorClass, errorProto, hasOwnProperty,
-      indicatorObject, isArguments, isArray, isString, iteratorData.keys, objectProto,
-      objectTypes, nonEnumProps, stringClass, stringProto, toString
-    );
-  }
-
-  /**
-   * Checks if `value` is a native function.
-   *
-   * @private
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a native function, else `false`.
-   */
-  function isNative(value) {
-    return typeof value == 'function' && reNative.test(value);
-  }
-
-  /**
-   * Sets `this` binding data on a given function.
-   *
-   * @private
-   * @param {Function} func The function to set data on.
-   * @param {Array} value The data array to set.
-   */
-  var setBindData = !defineProperty ? noop : function(func, value) {
-    descriptor.value = value;
-    defineProperty(func, '__bindData__', descriptor);
-  };
-
-  /**
-   * A fallback implementation of `isPlainObject` which checks if a given value
-   * is an object created by the `Object` constructor, assuming objects created
-   * by the `Object` constructor have no inherited enumerable properties and that
-   * there are no `Object.prototype` extensions.
-   *
-   * @private
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
-   */
-  function shimIsPlainObject(value) {
-    var ctor,
-        result;
-
-    // avoid non Object objects, `arguments` objects, and DOM elements
-    if (!(value && toString.call(value) == objectClass) ||
-        (ctor = value.constructor, isFunction(ctor) && !(ctor instanceof ctor)) ||
-        (!support.argsClass && isArguments(value)) ||
-        (!support.nodeClass && isNode(value))) {
-      return false;
-    }
-    // IE < 9 iterates inherited properties before own properties. If the first
-    // iterated property is an object's own property then there are no inherited
-    // enumerable properties.
-    if (support.ownLast) {
-      forIn(value, function(value, key, object) {
-        result = hasOwnProperty.call(object, key);
-        return false;
-      });
-      return result !== false;
-    }
-    // In most environments an object's own properties are iterated before
-    // its inherited properties. If the last iterated property is an object's
-    // own property then there are no inherited enumerable properties.
-    forIn(value, function(value, key) {
-      result = key;
-    });
-    return typeof result == 'undefined' || hasOwnProperty.call(value, result);
-  }
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Checks if `value` is an `arguments` object.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is an `arguments` object, else `false`.
-   * @example
-   *
-   * (function() { return _.isArguments(arguments); })(1, 2, 3);
-   * // => true
-   *
-   * _.isArguments([1, 2, 3]);
-   * // => false
-   */
-  function isArguments(value) {
-    return value && typeof value == 'object' && typeof value.length == 'number' &&
-      toString.call(value) == argsClass || false;
-  }
-  // fallback for browsers that can't detect `arguments` objects by [[Class]]
-  if (!support.argsClass) {
-    isArguments = function(value) {
-      return value && typeof value == 'object' && typeof value.length == 'number' &&
-        hasOwnProperty.call(value, 'callee') && !propertyIsEnumerable.call(value, 'callee') || false;
-    };
-  }
-
-  /**
-   * Checks if `value` is an array.
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is an array, else `false`.
-   * @example
-   *
-   * (function() { return _.isArray(arguments); })();
-   * // => false
-   *
-   * _.isArray([1, 2, 3]);
-   * // => true
-   */
-  var isArray = nativeIsArray || function(value) {
-    return value && typeof value == 'object' && typeof value.length == 'number' &&
-      toString.call(value) == arrayClass || false;
-  };
-
-  /**
-   * A fallback implementation of `Object.keys` which produces an array of the
-   * given object's own enumerable property names.
-   *
-   * @private
-   * @type Function
-   * @param {Object} object The object to inspect.
-   * @returns {Array} Returns an array of property names.
-   */
-  var shimKeys = createIterator({
-    'args': 'object',
-    'init': '[]',
-    'top': 'if (!(objectTypes[typeof object])) return result',
-    'loop': 'result.push(index)'
-  });
-
-  /**
-   * Creates an array composed of the own enumerable property names of an object.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {Object} object The object to inspect.
-   * @returns {Array} Returns an array of property names.
-   * @example
-   *
-   * _.keys({ 'one': 1, 'two': 2, 'three': 3 });
-   * // => ['one', 'two', 'three'] (property order is not guaranteed across environments)
-   */
-  var keys = !nativeKeys ? shimKeys : function(object) {
-    if (!isObject(object)) {
-      return [];
-    }
-    if ((support.enumPrototypes && typeof object == 'function') ||
-        (support.nonEnumArgs && object.length && isArguments(object))) {
-      return shimKeys(object);
-    }
-    return nativeKeys(object);
-  };
-
-  /** Reusable iterator options shared by `each`, `forIn`, and `forOwn` */
-  var eachIteratorOptions = {
-    'args': 'collection, callback, thisArg',
-    'top': "callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3)",
-    'array': "typeof length == 'number'",
-    'keys': keys,
-    'loop': 'if (callback(iterable[index], index, collection) === false) return result'
-  };
-
-  /** Reusable iterator options for `assign` and `defaults` */
-  var defaultsIteratorOptions = {
-    'args': 'object, source, guard',
-    'top':
-      'var args = arguments,\n' +
-      '    argsIndex = 0,\n' +
-      "    argsLength = typeof guard == 'number' ? 2 : args.length;\n" +
-      'while (++argsIndex < argsLength) {\n' +
-      '  iterable = args[argsIndex];\n' +
-      '  if (iterable && objectTypes[typeof iterable]) {',
-    'keys': keys,
-    'loop': "if (typeof result[index] == 'undefined') result[index] = iterable[index]",
-    'bottom': '  }\n}'
-  };
-
-  /** Reusable iterator options for `forIn` and `forOwn` */
-  var forOwnIteratorOptions = {
-    'top': 'if (!objectTypes[typeof iterable]) return result;\n' + eachIteratorOptions.top,
-    'array': false
-  };
-
-  /**
-   * A function compiled to iterate `arguments` objects, arrays, objects, and
-   * strings consistenly across environments, executing the callback for each
-   * element in the collection. The callback is bound to `thisArg` and invoked
-   * with three arguments; (value, index|key, collection). Callbacks may exit
-   * iteration early by explicitly returning `false`.
-   *
-   * @private
-   * @type Function
-   * @param {Array|Object|string} collection The collection to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Array|Object|string} Returns `collection`.
-   */
-  var baseEach = createIterator(eachIteratorOptions);
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Assigns own enumerable properties of source object(s) to the destination
-   * object. Subsequent sources will overwrite property assignments of previous
-   * sources. If a callback is provided it will be executed to produce the
-   * assigned values. The callback is bound to `thisArg` and invoked with two
-   * arguments; (objectValue, sourceValue).
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @alias extend
-   * @category Objects
-   * @param {Object} object The destination object.
-   * @param {...Object} [source] The source objects.
-   * @param {Function} [callback] The function to customize assigning values.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns the destination object.
-   * @example
-   *
-   * _.assign({ 'name': 'fred' }, { 'employer': 'slate' });
-   * // => { 'name': 'fred', 'employer': 'slate' }
-   *
-   * var defaults = _.partialRight(_.assign, function(a, b) {
-   *   return typeof a == 'undefined' ? b : a;
-   * });
-   *
-   * var object = { 'name': 'barney' };
-   * defaults(object, { 'name': 'fred', 'employer': 'slate' });
-   * // => { 'name': 'barney', 'employer': 'slate' }
-   */
-  var assign = createIterator(defaultsIteratorOptions, {
-    'top':
-      defaultsIteratorOptions.top.replace(';',
-        ';\n' +
-        "if (argsLength > 3 && typeof args[argsLength - 2] == 'function') {\n" +
-        '  var callback = baseCreateCallback(args[--argsLength - 1], args[argsLength--], 2);\n' +
-        "} else if (argsLength > 2 && typeof args[argsLength - 1] == 'function') {\n" +
-        '  callback = args[--argsLength];\n' +
-        '}'
-      ),
-    'loop': 'result[index] = callback ? callback(result[index], iterable[index]) : iterable[index]'
-  });
-
-  /**
-   * Creates a clone of `value`. If `isDeep` is `true` nested objects will also
-   * be cloned, otherwise they will be assigned by reference. If a callback
-   * is provided it will be executed to produce the cloned values. If the
-   * callback returns `undefined` cloning will be handled by the method instead.
-   * The callback is bound to `thisArg` and invoked with one argument; (value).
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to clone.
-   * @param {boolean} [isDeep=false] Specify a deep clone.
-   * @param {Function} [callback] The function to customize cloning values.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {*} Returns the cloned value.
-   * @example
-   *
-   * var characters = [
-   *   { 'name': 'barney', 'age': 36 },
-   *   { 'name': 'fred',   'age': 40 }
-   * ];
-   *
-   * var shallow = _.clone(characters);
-   * shallow[0] === characters[0];
-   * // => true
-   *
-   * var deep = _.clone(characters, true);
-   * deep[0] === characters[0];
-   * // => false
-   *
-   * _.mixin({
-   *   'clone': _.partialRight(_.clone, function(value) {
-   *     return _.isElement(value) ? value.cloneNode(false) : undefined;
-   *   })
-   * });
-   *
-   * var clone = _.clone(document.body);
-   * clone.childNodes.length;
-   * // => 0
-   */
-  function clone(value, isDeep, callback, thisArg) {
-    // allows working with "Collections" methods without using their `index`
-    // and `collection` arguments for `isDeep` and `callback`
-    if (typeof isDeep != 'boolean' && isDeep != null) {
-      thisArg = callback;
-      callback = isDeep;
-      isDeep = false;
-    }
-    return baseClone(value, isDeep, typeof callback == 'function' && baseCreateCallback(callback, thisArg, 1));
-  }
-
-  /**
-   * Iterates over own and inherited enumerable properties of an object,
-   * executing the callback for each property. The callback is bound to `thisArg`
-   * and invoked with three arguments; (value, key, object). Callbacks may exit
-   * iteration early by explicitly returning `false`.
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @category Objects
-   * @param {Object} object The object to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns `object`.
-   * @example
-   *
-   * function Shape() {
-   *   this.x = 0;
-   *   this.y = 0;
-   * }
-   *
-   * Shape.prototype.move = function(x, y) {
-   *   this.x += x;
-   *   this.y += y;
-   * };
-   *
-   * _.forIn(new Shape, function(value, key) {
-   *   console.log(key);
-   * });
-   * // => logs 'x', 'y', and 'move' (property order is not guaranteed across environments)
-   */
-  var forIn = createIterator(eachIteratorOptions, forOwnIteratorOptions, {
-    'useHas': false
-  });
-
-  /**
-   * Iterates over own enumerable properties of an object, executing the callback
-   * for each property. The callback is bound to `thisArg` and invoked with three
-   * arguments; (value, key, object). Callbacks may exit iteration early by
-   * explicitly returning `false`.
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @category Objects
-   * @param {Object} object The object to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns `object`.
-   * @example
-   *
-   * _.forOwn({ '0': 'zero', '1': 'one', 'length': 2 }, function(num, key) {
-   *   console.log(key);
-   * });
-   * // => logs '0', '1', and 'length' (property order is not guaranteed across environments)
-   */
-  var forOwn = createIterator(eachIteratorOptions, forOwnIteratorOptions);
-
-  /**
-   * Checks if `value` is empty. Arrays, strings, or `arguments` objects with a
-   * length of `0` and objects with no own enumerable properties are considered
-   * "empty".
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {Array|Object|string} value The value to inspect.
-   * @returns {boolean} Returns `true` if the `value` is empty, else `false`.
-   * @example
-   *
-   * _.isEmpty([1, 2, 3]);
-   * // => false
-   *
-   * _.isEmpty({});
-   * // => true
-   *
-   * _.isEmpty('');
-   * // => true
-   */
-  function isEmpty(value) {
-    var result = true;
-    if (!value) {
-      return result;
-    }
-    var className = toString.call(value),
-        length = value.length;
-
-    if ((className == arrayClass || className == stringClass ||
-        (support.argsClass ? className == argsClass : isArguments(value))) ||
-        (className == objectClass && typeof length == 'number' && isFunction(value.splice))) {
-      return !length;
-    }
-    forOwn(value, function() {
-      return (result = false);
-    });
-    return result;
-  }
-
-  /**
-   * Checks if `value` is a function.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a function, else `false`.
-   * @example
-   *
-   * _.isFunction(_);
-   * // => true
-   */
-  function isFunction(value) {
-    return typeof value == 'function';
-  }
-  // fallback for older versions of Chrome and Safari
-  if (isFunction(/x/)) {
-    isFunction = function(value) {
-      return typeof value == 'function' && toString.call(value) == funcClass;
-    };
-  }
-
-  /**
-   * Checks if `value` is the language type of Object.
-   * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is an object, else `false`.
-   * @example
-   *
-   * _.isObject({});
-   * // => true
-   *
-   * _.isObject([1, 2, 3]);
-   * // => true
-   *
-   * _.isObject(1);
-   * // => false
-   */
-  function isObject(value) {
-    // check if the value is the ECMAScript language type of Object
-    // http://es5.github.io/#x8
-    // and avoid a V8 bug
-    // http://code.google.com/p/v8/issues/detail?id=2291
-    return !!(value && objectTypes[typeof value]);
-  }
-
-  /**
-   * Checks if `value` is an object created by the `Object` constructor.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
-   * @example
-   *
-   * function Shape() {
-   *   this.x = 0;
-   *   this.y = 0;
-   * }
-   *
-   * _.isPlainObject(new Shape);
-   * // => false
-   *
-   * _.isPlainObject([1, 2, 3]);
-   * // => false
-   *
-   * _.isPlainObject({ 'x': 0, 'y': 0 });
-   * // => true
-   */
-  var isPlainObject = !getPrototypeOf ? shimIsPlainObject : function(value) {
-    if (!(value && toString.call(value) == objectClass) || (!support.argsClass && isArguments(value))) {
-      return false;
-    }
-    var valueOf = value.valueOf,
-        objProto = isNative(valueOf) && (objProto = getPrototypeOf(valueOf)) && getPrototypeOf(objProto);
-
-    return objProto
-      ? (value == objProto || getPrototypeOf(value) == objProto)
-      : shimIsPlainObject(value);
-  };
-
-  /**
-   * Checks if `value` is a string.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a string, else `false`.
-   * @example
-   *
-   * _.isString('fred');
-   * // => true
-   */
-  function isString(value) {
-    return typeof value == 'string' ||
-      value && typeof value == 'object' && toString.call(value) == stringClass || false;
-  }
-
-  /**
-   * Recursively merges own enumerable properties of the source object(s), that
-   * don't resolve to `undefined` into the destination object. Subsequent sources
-   * will overwrite property assignments of previous sources. If a callback is
-   * provided it will be executed to produce the merged values of the destination
-   * and source properties. If the callback returns `undefined` merging will
-   * be handled by the method instead. The callback is bound to `thisArg` and
-   * invoked with two arguments; (objectValue, sourceValue).
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {Object} object The destination object.
-   * @param {...Object} [source] The source objects.
-   * @param {Function} [callback] The function to customize merging properties.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns the destination object.
-   * @example
-   *
-   * var names = {
-   *   'characters': [
-   *     { 'name': 'barney' },
-   *     { 'name': 'fred' }
-   *   ]
-   * };
-   *
-   * var ages = {
-   *   'characters': [
-   *     { 'age': 36 },
-   *     { 'age': 40 }
-   *   ]
-   * };
-   *
-   * _.merge(names, ages);
-   * // => { 'characters': [{ 'name': 'barney', 'age': 36 }, { 'name': 'fred', 'age': 40 }] }
-   *
-   * var food = {
-   *   'fruits': ['apple'],
-   *   'vegetables': ['beet']
-   * };
-   *
-   * var otherFood = {
-   *   'fruits': ['banana'],
-   *   'vegetables': ['carrot']
-   * };
-   *
-   * _.merge(food, otherFood, function(a, b) {
-   *   return _.isArray(a) ? a.concat(b) : undefined;
-   * });
-   * // => { 'fruits': ['apple', 'banana'], 'vegetables': ['beet', 'carrot] }
-   */
-  function merge(object) {
-    var args = arguments,
-        length = 2;
-
-    if (!isObject(object)) {
-      return object;
-    }
-    // allows working with `_.reduce` and `_.reduceRight` without using
-    // their `index` and `collection` arguments
-    if (typeof args[2] != 'number') {
-      length = args.length;
-    }
-    if (length > 3 && typeof args[length - 2] == 'function') {
-      var callback = baseCreateCallback(args[--length - 1], args[length--], 2);
-    } else if (length > 2 && typeof args[length - 1] == 'function') {
-      callback = args[--length];
-    }
-    var sources = slice(arguments, 1, length),
-        index = -1,
-        stackA = getArray(),
-        stackB = getArray();
-
-    while (++index < length) {
-      baseMerge(object, sources[index], callback, stackA, stackB);
-    }
-    releaseArray(stackA);
-    releaseArray(stackB);
-    return object;
-  }
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Iterates over elements of a collection, executing the callback for each
-   * element. The callback is bound to `thisArg` and invoked with three arguments;
-   * (value, index|key, collection). Callbacks may exit iteration early by
-   * explicitly returning `false`.
-   *
-   * Note: As with other "Collections" methods, objects with a `length` property
-   * are iterated like arrays. To avoid this behavior `_.forIn` or `_.forOwn`
-   * may be used for object iteration.
-   *
-   * @static
-   * @memberOf _
-   * @alias each
-   * @category Collections
-   * @param {Array|Object|string} collection The collection to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Array|Object|string} Returns `collection`.
-   * @example
-   *
-   * _([1, 2, 3]).forEach(function(num) { console.log(num); }).join(',');
-   * // => logs each number and returns '1,2,3'
-   *
-   * _.forEach({ 'one': 1, 'two': 2, 'three': 3 }, function(num) { console.log(num); });
-   * // => logs each number and returns the object (property order is not guaranteed across environments)
-   */
-  function forEach(collection, callback, thisArg) {
-    if (callback && typeof thisArg == 'undefined' && isArray(collection)) {
-      var index = -1,
-          length = collection.length;
-
-      while (++index < length) {
-        if (callback(collection[index], index, collection) === false) {
-          break;
-        }
-      }
-    } else {
-      baseEach(collection, callback, thisArg);
-    }
-    return collection;
-  }
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Creates an array with all falsey values removed. The values `false`, `null`,
-   * `0`, `""`, `undefined`, and `NaN` are all falsey.
-   *
-   * @static
-   * @memberOf _
-   * @category Arrays
-   * @param {Array} array The array to compact.
-   * @returns {Array} Returns a new array of filtered values.
-   * @example
-   *
-   * _.compact([0, 1, false, 2, '', 3]);
-   * // => [1, 2, 3]
-   */
-  function compact(array) {
-    var index = -1,
-        length = array ? array.length : 0,
-        result = [];
-
-    while (++index < length) {
-      var value = array[index];
-      if (value) {
-        result.push(value);
-      }
-    }
-    return result;
-  }
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Creates a function that, when called, invokes `func` with the `this`
-   * binding of `thisArg` and prepends any additional `bind` arguments to those
-   * provided to the bound function.
-   *
-   * @static
-   * @memberOf _
-   * @category Functions
-   * @param {Function} func The function to bind.
-   * @param {*} [thisArg] The `this` binding of `func`.
-   * @param {...*} [arg] Arguments to be partially applied.
-   * @returns {Function} Returns the new bound function.
-   * @example
-   *
-   * var func = function(greeting) {
-   *   return greeting + ' ' + this.name;
-   * };
-   *
-   * func = _.bind(func, { 'name': 'fred' }, 'hi');
-   * func();
-   * // => 'hi fred'
-   */
-  function bind(func, thisArg) {
-    return arguments.length > 2
-      ? createWrapper(func, 17, slice(arguments, 2), null, thisArg)
-      : createWrapper(func, 1, null, null, thisArg);
-  }
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * This method returns the first argument provided to it.
-   *
-   * @static
-   * @memberOf _
-   * @category Utilities
-   * @param {*} value Any value.
-   * @returns {*} Returns `value`.
-   * @example
-   *
-   * var object = { 'name': 'fred' };
-   * _.identity(object) === object;
-   * // => true
-   */
-  function identity(value) {
-    return value;
-  }
-
-  /**
-   * A no-operation function.
-   *
-   * @static
-   * @memberOf _
-   * @category Utilities
-   * @example
-   *
-   * var object = { 'name': 'fred' };
-   * _.noop(object) === undefined;
-   * // => true
-   */
-  function noop() {
-    // no operation performed
-  }
-
-  /*--------------------------------------------------------------------------*/
-
-  lodash.assign = assign;
-  lodash.bind = bind;
-  lodash.compact = compact;
-  lodash.forEach = forEach;
-  lodash.forIn = forIn;
-  lodash.forOwn = forOwn;
-  lodash.keys = keys;
-  lodash.merge = merge;
-
-  lodash.each = forEach;
-  lodash.extend = assign;
-
-  /*--------------------------------------------------------------------------*/
-
-  // add functions that return unwrapped values when chaining
-  lodash.clone = clone;
-  lodash.identity = identity;
-  lodash.isArguments = isArguments;
-  lodash.isArray = isArray;
-  lodash.isEmpty = isEmpty;
-  lodash.isFunction = isFunction;
-  lodash.isObject = isObject;
-  lodash.isPlainObject = isPlainObject;
-  lodash.isString = isString;
-  lodash.noop = noop;
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * The semantic version number.
-   *
-   * @static
-   * @memberOf _
-   * @type string
-   */
-  lodash.VERSION = '2.4.1';
-
-  /*--------------------------------------------------------------------------*/
-
-  if (freeExports && freeModule) {
-    // in Node.js or RingoJS
-    if (moduleExports) {
-      (freeModule.exports = lodash)._ = lodash;
-    }
-
-  }
-
-}.call(this));
-
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],70:[function(require,module,exports){
-var geojsonArea = require('geojson-area');
-
-module.exports = rewind;
-
-function rewind(gj, outer) {
-    switch ((gj && gj.type) || null) {
-        case 'FeatureCollection':
-            gj.features = gj.features.map(curryOuter(rewind, outer));
-            return gj;
-        case 'Feature':
-            gj.geometry = rewind(gj.geometry, outer);
-            return gj;
-        case 'Polygon':
-        case 'MultiPolygon':
-            return correct(gj, outer);
-        default:
-            return gj;
-    }
-}
-
-function curryOuter(a, b) {
-    return function(_) { return a(_, b); };
-}
-
-function correct(_, outer) {
-    if (_.type === 'Polygon') {
-        _.coordinates = correctRings(_.coordinates, outer);
-    } else if (_.type === 'MultiPolygon') {
-        _.coordinates = _.coordinates.map(curryOuter(correctRings, outer));
-    }
-    return _;
-}
-
-function correctRings(_, outer) {
-    outer = !!outer;
-    _[0] = wind(_[0], !outer);
-    for (var i = 1; i < _.length; i++) {
-        _[i] = wind(_[i], outer);
-    }
-    return _;
-}
-
-function wind(_, dir) {
-    return cw(_) === dir ? _ : _.reverse();
-}
-
-function cw(_) {
-    return geojsonArea.ring(_) >= 0;
-}
-
-},{"geojson-area":25}],71:[function(require,module,exports){
-module.exports={
-    "building": true,
-    "highway": {
-        "included_values": {
-            "services": true,
-            "rest_area": true,
-            "escape": true
-        }
-    },
-    "natural": {
-        "excluded_values": {
-            "coastline": true,
-            "ridge": true,
-            "arete": true,
-            "tree_row": true
-        }
-    },
-    "landuse": true,
-    "waterway": {
-        "included_values": {
-            "riverbank": true,
-            "dock": true,
-            "boatyard": true,
-            "dam": true
-        }
-    },
-    "amenity": true,
-    "leisure": true,
-    "barrier": {
-        "included_values": {
-            "city_wall": true,
-            "ditch": true,
-            "hedge": true,
-            "retaining_wall": true,
-            "wall": true,
-            "spikes": true
-        }
-    },
-    "railway": {
-        "included_values": {
-            "station": true,
-            "turntable": true,
-            "roundhouse": true,
-            "platform": true
-        }
-    },
-    "area": true,
-    "boundary": true,
-    "man_made": {
-        "excluded_values": {
-            "cutline": true,
-            "embankment": true,
-            "pipeline": true
-        }
-    },
-    "power": {
-        "included_values": {
-            "generator": true,
-            "station": true,
-            "sub_station": true,
-            "transformer": true
-        }
-    },
-    "place": true,
-    "shop": true,
-    "aeroway": {
-        "excluded_values": {
-            "taxiway": true
-        }
-    },
-    "tourism": true,
-    "historic": true,
-    "public_transport": true,
-    "office": true,
-    "building:part": true,
-    "military": true,
-    "ruins": true,
-    "area:highway": true,
-    "craft": true
-}
-},{}],72:[function(require,module,exports){
+},{"./compressedObject":57,"./object":68,"./stringReader":70,"./utils":76}],79:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -14547,7 +10034,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":73,"./lib/inflate":74,"./lib/utils/common":75,"./lib/zlib/constants":78}],73:[function(require,module,exports){
+},{"./lib/deflate":80,"./lib/inflate":81,"./lib/utils/common":82,"./lib/zlib/constants":85}],80:[function(require,module,exports){
 'use strict';
 
 
@@ -14949,7 +10436,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":75,"./utils/strings":76,"./zlib/deflate":80,"./zlib/messages":85,"./zlib/zstream":87}],74:[function(require,module,exports){
+},{"./utils/common":82,"./utils/strings":83,"./zlib/deflate":87,"./zlib/messages":92,"./zlib/zstream":94}],81:[function(require,module,exports){
 'use strict';
 
 
@@ -15369,7 +10856,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":75,"./utils/strings":76,"./zlib/constants":78,"./zlib/gzheader":81,"./zlib/inflate":83,"./zlib/messages":85,"./zlib/zstream":87}],75:[function(require,module,exports){
+},{"./utils/common":82,"./utils/strings":83,"./zlib/constants":85,"./zlib/gzheader":88,"./zlib/inflate":90,"./zlib/messages":92,"./zlib/zstream":94}],82:[function(require,module,exports){
 'use strict';
 
 
@@ -15473,7 +10960,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],76:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -15660,7 +11147,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":75}],77:[function(require,module,exports){
+},{"./common":82}],84:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -15694,7 +11181,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],78:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 'use strict';
 
 
@@ -15746,7 +11233,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],79:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -15789,7 +11276,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],80:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -17646,7 +13133,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":75,"./adler32":77,"./crc32":79,"./messages":85,"./trees":86}],81:[function(require,module,exports){
+},{"../utils/common":82,"./adler32":84,"./crc32":86,"./messages":92,"./trees":93}],88:[function(require,module,exports){
 'use strict';
 
 
@@ -17688,7 +13175,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],82:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -18016,7 +13503,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],83:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 'use strict';
 
 
@@ -19556,7 +15043,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":75,"./adler32":77,"./crc32":79,"./inffast":82,"./inftrees":84}],84:[function(require,module,exports){
+},{"../utils/common":82,"./adler32":84,"./crc32":86,"./inffast":89,"./inftrees":91}],91:[function(require,module,exports){
 'use strict';
 
 
@@ -19885,7 +15372,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":75}],85:[function(require,module,exports){
+},{"../utils/common":82}],92:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -19900,7 +15387,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],86:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 'use strict';
 
 
@@ -21104,7 +16591,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":75}],87:[function(require,module,exports){
+},{"../utils/common":82}],94:[function(require,module,exports){
 'use strict';
 
 
@@ -21135,10 +16622,4005 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],88:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
+var spherical = require('spherical'),
+    geojsonArea = require('geojson-area');
+
+module.exports.circle = function(center, radius, opt) {
+    center = L.latLng(center);
+    opt = opt || {};
+    var parts = opt.parts || 20;
+
+    function generate(center) {
+        var lls = [];
+        for (var i = 0; i < parts + 1; i++) {
+            lls.push(spherical.radial(
+                [center.lng, center.lat],
+                (i / parts) * 360, radius).reverse());
+        }
+        return lls;
+    }
+
+    var poly = L.polygon(generate(center), opt);
+
+    poly.setLatLng = function(_) {
+        center = _;
+        poly.setLatLngs(generate(center));
+        return poly;
+    };
+
+    poly.getRadius = function(_) {
+        return radius;
+    };
+
+    poly.setRadius = function(_) {
+        radius = _;
+        poly.setLatLngs(generate(center));
+        return poly;
+    };
+
+    return poly;
+};
+
+module.exports.area = function(layer) {
+    var gj = layer.toGeoJSON();
+    return geojsonArea(gj.geometry);
+};
+
+},{"geojson-area":96,"spherical":121}],96:[function(require,module,exports){
+var wgs84 = require('wgs84');
+
+module.exports = function(_) {
+    if (_.type === 'Polygon') return polygonArea(_.coordinates);
+    else if (_.type === 'MultiPolygon') {
+        var area = 0;
+        for (var i = 0; i < _.coordinates.length; i++) {
+            area += polygonArea(_.coordinates[i]);
+        }
+        return area;
+    } else {
+        return null;
+    }
+};
+
+function polygonArea(coords) {
+    var area = 0;
+    if (coords && coords.length > 0) {
+        area += Math.abs(ringArea(coords[0]));
+        for (var i = 1; i < coords.length; i++) {
+            area -= Math.abs(ringArea(coords[i]));
+        }
+    }
+    return area;
+}
+
+/**
+ * Calculate the approximate area of the polygon were it projected onto
+ *     the earth.  Note that this area will be positive if ring is oriented
+ *     clockwise, otherwise it will be negative.
+ *
+ * Reference:
+ * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for
+ *     Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
+ *     Laboratory, Pasadena, CA, June 2007 http://trs-new.jpl.nasa.gov/dspace/handle/2014/40409
+ *
+ * Returns:
+ * {float} The approximate signed geodesic area of the polygon in square
+ *     meters.
+ */
+function ringArea(coords) {
+    var area = 0;
+
+    if (coords.length > 2) {
+        var p1, p2;
+        for (var i = 0; i < coords.length - 1; i++) {
+            p1 = coords[i];
+            p2 = coords[i + 1];
+            area += rad(p2[0] - p1[0]) * (2 + Math.sin(rad(p1[1])) + Math.sin(rad(p2[1])));
+        }
+
+        area = area * wgs84.RADIUS * wgs84.RADIUS / 2;
+    }
+
+    return area;
+}
+
+function rad(_) {
+    return _ * Math.PI / 180;
+}
+
+},{"wgs84":162}],97:[function(require,module,exports){
+(function (global){(function (){
+/**
+ * marked - a markdown parser
+ * Copyright (c) 2011-2014, Christopher Jeffrey. (MIT Licensed)
+ * https://github.com/chjj/marked
+ */
+
+;(function() {
+
+/**
+ * Block-Level Grammar
+ */
+
+var block = {
+  newline: /^\n+/,
+  code: /^( {4}[^\n]+\n*)+/,
+  fences: noop,
+  hr: /^( *[-*_]){3,} *(?:\n+|$)/,
+  heading: /^ *(#{1,6}) *([^\n]+?) *#* *(?:\n+|$)/,
+  nptable: noop,
+  lheading: /^([^\n]+)\n *(=|-){2,} *(?:\n+|$)/,
+  blockquote: /^( *>[^\n]+(\n(?!def)[^\n]+)*\n*)+/,
+  list: /^( *)(bull) [\s\S]+?(?:hr|def|\n{2,}(?! )(?!\1bull )\n*|\s*$)/,
+  html: /^ *(?:comment|closed|closing) *(?:\n{2,}|\s*$)/,
+  def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +["(]([^\n]+)[")])? *(?:\n+|$)/,
+  table: noop,
+  paragraph: /^((?:[^\n]+\n?(?!hr|heading|lheading|blockquote|tag|def))+)\n*/,
+  text: /^[^\n]+/
+};
+
+block.bullet = /(?:[*+-]|\d+\.)/;
+block.item = /^( *)(bull) [^\n]*(?:\n(?!\1bull )[^\n]*)*/;
+block.item = replace(block.item, 'gm')
+  (/bull/g, block.bullet)
+  ();
+
+block.list = replace(block.list)
+  (/bull/g, block.bullet)
+  ('hr', '\\n+(?=\\1?(?:[-*_] *){3,}(?:\\n+|$))')
+  ('def', '\\n+(?=' + block.def.source + ')')
+  ();
+
+block.blockquote = replace(block.blockquote)
+  ('def', block.def)
+  ();
+
+block._tag = '(?!(?:'
+  + 'a|em|strong|small|s|cite|q|dfn|abbr|data|time|code'
+  + '|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo'
+  + '|span|br|wbr|ins|del|img)\\b)\\w+(?!:/|[^\\w\\s@]*@)\\b';
+
+block.html = replace(block.html)
+  ('comment', /<!--[\s\S]*?-->/)
+  ('closed', /<(tag)[\s\S]+?<\/\1>/)
+  ('closing', /<tag(?:"[^"]*"|'[^']*'|[^'">])*?>/)
+  (/tag/g, block._tag)
+  ();
+
+block.paragraph = replace(block.paragraph)
+  ('hr', block.hr)
+  ('heading', block.heading)
+  ('lheading', block.lheading)
+  ('blockquote', block.blockquote)
+  ('tag', '<' + block._tag)
+  ('def', block.def)
+  ();
+
+/**
+ * Normal Block Grammar
+ */
+
+block.normal = merge({}, block);
+
+/**
+ * GFM Block Grammar
+ */
+
+block.gfm = merge({}, block.normal, {
+  fences: /^ *(`{3,}|~{3,}) *(\S+)? *\n([\s\S]+?)\s*\1 *(?:\n+|$)/,
+  paragraph: /^/
+});
+
+block.gfm.paragraph = replace(block.paragraph)
+  ('(?!', '(?!'
+    + block.gfm.fences.source.replace('\\1', '\\2') + '|'
+    + block.list.source.replace('\\1', '\\3') + '|')
+  ();
+
+/**
+ * GFM + Tables Block Grammar
+ */
+
+block.tables = merge({}, block.gfm, {
+  nptable: /^ *(\S.*\|.*)\n *([-:]+ *\|[-| :]*)\n((?:.*\|.*(?:\n|$))*)\n*/,
+  table: /^ *\|(.+)\n *\|( *[-:]+[-| :]*)\n((?: *\|.*(?:\n|$))*)\n*/
+});
+
+/**
+ * Block Lexer
+ */
+
+function Lexer(options) {
+  this.tokens = [];
+  this.tokens.links = {};
+  this.options = options || marked.defaults;
+  this.rules = block.normal;
+
+  if (this.options.gfm) {
+    if (this.options.tables) {
+      this.rules = block.tables;
+    } else {
+      this.rules = block.gfm;
+    }
+  }
+}
+
+/**
+ * Expose Block Rules
+ */
+
+Lexer.rules = block;
+
+/**
+ * Static Lex Method
+ */
+
+Lexer.lex = function(src, options) {
+  var lexer = new Lexer(options);
+  return lexer.lex(src);
+};
+
+/**
+ * Preprocessing
+ */
+
+Lexer.prototype.lex = function(src) {
+  src = src
+    .replace(/\r\n|\r/g, '\n')
+    .replace(/\t/g, '    ')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\u2424/g, '\n');
+
+  return this.token(src, true);
+};
+
+/**
+ * Lexing
+ */
+
+Lexer.prototype.token = function(src, top, bq) {
+  var src = src.replace(/^ +$/gm, '')
+    , next
+    , loose
+    , cap
+    , bull
+    , b
+    , item
+    , space
+    , i
+    , l;
+
+  while (src) {
+    // newline
+    if (cap = this.rules.newline.exec(src)) {
+      src = src.substring(cap[0].length);
+      if (cap[0].length > 1) {
+        this.tokens.push({
+          type: 'space'
+        });
+      }
+    }
+
+    // code
+    if (cap = this.rules.code.exec(src)) {
+      src = src.substring(cap[0].length);
+      cap = cap[0].replace(/^ {4}/gm, '');
+      this.tokens.push({
+        type: 'code',
+        text: !this.options.pedantic
+          ? cap.replace(/\n+$/, '')
+          : cap
+      });
+      continue;
+    }
+
+    // fences (gfm)
+    if (cap = this.rules.fences.exec(src)) {
+      src = src.substring(cap[0].length);
+      this.tokens.push({
+        type: 'code',
+        lang: cap[2],
+        text: cap[3]
+      });
+      continue;
+    }
+
+    // heading
+    if (cap = this.rules.heading.exec(src)) {
+      src = src.substring(cap[0].length);
+      this.tokens.push({
+        type: 'heading',
+        depth: cap[1].length,
+        text: cap[2]
+      });
+      continue;
+    }
+
+    // table no leading pipe (gfm)
+    if (top && (cap = this.rules.nptable.exec(src))) {
+      src = src.substring(cap[0].length);
+
+      item = {
+        type: 'table',
+        header: cap[1].replace(/^ *| *\| *$/g, '').split(/ *\| */),
+        align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
+        cells: cap[3].replace(/\n$/, '').split('\n')
+      };
+
+      for (i = 0; i < item.align.length; i++) {
+        if (/^ *-+: *$/.test(item.align[i])) {
+          item.align[i] = 'right';
+        } else if (/^ *:-+: *$/.test(item.align[i])) {
+          item.align[i] = 'center';
+        } else if (/^ *:-+ *$/.test(item.align[i])) {
+          item.align[i] = 'left';
+        } else {
+          item.align[i] = null;
+        }
+      }
+
+      for (i = 0; i < item.cells.length; i++) {
+        item.cells[i] = item.cells[i].split(/ *\| */);
+      }
+
+      this.tokens.push(item);
+
+      continue;
+    }
+
+    // lheading
+    if (cap = this.rules.lheading.exec(src)) {
+      src = src.substring(cap[0].length);
+      this.tokens.push({
+        type: 'heading',
+        depth: cap[2] === '=' ? 1 : 2,
+        text: cap[1]
+      });
+      continue;
+    }
+
+    // hr
+    if (cap = this.rules.hr.exec(src)) {
+      src = src.substring(cap[0].length);
+      this.tokens.push({
+        type: 'hr'
+      });
+      continue;
+    }
+
+    // blockquote
+    if (cap = this.rules.blockquote.exec(src)) {
+      src = src.substring(cap[0].length);
+
+      this.tokens.push({
+        type: 'blockquote_start'
+      });
+
+      cap = cap[0].replace(/^ *> ?/gm, '');
+
+      // Pass `top` to keep the current
+      // "toplevel" state. This is exactly
+      // how markdown.pl works.
+      this.token(cap, top, true);
+
+      this.tokens.push({
+        type: 'blockquote_end'
+      });
+
+      continue;
+    }
+
+    // list
+    if (cap = this.rules.list.exec(src)) {
+      src = src.substring(cap[0].length);
+      bull = cap[2];
+
+      this.tokens.push({
+        type: 'list_start',
+        ordered: bull.length > 1
+      });
+
+      // Get each top-level item.
+      cap = cap[0].match(this.rules.item);
+
+      next = false;
+      l = cap.length;
+      i = 0;
+
+      for (; i < l; i++) {
+        item = cap[i];
+
+        // Remove the list item's bullet
+        // so it is seen as the next token.
+        space = item.length;
+        item = item.replace(/^ *([*+-]|\d+\.) +/, '');
+
+        // Outdent whatever the
+        // list item contains. Hacky.
+        if (~item.indexOf('\n ')) {
+          space -= item.length;
+          item = !this.options.pedantic
+            ? item.replace(new RegExp('^ {1,' + space + '}', 'gm'), '')
+            : item.replace(/^ {1,4}/gm, '');
+        }
+
+        // Determine whether the next list item belongs here.
+        // Backpedal if it does not belong in this list.
+        if (this.options.smartLists && i !== l - 1) {
+          b = block.bullet.exec(cap[i + 1])[0];
+          if (bull !== b && !(bull.length > 1 && b.length > 1)) {
+            src = cap.slice(i + 1).join('\n') + src;
+            i = l - 1;
+          }
+        }
+
+        // Determine whether item is loose or not.
+        // Use: /(^|\n)(?! )[^\n]+\n\n(?!\s*$)/
+        // for discount behavior.
+        loose = next || /\n\n(?!\s*$)/.test(item);
+        if (i !== l - 1) {
+          next = item.charAt(item.length - 1) === '\n';
+          if (!loose) loose = next;
+        }
+
+        this.tokens.push({
+          type: loose
+            ? 'loose_item_start'
+            : 'list_item_start'
+        });
+
+        // Recurse.
+        this.token(item, false, bq);
+
+        this.tokens.push({
+          type: 'list_item_end'
+        });
+      }
+
+      this.tokens.push({
+        type: 'list_end'
+      });
+
+      continue;
+    }
+
+    // html
+    if (cap = this.rules.html.exec(src)) {
+      src = src.substring(cap[0].length);
+      this.tokens.push({
+        type: this.options.sanitize
+          ? 'paragraph'
+          : 'html',
+        pre: cap[1] === 'pre' || cap[1] === 'script' || cap[1] === 'style',
+        text: cap[0]
+      });
+      continue;
+    }
+
+    // def
+    if ((!bq && top) && (cap = this.rules.def.exec(src))) {
+      src = src.substring(cap[0].length);
+      this.tokens.links[cap[1].toLowerCase()] = {
+        href: cap[2],
+        title: cap[3]
+      };
+      continue;
+    }
+
+    // table (gfm)
+    if (top && (cap = this.rules.table.exec(src))) {
+      src = src.substring(cap[0].length);
+
+      item = {
+        type: 'table',
+        header: cap[1].replace(/^ *| *\| *$/g, '').split(/ *\| */),
+        align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
+        cells: cap[3].replace(/(?: *\| *)?\n$/, '').split('\n')
+      };
+
+      for (i = 0; i < item.align.length; i++) {
+        if (/^ *-+: *$/.test(item.align[i])) {
+          item.align[i] = 'right';
+        } else if (/^ *:-+: *$/.test(item.align[i])) {
+          item.align[i] = 'center';
+        } else if (/^ *:-+ *$/.test(item.align[i])) {
+          item.align[i] = 'left';
+        } else {
+          item.align[i] = null;
+        }
+      }
+
+      for (i = 0; i < item.cells.length; i++) {
+        item.cells[i] = item.cells[i]
+          .replace(/^ *\| *| *\| *$/g, '')
+          .split(/ *\| */);
+      }
+
+      this.tokens.push(item);
+
+      continue;
+    }
+
+    // top-level paragraph
+    if (top && (cap = this.rules.paragraph.exec(src))) {
+      src = src.substring(cap[0].length);
+      this.tokens.push({
+        type: 'paragraph',
+        text: cap[1].charAt(cap[1].length - 1) === '\n'
+          ? cap[1].slice(0, -1)
+          : cap[1]
+      });
+      continue;
+    }
+
+    // text
+    if (cap = this.rules.text.exec(src)) {
+      // Top-level should never reach here.
+      src = src.substring(cap[0].length);
+      this.tokens.push({
+        type: 'text',
+        text: cap[0]
+      });
+      continue;
+    }
+
+    if (src) {
+      throw new
+        Error('Infinite loop on byte: ' + src.charCodeAt(0));
+    }
+  }
+
+  return this.tokens;
+};
+
+/**
+ * Inline-Level Grammar
+ */
+
+var inline = {
+  escape: /^\\([\\`*{}\[\]()#+\-.!_>])/,
+  autolink: /^<([^ >]+(@|:\/)[^ >]+)>/,
+  url: noop,
+  tag: /^<!--[\s\S]*?-->|^<\/?\w+(?:"[^"]*"|'[^']*'|[^'">])*?>/,
+  link: /^!?\[(inside)\]\(href\)/,
+  reflink: /^!?\[(inside)\]\s*\[([^\]]*)\]/,
+  nolink: /^!?\[((?:\[[^\]]*\]|[^\[\]])*)\]/,
+  strong: /^__([\s\S]+?)__(?!_)|^\*\*([\s\S]+?)\*\*(?!\*)/,
+  em: /^\b_((?:__|[\s\S])+?)_\b|^\*((?:\*\*|[\s\S])+?)\*(?!\*)/,
+  code: /^(`+)\s*([\s\S]*?[^`])\s*\1(?!`)/,
+  br: /^ {2,}\n(?!\s*$)/,
+  del: noop,
+  text: /^[\s\S]+?(?=[\\<!\[_*`]| {2,}\n|$)/
+};
+
+inline._inside = /(?:\[[^\]]*\]|[^\[\]]|\](?=[^\[]*\]))*/;
+inline._href = /\s*<?([\s\S]*?)>?(?:\s+['"]([\s\S]*?)['"])?\s*/;
+
+inline.link = replace(inline.link)
+  ('inside', inline._inside)
+  ('href', inline._href)
+  ();
+
+inline.reflink = replace(inline.reflink)
+  ('inside', inline._inside)
+  ();
+
+/**
+ * Normal Inline Grammar
+ */
+
+inline.normal = merge({}, inline);
+
+/**
+ * Pedantic Inline Grammar
+ */
+
+inline.pedantic = merge({}, inline.normal, {
+  strong: /^__(?=\S)([\s\S]*?\S)__(?!_)|^\*\*(?=\S)([\s\S]*?\S)\*\*(?!\*)/,
+  em: /^_(?=\S)([\s\S]*?\S)_(?!_)|^\*(?=\S)([\s\S]*?\S)\*(?!\*)/
+});
+
+/**
+ * GFM Inline Grammar
+ */
+
+inline.gfm = merge({}, inline.normal, {
+  escape: replace(inline.escape)('])', '~|])')(),
+  url: /^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/,
+  del: /^~~(?=\S)([\s\S]*?\S)~~/,
+  text: replace(inline.text)
+    (']|', '~]|')
+    ('|', '|https?://|')
+    ()
+});
+
+/**
+ * GFM + Line Breaks Inline Grammar
+ */
+
+inline.breaks = merge({}, inline.gfm, {
+  br: replace(inline.br)('{2,}', '*')(),
+  text: replace(inline.gfm.text)('{2,}', '*')()
+});
+
+/**
+ * Inline Lexer & Compiler
+ */
+
+function InlineLexer(links, options) {
+  this.options = options || marked.defaults;
+  this.links = links;
+  this.rules = inline.normal;
+  this.renderer = this.options.renderer || new Renderer;
+  this.renderer.options = this.options;
+
+  if (!this.links) {
+    throw new
+      Error('Tokens array requires a `links` property.');
+  }
+
+  if (this.options.gfm) {
+    if (this.options.breaks) {
+      this.rules = inline.breaks;
+    } else {
+      this.rules = inline.gfm;
+    }
+  } else if (this.options.pedantic) {
+    this.rules = inline.pedantic;
+  }
+}
+
+/**
+ * Expose Inline Rules
+ */
+
+InlineLexer.rules = inline;
+
+/**
+ * Static Lexing/Compiling Method
+ */
+
+InlineLexer.output = function(src, links, options) {
+  var inline = new InlineLexer(links, options);
+  return inline.output(src);
+};
+
+/**
+ * Lexing/Compiling
+ */
+
+InlineLexer.prototype.output = function(src) {
+  var out = ''
+    , link
+    , text
+    , href
+    , cap;
+
+  while (src) {
+    // escape
+    if (cap = this.rules.escape.exec(src)) {
+      src = src.substring(cap[0].length);
+      out += cap[1];
+      continue;
+    }
+
+    // autolink
+    if (cap = this.rules.autolink.exec(src)) {
+      src = src.substring(cap[0].length);
+      if (cap[2] === '@') {
+        text = cap[1].charAt(6) === ':'
+          ? this.mangle(cap[1].substring(7))
+          : this.mangle(cap[1]);
+        href = this.mangle('mailto:') + text;
+      } else {
+        text = escape(cap[1]);
+        href = text;
+      }
+      out += this.renderer.link(href, null, text);
+      continue;
+    }
+
+    // url (gfm)
+    if (!this.inLink && (cap = this.rules.url.exec(src))) {
+      src = src.substring(cap[0].length);
+      text = escape(cap[1]);
+      href = text;
+      out += this.renderer.link(href, null, text);
+      continue;
+    }
+
+    // tag
+    if (cap = this.rules.tag.exec(src)) {
+      if (!this.inLink && /^<a /i.test(cap[0])) {
+        this.inLink = true;
+      } else if (this.inLink && /^<\/a>/i.test(cap[0])) {
+        this.inLink = false;
+      }
+      src = src.substring(cap[0].length);
+      out += this.options.sanitize
+        ? escape(cap[0])
+        : cap[0];
+      continue;
+    }
+
+    // link
+    if (cap = this.rules.link.exec(src)) {
+      src = src.substring(cap[0].length);
+      this.inLink = true;
+      out += this.outputLink(cap, {
+        href: cap[2],
+        title: cap[3]
+      });
+      this.inLink = false;
+      continue;
+    }
+
+    // reflink, nolink
+    if ((cap = this.rules.reflink.exec(src))
+        || (cap = this.rules.nolink.exec(src))) {
+      src = src.substring(cap[0].length);
+      link = (cap[2] || cap[1]).replace(/\s+/g, ' ');
+      link = this.links[link.toLowerCase()];
+      if (!link || !link.href) {
+        out += cap[0].charAt(0);
+        src = cap[0].substring(1) + src;
+        continue;
+      }
+      this.inLink = true;
+      out += this.outputLink(cap, link);
+      this.inLink = false;
+      continue;
+    }
+
+    // strong
+    if (cap = this.rules.strong.exec(src)) {
+      src = src.substring(cap[0].length);
+      out += this.renderer.strong(this.output(cap[2] || cap[1]));
+      continue;
+    }
+
+    // em
+    if (cap = this.rules.em.exec(src)) {
+      src = src.substring(cap[0].length);
+      out += this.renderer.em(this.output(cap[2] || cap[1]));
+      continue;
+    }
+
+    // code
+    if (cap = this.rules.code.exec(src)) {
+      src = src.substring(cap[0].length);
+      out += this.renderer.codespan(escape(cap[2], true));
+      continue;
+    }
+
+    // br
+    if (cap = this.rules.br.exec(src)) {
+      src = src.substring(cap[0].length);
+      out += this.renderer.br();
+      continue;
+    }
+
+    // del (gfm)
+    if (cap = this.rules.del.exec(src)) {
+      src = src.substring(cap[0].length);
+      out += this.renderer.del(this.output(cap[1]));
+      continue;
+    }
+
+    // text
+    if (cap = this.rules.text.exec(src)) {
+      src = src.substring(cap[0].length);
+      out += escape(this.smartypants(cap[0]));
+      continue;
+    }
+
+    if (src) {
+      throw new
+        Error('Infinite loop on byte: ' + src.charCodeAt(0));
+    }
+  }
+
+  return out;
+};
+
+/**
+ * Compile Link
+ */
+
+InlineLexer.prototype.outputLink = function(cap, link) {
+  var href = escape(link.href)
+    , title = link.title ? escape(link.title) : null;
+
+  return cap[0].charAt(0) !== '!'
+    ? this.renderer.link(href, title, this.output(cap[1]))
+    : this.renderer.image(href, title, escape(cap[1]));
+};
+
+/**
+ * Smartypants Transformations
+ */
+
+InlineLexer.prototype.smartypants = function(text) {
+  if (!this.options.smartypants) return text;
+  return text
+    // em-dashes
+    .replace(/--/g, '\u2014')
+    // opening singles
+    .replace(/(^|[-\u2014/(\[{"\s])'/g, '$1\u2018')
+    // closing singles & apostrophes
+    .replace(/'/g, '\u2019')
+    // opening doubles
+    .replace(/(^|[-\u2014/(\[{\u2018\s])"/g, '$1\u201c')
+    // closing doubles
+    .replace(/"/g, '\u201d')
+    // ellipses
+    .replace(/\.{3}/g, '\u2026');
+};
+
+/**
+ * Mangle Links
+ */
+
+InlineLexer.prototype.mangle = function(text) {
+  var out = ''
+    , l = text.length
+    , i = 0
+    , ch;
+
+  for (; i < l; i++) {
+    ch = text.charCodeAt(i);
+    if (Math.random() > 0.5) {
+      ch = 'x' + ch.toString(16);
+    }
+    out += '&#' + ch + ';';
+  }
+
+  return out;
+};
+
+/**
+ * Renderer
+ */
+
+function Renderer(options) {
+  this.options = options || {};
+}
+
+Renderer.prototype.code = function(code, lang, escaped) {
+  if (this.options.highlight) {
+    var out = this.options.highlight(code, lang);
+    if (out != null && out !== code) {
+      escaped = true;
+      code = out;
+    }
+  }
+
+  if (!lang) {
+    return '<pre><code>'
+      + (escaped ? code : escape(code, true))
+      + '\n</code></pre>';
+  }
+
+  return '<pre><code class="'
+    + this.options.langPrefix
+    + escape(lang, true)
+    + '">'
+    + (escaped ? code : escape(code, true))
+    + '\n</code></pre>\n';
+};
+
+Renderer.prototype.blockquote = function(quote) {
+  return '<blockquote>\n' + quote + '</blockquote>\n';
+};
+
+Renderer.prototype.html = function(html) {
+  return html;
+};
+
+Renderer.prototype.heading = function(text, level, raw) {
+  return '<h'
+    + level
+    + ' id="'
+    + this.options.headerPrefix
+    + raw.toLowerCase().replace(/[^\w]+/g, '-')
+    + '">'
+    + text
+    + '</h'
+    + level
+    + '>\n';
+};
+
+Renderer.prototype.hr = function() {
+  return this.options.xhtml ? '<hr/>\n' : '<hr>\n';
+};
+
+Renderer.prototype.list = function(body, ordered) {
+  var type = ordered ? 'ol' : 'ul';
+  return '<' + type + '>\n' + body + '</' + type + '>\n';
+};
+
+Renderer.prototype.listitem = function(text) {
+  return '<li>' + text + '</li>\n';
+};
+
+Renderer.prototype.paragraph = function(text) {
+  return '<p>' + text + '</p>\n';
+};
+
+Renderer.prototype.table = function(header, body) {
+  return '<table>\n'
+    + '<thead>\n'
+    + header
+    + '</thead>\n'
+    + '<tbody>\n'
+    + body
+    + '</tbody>\n'
+    + '</table>\n';
+};
+
+Renderer.prototype.tablerow = function(content) {
+  return '<tr>\n' + content + '</tr>\n';
+};
+
+Renderer.prototype.tablecell = function(content, flags) {
+  var type = flags.header ? 'th' : 'td';
+  var tag = flags.align
+    ? '<' + type + ' style="text-align:' + flags.align + '">'
+    : '<' + type + '>';
+  return tag + content + '</' + type + '>\n';
+};
+
+// span level renderer
+Renderer.prototype.strong = function(text) {
+  return '<strong>' + text + '</strong>';
+};
+
+Renderer.prototype.em = function(text) {
+  return '<em>' + text + '</em>';
+};
+
+Renderer.prototype.codespan = function(text) {
+  return '<code>' + text + '</code>';
+};
+
+Renderer.prototype.br = function() {
+  return this.options.xhtml ? '<br/>' : '<br>';
+};
+
+Renderer.prototype.del = function(text) {
+  return '<del>' + text + '</del>';
+};
+
+Renderer.prototype.link = function(href, title, text) {
+  if (this.options.sanitize) {
+    try {
+      var prot = decodeURIComponent(unescape(href))
+        .replace(/[^\w:]/g, '')
+        .toLowerCase();
+    } catch (e) {
+      return '';
+    }
+    if (prot.indexOf('javascript:') === 0) {
+      return '';
+    }
+  }
+  var out = '<a href="' + href + '"';
+  if (title) {
+    out += ' title="' + title + '"';
+  }
+  out += '>' + text + '</a>';
+  return out;
+};
+
+Renderer.prototype.image = function(href, title, text) {
+  var out = '<img src="' + href + '" alt="' + text + '"';
+  if (title) {
+    out += ' title="' + title + '"';
+  }
+  out += this.options.xhtml ? '/>' : '>';
+  return out;
+};
+
+/**
+ * Parsing & Compiling
+ */
+
+function Parser(options) {
+  this.tokens = [];
+  this.token = null;
+  this.options = options || marked.defaults;
+  this.options.renderer = this.options.renderer || new Renderer;
+  this.renderer = this.options.renderer;
+  this.renderer.options = this.options;
+}
+
+/**
+ * Static Parse Method
+ */
+
+Parser.parse = function(src, options, renderer) {
+  var parser = new Parser(options, renderer);
+  return parser.parse(src);
+};
+
+/**
+ * Parse Loop
+ */
+
+Parser.prototype.parse = function(src) {
+  this.inline = new InlineLexer(src.links, this.options, this.renderer);
+  this.tokens = src.reverse();
+
+  var out = '';
+  while (this.next()) {
+    out += this.tok();
+  }
+
+  return out;
+};
+
+/**
+ * Next Token
+ */
+
+Parser.prototype.next = function() {
+  return this.token = this.tokens.pop();
+};
+
+/**
+ * Preview Next Token
+ */
+
+Parser.prototype.peek = function() {
+  return this.tokens[this.tokens.length - 1] || 0;
+};
+
+/**
+ * Parse Text Tokens
+ */
+
+Parser.prototype.parseText = function() {
+  var body = this.token.text;
+
+  while (this.peek().type === 'text') {
+    body += '\n' + this.next().text;
+  }
+
+  return this.inline.output(body);
+};
+
+/**
+ * Parse Current Token
+ */
+
+Parser.prototype.tok = function() {
+  switch (this.token.type) {
+    case 'space': {
+      return '';
+    }
+    case 'hr': {
+      return this.renderer.hr();
+    }
+    case 'heading': {
+      return this.renderer.heading(
+        this.inline.output(this.token.text),
+        this.token.depth,
+        this.token.text);
+    }
+    case 'code': {
+      return this.renderer.code(this.token.text,
+        this.token.lang,
+        this.token.escaped);
+    }
+    case 'table': {
+      var header = ''
+        , body = ''
+        , i
+        , row
+        , cell
+        , flags
+        , j;
+
+      // header
+      cell = '';
+      for (i = 0; i < this.token.header.length; i++) {
+        flags = { header: true, align: this.token.align[i] };
+        cell += this.renderer.tablecell(
+          this.inline.output(this.token.header[i]),
+          { header: true, align: this.token.align[i] }
+        );
+      }
+      header += this.renderer.tablerow(cell);
+
+      for (i = 0; i < this.token.cells.length; i++) {
+        row = this.token.cells[i];
+
+        cell = '';
+        for (j = 0; j < row.length; j++) {
+          cell += this.renderer.tablecell(
+            this.inline.output(row[j]),
+            { header: false, align: this.token.align[j] }
+          );
+        }
+
+        body += this.renderer.tablerow(cell);
+      }
+      return this.renderer.table(header, body);
+    }
+    case 'blockquote_start': {
+      var body = '';
+
+      while (this.next().type !== 'blockquote_end') {
+        body += this.tok();
+      }
+
+      return this.renderer.blockquote(body);
+    }
+    case 'list_start': {
+      var body = ''
+        , ordered = this.token.ordered;
+
+      while (this.next().type !== 'list_end') {
+        body += this.tok();
+      }
+
+      return this.renderer.list(body, ordered);
+    }
+    case 'list_item_start': {
+      var body = '';
+
+      while (this.next().type !== 'list_item_end') {
+        body += this.token.type === 'text'
+          ? this.parseText()
+          : this.tok();
+      }
+
+      return this.renderer.listitem(body);
+    }
+    case 'loose_item_start': {
+      var body = '';
+
+      while (this.next().type !== 'list_item_end') {
+        body += this.tok();
+      }
+
+      return this.renderer.listitem(body);
+    }
+    case 'html': {
+      var html = !this.token.pre && !this.options.pedantic
+        ? this.inline.output(this.token.text)
+        : this.token.text;
+      return this.renderer.html(html);
+    }
+    case 'paragraph': {
+      return this.renderer.paragraph(this.inline.output(this.token.text));
+    }
+    case 'text': {
+      return this.renderer.paragraph(this.parseText());
+    }
+  }
+};
+
+/**
+ * Helpers
+ */
+
+function escape(html, encode) {
+  return html
+    .replace(!encode ? /&(?!#?\w+;)/g : /&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function unescape(html) {
+  return html.replace(/&([#\w]+);/g, function(_, n) {
+    n = n.toLowerCase();
+    if (n === 'colon') return ':';
+    if (n.charAt(0) === '#') {
+      return n.charAt(1) === 'x'
+        ? String.fromCharCode(parseInt(n.substring(2), 16))
+        : String.fromCharCode(+n.substring(1));
+    }
+    return '';
+  });
+}
+
+function replace(regex, opt) {
+  regex = regex.source;
+  opt = opt || '';
+  return function self(name, val) {
+    if (!name) return new RegExp(regex, opt);
+    val = val.source || val;
+    val = val.replace(/(^|[^\[])\^/g, '$1');
+    regex = regex.replace(name, val);
+    return self;
+  };
+}
+
+function noop() {}
+noop.exec = noop;
+
+function merge(obj) {
+  var i = 1
+    , target
+    , key;
+
+  for (; i < arguments.length; i++) {
+    target = arguments[i];
+    for (key in target) {
+      if (Object.prototype.hasOwnProperty.call(target, key)) {
+        obj[key] = target[key];
+      }
+    }
+  }
+
+  return obj;
+}
+
+
+/**
+ * Marked
+ */
+
+function marked(src, opt, callback) {
+  if (callback || typeof opt === 'function') {
+    if (!callback) {
+      callback = opt;
+      opt = null;
+    }
+
+    opt = merge({}, marked.defaults, opt || {});
+
+    var highlight = opt.highlight
+      , tokens
+      , pending
+      , i = 0;
+
+    try {
+      tokens = Lexer.lex(src, opt)
+    } catch (e) {
+      return callback(e);
+    }
+
+    pending = tokens.length;
+
+    var done = function() {
+      var out, err;
+
+      try {
+        out = Parser.parse(tokens, opt);
+      } catch (e) {
+        err = e;
+      }
+
+      opt.highlight = highlight;
+
+      return err
+        ? callback(err)
+        : callback(null, out);
+    };
+
+    if (!highlight || highlight.length < 3) {
+      return done();
+    }
+
+    delete opt.highlight;
+
+    if (!pending) return done();
+
+    for (; i < tokens.length; i++) {
+      (function(token) {
+        if (token.type !== 'code') {
+          return --pending || done();
+        }
+        return highlight(token.text, token.lang, function(err, code) {
+          if (code == null || code === token.text) {
+            return --pending || done();
+          }
+          token.text = code;
+          token.escaped = true;
+          --pending || done();
+        });
+      })(tokens[i]);
+    }
+
+    return;
+  }
+  try {
+    if (opt) opt = merge({}, marked.defaults, opt);
+    return Parser.parse(Lexer.lex(src, opt), opt);
+  } catch (e) {
+    e.message += '\nPlease report this to https://github.com/chjj/marked.';
+    if ((opt || marked.defaults).silent) {
+      return '<p>An error occured:</p><pre>'
+        + escape(e.message + '', true)
+        + '</pre>';
+    }
+    throw e;
+  }
+}
+
+/**
+ * Options
+ */
+
+marked.options =
+marked.setOptions = function(opt) {
+  merge(marked.defaults, opt);
+  return marked;
+};
+
+marked.defaults = {
+  gfm: true,
+  tables: true,
+  breaks: false,
+  pedantic: false,
+  sanitize: false,
+  smartLists: false,
+  silent: false,
+  highlight: null,
+  langPrefix: 'lang-',
+  smartypants: false,
+  headerPrefix: '',
+  renderer: new Renderer,
+  xhtml: false
+};
+
+/**
+ * Expose
+ */
+
+marked.Parser = Parser;
+marked.parser = Parser.parse;
+
+marked.Renderer = Renderer;
+
+marked.Lexer = Lexer;
+marked.lexer = Lexer.lex;
+
+marked.InlineLexer = InlineLexer;
+marked.inlineLexer = InlineLexer.output;
+
+marked.parse = marked;
+
+if (typeof exports === 'object') {
+  module.exports = marked;
+} else if (typeof define === 'function' && define.amd) {
+  define(function() { return marked; });
+} else {
+  this.marked = marked;
+}
+
+}).call(function() {
+  return this || (typeof window !== 'undefined' ? window : global);
+}());
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],98:[function(require,module,exports){
+/*
+object-assign
+(c) Sindre Sorhus
+@license MIT
+*/
+
+'use strict';
+/* eslint-disable no-unused-vars */
+var getOwnPropertySymbols = Object.getOwnPropertySymbols;
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+function toObject(val) {
+	if (val === null || val === undefined) {
+		throw new TypeError('Object.assign cannot be called with null or undefined');
+	}
+
+	return Object(val);
+}
+
+function shouldUseNative() {
+	try {
+		if (!Object.assign) {
+			return false;
+		}
+
+		// Detect buggy property enumeration order in older V8 versions.
+
+		// https://bugs.chromium.org/p/v8/issues/detail?id=4118
+		var test1 = new String('abc');  // eslint-disable-line no-new-wrappers
+		test1[5] = 'de';
+		if (Object.getOwnPropertyNames(test1)[0] === '5') {
+			return false;
+		}
+
+		// https://bugs.chromium.org/p/v8/issues/detail?id=3056
+		var test2 = {};
+		for (var i = 0; i < 10; i++) {
+			test2['_' + String.fromCharCode(i)] = i;
+		}
+		var order2 = Object.getOwnPropertyNames(test2).map(function (n) {
+			return test2[n];
+		});
+		if (order2.join('') !== '0123456789') {
+			return false;
+		}
+
+		// https://bugs.chromium.org/p/v8/issues/detail?id=3056
+		var test3 = {};
+		'abcdefghijklmnopqrst'.split('').forEach(function (letter) {
+			test3[letter] = letter;
+		});
+		if (Object.keys(Object.assign({}, test3)).join('') !==
+				'abcdefghijklmnopqrst') {
+			return false;
+		}
+
+		return true;
+	} catch (err) {
+		// We don't expect any of the above to throw, but better to be safe.
+		return false;
+	}
+}
+
+module.exports = shouldUseNative() ? Object.assign : function (target, source) {
+	var from;
+	var to = toObject(target);
+	var symbols;
+
+	for (var s = 1; s < arguments.length; s++) {
+		from = Object(arguments[s]);
+
+		for (var key in from) {
+			if (hasOwnProperty.call(from, key)) {
+				to[key] = from[key];
+			}
+		}
+
+		if (getOwnPropertySymbols) {
+			symbols = getOwnPropertySymbols(from);
+			for (var i = 0; i < symbols.length; i++) {
+				if (propIsEnumerable.call(from, symbols[i])) {
+					to[symbols[i]] = from[symbols[i]];
+				}
+			}
+		}
+	}
+
+	return to;
+};
+
+},{}],99:[function(require,module,exports){
+var _ = require("./lodash.custom.js");
+var rewind = require("geojson-rewind");
+
+// see https://wiki.openstreetmap.org/wiki/Overpass_turbo/Polygon_Features
+var polygonFeatures = require("./polygon_features.json");
+
+var osmtogeojson = {};
+
+osmtogeojson = function( data, options ) {
+
+  options = _.merge(
+    {
+      flatProperties: false,
+      uninterestingTags: {
+        "source": true,
+        "source_ref": true,
+        "source:ref": true,
+        "history": true,
+        "attribution": true,
+        "created_by": true,
+        "tiger:county": true,
+        "tiger:tlid": true,
+        "tiger:upload_uuid": true
+      },
+      polygonFeatures: polygonFeatures,
+    },
+    options
+  );
+
+  var result;
+  if ( ((typeof XMLDocument !== "undefined") && data instanceof XMLDocument ||
+        (typeof XMLDocument === "undefined") && data.childNodes) )
+    result = _osmXML2geoJSON(data);
+  else
+    result = _overpassJSON2geoJSON(data);
+  return result;
+
+  function _overpassJSON2geoJSON(json) {
+    // sort elements
+    var nodes = new Array();
+    var ways  = new Array();
+    var rels  = new Array();
+    // create copies of individual json objects to make sure the original data doesn't get altered
+    // todo: cloning is slow: see if this can be done differently!
+    for (var i=0;i<json.elements.length;i++) {
+      switch (json.elements[i].type) {
+      case "node":
+        var node = json.elements[i];
+        nodes.push(node);
+      break;
+      case "way":
+        var way = _.clone(json.elements[i]);
+        way.nodes = _.clone(way.nodes);
+        ways.push(way);
+      break;
+      case "relation":
+        var rel = _.clone(json.elements[i]);
+        rel.members = _.clone(rel.members);
+        rels.push(rel);
+      break;
+      default:
+      // type=area (from coord-query) is an example for this case.
+      }
+    }
+    return _convert2geoJSON(nodes,ways,rels);
+  }
+  function _osmXML2geoJSON(xml) {
+    // helper function
+    function copy_attribute( x, o, attr ) {
+      if (x.hasAttribute(attr))
+        o[attr] = x.getAttribute(attr);
+    }
+    // sort elements
+    var nodes = new Array();
+    var ways  = new Array();
+    var rels  = new Array();
+    // nodes
+    _.each( xml.getElementsByTagName('node'), function( node, i ) {
+      var tags = {};
+      _.each( node.getElementsByTagName('tag'), function( tag ) {
+        tags[tag.getAttribute('k')] = tag.getAttribute('v');
+      });
+      nodes[i] = {
+        'type': 'node'
+      };
+      copy_attribute( node, nodes[i], 'id' );
+      copy_attribute( node, nodes[i], 'lat' );
+      copy_attribute( node, nodes[i], 'lon' );
+      copy_attribute( node, nodes[i], 'version' );
+      copy_attribute( node, nodes[i], 'timestamp' );
+      copy_attribute( node, nodes[i], 'changeset' );
+      copy_attribute( node, nodes[i], 'uid' );
+      copy_attribute( node, nodes[i], 'user' );
+      if (!_.isEmpty(tags))
+        nodes[i].tags = tags;
+    });
+    // ways
+    _.each( xml.getElementsByTagName('way'), function( way, i ) {
+      var tags = {};
+      var wnodes = [];
+      _.each( way.getElementsByTagName('tag'), function( tag ) {
+        tags[tag.getAttribute('k')] = tag.getAttribute('v');
+      });
+      _.each( way.getElementsByTagName('nd'), function( nd, i ) {
+        wnodes[i] = nd.getAttribute('ref');
+      });
+      ways[i] = {
+        "type": "way"
+      };
+      copy_attribute( way, ways[i], 'id' );
+      copy_attribute( way, ways[i], 'version' );
+      copy_attribute( way, ways[i], 'timestamp' );
+      copy_attribute( way, ways[i], 'changeset' );
+      copy_attribute( way, ways[i], 'uid' );
+      copy_attribute( way, ways[i], 'user' );
+      if (wnodes.length > 0)
+        ways[i].nodes = wnodes;
+      if (!_.isEmpty(tags))
+        ways[i].tags = tags;
+    });
+    // relations
+    _.each( xml.getElementsByTagName('relation'), function( relation, i ) {
+      var tags = {};
+      var members = [];
+      _.each( relation.getElementsByTagName('tag'), function( tag ) {
+        tags[tag.getAttribute('k')] = tag.getAttribute('v');
+      });
+      _.each( relation.getElementsByTagName('member'), function( member, i ) {
+        members[i] = {};
+        copy_attribute( member, members[i], 'ref' );
+        copy_attribute( member, members[i], 'role' );
+        copy_attribute( member, members[i], 'type' );
+      });
+      rels[i] = {
+        "type": "relation"
+      }
+      copy_attribute( relation, rels[i], 'id' );
+      copy_attribute( relation, rels[i], 'version' );
+      copy_attribute( relation, rels[i], 'timestamp' );
+      copy_attribute( relation, rels[i], 'changeset' );
+      copy_attribute( relation, rels[i], 'uid' );
+      copy_attribute( relation, rels[i], 'user' );
+      if (members.length > 0)
+        rels[i].members = members;
+      if (!_.isEmpty(tags))
+        rels[i].tags = tags;
+    });
+    return _convert2geoJSON(nodes,ways,rels);
+  }
+  function _convert2geoJSON(nodes,ways,rels) {
+
+    // helper function that checks if there are any tags other than "created_by", "source", etc. or any tag provided in ignore_tags
+    function has_interesting_tags(t, ignore_tags) {
+      if (typeof ignore_tags !== "object")
+        ignore_tags={};
+      if (typeof options.uninterestingTags === "function")
+        return !options.uninterestingTags(t, ignore_tags);
+      for (var k in t)
+        if (!(options.uninterestingTags[k]===true) &&
+            !(ignore_tags[k]===true || ignore_tags[k]===t[k]))
+          return true;
+      return false;
+    };
+    // helper function to extract meta information
+    function build_meta_information(object) {
+      var res = {
+        "timestamp": object.timestamp,
+        "version": object.version,
+        "changeset": object.changeset,
+        "user": object.user,
+        "uid": object.uid
+      };
+      for (k in res)
+        if (res[k] === undefined)
+          delete res[k];
+      return res;
+    }
+
+    // some data processing (e.g. filter nodes only used for ways)
+    var nodeids = new Object();
+    for (var i=0;i<nodes.length;i++) {
+      if (nodes[i].lat === undefined)
+        continue; // ignore nodes without coordinates (e.g. returned by an ids_only query)
+      nodeids[nodes[i].id] = nodes[i];
+    }
+    var poinids = new Object();
+    for (var i=0;i<nodes.length;i++) {
+      if (typeof nodes[i].tags != 'undefined' &&
+          has_interesting_tags(nodes[i].tags)) // this checks if the node has any tags other than "created_by"
+        poinids[nodes[i].id] = true;
+    }
+    for (var i=0;i<rels.length;i++) {
+      if (!_.isArray(rels[i].members))
+        continue; // ignore relations without members (e.g. returned by an ids_only query)
+      for (var j=0;j<rels[i].members.length;j++) {
+        if (rels[i].members[j].type == "node")
+          poinids[rels[i].members[j].ref] = true;
+      }
+    }
+    var wayids = new Object();
+    var waynids = new Object();
+    for (var i=0;i<ways.length;i++) {
+      if (!_.isArray(ways[i].nodes))
+        continue; // ignore ways without nodes (e.g. returned by an ids_only query)
+      wayids[ways[i].id] = ways[i];
+      for (var j=0;j<ways[i].nodes.length;j++) {
+        waynids[ways[i].nodes[j]] = true;
+        ways[i].nodes[j] = nodeids[ways[i].nodes[j]];
+      }
+    }
+    var pois = new Array();
+    for (var i=0;i<nodes.length;i++) {
+      if ((!waynids[nodes[i].id]) ||
+          (poinids[nodes[i].id]))
+        pois.push(nodes[i]);
+    }
+    var relids = new Array();
+    for (var i=0;i<rels.length;i++) {
+      if (!_.isArray(rels[i].members))
+        continue; // ignore relations without members (e.g. returned by an ids_only query)
+      relids[rels[i].id] = rels[i];
+    }
+    var relsmap = {node: {}, way: {}, relation: {}};
+    for (var i=0;i<rels.length;i++) {
+      if (!_.isArray(rels[i].members))
+        continue; // ignore relations without members (e.g. returned by an ids_only query)
+      for (var j=0;j<rels[i].members.length;j++) {
+        var m;
+        switch (rels[i].members[j].type) {
+          case "node":
+            m = nodeids[rels[i].members[j].ref];
+          break;
+          case "way":
+            m = wayids[rels[i].members[j].ref];
+          break;
+          case "relation":
+            m = relids[rels[i].members[j].ref];
+          break;
+        }
+        if (!m) continue;
+        var m_type = rels[i].members[j].type;
+        var m_ref = rels[i].members[j].ref;
+        if (typeof relsmap[m_type][m_ref] === "undefined")
+          relsmap[m_type][m_ref] = [];
+        relsmap[m_type][m_ref].push({
+          "role" : rels[i].members[j].role,
+          "rel" : rels[i].id,
+          "reltags" : rels[i].tags,
+        });
+      }
+    }
+    // construct geojson
+    var geojson;
+    var geojsonnodes = {
+      "type"     : "FeatureCollection",
+      "features" : new Array()};
+    for (i=0;i<pois.length;i++) {
+      if (typeof pois[i].lon == "undefined" || typeof pois[i].lat == "undefined")
+        continue; // lon and lat are required for showing a point
+      geojsonnodes.features.push({
+        "type"       : "Feature",
+        "id"         : "node/"+pois[i].id,
+        "properties" : {
+          "type" : "node",
+          "id"   : pois[i].id,
+          "tags" : pois[i].tags || {},
+          "relations" : relsmap["node"][pois[i].id] || [],
+          "meta": build_meta_information(pois[i])
+        },
+        "geometry"   : {
+          "type" : "Point",
+          "coordinates" : [+pois[i].lon, +pois[i].lat],
+        }
+      });
+    }
+    var geojsonlines = {
+      "type"     : "FeatureCollection",
+      "features" : new Array()};
+    var geojsonpolygons = {
+      "type"     : "FeatureCollection",
+      "features" : new Array()};
+    // process multipolygons
+    for (var i=0;i<rels.length;i++) {
+      if ((typeof rels[i].tags != "undefined") &&
+          (rels[i].tags["type"] == "multipolygon" || rels[i].tags["type"] == "boundary")) {
+        if (!_.isArray(rels[i].members))
+          continue; // ignore relations without members (e.g. returned by an ids_only query)
+        var outer_count = 0;
+        for (var j=0;j<rels[i].members.length;j++)
+          if (rels[i].members[j].role == "outer")
+            outer_count++;
+        rels[i].members.forEach(function(m) {
+          if (wayids[m.ref]) {
+            // this even works in the following corner case:
+            // a multipolygon amenity=xxx with outer line tagged amenity=yyy
+            // see https://github.com/tyrasd/osmtogeojson/issues/7
+            if (m.role==="outer" && !has_interesting_tags(wayids[m.ref].tags,rels[i].tags))
+              wayids[m.ref].is_multipolygon_outline = true;
+            if (m.role==="inner" && !has_interesting_tags(wayids[m.ref].tags))
+              wayids[m.ref].is_multipolygon_outline = true;
+          }
+        });
+        if (outer_count == 0)
+          continue; // ignore multipolygons without outer ways
+        var simple_mp = false;
+        if (outer_count == 1 && !has_interesting_tags(rels[i].tags, {"type":true}))
+          simple_mp = true;
+        var feature = null;
+        if (!simple_mp) {
+          feature = construct_multipolygon(rels[i], rels[i]);
+        } else {
+          // simple multipolygon
+          var outer_way = rels[i].members.filter(function(m) {return m.role === "outer";})[0];
+          outer_way = wayids[outer_way.ref];
+          if (outer_way === undefined)
+            continue; // abort if outer way object is not present
+          outer_way.is_multipolygon_outline = true;
+          feature = construct_multipolygon(outer_way, rels[i]);
+        }
+        if (feature === false)
+          continue; // abort if feature could not be constructed
+        geojsonpolygons.features.push(feature);
+        function construct_multipolygon(tag_object, rel) {
+          var is_tainted = false;
+          // prepare mp members
+          var members;
+          members = rel.members.filter(function(m) {return m.type === "way";});
+          members = members.map(function(m) {
+            var way = wayids[m.ref];
+            if (way === undefined) { // check for missing ways
+              is_tainted = true;
+              return;
+            }
+            return { // TODO: this is slow! :(
+              id: m.ref,
+              role: m.role || "outer",
+              way: way,
+              nodes: way.nodes.filter(function(n) {
+                if (n !== undefined)
+                  return true;
+                is_tainted = true;
+                return false;
+              })
+            };
+          });
+          members = _.compact(members);
+          // construct outer and inner rings
+          var outers, inners;
+          function join(ways) {
+            var _first = function(arr) {return arr[0]};
+            var _last  = function(arr) {return arr[arr.length-1]};
+            // stolen from iD/relation.js
+            var joined = [], current, first, last, i, how, what;
+            while (ways.length) {
+              current = ways.pop().nodes.slice();
+              joined.push(current);
+              while (ways.length && _first(current) !== _last(current)) {
+                first = _first(current);
+                last  = _last(current);
+                for (i = 0; i < ways.length; i++) {
+                  what = ways[i].nodes;
+                  if (last === _first(what)) {
+                    how  = current.push;
+                    what = what.slice(1);
+                    break;
+                  } else if (last === _last(what)) {
+                    how  = current.push;
+                    what = what.slice(0, -1).reverse();
+                    break;
+                  } else if (first == _last(what)) {
+                    how  = current.unshift;
+                    what = what.slice(0, -1);
+                    break;
+                  } else if (first == _first(what)) {
+                    how  = current.unshift;
+                    what = what.slice(1).reverse();
+                    break;
+                  } else {
+                    what = how = null;
+                  }
+                }
+                if (!what)
+                  break; // Invalid geometry (dangling way, unclosed ring)
+                ways.splice(i, 1);
+                how.apply(current, what);
+              }
+            }
+            return joined;
+          }
+          outers = join(members.filter(function(m) {return m.role==="outer";}));
+          inners = join(members.filter(function(m) {return m.role==="inner";}));
+          // sort rings
+          var mp;
+          function findOuter(inner) {
+            var polygonIntersectsPolygon = function(outer, inner) {
+              for (var i=0; i<inner.length; i++)
+                if (pointInPolygon(inner[i], outer))
+                  return true;
+              return false;
+            }
+            var mapCoordinates = function(from) {
+              return from.map(function(n) {
+                return [+n.lat,+n.lon];
+              });
+            }
+            // stolen from iD/geo.js, 
+            // based on https://github.com/substack/point-in-polygon, 
+            // ray-casting algorithm based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+            var pointInPolygon = function(point, polygon) {
+              var x = point[0], y = point[1], inside = false;
+              for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                var xi = polygon[i][0], yi = polygon[i][1];
+                var xj = polygon[j][0], yj = polygon[j][1];
+                var intersect = ((yi > y) != (yj > y)) &&
+                  (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+              }
+              return inside;
+            };
+            // stolen from iD/relation.js
+            var o, outer;
+            // todo: all this coordinate mapping makes this unneccesarily slow.
+            // see the "todo: this is slow! :(" above.
+            inner = mapCoordinates(inner);
+            /*for (o = 0; o < outers.length; o++) {
+              outer = mapCoordinates(outers[o]);
+              if (polygonContainsPolygon(outer, inner))
+                return o;
+            }*/
+            for (o = 0; o < outers.length; o++) {
+              outer = mapCoordinates(outers[o]);
+              if (polygonIntersectsPolygon(outer, inner))
+                return o;
+            }
+          }
+          mp = outers.map(function(o) {return [o];});
+          for (var j=0; j<inners.length; j++) {
+            var o = findOuter(inners[j]);
+            if (o !== undefined)
+              mp[o].push(inners[j]);
+            else
+              // so, no outer ring for this inner ring is found.
+              // We're going to ignore holes in empty space.
+              ;
+          }
+          // sanitize mp-coordinates (remove empty clusters or rings, {lat,lon,...} to [lon,lat]
+          var mp_coords = [];
+          mp_coords = _.compact(mp.map(function(cluster) { 
+            var cl = _.compact(cluster.map(function(ring) {
+              if (ring.length < 4) // todo: is this correct: ring.length < 4 ?
+                return;
+              return _.compact(ring.map(function(node) {
+                return [+node.lon,+node.lat];
+              }));
+            }));
+            if (cl.length == 0)
+              return;
+            return cl;
+          }));
+
+          if (mp_coords.length == 0)
+            return false; // ignore multipolygons without coordinates
+          var mp_type = "MultiPolygon";
+          if (mp_coords.length === 1) {
+            mp_type = "Polygon";
+            mp_coords = mp_coords[0];
+          }
+          // mp parsed, now construct the geoJSON
+          var feature = {
+            "type"       : "Feature",
+            "id"         : tag_object.type+"/"+tag_object.id,
+            "properties" : {
+              "type" : tag_object.type,
+              "id"   : tag_object.id,
+              "tags" : tag_object.tags || {},
+              "relations" :  relsmap[tag_object.type][tag_object.id] || [],
+              "meta": build_meta_information(tag_object)
+            },
+            "geometry"   : {
+              "type" : mp_type,
+              "coordinates" : mp_coords,
+            }
+          }
+          if (is_tainted)
+            feature.properties["tainted"] = true;
+          return feature;
+        }
+      }
+    }
+    // process lines and polygons
+    for (var i=0;i<ways.length;i++) {
+      if (!_.isArray(ways[i].nodes))
+        continue; // ignore ways without nodes (e.g. returned by an ids_only query)
+      if (ways[i].is_multipolygon_outline)
+        continue; // ignore ways which are already rendered as (part of) a multipolygon
+      ways[i].tainted = false;
+      ways[i].hidden = false;
+      coords = new Array();
+      for (j=0;j<ways[i].nodes.length;j++) {
+        if (typeof ways[i].nodes[j] == "object")
+          coords.push([+ways[i].nodes[j].lon, +ways[i].nodes[j].lat]);
+        else
+          ways[i].tainted = true;
+      }
+      if (coords.length <= 1) // invalid way geometry
+        continue;
+      var way_type = "LineString"; // default
+      if (typeof ways[i].nodes[0] != "undefined" && // way has its nodes loaded
+        ways[i].nodes[0] === ways[i].nodes[ways[i].nodes.length-1] && // ... and forms a closed ring
+        typeof ways[i].tags != "undefined" && // ... and has tags
+        _isPolygonFeature(ways[i].tags) // ... and tags say it is a polygon
+      ) {
+        way_type = "Polygon";
+        coords = [coords];
+      }
+      var feature = {
+        "type"       : "Feature",
+        "id"         : "way/"+ways[i].id,
+        "properties" : {
+          "type" : "way",
+          "id"   : ways[i].id,
+          "tags" : ways[i].tags || {},
+          "relations" : relsmap["way"][ways[i].id] || [],
+          "meta": build_meta_information(ways[i])
+        },
+        "geometry"   : {
+          "type" : way_type,
+          "coordinates" : coords,
+        }
+      }
+      if (ways[i].tainted)
+        feature.properties["tainted"] = true;
+      if (way_type == "LineString")
+        geojsonlines.features.push(feature);
+      else
+        geojsonpolygons.features.push(feature);
+    }
+
+    geojson = {
+      "type": "FeatureCollection",
+      "features": []
+    };
+    geojson.features = geojson.features.concat(geojsonpolygons.features);
+    geojson.features = geojson.features.concat(geojsonlines.features);
+    geojson.features = geojson.features.concat(geojsonnodes.features);
+    // optionally, flatten properties
+    if (options.flatProperties) {
+      geojson.features.forEach(function(f) {
+        f.properties = _.merge(
+          f.properties.meta,
+          f.properties.tags,
+          {id: f.properties.type+"/"+f.properties.id}
+        );
+      });
+    }
+    // fix polygon winding
+    geojson = rewind(geojson, true /*remove for geojson-rewind >0.1.0*/);
+    return geojson;
+  }
+  function _isPolygonFeature( tags ) {
+    var polygonFeatures = options.polygonFeatures;
+    if (typeof polygonFeatures === "function")
+      return polygonFeatures(tags);
+    // explicitely tagged non-areas
+    if ( tags['area'] === 'no' )
+      return false;
+    // assuming that a typical OSM way has in average less tags than
+    // the polygonFeatures list, this way around should be faster
+    for ( var key in tags ) {
+      var val = tags[key];
+      var pfk = polygonFeatures[key];
+      // continue with next if tag is unknown or not "categorizing"
+      if ( typeof pfk === 'undefined' )
+        continue;
+      // continue with next if tag is explicitely un-set ("building=no")
+      if ( val === 'no' )
+        continue;
+      // check polygon features for: general acceptance, included or excluded values
+      if ( pfk === true )
+        return true;
+      if ( pfk.included_values && pfk.included_values[val] === true )
+        return true;
+      if ( pfk.excluded_values && pfk.excluded_values[val] !== true )
+        return true;
+    }
+    // if no tags matched, this ain't no area. 
+    return false;
+  }
+};
+
+// for backwards compatibility
+osmtogeojson.toGeojson = osmtogeojson;
+
+module.exports = osmtogeojson;
+
+},{"./lodash.custom.js":100,"./polygon_features.json":102,"geojson-rewind":101}],100:[function(require,module,exports){
+(function (global){(function (){
+/**
+ * @license
+ * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * Build: `lodash exports="node" include="clone,merge,isEmpty,isArray,compact,each" -d`
+ * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <http://lodash.com/license>
+ */
+;(function() {
+
+  /** Used to pool arrays and objects used internally */
+  var arrayPool = [];
+
+  /** Used internally to indicate various things */
+  var indicatorObject = {};
+
+  /** Used as the max size of the `arrayPool` and `objectPool` */
+  var maxPoolSize = 40;
+
+  /** Used to match regexp flags from their coerced string values */
+  var reFlags = /\w*$/;
+
+  /** Used to detected named functions */
+  var reFuncName = /^\s*function[ \n\r\t]+\w/;
+
+  /** Used to detect functions containing a `this` reference */
+  var reThis = /\bthis\b/;
+
+  /** Used to fix the JScript [[DontEnum]] bug */
+  var shadowedProps = [
+    'constructor', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable',
+    'toLocaleString', 'toString', 'valueOf'
+  ];
+
+  /** `Object#toString` result shortcuts */
+  var argsClass = '[object Arguments]',
+      arrayClass = '[object Array]',
+      boolClass = '[object Boolean]',
+      dateClass = '[object Date]',
+      errorClass = '[object Error]',
+      funcClass = '[object Function]',
+      numberClass = '[object Number]',
+      objectClass = '[object Object]',
+      regexpClass = '[object RegExp]',
+      stringClass = '[object String]';
+
+  /** Used to identify object classifications that `_.clone` supports */
+  var cloneableClasses = {};
+  cloneableClasses[funcClass] = false;
+  cloneableClasses[argsClass] = cloneableClasses[arrayClass] =
+  cloneableClasses[boolClass] = cloneableClasses[dateClass] =
+  cloneableClasses[numberClass] = cloneableClasses[objectClass] =
+  cloneableClasses[regexpClass] = cloneableClasses[stringClass] = true;
+
+  /** Used as the property descriptor for `__bindData__` */
+  var descriptor = {
+    'configurable': false,
+    'enumerable': false,
+    'value': null,
+    'writable': false
+  };
+
+  /** Used as the data object for `iteratorTemplate` */
+  var iteratorData = {
+    'args': '',
+    'array': null,
+    'bottom': '',
+    'firstArg': '',
+    'init': '',
+    'keys': null,
+    'loop': '',
+    'shadowedProps': null,
+    'support': null,
+    'top': '',
+    'useHas': false
+  };
+
+  /** Used to determine if values are of the language type Object */
+  var objectTypes = {
+    'boolean': false,
+    'function': true,
+    'object': true,
+    'number': false,
+    'string': false,
+    'undefined': false
+  };
+
+  /** Used as a reference to the global object */
+  var root = (objectTypes[typeof window] && window) || this;
+
+  /** Detect free variable `exports` */
+  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;
+
+  /** Detect free variable `module` */
+  var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;
+
+  /** Detect the popular CommonJS extension `module.exports` */
+  var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;
+
+  /** Detect free variable `global` from Node.js or Browserified code and use it as `root` */
+  var freeGlobal = objectTypes[typeof global] && global;
+  if (freeGlobal && (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal)) {
+    root = freeGlobal;
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * Gets an array from the array pool or creates a new one if the pool is empty.
+   *
+   * @private
+   * @returns {Array} The array from the pool.
+   */
+  function getArray() {
+    return arrayPool.pop() || [];
+  }
+
+  /**
+   * Checks if `value` is a DOM node in IE < 9.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if the `value` is a DOM node, else `false`.
+   */
+  function isNode(value) {
+    // IE < 9 presents DOM nodes as `Object` objects except they have `toString`
+    // methods that are `typeof` "string" and still can coerce nodes to strings
+    return typeof value.toString != 'function' && typeof (value + '') == 'string';
+  }
+
+  /**
+   * Releases the given array back to the array pool.
+   *
+   * @private
+   * @param {Array} [array] The array to release.
+   */
+  function releaseArray(array) {
+    array.length = 0;
+    if (arrayPool.length < maxPoolSize) {
+      arrayPool.push(array);
+    }
+  }
+
+  /**
+   * Slices the `collection` from the `start` index up to, but not including,
+   * the `end` index.
+   *
+   * Note: This function is used instead of `Array#slice` to support node lists
+   * in IE < 9 and to ensure dense arrays are returned.
+   *
+   * @private
+   * @param {Array|Object|string} collection The collection to slice.
+   * @param {number} start The start index.
+   * @param {number} end The end index.
+   * @returns {Array} Returns the new array.
+   */
+  function slice(array, start, end) {
+    start || (start = 0);
+    if (typeof end == 'undefined') {
+      end = array ? array.length : 0;
+    }
+    var index = -1,
+        length = end - start || 0,
+        result = Array(length < 0 ? 0 : length);
+
+    while (++index < length) {
+      result[index] = array[start + index];
+    }
+    return result;
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * Used for `Array` method references.
+   *
+   * Normally `Array.prototype` would suffice, however, using an array literal
+   * avoids issues in Narwhal.
+   */
+  var arrayRef = [];
+
+  /** Used for native method references */
+  var errorProto = Error.prototype,
+      objectProto = Object.prototype,
+      stringProto = String.prototype;
+
+  /** Used to resolve the internal [[Class]] of values */
+  var toString = objectProto.toString;
+
+  /** Used to detect if a method is native */
+  var reNative = RegExp('^' +
+    String(toString)
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      .replace(/toString| for [^\]]+/g, '.*?') + '$'
+  );
+
+  /** Native method shortcuts */
+  var fnToString = Function.prototype.toString,
+      getPrototypeOf = isNative(getPrototypeOf = Object.getPrototypeOf) && getPrototypeOf,
+      hasOwnProperty = objectProto.hasOwnProperty,
+      push = arrayRef.push,
+      propertyIsEnumerable = objectProto.propertyIsEnumerable,
+      unshift = arrayRef.unshift;
+
+  /** Used to set meta data on functions */
+  var defineProperty = (function() {
+    // IE 8 only accepts DOM elements
+    try {
+      var o = {},
+          func = isNative(func = Object.defineProperty) && func,
+          result = func(o, o, o) && func;
+    } catch(e) { }
+    return result;
+  }());
+
+  /* Native method shortcuts for methods with the same name as other `lodash` methods */
+  var nativeCreate = isNative(nativeCreate = Object.create) && nativeCreate,
+      nativeIsArray = isNative(nativeIsArray = Array.isArray) && nativeIsArray,
+      nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys;
+
+  /** Used to lookup a built-in constructor by [[Class]] */
+  var ctorByClass = {};
+  ctorByClass[arrayClass] = Array;
+  ctorByClass[boolClass] = Boolean;
+  ctorByClass[dateClass] = Date;
+  ctorByClass[funcClass] = Function;
+  ctorByClass[objectClass] = Object;
+  ctorByClass[numberClass] = Number;
+  ctorByClass[regexpClass] = RegExp;
+  ctorByClass[stringClass] = String;
+
+  /** Used to avoid iterating non-enumerable properties in IE < 9 */
+  var nonEnumProps = {};
+  nonEnumProps[arrayClass] = nonEnumProps[dateClass] = nonEnumProps[numberClass] = { 'constructor': true, 'toLocaleString': true, 'toString': true, 'valueOf': true };
+  nonEnumProps[boolClass] = nonEnumProps[stringClass] = { 'constructor': true, 'toString': true, 'valueOf': true };
+  nonEnumProps[errorClass] = nonEnumProps[funcClass] = nonEnumProps[regexpClass] = { 'constructor': true, 'toString': true };
+  nonEnumProps[objectClass] = { 'constructor': true };
+
+  (function() {
+    var length = shadowedProps.length;
+    while (length--) {
+      var key = shadowedProps[length];
+      for (var className in nonEnumProps) {
+        if (hasOwnProperty.call(nonEnumProps, className) && !hasOwnProperty.call(nonEnumProps[className], key)) {
+          nonEnumProps[className][key] = false;
+        }
+      }
+    }
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * Creates a `lodash` object which wraps the given value to enable intuitive
+   * method chaining.
+   *
+   * In addition to Lo-Dash methods, wrappers also have the following `Array` methods:
+   * `concat`, `join`, `pop`, `push`, `reverse`, `shift`, `slice`, `sort`, `splice`,
+   * and `unshift`
+   *
+   * Chaining is supported in custom builds as long as the `value` method is
+   * implicitly or explicitly included in the build.
+   *
+   * The chainable wrapper functions are:
+   * `after`, `assign`, `bind`, `bindAll`, `bindKey`, `chain`, `compact`,
+   * `compose`, `concat`, `countBy`, `create`, `createCallback`, `curry`,
+   * `debounce`, `defaults`, `defer`, `delay`, `difference`, `filter`, `flatten`,
+   * `forEach`, `forEachRight`, `forIn`, `forInRight`, `forOwn`, `forOwnRight`,
+   * `functions`, `groupBy`, `indexBy`, `initial`, `intersection`, `invert`,
+   * `invoke`, `keys`, `map`, `max`, `memoize`, `merge`, `min`, `object`, `omit`,
+   * `once`, `pairs`, `partial`, `partialRight`, `pick`, `pluck`, `pull`, `push`,
+   * `range`, `reject`, `remove`, `rest`, `reverse`, `shuffle`, `slice`, `sort`,
+   * `sortBy`, `splice`, `tap`, `throttle`, `times`, `toArray`, `transform`,
+   * `union`, `uniq`, `unshift`, `unzip`, `values`, `where`, `without`, `wrap`,
+   * and `zip`
+   *
+   * The non-chainable wrapper functions are:
+   * `clone`, `cloneDeep`, `contains`, `escape`, `every`, `find`, `findIndex`,
+   * `findKey`, `findLast`, `findLastIndex`, `findLastKey`, `has`, `identity`,
+   * `indexOf`, `isArguments`, `isArray`, `isBoolean`, `isDate`, `isElement`,
+   * `isEmpty`, `isEqual`, `isFinite`, `isFunction`, `isNaN`, `isNull`, `isNumber`,
+   * `isObject`, `isPlainObject`, `isRegExp`, `isString`, `isUndefined`, `join`,
+   * `lastIndexOf`, `mixin`, `noConflict`, `parseInt`, `pop`, `random`, `reduce`,
+   * `reduceRight`, `result`, `shift`, `size`, `some`, `sortedIndex`, `runInContext`,
+   * `template`, `unescape`, `uniqueId`, and `value`
+   *
+   * The wrapper functions `first` and `last` return wrapped values when `n` is
+   * provided, otherwise they return unwrapped values.
+   *
+   * Explicit chaining can be enabled by using the `_.chain` method.
+   *
+   * @name _
+   * @constructor
+   * @category Chaining
+   * @param {*} value The value to wrap in a `lodash` instance.
+   * @returns {Object} Returns a `lodash` instance.
+   * @example
+   *
+   * var wrapped = _([1, 2, 3]);
+   *
+   * // returns an unwrapped value
+   * wrapped.reduce(function(sum, num) {
+   *   return sum + num;
+   * });
+   * // => 6
+   *
+   * // returns a wrapped value
+   * var squares = wrapped.map(function(num) {
+   *   return num * num;
+   * });
+   *
+   * _.isArray(squares);
+   * // => false
+   *
+   * _.isArray(squares.value());
+   * // => true
+   */
+  function lodash() {
+    // no operation performed
+  }
+
+  /**
+   * An object used to flag environments features.
+   *
+   * @static
+   * @memberOf _
+   * @type Object
+   */
+  var support = lodash.support = {};
+
+  (function() {
+    var ctor = function() { this.x = 1; },
+        object = { '0': 1, 'length': 1 },
+        props = [];
+
+    ctor.prototype = { 'valueOf': 1, 'y': 1 };
+    for (var key in new ctor) { props.push(key); }
+    for (key in arguments) { }
+
+    /**
+     * Detect if an `arguments` object's [[Class]] is resolvable (all but Firefox < 4, IE < 9).
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.argsClass = toString.call(arguments) == argsClass;
+
+    /**
+     * Detect if `arguments` objects are `Object` objects (all but Narwhal and Opera < 10.5).
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.argsObject = arguments.constructor == Object && !(arguments instanceof Array);
+
+    /**
+     * Detect if `name` or `message` properties of `Error.prototype` are
+     * enumerable by default. (IE < 9, Safari < 5.1)
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.enumErrorProps = propertyIsEnumerable.call(errorProto, 'message') || propertyIsEnumerable.call(errorProto, 'name');
+
+    /**
+     * Detect if `prototype` properties are enumerable by default.
+     *
+     * Firefox < 3.6, Opera > 9.50 - Opera < 11.60, and Safari < 5.1
+     * (if the prototype or a property on the prototype has been set)
+     * incorrectly sets a function's `prototype` property [[Enumerable]]
+     * value to `true`.
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.enumPrototypes = propertyIsEnumerable.call(ctor, 'prototype');
+
+    /**
+     * Detect if functions can be decompiled by `Function#toString`
+     * (all but PS3 and older Opera mobile browsers & avoided in Windows 8 apps).
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.funcDecomp = !isNative(root.WinRTError) && reThis.test(function() { return this; });
+
+    /**
+     * Detect if `Function#name` is supported (all but IE).
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.funcNames = typeof Function.name == 'string';
+
+    /**
+     * Detect if `arguments` object indexes are non-enumerable
+     * (Firefox < 4, IE < 9, PhantomJS, Safari < 5.1).
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.nonEnumArgs = key != 0;
+
+    /**
+     * Detect if properties shadowing those on `Object.prototype` are non-enumerable.
+     *
+     * In IE < 9 an objects own properties, shadowing non-enumerable ones, are
+     * made non-enumerable as well (a.k.a the JScript [[DontEnum]] bug).
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.nonEnumShadows = !/valueOf/.test(props);
+
+    /**
+     * Detect if own properties are iterated after inherited properties (all but IE < 9).
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.ownLast = props[0] != 'x';
+
+    /**
+     * Detect if `Array#shift` and `Array#splice` augment array-like objects correctly.
+     *
+     * Firefox < 10, IE compatibility mode, and IE < 9 have buggy Array `shift()`
+     * and `splice()` functions that fail to remove the last element, `value[0]`,
+     * of array-like objects even though the `length` property is set to `0`.
+     * The `shift()` method is buggy in IE 8 compatibility mode, while `splice()`
+     * is buggy regardless of mode in IE < 9 and buggy in compatibility mode in IE 9.
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.spliceObjects = (arrayRef.splice.call(object, 0, 1), !object[0]);
+
+    /**
+     * Detect lack of support for accessing string characters by index.
+     *
+     * IE < 8 can't access characters by index and IE 8 can only access
+     * characters by index on string literals.
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    support.unindexedChars = ('x'[0] + Object('x')[0]) != 'xx';
+
+    /**
+     * Detect if a DOM node's [[Class]] is resolvable (all but IE < 9)
+     * and that the JS engine errors when attempting to coerce an object to
+     * a string without a `toString` function.
+     *
+     * @memberOf _.support
+     * @type boolean
+     */
+    try {
+      support.nodeClass = !(toString.call(document) == objectClass && !({ 'toString': 0 } + ''));
+    } catch(e) {
+      support.nodeClass = true;
+    }
+  }(1));
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * The template used to create iterator functions.
+   *
+   * @private
+   * @param {Object} data The data object used to populate the text.
+   * @returns {string} Returns the interpolated text.
+   */
+  var iteratorTemplate = function(obj) {
+
+    var __p = 'var index, iterable = ' +
+    (obj.firstArg) +
+    ', result = ' +
+    (obj.init) +
+    ';\nif (!iterable) return result;\n' +
+    (obj.top) +
+    ';';
+     if (obj.array) {
+    __p += '\nvar length = iterable.length; index = -1;\nif (' +
+    (obj.array) +
+    ') {  ';
+     if (support.unindexedChars) {
+    __p += '\n  if (isString(iterable)) {\n    iterable = iterable.split(\'\')\n  }  ';
+     }
+    __p += '\n  while (++index < length) {\n    ' +
+    (obj.loop) +
+    ';\n  }\n}\nelse {  ';
+     } else if (support.nonEnumArgs) {
+    __p += '\n  var length = iterable.length; index = -1;\n  if (length && isArguments(iterable)) {\n    while (++index < length) {\n      index += \'\';\n      ' +
+    (obj.loop) +
+    ';\n    }\n  } else {  ';
+     }
+
+     if (support.enumPrototypes) {
+    __p += '\n  var skipProto = typeof iterable == \'function\';\n  ';
+     }
+
+     if (support.enumErrorProps) {
+    __p += '\n  var skipErrorProps = iterable === errorProto || iterable instanceof Error;\n  ';
+     }
+
+        var conditions = [];    if (support.enumPrototypes) { conditions.push('!(skipProto && index == "prototype")'); }    if (support.enumErrorProps)  { conditions.push('!(skipErrorProps && (index == "message" || index == "name"))'); }
+
+     if (obj.useHas && obj.keys) {
+    __p += '\n  var ownIndex = -1,\n      ownProps = objectTypes[typeof iterable] && keys(iterable),\n      length = ownProps ? ownProps.length : 0;\n\n  while (++ownIndex < length) {\n    index = ownProps[ownIndex];\n';
+        if (conditions.length) {
+    __p += '    if (' +
+    (conditions.join(' && ')) +
+    ') {\n  ';
+     }
+    __p +=
+    (obj.loop) +
+    ';    ';
+     if (conditions.length) {
+    __p += '\n    }';
+     }
+    __p += '\n  }  ';
+     } else {
+    __p += '\n  for (index in iterable) {\n';
+        if (obj.useHas) { conditions.push("hasOwnProperty.call(iterable, index)"); }    if (conditions.length) {
+    __p += '    if (' +
+    (conditions.join(' && ')) +
+    ') {\n  ';
+     }
+    __p +=
+    (obj.loop) +
+    ';    ';
+     if (conditions.length) {
+    __p += '\n    }';
+     }
+    __p += '\n  }    ';
+     if (support.nonEnumShadows) {
+    __p += '\n\n  if (iterable !== objectProto) {\n    var ctor = iterable.constructor,\n        isProto = iterable === (ctor && ctor.prototype),\n        className = iterable === stringProto ? stringClass : iterable === errorProto ? errorClass : toString.call(iterable),\n        nonEnum = nonEnumProps[className];\n      ';
+     for (k = 0; k < 7; k++) {
+    __p += '\n    index = \'' +
+    (obj.shadowedProps[k]) +
+    '\';\n    if ((!(isProto && nonEnum[index]) && hasOwnProperty.call(iterable, index))';
+            if (!obj.useHas) {
+    __p += ' || (!nonEnum[index] && iterable[index] !== objectProto[index])';
+     }
+    __p += ') {\n      ' +
+    (obj.loop) +
+    ';\n    }      ';
+     }
+    __p += '\n  }    ';
+     }
+
+     }
+
+     if (obj.array || support.nonEnumArgs) {
+    __p += '\n}';
+     }
+    __p +=
+    (obj.bottom) +
+    ';\nreturn result';
+
+    return __p
+  };
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * The base implementation of `_.bind` that creates the bound function and
+   * sets its meta data.
+   *
+   * @private
+   * @param {Array} bindData The bind data array.
+   * @returns {Function} Returns the new bound function.
+   */
+  function baseBind(bindData) {
+    var func = bindData[0],
+        partialArgs = bindData[2],
+        thisArg = bindData[4];
+
+    function bound() {
+      // `Function#bind` spec
+      // http://es5.github.io/#x15.3.4.5
+      if (partialArgs) {
+        // avoid `arguments` object deoptimizations by using `slice` instead
+        // of `Array.prototype.slice.call` and not assigning `arguments` to a
+        // variable as a ternary expression
+        var args = slice(partialArgs);
+        push.apply(args, arguments);
+      }
+      // mimic the constructor's `return` behavior
+      // http://es5.github.io/#x13.2.2
+      if (this instanceof bound) {
+        // ensure `new bound` is an instance of `func`
+        var thisBinding = baseCreate(func.prototype),
+            result = func.apply(thisBinding, args || arguments);
+        return isObject(result) ? result : thisBinding;
+      }
+      return func.apply(thisArg, args || arguments);
+    }
+    setBindData(bound, bindData);
+    return bound;
+  }
+
+  /**
+   * The base implementation of `_.clone` without argument juggling or support
+   * for `thisArg` binding.
+   *
+   * @private
+   * @param {*} value The value to clone.
+   * @param {boolean} [isDeep=false] Specify a deep clone.
+   * @param {Function} [callback] The function to customize cloning values.
+   * @param {Array} [stackA=[]] Tracks traversed source objects.
+   * @param {Array} [stackB=[]] Associates clones with source counterparts.
+   * @returns {*} Returns the cloned value.
+   */
+  function baseClone(value, isDeep, callback, stackA, stackB) {
+    if (callback) {
+      var result = callback(value);
+      if (typeof result != 'undefined') {
+        return result;
+      }
+    }
+    // inspect [[Class]]
+    var isObj = isObject(value);
+    if (isObj) {
+      var className = toString.call(value);
+      if (!cloneableClasses[className] || (!support.nodeClass && isNode(value))) {
+        return value;
+      }
+      var ctor = ctorByClass[className];
+      switch (className) {
+        case boolClass:
+        case dateClass:
+          return new ctor(+value);
+
+        case numberClass:
+        case stringClass:
+          return new ctor(value);
+
+        case regexpClass:
+          result = ctor(value.source, reFlags.exec(value));
+          result.lastIndex = value.lastIndex;
+          return result;
+      }
+    } else {
+      return value;
+    }
+    var isArr = isArray(value);
+    if (isDeep) {
+      // check for circular references and return corresponding clone
+      var initedStack = !stackA;
+      stackA || (stackA = getArray());
+      stackB || (stackB = getArray());
+
+      var length = stackA.length;
+      while (length--) {
+        if (stackA[length] == value) {
+          return stackB[length];
+        }
+      }
+      result = isArr ? ctor(value.length) : {};
+    }
+    else {
+      result = isArr ? slice(value) : assign({}, value);
+    }
+    // add array properties assigned by `RegExp#exec`
+    if (isArr) {
+      if (hasOwnProperty.call(value, 'index')) {
+        result.index = value.index;
+      }
+      if (hasOwnProperty.call(value, 'input')) {
+        result.input = value.input;
+      }
+    }
+    // exit for shallow clone
+    if (!isDeep) {
+      return result;
+    }
+    // add the source value to the stack of traversed objects
+    // and associate it with its clone
+    stackA.push(value);
+    stackB.push(result);
+
+    // recursively populate clone (susceptible to call stack limits)
+    (isArr ? baseEach : forOwn)(value, function(objValue, key) {
+      result[key] = baseClone(objValue, isDeep, callback, stackA, stackB);
+    });
+
+    if (initedStack) {
+      releaseArray(stackA);
+      releaseArray(stackB);
+    }
+    return result;
+  }
+
+  /**
+   * The base implementation of `_.create` without support for assigning
+   * properties to the created object.
+   *
+   * @private
+   * @param {Object} prototype The object to inherit from.
+   * @returns {Object} Returns the new object.
+   */
+  function baseCreate(prototype, properties) {
+    return isObject(prototype) ? nativeCreate(prototype) : {};
+  }
+  // fallback for browsers without `Object.create`
+  if (!nativeCreate) {
+    baseCreate = (function() {
+      function Object() {}
+      return function(prototype) {
+        if (isObject(prototype)) {
+          Object.prototype = prototype;
+          var result = new Object;
+          Object.prototype = null;
+        }
+        return result || root.Object();
+      };
+    }());
+  }
+
+  /**
+   * The base implementation of `_.createCallback` without support for creating
+   * "_.pluck" or "_.where" style callbacks.
+   *
+   * @private
+   * @param {*} [func=identity] The value to convert to a callback.
+   * @param {*} [thisArg] The `this` binding of the created callback.
+   * @param {number} [argCount] The number of arguments the callback accepts.
+   * @returns {Function} Returns a callback function.
+   */
+  function baseCreateCallback(func, thisArg, argCount) {
+    if (typeof func != 'function') {
+      return identity;
+    }
+    // exit early for no `thisArg` or already bound by `Function#bind`
+    if (typeof thisArg == 'undefined' || !('prototype' in func)) {
+      return func;
+    }
+    var bindData = func.__bindData__;
+    if (typeof bindData == 'undefined') {
+      if (support.funcNames) {
+        bindData = !func.name;
+      }
+      bindData = bindData || !support.funcDecomp;
+      if (!bindData) {
+        var source = fnToString.call(func);
+        if (!support.funcNames) {
+          bindData = !reFuncName.test(source);
+        }
+        if (!bindData) {
+          // checks if `func` references the `this` keyword and stores the result
+          bindData = reThis.test(source);
+          setBindData(func, bindData);
+        }
+      }
+    }
+    // exit early if there are no `this` references or `func` is bound
+    if (bindData === false || (bindData !== true && bindData[1] & 1)) {
+      return func;
+    }
+    switch (argCount) {
+      case 1: return function(value) {
+        return func.call(thisArg, value);
+      };
+      case 2: return function(a, b) {
+        return func.call(thisArg, a, b);
+      };
+      case 3: return function(value, index, collection) {
+        return func.call(thisArg, value, index, collection);
+      };
+      case 4: return function(accumulator, value, index, collection) {
+        return func.call(thisArg, accumulator, value, index, collection);
+      };
+    }
+    return bind(func, thisArg);
+  }
+
+  /**
+   * The base implementation of `createWrapper` that creates the wrapper and
+   * sets its meta data.
+   *
+   * @private
+   * @param {Array} bindData The bind data array.
+   * @returns {Function} Returns the new function.
+   */
+  function baseCreateWrapper(bindData) {
+    var func = bindData[0],
+        bitmask = bindData[1],
+        partialArgs = bindData[2],
+        partialRightArgs = bindData[3],
+        thisArg = bindData[4],
+        arity = bindData[5];
+
+    var isBind = bitmask & 1,
+        isBindKey = bitmask & 2,
+        isCurry = bitmask & 4,
+        isCurryBound = bitmask & 8,
+        key = func;
+
+    function bound() {
+      var thisBinding = isBind ? thisArg : this;
+      if (partialArgs) {
+        var args = slice(partialArgs);
+        push.apply(args, arguments);
+      }
+      if (partialRightArgs || isCurry) {
+        args || (args = slice(arguments));
+        if (partialRightArgs) {
+          push.apply(args, partialRightArgs);
+        }
+        if (isCurry && args.length < arity) {
+          bitmask |= 16 & ~32;
+          return baseCreateWrapper([func, (isCurryBound ? bitmask : bitmask & ~3), args, null, thisArg, arity]);
+        }
+      }
+      args || (args = arguments);
+      if (isBindKey) {
+        func = thisBinding[key];
+      }
+      if (this instanceof bound) {
+        thisBinding = baseCreate(func.prototype);
+        var result = func.apply(thisBinding, args);
+        return isObject(result) ? result : thisBinding;
+      }
+      return func.apply(thisBinding, args);
+    }
+    setBindData(bound, bindData);
+    return bound;
+  }
+
+  /**
+   * The base implementation of `_.merge` without argument juggling or support
+   * for `thisArg` binding.
+   *
+   * @private
+   * @param {Object} object The destination object.
+   * @param {Object} source The source object.
+   * @param {Function} [callback] The function to customize merging properties.
+   * @param {Array} [stackA=[]] Tracks traversed source objects.
+   * @param {Array} [stackB=[]] Associates values with source counterparts.
+   */
+  function baseMerge(object, source, callback, stackA, stackB) {
+    (isArray(source) ? forEach : forOwn)(source, function(source, key) {
+      var found,
+          isArr,
+          result = source,
+          value = object[key];
+
+      if (source && ((isArr = isArray(source)) || isPlainObject(source))) {
+        // avoid merging previously merged cyclic sources
+        var stackLength = stackA.length;
+        while (stackLength--) {
+          if ((found = stackA[stackLength] == source)) {
+            value = stackB[stackLength];
+            break;
+          }
+        }
+        if (!found) {
+          var isShallow;
+          if (callback) {
+            result = callback(value, source);
+            if ((isShallow = typeof result != 'undefined')) {
+              value = result;
+            }
+          }
+          if (!isShallow) {
+            value = isArr
+              ? (isArray(value) ? value : [])
+              : (isPlainObject(value) ? value : {});
+          }
+          // add `source` and associated `value` to the stack of traversed objects
+          stackA.push(source);
+          stackB.push(value);
+
+          // recursively merge objects and arrays (susceptible to call stack limits)
+          if (!isShallow) {
+            baseMerge(value, source, callback, stackA, stackB);
+          }
+        }
+      }
+      else {
+        if (callback) {
+          result = callback(value, source);
+          if (typeof result == 'undefined') {
+            result = source;
+          }
+        }
+        if (typeof result != 'undefined') {
+          value = result;
+        }
+      }
+      object[key] = value;
+    });
+  }
+
+  /**
+   * Creates a function that, when called, either curries or invokes `func`
+   * with an optional `this` binding and partially applied arguments.
+   *
+   * @private
+   * @param {Function|string} func The function or method name to reference.
+   * @param {number} bitmask The bitmask of method flags to compose.
+   *  The bitmask may be composed of the following flags:
+   *  1 - `_.bind`
+   *  2 - `_.bindKey`
+   *  4 - `_.curry`
+   *  8 - `_.curry` (bound)
+   *  16 - `_.partial`
+   *  32 - `_.partialRight`
+   * @param {Array} [partialArgs] An array of arguments to prepend to those
+   *  provided to the new function.
+   * @param {Array} [partialRightArgs] An array of arguments to append to those
+   *  provided to the new function.
+   * @param {*} [thisArg] The `this` binding of `func`.
+   * @param {number} [arity] The arity of `func`.
+   * @returns {Function} Returns the new function.
+   */
+  function createWrapper(func, bitmask, partialArgs, partialRightArgs, thisArg, arity) {
+    var isBind = bitmask & 1,
+        isBindKey = bitmask & 2,
+        isCurry = bitmask & 4,
+        isCurryBound = bitmask & 8,
+        isPartial = bitmask & 16,
+        isPartialRight = bitmask & 32;
+
+    if (!isBindKey && !isFunction(func)) {
+      throw new TypeError;
+    }
+    if (isPartial && !partialArgs.length) {
+      bitmask &= ~16;
+      isPartial = partialArgs = false;
+    }
+    if (isPartialRight && !partialRightArgs.length) {
+      bitmask &= ~32;
+      isPartialRight = partialRightArgs = false;
+    }
+    var bindData = func && func.__bindData__;
+    if (bindData && bindData !== true) {
+      // clone `bindData`
+      bindData = slice(bindData);
+      if (bindData[2]) {
+        bindData[2] = slice(bindData[2]);
+      }
+      if (bindData[3]) {
+        bindData[3] = slice(bindData[3]);
+      }
+      // set `thisBinding` is not previously bound
+      if (isBind && !(bindData[1] & 1)) {
+        bindData[4] = thisArg;
+      }
+      // set if previously bound but not currently (subsequent curried functions)
+      if (!isBind && bindData[1] & 1) {
+        bitmask |= 8;
+      }
+      // set curried arity if not yet set
+      if (isCurry && !(bindData[1] & 4)) {
+        bindData[5] = arity;
+      }
+      // append partial left arguments
+      if (isPartial) {
+        push.apply(bindData[2] || (bindData[2] = []), partialArgs);
+      }
+      // append partial right arguments
+      if (isPartialRight) {
+        unshift.apply(bindData[3] || (bindData[3] = []), partialRightArgs);
+      }
+      // merge flags
+      bindData[1] |= bitmask;
+      return createWrapper.apply(null, bindData);
+    }
+    // fast path for `_.bind`
+    var creater = (bitmask == 1 || bitmask === 17) ? baseBind : baseCreateWrapper;
+    return creater([func, bitmask, partialArgs, partialRightArgs, thisArg, arity]);
+  }
+
+  /**
+   * Creates compiled iteration functions.
+   *
+   * @private
+   * @param {...Object} [options] The compile options object(s).
+   * @param {string} [options.array] Code to determine if the iterable is an array or array-like.
+   * @param {boolean} [options.useHas] Specify using `hasOwnProperty` checks in the object loop.
+   * @param {Function} [options.keys] A reference to `_.keys` for use in own property iteration.
+   * @param {string} [options.args] A comma separated string of iteration function arguments.
+   * @param {string} [options.top] Code to execute before the iteration branches.
+   * @param {string} [options.loop] Code to execute in the object loop.
+   * @param {string} [options.bottom] Code to execute after the iteration branches.
+   * @returns {Function} Returns the compiled function.
+   */
+  function createIterator() {
+    // data properties
+    iteratorData.shadowedProps = shadowedProps;
+
+    // iterator options
+    iteratorData.array = iteratorData.bottom = iteratorData.loop = iteratorData.top = '';
+    iteratorData.init = 'iterable';
+    iteratorData.useHas = true;
+
+    // merge options into a template data object
+    for (var object, index = 0; object = arguments[index]; index++) {
+      for (var key in object) {
+        iteratorData[key] = object[key];
+      }
+    }
+    var args = iteratorData.args;
+    iteratorData.firstArg = /^[^,]+/.exec(args)[0];
+
+    // create the function factory
+    var factory = Function(
+        'baseCreateCallback, errorClass, errorProto, hasOwnProperty, ' +
+        'indicatorObject, isArguments, isArray, isString, keys, objectProto, ' +
+        'objectTypes, nonEnumProps, stringClass, stringProto, toString',
+      'return function(' + args + ') {\n' + iteratorTemplate(iteratorData) + '\n}'
+    );
+
+    // return the compiled function
+    return factory(
+      baseCreateCallback, errorClass, errorProto, hasOwnProperty,
+      indicatorObject, isArguments, isArray, isString, iteratorData.keys, objectProto,
+      objectTypes, nonEnumProps, stringClass, stringProto, toString
+    );
+  }
+
+  /**
+   * Checks if `value` is a native function.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if the `value` is a native function, else `false`.
+   */
+  function isNative(value) {
+    return typeof value == 'function' && reNative.test(value);
+  }
+
+  /**
+   * Sets `this` binding data on a given function.
+   *
+   * @private
+   * @param {Function} func The function to set data on.
+   * @param {Array} value The data array to set.
+   */
+  var setBindData = !defineProperty ? noop : function(func, value) {
+    descriptor.value = value;
+    defineProperty(func, '__bindData__', descriptor);
+  };
+
+  /**
+   * A fallback implementation of `isPlainObject` which checks if a given value
+   * is an object created by the `Object` constructor, assuming objects created
+   * by the `Object` constructor have no inherited enumerable properties and that
+   * there are no `Object.prototype` extensions.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+   */
+  function shimIsPlainObject(value) {
+    var ctor,
+        result;
+
+    // avoid non Object objects, `arguments` objects, and DOM elements
+    if (!(value && toString.call(value) == objectClass) ||
+        (ctor = value.constructor, isFunction(ctor) && !(ctor instanceof ctor)) ||
+        (!support.argsClass && isArguments(value)) ||
+        (!support.nodeClass && isNode(value))) {
+      return false;
+    }
+    // IE < 9 iterates inherited properties before own properties. If the first
+    // iterated property is an object's own property then there are no inherited
+    // enumerable properties.
+    if (support.ownLast) {
+      forIn(value, function(value, key, object) {
+        result = hasOwnProperty.call(object, key);
+        return false;
+      });
+      return result !== false;
+    }
+    // In most environments an object's own properties are iterated before
+    // its inherited properties. If the last iterated property is an object's
+    // own property then there are no inherited enumerable properties.
+    forIn(value, function(value, key) {
+      result = key;
+    });
+    return typeof result == 'undefined' || hasOwnProperty.call(value, result);
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * Checks if `value` is an `arguments` object.
+   *
+   * @static
+   * @memberOf _
+   * @category Objects
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if the `value` is an `arguments` object, else `false`.
+   * @example
+   *
+   * (function() { return _.isArguments(arguments); })(1, 2, 3);
+   * // => true
+   *
+   * _.isArguments([1, 2, 3]);
+   * // => false
+   */
+  function isArguments(value) {
+    return value && typeof value == 'object' && typeof value.length == 'number' &&
+      toString.call(value) == argsClass || false;
+  }
+  // fallback for browsers that can't detect `arguments` objects by [[Class]]
+  if (!support.argsClass) {
+    isArguments = function(value) {
+      return value && typeof value == 'object' && typeof value.length == 'number' &&
+        hasOwnProperty.call(value, 'callee') && !propertyIsEnumerable.call(value, 'callee') || false;
+    };
+  }
+
+  /**
+   * Checks if `value` is an array.
+   *
+   * @static
+   * @memberOf _
+   * @type Function
+   * @category Objects
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if the `value` is an array, else `false`.
+   * @example
+   *
+   * (function() { return _.isArray(arguments); })();
+   * // => false
+   *
+   * _.isArray([1, 2, 3]);
+   * // => true
+   */
+  var isArray = nativeIsArray || function(value) {
+    return value && typeof value == 'object' && typeof value.length == 'number' &&
+      toString.call(value) == arrayClass || false;
+  };
+
+  /**
+   * A fallback implementation of `Object.keys` which produces an array of the
+   * given object's own enumerable property names.
+   *
+   * @private
+   * @type Function
+   * @param {Object} object The object to inspect.
+   * @returns {Array} Returns an array of property names.
+   */
+  var shimKeys = createIterator({
+    'args': 'object',
+    'init': '[]',
+    'top': 'if (!(objectTypes[typeof object])) return result',
+    'loop': 'result.push(index)'
+  });
+
+  /**
+   * Creates an array composed of the own enumerable property names of an object.
+   *
+   * @static
+   * @memberOf _
+   * @category Objects
+   * @param {Object} object The object to inspect.
+   * @returns {Array} Returns an array of property names.
+   * @example
+   *
+   * _.keys({ 'one': 1, 'two': 2, 'three': 3 });
+   * // => ['one', 'two', 'three'] (property order is not guaranteed across environments)
+   */
+  var keys = !nativeKeys ? shimKeys : function(object) {
+    if (!isObject(object)) {
+      return [];
+    }
+    if ((support.enumPrototypes && typeof object == 'function') ||
+        (support.nonEnumArgs && object.length && isArguments(object))) {
+      return shimKeys(object);
+    }
+    return nativeKeys(object);
+  };
+
+  /** Reusable iterator options shared by `each`, `forIn`, and `forOwn` */
+  var eachIteratorOptions = {
+    'args': 'collection, callback, thisArg',
+    'top': "callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3)",
+    'array': "typeof length == 'number'",
+    'keys': keys,
+    'loop': 'if (callback(iterable[index], index, collection) === false) return result'
+  };
+
+  /** Reusable iterator options for `assign` and `defaults` */
+  var defaultsIteratorOptions = {
+    'args': 'object, source, guard',
+    'top':
+      'var args = arguments,\n' +
+      '    argsIndex = 0,\n' +
+      "    argsLength = typeof guard == 'number' ? 2 : args.length;\n" +
+      'while (++argsIndex < argsLength) {\n' +
+      '  iterable = args[argsIndex];\n' +
+      '  if (iterable && objectTypes[typeof iterable]) {',
+    'keys': keys,
+    'loop': "if (typeof result[index] == 'undefined') result[index] = iterable[index]",
+    'bottom': '  }\n}'
+  };
+
+  /** Reusable iterator options for `forIn` and `forOwn` */
+  var forOwnIteratorOptions = {
+    'top': 'if (!objectTypes[typeof iterable]) return result;\n' + eachIteratorOptions.top,
+    'array': false
+  };
+
+  /**
+   * A function compiled to iterate `arguments` objects, arrays, objects, and
+   * strings consistenly across environments, executing the callback for each
+   * element in the collection. The callback is bound to `thisArg` and invoked
+   * with three arguments; (value, index|key, collection). Callbacks may exit
+   * iteration early by explicitly returning `false`.
+   *
+   * @private
+   * @type Function
+   * @param {Array|Object|string} collection The collection to iterate over.
+   * @param {Function} [callback=identity] The function called per iteration.
+   * @param {*} [thisArg] The `this` binding of `callback`.
+   * @returns {Array|Object|string} Returns `collection`.
+   */
+  var baseEach = createIterator(eachIteratorOptions);
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * Assigns own enumerable properties of source object(s) to the destination
+   * object. Subsequent sources will overwrite property assignments of previous
+   * sources. If a callback is provided it will be executed to produce the
+   * assigned values. The callback is bound to `thisArg` and invoked with two
+   * arguments; (objectValue, sourceValue).
+   *
+   * @static
+   * @memberOf _
+   * @type Function
+   * @alias extend
+   * @category Objects
+   * @param {Object} object The destination object.
+   * @param {...Object} [source] The source objects.
+   * @param {Function} [callback] The function to customize assigning values.
+   * @param {*} [thisArg] The `this` binding of `callback`.
+   * @returns {Object} Returns the destination object.
+   * @example
+   *
+   * _.assign({ 'name': 'fred' }, { 'employer': 'slate' });
+   * // => { 'name': 'fred', 'employer': 'slate' }
+   *
+   * var defaults = _.partialRight(_.assign, function(a, b) {
+   *   return typeof a == 'undefined' ? b : a;
+   * });
+   *
+   * var object = { 'name': 'barney' };
+   * defaults(object, { 'name': 'fred', 'employer': 'slate' });
+   * // => { 'name': 'barney', 'employer': 'slate' }
+   */
+  var assign = createIterator(defaultsIteratorOptions, {
+    'top':
+      defaultsIteratorOptions.top.replace(';',
+        ';\n' +
+        "if (argsLength > 3 && typeof args[argsLength - 2] == 'function') {\n" +
+        '  var callback = baseCreateCallback(args[--argsLength - 1], args[argsLength--], 2);\n' +
+        "} else if (argsLength > 2 && typeof args[argsLength - 1] == 'function') {\n" +
+        '  callback = args[--argsLength];\n' +
+        '}'
+      ),
+    'loop': 'result[index] = callback ? callback(result[index], iterable[index]) : iterable[index]'
+  });
+
+  /**
+   * Creates a clone of `value`. If `isDeep` is `true` nested objects will also
+   * be cloned, otherwise they will be assigned by reference. If a callback
+   * is provided it will be executed to produce the cloned values. If the
+   * callback returns `undefined` cloning will be handled by the method instead.
+   * The callback is bound to `thisArg` and invoked with one argument; (value).
+   *
+   * @static
+   * @memberOf _
+   * @category Objects
+   * @param {*} value The value to clone.
+   * @param {boolean} [isDeep=false] Specify a deep clone.
+   * @param {Function} [callback] The function to customize cloning values.
+   * @param {*} [thisArg] The `this` binding of `callback`.
+   * @returns {*} Returns the cloned value.
+   * @example
+   *
+   * var characters = [
+   *   { 'name': 'barney', 'age': 36 },
+   *   { 'name': 'fred',   'age': 40 }
+   * ];
+   *
+   * var shallow = _.clone(characters);
+   * shallow[0] === characters[0];
+   * // => true
+   *
+   * var deep = _.clone(characters, true);
+   * deep[0] === characters[0];
+   * // => false
+   *
+   * _.mixin({
+   *   'clone': _.partialRight(_.clone, function(value) {
+   *     return _.isElement(value) ? value.cloneNode(false) : undefined;
+   *   })
+   * });
+   *
+   * var clone = _.clone(document.body);
+   * clone.childNodes.length;
+   * // => 0
+   */
+  function clone(value, isDeep, callback, thisArg) {
+    // allows working with "Collections" methods without using their `index`
+    // and `collection` arguments for `isDeep` and `callback`
+    if (typeof isDeep != 'boolean' && isDeep != null) {
+      thisArg = callback;
+      callback = isDeep;
+      isDeep = false;
+    }
+    return baseClone(value, isDeep, typeof callback == 'function' && baseCreateCallback(callback, thisArg, 1));
+  }
+
+  /**
+   * Iterates over own and inherited enumerable properties of an object,
+   * executing the callback for each property. The callback is bound to `thisArg`
+   * and invoked with three arguments; (value, key, object). Callbacks may exit
+   * iteration early by explicitly returning `false`.
+   *
+   * @static
+   * @memberOf _
+   * @type Function
+   * @category Objects
+   * @param {Object} object The object to iterate over.
+   * @param {Function} [callback=identity] The function called per iteration.
+   * @param {*} [thisArg] The `this` binding of `callback`.
+   * @returns {Object} Returns `object`.
+   * @example
+   *
+   * function Shape() {
+   *   this.x = 0;
+   *   this.y = 0;
+   * }
+   *
+   * Shape.prototype.move = function(x, y) {
+   *   this.x += x;
+   *   this.y += y;
+   * };
+   *
+   * _.forIn(new Shape, function(value, key) {
+   *   console.log(key);
+   * });
+   * // => logs 'x', 'y', and 'move' (property order is not guaranteed across environments)
+   */
+  var forIn = createIterator(eachIteratorOptions, forOwnIteratorOptions, {
+    'useHas': false
+  });
+
+  /**
+   * Iterates over own enumerable properties of an object, executing the callback
+   * for each property. The callback is bound to `thisArg` and invoked with three
+   * arguments; (value, key, object). Callbacks may exit iteration early by
+   * explicitly returning `false`.
+   *
+   * @static
+   * @memberOf _
+   * @type Function
+   * @category Objects
+   * @param {Object} object The object to iterate over.
+   * @param {Function} [callback=identity] The function called per iteration.
+   * @param {*} [thisArg] The `this` binding of `callback`.
+   * @returns {Object} Returns `object`.
+   * @example
+   *
+   * _.forOwn({ '0': 'zero', '1': 'one', 'length': 2 }, function(num, key) {
+   *   console.log(key);
+   * });
+   * // => logs '0', '1', and 'length' (property order is not guaranteed across environments)
+   */
+  var forOwn = createIterator(eachIteratorOptions, forOwnIteratorOptions);
+
+  /**
+   * Checks if `value` is empty. Arrays, strings, or `arguments` objects with a
+   * length of `0` and objects with no own enumerable properties are considered
+   * "empty".
+   *
+   * @static
+   * @memberOf _
+   * @category Objects
+   * @param {Array|Object|string} value The value to inspect.
+   * @returns {boolean} Returns `true` if the `value` is empty, else `false`.
+   * @example
+   *
+   * _.isEmpty([1, 2, 3]);
+   * // => false
+   *
+   * _.isEmpty({});
+   * // => true
+   *
+   * _.isEmpty('');
+   * // => true
+   */
+  function isEmpty(value) {
+    var result = true;
+    if (!value) {
+      return result;
+    }
+    var className = toString.call(value),
+        length = value.length;
+
+    if ((className == arrayClass || className == stringClass ||
+        (support.argsClass ? className == argsClass : isArguments(value))) ||
+        (className == objectClass && typeof length == 'number' && isFunction(value.splice))) {
+      return !length;
+    }
+    forOwn(value, function() {
+      return (result = false);
+    });
+    return result;
+  }
+
+  /**
+   * Checks if `value` is a function.
+   *
+   * @static
+   * @memberOf _
+   * @category Objects
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if the `value` is a function, else `false`.
+   * @example
+   *
+   * _.isFunction(_);
+   * // => true
+   */
+  function isFunction(value) {
+    return typeof value == 'function';
+  }
+  // fallback for older versions of Chrome and Safari
+  if (isFunction(/x/)) {
+    isFunction = function(value) {
+      return typeof value == 'function' && toString.call(value) == funcClass;
+    };
+  }
+
+  /**
+   * Checks if `value` is the language type of Object.
+   * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+   *
+   * @static
+   * @memberOf _
+   * @category Objects
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if the `value` is an object, else `false`.
+   * @example
+   *
+   * _.isObject({});
+   * // => true
+   *
+   * _.isObject([1, 2, 3]);
+   * // => true
+   *
+   * _.isObject(1);
+   * // => false
+   */
+  function isObject(value) {
+    // check if the value is the ECMAScript language type of Object
+    // http://es5.github.io/#x8
+    // and avoid a V8 bug
+    // http://code.google.com/p/v8/issues/detail?id=2291
+    return !!(value && objectTypes[typeof value]);
+  }
+
+  /**
+   * Checks if `value` is an object created by the `Object` constructor.
+   *
+   * @static
+   * @memberOf _
+   * @category Objects
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+   * @example
+   *
+   * function Shape() {
+   *   this.x = 0;
+   *   this.y = 0;
+   * }
+   *
+   * _.isPlainObject(new Shape);
+   * // => false
+   *
+   * _.isPlainObject([1, 2, 3]);
+   * // => false
+   *
+   * _.isPlainObject({ 'x': 0, 'y': 0 });
+   * // => true
+   */
+  var isPlainObject = !getPrototypeOf ? shimIsPlainObject : function(value) {
+    if (!(value && toString.call(value) == objectClass) || (!support.argsClass && isArguments(value))) {
+      return false;
+    }
+    var valueOf = value.valueOf,
+        objProto = isNative(valueOf) && (objProto = getPrototypeOf(valueOf)) && getPrototypeOf(objProto);
+
+    return objProto
+      ? (value == objProto || getPrototypeOf(value) == objProto)
+      : shimIsPlainObject(value);
+  };
+
+  /**
+   * Checks if `value` is a string.
+   *
+   * @static
+   * @memberOf _
+   * @category Objects
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if the `value` is a string, else `false`.
+   * @example
+   *
+   * _.isString('fred');
+   * // => true
+   */
+  function isString(value) {
+    return typeof value == 'string' ||
+      value && typeof value == 'object' && toString.call(value) == stringClass || false;
+  }
+
+  /**
+   * Recursively merges own enumerable properties of the source object(s), that
+   * don't resolve to `undefined` into the destination object. Subsequent sources
+   * will overwrite property assignments of previous sources. If a callback is
+   * provided it will be executed to produce the merged values of the destination
+   * and source properties. If the callback returns `undefined` merging will
+   * be handled by the method instead. The callback is bound to `thisArg` and
+   * invoked with two arguments; (objectValue, sourceValue).
+   *
+   * @static
+   * @memberOf _
+   * @category Objects
+   * @param {Object} object The destination object.
+   * @param {...Object} [source] The source objects.
+   * @param {Function} [callback] The function to customize merging properties.
+   * @param {*} [thisArg] The `this` binding of `callback`.
+   * @returns {Object} Returns the destination object.
+   * @example
+   *
+   * var names = {
+   *   'characters': [
+   *     { 'name': 'barney' },
+   *     { 'name': 'fred' }
+   *   ]
+   * };
+   *
+   * var ages = {
+   *   'characters': [
+   *     { 'age': 36 },
+   *     { 'age': 40 }
+   *   ]
+   * };
+   *
+   * _.merge(names, ages);
+   * // => { 'characters': [{ 'name': 'barney', 'age': 36 }, { 'name': 'fred', 'age': 40 }] }
+   *
+   * var food = {
+   *   'fruits': ['apple'],
+   *   'vegetables': ['beet']
+   * };
+   *
+   * var otherFood = {
+   *   'fruits': ['banana'],
+   *   'vegetables': ['carrot']
+   * };
+   *
+   * _.merge(food, otherFood, function(a, b) {
+   *   return _.isArray(a) ? a.concat(b) : undefined;
+   * });
+   * // => { 'fruits': ['apple', 'banana'], 'vegetables': ['beet', 'carrot] }
+   */
+  function merge(object) {
+    var args = arguments,
+        length = 2;
+
+    if (!isObject(object)) {
+      return object;
+    }
+    // allows working with `_.reduce` and `_.reduceRight` without using
+    // their `index` and `collection` arguments
+    if (typeof args[2] != 'number') {
+      length = args.length;
+    }
+    if (length > 3 && typeof args[length - 2] == 'function') {
+      var callback = baseCreateCallback(args[--length - 1], args[length--], 2);
+    } else if (length > 2 && typeof args[length - 1] == 'function') {
+      callback = args[--length];
+    }
+    var sources = slice(arguments, 1, length),
+        index = -1,
+        stackA = getArray(),
+        stackB = getArray();
+
+    while (++index < length) {
+      baseMerge(object, sources[index], callback, stackA, stackB);
+    }
+    releaseArray(stackA);
+    releaseArray(stackB);
+    return object;
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * Iterates over elements of a collection, executing the callback for each
+   * element. The callback is bound to `thisArg` and invoked with three arguments;
+   * (value, index|key, collection). Callbacks may exit iteration early by
+   * explicitly returning `false`.
+   *
+   * Note: As with other "Collections" methods, objects with a `length` property
+   * are iterated like arrays. To avoid this behavior `_.forIn` or `_.forOwn`
+   * may be used for object iteration.
+   *
+   * @static
+   * @memberOf _
+   * @alias each
+   * @category Collections
+   * @param {Array|Object|string} collection The collection to iterate over.
+   * @param {Function} [callback=identity] The function called per iteration.
+   * @param {*} [thisArg] The `this` binding of `callback`.
+   * @returns {Array|Object|string} Returns `collection`.
+   * @example
+   *
+   * _([1, 2, 3]).forEach(function(num) { console.log(num); }).join(',');
+   * // => logs each number and returns '1,2,3'
+   *
+   * _.forEach({ 'one': 1, 'two': 2, 'three': 3 }, function(num) { console.log(num); });
+   * // => logs each number and returns the object (property order is not guaranteed across environments)
+   */
+  function forEach(collection, callback, thisArg) {
+    if (callback && typeof thisArg == 'undefined' && isArray(collection)) {
+      var index = -1,
+          length = collection.length;
+
+      while (++index < length) {
+        if (callback(collection[index], index, collection) === false) {
+          break;
+        }
+      }
+    } else {
+      baseEach(collection, callback, thisArg);
+    }
+    return collection;
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * Creates an array with all falsey values removed. The values `false`, `null`,
+   * `0`, `""`, `undefined`, and `NaN` are all falsey.
+   *
+   * @static
+   * @memberOf _
+   * @category Arrays
+   * @param {Array} array The array to compact.
+   * @returns {Array} Returns a new array of filtered values.
+   * @example
+   *
+   * _.compact([0, 1, false, 2, '', 3]);
+   * // => [1, 2, 3]
+   */
+  function compact(array) {
+    var index = -1,
+        length = array ? array.length : 0,
+        result = [];
+
+    while (++index < length) {
+      var value = array[index];
+      if (value) {
+        result.push(value);
+      }
+    }
+    return result;
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * Creates a function that, when called, invokes `func` with the `this`
+   * binding of `thisArg` and prepends any additional `bind` arguments to those
+   * provided to the bound function.
+   *
+   * @static
+   * @memberOf _
+   * @category Functions
+   * @param {Function} func The function to bind.
+   * @param {*} [thisArg] The `this` binding of `func`.
+   * @param {...*} [arg] Arguments to be partially applied.
+   * @returns {Function} Returns the new bound function.
+   * @example
+   *
+   * var func = function(greeting) {
+   *   return greeting + ' ' + this.name;
+   * };
+   *
+   * func = _.bind(func, { 'name': 'fred' }, 'hi');
+   * func();
+   * // => 'hi fred'
+   */
+  function bind(func, thisArg) {
+    return arguments.length > 2
+      ? createWrapper(func, 17, slice(arguments, 2), null, thisArg)
+      : createWrapper(func, 1, null, null, thisArg);
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * This method returns the first argument provided to it.
+   *
+   * @static
+   * @memberOf _
+   * @category Utilities
+   * @param {*} value Any value.
+   * @returns {*} Returns `value`.
+   * @example
+   *
+   * var object = { 'name': 'fred' };
+   * _.identity(object) === object;
+   * // => true
+   */
+  function identity(value) {
+    return value;
+  }
+
+  /**
+   * A no-operation function.
+   *
+   * @static
+   * @memberOf _
+   * @category Utilities
+   * @example
+   *
+   * var object = { 'name': 'fred' };
+   * _.noop(object) === undefined;
+   * // => true
+   */
+  function noop() {
+    // no operation performed
+  }
+
+  /*--------------------------------------------------------------------------*/
+
+  lodash.assign = assign;
+  lodash.bind = bind;
+  lodash.compact = compact;
+  lodash.forEach = forEach;
+  lodash.forIn = forIn;
+  lodash.forOwn = forOwn;
+  lodash.keys = keys;
+  lodash.merge = merge;
+
+  lodash.each = forEach;
+  lodash.extend = assign;
+
+  /*--------------------------------------------------------------------------*/
+
+  // add functions that return unwrapped values when chaining
+  lodash.clone = clone;
+  lodash.identity = identity;
+  lodash.isArguments = isArguments;
+  lodash.isArray = isArray;
+  lodash.isEmpty = isEmpty;
+  lodash.isFunction = isFunction;
+  lodash.isObject = isObject;
+  lodash.isPlainObject = isPlainObject;
+  lodash.isString = isString;
+  lodash.noop = noop;
+
+  /*--------------------------------------------------------------------------*/
+
+  /**
+   * The semantic version number.
+   *
+   * @static
+   * @memberOf _
+   * @type string
+   */
+  lodash.VERSION = '2.4.1';
+
+  /*--------------------------------------------------------------------------*/
+
+  if (freeExports && freeModule) {
+    // in Node.js or RingoJS
+    if (moduleExports) {
+      (freeModule.exports = lodash)._ = lodash;
+    }
+
+  }
+
+}.call(this));
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],101:[function(require,module,exports){
+var geojsonArea = require('geojson-area');
+
+module.exports = rewind;
+
+function rewind(gj, outer) {
+    switch ((gj && gj.type) || null) {
+        case 'FeatureCollection':
+            gj.features = gj.features.map(curryOuter(rewind, outer));
+            return gj;
+        case 'Feature':
+            gj.geometry = rewind(gj.geometry, outer);
+            return gj;
+        case 'Polygon':
+        case 'MultiPolygon':
+            return correct(gj, outer);
+        default:
+            return gj;
+    }
+}
+
+function curryOuter(a, b) {
+    return function(_) { return a(_, b); };
+}
+
+function correct(_, outer) {
+    if (_.type === 'Polygon') {
+        _.coordinates = correctRings(_.coordinates, outer);
+    } else if (_.type === 'MultiPolygon') {
+        _.coordinates = _.coordinates.map(curryOuter(correctRings, outer));
+    }
+    return _;
+}
+
+function correctRings(_, outer) {
+    outer = !!outer;
+    _[0] = wind(_[0], !outer);
+    for (var i = 1; i < _.length; i++) {
+        _[i] = wind(_[i], outer);
+    }
+    return _;
+}
+
+function wind(_, dir) {
+    return cw(_) === dir ? _ : _.reverse();
+}
+
+function cw(_) {
+    return geojsonArea.ring(_) >= 0;
+}
+
+},{"geojson-area":31}],102:[function(require,module,exports){
+module.exports={
+    "building": true,
+    "highway": {
+        "included_values": {
+            "services": true,
+            "rest_area": true,
+            "escape": true
+        }
+    },
+    "natural": {
+        "excluded_values": {
+            "coastline": true,
+            "ridge": true,
+            "arete": true,
+            "tree_row": true
+        }
+    },
+    "landuse": true,
+    "waterway": {
+        "included_values": {
+            "riverbank": true,
+            "dock": true,
+            "boatyard": true,
+            "dam": true
+        }
+    },
+    "amenity": true,
+    "leisure": true,
+    "barrier": {
+        "included_values": {
+            "city_wall": true,
+            "ditch": true,
+            "hedge": true,
+            "retaining_wall": true,
+            "wall": true,
+            "spikes": true
+        }
+    },
+    "railway": {
+        "included_values": {
+            "station": true,
+            "turntable": true,
+            "roundhouse": true,
+            "platform": true
+        }
+    },
+    "area": true,
+    "boundary": true,
+    "man_made": {
+        "excluded_values": {
+            "cutline": true,
+            "embankment": true,
+            "pipeline": true
+        }
+    },
+    "power": {
+        "included_values": {
+            "generator": true,
+            "station": true,
+            "sub_station": true,
+            "transformer": true
+        }
+    },
+    "place": true,
+    "shop": true,
+    "aeroway": {
+        "excluded_values": {
+            "taxiway": true
+        }
+    },
+    "tourism": true,
+    "historic": true,
+    "public_transport": true,
+    "office": true,
+    "building:part": true,
+    "military": true,
+    "ruins": true,
+    "area:highway": true,
+    "craft": true
+}
+},{}],103:[function(require,module,exports){
 (function (process){(function (){
-// .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
-// backported and transplited with Babel, with backwards-compat fixes
+// 'path' module extracted from Node.js v8.11.1 (only the posix part)
+// transplited with Babel
 
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -21161,287 +20643,514 @@ module.exports = ZStream;
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-// resolves . and .. elements in a path array with directory names there
-// must be no slashes, empty elements, or device names (c:\) in the array
-// (so also no leading and trailing slashes - it does not distinguish
-// relative and absolute paths)
-function normalizeArray(parts, allowAboveRoot) {
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = parts.length - 1; i >= 0; i--) {
-    var last = parts[i];
-    if (last === '.') {
-      parts.splice(i, 1);
-    } else if (last === '..') {
-      parts.splice(i, 1);
-      up++;
-    } else if (up) {
-      parts.splice(i, 1);
-      up--;
-    }
-  }
+'use strict';
 
-  // if the path is allowed to go above the root, restore leading ..s
-  if (allowAboveRoot) {
-    for (; up--; up) {
-      parts.unshift('..');
-    }
+function assertPath(path) {
+  if (typeof path !== 'string') {
+    throw new TypeError('Path must be a string. Received ' + JSON.stringify(path));
   }
-
-  return parts;
 }
 
-// path.resolve([from ...], to)
-// posix version
-exports.resolve = function() {
-  var resolvedPath = '',
-      resolvedAbsolute = false;
-
-  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-    var path = (i >= 0) ? arguments[i] : process.cwd();
-
-    // Skip empty and invalid entries
-    if (typeof path !== 'string') {
-      throw new TypeError('Arguments to path.resolve must be strings');
-    } else if (!path) {
-      continue;
-    }
-
-    resolvedPath = path + '/' + resolvedPath;
-    resolvedAbsolute = path.charAt(0) === '/';
-  }
-
-  // At this point the path should be resolved to a full absolute path, but
-  // handle relative paths to be safe (might happen when process.cwd() fails)
-
-  // Normalize the path
-  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
-    return !!p;
-  }), !resolvedAbsolute).join('/');
-
-  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
-};
-
-// path.normalize(path)
-// posix version
-exports.normalize = function(path) {
-  var isAbsolute = exports.isAbsolute(path),
-      trailingSlash = substr(path, -1) === '/';
-
-  // Normalize the path
-  path = normalizeArray(filter(path.split('/'), function(p) {
-    return !!p;
-  }), !isAbsolute).join('/');
-
-  if (!path && !isAbsolute) {
-    path = '.';
-  }
-  if (path && trailingSlash) {
-    path += '/';
-  }
-
-  return (isAbsolute ? '/' : '') + path;
-};
-
-// posix version
-exports.isAbsolute = function(path) {
-  return path.charAt(0) === '/';
-};
-
-// posix version
-exports.join = function() {
-  var paths = Array.prototype.slice.call(arguments, 0);
-  return exports.normalize(filter(paths, function(p, index) {
-    if (typeof p !== 'string') {
-      throw new TypeError('Arguments to path.join must be strings');
-    }
-    return p;
-  }).join('/'));
-};
-
-
-// path.relative(from, to)
-// posix version
-exports.relative = function(from, to) {
-  from = exports.resolve(from).substr(1);
-  to = exports.resolve(to).substr(1);
-
-  function trim(arr) {
-    var start = 0;
-    for (; start < arr.length; start++) {
-      if (arr[start] !== '') break;
-    }
-
-    var end = arr.length - 1;
-    for (; end >= 0; end--) {
-      if (arr[end] !== '') break;
-    }
-
-    if (start > end) return [];
-    return arr.slice(start, end - start + 1);
-  }
-
-  var fromParts = trim(from.split('/'));
-  var toParts = trim(to.split('/'));
-
-  var length = Math.min(fromParts.length, toParts.length);
-  var samePartsLength = length;
-  for (var i = 0; i < length; i++) {
-    if (fromParts[i] !== toParts[i]) {
-      samePartsLength = i;
+// Resolves . and .. elements in a path with directory names
+function normalizeStringPosix(path, allowAboveRoot) {
+  var res = '';
+  var lastSegmentLength = 0;
+  var lastSlash = -1;
+  var dots = 0;
+  var code;
+  for (var i = 0; i <= path.length; ++i) {
+    if (i < path.length)
+      code = path.charCodeAt(i);
+    else if (code === 47 /*/*/)
       break;
-    }
-  }
-
-  var outputParts = [];
-  for (var i = samePartsLength; i < fromParts.length; i++) {
-    outputParts.push('..');
-  }
-
-  outputParts = outputParts.concat(toParts.slice(samePartsLength));
-
-  return outputParts.join('/');
-};
-
-exports.sep = '/';
-exports.delimiter = ':';
-
-exports.dirname = function (path) {
-  if (typeof path !== 'string') path = path + '';
-  if (path.length === 0) return '.';
-  var code = path.charCodeAt(0);
-  var hasRoot = code === 47 /*/*/;
-  var end = -1;
-  var matchedSlash = true;
-  for (var i = path.length - 1; i >= 1; --i) {
-    code = path.charCodeAt(i);
+    else
+      code = 47 /*/*/;
     if (code === 47 /*/*/) {
-        if (!matchedSlash) {
-          end = i;
-          break;
+      if (lastSlash === i - 1 || dots === 1) {
+        // NOOP
+      } else if (lastSlash !== i - 1 && dots === 2) {
+        if (res.length < 2 || lastSegmentLength !== 2 || res.charCodeAt(res.length - 1) !== 46 /*.*/ || res.charCodeAt(res.length - 2) !== 46 /*.*/) {
+          if (res.length > 2) {
+            var lastSlashIndex = res.lastIndexOf('/');
+            if (lastSlashIndex !== res.length - 1) {
+              if (lastSlashIndex === -1) {
+                res = '';
+                lastSegmentLength = 0;
+              } else {
+                res = res.slice(0, lastSlashIndex);
+                lastSegmentLength = res.length - 1 - res.lastIndexOf('/');
+              }
+              lastSlash = i;
+              dots = 0;
+              continue;
+            }
+          } else if (res.length === 2 || res.length === 1) {
+            res = '';
+            lastSegmentLength = 0;
+            lastSlash = i;
+            dots = 0;
+            continue;
+          }
+        }
+        if (allowAboveRoot) {
+          if (res.length > 0)
+            res += '/..';
+          else
+            res = '..';
+          lastSegmentLength = 2;
         }
       } else {
-      // We saw the first non-path separator
-      matchedSlash = false;
+        if (res.length > 0)
+          res += '/' + path.slice(lastSlash + 1, i);
+        else
+          res = path.slice(lastSlash + 1, i);
+        lastSegmentLength = i - lastSlash - 1;
+      }
+      lastSlash = i;
+      dots = 0;
+    } else if (code === 46 /*.*/ && dots !== -1) {
+      ++dots;
+    } else {
+      dots = -1;
     }
   }
-
-  if (end === -1) return hasRoot ? '/' : '.';
-  if (hasRoot && end === 1) {
-    // return '//';
-    // Backwards-compat fix:
-    return '/';
-  }
-  return path.slice(0, end);
-};
-
-function basename(path) {
-  if (typeof path !== 'string') path = path + '';
-
-  var start = 0;
-  var end = -1;
-  var matchedSlash = true;
-  var i;
-
-  for (i = path.length - 1; i >= 0; --i) {
-    if (path.charCodeAt(i) === 47 /*/*/) {
-        // If we reached a path separator that was not part of a set of path
-        // separators at the end of the string, stop now
-        if (!matchedSlash) {
-          start = i + 1;
-          break;
-        }
-      } else if (end === -1) {
-      // We saw the first non-path separator, mark this as the end of our
-      // path component
-      matchedSlash = false;
-      end = i + 1;
-    }
-  }
-
-  if (end === -1) return '';
-  return path.slice(start, end);
+  return res;
 }
 
-// Uses a mixed approach for backwards-compatibility, as ext behavior changed
-// in new Node.js versions, so only basename() above is backported here
-exports.basename = function (path, ext) {
-  var f = basename(path);
-  if (ext && f.substr(-1 * ext.length) === ext) {
-    f = f.substr(0, f.length - ext.length);
+function _format(sep, pathObject) {
+  var dir = pathObject.dir || pathObject.root;
+  var base = pathObject.base || (pathObject.name || '') + (pathObject.ext || '');
+  if (!dir) {
+    return base;
   }
-  return f;
-};
+  if (dir === pathObject.root) {
+    return dir + base;
+  }
+  return dir + sep + base;
+}
 
-exports.extname = function (path) {
-  if (typeof path !== 'string') path = path + '';
-  var startDot = -1;
-  var startPart = 0;
-  var end = -1;
-  var matchedSlash = true;
-  // Track the state of characters (if any) we see before our first dot and
-  // after any path separator we find
-  var preDotState = 0;
-  for (var i = path.length - 1; i >= 0; --i) {
-    var code = path.charCodeAt(i);
-    if (code === 47 /*/*/) {
-        // If we reached a path separator that was not part of a set of path
-        // separators at the end of the string, stop now
-        if (!matchedSlash) {
-          startPart = i + 1;
-          break;
-        }
+var posix = {
+  // path.resolve([from ...], to)
+  resolve: function resolve() {
+    var resolvedPath = '';
+    var resolvedAbsolute = false;
+    var cwd;
+
+    for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+      var path;
+      if (i >= 0)
+        path = arguments[i];
+      else {
+        if (cwd === undefined)
+          cwd = process.cwd();
+        path = cwd;
+      }
+
+      assertPath(path);
+
+      // Skip empty entries
+      if (path.length === 0) {
         continue;
       }
-    if (end === -1) {
-      // We saw the first non-path separator, mark this as the end of our
-      // extension
-      matchedSlash = false;
-      end = i + 1;
-    }
-    if (code === 46 /*.*/) {
-        // If this is our first dot, mark it as the start of our extension
-        if (startDot === -1)
-          startDot = i;
-        else if (preDotState !== 1)
-          preDotState = 1;
-    } else if (startDot !== -1) {
-      // We saw a non-dot and non-path separator before our dot, so we should
-      // have a good chance at having a non-empty extension
-      preDotState = -1;
-    }
-  }
 
-  if (startDot === -1 || end === -1 ||
-      // We saw a non-dot character immediately before the dot
-      preDotState === 0 ||
-      // The (right-most) trimmed path component is exactly '..'
-      preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
-    return '';
-  }
-  return path.slice(startDot, end);
+      resolvedPath = path + '/' + resolvedPath;
+      resolvedAbsolute = path.charCodeAt(0) === 47 /*/*/;
+    }
+
+    // At this point the path should be resolved to a full absolute path, but
+    // handle relative paths to be safe (might happen when process.cwd() fails)
+
+    // Normalize the path
+    resolvedPath = normalizeStringPosix(resolvedPath, !resolvedAbsolute);
+
+    if (resolvedAbsolute) {
+      if (resolvedPath.length > 0)
+        return '/' + resolvedPath;
+      else
+        return '/';
+    } else if (resolvedPath.length > 0) {
+      return resolvedPath;
+    } else {
+      return '.';
+    }
+  },
+
+  normalize: function normalize(path) {
+    assertPath(path);
+
+    if (path.length === 0) return '.';
+
+    var isAbsolute = path.charCodeAt(0) === 47 /*/*/;
+    var trailingSeparator = path.charCodeAt(path.length - 1) === 47 /*/*/;
+
+    // Normalize the path
+    path = normalizeStringPosix(path, !isAbsolute);
+
+    if (path.length === 0 && !isAbsolute) path = '.';
+    if (path.length > 0 && trailingSeparator) path += '/';
+
+    if (isAbsolute) return '/' + path;
+    return path;
+  },
+
+  isAbsolute: function isAbsolute(path) {
+    assertPath(path);
+    return path.length > 0 && path.charCodeAt(0) === 47 /*/*/;
+  },
+
+  join: function join() {
+    if (arguments.length === 0)
+      return '.';
+    var joined;
+    for (var i = 0; i < arguments.length; ++i) {
+      var arg = arguments[i];
+      assertPath(arg);
+      if (arg.length > 0) {
+        if (joined === undefined)
+          joined = arg;
+        else
+          joined += '/' + arg;
+      }
+    }
+    if (joined === undefined)
+      return '.';
+    return posix.normalize(joined);
+  },
+
+  relative: function relative(from, to) {
+    assertPath(from);
+    assertPath(to);
+
+    if (from === to) return '';
+
+    from = posix.resolve(from);
+    to = posix.resolve(to);
+
+    if (from === to) return '';
+
+    // Trim any leading backslashes
+    var fromStart = 1;
+    for (; fromStart < from.length; ++fromStart) {
+      if (from.charCodeAt(fromStart) !== 47 /*/*/)
+        break;
+    }
+    var fromEnd = from.length;
+    var fromLen = fromEnd - fromStart;
+
+    // Trim any leading backslashes
+    var toStart = 1;
+    for (; toStart < to.length; ++toStart) {
+      if (to.charCodeAt(toStart) !== 47 /*/*/)
+        break;
+    }
+    var toEnd = to.length;
+    var toLen = toEnd - toStart;
+
+    // Compare paths to find the longest common path from root
+    var length = fromLen < toLen ? fromLen : toLen;
+    var lastCommonSep = -1;
+    var i = 0;
+    for (; i <= length; ++i) {
+      if (i === length) {
+        if (toLen > length) {
+          if (to.charCodeAt(toStart + i) === 47 /*/*/) {
+            // We get here if `from` is the exact base path for `to`.
+            // For example: from='/foo/bar'; to='/foo/bar/baz'
+            return to.slice(toStart + i + 1);
+          } else if (i === 0) {
+            // We get here if `from` is the root
+            // For example: from='/'; to='/foo'
+            return to.slice(toStart + i);
+          }
+        } else if (fromLen > length) {
+          if (from.charCodeAt(fromStart + i) === 47 /*/*/) {
+            // We get here if `to` is the exact base path for `from`.
+            // For example: from='/foo/bar/baz'; to='/foo/bar'
+            lastCommonSep = i;
+          } else if (i === 0) {
+            // We get here if `to` is the root.
+            // For example: from='/foo'; to='/'
+            lastCommonSep = 0;
+          }
+        }
+        break;
+      }
+      var fromCode = from.charCodeAt(fromStart + i);
+      var toCode = to.charCodeAt(toStart + i);
+      if (fromCode !== toCode)
+        break;
+      else if (fromCode === 47 /*/*/)
+        lastCommonSep = i;
+    }
+
+    var out = '';
+    // Generate the relative path based on the path difference between `to`
+    // and `from`
+    for (i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i) {
+      if (i === fromEnd || from.charCodeAt(i) === 47 /*/*/) {
+        if (out.length === 0)
+          out += '..';
+        else
+          out += '/..';
+      }
+    }
+
+    // Lastly, append the rest of the destination (`to`) path that comes after
+    // the common path parts
+    if (out.length > 0)
+      return out + to.slice(toStart + lastCommonSep);
+    else {
+      toStart += lastCommonSep;
+      if (to.charCodeAt(toStart) === 47 /*/*/)
+        ++toStart;
+      return to.slice(toStart);
+    }
+  },
+
+  _makeLong: function _makeLong(path) {
+    return path;
+  },
+
+  dirname: function dirname(path) {
+    assertPath(path);
+    if (path.length === 0) return '.';
+    var code = path.charCodeAt(0);
+    var hasRoot = code === 47 /*/*/;
+    var end = -1;
+    var matchedSlash = true;
+    for (var i = path.length - 1; i >= 1; --i) {
+      code = path.charCodeAt(i);
+      if (code === 47 /*/*/) {
+          if (!matchedSlash) {
+            end = i;
+            break;
+          }
+        } else {
+        // We saw the first non-path separator
+        matchedSlash = false;
+      }
+    }
+
+    if (end === -1) return hasRoot ? '/' : '.';
+    if (hasRoot && end === 1) return '//';
+    return path.slice(0, end);
+  },
+
+  basename: function basename(path, ext) {
+    if (ext !== undefined && typeof ext !== 'string') throw new TypeError('"ext" argument must be a string');
+    assertPath(path);
+
+    var start = 0;
+    var end = -1;
+    var matchedSlash = true;
+    var i;
+
+    if (ext !== undefined && ext.length > 0 && ext.length <= path.length) {
+      if (ext.length === path.length && ext === path) return '';
+      var extIdx = ext.length - 1;
+      var firstNonSlashEnd = -1;
+      for (i = path.length - 1; i >= 0; --i) {
+        var code = path.charCodeAt(i);
+        if (code === 47 /*/*/) {
+            // If we reached a path separator that was not part of a set of path
+            // separators at the end of the string, stop now
+            if (!matchedSlash) {
+              start = i + 1;
+              break;
+            }
+          } else {
+          if (firstNonSlashEnd === -1) {
+            // We saw the first non-path separator, remember this index in case
+            // we need it if the extension ends up not matching
+            matchedSlash = false;
+            firstNonSlashEnd = i + 1;
+          }
+          if (extIdx >= 0) {
+            // Try to match the explicit extension
+            if (code === ext.charCodeAt(extIdx)) {
+              if (--extIdx === -1) {
+                // We matched the extension, so mark this as the end of our path
+                // component
+                end = i;
+              }
+            } else {
+              // Extension does not match, so our result is the entire path
+              // component
+              extIdx = -1;
+              end = firstNonSlashEnd;
+            }
+          }
+        }
+      }
+
+      if (start === end) end = firstNonSlashEnd;else if (end === -1) end = path.length;
+      return path.slice(start, end);
+    } else {
+      for (i = path.length - 1; i >= 0; --i) {
+        if (path.charCodeAt(i) === 47 /*/*/) {
+            // If we reached a path separator that was not part of a set of path
+            // separators at the end of the string, stop now
+            if (!matchedSlash) {
+              start = i + 1;
+              break;
+            }
+          } else if (end === -1) {
+          // We saw the first non-path separator, mark this as the end of our
+          // path component
+          matchedSlash = false;
+          end = i + 1;
+        }
+      }
+
+      if (end === -1) return '';
+      return path.slice(start, end);
+    }
+  },
+
+  extname: function extname(path) {
+    assertPath(path);
+    var startDot = -1;
+    var startPart = 0;
+    var end = -1;
+    var matchedSlash = true;
+    // Track the state of characters (if any) we see before our first dot and
+    // after any path separator we find
+    var preDotState = 0;
+    for (var i = path.length - 1; i >= 0; --i) {
+      var code = path.charCodeAt(i);
+      if (code === 47 /*/*/) {
+          // If we reached a path separator that was not part of a set of path
+          // separators at the end of the string, stop now
+          if (!matchedSlash) {
+            startPart = i + 1;
+            break;
+          }
+          continue;
+        }
+      if (end === -1) {
+        // We saw the first non-path separator, mark this as the end of our
+        // extension
+        matchedSlash = false;
+        end = i + 1;
+      }
+      if (code === 46 /*.*/) {
+          // If this is our first dot, mark it as the start of our extension
+          if (startDot === -1)
+            startDot = i;
+          else if (preDotState !== 1)
+            preDotState = 1;
+      } else if (startDot !== -1) {
+        // We saw a non-dot and non-path separator before our dot, so we should
+        // have a good chance at having a non-empty extension
+        preDotState = -1;
+      }
+    }
+
+    if (startDot === -1 || end === -1 ||
+        // We saw a non-dot character immediately before the dot
+        preDotState === 0 ||
+        // The (right-most) trimmed path component is exactly '..'
+        preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+      return '';
+    }
+    return path.slice(startDot, end);
+  },
+
+  format: function format(pathObject) {
+    if (pathObject === null || typeof pathObject !== 'object') {
+      throw new TypeError('The "pathObject" argument must be of type Object. Received type ' + typeof pathObject);
+    }
+    return _format('/', pathObject);
+  },
+
+  parse: function parse(path) {
+    assertPath(path);
+
+    var ret = { root: '', dir: '', base: '', ext: '', name: '' };
+    if (path.length === 0) return ret;
+    var code = path.charCodeAt(0);
+    var isAbsolute = code === 47 /*/*/;
+    var start;
+    if (isAbsolute) {
+      ret.root = '/';
+      start = 1;
+    } else {
+      start = 0;
+    }
+    var startDot = -1;
+    var startPart = 0;
+    var end = -1;
+    var matchedSlash = true;
+    var i = path.length - 1;
+
+    // Track the state of characters (if any) we see before our first dot and
+    // after any path separator we find
+    var preDotState = 0;
+
+    // Get non-dir info
+    for (; i >= start; --i) {
+      code = path.charCodeAt(i);
+      if (code === 47 /*/*/) {
+          // If we reached a path separator that was not part of a set of path
+          // separators at the end of the string, stop now
+          if (!matchedSlash) {
+            startPart = i + 1;
+            break;
+          }
+          continue;
+        }
+      if (end === -1) {
+        // We saw the first non-path separator, mark this as the end of our
+        // extension
+        matchedSlash = false;
+        end = i + 1;
+      }
+      if (code === 46 /*.*/) {
+          // If this is our first dot, mark it as the start of our extension
+          if (startDot === -1) startDot = i;else if (preDotState !== 1) preDotState = 1;
+        } else if (startDot !== -1) {
+        // We saw a non-dot and non-path separator before our dot, so we should
+        // have a good chance at having a non-empty extension
+        preDotState = -1;
+      }
+    }
+
+    if (startDot === -1 || end === -1 ||
+    // We saw a non-dot character immediately before the dot
+    preDotState === 0 ||
+    // The (right-most) trimmed path component is exactly '..'
+    preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+      if (end !== -1) {
+        if (startPart === 0 && isAbsolute) ret.base = ret.name = path.slice(1, end);else ret.base = ret.name = path.slice(startPart, end);
+      }
+    } else {
+      if (startPart === 0 && isAbsolute) {
+        ret.name = path.slice(1, startDot);
+        ret.base = path.slice(1, end);
+      } else {
+        ret.name = path.slice(startPart, startDot);
+        ret.base = path.slice(startPart, end);
+      }
+      ret.ext = path.slice(startDot, end);
+    }
+
+    if (startPart > 0) ret.dir = path.slice(0, startPart - 1);else if (isAbsolute) ret.dir = '/';
+
+    return ret;
+  },
+
+  sep: '/',
+  delimiter: ':',
+  win32: null,
+  posix: null
 };
 
-function filter (xs, f) {
-    if (xs.filter) return xs.filter(f);
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        if (f(xs[i], i, xs)) res.push(xs[i]);
-    }
-    return res;
-}
+posix.posix = posix;
 
-// String.prototype.substr - negative index don't work in IE8
-var substr = 'ab'.substr(-1) === 'b'
-    ? function (str, start, len) { return str.substr(start, len) }
-    : function (str, start, len) {
-        if (start < 0) start = str.length + start;
-        return str.substr(start, len);
-    }
-;
+module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":91}],89:[function(require,module,exports){
+},{"_process":106}],104:[function(require,module,exports){
 'use strict';
 
 /**
@@ -21596,7 +21305,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = polyline;
 }
 
-},{}],90:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 module.exports = function (data) {
     var lines = data.split('\n'),
                 isNameLine = true,
@@ -21662,7 +21371,7 @@ module.exports = function (data) {
     return gj;
 };
 
-},{}],91:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -21848,7 +21557,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],92:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 /*
  * Given a querystring, return an object of that querystring's components.
  *
@@ -21881,7 +21590,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],93:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 (function() {
   var slice = [].slice;
 
@@ -21963,7 +21672,7 @@ module.exports.qsString = function(obj, noencode) {
   else this.queue = queue;
 })();
 
-},{}],94:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 module.exports = function(x, dims) {
     if (!dims) dims = 'NSEW';
     if (typeof x !== 'string') return null;
@@ -21977,11 +21686,11 @@ module.exports = function(x, dims) {
         ((m[4] && m[4] === 'S' || m[4] === 'W') ? -1 : 1);
 };
 
-},{}],95:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 module.exports.download = require('./src/download')
 module.exports.write = require('./src/write')
 module.exports.zip = require('./src/zip')
-},{"./src/download":96,"./src/write":104,"./src/zip":105}],96:[function(require,module,exports){
+},{"./src/download":111,"./src/write":119,"./src/zip":120}],111:[function(require,module,exports){
 var zip = require('./zip');
 
 module.exports = function(gj, options) {
@@ -21989,7 +21698,7 @@ module.exports = function(gj, options) {
     location.href = 'data:application/zip;base64,' + content;
 };
 
-},{"./zip":105}],97:[function(require,module,exports){
+},{"./zip":120}],112:[function(require,module,exports){
 module.exports.enlarge = function enlargeExtent(extent, pt) {
     if (pt[0] < extent.xmin) extent.xmin = pt[0];
     if (pt[0] > extent.xmax) extent.xmax = pt[0];
@@ -22015,7 +21724,7 @@ module.exports.blank = function() {
     };
 };
 
-},{}],98:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 var types = require('./types').jstypes;
 
 module.exports.geojson = geojson;
@@ -22045,7 +21754,7 @@ function obj(_) {
     return o;
 }
 
-},{"./types":103}],99:[function(require,module,exports){
+},{"./types":118}],114:[function(require,module,exports){
 module.exports.point = justType('Point', 'POINT');
 module.exports.line = justType('LineString', 'POLYLINE');
 module.exports.polygon = justType('Polygon', 'POLYGON');
@@ -22079,7 +21788,7 @@ function isType(t) {
     return function(f) { return f.geometry.type === t; };
 }
 
-},{}],100:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(coordinates, extent, shpView, shxView) {
@@ -22126,7 +21835,7 @@ module.exports.shpLength = function(coordinates) {
     return coordinates.length * 28;
 };
 
-},{"./extent":97}],101:[function(require,module,exports){
+},{"./extent":112}],116:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
@@ -22206,10 +21915,10 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":97}],102:[function(require,module,exports){
+},{"./extent":112}],117:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
-},{}],103:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 module.exports.geometries = {
     NULL: 0,
     POINT: 1,
@@ -22227,7 +21936,7 @@ module.exports.geometries = {
     MULTIPATCH: 31,
 };
 
-},{}],104:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 var types = require('./types'),
     dbf = require('dbf'),
     prj = require('./prj'),
@@ -22296,7 +22005,7 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":97,"./fields":98,"./points":100,"./poly":101,"./prj":102,"./types":103,"assert":4,"dbf":16}],105:[function(require,module,exports){
+},{"./extent":112,"./fields":113,"./points":115,"./poly":116,"./prj":117,"./types":118,"assert":3,"dbf":18}],120:[function(require,module,exports){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
@@ -22330,7 +22039,7 @@ module.exports = function(gj, options) {
     return zip.generate({compression:'STORE'});
 };
 
-},{"./geojson":99,"./prj":102,"./write":104,"jszip":48}],106:[function(require,module,exports){
+},{"./geojson":114,"./prj":117,"./write":119,"jszip":64}],121:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports.heading = function(from, to) {
@@ -22384,7 +22093,7 @@ function deg(_) {
     return _ * (180 / Math.PI);
 }
 
-},{"wgs84":147}],107:[function(require,module,exports){
+},{"wgs84":162}],122:[function(require,module,exports){
 (function (global){(function (){
 ;(function(win){
 	var store = {},
@@ -22552,7 +22261,7 @@ function deg(_) {
 })(this.window || global);
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],108:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 module.exports.attr = attr;
 module.exports.tagClose = tagClose;
 module.exports.tag = tag;
@@ -22598,7 +22307,7 @@ function encode(_) {
         .replace(/"/g, '&quot;');
 }
 
-},{}],109:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 (function (process){(function (){
 toGeoJSON = (function() {
     'use strict';
@@ -22837,7 +22546,7 @@ toGeoJSON = (function() {
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":91,"xmldom":9}],110:[function(require,module,exports){
+},{"_process":106,"xmldom":10}],125:[function(require,module,exports){
 var strxml = require('strxml'),
     tag = strxml.tag,
     encode = strxml.encode;
@@ -23034,7 +22743,7 @@ function pairs(_) {
     return o;
 }
 
-},{"strxml":108}],111:[function(require,module,exports){
+},{"strxml":123}],126:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -23064,7 +22773,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"topojson","./type":139}],112:[function(require,module,exports){
+},{"../../":"topojson","./type":154}],127:[function(require,module,exports){
 
 // Computes the bounding box of the specified hash of GeoJSON objects.
 module.exports = function(objects) {
@@ -23111,7 +22820,7 @@ module.exports = function(objects) {
   return [x0, y0, x1, y1];
 };
 
-},{}],113:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -23151,7 +22860,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],114:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -23242,7 +22951,7 @@ function clockwisePolygonSystem(ringArea, reverse) {
 
 function noop() {}
 
-},{"../../":"topojson","./coordinate-systems":116,"./type":139}],115:[function(require,module,exports){
+},{"../../":"topojson","./coordinate-systems":131,"./type":154}],130:[function(require,module,exports){
 // Given a hash of GeoJSON objects and an id function, invokes the id function
 // to compute a new id for each object that is a feature. The function is passed
 // the feature and is expected to return the new feature id, or null if the
@@ -23272,13 +22981,13 @@ module.exports = function(objects, id) {
   return objects;
 };
 
-},{}],116:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":113,"./spherical":126}],117:[function(require,module,exports){
+},{"./cartesian":128,"./spherical":141}],132:[function(require,module,exports){
 // Given a TopoJSON topology in absolute (quantized) coordinates,
 // converts to fixed-point delta encoding.
 // This is a destructive operation that modifies the given topology!
@@ -23309,7 +23018,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{}],118:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -23438,7 +23147,7 @@ function preserveNone() {
   return false;
 }
 
-},{"../../":"topojson","./clockwise":114,"./coordinate-systems":116,"./prune":122,"./type":139}],119:[function(require,module,exports){
+},{"../../":"topojson","./clockwise":129,"./coordinate-systems":131,"./prune":137,"./type":154}],134:[function(require,module,exports){
 // Given a hash of GeoJSON objects, replaces Features with geometry objects.
 // This is a destructive operation that modifies the input objects!
 module.exports = function(objects) {
@@ -23557,7 +23266,7 @@ module.exports = function(objects) {
   return objects;
 };
 
-},{}],120:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(topology, Q0, Q1) {
@@ -23605,7 +23314,7 @@ module.exports = function(topology, Q0, Q1) {
   return topology;
 };
 
-},{"./quantize":123}],121:[function(require,module,exports){
+},{"./quantize":138}],136:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(objects, bbox, Q0, Q1) {
@@ -23664,7 +23373,7 @@ module.exports = function(objects, bbox, Q0, Q1) {
   return q.transform;
 };
 
-},{"./quantize":123}],122:[function(require,module,exports){
+},{"./quantize":138}],137:[function(require,module,exports){
 module.exports = function(topology, options) {
   var verbose = false,
       objects = topology.objects,
@@ -23721,7 +23430,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{}],123:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 module.exports = function(dx, dy, kx, ky) {
 
   function quantizePoint(coordinates) {
@@ -23765,7 +23474,7 @@ module.exports = function(dx, dy, kx, ky) {
   };
 };
 
-},{}],124:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(topology, options) {
@@ -23845,7 +23554,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":139}],125:[function(require,module,exports){
+},{"./type":154}],140:[function(require,module,exports){
 var topojson = require("../../"),
     systems = require("./coordinate-systems");
 
@@ -23954,7 +23663,7 @@ module.exports = function(topology, options) {
   return topology;
 };
 
-},{"../../":"topojson","./coordinate-systems":116}],126:[function(require,module,exports){
+},{"../../":"topojson","./coordinate-systems":131}],141:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -24035,7 +23744,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],127:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, transform) {
@@ -24218,7 +23927,7 @@ module.exports = function(objects, transform) {
   }
 };
 
-},{"./type":139}],128:[function(require,module,exports){
+},{"./type":154}],143:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch"),
     systems = require("./coordinate-systems"),
@@ -24331,7 +24040,7 @@ module.exports = function(objects, options) {
   return topology;
 };
 
-},{"./bounds":112,"./compute-id":115,"./coordinate-systems":116,"./delta":117,"./geomify":119,"./post-quantize":120,"./pre-quantize":121,"./stitch":127,"./topology/index":134,"./transform-properties":138,"./type":139}],129:[function(require,module,exports){
+},{"./bounds":127,"./compute-id":130,"./coordinate-systems":131,"./delta":132,"./geomify":134,"./post-quantize":135,"./pre-quantize":136,"./stitch":142,"./topology/index":149,"./transform-properties":153,"./type":154}],144:[function(require,module,exports){
 var join = require("./join");
 
 // Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
@@ -24393,7 +24102,7 @@ function reverse(array, start, end) {
   }
 }
 
-},{"./join":135}],130:[function(require,module,exports){
+},{"./join":150}],145:[function(require,module,exports){
 var join = require("./join"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -24579,7 +24288,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{"./hashmap":132,"./join":135,"./point-equal":136,"./point-hash":137}],131:[function(require,module,exports){
+},{"./hashmap":147,"./join":150,"./point-equal":151,"./point-hash":152}],146:[function(require,module,exports){
 // Extracts the lines and rings from the specified hash of geometry objects.
 //
 // Returns an object with three properties:
@@ -24646,7 +24355,7 @@ module.exports = function(objects) {
   };
 };
 
-},{}],132:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   if (arguments.length === 3) {
     keyType = valueType = Array;
@@ -24721,7 +24430,7 @@ module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   };
 };
 
-},{}],133:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 module.exports = function(size, hash, equal, type, empty) {
   if (arguments.length === 3) {
     type = Array;
@@ -24778,7 +24487,7 @@ module.exports = function(size, hash, equal, type, empty) {
   };
 };
 
-},{}],134:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 var hashmap = require("./hashmap"),
     extract = require("./extract"),
     cut = require("./cut"),
@@ -24848,7 +24557,7 @@ function equalArc(arcA, arcB) {
   return ia === ib && ja === jb;
 }
 
-},{"./cut":129,"./dedup":130,"./extract":131,"./hashmap":132}],135:[function(require,module,exports){
+},{"./cut":144,"./dedup":145,"./extract":146,"./hashmap":147}],150:[function(require,module,exports){
 var hashset = require("./hashset"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -24963,12 +24672,12 @@ module.exports = function(topology) {
   return junctionByPoint;
 };
 
-},{"./hashmap":132,"./hashset":133,"./point-equal":136,"./point-hash":137}],136:[function(require,module,exports){
+},{"./hashmap":147,"./hashset":148,"./point-equal":151,"./point-hash":152}],151:[function(require,module,exports){
 module.exports = function(pointA, pointB) {
   return pointA[0] === pointB[0] && pointA[1] === pointB[1];
 };
 
-},{}],137:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 // TODO if quantized, use simpler Int32 hashing?
 
 var buffer = new ArrayBuffer(16),
@@ -24983,7 +24692,7 @@ module.exports = function(point) {
   return hash & 0x7fffffff;
 };
 
-},{}],138:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 // Given a hash of GeoJSON objects, transforms any properties on features using
 // the specified transform function. The function is invoked for each existing
 // property on the current feature, being passed the new properties hash, the
@@ -25028,7 +24737,7 @@ module.exports = function(objects, propertyTransform) {
   return objects;
 };
 
-},{}],139:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -25122,7 +24831,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],140:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 !function() {
   var topojson = {
     version: "1.6.8",
@@ -25656,7 +25365,7 @@ var typeObjects = {
   else this.topojson = topojson;
 }();
 
-},{}],141:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -25972,7 +25681,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],142:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 module.exports = function(request) {
     var parent = ce('div', 'treeui'),
         onclick = function() { };
@@ -26071,13 +25780,1064 @@ function ae(x, y, z) {
     return x.addEventListener(y, z);
 }
 
-},{}],143:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],144:[function(require,module,exports){
-arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],145:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"./support/isBuffer":144,"_process":91,"dup":7,"inherits":143}],146:[function(require,module,exports){
+},{"dup":5}],159:[function(require,module,exports){
+// Currently in sync with Node.js lib/internal/util/types.js
+// https://github.com/nodejs/node/commit/112cc7c27551254aa2b17098fb774867f05ed0d9
+
+'use strict';
+
+var isArgumentsObject = require('is-arguments');
+var isGeneratorFunction = require('is-generator-function');
+var whichTypedArray = require('which-typed-array');
+var isTypedArray = require('is-typed-array');
+
+function uncurryThis(f) {
+  return f.call.bind(f);
+}
+
+var BigIntSupported = typeof BigInt !== 'undefined';
+var SymbolSupported = typeof Symbol !== 'undefined';
+
+var ObjectToString = uncurryThis(Object.prototype.toString);
+
+var numberValue = uncurryThis(Number.prototype.valueOf);
+var stringValue = uncurryThis(String.prototype.valueOf);
+var booleanValue = uncurryThis(Boolean.prototype.valueOf);
+
+if (BigIntSupported) {
+  var bigIntValue = uncurryThis(BigInt.prototype.valueOf);
+}
+
+if (SymbolSupported) {
+  var symbolValue = uncurryThis(Symbol.prototype.valueOf);
+}
+
+function checkBoxedPrimitive(value, prototypeValueOf) {
+  if (typeof value !== 'object') {
+    return false;
+  }
+  try {
+    prototypeValueOf(value);
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+exports.isArgumentsObject = isArgumentsObject;
+exports.isGeneratorFunction = isGeneratorFunction;
+exports.isTypedArray = isTypedArray;
+
+// Taken from here and modified for better browser support
+// https://github.com/sindresorhus/p-is-promise/blob/cda35a513bda03f977ad5cde3a079d237e82d7ef/index.js
+function isPromise(input) {
+	return (
+		(
+			typeof Promise !== 'undefined' &&
+			input instanceof Promise
+		) ||
+		(
+			input !== null &&
+			typeof input === 'object' &&
+			typeof input.then === 'function' &&
+			typeof input.catch === 'function'
+		)
+	);
+}
+exports.isPromise = isPromise;
+
+function isArrayBufferView(value) {
+  if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView) {
+    return ArrayBuffer.isView(value);
+  }
+
+  return (
+    isTypedArray(value) ||
+    isDataView(value)
+  );
+}
+exports.isArrayBufferView = isArrayBufferView;
+
+
+function isUint8Array(value) {
+  return whichTypedArray(value) === 'Uint8Array';
+}
+exports.isUint8Array = isUint8Array;
+
+function isUint8ClampedArray(value) {
+  return whichTypedArray(value) === 'Uint8ClampedArray';
+}
+exports.isUint8ClampedArray = isUint8ClampedArray;
+
+function isUint16Array(value) {
+  return whichTypedArray(value) === 'Uint16Array';
+}
+exports.isUint16Array = isUint16Array;
+
+function isUint32Array(value) {
+  return whichTypedArray(value) === 'Uint32Array';
+}
+exports.isUint32Array = isUint32Array;
+
+function isInt8Array(value) {
+  return whichTypedArray(value) === 'Int8Array';
+}
+exports.isInt8Array = isInt8Array;
+
+function isInt16Array(value) {
+  return whichTypedArray(value) === 'Int16Array';
+}
+exports.isInt16Array = isInt16Array;
+
+function isInt32Array(value) {
+  return whichTypedArray(value) === 'Int32Array';
+}
+exports.isInt32Array = isInt32Array;
+
+function isFloat32Array(value) {
+  return whichTypedArray(value) === 'Float32Array';
+}
+exports.isFloat32Array = isFloat32Array;
+
+function isFloat64Array(value) {
+  return whichTypedArray(value) === 'Float64Array';
+}
+exports.isFloat64Array = isFloat64Array;
+
+function isBigInt64Array(value) {
+  return whichTypedArray(value) === 'BigInt64Array';
+}
+exports.isBigInt64Array = isBigInt64Array;
+
+function isBigUint64Array(value) {
+  return whichTypedArray(value) === 'BigUint64Array';
+}
+exports.isBigUint64Array = isBigUint64Array;
+
+function isMapToString(value) {
+  return ObjectToString(value) === '[object Map]';
+}
+isMapToString.working = (
+  typeof Map !== 'undefined' &&
+  isMapToString(new Map())
+);
+
+function isMap(value) {
+  if (typeof Map === 'undefined') {
+    return false;
+  }
+
+  return isMapToString.working
+    ? isMapToString(value)
+    : value instanceof Map;
+}
+exports.isMap = isMap;
+
+function isSetToString(value) {
+  return ObjectToString(value) === '[object Set]';
+}
+isSetToString.working = (
+  typeof Set !== 'undefined' &&
+  isSetToString(new Set())
+);
+function isSet(value) {
+  if (typeof Set === 'undefined') {
+    return false;
+  }
+
+  return isSetToString.working
+    ? isSetToString(value)
+    : value instanceof Set;
+}
+exports.isSet = isSet;
+
+function isWeakMapToString(value) {
+  return ObjectToString(value) === '[object WeakMap]';
+}
+isWeakMapToString.working = (
+  typeof WeakMap !== 'undefined' &&
+  isWeakMapToString(new WeakMap())
+);
+function isWeakMap(value) {
+  if (typeof WeakMap === 'undefined') {
+    return false;
+  }
+
+  return isWeakMapToString.working
+    ? isWeakMapToString(value)
+    : value instanceof WeakMap;
+}
+exports.isWeakMap = isWeakMap;
+
+function isWeakSetToString(value) {
+  return ObjectToString(value) === '[object WeakSet]';
+}
+isWeakSetToString.working = (
+  typeof WeakSet !== 'undefined' &&
+  isWeakSetToString(new WeakSet())
+);
+function isWeakSet(value) {
+  return isWeakSetToString(value);
+}
+exports.isWeakSet = isWeakSet;
+
+function isArrayBufferToString(value) {
+  return ObjectToString(value) === '[object ArrayBuffer]';
+}
+isArrayBufferToString.working = (
+  typeof ArrayBuffer !== 'undefined' &&
+  isArrayBufferToString(new ArrayBuffer())
+);
+function isArrayBuffer(value) {
+  if (typeof ArrayBuffer === 'undefined') {
+    return false;
+  }
+
+  return isArrayBufferToString.working
+    ? isArrayBufferToString(value)
+    : value instanceof ArrayBuffer;
+}
+exports.isArrayBuffer = isArrayBuffer;
+
+function isDataViewToString(value) {
+  return ObjectToString(value) === '[object DataView]';
+}
+isDataViewToString.working = (
+  typeof ArrayBuffer !== 'undefined' &&
+  typeof DataView !== 'undefined' &&
+  isDataViewToString(new DataView(new ArrayBuffer(1), 0, 1))
+);
+function isDataView(value) {
+  if (typeof DataView === 'undefined') {
+    return false;
+  }
+
+  return isDataViewToString.working
+    ? isDataViewToString(value)
+    : value instanceof DataView;
+}
+exports.isDataView = isDataView;
+
+// Store a copy of SharedArrayBuffer in case it's deleted elsewhere
+var SharedArrayBufferCopy = typeof SharedArrayBuffer !== 'undefined' ? SharedArrayBuffer : undefined;
+function isSharedArrayBufferToString(value) {
+  return ObjectToString(value) === '[object SharedArrayBuffer]';
+}
+function isSharedArrayBuffer(value) {
+  if (typeof SharedArrayBufferCopy === 'undefined') {
+    return false;
+  }
+
+  if (typeof isSharedArrayBufferToString.working === 'undefined') {
+    isSharedArrayBufferToString.working = isSharedArrayBufferToString(new SharedArrayBufferCopy());
+  }
+
+  return isSharedArrayBufferToString.working
+    ? isSharedArrayBufferToString(value)
+    : value instanceof SharedArrayBufferCopy;
+}
+exports.isSharedArrayBuffer = isSharedArrayBuffer;
+
+function isAsyncFunction(value) {
+  return ObjectToString(value) === '[object AsyncFunction]';
+}
+exports.isAsyncFunction = isAsyncFunction;
+
+function isMapIterator(value) {
+  return ObjectToString(value) === '[object Map Iterator]';
+}
+exports.isMapIterator = isMapIterator;
+
+function isSetIterator(value) {
+  return ObjectToString(value) === '[object Set Iterator]';
+}
+exports.isSetIterator = isSetIterator;
+
+function isGeneratorObject(value) {
+  return ObjectToString(value) === '[object Generator]';
+}
+exports.isGeneratorObject = isGeneratorObject;
+
+function isWebAssemblyCompiledModule(value) {
+  return ObjectToString(value) === '[object WebAssembly.Module]';
+}
+exports.isWebAssemblyCompiledModule = isWebAssemblyCompiledModule;
+
+function isNumberObject(value) {
+  return checkBoxedPrimitive(value, numberValue);
+}
+exports.isNumberObject = isNumberObject;
+
+function isStringObject(value) {
+  return checkBoxedPrimitive(value, stringValue);
+}
+exports.isStringObject = isStringObject;
+
+function isBooleanObject(value) {
+  return checkBoxedPrimitive(value, booleanValue);
+}
+exports.isBooleanObject = isBooleanObject;
+
+function isBigIntObject(value) {
+  return BigIntSupported && checkBoxedPrimitive(value, bigIntValue);
+}
+exports.isBigIntObject = isBigIntObject;
+
+function isSymbolObject(value) {
+  return SymbolSupported && checkBoxedPrimitive(value, symbolValue);
+}
+exports.isSymbolObject = isSymbolObject;
+
+function isBoxedPrimitive(value) {
+  return (
+    isNumberObject(value) ||
+    isStringObject(value) ||
+    isBooleanObject(value) ||
+    isBigIntObject(value) ||
+    isSymbolObject(value)
+  );
+}
+exports.isBoxedPrimitive = isBoxedPrimitive;
+
+function isAnyArrayBuffer(value) {
+  return typeof Uint8Array !== 'undefined' && (
+    isArrayBuffer(value) ||
+    isSharedArrayBuffer(value)
+  );
+}
+exports.isAnyArrayBuffer = isAnyArrayBuffer;
+
+['isProxy', 'isExternal', 'isModuleNamespaceObject'].forEach(function(method) {
+  Object.defineProperty(exports, method, {
+    enumerable: false,
+    value: function() {
+      throw new Error(method + ' is not supported in userland');
+    }
+  });
+});
+
+},{"is-arguments":50,"is-generator-function":53,"is-typed-array":54,"which-typed-array":163}],160:[function(require,module,exports){
+(function (process){(function (){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors ||
+  function getOwnPropertyDescriptors(obj) {
+    var keys = Object.keys(obj);
+    var descriptors = {};
+    for (var i = 0; i < keys.length; i++) {
+      descriptors[keys[i]] = Object.getOwnPropertyDescriptor(obj, keys[i]);
+    }
+    return descriptors;
+  };
+
+var formatRegExp = /%[sdj%]/g;
+exports.format = function(f) {
+  if (!isString(f)) {
+    var objects = [];
+    for (var i = 0; i < arguments.length; i++) {
+      objects.push(inspect(arguments[i]));
+    }
+    return objects.join(' ');
+  }
+
+  var i = 1;
+  var args = arguments;
+  var len = args.length;
+  var str = String(f).replace(formatRegExp, function(x) {
+    if (x === '%%') return '%';
+    if (i >= len) return x;
+    switch (x) {
+      case '%s': return String(args[i++]);
+      case '%d': return Number(args[i++]);
+      case '%j':
+        try {
+          return JSON.stringify(args[i++]);
+        } catch (_) {
+          return '[Circular]';
+        }
+      default:
+        return x;
+    }
+  });
+  for (var x = args[i]; i < len; x = args[++i]) {
+    if (isNull(x) || !isObject(x)) {
+      str += ' ' + x;
+    } else {
+      str += ' ' + inspect(x);
+    }
+  }
+  return str;
+};
+
+
+// Mark that a method should not be used.
+// Returns a modified function which warns once by default.
+// If --no-deprecation is set, then it is a no-op.
+exports.deprecate = function(fn, msg) {
+  if (typeof process !== 'undefined' && process.noDeprecation === true) {
+    return fn;
+  }
+
+  // Allow for deprecating things in the process of starting up.
+  if (typeof process === 'undefined') {
+    return function() {
+      return exports.deprecate(fn, msg).apply(this, arguments);
+    };
+  }
+
+  var warned = false;
+  function deprecated() {
+    if (!warned) {
+      if (process.throwDeprecation) {
+        throw new Error(msg);
+      } else if (process.traceDeprecation) {
+        console.trace(msg);
+      } else {
+        console.error(msg);
+      }
+      warned = true;
+    }
+    return fn.apply(this, arguments);
+  }
+
+  return deprecated;
+};
+
+
+var debugs = {};
+var debugEnvRegex = /^$/;
+
+if (process.env.NODE_DEBUG) {
+  var debugEnv = process.env.NODE_DEBUG;
+  debugEnv = debugEnv.replace(/[|\\{}()[\]^$+?.]/g, '\\$&')
+    .replace(/\*/g, '.*')
+    .replace(/,/g, '$|^')
+    .toUpperCase();
+  debugEnvRegex = new RegExp('^' + debugEnv + '$', 'i');
+}
+exports.debuglog = function(set) {
+  set = set.toUpperCase();
+  if (!debugs[set]) {
+    if (debugEnvRegex.test(set)) {
+      var pid = process.pid;
+      debugs[set] = function() {
+        var msg = exports.format.apply(exports, arguments);
+        console.error('%s %d: %s', set, pid, msg);
+      };
+    } else {
+      debugs[set] = function() {};
+    }
+  }
+  return debugs[set];
+};
+
+
+/**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
+ *
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
+ */
+/* legacy: obj, showHidden, depth, colors*/
+function inspect(obj, opts) {
+  // default options
+  var ctx = {
+    seen: [],
+    stylize: stylizeNoColor
+  };
+  // legacy...
+  if (arguments.length >= 3) ctx.depth = arguments[2];
+  if (arguments.length >= 4) ctx.colors = arguments[3];
+  if (isBoolean(opts)) {
+    // legacy...
+    ctx.showHidden = opts;
+  } else if (opts) {
+    // got an "options" object
+    exports._extend(ctx, opts);
+  }
+  // set default options
+  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+  if (isUndefined(ctx.depth)) ctx.depth = 2;
+  if (isUndefined(ctx.colors)) ctx.colors = false;
+  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+  if (ctx.colors) ctx.stylize = stylizeWithColor;
+  return formatValue(ctx, obj, ctx.depth);
+}
+exports.inspect = inspect;
+
+
+// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+inspect.colors = {
+  'bold' : [1, 22],
+  'italic' : [3, 23],
+  'underline' : [4, 24],
+  'inverse' : [7, 27],
+  'white' : [37, 39],
+  'grey' : [90, 39],
+  'black' : [30, 39],
+  'blue' : [34, 39],
+  'cyan' : [36, 39],
+  'green' : [32, 39],
+  'magenta' : [35, 39],
+  'red' : [31, 39],
+  'yellow' : [33, 39]
+};
+
+// Don't use 'blue' not visible on cmd.exe
+inspect.styles = {
+  'special': 'cyan',
+  'number': 'yellow',
+  'boolean': 'yellow',
+  'undefined': 'grey',
+  'null': 'bold',
+  'string': 'green',
+  'date': 'magenta',
+  // "name": intentionally not styling
+  'regexp': 'red'
+};
+
+
+function stylizeWithColor(str, styleType) {
+  var style = inspect.styles[styleType];
+
+  if (style) {
+    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
+           '\u001b[' + inspect.colors[style][1] + 'm';
+  } else {
+    return str;
+  }
+}
+
+
+function stylizeNoColor(str, styleType) {
+  return str;
+}
+
+
+function arrayToHash(array) {
+  var hash = {};
+
+  array.forEach(function(val, idx) {
+    hash[val] = true;
+  });
+
+  return hash;
+}
+
+
+function formatValue(ctx, value, recurseTimes) {
+  // Provide a hook for user-specified inspect functions.
+  // Check that value is an object with an inspect function on it
+  if (ctx.customInspect &&
+      value &&
+      isFunction(value.inspect) &&
+      // Filter out the util module, it's inspect function is special
+      value.inspect !== exports.inspect &&
+      // Also filter out any prototype objects using the circular check.
+      !(value.constructor && value.constructor.prototype === value)) {
+    var ret = value.inspect(recurseTimes, ctx);
+    if (!isString(ret)) {
+      ret = formatValue(ctx, ret, recurseTimes);
+    }
+    return ret;
+  }
+
+  // Primitive types cannot have properties
+  var primitive = formatPrimitive(ctx, value);
+  if (primitive) {
+    return primitive;
+  }
+
+  // Look up the keys of the object.
+  var keys = Object.keys(value);
+  var visibleKeys = arrayToHash(keys);
+
+  if (ctx.showHidden) {
+    keys = Object.getOwnPropertyNames(value);
+  }
+
+  // IE doesn't make error fields non-enumerable
+  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
+  if (isError(value)
+      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
+    return formatError(value);
+  }
+
+  // Some type of object without properties can be shortcutted.
+  if (keys.length === 0) {
+    if (isFunction(value)) {
+      var name = value.name ? ': ' + value.name : '';
+      return ctx.stylize('[Function' + name + ']', 'special');
+    }
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    }
+    if (isDate(value)) {
+      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+    }
+    if (isError(value)) {
+      return formatError(value);
+    }
+  }
+
+  var base = '', array = false, braces = ['{', '}'];
+
+  // Make Array say that they are Array
+  if (isArray(value)) {
+    array = true;
+    braces = ['[', ']'];
+  }
+
+  // Make functions say that they are functions
+  if (isFunction(value)) {
+    var n = value.name ? ': ' + value.name : '';
+    base = ' [Function' + n + ']';
+  }
+
+  // Make RegExps say that they are RegExps
+  if (isRegExp(value)) {
+    base = ' ' + RegExp.prototype.toString.call(value);
+  }
+
+  // Make dates with properties first say the date
+  if (isDate(value)) {
+    base = ' ' + Date.prototype.toUTCString.call(value);
+  }
+
+  // Make error with message first say the error
+  if (isError(value)) {
+    base = ' ' + formatError(value);
+  }
+
+  if (keys.length === 0 && (!array || value.length == 0)) {
+    return braces[0] + base + braces[1];
+  }
+
+  if (recurseTimes < 0) {
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    } else {
+      return ctx.stylize('[Object]', 'special');
+    }
+  }
+
+  ctx.seen.push(value);
+
+  var output;
+  if (array) {
+    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+  } else {
+    output = keys.map(function(key) {
+      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+    });
+  }
+
+  ctx.seen.pop();
+
+  return reduceToSingleString(output, base, braces);
+}
+
+
+function formatPrimitive(ctx, value) {
+  if (isUndefined(value))
+    return ctx.stylize('undefined', 'undefined');
+  if (isString(value)) {
+    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+                                             .replace(/'/g, "\\'")
+                                             .replace(/\\"/g, '"') + '\'';
+    return ctx.stylize(simple, 'string');
+  }
+  if (isNumber(value))
+    return ctx.stylize('' + value, 'number');
+  if (isBoolean(value))
+    return ctx.stylize('' + value, 'boolean');
+  // For some reason typeof null is "object", so special case here.
+  if (isNull(value))
+    return ctx.stylize('null', 'null');
+}
+
+
+function formatError(value) {
+  return '[' + Error.prototype.toString.call(value) + ']';
+}
+
+
+function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+  var output = [];
+  for (var i = 0, l = value.length; i < l; ++i) {
+    if (hasOwnProperty(value, String(i))) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          String(i), true));
+    } else {
+      output.push('');
+    }
+  }
+  keys.forEach(function(key) {
+    if (!key.match(/^\d+$/)) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          key, true));
+    }
+  });
+  return output;
+}
+
+
+function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+  var name, str, desc;
+  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+  if (desc.get) {
+    if (desc.set) {
+      str = ctx.stylize('[Getter/Setter]', 'special');
+    } else {
+      str = ctx.stylize('[Getter]', 'special');
+    }
+  } else {
+    if (desc.set) {
+      str = ctx.stylize('[Setter]', 'special');
+    }
+  }
+  if (!hasOwnProperty(visibleKeys, key)) {
+    name = '[' + key + ']';
+  }
+  if (!str) {
+    if (ctx.seen.indexOf(desc.value) < 0) {
+      if (isNull(recurseTimes)) {
+        str = formatValue(ctx, desc.value, null);
+      } else {
+        str = formatValue(ctx, desc.value, recurseTimes - 1);
+      }
+      if (str.indexOf('\n') > -1) {
+        if (array) {
+          str = str.split('\n').map(function(line) {
+            return '  ' + line;
+          }).join('\n').substr(2);
+        } else {
+          str = '\n' + str.split('\n').map(function(line) {
+            return '   ' + line;
+          }).join('\n');
+        }
+      }
+    } else {
+      str = ctx.stylize('[Circular]', 'special');
+    }
+  }
+  if (isUndefined(name)) {
+    if (array && key.match(/^\d+$/)) {
+      return str;
+    }
+    name = JSON.stringify('' + key);
+    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+      name = name.substr(1, name.length - 2);
+      name = ctx.stylize(name, 'name');
+    } else {
+      name = name.replace(/'/g, "\\'")
+                 .replace(/\\"/g, '"')
+                 .replace(/(^"|"$)/g, "'");
+      name = ctx.stylize(name, 'string');
+    }
+  }
+
+  return name + ': ' + str;
+}
+
+
+function reduceToSingleString(output, base, braces) {
+  var numLinesEst = 0;
+  var length = output.reduce(function(prev, cur) {
+    numLinesEst++;
+    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+  }, 0);
+
+  if (length > 60) {
+    return braces[0] +
+           (base === '' ? '' : base + '\n ') +
+           ' ' +
+           output.join(',\n  ') +
+           ' ' +
+           braces[1];
+  }
+
+  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+}
+
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+exports.types = require('./support/types');
+
+function isArray(ar) {
+  return Array.isArray(ar);
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+exports.types.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+exports.types.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) &&
+      (objectToString(e) === '[object Error]' || e instanceof Error);
+}
+exports.isError = isError;
+exports.types.isNativeError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+exports.isBuffer = require('./support/isBuffer');
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+              'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()),
+              pad(d.getMinutes()),
+              pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
+
+
+// log is just a thin wrapper to console.log that prepends a timestamp
+exports.log = function() {
+  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
+};
+
+
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
+ *
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
+ */
+exports.inherits = require('inherits');
+
+exports._extend = function(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || !isObject(add)) return origin;
+
+  var keys = Object.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+};
+
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+var kCustomPromisifiedSymbol = typeof Symbol !== 'undefined' ? Symbol('util.promisify.custom') : undefined;
+
+exports.promisify = function promisify(original) {
+  if (typeof original !== 'function')
+    throw new TypeError('The "original" argument must be of type Function');
+
+  if (kCustomPromisifiedSymbol && original[kCustomPromisifiedSymbol]) {
+    var fn = original[kCustomPromisifiedSymbol];
+    if (typeof fn !== 'function') {
+      throw new TypeError('The "util.promisify.custom" argument must be of type Function');
+    }
+    Object.defineProperty(fn, kCustomPromisifiedSymbol, {
+      value: fn, enumerable: false, writable: false, configurable: true
+    });
+    return fn;
+  }
+
+  function fn() {
+    var promiseResolve, promiseReject;
+    var promise = new Promise(function (resolve, reject) {
+      promiseResolve = resolve;
+      promiseReject = reject;
+    });
+
+    var args = [];
+    for (var i = 0; i < arguments.length; i++) {
+      args.push(arguments[i]);
+    }
+    args.push(function (err, value) {
+      if (err) {
+        promiseReject(err);
+      } else {
+        promiseResolve(value);
+      }
+    });
+
+    try {
+      original.apply(this, args);
+    } catch (err) {
+      promiseReject(err);
+    }
+
+    return promise;
+  }
+
+  Object.setPrototypeOf(fn, Object.getPrototypeOf(original));
+
+  if (kCustomPromisifiedSymbol) Object.defineProperty(fn, kCustomPromisifiedSymbol, {
+    value: fn, enumerable: false, writable: false, configurable: true
+  });
+  return Object.defineProperties(
+    fn,
+    getOwnPropertyDescriptors(original)
+  );
+}
+
+exports.promisify.custom = kCustomPromisifiedSymbol
+
+function callbackifyOnRejected(reason, cb) {
+  // `!reason` guard inspired by bluebird (Ref: https://goo.gl/t5IS6M).
+  // Because `null` is a special error value in callbacks which means "no error
+  // occurred", we error-wrap so the callback consumer can distinguish between
+  // "the promise rejected with null" or "the promise fulfilled with undefined".
+  if (!reason) {
+    var newReason = new Error('Promise was rejected with a falsy value');
+    newReason.reason = reason;
+    reason = newReason;
+  }
+  return cb(reason);
+}
+
+function callbackify(original) {
+  if (typeof original !== 'function') {
+    throw new TypeError('The "original" argument must be of type Function');
+  }
+
+  // We DO NOT return the promise as it gives the user a false sense that
+  // the promise is actually somehow related to the callback's execution
+  // and that the callback throwing will reject the promise.
+  function callbackified() {
+    var args = [];
+    for (var i = 0; i < arguments.length; i++) {
+      args.push(arguments[i]);
+    }
+
+    var maybeCb = args.pop();
+    if (typeof maybeCb !== 'function') {
+      throw new TypeError('The last argument must be of type Function');
+    }
+    var self = this;
+    var cb = function() {
+      return maybeCb.apply(self, arguments);
+    };
+    // In true node style we process the callback on `nextTick` with all the
+    // implications (stack, `uncaughtException`, `async_hooks`)
+    original.apply(this, args)
+      .then(function(ret) { process.nextTick(cb.bind(null, null, ret)) },
+            function(rej) { process.nextTick(callbackifyOnRejected.bind(null, rej, cb)) });
+  }
+
+  Object.setPrototypeOf(callbackified, Object.getPrototypeOf(original));
+  Object.defineProperties(callbackified,
+                          getOwnPropertyDescriptors(original));
+  return callbackified;
+}
+exports.callbackify = callbackify;
+
+}).call(this)}).call(this,require('_process'))
+},{"./support/isBuffer":158,"./support/types":159,"_process":106,"inherits":49}],161:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -26328,12 +27088,71 @@ function stringify(gj) {
     }
 }
 
-},{}],147:[function(require,module,exports){
+},{}],162:[function(require,module,exports){
 module.exports.RADIUS = 6378137;
 module.exports.FLATTENING = 1/298.257223563;
 module.exports.POLAR_RADIUS = 6356752.3142;
 
-},{}],148:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
+(function (global){(function (){
+'use strict';
+
+var forEach = require('for-each');
+var availableTypedArrays = require('available-typed-arrays');
+var callBound = require('call-bind/callBound');
+
+var $toString = callBound('Object.prototype.toString');
+var hasToStringTag = require('has-tostringtag/shams')();
+
+var g = typeof globalThis === 'undefined' ? global : globalThis;
+var typedArrays = availableTypedArrays();
+
+var $slice = callBound('String.prototype.slice');
+var toStrTags = {};
+var gOPD = require('es-abstract/helpers/getOwnPropertyDescriptor');
+var getPrototypeOf = Object.getPrototypeOf; // require('getprototypeof');
+if (hasToStringTag && gOPD && getPrototypeOf) {
+	forEach(typedArrays, function (typedArray) {
+		if (typeof g[typedArray] === 'function') {
+			var arr = new g[typedArray]();
+			if (Symbol.toStringTag in arr) {
+				var proto = getPrototypeOf(arr);
+				var descriptor = gOPD(proto, Symbol.toStringTag);
+				if (!descriptor) {
+					var superProto = getPrototypeOf(proto);
+					descriptor = gOPD(superProto, Symbol.toStringTag);
+				}
+				toStrTags[typedArray] = descriptor.get;
+			}
+		}
+	});
+}
+
+var tryTypedArrays = function tryAllTypedArrays(value) {
+	var foundName = false;
+	forEach(toStrTags, function (getter, typedArray) {
+		if (!foundName) {
+			try {
+				var name = getter.call(value);
+				if (name === typedArray) {
+					foundName = name;
+				}
+			} catch (e) {}
+		}
+	});
+	return foundName;
+};
+
+var isTypedArray = require('is-typed-array');
+
+module.exports = function whichTypedArray(value) {
+	if (!isTypedArray(value)) { return false; }
+	if (!hasToStringTag || !(Symbol.toStringTag in value)) { return $slice($toString(value), 8, -1); }
+	return tryTypedArrays(value);
+};
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"available-typed-arrays":7,"call-bind/callBound":13,"es-abstract/helpers/getOwnPropertyDescriptor":24,"for-each":28,"has-tostringtag/shams":46,"is-typed-array":54}],164:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryReader;
 
@@ -26384,7 +27203,7 @@ BinaryReader.prototype.readVarInt = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":11}],149:[function(require,module,exports){
+},{"buffer":12}],165:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryWriter;
 
@@ -26453,7 +27272,7 @@ BinaryWriter.prototype.ensureSize = function (size) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":11}],150:[function(require,module,exports){
+},{"buffer":12}],166:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = Geometry;
 
@@ -26841,7 +27660,7 @@ Geometry.prototype.toGeoJSON = function (options) {
 };
 
 }).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":39,"./binaryreader":148,"./binarywriter":149,"./geometrycollection":151,"./linestring":152,"./multilinestring":153,"./multipoint":154,"./multipolygon":155,"./point":156,"./polygon":157,"./types":158,"./wktparser":159,"./zigzag.js":161}],151:[function(require,module,exports){
+},{"../../is-buffer/index.js":51,"./binaryreader":164,"./binarywriter":165,"./geometrycollection":167,"./linestring":168,"./multilinestring":169,"./multipoint":170,"./multipolygon":171,"./point":172,"./polygon":173,"./types":174,"./wktparser":175,"./zigzag.js":177}],167:[function(require,module,exports){
 module.exports = GeometryCollection;
 
 var util = require('util');
@@ -27012,7 +27831,7 @@ GeometryCollection.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":149,"./geometry":150,"./types":158,"util":145}],152:[function(require,module,exports){
+},{"./binarywriter":165,"./geometry":166,"./types":174,"util":160}],168:[function(require,module,exports){
 module.exports = LineString;
 
 var util = require('util');
@@ -27192,7 +28011,7 @@ LineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":149,"./geometry":150,"./point":156,"./types":158,"util":145}],153:[function(require,module,exports){
+},{"./binarywriter":165,"./geometry":166,"./point":172,"./types":174,"util":160}],169:[function(require,module,exports){
 module.exports = MultiLineString;
 
 var util = require('util');
@@ -27383,7 +28202,7 @@ MultiLineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":149,"./geometry":150,"./linestring":152,"./point":156,"./types":158,"util":145}],154:[function(require,module,exports){
+},{"./binarywriter":165,"./geometry":166,"./linestring":168,"./point":172,"./types":174,"util":160}],170:[function(require,module,exports){
 module.exports = MultiPoint;
 
 var util = require('util');
@@ -27557,7 +28376,7 @@ MultiPoint.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":149,"./geometry":150,"./point":156,"./types":158,"util":145}],155:[function(require,module,exports){
+},{"./binarywriter":165,"./geometry":166,"./point":172,"./types":174,"util":160}],171:[function(require,module,exports){
 module.exports = MultiPolygon;
 
 var util = require('util');
@@ -27785,7 +28604,7 @@ MultiPolygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":149,"./geometry":150,"./point":156,"./polygon":157,"./types":158,"util":145}],156:[function(require,module,exports){
+},{"./binarywriter":165,"./geometry":166,"./point":172,"./polygon":173,"./types":174,"util":160}],172:[function(require,module,exports){
 module.exports = Point;
 
 var util = require('util');
@@ -28004,7 +28823,7 @@ Point.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":149,"./geometry":150,"./types":158,"./zigzag.js":161,"util":145}],157:[function(require,module,exports){
+},{"./binarywriter":165,"./geometry":166,"./types":174,"./zigzag.js":177,"util":160}],173:[function(require,module,exports){
 module.exports = Polygon;
 
 var util = require('util');
@@ -28294,7 +29113,7 @@ Polygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":149,"./geometry":150,"./point":156,"./types":158,"util":145}],158:[function(require,module,exports){
+},{"./binarywriter":165,"./geometry":166,"./point":172,"./types":174,"util":160}],174:[function(require,module,exports){
 module.exports = {
     wkt: {
         Point: 'POINT',
@@ -28325,7 +29144,7 @@ module.exports = {
     }
 };
 
-},{}],159:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 module.exports = WktParser;
 
 var Types = require('./types');
@@ -28451,7 +29270,7 @@ WktParser.prototype.skipWhitespaces = function () {
         this.position++;
 };
 
-},{"./point":156,"./types":158}],160:[function(require,module,exports){
+},{"./point":172,"./types":174}],176:[function(require,module,exports){
 exports.Types = require('./types');
 exports.Geometry = require('./geometry');
 exports.Point = require('./point');
@@ -28461,7 +29280,7 @@ exports.MultiPoint = require('./multipoint');
 exports.MultiLineString = require('./multilinestring');
 exports.MultiPolygon = require('./multipolygon');
 exports.GeometryCollection = require('./geometrycollection');
-},{"./geometry":150,"./geometrycollection":151,"./linestring":152,"./multilinestring":153,"./multipoint":154,"./multipolygon":155,"./point":156,"./polygon":157,"./types":158}],161:[function(require,module,exports){
+},{"./geometry":166,"./geometrycollection":167,"./linestring":168,"./multilinestring":169,"./multipoint":170,"./multipolygon":171,"./point":172,"./polygon":173,"./types":174}],177:[function(require,module,exports){
 module.exports = {
     encode: function (value) {
         return (value << 1) ^ (value >> 31);
@@ -28471,7 +29290,7 @@ module.exports = {
     }
 };
 
-},{}],162:[function(require,module,exports){
+},{}],178:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -28490,32 +29309,14 @@ function extend() {
     return target
 }
 
-},{}],163:[function(require,module,exports){
+},{}],179:[function(require,module,exports){
 module.exports = function(hostname) {
-    // Settings for geojson.io
-    L.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
-    if (hostname === 'geojson.io') {
-        L.mapbox.config.FORCE_HTTPS = true;
-        return {
-            client_id: '62c753fd0faf18392d85',
-            gatekeeper_url: 'https://geojsonioauth.herokuapp.com'
-        };
-    // Customize these settings for your own development/deployment
-    // version of geojson.io.
-    } else {
-        L.mapbox.config.HTTP_URL = 'http://a.tiles.mapbox.com/v4';
-        L.mapbox.config.HTTPS_URL = 'https://a.tiles.mapbox.com/v4';
-        L.mapbox.config.FORCE_HTTPS = true;
-        L.mapbox.config.REQUIRE_ACCESS_TOKEN = true;
-        return {
-            GithubAPI: null,
-            client_id: 'bb7bbe70bd1f707125bc',
-            gatekeeper_url: 'https://localhostauth.herokuapp.com'
-        };
-    }
+  return {
+    GithubAPI: false
+  };
 };
 
-},{}],164:[function(require,module,exports){
+},{}],180:[function(require,module,exports){
 module.exports = api;
 
 function api(context) {
@@ -28558,384 +29359,386 @@ function api(context) {
     d3.rebind(window.api, context.dispatch, 'on');
 }
 
-},{}],165:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 var clone = require('clone'),
-    xtend = require('xtend'),
-    config = require('../config.js')(location.hostname),
-    source = {
-        gist: require('../source/gist'),
-        github: require('../source/github'),
-        local: require('../source/local')
-    };
+  xtend = require('xtend'),
+  config = require('../config.js')(location.hostname),
+  source = {
+    gist: require('../source/gist'),
+    github: require('../source/github'),
+    local: require('../source/local')
+  };
 
 function _getData() {
-    return {
-        map: {
-            type: 'FeatureCollection',
-            features: []
-        },
-        dirty: false,
-        source: null,
-        meta: null,
-        type: 'local'
-    };
+  return {
+    map: {
+      type: 'FeatureCollection',
+      features: []
+    },
+    dirty: false,
+    source: null,
+    meta: null,
+    type: 'local'
+  };
 }
 
 module.exports = function(context) {
 
-    var _data = _getData();
+  var _data = _getData();
 
-    function mapFile(gist) {
-        var f;
-        var content;
+  function mapFile(gist) {
+    var f;
+    var content;
 
-        for (f in gist.files) {
-            content = gist.files[f].content;
-            if (f.indexOf('.geojson') !== -1 && content) {
-                return f;
-            }
-        }
-
-        for (f in gist.files) {
-            content = gist.files[f].content;
-            if (f.indexOf('.json') !== -1 && content) {
-                return f;
-            }
-        }
+    for (f in gist.files) {
+      content = gist.files[f].content;
+      if (f.indexOf('.geojson') !== -1 && content) {
+        return f;
+      }
     }
 
-    var data = {};
+    for (f in gist.files) {
+      content = gist.files[f].content;
+      if (f.indexOf('.json') !== -1 && content) {
+        return f;
+      }
+    }
+  }
 
-    data.hasFeatures = function() {
-        return !!(_data.map && _data.map.features && _data.map.features.length);
-    };
+  var data = {};
 
-    data.set = function(obj, src) {
-        for (var k in obj) {
-            _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
-        }
-        if (obj.dirty !== false) data.dirty = true;
-        context.dispatch.change({
-            obj: obj,
-            source: src
-        });
-        return data;
-    };
+  data.hasFeatures = function() {
+    return !!(_data.map && _data.map.features && _data.map.features.length);
+  };
 
-    data.clear = function() {
-        data.set(_getData());
-    };
-
-    data.mergeFeatures = function(features, src) {
-        function coerceNum(feature) {
-            var props = feature.properties,
-                keys = Object.keys(props),
-                length = keys.length;
-
-            for (var i = 0; i < length; i++) {
-                var key = keys[i];
-                var value = props[key];
-                feature.properties[key] = losslessNumber(value);
-            }
-
-            return feature;
-        }
-
-        function losslessNumber(x) {
-            var fl = parseFloat(x);
-            if (fl.toString() === x) return fl;
-            else return x;
-        }
-
-        _data.map.features = (_data.map.features || []).concat(features.map(coerceNum));
-        return data.set({ map: _data.map }, src);
-    };
-
-    data.get = function(k) {
-        return _data[k];
-    };
-
-    data.all = function() {
-        return clone(_data, false);
-    };
-
-    data.fetch = function(q, cb) {
-        var type = q.id.split(':')[0];
-
-        switch(type) {
-            case 'gist':
-                var id = q.id.split(':')[1].split('/')[1];
-
-                // From: https://api.github.com/gists/dfa850f66f61ddc58bbf
-                // Gists > 1 MB will have truncated set to true. Request
-                // the raw URL in those cases.
-                source.gist.load(id, context, function(err, d) {
-                    if (err) return cb(err, d);
-
-                    var file = mapFile(d);
-                    // Test for .json or .geojson found
-                    if (typeof file === 'undefined') return cb(err, d);
-
-                    var f = d.files[file];
-                    if (f.truncated === true) {
-                        source.gist.loadRaw(f.raw_url, context, function(err, content) {
-                            if (err) return cb(err);
-                            return cb(err, xtend(d, { file: f.filename, content: JSON.parse(content) }));
-                        });
-                    } else {
-                        return cb(err, xtend(d, { file: f.filename, content: JSON.parse(f.content) }));
-                    }
-                });
-
-                break;
-            case 'github':
-                var url = q.id.split('/');
-                var parts = {
-                    user: url[0].split(':')[1],
-                    repo: url[1],
-                    branch: url[3],
-                    path: (url.slice(4) || []).join('/')
-                };
-
-                source.github.load(parts, context, function(err, meta) {
-                    if (err) return cb(err);
-                    return source.github.loadRaw(parts, meta.sha, context, function(err, file) {
-                        try {
-                            return cb(err, xtend(meta, { content: JSON.parse(file) }));
-                        } catch(e) {
-                            // this was not a github file
-                            location.hash = '';
-                            return cb(e);
-                        }
-                    });
-                });
-
-                break;
-        }
-    };
-
-    data.parse = function(d, browser) {
-        var endpoint = config.GithubAPI || 'https://github.com/';
-        var login,
-            repo,
-            branch,
-            path,
-            chunked,
-            file;
-
-        if (d.files) d.type = 'gist';
-        var type = d.length ? d[d.length - 1].type : d.type;
-        if (d.commit) type = 'commit';
-        switch (type) {
-            case 'commit':
-                data.set({
-                    source: d.content
-                });
-                break;
-            case 'local':
-                data.set({
-                    type: 'local',
-                    map: d.content,
-                    path: d.path
-                });
-                break;
-            case 'blob':
-                login = d[0].login;
-                repo = d[1].name;
-                branch = d[2].name;
-                path = d.slice(3).map(function(p) {
-                    return p.path;
-                }).join('/');
-
-                data.set({
-                    type: 'github',
-                    source: d,
-                    meta: {
-                        login: login,
-                        repo: repo,
-                        branch: branch,
-                        name: d.path
-                    },
-                    path: path,
-                    route: 'github:' + [
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        path
-                    ].join('/'),
-                    url: [
-                        endpoint,
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        path
-                    ].join('/')
-                });
-                if (d.content) data.set({ map: d.content });
-                break;
-            case 'file':
-                chunked = d.html_url.split('/');
-                login = chunked[3];
-                repo = chunked[4];
-                branch = chunked[6];
-
-                data.set({
-                    type: 'github',
-                    source: d,
-                    meta: {
-                        login: login,
-                        repo: repo,
-                        branch: branch,
-                        name: d.name,
-                        sha: d.sha
-                    },
-                    map: d.content,
-                    path: d.path,
-                    route: 'github:' + [
-                        login,
-                        repo,
-                        'blob',
-                        branch,
-                        d.path
-                    ].join('/'),
-                    url: d.html_url
-                });
-                break;
-            case 'gist':
-                login = (d.owner && d.owner.login) || 'anonymous';
-                path = [login, d.id].join('/');
-
-                var name = mapFile(d);
-
-                try {
-                    if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
-                } catch (e) {
-                    console.error(e);
-                }
-                data.set({
-                    type: 'gist',
-                    source: d,
-                    meta: {
-                        login: login,
-                        name: name
-                    },
-                    path: path,
-                    route: 'gist:' + path,
-                    url: d.html_url
-                });
-                break;
-        }
-    };
-
-    data.save = function(cb) {
-        var type = context.data.get('type');
-        if (type === 'github') {
-            source.github.save(context, cb);
-        } else if (type === 'gist') {
-            source.gist.save(context, cb);
-        } else if (type === 'local') {
-            if (context.data.path) {
-                source.local.save(context, cb);
-            } else {
-                source.gist.save(context, cb);
-            }
-        } else {
-            source.gist.save(context, cb);
-        }
-    };
-
+  data.set = function(obj, src) {
+    for (var k in obj) {
+      _data[k] = (typeof obj[k] === 'object') ? clone(obj[k], false) : obj[k];
+    }
+    if (obj.dirty !== false) data.dirty = true;
+    context.dispatch.change({
+      obj: obj,
+      source: src
+    });
     return data;
+  };
+
+  data.clear = function() {
+    data.set(_getData());
+  };
+
+  data.mergeFeatures = function(features, src) {
+    function coerceNum(feature) {
+      var props = feature.properties,
+        keys = Object.keys(props),
+        length = keys.length;
+
+      for (var i = 0; i < length; i++) {
+        var key = keys[i];
+        var value = props[key];
+        feature.properties[key] = losslessNumber(value);
+      }
+
+      return feature;
+    }
+
+    function losslessNumber(x) {
+      var fl = parseFloat(x);
+      if (fl.toString() === x) return fl;
+      else return x;
+    }
+
+    _data.map.features = (_data.map.features || []).concat(features.map(coerceNum));
+    return data.set({ map: _data.map }, src);
+  };
+
+  data.get = function(k) {
+    return _data[k];
+  };
+
+  data.all = function() {
+    return clone(_data, false);
+  };
+
+  data.fetch = function(q, cb) {
+    var type = q.id.split(':')[0];
+
+    switch(type) {
+    case 'gist':
+      var id = q.id.split(':')[1].split('/')[1];
+
+      // From: https://api.github.com/gists/dfa850f66f61ddc58bbf
+      // Gists > 1 MB will have truncated set to true. Request
+      // the raw URL in those cases.
+      source.gist.load(id, context, function(err, d) {
+        if (err) return cb(err, d);
+
+        var file = mapFile(d);
+        // Test for .json or .geojson found
+        if (typeof file === 'undefined') return cb(err, d);
+
+        var f = d.files[file];
+        if (f.truncated === true) {
+          source.gist.loadRaw(f.raw_url, context, function(err, content) {
+            if (err) return cb(err);
+            return cb(err, xtend(d, { file: f.filename, content: JSON.parse(content) }));
+          });
+        } else {
+          return cb(err, xtend(d, { file: f.filename, content: JSON.parse(f.content) }));
+        }
+      });
+
+      break;
+    case 'github':
+      var url = q.id.split('/');
+      var parts = {
+        user: url[0].split(':')[1],
+        repo: url[1],
+        branch: url[3],
+        path: (url.slice(4) || []).join('/')
+      };
+
+      source.github.load(parts, context, function(err, meta) {
+        if (err) return cb(err);
+        return source.github.loadRaw(parts, meta.sha, context, function(err, file) {
+          try {
+            return cb(err, xtend(meta, { content: JSON.parse(file) }));
+          } catch(e) {
+            // this was not a github file
+            history.replaceState('', document.title, window.location.pathname);
+            return cb(e);
+          }
+        });
+      });
+
+      break;
+    }
+  };
+
+  data.parse = function(d, browser) {
+    var endpoint = config.GithubAPI || 'https://github.com/';
+    var login,
+      repo,
+      branch,
+      path,
+      chunked,
+      file;
+
+    if (d.files) d.type = 'gist';
+    var type = d.length ? d[d.length - 1].type : d.type;
+    if (d.commit) type = 'commit';
+    switch (type) {
+    case 'commit':
+      data.set({
+        source: d.content
+      });
+      break;
+    case 'local':
+      data.set({
+        type: 'local',
+        map: d.content,
+        path: d.path
+      });
+      break;
+    case 'blob':
+      login = d[0].login;
+      repo = d[1].name;
+      branch = d[2].name;
+      path = d.slice(3).map(function(p) {
+        return p.path;
+      }).join('/');
+
+      data.set({
+        type: 'github',
+        source: d,
+        meta: {
+          login: login,
+          repo: repo,
+          branch: branch,
+          name: d.path
+        },
+        path: path,
+        route: 'github:' + [
+          login,
+          repo,
+          'blob',
+          branch,
+          path
+        ].join('/'),
+        url: [
+          endpoint,
+          login,
+          repo,
+          'blob',
+          branch,
+          path
+        ].join('/')
+      });
+      if (d.content) data.set({ map: d.content });
+      break;
+    case 'file':
+      chunked = d.html_url.split('/');
+      login = chunked[3];
+      repo = chunked[4];
+      branch = chunked[6];
+
+      data.set({
+        type: 'github',
+        source: d,
+        meta: {
+          login: login,
+          repo: repo,
+          branch: branch,
+          name: d.name,
+          sha: d.sha
+        },
+        map: d.content,
+        path: d.path,
+        route: 'github:' + [
+          login,
+          repo,
+          'blob',
+          branch,
+          d.path
+        ].join('/'),
+        url: d.html_url
+      });
+      break;
+    case 'gist':
+      login = (d.owner && d.owner.login) || 'anonymous';
+      path = [login, d.id].join('/');
+
+      var name = mapFile(d);
+
+      try {
+        if (d.files[name].content) data.set({ map: JSON.parse(d.files[name].content) });
+      } catch (e) {
+        console.error(e);
+      }
+      data.set({
+        type: 'gist',
+        source: d,
+        meta: {
+          login: login,
+          name: name
+        },
+        path: path,
+        route: 'gist:' + path,
+        url: d.html_url
+      });
+      break;
+    }
+  };
+
+  data.save = function(cb) {
+    var type = context.data.get('type');
+    if (type === 'github') {
+      source.github.save(context, cb);
+    } else if (type === 'gist') {
+      source.gist.save(context, cb);
+    } else if (type === 'local') {
+      if (context.data.path) {
+        source.local.save(context, cb);
+      } else {
+        source.gist.save(context, cb);
+      }
+    } else {
+      source.gist.save(context, cb);
+    }
+  };
+
+  return data;
 };
 
-},{"../config.js":163,"../source/gist":182,"../source/github":183,"../source/local":184,"clone":13,"xtend":162}],166:[function(require,module,exports){
+},{"../config.js":179,"../source/gist":197,"../source/github":198,"../source/local":199,"clone":15,"xtend":178}],182:[function(require,module,exports){
 var qs = require('qs-hash'),
-    zoomextent = require('../lib/zoomextent'),
-    flash = require('../ui/flash');
+  zoomextent = require('../lib/zoomextent'),
+  flash = require('../ui/flash');
 
 module.exports = function(context) {
 
-    function success(err, d) {
-        context.container.select('.map').classed('loading', false);
+  function success(err, d) {
+    context.container.select('.map').classed('loading', false);
 
-        var message,
-            url = /(http:\/\/\S*)/g;
+    var message,
+      url = /(http:\/\/\S*)/g;
 
-        if (err) {
-            try {
-                message = err.message || JSON.parse(err.responseText).message
-                    .replace(url, '<a href="$&">$&</a>');
-            } catch(e) {
-                message = 'Sorry, an error occurred.';
-            }
-            return flash(context.container, message);
-        }
-
-        context.data.parse(d);
-
-        if (!qs.stringQs(location.hash.substring(1)).map || mapDefault()) {
-            zoomextent(context);
-        }
+    if (err) {
+      try {
+        message = err.message || JSON.parse(err.responseText).message
+          .replace(url, '<a href="$&">$&</a>');
+      } catch(e) {
+        message = 'Sorry, an error occurred.';
+      }
+      return flash(context.container, message);
     }
 
-    function mapDefault() {
-        return context.map.getZoom() == 2 || context.map.getCenter().equals(new L.LatLng(20, 0));
+    context.data.parse(d);
+
+    if (!qs.stringQs(location.hash.substring(1)).map || mapDefault()) {
+      zoomextent(context);
+    }
+  }
+
+  function mapDefault() {
+    return context.map.getZoom() == 2 || context.map.getCenter().equals(new L.LatLng(20, 0));
+  }
+
+  function inlineJSON(data) {
+    try {
+      context.data.set({
+        map: JSON.parse(data)
+      });
+      history.replaceState('', document.title, window.location.pathname);
+
+      zoomextent(context);
+    } catch(e) {
+      return flash(context.container, 'Could not parse JSON');
+    }
+  }
+
+  function loadUrl(data) {
+    d3.json(data)
+      .header('Accept', 'application/vnd.geo+json')
+      .on('load', onload)
+      .on('error', onerror)
+      .get();
+
+    function onload(d) {
+      context.data.set({ map: d });
+      history.replaceState('', document.title, window.location.pathname);
+      zoomextent(context);
     }
 
-    function inlineJSON(data) {
-        try {
-            context.data.set({
-                map: JSON.parse(data)
-            });
-            location.hash = '';
-            zoomextent(context);
-        } catch(e) {
-            return flash(context.container, 'Could not parse JSON');
-        }
+    function onerror() {
+      return flash(context.container, 'Could not load external file. External files must be served with CORS and be valid GeoJSON.');
     }
+  }
 
-    function loadUrl(data) {
-        d3.json(data)
-            .header('Accept', 'application/vnd.geo+json')
-            .on('load', onload)
-            .on('error', onerror)
-            .get();
+  return function(query) {
+    if (!query.id && !query.data) return;
 
-        function onload(d) {
-            context.data.set({ map: d });
-            location.hash = '';
-            zoomextent(context);
+    var oldRoute = d3.event ? qs.stringQs(d3.event.oldURL.split('#')[1]).id :
+      context.data.get('route');
+
+    if (query.data) {
+      // eslint-disable-next-line
+      var type = query.data.match(/^(data\:[\w\-]+\/[\w\-]+\,?)/);
+      if (type) {
+        if (type[0] == 'data:application/json,') {
+          inlineJSON(query.data.replace(type[0], ''));
+        } else if (type[0] == 'data:text/x-url,') {
+          loadUrl(query.data.replace(type[0], ''));
         }
-
-        function onerror() {
-            return flash(context.container, 'Could not load external file. External files must be served with CORS and be valid GeoJSON.');
-        }
+      }
+    } else if (query.id !== oldRoute) {
+      context.container.select('.map').classed('loading', true);
+      context.data.fetch(query, success);
     }
-
-    return function(query) {
-        if (!query.id && !query.data) return;
-
-        var oldRoute = d3.event ? qs.stringQs(d3.event.oldURL.split('#')[1]).id :
-            context.data.get('route');
-
-        if (query.data) {
-            var type = query.data.match(/^(data\:[\w\-]+\/[\w\-]+\,?)/);
-            if (type) {
-                if (type[0] == 'data:application/json,') {
-                    inlineJSON(query.data.replace(type[0], ''));
-                } else if (type[0] == 'data:text/x-url,') {
-                    loadUrl(query.data.replace(type[0], ''));
-                }
-            }
-        } else if (query.id !== oldRoute) {
-            context.container.select('.map').classed('loading', true);
-            context.data.fetch(query, success);
-        }
-    };
+  };
 };
 
-},{"../lib/zoomextent":178,"../ui/flash":188,"qs-hash":92}],167:[function(require,module,exports){
+},{"../lib/zoomextent":193,"../ui/flash":203,"qs-hash":107}],183:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('qs-hash');
 
@@ -28977,7 +29780,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/zoomextent":178,"qs-hash":92}],168:[function(require,module,exports){
+},{"../lib/zoomextent":193,"qs-hash":107}],184:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -29021,7 +29824,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":163}],169:[function(require,module,exports){
+},{"../config.js":179}],185:[function(require,module,exports){
 var qs = require('qs-hash'),
     xtend = require('xtend');
 
@@ -29088,7 +29891,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"qs-hash":92,"xtend":162}],170:[function(require,module,exports){
+},{"qs-hash":107,"xtend":178}],186:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -29176,7 +29979,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":163}],171:[function(require,module,exports){
+},{"../config.js":179}],187:[function(require,module,exports){
 var ui = require('./ui'),
     map = require('./ui/map'),
     data = require('./core/data'),
@@ -29212,46 +30015,7 @@ function geojsonIO() {
 }
 
 
-},{"./core/api":164,"./core/data":165,"./core/loader":166,"./core/recovery":167,"./core/repo":168,"./core/router":169,"./core/user":170,"./ui":185,"./ui/map":190,"store":107}],172:[function(require,module,exports){
-var qs = require('qs-hash');
-require('leaflet-hash');
-
-L.Hash.prototype.parseHash = function(hash) {
-    var query = qs.stringQs(hash.substring(1));
-    var map = query.map || '';
-    var args = map.split('/');
-    if (args.length == 3) {
-        var zoom = parseInt(args[0], 10),
-            lat = parseFloat(args[1]),
-                lon = parseFloat(args[2]);
-                if (isNaN(zoom) || isNaN(lat) || isNaN(lon)) {
-                    return false;
-                } else {
-                    return {
-                        center: new L.LatLng(lat, lon),
-                        zoom: zoom
-                    };
-                }
-    } else {
-        return false;
-    }
-};
-
-L.Hash.prototype.formatHash = function(map) {
-    var query = qs.stringQs(location.hash.substring(1)),
-        center = map.getCenter(),
-            zoom = map.getZoom(),
-                precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
-
-                query.map = [zoom,
-                    center.lat.toFixed(precision),
-                    center.lng.toFixed(precision)
-                ].join('/');
-
-                return '#' + qs.qsString(query);
-};
-
-},{"leaflet-hash":65,"qs-hash":92}],173:[function(require,module,exports){
+},{"./core/api":180,"./core/data":181,"./core/loader":182,"./core/recovery":183,"./core/repo":184,"./core/router":185,"./core/user":186,"./ui":200,"./ui/map":205,"store":122}],188:[function(require,module,exports){
 (function (Buffer){(function (){
 var escape = require('escape-html'),
     geojsonRandom = require('geojson-random'),
@@ -29346,71 +30110,70 @@ module.exports.wkxString = function(context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../lib/zoomextent":178,"buffer":11,"escape-html":22,"geojson-extent":28,"geojson-flatten":29,"geojson-random":31,"polyline":89,"wkx":160}],174:[function(require,module,exports){
-module.exports = function(context) {
-    return function(e) {
-        var sel = d3.select(e.popup._contentNode);
+},{"../lib/zoomextent":193,"buffer":12,"escape-html":25,"geojson-extent":34,"geojson-flatten":35,"geojson-random":37,"polyline":104,"wkx":176}],189:[function(require,module,exports){
+module.exports = function (context) {
+  return function (e, id) {
+    var sel = d3.select(e.target._content);
 
-        sel.selectAll('.cancel')
-            .on('click', clickClose);
+    sel.selectAll('.cancel').on('click', clickClose);
 
-        sel.selectAll('.save')
-            .on('click', saveFeature);
+    sel.selectAll('.save').on('click', saveFeature);
 
-        sel.selectAll('.add')
-            .on('click', addRow);
+    sel.selectAll('.add').on('click', addRow);
 
-        sel.selectAll('.delete-invert')
-            .on('click', removeFeature);
+    sel.selectAll('.delete-invert').on('click', removeFeature);
 
-        function clickClose() {
-            context.map.closePopup(e.popup);
+    function clickClose() {
+      e.target._onClose();
+    }
+
+    function removeFeature() {
+      const data = context.data.get('map');
+      data.features.splice(id, 1);
+
+      context.data.set({ map: data }, 'popup');
+
+      // hide the popup
+      e.target._onClose();
+    }
+
+    function losslessNumber(x) {
+      var fl = parseFloat(x);
+      if (fl.toString() === x) return fl;
+      else return x;
+    }
+
+    function saveFeature() {
+      var obj = {};
+      var table = sel.select('table.marker-properties');
+      table.selectAll('tr').each(collectRow);
+      function collectRow() {
+        if (d3.select(this).selectAll('input')[0][0].value) {
+          obj[d3.select(this).selectAll('input')[0][0].value] = losslessNumber(
+            d3.select(this).selectAll('input')[0][1].value
+          );
         }
+      }
 
-        function removeFeature() {
-            if (e.popup._source && context.mapLayer.hasLayer(e.popup._source)) {
-                context.mapLayer.removeLayer(e.popup._source);
-                context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
-            }
-        }
+      const data = context.data.get('map');
+      const feature = data.features[id];
+      feature.properties = obj;
+      context.data.set({ map: data }, 'popup');
+      // hide the popup
+      e.target._onClose();
+    }
 
-        function losslessNumber(x) {
-            var fl = parseFloat(x);
-            if (fl.toString() === x) return fl;
-            else return x;
-        }
+    function addRow() {
+      var tr = sel.select('table.marker-properties tbody').append('tr');
 
-        function saveFeature() {
-            var obj = {};
-            var table = sel.select('table.marker-properties');
-            table.selectAll('tr').each(collectRow);
-            function collectRow() {
-                if (d3.select(this).selectAll('input')[0][0].value) {
-                    obj[d3.select(this).selectAll('input')[0][0].value] =
-                        losslessNumber(d3.select(this).selectAll('input')[0][1].value);
-                }
-            }
-            e.popup._source.feature.properties = obj;
-            context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
-            context.map.closePopup(e.popup);
-        }
+      tr.append('th').append('input').attr('type', 'text');
 
-        function addRow() {
-            var tr = sel.select('table.marker-properties tbody')
-                .append('tr');
-
-            tr.append('th')
-                .append('input')
-                .attr('type', 'text');
-
-            tr.append('td')
-                .append('input')
-                .attr('type', 'text');
-        }
-    };
+      tr.append('td').append('input').attr('type', 'text');
+    }
+  };
 };
 
-},{}],175:[function(require,module,exports){
+},{}],190:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     gtfs2geojson = require('gtfs2geojson'),
@@ -29602,19 +30365,21 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":14,"geojson-normalize":30,"gtfs2geojson":36,"osmtogeojson":68,"polytogeojson":90,"togeojson":109,"topojson":"topojson"}],176:[function(require,module,exports){
-module.exports = function(map, feature, bounds) {
-    var zoomLevel;
+},{"csv2geojson":16,"geojson-normalize":36,"gtfs2geojson":42,"osmtogeojson":99,"polytogeojson":105,"togeojson":124,"topojson":"topojson"}],191:[function(require,module,exports){
+module.exports = function (map, feature) {
+  var zoomLevel;
 
-    if (feature instanceof L.Marker) {
-        zoomLevel = bounds.isValid() ? map.getBoundsZoom(bounds) + 2 : 10;
-        map.setView(feature.getLatLng(), zoomLevel);
-    } else if ('getBounds' in feature && feature.getBounds().isValid()) {
-        map.fitBounds(feature.getBounds());
-    }
+  if (feature.geometry.type === 'Point') {
+    map.flyTo({
+      center: feature.geometry.coordinates,
+    });
+  } else {
+    const bounds = turf.bbox(feature);
+    map.fitBounds(bounds, { padding: 60 });
+  }
 };
 
-},{}],177:[function(require,module,exports){
+},{}],192:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -29675,13 +30440,15 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":34}],178:[function(require,module,exports){
+},{"geojsonhint":40}],193:[function(require,module,exports){
 module.exports = function(context) {
-    var bounds = context.mapLayer.getBounds();
-    if (bounds.isValid()) context.map.fitBounds(bounds);
+  var bounds = turf.bbox(context.data.get('map'));
+  context.map.fitBounds(bounds, {
+    padding: 50
+  });
 };
 
-},{}],179:[function(require,module,exports){
+},{}],194:[function(require,module,exports){
 (function (Buffer){(function (){
 
 var marked = require('marked');
@@ -29705,7 +30472,7 @@ module.exports = function(context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":11,"marked":66}],180:[function(require,module,exports){
+},{"buffer":12,"marked":97}],195:[function(require,module,exports){
 var validate = require('../lib/validate'),
     zoomextent = require('../lib/zoomextent'),
     saver = require('../ui/saver.js');
@@ -29770,79 +30537,81 @@ module.exports = function(context) {
     return render;
 };
 
-},{"../lib/validate":177,"../lib/zoomextent":178,"../ui/saver.js":194}],181:[function(require,module,exports){
+},{"../lib/validate":192,"../lib/zoomextent":193,"../ui/saver.js":209}],196:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
-    smartZoom = require('../lib/smartzoom.js');
+  smartZoom = require('../lib/smartzoom.js');
 
-module.exports = function(context) {
-    function render(selection) {
+module.exports = function (context) {
+  function render(selection) {
+    selection.html('');
 
-        selection.html('');
+    function rerender() {
+      var geojson = context.data.get('map');
+      var props;
 
-        function rerender() {
-            var geojson = context.data.get('map');
-            var props;
-
-            if (!geojson || !geojson.geometry &&
-                (!geojson.features || !geojson.features.length)) {
-                selection
-                    .html('')
-                    .append('div')
-                    .attr('class', 'blank-banner center')
-                    .text('no features');
-            } else {
-                props = geojson.geometry ? [geojson.properties] :
-                    geojson.features.map(getProperties);
-                selection.select('.blank-banner').remove();
-                selection
-                    .data([props])
-                    .call(metatable()
-                        .on('change', function(row, i) {
-                            var geojson = context.data.get('map');
-                            if (geojson.geometry) {
-                                geojson.properties = row;
-                            } else {
-                                geojson.features[i].properties = row;
-                            }
-                            context.data.set('map', geojson);
-                        })
-                        .on('rowfocus', function(row, i) {
-                            var bounds = context.mapLayer.getBounds();
-                            var j = 0;
-                            context.mapLayer.eachLayer(function(l) {
-                                if (i === j++) smartZoom(context.map, l, bounds);
-                            });
-                        })
-                    );
-            }
-
-        }
-
-        context.dispatch.on('change.table', function(evt) {
-            rerender();
-        });
-
-        rerender();
-
-        function getProperties(f) { return f.properties; }
-
-        function zoomToMap(p) {
-            var layer;
-            // layers.eachLayer(function(l) {
-            //     if (p == l.feature.properties) layer = l;
-            // });
-            return layer;
-        }
+      if (
+        !geojson ||
+        (!geojson.geometry && (!geojson.features || !geojson.features.length))
+      ) {
+        selection
+          .html('')
+          .append('div')
+          .attr('class', 'blank-banner center')
+          .text('no features');
+      } else {
+        props = geojson.geometry
+          ? [geojson.properties]
+          : geojson.features.map(getProperties);
+        selection.select('.blank-banner').remove();
+        selection.data([props]).call(
+          metatable()
+            .on('change', function (row, i) {
+              var geojson = context.data.get('map');
+              if (geojson.geometry) {
+                geojson.properties = row;
+              } else {
+                geojson.features[i].properties = row;
+              }
+              context.data.set('map', geojson);
+            })
+            .on('rowfocus', function (row, i) {
+              var geojson = context.data.get('map');
+              if (geojson.geometry) {
+              } else {
+                smartZoom(context.map, geojson.features[i]);
+              }
+            })
+        );
+      }
     }
 
-    render.off = function() {
-        context.dispatch.on('change.table', null);
-    };
+    context.dispatch.on('change.table', function (evt) {
+      rerender();
+    });
 
-    return render;
+    rerender();
+
+    function getProperties(f) {
+      return f.properties;
+    }
+
+    function zoomToMap(p) {
+      var layer;
+      // layers.eachLayer(function(l) {
+      //     if (p == l.feature.properties) layer = l;
+      // });
+      return layer;
+    }
+  }
+
+  render.off = function () {
+    context.dispatch.on('change.table', null);
+  };
+
+  return render;
 };
 
-},{"../lib/smartzoom.js":176,"d3-metatable":15}],182:[function(require,module,exports){
+},{"../lib/smartzoom.js":191,"d3-metatable":17}],197:[function(require,module,exports){
 
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';\nvar map = L.mapbox.map('map');\n\nL.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties;\n    var table = document.createElement('table');\n    table.setAttribute('class', 'marker-properties display')\n    for (var key in properties) {\n        var tr = createTableRows(key, properties[key]);\n        table.appendChild(tr);\n    }\n    if (table) l.bindPopup(table);\n}\n\nfunction createTableRows(key, value) {\n    var tr = document.createElement('tr');\n    var th = document.createElement('th');\n    var td = document.createElement('td');\n    key = document.createTextNode(key);\n    value = document.createTextNode(value);\n    th.appendChild(key);\n    td.appendChild(value);\n    tr.appendChild(th);\n    tr.appendChild(td);\n    return tr\n}\n\n</script>\n</body>\n</html>\n";
 
@@ -29956,7 +30725,7 @@ function loadRaw(url, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"../config.js":163}],183:[function(require,module,exports){
+},{"../config.js":179}],198:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -30088,9 +30857,9 @@ function shaUrl(parts, sha) {
         '/git/blobs/' + sha;
 }
 
-},{"../config.js":163}],184:[function(require,module,exports){
+},{"../config.js":179}],199:[function(require,module,exports){
 try {
-    
+    var fs = require('fs');
 } catch(e) {
     console.warn(e);
 }
@@ -30113,92 +30882,93 @@ function save(context, callback) {
     });
 }
 
-},{}],185:[function(require,module,exports){
+},{"fs":11}],200:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
-    file_bar = require('./ui/file_bar'),
-    dnd = require('./ui/dnd'),
-    userUi = require('./ui/user'),
-    layer_switch = require('./ui/layer_switch');
+  file_bar = require('./ui/file_bar'),
+  dnd = require('./ui/dnd'),
+  userUi = require('./ui/user'),
+  layer_switch = require('./ui/layer_switch');
 
 module.exports = ui;
 
 function ui(context) {
-    function init(selection) {
+  function init(selection) {
 
-        var container = selection
-            .append('div')
-            .attr('class', 'ui-container flex-grow relative');
+    var container = selection
+      .append('div')
+      .attr('class', 'ui-container flex-grow relative');
 
-        var map = container
-            .append('div')
-            .attr('class', 'map')
-            .call(context.map)
-            .call(layer_switch(context));
+    var map = container
+      .append('div')
+      .attr('class', 'map')
+      .call(context.map)
+      .call(layer_switch(context));
 
-        context.container = container;
+    context.container = container;
 
-        return container;
-    }
+    return container;
+  }
 
-    function render(selection) {
+  function render(selection) {
 
-        var container = init(selection);
+    var container = init(selection);
 
-        var right = container
-            .append('div')
-            .attr('class', 'right');
+    var right = container
+      .append('div')
+      .attr('class', 'right');
 
-        var top = right
-            .append('div')
-            .attr('class', 'top');
+    var top = right
+      .append('div')
+      .attr('class', 'top');
 
-        top
-            .append('button')
-            .attr('class', 'collapse-button')
-            .attr('title', 'Collapse')
-            .on('click', function collapse() {
-                d3.select('body').classed('fullscreen',
-                    !d3.select('body').classed('fullscreen'));
-                var full = d3.select('body').classed('fullscreen');
-                d3.select(this)
-                    .select('.icon')
-                    .classed('icon-caret-up', !full)
-                    .classed('icon-caret-down', full);
-                context.map.invalidateSize();
-            })
-            .append('class', 'span')
-            .attr('class', 'icon icon-caret-up');
+    top
+      .append('button')
+      .attr('class', 'collapse-button')
+      .attr('title', 'Collapse')
+      .on('click', function collapse() {
+        d3.select('body').classed('fullscreen',
+          !d3.select('body').classed('fullscreen'));
+        var full = d3.select('body').classed('fullscreen');
+        d3.select(this)
+          .select('.icon')
+          .classed('icon-caret-up', !full)
+          .classed('icon-caret-down', full);
+        context.map.resize();
+      })
+      .append('class', 'span')
+      .attr('class', 'icon icon-caret-up');
 
-        var pane = right
-            .append('div')
-            .attr('class', 'pane');
+    var pane = right
+      .append('div')
+      .attr('class', 'pane');
 
-        top
-            .append('div')
-            .attr('class', 'user fr pad1 deemphasize')
-            .call(userUi(context));
+    // user ui, disabled for now
+    // top
+    //     .append('div')
+    //     .attr('class', 'user fr pad1 deemphasize')
+    //     .call(userUi(context));
 
-        top
-            .append('div')
-            .attr('class', 'buttons')
-            .call(buttons(context, pane));
+    top
+      .append('div')
+      .attr('class', 'buttons')
+      .call(buttons(context, pane));
 
-        container
-            .append('div')
-            .attr('class', 'file-bar')
-            .call(file_bar(context));
+    container
+      .append('div')
+      .attr('class', 'file-bar')
+      .call(file_bar(context));
 
-        dnd(context);
-    }
+    dnd(context);
+  }
 
 
-    return {
-        read: init,
-        write: render
-    };
+  return {
+    read: init,
+    write: render
+  };
 }
 
-},{"./ui/dnd":186,"./ui/file_bar":187,"./ui/layer_switch":189,"./ui/mode_buttons":193,"./ui/user":196}],186:[function(require,module,exports){
+},{"./ui/dnd":201,"./ui/file_bar":202,"./ui/layer_switch":204,"./ui/mode_buttons":208,"./ui/user":211}],201:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -30242,26 +31012,26 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":175,"../lib/zoomextent":178,"./flash.js":188}],187:[function(require,module,exports){
+},{"../lib/readfile.js":190,"../lib/zoomextent":193,"./flash.js":203}],202:[function(require,module,exports){
 var shpwrite = require('shp-write'),
-    clone = require('clone'),
-    geojson2dsv = require('geojson2dsv'),
-    topojson = require('topojson'),
-    saveAs = require('filesaver.js'),
-    tokml = require('tokml'),
-    githubBrowser = require('@mapbox/github-file-browser'),
-    gistBrowser = require('@mapbox/gist-map-browser'),
-    geojsonNormalize = require('geojson-normalize'),
-    wellknown = require('wellknown');
+  clone = require('clone'),
+  geojson2dsv = require('geojson2dsv'),
+  topojson = require('topojson'),
+  saveAs = require('filesaver.js'),
+  tokml = require('tokml'),
+  githubBrowser = require('@mapbox/github-file-browser'),
+  gistBrowser = require('@mapbox/gist-map-browser'),
+  geojsonNormalize = require('geojson-normalize'),
+  wellknown = require('wellknown');
 
 var share = require('./share'),
-    modal = require('./modal.js'),
-    flash = require('./flash'),
-    zoomextent = require('../lib/zoomextent'),
-    readFile = require('../lib/readfile'),
-    meta = require('../lib/meta.js'),
-    saver = require('../ui/saver.js'),
-    config = require('../config.js')(location.hostname);
+  modal = require('./modal.js'),
+  flash = require('./flash'),
+  zoomextent = require('../lib/zoomextent'),
+  readFile = require('../lib/readfile'),
+  meta = require('../lib/meta.js'),
+  saver = require('../ui/saver.js'),
+  config = require('../config.js')(location.hostname);
 
 /**
  * This module provides the file picking & status bar above the map interface.
@@ -30269,537 +31039,637 @@ var share = require('./share'),
  * sources, like GitHub.
  */
 module.exports = function fileBar(context) {
+  var shpSupport = typeof ArrayBuffer !== 'undefined';
+  var mapboxAPI = false;
+  var githubAPI = !!config.GithubAPI;
+  var githubBase = githubAPI
+    ? config.GithubAPI + '/api/v3'
+    : 'https://api.github.com';
 
-    var shpSupport = typeof ArrayBuffer !== 'undefined';
-    var mapboxAPI = /a\.tiles\.mapbox.com/.test(L.mapbox.config.HTTP_URL);
-    var githubAPI = !!config.GithubAPI;
-    var githubBase = githubAPI ? config.GithubAPI + '/api/v3': 'https://api.github.com';
+  var exportFormats = [
+    {
+      title: 'GeoJSON',
+      action: downloadGeoJSON,
+    },
+    {
+      title: 'TopoJSON',
+      action: downloadTopo,
+    },
+    {
+      title: 'CSV',
+      action: downloadDSV,
+    },
+    {
+      title: 'KML',
+      action: downloadKML,
+    },
+    {
+      title: 'WKT',
+      action: downloadWKT,
+    },
+  ];
 
-    var exportFormats = [{
-        title: 'GeoJSON',
-        action: downloadGeoJSON
-    }, {
-        title: 'TopoJSON',
-        action: downloadTopo
-    }, {
-        title: 'CSV',
-        action: downloadDSV
-    }, {
-        title: 'KML',
-        action: downloadKML
-    }, {
-        title: 'WKT',
-        action: downloadWKT
-    }];
+  if (shpSupport) {
+    exportFormats.push({
+      title: 'Shapefile',
+      action: downloadShp,
+    });
+  }
 
-    if (shpSupport) {
-        exportFormats.push({
-            title: 'Shapefile',
-            action: downloadShp
+  function bar(selection) {
+    var actions = [
+      {
+        title: 'Save',
+        action: mapboxAPI || githubAPI ? saveAction : function () {},
+        children: exportFormats,
+      },
+      {
+        title: 'New',
+        action: function () {
+          window.open(
+            window.location.origin + window.location.pathname + '#new'
+          );
+        },
+      },
+      {
+        title: 'Meta',
+        action: function () {},
+        children: [
+          {
+            title: 'Add map layer',
+            alt: 'Add a custom tile layer',
+            action: function () {
+              var layerURL = prompt(
+                'Layer URL \n(http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)'
+              );
+              if (layerURL === null) return;
+              var layerName = prompt('Layer name');
+              if (layerName === null) return;
+              meta.adduserlayer(context, layerURL, layerName);
+            },
+          },
+          {
+            title: 'Zoom to features',
+            alt: 'Zoom to the extent of all features',
+            action: function () {
+              meta.zoomextent(context);
+            },
+          },
+          {
+            title: 'Clear',
+            alt: 'Delete all features from the map',
+            action: function () {
+              if (
+                confirm(
+                  'Are you sure you want to delete all features from this map?'
+                )
+              ) {
+                meta.clear(context);
+              }
+            },
+          },
+          {
+            title: 'Random: Points',
+            alt: 'Add random points to your map',
+            action: function () {
+              var response = prompt('Number of points (default: 100)');
+              if (response === null) return;
+              var count = parseInt(response, 10);
+              if (isNaN(count)) count = 100;
+              meta.random(context, count, 'point');
+            },
+          },
+          {
+            title: 'Add bboxes',
+            alt: 'Add bounding box members to all applicable GeoJSON objects',
+            action: function () {
+              meta.bboxify(context);
+            },
+          },
+          {
+            title: 'Flatten Multi Features',
+            alt: 'Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries',
+            action: function () {
+              meta.flatten(context);
+            },
+          },
+          {
+            title: 'Load encoded polyline',
+            alt: 'Decode and show an encoded polyline. Precision 5 is supported.',
+            action: function () {
+              meta.polyline(context);
+            },
+          },
+          {
+            title: 'Load WKB Base64 Encoded String',
+            alt: 'Decode and show WKX data',
+            action: function () {
+              meta.wkxBase64(context);
+            },
+          },
+          {
+            title: 'Load WKB Hex Encoded String',
+            alt: 'Decode and show WKX data',
+            action: function () {
+              meta.wkxHex(context);
+            },
+          },
+          {
+            title: 'Load WKT String',
+            alt: 'Decode and show WKX data',
+            action: function () {
+              meta.wkxString(context);
+            },
+          },
+        ],
+      },
+    ];
+
+    if (mapboxAPI || githubAPI) {
+      actions.unshift({
+        title: 'Open',
+        children: [
+          {
+            title: 'File',
+            alt: 'GeoJSON, TopoJSON, GTFS, KML, CSV, GPX and OSM XML supported',
+            action: blindImport,
+          },
+          {
+            title: 'GitHub',
+            alt: 'GeoJSON files in GitHub Repositories',
+            authenticated: true,
+            action: clickGitHubOpen,
+          },
+          {
+            title: 'Gist',
+            alt: 'GeoJSON files in GitHub Gists',
+            authenticated: true,
+            action: clickGist,
+          },
+        ],
+      });
+      actions[1].children.unshift(
+        {
+          title: 'GitHub',
+          alt: 'GeoJSON files in GitHub Repositories',
+          authenticated: true,
+          action: clickGitHubSave,
+        },
+        {
+          title: 'Gist',
+          alt: 'GeoJSON files in GitHub Gists',
+          authenticated: true,
+          action: clickGistSave,
+        }
+      );
+
+      if (mapboxAPI)
+        actions.splice(3, 0, {
+          title: 'Share',
+          action: function () {
+            context.container.call(share(context));
+          },
         });
+    } else {
+      actions.unshift({
+        title: 'Open',
+        alt: 'CSV, GTFS, KML, GPX, and other filetypes',
+        action: blindImport,
+      });
     }
 
-    function bar(selection) {
+    var items = selection
+      .append('div')
+      .attr('class', 'inline')
+      .selectAll('div.item')
+      .data(actions)
+      .enter()
+      .append('div')
+      .attr('class', 'item');
 
-        var actions = [{
-            title: 'Save',
-            action: (mapboxAPI || githubAPI) ? saveAction : function() {},
-            children: exportFormats
-        }, {
-            title: 'New',
-            action: function() {
-                window.open(window.location.origin +
-                    window.location.pathname + '#new');
-            }
-        }, {
-            title: 'Meta',
-            action: function() {},
-            children: [
-                {
-                    title: 'Add map layer',
-                    alt: 'Add a custom tile layer',
-                    action: function() {
-                        var layerURL = prompt('Layer URL \n(http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg)');
-                        if (layerURL === null) return;
-                        var layerName = prompt('Layer name');
-                        if (layerName === null) return;
-                        meta.adduserlayer(context, layerURL, layerName);
-                    }
-                },
-                {
-                    title: 'Zoom to features',
-                    alt: 'Zoom to the extent of all features',
-                    action: function() {
-                        meta.zoomextent(context);
-                    }
-                },
-                {
-                    title: 'Clear',
-                    alt: 'Delete all features from the map',
-                    action: function() {
-                        if (confirm('Are you sure you want to delete all features from this map?')) {
-                            meta.clear(context);
-                        }
-                    }
-                }, {
-                    title: 'Random: Points',
-                    alt: 'Add random points to your map',
-                    action: function() {
-                        var response = prompt('Number of points (default: 100)');
-                        if (response === null) return;
-                        var count = parseInt(response, 10);
-                        if (isNaN(count)) count = 100;
-                        meta.random(context, count, 'point');
-                    }
-                }, {
-                    title: 'Add bboxes',
-                    alt: 'Add bounding box members to all applicable GeoJSON objects',
-                    action: function() {
-                        meta.bboxify(context);
-                    }
-                }, {
-                    title: 'Flatten Multi Features',
-                    alt: 'Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries',
-                    action: function() {
-                        meta.flatten(context);
-                    }
-                }, {
-                    title: 'Load encoded polyline',
-                    alt: 'Decode and show an encoded polyline. Precision 5 is supported.',
-                    action: function() {
-                        meta.polyline(context);
-                    }
-                }, {
-                    title: 'Load WKB Base64 Encoded String',
-                    alt: 'Decode and show WKX data',
-                    action: function() {
-                        meta.wkxBase64(context);
-                    }
-                }, {
-                    title: 'Load WKB Hex Encoded String',
-                    alt: 'Decode and show WKX data',
-                    action: function() {
-                        meta.wkxHex(context);
-                    }
-                }, {
-                    title: 'Load WKT String',
-                    alt: 'Decode and show WKX data',
-                    action: function() {
-                        meta.wkxString(context);
-                    }
-                }
-            ]
-        }];
+    var buttons = items
+      .append('a')
+      .attr('class', 'parent')
+      .on('click', function (d) {
+        if (d.action) d.action.apply(this, d);
+      })
+      .text(function (d) {
+        return ' ' + d.title;
+      });
 
-        if (mapboxAPI || githubAPI) {
-            actions.unshift({
-                title: 'Open',
-                children: [
-                    {
-                        title: 'File',
-                        alt: 'GeoJSON, TopoJSON, GTFS, KML, CSV, GPX and OSM XML supported',
-                        action: blindImport
-                    }, {
-                        title: 'GitHub',
-                        alt: 'GeoJSON files in GitHub Repositories',
-                        authenticated: true,
-                        action: clickGitHubOpen
-                    }, {
-                        title: 'Gist',
-                        alt: 'GeoJSON files in GitHub Gists',
-                        authenticated: true,
-                        action: clickGist
-                    }
-                ]
-            });
-            actions[1].children.unshift({
-                    title: 'GitHub',
-                    alt: 'GeoJSON files in GitHub Repositories',
-                    authenticated: true,
-                    action: clickGitHubSave
-                }, {
-                    title: 'Gist',
-                    alt: 'GeoJSON files in GitHub Gists',
-                    authenticated: true,
-                    action: clickGistSave
-                });
+    items.each(function (d) {
+      if (!d.children) return;
+      d3.select(this)
+        .append('div')
+        .attr('class', 'children')
+        .call(submenu(d.children));
+    });
 
-            if (mapboxAPI) actions.splice(3, 0, {
-                    title: 'Share',
-                    action: function() {
-                        context.container.call(share(context));
-                    }
-                });
-        } else {
-            actions.unshift({
-                title: 'Open',
-                alt: 'CSV, GTFS, KML, GPX, and other filetypes',
-                action: blindImport
-            });
-        }
+    var name = selection.append('div').attr('class', 'name');
 
-        var items = selection.append('div')
-            .attr('class', 'inline')
-            .selectAll('div.item')
-            .data(actions)
-            .enter()
-            .append('div')
-            .attr('class', 'item');
+    if (mapboxAPI || githubAPI) {
+      var filetype = name
+        .append('a')
+        .attr('target', '_blank')
+        .attr('class', 'icon-file-alt');
 
-        var buttons = items.append('a')
-            .attr('class', 'parent')
-            .on('click', function(d) {
-                if (d.action) d.action.apply(this, d);
-            })
-            .text(function(d) {
-                return ' ' + d.title;
-            });
+      var filename = name
+        .append('span')
+        .attr('class', 'filename')
+        .text('unsaved');
+    }
 
-        items.each(function(d) {
-            if (!d.children) return;
-            d3.select(this)
-                .append('div')
-                .attr('class', 'children')
-                .call(submenu(d.children));
-        });
+    function clickGistSave() {
+      if (d3.event) d3.event.preventDefault();
+      context.data.set({ type: 'gist' });
+      saver(context);
+    }
 
-        var name = selection.append('div')
-            .attr('class', 'name');
+    function saveAction() {
+      if (d3.event) d3.event.preventDefault();
+      saver(context);
+    }
 
-        if (mapboxAPI || githubAPI) {
-            var filetype = name.append('a')
-                .attr('target', '_blank')
-                .attr('class', 'icon-file-alt');
+    function sourceIcon(type) {
+      if (type == 'github') return 'icon-github';
+      else if (type == 'gist') return 'icon-github-alt';
+      else return 'icon-file-alt';
+    }
 
-            var filename = name.append('span')
-                .attr('class', 'filename')
-                .text('unsaved');
-        }
+    function saveNoun(_) {
+      buttons
+        .filter(function (b) {
+          return b.title === 'Save';
+        })
+        .select('span.title')
+        .text(_);
+    }
 
-        function clickGistSave() {
-            if (d3.event) d3.event.preventDefault();
-            context.data.set({ type: 'gist' });
-            saver(context);
-        }
+    function submenu(children) {
+      return function (selection) {
+        selection
+          .selectAll('a')
+          .data(children)
+          .enter()
+          .append('a')
+          .attr('title', function (d) {
+            if (
+              d.title == 'File' ||
+              d.title == 'GitHub' ||
+              d.title == 'Gist' ||
+              d.title == 'Add map layer' ||
+              d.title == 'Zoom to features' ||
+              d.title == 'Clear' ||
+              d.title == 'Random: Points' ||
+              d.title == 'Add bboxes' ||
+              d.title == 'Flatten Multi Features'
+            )
+              return d.alt;
+          })
+          .text(function (d) {
+            return d.title;
+          })
+          .on('click', function (d) {
+            d.action.apply(this, d);
+          });
+      };
+    }
 
-        function saveAction() {
-            if (d3.event) d3.event.preventDefault();
-            saver(context);
-        }
+    context.dispatch.on('change.filebar', onchange);
 
-        function sourceIcon(type) {
-            if (type == 'github') return 'icon-github';
-            else if (type == 'gist') return 'icon-github-alt';
-            else return 'icon-file-alt';
-        }
+    function clickGitHubOpen() {
+      if (!context.user.token())
+        return flash(
+          context.container,
+          'You must authenticate to use this API.'
+        );
 
-        function saveNoun(_) {
-            buttons.filter(function(b) {
-                return b.title === 'Save';
-            }).select('span.title').text(_);
-        }
+      var m = modal(d3.select('div.geojsonio'));
 
-        function submenu(children) {
-            return function(selection) {
-                selection
-                    .selectAll('a')
-                    .data(children)
-                    .enter()
-                    .append('a')
-                    .attr('title', function(d) {
-                        if (d.title == 'File' || d.title == 'GitHub' || d.title == 'Gist' || d.title == 'Add map layer' || d.title == 'Zoom to features' || d.title == 'Clear' || d.title == 'Random: Points' || d.title == 'Add bboxes' || d.title == 'Flatten Multi Features') return d.alt;
-                    })
-                    .text(function(d) {
-                        return d.title;
-                    })
-                    .on('click', function(d) {
-                        d.action.apply(this, d);
-                    });
-            };
-        }
+      m.select('.m').attr('class', 'modal-splash modal col6');
 
-        context.dispatch.on('change.filebar', onchange);
+      m.select('.content')
+        .append('div')
+        .attr('class', 'header pad2 fillD')
+        .append('h1')
+        .text('GitHub');
 
-        function clickGitHubOpen() {
-            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
-
-            var m = modal(d3.select('div.geojsonio'));
-
-            m.select('.m')
-                .attr('class', 'modal-splash modal col6');
-
-            m.select('.content')
-                .append('div')
-                .attr('class', 'header pad2 fillD')
-                .append('h1')
-                .text('GitHub');
-
-            githubBrowser(context.user.token(), false, githubBase)
-                .open()
-                .onclick(function(d) {
-                    if (!d || !d.length) return;
-                    var last = d[d.length - 1];
-                    if (!last.path) {
-                        throw new Error('last is invalid: ' + JSON.stringify(last));
-                    }
-                    if (!last.path.match(/\.(geo)?json/i)) {
-                        return alert('only GeoJSON files are supported from GitHub');
-                    }
-                    if (last.type === 'blob') {
-                        githubBrowser.request('/repos/' + d[1].full_name +
-                            '/git/blobs/' + last.sha, function(err, blob) {
-                                d.content = JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(blob[0].content), function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join('')));
-                                context.data.parse(d);
-                                zoomextent(context);
-                                m.close();
-                            });
-                    }
-                })
-                .appendTo(
-                    m.select('.content')
-                        .append('div')
-                        .attr('class', 'repos pad2')
-                        .node());
-        }
-
-        function clickGitHubSave() {
-            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
-
-            var m = modal(d3.select('div.geojsonio'));
-
-            m.select('.m')
-                .attr('class', 'modal-splash modal col6');
-
-            m.select('.content')
-                .append('div')
-                .attr('class', 'header pad2 fillD')
-                .append('h1')
-                .text('GitHub');
-
-            githubBrowser(context.user.token(), true, githubBase)
-                .open()
-                .onclick(function(d) {
-                    if (!d || !d.length) return;
-                    var last = d[d.length - 1];
-                    var pathparts;
-                    var partial;
-
-                    // New file
-                    if (last.type === 'new')  {
-                        var filename = prompt('New file name');
-                        if (!filename) {
-                            m.close();
-                            return;
-                        }
-                        pathparts = d.slice(3);
-                        pathparts.pop();
-                        pathparts.push({ path: filename });
-                        partial = pathparts.map(function(p) {
-                            return p.path;
-                        }).join('/');
-                        context.data.set({
-                            source: {
-                                url: githubBase + '/repos/' +
-                                    d[0].login + '/' + d[1].name +
-                                        '/contents/' + partial +
-                                        '?ref=' + d[2].name
-                            },
-                            type: 'github',
-                            meta: {
-                                branch: d[2].name,
-                                login: d[0].login,
-                                repo: d[1].name
-                            }
-                        });
-                        context.data.set({ newpath: partial + filename });
-                        m.close();
-                        saver(context);
-                    }
-                    // Update a file
-                    else if (last.type === 'blob') {
-                        // Build the path
-                        pathparts = d.slice(3);
-                        partial = pathparts.map(function(p) {
-                            return p.path;
-                        }).join('/');
-
-
-                        context.data.set(
-                        {
-                            source: {
-                                url: githubBase + '/repos/' +
-                                    d[0].login + '/' + d[1].name +
-                                        '/contents/' + partial +
-                                        '?ref=' + d[2].name,
-                                sha: last.sha
-                            },
-                            type: 'github',
-                            meta: {
-                                branch: d[2].name,
-                                login: d[0].login,
-                                repo: d[1].name
-                            }
-                        });
-                        m.close();
-                        saver(context);
-                    }
-                })
-                .appendTo(
-                    m.select('.content')
-                        .append('div')
-                        .attr('class', 'repos pad2')
-                        .node());
-        }
-
-        function clickGist() {
-            if (!context.user.token()) return flash(context.container, 'You must authenticate to use this API.');
-
-            var m = modal(d3.select('div.geojsonio'));
-
-            m.select('.m')
-                .attr('class', 'modal-splash modal col6');
-
-            gistBrowser(context.user.token(), githubBase)
-                .open()
-                .onclick(function(d) {
-                    context.data.parse(d);
-                    zoomextent(context);
-                    m.close();
-                })
-                .appendTo(
-                    m.select('.content')
-                        .append('div')
-                        .attr('class', 'repos pad2')
-                        .node());
-        }
-
-        function onchange(d) {
-            var data = d.obj,
-                type = data.type,
-                path = data.path;
-            if (mapboxAPI || githubAPI) filename
-                .text(path ? path : 'unsaved')
-                .classed('deemphasize', context.data.dirty);
-            if (mapboxAPI || githubAPI) filetype
-                .attr('href', data.url)
-                .attr('class', sourceIcon(type));
-            saveNoun(type == 'github' ? 'Commit' : 'Save');
-        }
-
-        function blindImport() {
-            var put = d3.select('body')
-                .append('input')
-                .attr('type', 'file')
-                .style('visibility', 'hidden')
-                .style('position', 'absolute')
-                .style('height', '0')
-                .on('change', function() {
-                    var files = this.files;
-                    if (!(files && files[0])) return;
-                    readFile.readAsText(files[0], function(err, text) {
-                        readFile.readFile(files[0], text, onImport);
-                        if (files[0].path) {
-                            context.data.set({
-                                path: files[0].path
-                            });
-                        }
-                    });
-                    put.remove();
-                });
-            put.node().click();
-        }
-
-        function onImport(err, gj, warning) {
-            gj = geojsonNormalize(gj);
-            if (gj) {
-                context.data.mergeFeatures(gj.features);
-                if (warning) {
-                    flash(context.container, warning.message);
-                } else {
-                    flash(context.container, 'Imported ' + gj.features.length + ' features.')
-                        .classed('success', 'true');
-                }
+      githubBrowser(context.user.token(), false, githubBase)
+        .open()
+        .onclick(function (d) {
+          if (!d || !d.length) return;
+          var last = d[d.length - 1];
+          if (!last.path) {
+            throw new Error('last is invalid: ' + JSON.stringify(last));
+          }
+          if (!last.path.match(/\.(geo)?json/i)) {
+            return alert('only GeoJSON files are supported from GitHub');
+          }
+          if (last.type === 'blob') {
+            githubBrowser.request(
+              '/repos/' + d[1].full_name + '/git/blobs/' + last.sha,
+              function (err, blob) {
+                d.content = JSON.parse(
+                  decodeURIComponent(
+                    Array.prototype.map
+                      .call(atob(blob[0].content), function (c) {
+                        return (
+                          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+                        );
+                      })
+                      .join('')
+                  )
+                );
+                context.data.parse(d);
                 zoomextent(context);
+                m.close();
+              }
+            );
+          }
+        })
+        .appendTo(
+          m.select('.content').append('div').attr('class', 'repos pad2').node()
+        );
+    }
+
+    function clickGitHubSave() {
+      if (!context.user.token())
+        return flash(
+          context.container,
+          'You must authenticate to use this API.'
+        );
+
+      var m = modal(d3.select('div.geojsonio'));
+
+      m.select('.m').attr('class', 'modal-splash modal col6');
+
+      m.select('.content')
+        .append('div')
+        .attr('class', 'header pad2 fillD')
+        .append('h1')
+        .text('GitHub');
+
+      githubBrowser(context.user.token(), true, githubBase)
+        .open()
+        .onclick(function (d) {
+          if (!d || !d.length) return;
+          var last = d[d.length - 1];
+          var pathparts;
+          var partial;
+
+          // New file
+          if (last.type === 'new') {
+            var filename = prompt('New file name');
+            if (!filename) {
+              m.close();
+              return;
             }
+            pathparts = d.slice(3);
+            pathparts.pop();
+            pathparts.push({ path: filename });
+            partial = pathparts
+              .map(function (p) {
+                return p.path;
+              })
+              .join('/');
+            context.data.set({
+              source: {
+                url:
+                  githubBase +
+                  '/repos/' +
+                  d[0].login +
+                  '/' +
+                  d[1].name +
+                  '/contents/' +
+                  partial +
+                  '?ref=' +
+                  d[2].name,
+              },
+              type: 'github',
+              meta: {
+                branch: d[2].name,
+                login: d[0].login,
+                repo: d[1].name,
+              },
+            });
+            context.data.set({ newpath: partial + filename });
+            m.close();
+            saver(context);
+          }
+          // Update a file
+          else if (last.type === 'blob') {
+            // Build the path
+            pathparts = d.slice(3);
+            partial = pathparts
+              .map(function (p) {
+                return p.path;
+              })
+              .join('/');
+
+            context.data.set({
+              source: {
+                url:
+                  githubBase +
+                  '/repos/' +
+                  d[0].login +
+                  '/' +
+                  d[1].name +
+                  '/contents/' +
+                  partial +
+                  '?ref=' +
+                  d[2].name,
+                sha: last.sha,
+              },
+              type: 'github',
+              meta: {
+                branch: d[2].name,
+                login: d[0].login,
+                repo: d[1].name,
+              },
+            });
+            m.close();
+            saver(context);
+          }
+        })
+        .appendTo(
+          m.select('.content').append('div').attr('class', 'repos pad2').node()
+        );
+    }
+
+    function clickGist() {
+      if (!context.user.token())
+        return flash(
+          context.container,
+          'You must authenticate to use this API.'
+        );
+
+      var m = modal(d3.select('div.geojsonio'));
+
+      m.select('.m').attr('class', 'modal-splash modal col6');
+
+      gistBrowser(context.user.token(), githubBase)
+        .open()
+        .onclick(function (d) {
+          context.data.parse(d);
+          zoomextent(context);
+          m.close();
+        })
+        .appendTo(
+          m.select('.content').append('div').attr('class', 'repos pad2').node()
+        );
+    }
+
+    function onchange(d) {
+      var data = d.obj,
+        type = data.type,
+        path = data.path;
+      if (mapboxAPI || githubAPI)
+        filename
+          .text(path ? path : 'unsaved')
+          .classed('deemphasize', context.data.dirty);
+      if (mapboxAPI || githubAPI)
+        filetype.attr('href', data.url).attr('class', sourceIcon(type));
+      saveNoun(type == 'github' ? 'Commit' : 'Save');
+    }
+
+    function blindImport() {
+      var put = d3
+        .select('body')
+        .append('input')
+        .attr('type', 'file')
+        .style('visibility', 'hidden')
+        .style('position', 'absolute')
+        .style('height', '0')
+        .on('change', function () {
+          var files = this.files;
+          if (!(files && files[0])) return;
+          readFile.readAsText(files[0], function (err, text) {
+            readFile.readFile(files[0], text, onImport);
+            if (files[0].path) {
+              context.data.set({
+                path: files[0].path,
+              });
+            }
+          });
+          put.remove();
+        });
+      put.node().click();
+    }
+
+    function onImport(err, gj, warning) {
+      gj = geojsonNormalize(gj);
+      if (gj) {
+        context.data.mergeFeatures(gj.features);
+        if (warning) {
+          flash(context.container, warning.message);
+        } else {
+          flash(
+            context.container,
+            'Imported ' + gj.features.length + ' features.'
+          ).classed('success', 'true');
         }
-
-        d3.select(document).call(
-            d3.keybinding('file_bar')
-                .on('⌘+o', function() {
-                    blindImport();
-                    d3.event.preventDefault();
-                })
-                .on('⌘+s', saveAction));
+        zoomextent(context);
+      }
     }
 
-    function downloadTopo() {
-        var content = JSON.stringify(topojson.topology({
-            collection: clone(context.data.get('map'))
-        }, {'property-transform': allProperties}));
+    d3.select(document).call(
+      d3
+        .keybinding('file_bar')
+        .on('⌘+o', function () {
+          blindImport();
+          d3.event.preventDefault();
+        })
+        .on('⌘+s', saveAction)
+    );
+  }
 
-        saveAs(new Blob([content], {
-            type: 'text/plain;charset=utf-8'
-        }), 'map.topojson');
+  function downloadTopo() {
+    var content = JSON.stringify(
+      topojson.topology(
+        {
+          collection: clone(context.data.get('map')),
+        },
+        { 'property-transform': allProperties }
+      )
+    );
 
+    saveAs(
+      new Blob([content], {
+        type: 'text/plain;charset=utf-8',
+      }),
+      'map.topojson'
+    );
+  }
+
+  function downloadGeoJSON() {
+    if (d3.event) d3.event.preventDefault();
+    var content = JSON.stringify(context.data.get('map'));
+    var meta = context.data.get('meta');
+    saveAs(
+      new Blob([content], {
+        type: 'text/plain;charset=utf-8',
+      }),
+      (meta && meta.name) || 'map.geojson'
+    );
+  }
+
+  function downloadDSV() {
+    if (d3.event) d3.event.preventDefault();
+    var content = geojson2dsv(context.data.get('map'));
+    saveAs(
+      new Blob([content], {
+        type: 'text/plain;charset=utf-8',
+      }),
+      'points.csv'
+    );
+  }
+
+  function downloadKML() {
+    if (d3.event) d3.event.preventDefault();
+    var content = tokml(context.data.get('map'));
+    var meta = context.data.get('meta');
+    saveAs(
+      new Blob([content], {
+        type: 'text/plain;charset=utf-8',
+      }),
+      'map.kml'
+    );
+  }
+
+  function downloadShp() {
+    if (d3.event) d3.event.preventDefault();
+    d3.select('.map').classed('loading', true);
+    try {
+      shpwrite.download(context.data.get('map'));
+    } finally {
+      d3.select('.map').classed('loading', false);
     }
+  }
 
-    function downloadGeoJSON() {
-        if (d3.event) d3.event.preventDefault();
-        var content = JSON.stringify(context.data.get('map'));
-        var meta = context.data.get('meta');
-        saveAs(new Blob([content], {
-            type: 'text/plain;charset=utf-8'
-        }), (meta && meta.name) || 'map.geojson');
-    }
+  function downloadWKT() {
+    if (d3.event) d3.event.preventDefault();
+    var contentArray = [];
+    var features = context.data.get('map').features;
+    if (features.length === 0) return;
+    var content = features.map(wellknown.stringify).join('\n');
+    var meta = context.data.get('meta');
+    saveAs(
+      new Blob([content], {
+        type: 'text/plain;charset=utf-8',
+      }),
+      'map.wkt'
+    );
+  }
 
-    function downloadDSV() {
-        if (d3.event) d3.event.preventDefault();
-        var content = geojson2dsv(context.data.get('map'));
-        saveAs(new Blob([content], {
-            type: 'text/plain;charset=utf-8'
-        }), 'points.csv');
-    }
+  function allProperties(properties, key, value) {
+    properties[key] = value;
+    return true;
+  }
 
-    function downloadKML() {
-        if (d3.event) d3.event.preventDefault();
-        var content = tokml(context.data.get('map'));
-        var meta = context.data.get('meta');
-        saveAs(new Blob([content], {
-            type: 'text/plain;charset=utf-8'
-        }), 'map.kml');
-    }
-
-    function downloadShp() {
-        if (d3.event) d3.event.preventDefault();
-        d3.select('.map').classed('loading', true);
-        try {
-            shpwrite.download(context.data.get('map'));
-        } finally {
-            d3.select('.map').classed('loading', false);
-        }
-    }
-
-    function downloadWKT() {
-        if (d3.event) d3.event.preventDefault();
-        var contentArray = [];
-        var features = context.data.get('map').features;
-        if (features.length === 0) return;
-        var content = features.map(wellknown.stringify).join('\n');
-        var meta = context.data.get('meta');
-        saveAs(new Blob([content], {
-            type: 'text/plain;charset=utf-8'
-        }), 'map.wkt');
-    }
-
-    function allProperties(properties, key, value) {
-        properties[key] = value;
-        return true;
-    }
-
-    return bar;
+  return bar;
 };
 
-},{"../config.js":163,"../lib/meta.js":173,"../lib/readfile":175,"../lib/zoomextent":178,"../ui/saver.js":194,"./flash":188,"./modal.js":192,"./share":195,"@mapbox/gist-map-browser":2,"@mapbox/github-file-browser":3,"clone":13,"filesaver.js":24,"geojson-normalize":30,"geojson2dsv":33,"shp-write":95,"tokml":110,"topojson":"topojson","wellknown":146}],188:[function(require,module,exports){
+},{"../config.js":179,"../lib/meta.js":188,"../lib/readfile":190,"../lib/zoomextent":193,"../ui/saver.js":209,"./flash":203,"./modal.js":207,"./share":210,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":15,"filesaver.js":27,"geojson-normalize":36,"geojson2dsv":39,"shp-write":110,"tokml":125,"topojson":"topojson","wellknown":161}],203:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -30821,351 +31691,630 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":191}],189:[function(require,module,exports){
+},{"./message":206}],204:[function(require,module,exports){
 module.exports = function(context) {
 
-    return function(selection) {
-        var layers;
+  return function(selection) {
 
-        if (!(/a\.tiles\.mapbox.com/).test(L.mapbox.config.HTTP_URL)) {
-            layers = [{
-                title: 'Mapbox',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22, attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'})
-            }, {
-                title: 'Mapbox Outdoors',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22,  attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'})
-            }, {
-                title: 'Satellite',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22, attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.maxar.com/">Maxar</a>'})
-            }];
+    var layers = [
+      {
+        title: 'Streets',
+        style: 'mapbox://styles/mapbox/streets-v11'
+      }, 
+      {
+        title: 'Satellite Streets',
+        style: 'mapbox://styles/mapbox/satellite-v9'
+      },
+      {
+        title: 'Outdoors',
+        style: 'mapbox://styles/mapbox/outdoors-v11'
+      },
+      {
+        title: 'Light',
+        style: 'mapbox://styles/mapbox/light-v10'
+      },
+      {
+        title: 'Dark',
+        style: 'mapbox://styles/mapbox/dark-v10'
+      }
+    ];
 
-        } else {
-            layers = [{
-                title: 'Mapbox',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22, attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'})
-            }, {
-                title: 'Satellite',
-                layer: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {maxZoom: 22, attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.maxar.com/">Maxar</a>'})
-            }, {
-                title: 'OSM',
-                layer: L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
-                })
-            }
-            // OCM tiles from Thunderforest require an API key. Add your key and uncomment the lines
-            // below to enable the OCM layer.
-            //
-            // , {
-            //    title: 'OCM',
-            //    layer: L.tileLayer('https://a.tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=<insert-your-apikey-here>', {
-            //       attribution: 'Maps &copy; <a href="http://www.thunderforest.com/">Thunderforest</a>, Data &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-            //    })
-            // }
-            ];
-        }
+        
 
-        var layerSwap = function(d) {
-            var clicked = this instanceof d3.selection ? this.node() : this;
-            layerButtons.classed('active', function() {
-                return clicked === this;
-            });
-            layers.forEach(swap);
-            function swap(l) {
-                var datum = d instanceof d3.selection ? d.datum() : d;
-                if (l.layer == datum.layer) context.map.addLayer(datum.layer);
-                else if (context.map.hasLayer(l.layer)) context.map.removeLayer(l.layer);
-            }
-        };
+    var layerSwap = function(d) {
+      var clicked = this instanceof d3.selection ? this.node() : this;
+      layerButtons.classed('active', function() {
+        return clicked === this;
+      });
 
-        var layerButtons = selection.append('div')
-            .attr('class', 'layer-switch')
-            .selectAll('button')
-            .data(layers)
-            .enter()
-            .append('button')
-            .attr('class', 'pad0x')
-            .on('click', layerSwap)
-            .text(function(d) { return d.title; });
+      // this will likely run before the initial map style is loaded
+      // streets is default, but on subsequent runs we must change styles
+      if (context.map._loaded) {
+        const { title, style } = d3.select(clicked).datum();
 
-        layerButtons.filter(function(d, i) { return i === 0; }).call(layerSwap);
-
+        context.map.setStyle(style);
+      }
     };
+
+    var layerButtons = selection.append('div')
+      .attr('class', 'layer-switch mb-10')
+      .selectAll('button')
+      .data(layers)
+      .enter()
+      .append('button')
+      .attr('class', 'pad0x')
+      .on('click', layerSwap)
+      .text(function(d) { return d.title; });
+
+    layerButtons.filter(function(d, i) { return i === 0; }).call(layerSwap);
+
+  };
 };
 
-},{}],190:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 require('qs-hash');
-require('../lib/custom_hash.js');
+
+// extend mapboxGL Marker so we can pass in an onClick handler
+class ClickableMarker extends mapboxgl.Marker {
+  // new method onClick, sets _handleClick to a function you pass in
+  onClick(handleClick) {
+      
+    this._handleClick = handleClick;
+    return this;
+  }
+
+  // the existing _onMapClick was there to trigger a popup
+  // but we are hijacking it to run a function we define
+  _onMapClick(e) {
+    const targetElement = e.originalEvent.target;
+    const element = this._element;
+
+    if (
+      this._handleClick &&
+      (targetElement === element || element.contains(targetElement))
+    ) {
+      this._handleClick();
+    }
+  }
+}
 
 var popup = require('../lib/popup'),
-    escape = require('escape-html'),
-    LGeo = require('leaflet-geodesy'),
-    geojsonRewind = require('geojson-rewind'),
-    writable = false,
-    showStyle = true,
-    makiValues = require('../../data/maki.json'),
-    maki = '';
+  escape = require('escape-html'),
+  LGeo = require('leaflet-geodesy'),
+  geojsonRewind = require('geojson-rewind'),
+  writable = false,
+  showStyle = true;
 
-for (var i = 0; i < makiValues.length; i++) {
-    maki += '<option value="' + makiValues[i].icon + '">';
-}
-
-module.exports = function(context, readonly) {
-
-    writable = !readonly;
-
-    function map(selection) {
-        context.map = L.mapbox.map(selection.node(), null)
-            .setView([20, 0], 2)
-            .addControl(L.mapbox.geocoderControl('mapbox.places', {
-                position: 'topright'
-            }));
-
-        L.control.scale().setPosition('bottomright').addTo(context.map);
-        context.map.zoomControl.setPosition('topright');
-
-        L.hash(context.map);
-
-        context.mapLayer = L.featureGroup().addTo(context.map);
-
-        if (writable) {
-          context.drawControl = new L.Control.Draw({
-              position: 'topright',
-              edit: { featureGroup: context.mapLayer },
-              draw: {
-                  circle: false,
-                  polyline: { metric: (navigator.language !== 'en-us' && navigator.language !== 'en-US') },
-                  polygon: { metric: (navigator.language !== 'en-us' && navigator.language !== 'en-US') },
-                  marker: {
-                      icon: L.mapbox.marker.icon({})
-                  }
-              }
-          }).addTo(context.map);
-
-          context.map
-            .on('draw:edited', update)
-            .on('draw:deleted', update);
-        }
-
-        context.map
-            .on('draw:created', created)
-            .on('popupopen', popup(context));
-
-        context.map.attributionControl.setPrefix('<a target="_blank" href="http://geojson.io/about.html">About</a>');
-
-        function update() {
-            var geojson = context.mapLayer.toGeoJSON();
-            geojson = geojsonRewind(geojson);
-            geojsonToLayer(geojson, context.mapLayer);
-            context.data.set({map: layerToGeoJSON(context.mapLayer)}, 'map');
-        }
-
-        context.dispatch.on('change.map', function() {
-            geojsonToLayer(context.data.get('map'), context.mapLayer);
-        });
-
-        function created(e) {
-            context.mapLayer.addLayer(e.layer);
-            update();
-        }
-    }
-
-    function layerToGeoJSON(layer) {
-        var features = [];
-        layer.eachLayer(collect);
-        function collect(l) { if ('toGeoJSON' in l) features.push(l.toGeoJSON()); }
-        return {
-            type: 'FeatureCollection',
-            features: features
-        };
-    }
-
-    return map;
+const dummyGeojson = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [0, 0],
+      },
+    },
+  ],
 };
 
-function geojsonToLayer(geojson, layer) {
-    layer.clearLayers();
-    L.geoJson(geojson, {
-        style: L.mapbox.simplestyle.style,
-        pointToLayer: function(feature, latlon) {
-            if (!feature.properties) feature.properties = {};
-            return L.mapbox.marker.style(feature, latlon);
-        }
-    }).eachLayer(add);
-    function add(l) {
-        bindPopup(l);
-        l.addTo(layer);
-    }
-}
+const markers = [];
 
-function bindPopup(l) {
+const addIds = (geojson) => {
+  if (geojson.type === 'FeatureCollection') {
+    return {
+      ...geojson,
+      features: geojson.features.map((feature, i) => {
+        return {
+          ...feature,
+          id: i,
+        };
+      }),
+    };
+  }
 
-    var props = JSON.parse(JSON.stringify(l.toGeoJSON().properties)),
-        table = '',
-        info = '';
+  return geojson;
+};
 
-    var properties = {};
-
-    // Steer clear of XSS
-    for (var k in props) {
-        var e = escape(k);
-        // users don't want to see "[object Object]"
-        if (typeof props[k] === 'object') {
-          properties[e] = escape(JSON.stringify(props[k]));
-        } else {
-          properties[e] = escape(props[k]);
-        }
-    }
-
-    if (!properties) return;
-
-    if (!Object.keys(properties).length) properties = { '': '' };
-
-    if (l.feature && l.feature.geometry && writable) {
-        if (l.feature.geometry.type === 'Point' || l.feature.geometry.type === 'MultiPoint') {
-            if (!('marker-color' in properties)) {
-                table += '<tr class="style-row"><th><input type="text" value="marker-color"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                    '<td><input type="color" value="#7E7E7E"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
-            }
-            if (!('marker-size' in properties)) {
-                table += '<tr class="style-row"><th><input type="text" value="marker-size"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                    '<td><input type="text" list="marker-size" value="medium"' + (!writable ? ' readonly' : '') + ' /><datalist id="marker-size"><option value="small"><option value="medium"><option value="large"></datalist></td></tr>';
-            }
-            if (!('marker-symbol' in properties)) {
-                table += '<tr class="style-row"><th><input type="text" value="marker-symbol"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                    '<td><input type="text" list="marker-symbol" value=""' + (!writable ? ' readonly' : '') + ' /><datalist id="marker-symbol">' + maki + '</datalist></td></tr>';
-            }
-        }
-        if (l.feature.geometry.type === 'LineString' || l.feature.geometry.type === 'MultiLineString' || l.feature.geometry.type === 'Polygon' || l.feature.geometry.type === 'MultiPolygon') {
-            if (!('stroke' in properties)) {
-                table += '<tr class="style-row"><th><input type="text" value="stroke"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                    '<td><input type="color" value="#555555"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
-            }
-            if (!('stroke-width' in properties)) {
-                table += '<tr class="style-row"><th><input type="text" value="stroke-width"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                    '<td><input type="number" min="0" step="0.1" value="2"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
-            }
-            if (!('stroke-opacity' in properties)) {
-                table += '<tr class="style-row"><th><input type="text" value="stroke-opacity"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                    '<td><input type="number" min="0" max="1" step="0.1" value="1"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
-            }
-        }
-        if (l.feature.geometry.type === 'Polygon' || l.feature.geometry.type === 'MultiPolygon') {
-            if (!('fill' in properties)) {
-                table += '<tr class="style-row"><th><input type="text" value="fill"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                    '<td><input type="color" value="#555555"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
-            }
-            if (!('fill-opacity' in properties)) {
-                table += '<tr class="style-row"><th><input type="text" value="fill-opacity"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                    '<td><input type="number" min="0" max="1" step="0.1" value="0.5"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
-            }
-        }
-    }
-
-    for (var key in properties) {
-        if ((key == 'marker-color' || key == 'stroke' || key == 'fill') && writable) {
-            table += '<tr class="style-row"><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                '<td><input type="color" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
-        }
-        else if (key == 'marker-size' && writable) {
-            table += '<tr class="style-row"><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                '<td><input type="text" list="marker-size" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /><datalist id="marker-size"><option value="small"><option value="medium"><option value="large"></datalist></td></tr>';
-        }
-        else if (key == 'marker-symbol' && writable) {
-            table += '<tr class="style-row"><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                '<td><input type="text" list="marker-symbol" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /><datalist id="marker-symbol">' + maki + '</datalist></td></tr>';
-        }
-        else if (key == 'stroke-width' && writable) {
-            table += '<tr class="style-row"><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                '<td><input type="number" min="0" step="0.1" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
-        }
-        else if ((key == 'stroke-opacity' || key == 'fill-opacity') && writable) {
-            table += '<tr class="style-row"><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                '<td><input type="number" min="0" max="1" step="0.1" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
-        }
-        else {
-            table += '<tr><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
-                '<td><input type="text" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
-        }
-    }
-
-    if (l.feature && l.feature.geometry) {
-        info += '<table class="metadata">';
-        if (l.feature.geometry.type === 'LineString') {
-            var total = d3.pairs(l.feature.geometry.coordinates).reduce(function(total, pair) {
-                return total + L.latLng(pair[0][1], pair[0][0])
-                    .distanceTo(L.latLng(pair[1][1], pair[1][0]));
-            }, 0);
-            info += '<tr><td>Meters</td><td>' + total.toFixed(2) + '</td></tr>' +
-                    '<tr><td>Kilometers</td><td>' + (total / 1000).toFixed(2) + '</td></tr>' +
-                    '<tr><td>Feet</td><td>' + (total / 0.3048).toFixed(2) + '</td></tr>' +
-                    '<tr><td>Yards</td><td>' + (total / 0.9144).toFixed(2) + '</td></tr>' +
-                    '<tr><td>Miles</td><td>' + (total / 1609.34).toFixed(2) + '</td></tr>';
-        } else if (l.feature.geometry.type === 'Point') {
-            info += '<tr><td>Latitude </td><td>' + l.feature.geometry.coordinates[1].toFixed(4) + '</td></tr>' +
-                    '<tr><td>Longitude</td><td>' + l.feature.geometry.coordinates[0].toFixed(4) + '</td></tr>';
-        } else if (l.feature.geometry.type === 'Polygon') {
-          info += '<tr><td>Sq. Meters</td><td>' + (LGeo.area(l)).toFixed(2) + '</td></tr>' +
-                  '<tr><td>Sq. Kilometers</td><td>' + (LGeo.area(l) / 1000000).toFixed(2) + '</td></tr>' +
-                  '<tr><td>Sq. Feet</td><td>' + (LGeo.area(l) / 0.092903).toFixed(2) + '</td></tr>' +
-                  '<tr><td>Acres</td><td>' + (LGeo.area(l) / 4046.86).toFixed(2) + '</td></tr>' +
-                  '<tr><td>Sq. Miles</td><td>' + (LGeo.area(l) / 2589990).toFixed(2) + '</td></tr>';
-        }
-        info += '</table>';
-    }
-
-    var tabs = '<div class="pad1 tabs-ui clearfix col12">' +
-                    '<div class="tab col12">' +
-                        '<input class="hide" type="radio" id="properties" name="tab-group" checked="true">' +
-                        '<label class="keyline-top keyline-right tab-toggle pad0 pin-bottomleft z10 center col6" for="properties">Properties</label>' +
-                        '<div class="space-bottom1 col12 content">' +
-                            '<table class="space-bottom0 marker-properties">' + table + '</table>' +
-                            (writable ? '<div class="add-row-button add fl col3"><span class="icon-plus"> Add row</div>' +
-                            '<div class="fl text-right col9"><input type="checkbox" id="show-style" name="show-style" value="true" checked><label for="show-style">Show style properties</label></div>' : '') +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="space-bottom2 tab col12">' +
-                        '<input class="hide" type="radio" id="info" name="tab-group">' +
-                        '<label class="keyline-top tab-toggle pad0 pin-bottomright z10 center col6" for="info">Info</label>' +
-                        '<div class="space-bottom1 col12 content">' +
-                            '<div class="marker-info">' + info + ' </div>' +
-                        '</div>' +
-                    '</div>' +
-                '</div>';
-
-    var content = tabs +
-        (writable ? '<div class="clearfix col12 pad1 keyline-top">' +
-            '<div class="pill col6">' +
-            '<button class="save col6 major">Save</button> ' +
-            '<button class="minor col6 cancel">Cancel</button>' +
-            '</div>' +
-            '<button class="col6 text-right pad0 delete-invert"><span class="icon-remove-sign"></span> Delete feature</button></div>' : '');
-
-    l.bindPopup(L.popup({
-        closeButton: false,
-        maxWidth: 500,
-        maxHeight: 400,
-        autoPanPadding: [5, 45],
-        className: 'geojsonio-feature'
-    }, l).setContent(content));
-
-    l.on('popupopen', function(e){
-        if (showStyle === false) {
-            d3.select('#show-style').property('checked', false);
-              d3.selectAll('.style-row').style('display','none');
-        }
-        d3.select('#show-style').on('click', function() {
-            if (this.checked) {
-                showStyle = true;
-                d3.selectAll('.style-row').style('display','');
-            } else {
-                showStyle = false;
-                d3.selectAll('.style-row').style('display','none');
-            }
-        });
+const addMarkers = (geojson, map, context) => {
+  markers.forEach((d) => {
+    d.remove();
+  });
+  let pointFeatures = [];
+  let pointFeaturesIndices = [];
+  // add markers
+  if (geojson.features) {
+    geojson.features.forEach((d, i) => {
+      if (d.geometry.type === 'Point') {
+        pointFeatures.push(d);
+        pointFeaturesIndices.push(i);
+      }
     });
+  }
+
+  if (pointFeatures.length === 0) {
+    return;
+  }
+
+  pointFeatures.map((d, i) => {
+    const marker = new ClickableMarker({
+      color: '#7e7e7e',
+    })
+      .setLngLat(d.geometry.coordinates)
+      .onClick(() => {
+        bindPopup(
+          {
+            lngLat: d.geometry.coordinates,
+            features: [
+              {
+                id: pointFeaturesIndices[i],
+                ...d,
+              },
+            ],
+          },
+          context
+        );
+      })
+      .addTo(map);
+    markers.push(marker);
+  });
+};
+
+module.exports = function (context, readonly) {
+  writable = !readonly;
+
+  function map(selection) {
+    mapboxgl.accessToken =
+      'pk.eyJ1IjoiY2hyaXN3aG9uZ21hcGJveCIsImEiOiJjbDR5OTNyY2cxZGg1M2luejcxZmJpaG1yIn0.mUZ2xk8CLeBFotkPvPJHGg';
+
+    context.map = new mapboxgl.Map({
+      container: selection.node(),
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [-96, 37.8],
+      zoom: 3,
+      projection: 'globe',
+      hash: 'map',
+    });
+
+    context.map.addControl(
+      new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl,
+        marker: true,
+      })
+    );
+
+    context.Draw = new MapboxDraw({
+      displayControlsDefault: false,
+      controls: {
+        point: true,
+        line_string: true,
+        polygon: true,
+        trash: false,
+      },
+    });
+
+    context.map.addControl(new mapboxgl.NavigationControl());
+
+    context.map.addControl(context.Draw, 'top-right');
+
+    class EditControl {
+      onAdd(map) {
+        this.map = map;
+        this._container = document.createElement('div');
+        this._container.className =
+          'mapboxgl-ctrl-group mapboxgl-ctrl edit-control';
+
+        this._container.innerHTML = `
+          <button class="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_edit" title="Edit geometries" style="background-image: url(img/edit.svg); background-size: 13px 13px;">
+            
+          </button>
+        `;
+
+        return this._container;
+      }
+    }
+
+
+    const editControl = new EditControl();
+    context.map.addControl(editControl, 'top-right');
+
+    class SaveCancelControl {
+      onAdd(map) {
+        this.map = map;
+        this._container = document.createElement('div');
+        this._container.className =
+          'save-cancel-control bg-white rounded pt-1 pb-2 px-2 mt-2 mr-2 float-right clear-both pointer-events-auto';
+        this._container.style = 'display: none;';
+        this._container.innerHTML = `
+          <div class='font-bold mb-0.5'>Editing Geometries</div>
+            <div class="flex">
+              <button class='mapboxgl-draw-actions-btn mapboxgl-draw-actions-btn_save txt-xs bg-gray-500 hover:bg-gray-700 text-white font-bold py-0 px-2 rounded' title="Save changes.">
+                Save
+              </button>
+              <button class='mapboxgl-draw-actions-btn mapboxgl-draw-actions-btn_cancel ml-1 txt-xs bg-gray-500 hover:bg-gray-700 text-white font-bold py-0 px-2 rounded' title="Cancel editing, discards all changes.">
+                Cancel
+              </button>
+            </div>
+        `;
+
+        return this._container;
+      }
+    }
+
+    const saveCancelControl = new SaveCancelControl();
+
+    context.map.addControl(saveCancelControl, 'top-right');
+
+    class TrashControl {
+      onAdd(map) {
+        this.map = map;
+        this._container = document.createElement('div');
+        this._container.className =
+          'mapboxgl-ctrl-group mapboxgl-ctrl trash-control';
+        this._container.style = 'display: none;';
+        this._container.innerHTML = `
+          <button class="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_trash" title="Delete">
+          </button>
+        `;
+
+        return this._container;
+      }
+    }
+
+    const trashControl = new TrashControl();
+
+    context.map.addControl(trashControl, 'top-right');
+
+    const exitEditMode = () => {
+      // show the data layers
+      context.map.setLayoutProperty('map-data-fill', 'visibility', 'visible');
+      context.map.setLayoutProperty(
+        'map-data-fill-outline',
+        'visibility',
+        'visible'
+      );
+      context.map.setLayoutProperty('map-data-line', 'visibility', 'visible');
+
+      // show markers
+      d3.selectAll('.mapboxgl-marker').style('display', 'block');
+
+      // clean up draw
+      context.Draw.changeMode('simple_select');
+      context.Draw.deleteAll();
+
+      // hide the save/cancel control and the delete control
+      d3.select('.save-cancel-control').style('display', 'none');
+      d3.select('.trash-control').style('display', 'none');
+
+      // show the edit button and draw tools
+      d3.select('.edit-control').style('display', 'block');
+      d3.select('.mapboxgl-ctrl-group:nth-child(3)').style('display', 'block');
+    };
+
+    // handle save or cancel from edit mode
+    d3.selectAll('.mapboxgl-draw-actions-btn').on('click', function () {
+      const target = d3.select(this);
+      const isSaveButton = target.classed('mapboxgl-draw-actions-btn_save');
+      if (isSaveButton) {
+        const FC = context.Draw.getAll();
+        context.data.set(
+          {
+            map: {
+              ...FC,
+              features: stripIds(FC.features),
+            },
+          },
+          'map'
+        );
+      }
+
+      exitEditMode();
+    });
+
+    // handle delete
+    d3.select('.mapbox-gl-draw_trash').on('click', function () {
+      context.Draw.trash();
+    });
+
+    // enter edit mode
+    d3.selectAll('.mapbox-gl-draw_edit').on('click', function () {
+      // hide the edit button and draw tools
+      d3.select('.edit-control').style('display', 'none');
+      d3.select('.mapboxgl-ctrl-group:nth-child(3)').style('display', 'none');
+
+      // show the save/cancel control and the delete control
+      d3.select('.save-cancel-control').style('display', 'block');
+      d3.select('.trash-control').style('display', 'block');
+
+      // hide the line and polygon data layers
+      context.map.setLayoutProperty('map-data-fill', 'visibility', 'none');
+      context.map.setLayoutProperty(
+        'map-data-fill-outline',
+        'visibility',
+        'none'
+      );
+      context.map.setLayoutProperty('map-data-line', 'visibility', 'none');
+
+      // hide markers
+      d3.selectAll('.mapboxgl-marker').style('display', 'none');
+
+      // import the current data into draw for editing
+      const featureIds = context.Draw.add(context.data.get('map'));
+      context.Draw.changeMode('simple_select');
+    });
+
+    context.map.on('style.load', () => {
+      context.map.setFog({});
+
+      context.map.addSource('map-data', {
+        type: 'geojson',
+        data: addIds(context.data.get('map')) || dummyGeojson,
+      });
+
+      context.map.addLayer({
+        id: 'map-data-fill',
+        type: 'fill',
+        source: 'map-data',
+        paint: {
+          'fill-color': '#555',
+          'fill-opacity': 0.3,
+        },
+        filter: ['==', ['geometry-type'], 'Polygon'],
+      });
+
+      context.map.addLayer({
+        id: 'map-data-fill-outline',
+        type: 'line',
+        source: 'map-data',
+        paint: {
+          'line-color': '#555',
+          'line-width': 2,
+        },
+        filter: ['==', ['geometry-type'], 'Polygon'],
+      });
+
+      context.map.addLayer({
+        id: 'map-data-line',
+        type: 'line',
+        source: 'map-data',
+        paint: {
+          'line-color': '#555',
+          'line-width': 2,
+        },
+        filter: ['==', ['geometry-type'], 'LineString'],
+      });
+
+      addMarkers(context.data.get('map'), context.map, context);
+    });
+
+    context.map.on('load', () => {
+   
+      context.map.on('mouseenter', 'map-data-fill', () => {
+        context.map.getCanvas().style.cursor = 'pointer';
+      });
+
+      context.map.on('mouseleave', 'map-data-fill', () => {
+        context.map.getCanvas().style.cursor = 'default';
+      });
+
+      context.map.on('mouseenter', 'map-data-line', () => {
+        context.map.getCanvas().style.cursor = 'pointer';
+      });
+
+      context.map.on('mouseleave', 'map-data-line', () => {
+        context.map.getCanvas().style.cursor = 'default';
+      });
+
+      context.map.on('click', 'map-data-fill', (e) => {
+        bindPopup(e, context);
+      });
+
+      context.map.on('click', 'map-data-line', (e) => {
+        bindPopup(e, context);
+      });
+    });
+
+    context.map.on('draw.create', created);
+
+    function stripIds(features) {
+      return features.map((feature) => {
+        delete feature.id;
+        return feature;
+      });
+    }
+
+    function created(e) {
+      context.Draw.deleteAll();
+      update(stripIds(e.features));
+    }
+
+    function update(features) {
+      const FC = context.data.get('map');
+
+      FC.features = [...FC.features, ...features];
+
+      context.data.set({ map: FC }, 'map');
+    }
+
+    context.dispatch.on('change.map', function () {
+      geojsonToLayer(context.data.get('map'), context.map, context);
+    });
+  }
+
+  function layerToGeoJSON(layer) {
+    var features = [];
+    layer.eachLayer(collect);
+    function collect(l) {
+      if ('toGeoJSON' in l) features.push(l.toGeoJSON());
+    }
+    return {
+      type: 'FeatureCollection',
+      features: features,
+    };
+  }
+
+  return map;
+};
+
+function geojsonToLayer(geojson, map, context) {
+  if (map.isStyleLoaded()) {
+    map.getSource('map-data').setData(addIds(geojson));
+
+    addMarkers(geojson, map, context);
+  }
 }
 
-},{"../../data/maki.json":1,"../lib/custom_hash.js":172,"../lib/popup":174,"escape-html":22,"geojson-rewind":32,"leaflet-geodesy":63,"qs-hash":92}],191:[function(require,module,exports){
+function bindPopup(e, context) {
+  const [feature] = e.features;
+  var props = feature.properties;
+  var table = '';
+  var info = '';
+
+  var properties = {};
+
+  // Steer clear of XSS
+  for (var k in props) {
+    var esc = escape(k);
+    // users don't want to see "[object Object]"
+    if (typeof props[k] === 'object') {
+      properties[esc] = escape(JSON.stringify(props[k]));
+    } else {
+      properties[esc] = escape(props[k]);
+    }
+  }
+
+  if (!properties) return;
+
+  if (!Object.keys(properties).length) properties = { '': '' };
+
+  for (var key in properties) {
+    table +=
+      '<tr><th><input type="text" value="' +
+      key +
+      '"' +
+      (!writable ? ' readonly' : '') +
+      ' /></th>' +
+      '<td><input type="text" value="' +
+      properties[key] +
+      '"' +
+      (!writable ? ' readonly' : '') +
+      ' /></td></tr>';
+  }
+
+  if (feature && feature.geometry) {
+    info += '<table class="metadata">';
+    if (feature.geometry.type === 'LineString') {
+      var total = turf.length(feature) * 1000;
+      info +=
+        '<tr><td>Meters</td><td>' +
+        total.toFixed(2) +
+        '</td></tr>' +
+        '<tr><td>Kilometers</td><td>' +
+        (total / 1000).toFixed(2) +
+        '</td></tr>' +
+        '<tr><td>Feet</td><td>' +
+        (total / 0.3048).toFixed(2) +
+        '</td></tr>' +
+        '<tr><td>Yards</td><td>' +
+        (total / 0.9144).toFixed(2) +
+        '</td></tr>' +
+        '<tr><td>Miles</td><td>' +
+        (total / 1609.34).toFixed(2) +
+        '</td></tr>';
+    } else if (feature.geometry.type === 'Point') {
+      info +=
+        '<tr><td>Latitude </td><td>' +
+        feature.geometry.coordinates[1].toFixed(4) +
+        '</td></tr>' +
+        '<tr><td>Longitude</td><td>' +
+        feature.geometry.coordinates[0].toFixed(4) +
+        '</td></tr>';
+    } else if (feature.geometry.type === 'Polygon') {
+      info +=
+        '<tr><td>Sq. Meters</td><td>' +
+        turf.area(feature.geometry).toFixed(2) +
+        '</td></tr>' +
+        '<tr><td>Sq. Kilometers</td><td>' +
+        (turf.area(feature.geometry) / 1000000).toFixed(2) +
+        '</td></tr>' +
+        '<tr><td>Sq. Feet</td><td>' +
+        (turf.area(feature.geometry) / 0.092903).toFixed(2) +
+        '</td></tr>' +
+        '<tr><td>Acres</td><td>' +
+        (turf.area(feature.geometry) / 4046.86).toFixed(2) +
+        '</td></tr>' +
+        '<tr><td>Sq. Miles</td><td>' +
+        (turf.area(feature.geometry) / 2589990).toFixed(2) +
+        '</td></tr>';
+    }
+    info += '</table>';
+  }
+
+  var tabs =
+    '<div class="pad1 tabs-ui clearfix col12">' +
+    '<div class="tab col12">' +
+    '<input class="hide" type="radio" id="properties" name="tab-group" checked="true">' +
+    '<label class="keyline-top keyline-right tab-toggle pad0 pin-bottomleft z10 center col6" for="properties">Properties</label>' +
+    '<div class="space-bottom1 col12 content">' +
+    '<table class="space-bottom0 marker-properties">' +
+    table +
+    '</table>' +
+    (writable
+      ? '<div class="add-row-button add fl col3"><span class="icon-plus"> Add row</div>'
+      : '') +
+    '</div>' +
+    '</div>' +
+    '<div class="space-bottom2 tab col12">' +
+    '<input class="hide" type="radio" id="info" name="tab-group">' +
+    '<label class="keyline-top tab-toggle pad0 pin-bottomright z10 center col6" for="info">Info</label>' +
+    '<div class="space-bottom1 col12 content">' +
+    '<div class="marker-info">' +
+    info +
+    ' </div>' +
+    '</div>' +
+    '</div>' +
+    '</div>';
+
+  var content =
+    tabs +
+    (writable
+      ? '<div class="clearfix col12 pad1 keyline-top">' +
+        '<div class="pill col6">' +
+        '<button class="save col6 major">Save</button> ' +
+        '<button class="minor col6 cancel">Cancel</button>' +
+        '</div>' +
+        '<button class="col6 text-right pad0 delete-invert"><span class="icon-remove-sign"></span> Delete feature</button></div>'
+      : '');
+
+  new mapboxgl.Popup({
+    closeButton: false,
+    maxWidth: '251px',
+    className: 'geojsonio-feature',
+  })
+    .setLngLat(e.lngLat)
+    .setHTML(content)
+    .on('open', (e) => {
+      // bind popup event listeners
+      popup(context)(e, feature.id);
+      if (showStyle === false) {
+        d3.select('#show-style').property('checked', false);
+        d3.selectAll('.style-row').style('display', 'none');
+      }
+      d3.select('#show-style').on('click', function () {
+        if (this.checked) {
+          showStyle = true;
+          d3.selectAll('.style-row').style('display', '');
+        } else {
+          showStyle = false;
+          d3.selectAll('.style-row').style('display', 'none');
+        }
+      });
+    })
+    .addTo(context.map);
+}
+
+},{"../lib/popup":189,"escape-html":25,"geojson-rewind":38,"leaflet-geodesy":95,"qs-hash":107}],206:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -31206,7 +32355,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],192:[function(require,module,exports){
+},{}],207:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -31274,7 +32423,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],193:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -31326,7 +32475,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":179,"../panel/json":180,"../panel/table":181}],194:[function(require,module,exports){
+},{"../panel/help":194,"../panel/json":195,"../panel/table":196}],209:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -31394,7 +32543,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":188}],195:[function(require,module,exports){
+},{"./flash":203}],210:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -31443,58 +32592,58 @@ function share(context) {
     };
 }
 
-},{"../source/gist":182,"./modal":192}],196:[function(require,module,exports){
+},{"../source/gist":197,"./modal":207}],211:[function(require,module,exports){
 module.exports = function(context) {
-    if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
-        return function() {};
+  // if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
+  //     return function() {};
+  // }
+  return function(selection) {
+    var name = selection.append('a')
+      .attr('target', '_blank');
+
+    selection.append('span').text(' | ');
+
+    var action = selection.append('a')
+      .attr('href', '#');
+
+    function nextLogin() {
+      action.text('login').on('click', login);
+      name
+        .text('anon')
+        .attr('href', '#')
+        .on('click', function() { d3.event.preventDefault(); });
     }
-    return function(selection) {
-        var name = selection.append('a')
-            .attr('target', '_blank');
 
-        selection.append('span').text(' | ');
+    function nextLogout() {
+      name.on('click', null);
+      action.text('logout').on('click', logout);
+    }
 
-        var action = selection.append('a')
-            .attr('href', '#');
+    function login() {
+      d3.event.preventDefault();
+      context.user.authenticate();
+    }
 
-        function nextLogin() {
-            action.text('login').on('click', login);
-            name
-                .text('anon')
-                .attr('href', '#')
-                .on('click', function() { d3.event.preventDefault(); });
-        }
+    function logout() {
+      d3.event.preventDefault();
+      context.user.logout();
+      nextLogin();
+    }
 
-        function nextLogout() {
-            name.on('click', null);
-            action.text('logout').on('click', logout);
-        }
+    nextLogin();
 
-        function login() {
-            d3.event.preventDefault();
-            context.user.authenticate();
-        }
-
-        function logout() {
-            d3.event.preventDefault();
-            context.user.logout();
-            nextLogin();
-        }
-
-        nextLogin();
-
-        if (context.user.token()) {
-            context.user.details(function(err, d) {
-                if (err) return;
-                name.text(d.login);
-                name.attr('href', d.html_url);
-                nextLogout();
-            });
-        }
-    };
+    if (context.user.token()) {
+      context.user.details(function(err, d) {
+        if (err) return;
+        name.text(d.login);
+        name.attr('href', d.html_url);
+        nextLogout();
+      });
+    }
+  };
 };
 
-},{"../config.js":163}],"topojson":[function(require,module,exports){
+},{}],"topojson":[function(require,module,exports){
 var topojson = module.exports = require("./topojson");
 topojson.topology = require("./lib/topojson/topology");
 topojson.simplify = require("./lib/topojson/simplify");
@@ -31505,4 +32654,4 @@ topojson.bind = require("./lib/topojson/bind");
 topojson.stitch = require("./lib/topojson/stitch");
 topojson.scale = require("./lib/topojson/scale");
 
-},{"./lib/topojson/bind":111,"./lib/topojson/clockwise":114,"./lib/topojson/filter":118,"./lib/topojson/prune":122,"./lib/topojson/scale":124,"./lib/topojson/simplify":125,"./lib/topojson/stitch":127,"./lib/topojson/topology":128,"./topojson":140}]},{},[171]);
+},{"./lib/topojson/bind":126,"./lib/topojson/clockwise":129,"./lib/topojson/filter":133,"./lib/topojson/prune":137,"./lib/topojson/scale":139,"./lib/topojson/simplify":140,"./lib/topojson/stitch":142,"./lib/topojson/topology":143,"./topojson":155}]},{},[187]);

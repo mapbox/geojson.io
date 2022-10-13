@@ -4,8 +4,12 @@
       {
         "match": ".*",
         "isAsync": true,
-        "cmd": "make && npx tailwindcss -i ./css/site_src.css -o ./css/site_dist.css"
+        "cmd": "npx tailwindcss -i ./css/tailwind_src.css -o ./css/tailwind_dist.css && make"
       }
     ]
-  }
-}
+  },
+  "liveServer.settings.ignoreFiles" : [
+    "css/site_dist.css",
+    "css/site_src.css"
+  ]
+} 

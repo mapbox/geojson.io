@@ -45,16 +45,10 @@
     background-color:#f7f7f7;
 }
 
-.geojsonio-feature .leaflet-popup-content-wrapper {
-    float: left;
-    width: 100%;
-    padding: 0;
-}
 
-.geojsonio-feature .leaflet-popup-content {
+.geojsonio-feature .mapboxgl-popup-content {
     float: left;
     padding: 0 !important;
-    width:100%;
 }
 
 .geojsonio-feature .leaflet-popup-tip-container {
@@ -73,6 +67,10 @@ datalist {
 .tabs-ui {
     position:relative;
     width: 250px;
+}
+
+.tabs-ui > * {
+    box-sizing: border-box;
 }
 
 .tab .tab-toggle {

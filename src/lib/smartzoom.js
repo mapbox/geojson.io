@@ -1,10 +1,12 @@
-module.exports = function(map, feature, bounds) {
-    var zoomLevel;
+module.exports = function (map, feature) {
+  var zoomLevel;
 
-    if (feature instanceof L.Marker) {
-        zoomLevel = bounds.isValid() ? map.getBoundsZoom(bounds) + 2 : 10;
-        map.setView(feature.getLatLng(), zoomLevel);
-    } else if ('getBounds' in feature && feature.getBounds().isValid()) {
-        map.fitBounds(feature.getBounds());
-    }
+  if (feature.geometry.type === 'Point') {
+    map.flyTo({
+      center: feature.geometry.coordinates,
+    });
+  } else {
+    const bounds = turf.bbox(feature);
+    map.fitBounds(bounds, { padding: 60 });
+  }
 };
