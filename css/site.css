@@ -422,6 +422,7 @@ html {
     padding: 5px 10px;
     line-height: 20px;
     background: #fff;
+    white-space: nowrap;
   }
   
   /*
