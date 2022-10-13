@@ -30383,67 +30383,80 @@ module.exports = function(context) {
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"buffer":12,"marked":97}],193:[function(require,module,exports){
 var validate = require('../lib/validate'),
-    zoomextent = require('../lib/zoomextent'),
-    saver = require('../ui/saver.js');
+  zoomextent = require('../lib/zoomextent'),
+  saver = require('../ui/saver.js');
 
 module.exports = function(context) {
 
-    CodeMirror.keyMap.tabSpace = {
-        Tab: function(cm) {
-            var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
-            cm.replaceSelection(spaces, 'end', '+input');
-        },
-        'Ctrl-S': saveAction,
-        'Cmd-S': saveAction,
-        fallthrough: ['default']
-    };
+  CodeMirror.keyMap.tabSpace = {
+    Tab: function(cm) {
+      var spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
+      cm.replaceSelection(spaces, 'end', '+input');
+    },
+    'Ctrl-S': saveAction,
+    'Cmd-S': saveAction,
+    fallthrough: ['default']
+  };
 
-    function saveAction() {
-        saver(context);
-        return false;
-    }
+  function saveAction() {
+    saver(context);
+    return false;
+  }
 
-    function render(selection) {
-        var textarea = selection
-            .html('')
-            .append('textarea');
+  function render(selection) {
+    var textarea = selection
+      .html('')
+      .append('textarea');
 
-        var editor = CodeMirror.fromTextArea(textarea.node(), {
-            mode: 'application/json',
-            matchBrackets: true,
-            tabSize: 2,
-            gutters: ['error'],
-            theme: 'eclipse',
-            autofocus: (window === window.top),
-            keyMap: 'tabSpace',
-            lineNumbers: true
-        });
+    var editor = CodeMirror.fromTextArea(textarea.node(), {
+      mode: 'application/json',
+      matchBrackets: true,
+      tabSize: 2,
+      gutters: ['error'],
+      theme: 'eclipse',
+      autofocus: (window === window.top),
+      keyMap: 'tabSpace',
+      lineNumbers: true
+    });
 
-        editor.on('change', validate(changeValidated));
-
-        function changeValidated(err, data, zoom) {
-            if (!err) {
-              context.data.set({map: data}, 'json');
-              if (zoom) zoomextent(context);
-            }
+    editor.on('beforeChange', (cm, change) => {
+      console.log(change);
+      if(change.origin === 'paste') {
+        try {
+          const newText = JSON.stringify(JSON.parse(change.text[0]), null, 2);
+          console.log(newText);
+          change.update(null, null, newText.split('\n'));
+        } catch(e) {
+          console.log(e);
         }
+      }
+    });
 
-        context.dispatch.on('change.json', function(event) {
-            if (event.source !== 'json') {
-                var scrollInfo = editor.getScrollInfo();
-                editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
-                editor.scrollTo(scrollInfo.left, scrollInfo.top);
-            }
-        });
+    editor.on('change', validate(changeValidated));
 
-        editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+    function changeValidated(err, data, zoom) {
+      if (!err) {
+        context.data.set({map: data}, 'json');
+        if (zoom) zoomextent(context);
+      }
     }
 
-    render.off = function() {
-        context.dispatch.on('change.json', null);
-    };
+    context.dispatch.on('change.json', function(event) {
+      if (event.source !== 'json') {
+        var scrollInfo = editor.getScrollInfo();
+        editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+        editor.scrollTo(scrollInfo.left, scrollInfo.top);
+      }
+    });
 
-    return render;
+    editor.setValue(JSON.stringify(context.data.get('map'), null, 2));
+  }
+
+  render.off = function() {
+    context.dispatch.on('change.json', null);
+  };
+
+  return render;
 };
 
 },{"../lib/validate":189,"../lib/zoomextent":190,"../ui/saver.js":207}],194:[function(require,module,exports){
@@ -32503,56 +32516,56 @@ function share(context) {
 
 },{"../source/gist":195,"./modal":205}],209:[function(require,module,exports){
 module.exports = function(context) {
-  // if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
-  //     return function() {};
-  // }
-  return function(selection) {
-    var name = selection.append('a')
-      .attr('target', '_blank');
-
-    selection.append('span').text(' | ');
-
-    var action = selection.append('a')
-      .attr('href', '#');
-
-    function nextLogin() {
-      action.text('login').on('click', login);
-      name
-        .text('anon')
-        .attr('href', '#')
-        .on('click', function() { d3.event.preventDefault(); });
+    if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
+        return function() {};
     }
+    return function(selection) {
+        var name = selection.append('a')
+            .attr('target', '_blank');
 
-    function nextLogout() {
-      name.on('click', null);
-      action.text('logout').on('click', logout);
-    }
+        selection.append('span').text(' | ');
 
-    function login() {
-      d3.event.preventDefault();
-      context.user.authenticate();
-    }
+        var action = selection.append('a')
+            .attr('href', '#');
 
-    function logout() {
-      d3.event.preventDefault();
-      context.user.logout();
-      nextLogin();
-    }
+        function nextLogin() {
+            action.text('login').on('click', login);
+            name
+                .text('anon')
+                .attr('href', '#')
+                .on('click', function() { d3.event.preventDefault(); });
+        }
 
-    nextLogin();
+        function nextLogout() {
+            name.on('click', null);
+            action.text('logout').on('click', logout);
+        }
 
-    if (context.user.token()) {
-      context.user.details(function(err, d) {
-        if (err) return;
-        name.text(d.login);
-        name.attr('href', d.html_url);
-        nextLogout();
-      });
-    }
-  };
+        function login() {
+            d3.event.preventDefault();
+            context.user.authenticate();
+        }
+
+        function logout() {
+            d3.event.preventDefault();
+            context.user.logout();
+            nextLogin();
+        }
+
+        nextLogin();
+
+        if (context.user.token()) {
+            context.user.details(function(err, d) {
+                if (err) return;
+                name.text(d.login);
+                name.attr('href', d.html_url);
+                nextLogout();
+            });
+        }
+    };
 };
 
-},{}],"topojson":[function(require,module,exports){
+},{"../config.js":179}],"topojson":[function(require,module,exports){
 var topojson = module.exports = require("./topojson");
 topojson.topology = require("./lib/topojson/topology");
 topojson.simplify = require("./lib/topojson/simplify");
