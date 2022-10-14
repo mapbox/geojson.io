@@ -2,7 +2,8 @@ var buttons = require('./ui/mode_buttons'),
   file_bar = require('./ui/file_bar'),
   dnd = require('./ui/dnd'),
   userUi = require('./ui/user'),
-  layer_switch = require('./ui/layer_switch');
+  layer_switch = require('./ui/layer_switch'),
+  projection_switch = require('./ui/projection_switch');
 
 module.exports = ui;
 
@@ -17,7 +18,8 @@ function ui(context) {
       .append('div')
       .attr('class', 'map')
       .call(context.map)
-      .call(layer_switch(context));
+      .call(layer_switch(context))
+      .call(projection_switch(context));
 
     context.container = container;
 

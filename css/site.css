@@ -119,7 +119,9 @@ html {
     box-sizing: border-box;
   }
   
-  .top button.active, .layer-switch button.active {
+  .top button.active,
+  .layer-switch button.active,
+  .projection-switch button.active {
     background: #34495e;
     color: #fff;
   }
@@ -312,12 +314,6 @@ html {
   /*
    * layer_switch ---------------------------------------------------------------
    */
-  
-  .layer-switch {
-    position: absolute;
-    bottom: 0px;
-    left: 0px;
-  }
   
   .blank-banner {
     font-size: 20px;
@@ -568,7 +564,7 @@ html {
   }
   
   .mapbox-gl-draw_polygon {
-    background-image: url("/img/polygon.svg");
+    background-image: url("../img/polygon.svg");
   }
 
   .mapbox-gl-draw_rectangle {

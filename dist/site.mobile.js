@@ -30459,7 +30459,7 @@ module.exports = function(context) {
   return render;
 };
 
-},{"../lib/validate":189,"../lib/zoomextent":190,"../ui/saver.js":209}],194:[function(require,module,exports){
+},{"../lib/validate":189,"../lib/zoomextent":190,"../ui/saver.js":210}],194:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -30809,7 +30809,8 @@ var buttons = require('./ui/mode_buttons'),
   file_bar = require('./ui/file_bar'),
   dnd = require('./ui/dnd'),
   userUi = require('./ui/user'),
-  layer_switch = require('./ui/layer_switch');
+  layer_switch = require('./ui/layer_switch'),
+  projection_switch = require('./ui/projection_switch');
 
 module.exports = ui;
 
@@ -30824,7 +30825,8 @@ function ui(context) {
       .append('div')
       .attr('class', 'map')
       .call(context.map)
-      .call(layer_switch(context));
+      .call(layer_switch(context))
+      .call(projection_switch(context));
 
     context.container = container;
 
@@ -30890,7 +30892,7 @@ function ui(context) {
   };
 }
 
-},{"./ui/dnd":199,"./ui/file_bar":202,"./ui/layer_switch":204,"./ui/mode_buttons":208,"./ui/user":211}],199:[function(require,module,exports){
+},{"./ui/dnd":199,"./ui/file_bar":202,"./ui/layer_switch":204,"./ui/mode_buttons":208,"./ui/projection_switch":209,"./ui/user":212}],199:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -31777,7 +31779,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":179,"../lib/meta.js":185,"../lib/readfile":187,"../lib/zoomextent":190,"../ui/saver.js":209,"./flash":203,"./modal.js":207,"./share":210,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":15,"filesaver.js":27,"geojson-normalize":36,"geojson2dsv":39,"shp-write":110,"tokml":125,"topojson":"topojson","wellknown":161}],203:[function(require,module,exports){
+},{"../config.js":179,"../lib/meta.js":185,"../lib/readfile":187,"../lib/zoomextent":190,"../ui/saver.js":210,"./flash":203,"./modal.js":207,"./share":211,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":15,"filesaver.js":27,"geojson-normalize":36,"geojson2dsv":39,"shp-write":110,"tokml":125,"topojson":"topojson","wellknown":161}],203:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -31845,7 +31847,7 @@ module.exports = function(context) {
     };
 
     var layerButtons = selection.append('div')
-      .attr('class', 'layer-switch mb-10')
+      .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs')
       .selectAll('button')
       .data(layers)
       .enter()
@@ -32232,6 +32234,16 @@ module.exports = function (context, readonly) {
       });
 
       addMarkers(context.data.get('map'), context.map, context);
+    });
+
+    // only show projection toggle on zoom < 6
+    context.map.on('zoomend', () => {
+      const zoom = context.map.getZoom();
+      if (zoom < 6) {
+        d3.select('.projection-switch').style('opacity', 1);
+      } else {
+        d3.select('.projection-switch').style('opacity', 0);
+      }
     });
 
     context.map.on('load', () => {
@@ -32622,6 +32634,50 @@ module.exports = function(context, pane) {
 };
 
 },{"../panel/help":192,"../panel/json":193,"../panel/table":194}],209:[function(require,module,exports){
+module.exports = function(context) {
+
+  return function(selection) {
+  
+    var projections = [
+      {
+        label: 'Globe',
+        value: 'globe'
+      },
+      {
+        label: 'Mercator',
+        value: 'mercator'
+      }
+    ];
+  
+          
+  
+    var setProjection = function(d) {
+      var clicked = this instanceof d3.selection ? this.node() : this;
+      projectionButtons.classed('active', function() {
+        return clicked === this;
+      });
+  
+      if (context.map._loaded) {
+        const { value } = d3.select(clicked).datum();
+        context.map.setProjection(value);
+      }
+    };
+  
+    const projectionButtons = selection.append('div')
+      .attr('class', 'projection-switch absolute bottom-0 right-0 mb-9 text-xs transition-all duration-200')
+      .selectAll('button')
+      .data(projections)
+      .enter()
+      .append('button')
+      .attr('class', 'pad0x')
+      .on('click', setProjection)
+      .text(function(d) { return d.label; });
+  
+    projectionButtons.filter(function(d, i) { return i === 0; }).call(setProjection);
+  };
+};
+  
+},{}],210:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -32689,7 +32745,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":203}],210:[function(require,module,exports){
+},{"./flash":203}],211:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -32738,7 +32794,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":195,"./modal":207}],211:[function(require,module,exports){
+},{"../source/gist":195,"./modal":207}],212:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};

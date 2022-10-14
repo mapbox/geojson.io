@@ -372,6 +372,16 @@ module.exports = function (context, readonly) {
       addMarkers(context.data.get('map'), context.map, context);
     });
 
+    // only show projection toggle on zoom < 6
+    context.map.on('zoomend', () => {
+      const zoom = context.map.getZoom();
+      if (zoom < 6) {
+        d3.select('.projection-switch').style('opacity', 1);
+      } else {
+        d3.select('.projection-switch').style('opacity', 0);
+      }
+    });
+
     context.map.on('load', () => {
    
       context.map.on('mouseenter', 'map-data-fill', () => {

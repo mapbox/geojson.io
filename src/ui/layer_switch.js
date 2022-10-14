@@ -43,7 +43,7 @@ module.exports = function(context) {
     };
 
     var layerButtons = selection.append('div')
-      .attr('class', 'layer-switch mb-10')
+      .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs')
       .selectAll('button')
       .data(layers)
       .enter()
