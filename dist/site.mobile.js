@@ -29695,7 +29695,7 @@ module.exports = function(context) {
   };
 };
 
-},{"../lib/zoomextent":190,"../ui/flash":201,"qs-hash":107}],182:[function(require,module,exports){
+},{"../lib/zoomextent":190,"../ui/flash":203,"qs-hash":107}],182:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -30357,7 +30357,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":180,"./core/loader":181,"./core/repo":182,"./core/router":183,"./core/user":184,"./ui":198,"./ui/map":203,"store":122}],192:[function(require,module,exports){
+},{"./core/data":180,"./core/loader":181,"./core/repo":182,"./core/router":183,"./core/user":184,"./ui":198,"./ui/map":205,"store":122}],192:[function(require,module,exports){
 (function (Buffer){(function (){
 
 var marked = require('marked');
@@ -30459,7 +30459,7 @@ module.exports = function(context) {
   return render;
 };
 
-},{"../lib/validate":189,"../lib/zoomextent":190,"../ui/saver.js":207}],194:[function(require,module,exports){
+},{"../lib/validate":189,"../lib/zoomextent":190,"../ui/saver.js":209}],194:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -30890,7 +30890,7 @@ function ui(context) {
   };
 }
 
-},{"./ui/dnd":199,"./ui/file_bar":200,"./ui/layer_switch":202,"./ui/mode_buttons":206,"./ui/user":209}],199:[function(require,module,exports){
+},{"./ui/dnd":199,"./ui/file_bar":202,"./ui/layer_switch":204,"./ui/mode_buttons":208,"./ui/user":211}],199:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -30934,7 +30934,193 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":187,"../lib/zoomextent":190,"./flash.js":201}],200:[function(require,module,exports){
+},{"../lib/readfile.js":187,"../lib/zoomextent":190,"./flash.js":203}],200:[function(require,module,exports){
+// from https://jsfiddle.net/fxi/xf51zet4/
+class extendDrawBar {
+  constructor(opt) {
+    let ctrl = this;
+    ctrl.draw = opt.draw;
+    ctrl.buttons = opt.buttons || [];
+    ctrl.onAddOrig = opt.draw.onAdd;
+    ctrl.onRemoveOrig = opt.draw.onRemove;
+  }
+  onAdd(map) {
+    let ctrl = this;
+    ctrl.map = map;
+    ctrl.elContainer = ctrl.onAddOrig(map);
+    ctrl.buttons.forEach((b) => {
+      ctrl.addButton(b);
+    });
+    return ctrl.elContainer;
+  }
+  onRemove(map) {
+    ctrl.buttons.forEach((b) => {
+      ctrl.removeButton(b);
+    });
+    ctrl.onRemoveOrig(map);
+  }
+  addButton(opt) {
+    let ctrl = this;
+    var elButton = document.createElement('button');
+    elButton.className = 'mapbox-gl-draw_ctrl-draw-btn';
+    if (opt.classes instanceof Array) {
+      opt.classes.forEach((c) => {
+        elButton.classList.add(c);
+      });
+    }
+    elButton.addEventListener(opt.on, opt.action);
+    ctrl.elContainer.appendChild(elButton);
+    opt.elButton = elButton;
+  }
+  removeButton(opt) {
+    opt.elButton.removeEventListener(opt.on, opt.action);
+    opt.elButton.remove();
+  }
+}
+
+module.exports = extendDrawBar;
+},{}],201:[function(require,module,exports){
+// from https://github.com/thegisdev/mapbox-gl-draw-rectangle-mode
+const doubleClickZoom = {
+  enable: ctx => {
+    setTimeout(() => {
+      // First check we've got a map and some context.
+      if (
+        !ctx.map ||
+          !ctx.map.doubleClickZoom ||
+          !ctx._ctx ||
+          !ctx._ctx.store ||
+          !ctx._ctx.store.getInitialConfigValue
+      )
+        return;
+        // Now check initial state wasn't false (we leave it disabled if so)
+      if (!ctx._ctx.store.getInitialConfigValue('doubleClickZoom')) return;
+      ctx.map.doubleClickZoom.enable();
+    }, 0);
+  },
+  disable(ctx) {
+    setTimeout(() => {
+      if (!ctx.map || !ctx.map.doubleClickZoom) return;
+      // Always disable here, as it's necessary in some cases.
+      ctx.map.doubleClickZoom.disable();
+    }, 0);
+  }
+};
+  
+const DrawRectangle = {
+  // When the mode starts this function will be called.
+  onSetup: function(opts) {
+    const rectangle = this.newFeature({
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[]]
+      }
+    });
+    this.addFeature(rectangle);
+    this.clearSelectedFeatures();
+    doubleClickZoom.disable(this);
+    this.updateUIClasses({ mouse: 'add' });
+    this.setActionableState({
+      trash: true
+    });
+    return {
+      rectangle
+    };
+  },
+  // support mobile taps
+  onTap: function(state, e) {
+    // emulate 'move mouse' to update feature coords
+    if (state.startPoint) this.onMouseMove(state, e);
+    // emulate onClick
+    this.onClick(state, e);
+  },
+  // Whenever a user clicks on the map, Draw will call `onClick`
+  onClick: function(state, e) {
+    // if state.startPoint exist, means its second click
+    //change to  simple_select mode
+    if (
+      state.startPoint &&
+        state.startPoint[0] !== e.lngLat.lng &&
+        state.startPoint[1] !== e.lngLat.lat
+    ) {
+      this.updateUIClasses({ mouse: 'pointer' });
+      state.endPoint = [e.lngLat.lng, e.lngLat.lat];
+      this.changeMode('simple_select', { featuresId: state.rectangle.id });
+    }
+    // on first click, save clicked point coords as starting for  rectangle
+    const startPoint = [e.lngLat.lng, e.lngLat.lat];
+    state.startPoint = startPoint;
+  },
+  onMouseMove: function(state, e) {
+    // if startPoint, update the feature coordinates, using the bounding box concept
+    // we are simply using the startingPoint coordinates and the current Mouse Position
+    // coordinates to calculate the bounding box on the fly, which will be our rectangle
+    if (state.startPoint) {
+      state.rectangle.updateCoordinate(
+        '0.0',
+        state.startPoint[0],
+        state.startPoint[1]
+      ); //minX, minY - the starting point
+      state.rectangle.updateCoordinate(
+        '0.1',
+        e.lngLat.lng,
+        state.startPoint[1]
+      ); // maxX, minY
+      state.rectangle.updateCoordinate('0.2', e.lngLat.lng, e.lngLat.lat); // maxX, maxY
+      state.rectangle.updateCoordinate(
+        '0.3',
+        state.startPoint[0],
+        e.lngLat.lat
+      ); // minX,maxY
+      state.rectangle.updateCoordinate(
+        '0.4',
+        state.startPoint[0],
+        state.startPoint[1]
+      ); //minX,minY - ending point (equals to starting point)
+    }
+  },
+  // Whenever a user clicks on a key while focused on the map, it will be sent here
+  onKeyUp: function(state, e) {
+    if (e.keyCode === 27) return this.changeMode('simple_select');
+  },
+  onStop: function(state) {
+    doubleClickZoom.enable(this);
+    this.updateUIClasses({ mouse: 'none' });
+    this.activateUIButton();
+  
+    // check to see if we've deleted this feature
+    if (this.getFeature(state.rectangle.id) === undefined) return;
+  
+    //remove last added coordinate
+    state.rectangle.removeCoordinate('0.4');
+    if (state.rectangle.isValid()) {
+      this.map.fire('draw.create', {
+        features: [state.rectangle.toGeoJSON()]
+      });
+    } else {
+      this.deleteFeature([state.rectangle.id], { silent: true });
+      this.changeMode('simple_select', {}, { silent: true });
+    }
+  },
+  toDisplayFeatures: function(state, geojson, display) {
+    const isActivePolygon = geojson.properties.id === state.rectangle.id;
+    geojson.properties.active = isActivePolygon ? 'true' : 'false';
+    if (!isActivePolygon) return display(geojson);
+  
+    // Only render the rectangular polygon if it has the starting point
+    if (!state.startPoint) return;
+    return display(geojson);
+  },
+  onTrash: function(state) {
+    this.deleteFeature([state.rectangle.id], { silent: true });
+    this.changeMode('simple_select');
+  }
+};
+  
+module.exports =  DrawRectangle;
+},{}],202:[function(require,module,exports){
 var shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
@@ -31591,7 +31777,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":179,"../lib/meta.js":185,"../lib/readfile":187,"../lib/zoomextent":190,"../ui/saver.js":207,"./flash":201,"./modal.js":205,"./share":208,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":15,"filesaver.js":27,"geojson-normalize":36,"geojson2dsv":39,"shp-write":110,"tokml":125,"topojson":"topojson","wellknown":161}],201:[function(require,module,exports){
+},{"../config.js":179,"../lib/meta.js":185,"../lib/readfile":187,"../lib/zoomextent":190,"../ui/saver.js":209,"./flash":203,"./modal.js":207,"./share":210,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":15,"filesaver.js":27,"geojson-normalize":36,"geojson2dsv":39,"shp-write":110,"tokml":125,"topojson":"topojson","wellknown":161}],203:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -31613,7 +31799,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":204}],202:[function(require,module,exports){
+},{"./message":206}],204:[function(require,module,exports){
 module.exports = function(context) {
 
   return function(selection) {
@@ -31673,8 +31859,10 @@ module.exports = function(context) {
   };
 };
 
-},{}],203:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 require('qs-hash');
+const DrawRectangle = require('./draw/rectangle');
+const ExtendDrawBar = require('./draw/extend_draw_bar');
 
 // extend mapboxGL Marker so we can pass in an onClick handler
 class ClickableMarker extends mapboxgl.Marker {
@@ -31808,17 +31996,51 @@ module.exports = function (context, readonly) {
 
     context.Draw = new MapboxDraw({
       displayControlsDefault: false,
-      controls: {
-        point: true,
-        line_string: true,
-        polygon: true,
-        trash: false,
+      modes: {
+        ...MapboxDraw.modes,
+        draw_rectangle: DrawRectangle
       },
+      controls: {
+      },
+    });
+
+    const drawControl = new ExtendDrawBar({
+      draw: context.Draw,
+      buttons: [
+        {
+          on: 'click',
+          action: () => {
+            context.Draw.changeMode('draw_point');
+          },
+          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_point']
+        },
+        {
+          on: 'click',
+          action: () => {
+            context.Draw.changeMode('draw_line_string');
+          },
+          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_line']
+        },
+        {
+          on: 'click',
+          action: () => {
+            context.Draw.changeMode('draw_polygon');
+          },
+          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_polygon']
+        },
+        {
+          on: 'click',
+          action: () => {
+            context.Draw.changeMode('draw_rectangle');
+          },
+          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_rectangle']
+        },
+      ]
     });
 
     context.map.addControl(new mapboxgl.NavigationControl());
 
-    context.map.addControl(context.Draw, 'top-right');
+    context.map.addControl(drawControl, 'top-right');
 
     class EditControl {
       onAdd(map) {
@@ -31963,7 +32185,9 @@ module.exports = function (context, readonly) {
 
       // import the current data into draw for editing
       const featureIds = context.Draw.add(context.data.get('map'));
-      context.Draw.changeMode('simple_select');
+      context.Draw.changeMode('simple_select', {
+        featureIds
+      });
     });
 
     context.map.on('style.load', () => {
@@ -32236,7 +32460,7 @@ function bindPopup(e, context) {
     .addTo(context.map);
 }
 
-},{"../lib/popup":186,"escape-html":25,"geojson-rewind":38,"leaflet-geodesy":95,"qs-hash":107}],204:[function(require,module,exports){
+},{"../lib/popup":186,"./draw/extend_draw_bar":200,"./draw/rectangle":201,"escape-html":25,"geojson-rewind":38,"leaflet-geodesy":95,"qs-hash":107}],206:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -32277,7 +32501,7 @@ function message(selection) {
     return sel;
 }
 
-},{}],205:[function(require,module,exports){
+},{}],207:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -32345,7 +32569,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],206:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
 var table = require('../panel/table'),
     json = require('../panel/json'),
     help = require('../panel/help');
@@ -32397,7 +32621,7 @@ module.exports = function(context, pane) {
     };
 };
 
-},{"../panel/help":192,"../panel/json":193,"../panel/table":194}],207:[function(require,module,exports){
+},{"../panel/help":192,"../panel/json":193,"../panel/table":194}],209:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -32465,7 +32689,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":201}],208:[function(require,module,exports){
+},{"./flash":203}],210:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -32514,7 +32738,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":195,"./modal":205}],209:[function(require,module,exports){
+},{"../source/gist":195,"./modal":207}],211:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};

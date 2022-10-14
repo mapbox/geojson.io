@@ -1,4 +1,6 @@
 require('qs-hash');
+const DrawRectangle = require('./draw/rectangle');
+const ExtendDrawBar = require('./draw/extend_draw_bar');
 
 // extend mapboxGL Marker so we can pass in an onClick handler
 class ClickableMarker extends mapboxgl.Marker {
@@ -132,17 +134,51 @@ module.exports = function (context, readonly) {
 
     context.Draw = new MapboxDraw({
       displayControlsDefault: false,
-      controls: {
-        point: true,
-        line_string: true,
-        polygon: true,
-        trash: false,
+      modes: {
+        ...MapboxDraw.modes,
+        draw_rectangle: DrawRectangle
       },
+      controls: {
+      },
+    });
+
+    const drawControl = new ExtendDrawBar({
+      draw: context.Draw,
+      buttons: [
+        {
+          on: 'click',
+          action: () => {
+            context.Draw.changeMode('draw_point');
+          },
+          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_point']
+        },
+        {
+          on: 'click',
+          action: () => {
+            context.Draw.changeMode('draw_line_string');
+          },
+          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_line']
+        },
+        {
+          on: 'click',
+          action: () => {
+            context.Draw.changeMode('draw_polygon');
+          },
+          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_polygon']
+        },
+        {
+          on: 'click',
+          action: () => {
+            context.Draw.changeMode('draw_rectangle');
+          },
+          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_rectangle']
+        },
+      ]
     });
 
     context.map.addControl(new mapboxgl.NavigationControl());
 
-    context.map.addControl(context.Draw, 'top-right');
+    context.map.addControl(drawControl, 'top-right');
 
     class EditControl {
       onAdd(map) {
@@ -287,7 +323,9 @@ module.exports = function (context, readonly) {
 
       // import the current data into draw for editing
       const featureIds = context.Draw.add(context.data.get('map'));
-      context.Draw.changeMode('simple_select');
+      context.Draw.changeMode('simple_select', {
+        featureIds
+      });
     });
 
     context.map.on('style.load', () => {
