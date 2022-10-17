@@ -1,62 +1,75 @@
 <!DOCTYPE html>
 <html>
-  <head>
-      <title>mobile view</title>
-      <link href='lib/draw/leaflet.draw.css' rel='stylesheet' />
-      <link href='css/marker.css' rel='stylesheet' />
-      <link href='css/base.css' rel='stylesheet' />
-      <link href='css/site.css' rel='stylesheet' />
-      <link rel='icon' type='image/x-icon' href='/img/favicon.png' />
-      <meta charset='utf-8'>
-      <meta name="viewport" content="initial-scale=1,maximum-scale=1">
-      <meta http-equiv='X-UA-Compatible' content='IE=Edge'>
-      <style>
+
+<head>
+    <title>mobile view</title>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css' rel='stylesheet' />
+    <link href='css/marker.css' rel='stylesheet' />
+    <link href='css/base.css' rel='stylesheet' />
+    <link href='css/site.css' rel='stylesheet' />
+    <link rel='icon' type='image/x-icon' href='/img/favicon.png' />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1">
+    <meta http-equiv='X-UA-Compatible' content='IE=Edge'>
+    <style>
         body {
-            background:#eee;
-            margin:0;
-            color:#222;
-            font:normal 14px/20px 'Helvetica Neue';
+            background: #eee;
+            margin: 0;
+            color: #222;
+            font: normal 14px/20px 'Helvetica Neue';
         }
+
         h2 {
-            margin:0;
+            margin: 0;
         }
+
         .layer-switch {
-            top:10px;
-            left:10px;
+            top: 10px;
+            left: 10px;
         }
+
         .pad1 {
-            padding:10px;
+            padding: 10px;
         }
+
         .fillE {
-            background:#eee;
+            background: #eee;
         }
+
         p {
-            margin:0;
+            margin: 0;
         }
+
         .bottom {
-            position:absolute;
-            bottom:0;
-            left:0;
-            right:0;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
         }
+
         .geojsonio .map {
-            position:absolute;
-            top:0;
-            right:0;
-            bottom:0;
-            left:0;
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
         }
+
         .deemphasize {
-            color:#777;
+            color: #777;
         }
-      </style>
-  </head>
-  <body>
+    </style>
+</head>
+
+<body>
     <div class='geojsonio'></div>
     <div class='pad1 fillE bottom'>
         <p>geojson.io mobile <span class='deemphasize'>(read-only)</span></p>
     </div>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
     <script src='dist/lib.js'></script>
     <script src='dist/site.mobile.js'></script>
 </body>
+
 </html>

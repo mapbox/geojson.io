@@ -124,209 +124,212 @@ module.exports = function (context, readonly) {
       hash: 'map',
     });
 
-    context.map.addControl(
-      new MapboxGeocoder({
-        accessToken: mapboxgl.accessToken,
-        mapboxgl,
-        marker: true,
-      })
-    );
-
-    context.Draw = new MapboxDraw({
-      displayControlsDefault: false,
-      modes: {
-        ...MapboxDraw.modes,
-        draw_rectangle: DrawRectangle
-      },
-      controls: {
-      },
-    });
-
-    const drawControl = new ExtendDrawBar({
-      draw: context.Draw,
-      buttons: [
-        {
-          on: 'click',
-          action: () => {
-            context.Draw.changeMode('draw_point');
-          },
-          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_point']
-        },
-        {
-          on: 'click',
-          action: () => {
-            context.Draw.changeMode('draw_line_string');
-          },
-          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_line']
-        },
-        {
-          on: 'click',
-          action: () => {
-            context.Draw.changeMode('draw_polygon');
-          },
-          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_polygon']
-        },
-        {
-          on: 'click',
-          action: () => {
-            context.Draw.changeMode('draw_rectangle');
-          },
-          classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_rectangle']
-        },
-      ]
-    });
-
-    context.map.addControl(new mapboxgl.NavigationControl());
-
-    context.map.addControl(drawControl, 'top-right');
-
-    class EditControl {
-      onAdd(map) {
-        this.map = map;
-        this._container = document.createElement('div');
-        this._container.className =
-          'mapboxgl-ctrl-group mapboxgl-ctrl edit-control';
-
-        this._container.innerHTML = `
-          <button class="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_edit" title="Edit geometries" style="background-image: url(img/edit.svg); background-size: 13px 13px;">
-            
-          </button>
-        `;
-
-        return this._container;
-      }
-    }
-
-
-    const editControl = new EditControl();
-    context.map.addControl(editControl, 'top-right');
-
-    class SaveCancelControl {
-      onAdd(map) {
-        this.map = map;
-        this._container = document.createElement('div');
-        this._container.className =
-          'save-cancel-control bg-white rounded pt-1 pb-2 px-2 mt-2 mr-2 float-right clear-both pointer-events-auto';
-        this._container.style = 'display: none;';
-        this._container.innerHTML = `
-          <div class='font-bold mb-0.5'>Editing Geometries</div>
-            <div class="flex">
-              <button class='mapboxgl-draw-actions-btn mapboxgl-draw-actions-btn_save txt-xs bg-gray-500 hover:bg-gray-700 text-white font-bold py-0 px-2 rounded' title="Save changes.">
-                Save
-              </button>
-              <button class='mapboxgl-draw-actions-btn mapboxgl-draw-actions-btn_cancel ml-1 txt-xs bg-gray-500 hover:bg-gray-700 text-white font-bold py-0 px-2 rounded' title="Cancel editing, discards all changes.">
-                Cancel
-              </button>
-            </div>
-        `;
-
-        return this._container;
-      }
-    }
-
-    const saveCancelControl = new SaveCancelControl();
-
-    context.map.addControl(saveCancelControl, 'top-right');
-
-    class TrashControl {
-      onAdd(map) {
-        this.map = map;
-        this._container = document.createElement('div');
-        this._container.className =
-          'mapboxgl-ctrl-group mapboxgl-ctrl trash-control';
-        this._container.style = 'display: none;';
-        this._container.innerHTML = `
-          <button class="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_trash" title="Delete">
-          </button>
-        `;
-
-        return this._container;
-      }
-    }
-
-    const trashControl = new TrashControl();
-
-    context.map.addControl(trashControl, 'top-right');
-
-    const exitEditMode = () => {
-      // show the data layers
-      context.map.setLayoutProperty('map-data-fill', 'visibility', 'visible');
-      context.map.setLayoutProperty(
-        'map-data-fill-outline',
-        'visibility',
-        'visible'
+  
+    if (writable) {
+      context.map.addControl(
+        new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl,
+          marker: true,
+        })
       );
-      context.map.setLayoutProperty('map-data-line', 'visibility', 'visible');
-
-      // show markers
-      d3.selectAll('.mapboxgl-marker').style('display', 'block');
-
-      // clean up draw
-      context.Draw.changeMode('simple_select');
-      context.Draw.deleteAll();
-
-      // hide the save/cancel control and the delete control
-      d3.select('.save-cancel-control').style('display', 'none');
-      d3.select('.trash-control').style('display', 'none');
-
-      // show the edit button and draw tools
-      d3.select('.edit-control').style('display', 'block');
-      d3.select('.mapboxgl-ctrl-group:nth-child(3)').style('display', 'block');
-    };
-
-    // handle save or cancel from edit mode
-    d3.selectAll('.mapboxgl-draw-actions-btn').on('click', function () {
-      const target = d3.select(this);
-      const isSaveButton = target.classed('mapboxgl-draw-actions-btn_save');
-      if (isSaveButton) {
-        const FC = context.Draw.getAll();
-        context.data.set(
-          {
-            map: {
-              ...FC,
-              features: stripIds(FC.features),
-            },
-          },
-          'map'
-        );
-      }
-
-      exitEditMode();
-    });
-
-    // handle delete
-    d3.select('.mapbox-gl-draw_trash').on('click', function () {
-      context.Draw.trash();
-    });
-
-    // enter edit mode
-    d3.selectAll('.mapbox-gl-draw_edit').on('click', function () {
-      // hide the edit button and draw tools
-      d3.select('.edit-control').style('display', 'none');
-      d3.select('.mapboxgl-ctrl-group:nth-child(3)').style('display', 'none');
-
-      // show the save/cancel control and the delete control
-      d3.select('.save-cancel-control').style('display', 'block');
-      d3.select('.trash-control').style('display', 'block');
-
-      // hide the line and polygon data layers
-      context.map.setLayoutProperty('map-data-fill', 'visibility', 'none');
-      context.map.setLayoutProperty(
-        'map-data-fill-outline',
-        'visibility',
-        'none'
-      );
-      context.map.setLayoutProperty('map-data-line', 'visibility', 'none');
-
-      // hide markers
-      d3.selectAll('.mapboxgl-marker').style('display', 'none');
-
-      // import the current data into draw for editing
-      const featureIds = context.Draw.add(context.data.get('map'));
-      context.Draw.changeMode('simple_select', {
-        featureIds
+  
+      context.Draw = new MapboxDraw({
+        displayControlsDefault: false,
+        modes: {
+          ...MapboxDraw.modes,
+          draw_rectangle: DrawRectangle
+        },
+        controls: {
+        },
       });
-    });
+  
+      const drawControl = new ExtendDrawBar({
+        draw: context.Draw,
+        buttons: [
+          {
+            on: 'click',
+            action: () => {
+              context.Draw.changeMode('draw_point');
+            },
+            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_point']
+          },
+          {
+            on: 'click',
+            action: () => {
+              context.Draw.changeMode('draw_line_string');
+            },
+            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_line']
+          },
+          {
+            on: 'click',
+            action: () => {
+              context.Draw.changeMode('draw_polygon');
+            },
+            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_polygon']
+          },
+          {
+            on: 'click',
+            action: () => {
+              context.Draw.changeMode('draw_rectangle');
+            },
+            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_rectangle']
+          },
+        ]
+      });
+  
+      context.map.addControl(new mapboxgl.NavigationControl());
+  
+      context.map.addControl(drawControl, 'top-right');
+  
+      class EditControl {
+        onAdd(map) {
+          this.map = map;
+          this._container = document.createElement('div');
+          this._container.className =
+            'mapboxgl-ctrl-group mapboxgl-ctrl edit-control';
+  
+          this._container.innerHTML = `
+            <button class="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_edit" title="Edit geometries" style="background-image: url(img/edit.svg); background-size: 13px 13px;">
+              
+            </button>
+          `;
+  
+          return this._container;
+        }
+      }
+  
+  
+      const editControl = new EditControl();
+      context.map.addControl(editControl, 'top-right');
+  
+      class SaveCancelControl {
+        onAdd(map) {
+          this.map = map;
+          this._container = document.createElement('div');
+          this._container.className =
+            'save-cancel-control bg-white rounded pt-1 pb-2 px-2 mt-2 mr-2 float-right clear-both pointer-events-auto';
+          this._container.style = 'display: none;';
+          this._container.innerHTML = `
+            <div class='font-bold mb-0.5'>Editing Geometries</div>
+              <div class="flex">
+                <button class='mapboxgl-draw-actions-btn mapboxgl-draw-actions-btn_save txt-xs bg-gray-500 hover:bg-gray-700 text-white font-bold py-0 px-2 rounded' title="Save changes.">
+                  Save
+                </button>
+                <button class='mapboxgl-draw-actions-btn mapboxgl-draw-actions-btn_cancel ml-1 txt-xs bg-gray-500 hover:bg-gray-700 text-white font-bold py-0 px-2 rounded' title="Cancel editing, discards all changes.">
+                  Cancel
+                </button>
+              </div>
+          `;
+  
+          return this._container;
+        }
+      }
+  
+      const saveCancelControl = new SaveCancelControl();
+  
+      context.map.addControl(saveCancelControl, 'top-right');
+  
+      class TrashControl {
+        onAdd(map) {
+          this.map = map;
+          this._container = document.createElement('div');
+          this._container.className =
+            'mapboxgl-ctrl-group mapboxgl-ctrl trash-control';
+          this._container.style = 'display: none;';
+          this._container.innerHTML = `
+            <button class="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_trash" title="Delete">
+            </button>
+          `;
+  
+          return this._container;
+        }
+      }
+  
+      const trashControl = new TrashControl();
+  
+      context.map.addControl(trashControl, 'top-right');
+  
+      const exitEditMode = () => {
+        // show the data layers
+        context.map.setLayoutProperty('map-data-fill', 'visibility', 'visible');
+        context.map.setLayoutProperty(
+          'map-data-fill-outline',
+          'visibility',
+          'visible'
+        );
+        context.map.setLayoutProperty('map-data-line', 'visibility', 'visible');
+  
+        // show markers
+        d3.selectAll('.mapboxgl-marker').style('display', 'block');
+  
+        // clean up draw
+        context.Draw.changeMode('simple_select');
+        context.Draw.deleteAll();
+  
+        // hide the save/cancel control and the delete control
+        d3.select('.save-cancel-control').style('display', 'none');
+        d3.select('.trash-control').style('display', 'none');
+  
+        // show the edit button and draw tools
+        d3.select('.edit-control').style('display', 'block');
+        d3.select('.mapboxgl-ctrl-group:nth-child(3)').style('display', 'block');
+      };
+  
+      // handle save or cancel from edit mode
+      d3.selectAll('.mapboxgl-draw-actions-btn').on('click', function () {
+        const target = d3.select(this);
+        const isSaveButton = target.classed('mapboxgl-draw-actions-btn_save');
+        if (isSaveButton) {
+          const FC = context.Draw.getAll();
+          context.data.set(
+            {
+              map: {
+                ...FC,
+                features: stripIds(FC.features),
+              },
+            },
+            'map'
+          );
+        }
+  
+        exitEditMode();
+      });
+  
+      // handle delete
+      d3.select('.mapbox-gl-draw_trash').on('click', function () {
+        context.Draw.trash();
+      });
+  
+      // enter edit mode
+      d3.selectAll('.mapbox-gl-draw_edit').on('click', function () {
+        // hide the edit button and draw tools
+        d3.select('.edit-control').style('display', 'none');
+        d3.select('.mapboxgl-ctrl-group:nth-child(3)').style('display', 'none');
+  
+        // show the save/cancel control and the delete control
+        d3.select('.save-cancel-control').style('display', 'block');
+        d3.select('.trash-control').style('display', 'block');
+  
+        // hide the line and polygon data layers
+        context.map.setLayoutProperty('map-data-fill', 'visibility', 'none');
+        context.map.setLayoutProperty(
+          'map-data-fill-outline',
+          'visibility',
+          'none'
+        );
+        context.map.setLayoutProperty('map-data-line', 'visibility', 'none');
+  
+        // hide markers
+        d3.selectAll('.mapboxgl-marker').style('display', 'none');
+  
+        // import the current data into draw for editing
+        const featureIds = context.Draw.add(context.data.get('map'));
+        context.Draw.changeMode('simple_select', {
+          featureIds
+        });
+      });
+    }
 
     context.map.on('style.load', () => {
       context.map.setFog({});
