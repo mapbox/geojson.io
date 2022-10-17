@@ -49,6 +49,10 @@ dist/lib.js: dist dist/d3.js $(LIBS)
 		lib/d3.trigger.js \
 		lib/d3-compat.js \
 		lib/codemirror/lib/codemirror.js \
+		lib/codemirror/addon/fold/foldcode.js \
+		lib/codemirror/addon/fold/foldgutter.js \
+		lib/codemirror/addon/fold/brace-fold.js \
+		lib/codemirror/addon/edit/matchbrackets.js \
 		lib/codemirror/mode/javascript/javascript.js > dist/lib.js
 
 dist/delegate.js: src/delegate.js
