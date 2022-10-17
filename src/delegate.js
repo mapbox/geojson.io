@@ -1,10 +1,12 @@
-var bowser = require('bowser').browser;
+const Bowser = require('bowser');
 
-if (bowser.android || bowser.iphone || bowser.ipad || bowser.touchpad) {
-    var hash = window.location.hash;
-    window.location.href = '/mobile.html' + hash;
+const { platform: { type } } = Bowser.parse(window.navigator.userAgent);
+
+if (type !== 'desktop') {
+  var hash = window.location.hash;
+  window.location.href = '/mobile.html' + hash;
 }
 
-if (bowser.msie && parseFloat(bowser.version) < 10) {
-    window.location.href = '/unsupported.html';
+if (!mapboxgl.supported()) {
+  window.location.href = '/unsupported.html';
 }

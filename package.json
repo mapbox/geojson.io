@@ -6,7 +6,7 @@
   "dependencies": {
     "@mapbox/gist-map-browser": "0.2.1",
     "@mapbox/github-file-browser": "0.6.1",
-    "bowser": "0.3.2",
+    "bowser": "^2.11.0",
     "brfs": "^2.0.2",
     "clean-css": "~2.0.7",
     "clone": "0.1.16",
