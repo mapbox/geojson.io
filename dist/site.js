@@ -29642,7 +29642,6 @@ module.exports = function(context) {
   }
 
   function inlineJSON(data) {
-    console.log(data);
     try {
       context.data.set({
         map: JSON.parse(data)
@@ -29651,7 +29650,6 @@ module.exports = function(context) {
 
       zoomextent(context);
     } catch(e) {
-      console.log(e);
       return flash(context.container, 'Could not parse JSON');
     }
   }
@@ -30467,14 +30465,12 @@ module.exports = function(context) {
     });
 
     editor.on('beforeChange', (cm, change) => {
-      console.log(change);
       if(change.origin === 'paste') {
         try {
           const newText = JSON.stringify(JSON.parse(change.text[0]), null, 2);
-          console.log(newText);
           change.update(null, null, newText.split('\n'));
         } catch(e) {
-          console.log(e);
+          console.log('error pretty-printing pasted geojson', e);
         }
       }
     });

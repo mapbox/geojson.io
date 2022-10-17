@@ -36,14 +36,12 @@ module.exports = function(context) {
     });
 
     editor.on('beforeChange', (cm, change) => {
-      console.log(change);
       if(change.origin === 'paste') {
         try {
           const newText = JSON.stringify(JSON.parse(change.text[0]), null, 2);
-          console.log(newText);
           change.update(null, null, newText.split('\n'));
         } catch(e) {
-          console.log(e);
+          console.log('error pretty-printing pasted geojson', e);
         }
       }
     });
