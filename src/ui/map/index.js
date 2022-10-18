@@ -16,7 +16,6 @@ const {
 } = require('./util');
 
 let writable = false;
-let recentlyCreatedFeature = false;
 
 const dummyGeojson = {
   type: 'FeatureCollection',
@@ -257,7 +256,7 @@ module.exports = function (context, readonly) {
         filter: ['==', ['geometry-type'], 'LineString'],
       });
 
-      addMarkers(context.data.get('map'), context.map, context);
+      addMarkers(context.data.get('map'), context.map, context, writable);
     });
 
     // only show projection toggle on zoom < 6
@@ -270,30 +269,31 @@ module.exports = function (context, readonly) {
       }
     });
 
+    const maybeSetCursorToPointer = () => {
+      if (context.Draw.getMode() === 'simple_select') {
+        context.map.getCanvas().style.cursor = 'pointer';
+      }
+    };
+
+    const maybeResetCursor = () => {
+      if (context.Draw.getMode() === 'simple_select') {
+        context.map.getCanvas().style.removeProperty('cursor');
+      }
+    };
+
     context.map.on('load', () => {
    
-      context.map.on('mouseenter', 'map-data-fill', () => {
-        context.map.getCanvas().style.cursor = 'pointer';
-      });
-
-      context.map.on('mouseleave', 'map-data-fill', () => {
-        context.map.getCanvas().style.cursor = 'default';
-      });
-
-      context.map.on('mouseenter', 'map-data-line', () => {
-        context.map.getCanvas().style.cursor = 'pointer';
-      });
-
-      context.map.on('mouseleave', 'map-data-line', () => {
-        context.map.getCanvas().style.cursor = 'default';
-      });
+      context.map.on('mouseenter', 'map-data-fill', maybeSetCursorToPointer);
+      context.map.on('mouseleave', 'map-data-fill', maybeResetCursor);
+      context.map.on('mouseenter', 'map-data-line', maybeSetCursorToPointer);
+      context.map.on('mouseleave', 'map-data-line', maybeResetCursor);
 
       context.map.on('click', 'map-data-fill', (e) => {
-        bindPopup(e, context, writable, recentlyCreatedFeature);
+        bindPopup(e, context, writable);
       });
 
       context.map.on('click', 'map-data-line', (e) => {
-        bindPopup(e, context, writable, recentlyCreatedFeature);
+        bindPopup(e, context, writable);
       });
     });
 
@@ -307,7 +307,6 @@ module.exports = function (context, readonly) {
     }
 
     function created(e) {
-      recentlyCreatedFeature = true;
       context.Draw.deleteAll();
       update(stripIds(e.features));
     }

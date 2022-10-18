@@ -21,7 +21,7 @@ const addIds = (geojson) => {
   return geojson;
 };
   
-const addMarkers = (geojson, map, context) => {
+const addMarkers = (geojson, map, context, writable) => {
   markers.forEach((d) => {
     d.remove();
   });
@@ -57,7 +57,8 @@ const addMarkers = (geojson, map, context) => {
               },
             ],
           },
-          context
+          context,
+          writable
         );
       })
       .addTo(map);
@@ -72,11 +73,7 @@ function geojsonToLayer(geojson, map, context) {
   }
 }
   
-function bindPopup(e, context, writable, recentlyCreatedFeature) {
-  // don't show a popup when drawing new features
-  if ((context.Draw.getMode() !== 'simple_select') || recentlyCreatedFeature) return;
-  recentlyCreatedFeature = false;
-    
+function bindPopup(e, context, writable) {
   const [feature] = e.features;
   var props = feature.properties;
   var table = '';
