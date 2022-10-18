@@ -31975,6 +31975,13 @@ const addMarkers = (geojson, map, context) => {
 module.exports = function (context, readonly) {
   writable = !readonly;
 
+  function maybeShowEditControl() {
+    // if there are features, show the edit button
+    if (context.data.hasFeatures()) {
+      d3.select('.edit-control').style('display', 'block');
+    }
+  }
+
   function map(selection) {
     mapboxgl.accessToken =
       'pk.eyJ1IjoiY2hyaXN3aG9uZ21hcGJveCIsImEiOiJjbDR5OTNyY2cxZGg1M2luejcxZmJpaG1yIn0.mUZ2xk8CLeBFotkPvPJHGg';
@@ -32051,7 +32058,7 @@ module.exports = function (context, readonly) {
           this.map = map;
           this._container = document.createElement('div');
           this._container.className =
-            'mapboxgl-ctrl-group mapboxgl-ctrl edit-control';
+            'mapboxgl-ctrl-group mapboxgl-ctrl edit-control hidden';
   
           this._container.innerHTML = `
             <button class="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_edit" title="Edit geometries" style="background-image: url(img/edit.svg); background-size: 13px 13px;">
@@ -32136,7 +32143,7 @@ module.exports = function (context, readonly) {
         d3.select('.trash-control').style('display', 'none');
   
         // show the edit button and draw tools
-        d3.select('.edit-control').style('display', 'block');
+        maybeShowEditControl();
         d3.select('.mapboxgl-ctrl-group:nth-child(3)').style('display', 'block');
       };
   
@@ -32300,6 +32307,8 @@ module.exports = function (context, readonly) {
     }
 
     context.dispatch.on('change.map', function () {
+      maybeShowEditControl();
+
       geojsonToLayer(context.data.get('map'), context.map, context);
     });
   }
