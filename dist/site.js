@@ -31909,6 +31909,8 @@ require('qs-hash');
 const DrawRectangle = require('./draw/rectangle');
 const ExtendDrawBar = require('./draw/extend_draw_bar');
 
+let recentlyCreatedFeature = false;
+
 // extend mapboxGL Marker so we can pass in an onClick handler
 class ClickableMarker extends mapboxgl.Marker {
   // new method onClick, sets _handleClick to a function you pass in
@@ -32329,6 +32331,7 @@ module.exports = function (context, readonly) {
     }
 
     function created(e) {
+      recentlyCreatedFeature = true;
       context.Draw.deleteAll();
       update(stripIds(e.features));
     }
@@ -32370,6 +32373,10 @@ function geojsonToLayer(geojson, map, context) {
 }
 
 function bindPopup(e, context) {
+  // don't show a popup when drawing new features
+  if ((context.Draw.getMode() !== 'simple_select') || recentlyCreatedFeature) return;
+  recentlyCreatedFeature = false;
+  
   const [feature] = e.features;
   var props = feature.properties;
   var table = '';
