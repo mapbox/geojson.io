@@ -31864,8 +31864,8 @@ const dummyGeojson = {
   ],
 };
 
-
-
+const DARK_FEATURE_COLOR = '#555';
+const LIGHT_FEATURE_COLOR = '#e8e8e8';
 
 module.exports = function (context, readonly) {
   writable = !readonly;
@@ -32045,6 +32045,11 @@ module.exports = function (context, readonly) {
     }
 
     context.map.on('style.load', () => {
+      const {name} = context.map.getStyle();
+      let color = DARK_FEATURE_COLOR;
+      if (['Mapbox Satellite', 'Mapbox Dark'].includes(name)) {
+        color = LIGHT_FEATURE_COLOR;
+      }
       context.map.setFog({});
 
       context.map.addSource('map-data', {
@@ -32057,7 +32062,7 @@ module.exports = function (context, readonly) {
         type: 'fill',
         source: 'map-data',
         paint: {
-          'fill-color': '#555',
+          'fill-color': color,
           'fill-opacity': 0.3,
         },
         filter: ['==', ['geometry-type'], 'Polygon'],
@@ -32068,7 +32073,7 @@ module.exports = function (context, readonly) {
         type: 'line',
         source: 'map-data',
         paint: {
-          'line-color': '#555',
+          'line-color': color,
           'line-width': 2,
         },
         filter: ['==', ['geometry-type'], 'Polygon'],
@@ -32079,7 +32084,7 @@ module.exports = function (context, readonly) {
         type: 'line',
         source: 'map-data',
         paint: {
-          'line-color': '#555',
+          'line-color': color,
           'line-width': 2,
         },
         filter: ['==', ['geometry-type'], 'LineString'],
