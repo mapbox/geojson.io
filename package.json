@@ -25,7 +25,6 @@
     "geojsonhint": "0.3.4",
     "gtfs2geojson": "^1.0.0",
     "jsonlint": "1.6.0",
-    "mapbox.js": "2.2.2",
     "marked": "0.3.2",
     "osmtogeojson": "2.0.5",
     "polyline": "^0.2.0",
@@ -49,7 +48,6 @@
     "tape": "~2.12.3"
   },
   "scripts": {
-    "start": "nodewebkit",
     "test": "eslint src",
     "test-browser": "browserify test/index.js | testling"
   },
