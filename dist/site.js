@@ -31684,38 +31684,34 @@ function flash(selection, txt) {
 }
 
 },{"./message":207}],202:[function(require,module,exports){
-module.exports = function(context) {
-
-  return function(selection) {
-
+module.exports = function (context) {
+  return function (selection) {
     var layers = [
       {
         title: 'Streets',
-        style: 'mapbox://styles/mapbox/streets-v11'
-      }, 
+        style: 'mapbox://styles/mapbox/streets-v11',
+      },
       {
         title: 'Satellite Streets',
-        style: 'mapbox://styles/mapbox/satellite-v9'
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
       },
       {
         title: 'Outdoors',
-        style: 'mapbox://styles/mapbox/outdoors-v11'
+        style: 'mapbox://styles/mapbox/outdoors-v11',
       },
       {
         title: 'Light',
-        style: 'mapbox://styles/mapbox/light-v10'
+        style: 'mapbox://styles/mapbox/light-v10',
       },
       {
         title: 'Dark',
-        style: 'mapbox://styles/mapbox/dark-v10'
-      }
+        style: 'mapbox://styles/mapbox/dark-v10',
+      },
     ];
 
-        
-
-    var layerSwap = function(d) {
+    var layerSwap = function (d) {
       var clicked = this instanceof d3.selection ? this.node() : this;
-      layerButtons.classed('active', function() {
+      layerButtons.classed('active', function () {
         return clicked === this;
       });
 
@@ -31728,7 +31724,8 @@ module.exports = function(context) {
       }
     };
 
-    var layerButtons = selection.append('div')
+    var layerButtons = selection
+      .append('div')
       .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs')
       .selectAll('button')
       .data(layers)
@@ -31736,10 +31733,15 @@ module.exports = function(context) {
       .append('button')
       .attr('class', 'pad0x')
       .on('click', layerSwap)
-      .text(function(d) { return d.title; });
+      .text(function (d) {
+        return d.title;
+      });
 
-    layerButtons.filter(function(d, i) { return i === 0; }).call(layerSwap);
-
+    layerButtons
+      .filter(function (d, i) {
+        return i === 0;
+      })
+      .call(layerSwap);
   };
 };
 
@@ -31836,17 +31838,8 @@ const geojsonRewind = require('geojson-rewind');
 
 const DrawRectangle = require('../draw/rectangle');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
-const {
-  EditControl,
-  SaveCancelControl,
-  TrashControl
-} = require('./controls');
-const {
-  addIds,
-  addMarkers,
-  geojsonToLayer,
-  bindPopup
-} = require('./util');
+const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
+const { addIds, addMarkers, geojsonToLayer, bindPopup } = require('./util');
 
 let writable = false;
 
@@ -31889,7 +31882,8 @@ module.exports = function (context, readonly) {
       hash: 'map',
     });
 
-  
+    window.map = context.map;
+
     if (writable) {
       context.map.addControl(
         new MapboxGeocoder({
@@ -31898,17 +31892,16 @@ module.exports = function (context, readonly) {
           marker: true,
         })
       );
-  
+
       context.Draw = new MapboxDraw({
         displayControlsDefault: false,
         modes: {
           ...MapboxDraw.modes,
-          draw_rectangle: DrawRectangle
+          draw_rectangle: DrawRectangle,
         },
-        controls: {
-        },
+        controls: {},
       });
-  
+
       const drawControl = new ExtendDrawBar({
         draw: context.Draw,
         buttons: [
@@ -31917,51 +31910,50 @@ module.exports = function (context, readonly) {
             action: () => {
               context.Draw.changeMode('draw_point');
             },
-            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_point']
+            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_point'],
           },
           {
             on: 'click',
             action: () => {
               context.Draw.changeMode('draw_line_string');
             },
-            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_line']
+            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_line'],
           },
           {
             on: 'click',
             action: () => {
               context.Draw.changeMode('draw_polygon');
             },
-            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_polygon']
+            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_polygon'],
           },
           {
             on: 'click',
             action: () => {
               context.Draw.changeMode('draw_rectangle');
             },
-            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_rectangle']
+            classes: [
+              'mapbox-gl-draw_ctrl-draw-btn',
+              'mapbox-gl-draw_rectangle',
+            ],
           },
-        ]
+        ],
       });
-  
+
       context.map.addControl(new mapboxgl.NavigationControl());
-  
+
       context.map.addControl(drawControl, 'top-right');
-  
-  
+
       const editControl = new EditControl();
       context.map.addControl(editControl, 'top-right');
-  
 
-  
       const saveCancelControl = new SaveCancelControl();
-  
+
       context.map.addControl(saveCancelControl, 'top-right');
-  
 
       const trashControl = new TrashControl();
-  
+
       context.map.addControl(trashControl, 'top-right');
-  
+
       const exitEditMode = () => {
         // show the data layers
         context.map.setLayoutProperty('map-data-fill', 'visibility', 'visible');
@@ -31971,23 +31963,26 @@ module.exports = function (context, readonly) {
           'visible'
         );
         context.map.setLayoutProperty('map-data-line', 'visibility', 'visible');
-  
+
         // show markers
         d3.selectAll('.mapboxgl-marker').style('display', 'block');
-  
+
         // clean up draw
         context.Draw.changeMode('simple_select');
         context.Draw.deleteAll();
-  
+
         // hide the save/cancel control and the delete control
         d3.select('.save-cancel-control').style('display', 'none');
         d3.select('.trash-control').style('display', 'none');
-  
+
         // show the edit button and draw tools
         maybeShowEditControl();
-        d3.select('.mapboxgl-ctrl-group:nth-child(3)').style('display', 'block');
+        d3.select('.mapboxgl-ctrl-group:nth-child(3)').style(
+          'display',
+          'block'
+        );
       };
-  
+
       // handle save or cancel from edit mode
       d3.selectAll('.mapboxgl-draw-actions-btn').on('click', function () {
         const target = d3.select(this);
@@ -32004,25 +31999,25 @@ module.exports = function (context, readonly) {
             'map'
           );
         }
-  
+
         exitEditMode();
       });
-  
+
       // handle delete
       d3.select('.mapbox-gl-draw_trash').on('click', function () {
         context.Draw.trash();
       });
-  
+
       // enter edit mode
       d3.selectAll('.mapbox-gl-draw_edit').on('click', function () {
         // hide the edit button and draw tools
         d3.select('.edit-control').style('display', 'none');
         d3.select('.mapboxgl-ctrl-group:nth-child(3)').style('display', 'none');
-  
+
         // show the save/cancel control and the delete control
         d3.select('.save-cancel-control').style('display', 'block');
         d3.select('.trash-control').style('display', 'block');
-  
+
         // hide the line and polygon data layers
         context.map.setLayoutProperty('map-data-fill', 'visibility', 'none');
         context.map.setLayoutProperty(
@@ -32031,20 +32026,20 @@ module.exports = function (context, readonly) {
           'none'
         );
         context.map.setLayoutProperty('map-data-line', 'visibility', 'none');
-  
+
         // hide markers
         d3.selectAll('.mapboxgl-marker').style('display', 'none');
-  
+
         // import the current data into draw for editing
         const featureIds = context.Draw.add(context.data.get('map'));
         context.Draw.changeMode('simple_select', {
-          featureIds
+          featureIds,
         });
       });
     }
 
     context.map.on('style.load', () => {
-      const {name} = context.map.getStyle();
+      const { name } = context.map.getStyle();
       let color = DARK_FEATURE_COLOR;
       if (['Mapbox Satellite', 'Mapbox Dark'].includes(name)) {
         color = LIGHT_FEATURE_COLOR;
@@ -32115,7 +32110,6 @@ module.exports = function (context, readonly) {
     };
 
     context.map.on('load', () => {
-   
       context.map.on('mouseenter', 'map-data-fill', maybeSetCursorToPointer);
       context.map.on('mouseleave', 'map-data-fill', maybeResetCursor);
       context.map.on('mouseenter', 'map-data-line', maybeSetCursorToPointer);
