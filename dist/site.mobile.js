@@ -30248,15 +30248,19 @@ module.exports = function(context) {
       .append('textarea');
 
     var editor = CodeMirror.fromTextArea(textarea.node(), {
-      mode: 'application/json',
+      mode: {name: 'javascript', json: true},
       matchBrackets: true,
       tabSize: 2,
-      gutters: ['error'],
+      gutters: ['error', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
       theme: 'eclipse',
       autofocus: (window === window.top),
       keyMap: 'tabSpace',
-      lineNumbers: true
+      lineNumbers: true,
+      foldGutter: true
     });
+
+    editor.foldCode(CodeMirror.Pos(0, 0));
+    editor.matchBrackets();
 
     editor.on('beforeChange', (cm, change) => {
       if(change.origin === 'paste') {
