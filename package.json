@@ -6,12 +6,12 @@
   "dependencies": {
     "@mapbox/gist-map-browser": "0.2.1",
     "@mapbox/github-file-browser": "0.6.1",
-    "bowser": "0.3.2",
-    "brfs": "^1.4.3",
+    "bowser": "^2.11.0",
+    "brfs": "^2.0.2",
     "clean-css": "~2.0.7",
     "clone": "0.1.16",
     "csv2geojson": "3.6.1",
-    "d3": "3.4.11",
+    "d3": "3.5.17",
     "d3-metatable": "0.3.0",
     "detect-json-indent": "0.0.0",
     "escape-html": "^1.0.1",
@@ -25,10 +25,6 @@
     "geojsonhint": "0.3.4",
     "gtfs2geojson": "^1.0.0",
     "jsonlint": "1.6.0",
-    "leaflet-draw": "0.2.3",
-    "leaflet-geodesy": "0.1.1",
-    "leaflet-hash": "0.2.1",
-    "mapbox.js": "2.2.2",
     "marked": "0.3.2",
     "osmtogeojson": "2.0.5",
     "polyline": "^0.2.0",
@@ -46,13 +42,12 @@
     "xtend": "3.0.0"
   },
   "devDependencies": {
-    "browserify": "^14.0.0",
-    "eslint": "^1.10.3",
+    "browserify": "^17.0.0",
+    "eslint": "^8.25.0",
     "tailwindcss": "^3.1.8",
     "tape": "~2.12.3"
   },
   "scripts": {
-    "start": "nodewebkit",
     "test": "eslint src",
     "test-browser": "browserify test/index.js | testling"
   },
@@ -69,6 +64,6 @@
     "toolbar": false
   },
   "engines": {
-    "node": "<8"
+    "node": "14"
   }
 }

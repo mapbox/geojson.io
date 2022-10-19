@@ -1,85 +1,99 @@
 !function(){
-  var d3 = {version: "3.4.11"}; // semver
+  var d3 = {version: "3.5.17"}; // semver
 d3.entries = function(map) {
   var entries = [];
   for (var key in map) entries.push({key: key, value: map[key]});
   return entries;
 };
 function d3_class(ctor, properties) {
-  try {
-    for (var key in properties) {
-      Object.defineProperty(ctor.prototype, key, {
-        value: properties[key],
-        enumerable: false
-      });
-    }
-  } catch (e) {
-    ctor.prototype = properties;
+  for (var key in properties) {
+    Object.defineProperty(ctor.prototype, key, {
+      value: properties[key],
+      enumerable: false
+    });
   }
 }
 
-d3.map = function(object) {
+d3.map = function(object, f) {
   var map = new d3_Map;
-  if (object instanceof d3_Map) object.forEach(function(key, value) { map.set(key, value); });
-  else for (var key in object) map.set(key, object[key]);
+  if (object instanceof d3_Map) {
+    object.forEach(function(key, value) { map.set(key, value); });
+  } else if (Array.isArray(object)) {
+    var i = -1,
+        n = object.length,
+        o;
+    if (arguments.length === 1) while (++i < n) map.set(i, object[i]);
+    else while (++i < n) map.set(f.call(object, o = object[i], i), o);
+  } else {
+    for (var key in object) map.set(key, object[key]);
+  }
   return map;
 };
 
-function d3_Map() {}
+function d3_Map() {
+  this._ = Object.create(null);
+}
+
+var d3_map_proto = "__proto__",
+    d3_map_zero = "\0";
 
 d3_class(d3_Map, {
   has: d3_map_has,
   get: function(key) {
-    return this[d3_map_prefix + key];
+    return this._[d3_map_escape(key)];
   },
   set: function(key, value) {
-    return this[d3_map_prefix + key] = value;
+    return this._[d3_map_escape(key)] = value;
   },
   remove: d3_map_remove,
   keys: d3_map_keys,
   values: function() {
     var values = [];
-    this.forEach(function(key, value) { values.push(value); });
+    for (var key in this._) values.push(this._[key]);
     return values;
   },
   entries: function() {
     var entries = [];
-    this.forEach(function(key, value) { entries.push({key: key, value: value}); });
+    for (var key in this._) entries.push({key: d3_map_unescape(key), value: this._[key]});
     return entries;
   },
   size: d3_map_size,
   empty: d3_map_empty,
   forEach: function(f) {
-    for (var key in this) if (key.charCodeAt(0) === d3_map_prefixCode) f.call(this, key.substring(1), this[key]);
+    for (var key in this._) f.call(this, d3_map_unescape(key), this._[key]);
   }
 });
 
-var d3_map_prefix = "\0", // prevent collision with built-ins
-    d3_map_prefixCode = d3_map_prefix.charCodeAt(0);
+function d3_map_escape(key) {
+  return (key += "") === d3_map_proto || key[0] === d3_map_zero ? d3_map_zero + key : key;
+}
+
+function d3_map_unescape(key) {
+  return (key += "")[0] === d3_map_zero ? key.slice(1) : key;
+}
 
 function d3_map_has(key) {
-  return d3_map_prefix + key in this;
+  return d3_map_escape(key) in this._;
 }
 
 function d3_map_remove(key) {
-  key = d3_map_prefix + key;
-  return key in this && delete this[key];
+  return (key = d3_map_escape(key)) in this._ && delete this._[key];
 }
 
 function d3_map_keys() {
   var keys = [];
-  this.forEach(function(key) { keys.push(key); });
+  for (var key in this._) keys.push(d3_map_unescape(key));
   return keys;
 }
 
 function d3_map_size() {
   var size = 0;
-  for (var key in this) if (key.charCodeAt(0) === d3_map_prefixCode) ++size;
+  for (var key in this._) ++size;
   return size;
 }
 
 function d3_map_empty() {
-  for (var key in this) if (key.charCodeAt(0) === d3_map_prefixCode) return false;
+  for (var key in this._) return false;
   return true;
 }
 
@@ -89,23 +103,22 @@ d3.set = function(array) {
   return set;
 };
 
-function d3_Set() {}
+function d3_Set() {
+  this._ = Object.create(null);
+}
 
 d3_class(d3_Set, {
   has: d3_map_has,
-  add: function(value) {
-    this[d3_map_prefix + value] = true;
-    return value;
+  add: function(key) {
+    this._[d3_map_escape(key += "")] = true;
+    return key;
   },
-  remove: function(value) {
-    value = d3_map_prefix + value;
-    return value in this && delete this[value];
-  },
+  remove: d3_map_remove,
   values: d3_map_keys,
   size: d3_map_size,
   empty: d3_map_empty,
   forEach: function(f) {
-    for (var value in this) if (value.charCodeAt(0) === d3_map_prefixCode) f.call(this, value.substring(1));
+    for (var key in this._) f.call(this, d3_map_unescape(key));
   }
 });
 d3.pairs = function(array) {
@@ -139,22 +152,23 @@ function d3_range_integerScale(x) {
   while (x * k % 1) k *= 10;
   return k;
 }
-var d3_arraySlice = [].slice,
-    d3_array = function(list) { return d3_arraySlice.call(list); }; // conversion for NodeLists
+var d3_document = this.document;
 
-var d3_document = document,
-    d3_documentElement = d3_document.documentElement,
-    d3_window = window;
+function d3_documentElement(node) {
+  return node
+      && (node.ownerDocument // node is a Node
+      || node.document // node is a Window
+      || node).documentElement; // node is a Document
+}
 
-// Redefine d3_array if the browser doesn’t support slice-based conversion.
-try {
-  d3_array(d3_documentElement.childNodes)[0].nodeType;
-} catch(e) {
-  d3_array = function(list) {
-    var i = list.length, array = new Array(i);
-    while (i--) array[i] = list[i];
-    return array;
-  };
+function d3_window(node) {
+  return node
+      && ((node.ownerDocument && node.ownerDocument.defaultView) // node is a Node
+        || (node.document && node) // node is a Window
+        || node.defaultView); // node is a Document
+}
+function d3_identity(d) {
+  return d;
 }
 // Copies a variable number of methods from source to target.
 d3.rebind = function(target, source) {
@@ -172,10 +186,9 @@ function d3_rebind(target, source, method) {
     return value === source ? target : value;
   };
 }
-
 function d3_vendorSymbol(object, name) {
   if (name in object) return name;
-  name = name.charAt(0).toUpperCase() + name.substring(1);
+  name = name.charAt(0).toUpperCase() + name.slice(1);
   for (var i = 0, n = d3_vendorPrefixes.length; i < n; ++i) {
     var prefixName = d3_vendorPrefixes[i] + name;
     if (prefixName in object) return prefixName;
@@ -183,6 +196,8 @@ function d3_vendorSymbol(object, name) {
 }
 
 var d3_vendorPrefixes = ["webkit", "ms", "moz", "Moz", "o", "O"];
+var d3_arraySlice = [].slice,
+    d3_array = function(list) { return d3_arraySlice.call(list); }; // conversion for NodeLists
 function d3_noop() {}
 
 d3.dispatch = function() {
@@ -201,8 +216,8 @@ d3_dispatch.prototype.on = function(type, listener) {
 
   // Extract optional namespace, e.g., "click.foo"
   if (i >= 0) {
-    name = type.substring(i + 1);
-    type = type.substring(0, i);
+    name = type.slice(i + 1);
+    type = type.slice(0, i);
   }
 
   if (type) return arguments.length < 2
@@ -325,8 +340,13 @@ function d3_selection(groups) {
 
 var d3_select = function(s, n) { return n.querySelector(s); },
     d3_selectAll = function(s, n) { return n.querySelectorAll(s); },
-    d3_selectMatcher = d3_documentElement.matches || d3_documentElement[d3_vendorSymbol(d3_documentElement, "matchesSelector")],
-    d3_selectMatches = function(n, s) { return d3_selectMatcher.call(n, s); };
+    d3_selectMatches = function(n, s) {
+      var d3_selectMatcher = n.matches || n[d3_vendorSymbol(n, "matchesSelector")];
+      d3_selectMatches = function(n, s) {
+        return d3_selectMatcher.call(n, s);
+      };
+      return d3_selectMatches(n, s);
+    };
 
 // Prefer Sizzle, if available.
 if (typeof Sizzle === "function") {
@@ -336,7 +356,7 @@ if (typeof Sizzle === "function") {
 }
 
 d3.selection = function() {
-  return d3_selectionRoot;
+  return d3.select(d3_document.documentElement);
 };
 
 var d3_selectionPrototype = d3.selection.prototype = [];
@@ -397,9 +417,11 @@ function d3_selection_selectorAll(selector) {
     return d3_selectAll(selector, this);
   };
 }
+var d3_nsXhtml = "http://www.w3.org/1999/xhtml";
+
 var d3_nsPrefix = {
   svg: "http://www.w3.org/2000/svg",
-  xhtml: "http://www.w3.org/1999/xhtml",
+  xhtml: d3_nsXhtml,
   xlink: "http://www.w3.org/1999/xlink",
   xml: "http://www.w3.org/XML/1998/namespace",
   xmlns: "http://www.w3.org/2000/xmlns/"
@@ -408,15 +430,9 @@ var d3_nsPrefix = {
 d3.ns = {
   prefix: d3_nsPrefix,
   qualify: function(name) {
-    var i = name.indexOf(":"),
-        prefix = name;
-    if (i >= 0) {
-      prefix = name.substring(0, i);
-      name = name.substring(i + 1);
-    }
-    return d3_nsPrefix.hasOwnProperty(prefix)
-        ? {space: d3_nsPrefix[prefix], local: name}
-        : name;
+    var i = name.indexOf(":"), prefix = name;
+    if (i >= 0 && (prefix = name.slice(0, i)) !== "xmlns") name = name.slice(i + 1);
+    return d3_nsPrefix.hasOwnProperty(prefix) ? {space: d3_nsPrefix[prefix], local: name} : name;
   }
 };
 
@@ -571,7 +587,10 @@ d3_selectionPrototype.style = function(name, value, priority) {
     }
 
     // For style(string), return the computed style value for the first node.
-    if (n < 2) return d3_window.getComputedStyle(this.node(), null).getPropertyValue(name);
+    if (n < 2) {
+      var node = this.node();
+      return d3_window(node).getComputedStyle(node, null).getPropertyValue(name);
+    }
 
     // For style(string, string) or style(string, function), use the default
     // priority. The priority is ignored for style(string, null).
@@ -678,9 +697,22 @@ d3_selectionPrototype.append = function(name) {
 };
 
 function d3_selection_creator(name) {
+
+  function create() {
+    var document = this.ownerDocument,
+        namespace = this.namespaceURI;
+    return namespace === d3_nsXhtml && document.documentElement.namespaceURI === d3_nsXhtml
+        ? document.createElement(name)
+        : document.createElementNS(namespace, name);
+  }
+
+  function createNS() {
+    return this.ownerDocument.createElementNS(name.space, name.local);
+  }
+
   return typeof name === "function" ? name
-      : (name = d3.ns.qualify(name)).local ? function() { return this.ownerDocument.createElementNS(name.space, name.local); }
-      : function() { return this.ownerDocument.createElementNS(this.namespaceURI, name); };
+      : (name = d3.ns.qualify(name)).local ? createNS
+      : create;
 }
 
 d3_selectionPrototype.insert = function(name, before) {
@@ -695,11 +727,13 @@ d3_selectionPrototype.insert = function(name, before) {
 // TODO remove(node)?
 // TODO remove(function)?
 d3_selectionPrototype.remove = function() {
-  return this.each(function() {
-    var parent = this.parentNode;
-    if (parent) parent.removeChild(this);
-  });
+  return this.each(d3_selectionRemove);
 };
+
+function d3_selectionRemove() {
+  var parent = this.parentNode;
+  if (parent) parent.removeChild(this);
+}
 
 d3_selectionPrototype.data = function(value, key) {
   var i = -1,
@@ -731,34 +765,32 @@ d3_selectionPrototype.data = function(value, key) {
 
     if (key) {
       var nodeByKeyValue = new d3_Map,
-          dataByKeyValue = new d3_Map,
-          keyValues = [],
+          keyValues = new Array(n),
           keyValue;
 
       for (i = -1; ++i < n;) {
-        keyValue = key.call(node = group[i], node.__data__, i);
-        if (nodeByKeyValue.has(keyValue)) {
-          exitNodes[i] = node; // duplicate selection key
-        } else {
-          nodeByKeyValue.set(keyValue, node);
+        if (node = group[i]) {
+          if (nodeByKeyValue.has(keyValue = key.call(node, node.__data__, i))) {
+            exitNodes[i] = node; // duplicate selection key
+          } else {
+            nodeByKeyValue.set(keyValue, node);
+          }
+          keyValues[i] = keyValue;
         }
-        keyValues.push(keyValue);
       }
 
       for (i = -1; ++i < m;) {
-        keyValue = key.call(groupData, nodeData = groupData[i], i);
-        if (node = nodeByKeyValue.get(keyValue)) {
+        if (!(node = nodeByKeyValue.get(keyValue = key.call(groupData, nodeData = groupData[i], i)))) {
+          enterNodes[i] = d3_selection_dataNode(nodeData);
+        } else if (node !== true) { // no duplicate data key
           updateNodes[i] = node;
           node.__data__ = nodeData;
-        } else if (!dataByKeyValue.has(keyValue)) { // no duplicate data key
-          enterNodes[i] = d3_selection_dataNode(nodeData);
         }
-        dataByKeyValue.set(keyValue, nodeData);
-        nodeByKeyValue.remove(keyValue);
+        nodeByKeyValue.set(keyValue, true);
       }
 
       for (i = -1; ++i < n;) {
-        if (nodeByKeyValue.has(keyValues[i])) {
+        if (i in keyValues && nodeByKeyValue.get(keyValues[i]) !== true) {
           exitNodes[i] = group[i];
         }
       }
@@ -917,7 +949,7 @@ d3_selectionPrototype.node = function() {
 
 d3_selectionPrototype.size = function() {
   var n = 0;
-  this.each(function() { ++n; });
+  d3_selection_each(this, function() { ++n; });
   return n;
 };
 
@@ -981,50 +1013,30 @@ function d3_selection_enterInsertBefore(enter) {
   };
 }
 
-// import "../transition/transition";
-
-d3_selectionPrototype.transition = function() {
-  var id = d3_transitionInheritId || ++d3_transitionId,
-      subgroups = [],
-      subgroup,
-      node,
-      transition = d3_transitionInherit || {time: Date.now(), ease: d3_ease_cubicInOut, delay: 0, duration: 250};
-
-  for (var j = -1, m = this.length; ++j < m;) {
-    subgroups.push(subgroup = []);
-    for (var group = this[j], i = -1, n = group.length; ++i < n;) {
-      if (node = group[i]) d3_transitionNode(node, i, id, transition);
-      subgroup.push(node);
-    }
-  }
-
-  return d3_transition(subgroups, id);
-};
-// import "../transition/transition";
-
-d3_selectionPrototype.interrupt = function() {
-  return this.each(d3_selection_interrupt);
-};
-
-function d3_selection_interrupt() {
-  var lock = this.__transition__;
-  if (lock) ++lock.active;
-}
-
 // TODO fast singleton implementation?
 d3.select = function(node) {
-  var group = [typeof node === "string" ? d3_select(node, d3_document) : node];
-  group.parentNode = d3_documentElement;
+  var group;
+  if (typeof node === "string") {
+    group = [d3_select(node, d3_document)];
+    group.parentNode = d3_document.documentElement;
+  } else {
+    group = [node];
+    group.parentNode = d3_documentElement(node);
+  }
   return d3_selection([group]);
 };
 
 d3.selectAll = function(nodes) {
-  var group = d3_array(typeof nodes === "string" ? d3_selectAll(nodes, d3_document) : nodes);
-  group.parentNode = d3_documentElement;
+  var group;
+  if (typeof nodes === "string") {
+    group = d3_array(d3_selectAll(nodes, d3_document));
+    group.parentNode = d3_document.documentElement;
+  } else {
+    group = d3_array(nodes);
+    group.parentNode = null;
+  }
   return d3_selection([group]);
 };
-
-var d3_selectionRoot = d3.select(d3_documentElement);
 
 d3_selectionPrototype.on = function(type, listener, capture) {
   var n = arguments.length;
@@ -1055,7 +1067,7 @@ function d3_selection_on(type, listener, capture) {
       i = type.indexOf("."),
       wrap = d3_selection_onListener;
 
-  if (i > 0) type = type.substring(0, i);
+  if (i > 0) type = type.slice(0, i);
   var filter = d3_selection_onFilters.get(type);
   if (filter) type = filter, wrap = d3_selection_onFilter;
 
@@ -1096,9 +1108,11 @@ var d3_selection_onFilters = d3.map({
   mouseleave: "mouseout"
 });
 
-d3_selection_onFilters.forEach(function(k) {
-  if ("on" + k in d3_document) d3_selection_onFilters.remove(k);
-});
+if (d3_document) {
+  d3_selection_onFilters.forEach(function(k) {
+    if ("on" + k in d3_document) d3_selection_onFilters.remove(k);
+  });
+}
 
 function d3_selection_onListener(listener, argumentz) {
   return function(e) {
@@ -1123,26 +1137,33 @@ function d3_selection_onFilter(listener, argumentz) {
   };
 }
 
-var d3_event_dragSelect = "onselectstart" in d3_document ? null : d3_vendorSymbol(d3_documentElement.style, "userSelect"),
+var d3_event_dragSelect,
     d3_event_dragId = 0;
 
-function d3_event_dragSuppress() {
+function d3_event_dragSuppress(node) {
   var name = ".dragsuppress-" + ++d3_event_dragId,
       click = "click" + name,
-      w = d3.select(d3_window)
+      w = d3.select(d3_window(node))
           .on("touchmove" + name, d3_eventPreventDefault)
           .on("dragstart" + name, d3_eventPreventDefault)
           .on("selectstart" + name, d3_eventPreventDefault);
+
+  if (d3_event_dragSelect == null) {
+    d3_event_dragSelect = "onselectstart" in node ? false
+        : d3_vendorSymbol(node.style, "userSelect");
+  }
+
   if (d3_event_dragSelect) {
-    var style = d3_documentElement.style,
+    var style = d3_documentElement(node).style,
         select = style[d3_event_dragSelect];
     style[d3_event_dragSelect] = "none";
   }
+
   return function(suppressClick) {
     w.on(name, null);
     if (d3_event_dragSelect) style[d3_event_dragSelect] = select;
     if (suppressClick) { // suppress the next click, but only if it’s immediate
-      function off() { w.on(click, null); }
+      var off = function() { w.on(click, null); };
       w.on(click, function() { d3_eventPreventDefault(); off(); }, true);
       setTimeout(off, 0);
     }
@@ -1154,25 +1175,28 @@ d3.mouse = function(container) {
 };
 
 // https://bugs.webkit.org/show_bug.cgi?id=44083
-var d3_mouse_bug44083 = /WebKit/.test(d3_window.navigator.userAgent) ? -1 : 0;
+var d3_mouse_bug44083 = this.navigator && /WebKit/.test(this.navigator.userAgent) ? -1 : 0;
 
 function d3_mousePoint(container, e) {
   if (e.changedTouches) e = e.changedTouches[0];
   var svg = container.ownerSVGElement || container;
   if (svg.createSVGPoint) {
     var point = svg.createSVGPoint();
-    if (d3_mouse_bug44083 < 0 && (d3_window.scrollX || d3_window.scrollY)) {
-      svg = d3.select("body").append("svg").style({
-        position: "absolute",
-        top: 0,
-        left: 0,
-        margin: 0,
-        padding: 0,
-        border: "none"
-      }, "important");
-      var ctm = svg[0][0].getScreenCTM();
-      d3_mouse_bug44083 = !(ctm.f || ctm.e);
-      svg.remove();
+    if (d3_mouse_bug44083 < 0) {
+      var window = d3_window(container);
+      if (window.scrollX || window.scrollY) {
+        svg = d3.select("body").append("svg").style({
+          position: "absolute",
+          top: 0,
+          left: 0,
+          margin: 0,
+          padding: 0,
+          border: "none"
+        }, "important");
+        var ctm = svg[0][0].getScreenCTM();
+        d3_mouse_bug44083 = !(ctm.f || ctm.e);
+        svg.remove();
+      }
     }
     if (d3_mouse_bug44083) point.x = e.pageX, point.y = e.pageY;
     else point.x = e.clientX, point.y = e.clientY;
@@ -1183,21 +1207,21 @@ function d3_mousePoint(container, e) {
   return [e.clientX - rect.left - container.clientLeft, e.clientY - rect.top - container.clientTop];
 };
 
-d3.touches = function(container, touches) {
-  if (arguments.length < 2) touches = d3_eventSource().touches;
-  return touches ? d3_array(touches).map(function(touch) {
-    var point = d3_mousePoint(container, touch);
-    point.identifier = touch.identifier;
-    return point;
-  }) : [];
+d3.touch = function(container, touches, identifier) {
+  if (arguments.length < 3) identifier = touches, touches = d3_eventSource().changedTouches;
+  if (touches) for (var i = 0, n = touches.length, touch; i < n; ++i) {
+    if ((touch = touches[i]).identifier === identifier) {
+      return d3_mousePoint(container, touch);
+    }
+  }
 };
 d3.behavior = {};
 
 d3.behavior.drag = function() {
   var event = d3_eventDispatch(drag, "drag", "dragstart", "dragend"),
       origin = null,
-      mousedown = dragstart(d3_noop, d3.mouse, d3_behavior_dragMouseSubject, "mousemove", "mouseup"),
-      touchstart = dragstart(d3_behavior_dragTouchId, d3.touch, d3_behavior_dragTouchSubject, "touchmove", "touchend");
+      mousedown = dragstart(d3_noop, d3.mouse, d3_window, "mousemove", "mouseup"),
+      touchstart = dragstart(d3_behavior_dragTouchId, d3.touch, d3_identity, "touchmove", "touchend");
 
   function drag() {
     this.on("mousedown.drag", mousedown)
@@ -1207,15 +1231,15 @@ d3.behavior.drag = function() {
   function dragstart(id, position, subject, move, end) {
     return function() {
       var that = this,
-          target = d3.event.target,
+          target = d3.event.target.correspondingElement || d3.event.target,
           parent = that.parentNode,
           dispatch = event.of(that, arguments),
           dragged = 0,
           dragId = id(),
           dragName = ".drag" + (dragId == null ? "" : "-" + dragId),
           dragOffset,
-          dragSubject = d3.select(subject()).on(move + dragName, moved).on(end + dragName, ended),
-          dragRestore = d3_event_dragSuppress(),
+          dragSubject = d3.select(subject(target)).on(move + dragName, moved).on(end + dragName, ended),
+          dragRestore = d3_event_dragSuppress(target),
           position0 = position(parent, dragId);
 
       if (origin) {
@@ -1248,7 +1272,7 @@ d3.behavior.drag = function() {
       function ended() {
         if (!position(parent, dragId)) return; // this touch didn’t end
         dragSubject.on(move + dragName, null).on(end + dragName, null);
-        dragRestore(dragged && d3.event.target === target);
+        dragRestore(dragged);
         dispatch({type: "dragend"});
       }
     };
@@ -1272,19 +1296,31 @@ d3.behavior.drag = function() {
 function d3_behavior_dragTouchId() {
   return d3.event.changedTouches[0].identifier;
 }
-
-function d3_behavior_dragTouchSubject() {
-  return d3.event.target;
-}
-
-function d3_behavior_dragMouseSubject() {
-  return d3_window;
-}
 function d3_functor(v) {
   return typeof v === "function" ? v : function() { return v; };
 }
 
 d3.functor = d3_functor;
+// import "../transition/transition";
+
+d3_selectionPrototype.transition = function(name) {
+  var id = d3_transitionInheritId || ++d3_transitionId,
+      ns = d3_transitionNamespace(name),
+      subgroups = [],
+      subgroup,
+      node,
+      transition = d3_transitionInherit || {time: Date.now(), ease: d3_ease_cubicInOut, delay: 0, duration: 250};
+
+  for (var j = -1, m = this.length; ++j < m;) {
+    subgroups.push(subgroup = []);
+    for (var group = this[j], i = -1, n = group.length; ++i < n;) {
+      if (node = group[i]) d3_transitionNode(node, i, ns, id, transition);
+      subgroup.push(node);
+    }
+  }
+
+  return d3_transition(subgroups, ns, id);
+};
 function d3_true() {
   return true;
 }
@@ -1293,17 +1329,20 @@ var d3_timer_queueHead,
     d3_timer_queueTail,
     d3_timer_interval, // is an interval (or frame) active?
     d3_timer_timeout, // is a timeout active?
-    d3_timer_active, // active timer object
-    d3_timer_frame = d3_window[d3_vendorSymbol(d3_window, "requestAnimationFrame")] || function(callback) { setTimeout(callback, 17); };
+    d3_timer_frame = this[d3_vendorSymbol(this, "requestAnimationFrame")] || function(callback) { setTimeout(callback, 17); };
 
 // The timer will continue to fire until callback returns true.
-d3.timer = function(callback, delay, then) {
+d3.timer = function() {
+  d3_timer.apply(this, arguments);
+};
+
+function d3_timer(callback, delay, then) {
   var n = arguments.length;
   if (n < 2) delay = 0;
   if (n < 3) then = Date.now();
 
   // Add the callback to the tail of the queue.
-  var time = then + delay, timer = {c: callback, t: time, f: false, n: null};
+  var time = then + delay, timer = {c: callback, t: time, n: null};
   if (d3_timer_queueTail) d3_timer_queueTail.n = timer;
   else d3_timer_queueHead = timer;
   d3_timer_queueTail = timer;
@@ -1314,7 +1353,9 @@ d3.timer = function(callback, delay, then) {
     d3_timer_interval = 1;
     d3_timer_frame(d3_timer_step);
   }
-};
+
+  return timer;
+}
 
 function d3_timer_step() {
   var now = d3_timer_mark(),
@@ -1337,11 +1378,11 @@ d3.timer.flush = function() {
 };
 
 function d3_timer_mark() {
-  var now = Date.now();
-  d3_timer_active = d3_timer_queueHead;
-  while (d3_timer_active) {
-    if (now >= d3_timer_active.t) d3_timer_active.f = d3_timer_active.c(now - d3_timer_active.t);
-    d3_timer_active = d3_timer_active.n;
+  var now = Date.now(),
+      timer = d3_timer_queueHead;
+  while (timer) {
+    if (now >= timer.t && timer.c(now - timer.t)) timer.c = null;
+    timer = timer.n;
   }
   return now;
 }
@@ -1353,174 +1394,49 @@ function d3_timer_sweep() {
       t1 = d3_timer_queueHead,
       time = Infinity;
   while (t1) {
-    if (t1.f) {
-      t1 = t0 ? t0.n = t1.n : d3_timer_queueHead = t1.n;
-    } else {
+    if (t1.c) {
       if (t1.t < time) time = t1.t;
       t1 = (t0 = t1).n;
+    } else {
+      t1 = t0 ? t0.n = t1.n : d3_timer_queueHead = t1.n;
     }
   }
   d3_timer_queueTail = t0;
   return time;
 }
-function d3_identity(d) {
-  return d;
-}
-var π = Math.PI,
-    τ = 2 * π,
-    halfπ = π / 2,
-    ε = 1e-6,
-    ε2 = ε * ε,
-    d3_radians = π / 180,
-    d3_degrees = 180 / π;
+// import "../transition/transition";
 
-function d3_sgn(x) {
-  return x > 0 ? 1 : x < 0 ? -1 : 0;
-}
-
-// Returns the 2D cross product of AB and AC vectors, i.e., the z-component of
-// the 3D cross product in a quadrant I Cartesian coordinate system (+x is
-// right, +y is up). Returns a positive value if ABC is counter-clockwise,
-// negative if clockwise, and zero if the points are collinear.
-function d3_cross2d(a, b, c) {
-  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
-}
-
-function d3_acos(x) {
-  return x > 1 ? 0 : x < -1 ? π : Math.acos(x);
-}
-
-function d3_asin(x) {
-  return x > 1 ? halfπ : x < -1 ? -halfπ : Math.asin(x);
-}
-
-function d3_sinh(x) {
-  return ((x = Math.exp(x)) - 1 / x) / 2;
-}
-
-function d3_cosh(x) {
-  return ((x = Math.exp(x)) + 1 / x) / 2;
-}
-
-function d3_tanh(x) {
-  return ((x = Math.exp(2 * x)) - 1) / (x + 1);
-}
-
-function d3_haversin(x) {
-  return (x = Math.sin(x / 2)) * x;
-}
-
-var d3_ease_default = function() { return d3_identity; };
-
-var d3_ease = d3.map({
-  linear: d3_ease_default,
-  poly: d3_ease_poly,
-  quad: function() { return d3_ease_quad; },
-  cubic: function() { return d3_ease_cubic; },
-  sin: function() { return d3_ease_sin; },
-  exp: function() { return d3_ease_exp; },
-  circle: function() { return d3_ease_circle; },
-  elastic: d3_ease_elastic,
-  back: d3_ease_back,
-  bounce: function() { return d3_ease_bounce; }
-});
-
-var d3_ease_mode = d3.map({
-  "in": d3_identity,
-  "out": d3_ease_reverse,
-  "in-out": d3_ease_reflect,
-  "out-in": function(f) { return d3_ease_reflect(d3_ease_reverse(f)); }
-});
-
-d3.ease = function(name) {
-  var i = name.indexOf("-"),
-      t = i >= 0 ? name.substring(0, i) : name,
-      m = i >= 0 ? name.substring(i + 1) : "in";
-  t = d3_ease.get(t) || d3_ease_default;
-  m = d3_ease_mode.get(m) || d3_identity;
-  return d3_ease_clamp(m(t.apply(null, d3_arraySlice.call(arguments, 1))));
+// TODO Interrupt transitions for all namespaces?
+d3_selectionPrototype.interrupt = function(name) {
+  return this.each(name == null
+      ? d3_selection_interrupt
+      : d3_selection_interruptNS(d3_transitionNamespace(name)));
 };
 
-function d3_ease_clamp(f) {
-  return function(t) {
-    return t <= 0 ? 0 : t >= 1 ? 1 : f(t);
+var d3_selection_interrupt = d3_selection_interruptNS(d3_transitionNamespace());
+
+function d3_selection_interruptNS(ns) {
+  return function() {
+    var lock,
+        activeId,
+        active;
+    if ((lock = this[ns]) && (active = lock[activeId = lock.active])) {
+      active.timer.c = null;
+      active.timer.t = NaN;
+      if (--lock.count) delete lock[activeId];
+      else delete this[ns];
+      lock.active += 0.5;
+      active.event && active.event.interrupt.call(this, this.__data__, active.index);
+    }
   };
 }
 
-function d3_ease_reverse(f) {
-  return function(t) {
-    return 1 - f(1 - t);
-  };
-}
-
-function d3_ease_reflect(f) {
-  return function(t) {
-    return .5 * (t < .5 ? f(2 * t) : (2 - f(2 - 2 * t)));
-  };
-}
-
-function d3_ease_quad(t) {
-  return t * t;
-}
-
-function d3_ease_cubic(t) {
-  return t * t * t;
-}
-
-// Optimized clamp(reflect(poly(3))).
-function d3_ease_cubicInOut(t) {
-  if (t <= 0) return 0;
-  if (t >= 1) return 1;
-  var t2 = t * t, t3 = t2 * t;
-  return 4 * (t < .5 ? t3 : 3 * (t - t2) + t3 - .75);
-}
-
-function d3_ease_poly(e) {
-  return function(t) {
-    return Math.pow(t, e);
-  };
-}
-
-function d3_ease_sin(t) {
-  return 1 - Math.cos(t * halfπ);
-}
-
-function d3_ease_exp(t) {
-  return Math.pow(2, 10 * (t - 1));
-}
-
-function d3_ease_circle(t) {
-  return 1 - Math.sqrt(1 - t * t);
-}
-
-function d3_ease_elastic(a, p) {
-  var s;
-  if (arguments.length < 2) p = 0.45;
-  if (arguments.length) s = p / τ * Math.asin(1 / a);
-  else a = 1, s = p / 4;
-  return function(t) {
-    return 1 + a * Math.pow(2, -10 * t) * Math.sin((t - s) * τ / p);
-  };
-}
-
-function d3_ease_back(s) {
-  if (!s) s = 1.70158;
-  return function(t) {
-    return t * t * ((s + 1) * t - s);
-  };
-}
-
-function d3_ease_bounce(t) {
-  return t < 1 / 2.75 ? 7.5625 * t * t
-      : t < 2 / 2.75 ? 7.5625 * (t -= 1.5 / 2.75) * t + .75
-      : t < 2.5 / 2.75 ? 7.5625 * (t -= 2.25 / 2.75) * t + .9375
-      : 7.5625 * (t -= 2.625 / 2.75) * t + .984375;
-}
-
-function d3_transition(groups, id) {
+function d3_transition(groups, ns, id) {
   d3_subclass(groups, d3_transitionPrototype);
 
-  groups.id = id; // Note: read-only!
+  // Note: read-only!
+  groups.namespace = ns;
+  groups.id = id;
 
   return groups;
 }
@@ -1535,10 +1451,10 @@ d3_transitionPrototype.empty = d3_selectionPrototype.empty;
 d3_transitionPrototype.node = d3_selectionPrototype.node;
 d3_transitionPrototype.size = d3_selectionPrototype.size;
 
-d3.transition = function(selection) {
-  return arguments.length
-      ? (d3_transitionInheritId ? selection.transition() : selection)
-      : d3_selectionRoot.transition();
+d3.transition = function(selection, name) {
+  return selection && selection.transition
+      ? (d3_transitionInheritId ? selection.transition(name) : selection)
+      : d3.selection().transition(selection);
 };
 
 d3.transition.prototype = d3_transitionPrototype;
@@ -1546,6 +1462,7 @@ d3.transition.prototype = d3_transitionPrototype;
 
 d3_transitionPrototype.select = function(selector) {
   var id = this.id,
+      ns = this.namespace,
       subgroups = [],
       subgroup,
       subnode,
@@ -1558,7 +1475,7 @@ d3_transitionPrototype.select = function(selector) {
     for (var group = this[j], i = -1, n = group.length; ++i < n;) {
       if ((node = group[i]) && (subnode = selector.call(node, node.__data__, i, j))) {
         if ("__data__" in node) subnode.__data__ = node.__data__;
-        d3_transitionNode(subnode, i, id, node.__transition__[id]);
+        d3_transitionNode(subnode, i, ns, id, node[ns][id]);
         subgroup.push(subnode);
       } else {
         subgroup.push(null);
@@ -1566,11 +1483,12 @@ d3_transitionPrototype.select = function(selector) {
     }
   }
 
-  return d3_transition(subgroups, id);
+  return d3_transition(subgroups, ns, id);
 };
 
 d3_transitionPrototype.selectAll = function(selector) {
   var id = this.id,
+      ns = this.namespace,
       subgroups = [],
       subgroup,
       subnodes,
@@ -1583,18 +1501,18 @@ d3_transitionPrototype.selectAll = function(selector) {
   for (var j = -1, m = this.length; ++j < m;) {
     for (var group = this[j], i = -1, n = group.length; ++i < n;) {
       if (node = group[i]) {
-        transition = node.__transition__[id];
+        transition = node[ns][id];
         subnodes = selector.call(node, node.__data__, i, j);
         subgroups.push(subgroup = []);
         for (var k = -1, o = subnodes.length; ++k < o;) {
-          if (subnode = subnodes[k]) d3_transitionNode(subnode, k, id, transition);
+          if (subnode = subnodes[k]) d3_transitionNode(subnode, k, ns, id, transition);
           subgroup.push(subnode);
         }
       }
     }
   }
 
-  return d3_transition(subgroups, id);
+  return d3_transition(subgroups, ns, id);
 };
 
 d3_transitionPrototype.filter = function(filter) {
@@ -1614,7 +1532,7 @@ d3_transitionPrototype.filter = function(filter) {
     }
   }
 
-  return d3_transition(subgroups, this.id);
+  return d3_transition(subgroups, this.namespace, this.id);
 };
 d3.color = d3_color;
 
@@ -1659,7 +1577,7 @@ function d3_hsl_rgb(h, s, l) {
   l = l < 0 ? 0 : l > 1 ? 1 : l;
 
   /* From FvD 13.37, CSS Color Module Level 3 */
-  m2 = l <= .5 ? l * (1 + s) : l + s - l * s;
+  m2 = l <= 0.5 ? l * (1 + s) : l + s - l * s;
   m1 = 2 * l - m2;
 
   function v(h) {
@@ -1676,6 +1594,50 @@ function d3_hsl_rgb(h, s, l) {
   }
 
   return new d3_rgb(vv(h + 120), vv(h), vv(h - 120));
+}
+var ε = 1e-6,
+    ε2 = ε * ε,
+    π = Math.PI,
+    τ = 2 * π,
+    τε = τ - ε,
+    halfπ = π / 2,
+    d3_radians = π / 180,
+    d3_degrees = 180 / π;
+
+function d3_sgn(x) {
+  return x > 0 ? 1 : x < 0 ? -1 : 0;
+}
+
+// Returns the 2D cross product of AB and AC vectors, i.e., the z-component of
+// the 3D cross product in a quadrant I Cartesian coordinate system (+x is
+// right, +y is up). Returns a positive value if ABC is counter-clockwise,
+// negative if clockwise, and zero if the points are collinear.
+function d3_cross2d(a, b, c) {
+  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+}
+
+function d3_acos(x) {
+  return x > 1 ? 0 : x < -1 ? π : Math.acos(x);
+}
+
+function d3_asin(x) {
+  return x > 1 ? halfπ : x < -1 ? -halfπ : Math.asin(x);
+}
+
+function d3_sinh(x) {
+  return ((x = Math.exp(x)) - 1 / x) / 2;
+}
+
+function d3_cosh(x) {
+  return ((x = Math.exp(x)) + 1 / x) / 2;
+}
+
+function d3_tanh(x) {
+  return ((x = Math.exp(2 * x)) - 1) / (x + 1);
+}
+
+function d3_haversin(x) {
+  return (x = Math.sin(x / 2)) * x;
 }
 
 d3.hcl = d3_hcl;
@@ -1713,7 +1675,7 @@ d3.lab = d3_lab;
 function d3_lab(l, a, b) {
   return this instanceof d3_lab ? void (this.l = +l, this.a = +a, this.b = +b)
       : arguments.length < 2 ? (l instanceof d3_lab ? new d3_lab(l.l, l.a, l.b)
-      : (l instanceof d3_hcl ? d3_hcl_lab(l.l, l.c, l.h)
+      : (l instanceof d3_hcl ? d3_hcl_lab(l.h, l.c, l.l)
       : d3_rgb_lab((l = d3_rgb(l)).r, l.g, l.b)))
       : new d3_lab(l, a, b);
 }
@@ -1831,7 +1793,7 @@ function d3_rgb_parse(format, rgb, hsl) {
       color;
 
   /* Handle hsl, rgb. */
-  m1 = /([a-z]+)\((.*)\)/i.exec(format);
+  m1 = /([a-z]+)\((.*)\)/.exec(format = format.toLowerCase());
   if (m1) {
     m2 = m1[2].split(",");
     switch (m1[1]) {
@@ -1853,10 +1815,12 @@ function d3_rgb_parse(format, rgb, hsl) {
   }
 
   /* Named colors. */
-  if (color = d3_rgb_names.get(format)) return rgb(color.r, color.g, color.b);
+  if (color = d3_rgb_names.get(format)) {
+    return rgb(color.r, color.g, color.b);
+  }
 
   /* Hexadecimal colors: #rgb and #rrggbb. */
-  if (format != null && format.charAt(0) === "#" && !isNaN(color = parseInt(format.substring(1), 16))) {
+  if (format != null && format.charAt(0) === "#" && !isNaN(color = parseInt(format.slice(1), 16))) {
     if (format.length === 4) {
       r = (color & 0xf00) >> 4; r = (r >> 4) | r;
       g = (color & 0xf0); g = (g >> 4) | g;
@@ -1879,7 +1843,7 @@ function d3_rgb_hsl(r, g, b) {
       s,
       l = (max + min) / 2;
   if (d) {
-    s = l < .5 ? d / (max + min) : d / (2 - max - min);
+    s = l < 0.5 ? d / (max + min) : d / (2 - max - min);
     if (r == max) h = (g - b) / d + (g < b ? 6 : 0);
     else if (g == max) h = (b - r) / d + 2;
     else h = (r - g) / d + 4;
@@ -2030,6 +1994,7 @@ var d3_rgb_names = d3.map({
   plum: 0xdda0dd,
   powderblue: 0xb0e0e6,
   purple: 0x800080,
+  rebeccapurple: 0x663399,
   red: 0xff0000,
   rosybrown: 0xbc8f8f,
   royalblue: 0x4169e1,
@@ -2127,8 +2092,8 @@ function d3_interpolateArray(a, b) {
 d3.interpolateNumber = d3_interpolateNumber;
 
 function d3_interpolateNumber(a, b) {
-  b -= a = +a;
-  return function(t) { return a + b * t; };
+  a = +a, b = +b;
+  return function(t) { return a * (1 - t) + b * t; };
 }
 
 d3.interpolateString = d3_interpolateString;
@@ -2149,7 +2114,7 @@ function d3_interpolateString(a, b) {
   while ((am = d3_interpolate_numberA.exec(a))
       && (bm = d3_interpolate_numberB.exec(b))) {
     if ((bs = bm.index) > bi) { // a string precedes the next number in b
-      bs = b.substring(bi, bs);
+      bs = b.slice(bi, bs);
       if (s[i]) s[i] += bs; // coalesce with previous string
       else s[++i] = bs;
     }
@@ -2165,7 +2130,7 @@ function d3_interpolateString(a, b) {
 
   // Add remains of b.
   if (bi < b.length) {
-    bs = b.substring(bi);
+    bs = b.slice(bi);
     if (s[i]) s[i] += bs; // coalesce with previous string
     else s[++i] = bs;
   }
@@ -2195,7 +2160,7 @@ function d3_interpolate(a, b) {
 d3.interpolators = [
   function(a, b) {
     var t = typeof b;
-    return (t === "string" ? (d3_rgb_names.has(b) || /^(#|rgb\(|hsl\()/.test(b) ? d3_interpolateRgb : d3_interpolateString)
+    return (t === "string" ? (d3_rgb_names.has(b.toLowerCase()) || /^(#|rgb\(|hsl\()/i.test(b) ? d3_interpolateRgb : d3_interpolateString)
         : b instanceof d3_color ? d3_interpolateRgb
         : Array.isArray(b) ? d3_interpolateArray
         : t === "object" && isNaN(b) ? d3_interpolateObject
@@ -2267,71 +2232,74 @@ var d3_transformIdentity = {a: 1, b: 0, c: 0, d: 1, e: 0, f: 0};
 
 d3.interpolateTransform = d3_interpolateTransform;
 
-function d3_interpolateTransform(a, b) {
-  var s = [], // string constants and placeholders
-      q = [], // number interpolators
-      n,
-      A = d3.transform(a),
-      B = d3.transform(b),
-      ta = A.translate,
-      tb = B.translate,
-      ra = A.rotate,
-      rb = B.rotate,
-      wa = A.skew,
-      wb = B.skew,
-      ka = A.scale,
-      kb = B.scale;
+function d3_interpolateTransformPop(s) {
+  return s.length ? s.pop() + "," : "";
+}
 
-  if (ta[0] != tb[0] || ta[1] != tb[1]) {
-    s.push("translate(", null, ",", null, ")");
-    q.push({i: 1, x: d3_interpolateNumber(ta[0], tb[0])}, {i: 3, x: d3_interpolateNumber(ta[1], tb[1])});
+function d3_interpolateTranslate(ta, tb, s, q) {
+  if (ta[0] !== tb[0] || ta[1] !== tb[1]) {
+    var i = s.push("translate(", null, ",", null, ")");
+    q.push({i: i - 4, x: d3_interpolateNumber(ta[0], tb[0])}, {i: i - 2, x: d3_interpolateNumber(ta[1], tb[1])});
   } else if (tb[0] || tb[1]) {
     s.push("translate(" + tb + ")");
-  } else {
-    s.push("");
   }
+}
 
-  if (ra != rb) {
+function d3_interpolateRotate(ra, rb, s, q) {
+  if (ra !== rb) {
     if (ra - rb > 180) rb += 360; else if (rb - ra > 180) ra += 360; // shortest path
-    q.push({i: s.push(s.pop() + "rotate(", null, ")") - 2, x: d3_interpolateNumber(ra, rb)});
+    q.push({i: s.push(d3_interpolateTransformPop(s) + "rotate(", null, ")") - 2, x: d3_interpolateNumber(ra, rb)});
   } else if (rb) {
-    s.push(s.pop() + "rotate(" + rb + ")");
+    s.push(d3_interpolateTransformPop(s) + "rotate(" + rb + ")");
   }
+}
 
-  if (wa != wb) {
-    q.push({i: s.push(s.pop() + "skewX(", null, ")") - 2, x: d3_interpolateNumber(wa, wb)});
+function d3_interpolateSkew(wa, wb, s, q) {
+  if (wa !== wb) {
+    q.push({i: s.push(d3_interpolateTransformPop(s) + "skewX(", null, ")") - 2, x: d3_interpolateNumber(wa, wb)});
   } else if (wb) {
-    s.push(s.pop() + "skewX(" + wb + ")");
+    s.push(d3_interpolateTransformPop(s) + "skewX(" + wb + ")");
   }
+}
 
-  if (ka[0] != kb[0] || ka[1] != kb[1]) {
-    n = s.push(s.pop() + "scale(", null, ",", null, ")");
-    q.push({i: n - 4, x: d3_interpolateNumber(ka[0], kb[0])}, {i: n - 2, x: d3_interpolateNumber(ka[1], kb[1])});
-  } else if (kb[0] != 1 || kb[1] != 1) {
-    s.push(s.pop() + "scale(" + kb + ")");
+function d3_interpolateScale(ka, kb, s, q) {
+  if (ka[0] !== kb[0] || ka[1] !== kb[1]) {
+    var i = s.push(d3_interpolateTransformPop(s) + "scale(", null, ",", null, ")");
+    q.push({i: i - 4, x: d3_interpolateNumber(ka[0], kb[0])}, {i: i - 2, x: d3_interpolateNumber(ka[1], kb[1])});
+  } else if (kb[0] !== 1 || kb[1] !== 1) {
+    s.push(d3_interpolateTransformPop(s) + "scale(" + kb + ")");
   }
+}
 
-  n = q.length;
+function d3_interpolateTransform(a, b) {
+  var s = [], // string constants and placeholders
+      q = []; // number interpolators
+  a = d3.transform(a), b = d3.transform(b);
+  d3_interpolateTranslate(a.translate, b.translate, s, q);
+  d3_interpolateRotate(a.rotate, b.rotate, s, q);
+  d3_interpolateSkew(a.skew, b.skew, s, q);
+  d3_interpolateScale(a.scale, b.scale, s, q);
+  a = b = null; // gc
   return function(t) {
-    var i = -1, o;
+    var i = -1, n = q.length, o;
     while (++i < n) s[(o = q[i]).i] = o.x(t);
     return s.join("");
   };
 }
 
 d3_transitionPrototype.tween = function(name, tween) {
-  var id = this.id;
-  if (arguments.length < 2) return this.node().__transition__[id].tween.get(name);
+  var id = this.id, ns = this.namespace;
+  if (arguments.length < 2) return this.node()[ns][id].tween.get(name);
   return d3_selection_each(this, tween == null
-        ? function(node) { node.__transition__[id].tween.remove(name); }
-        : function(node) { node.__transition__[id].tween.set(name, tween); });
+        ? function(node) { node[ns][id].tween.remove(name); }
+        : function(node) { node[ns][id].tween.set(name, tween); });
 };
 
 function d3_transition_tween(groups, name, value, tween) {
-  var id = groups.id;
+  var id = groups.id, ns = groups.namespace;
   return d3_selection_each(groups, typeof value === "function"
-      ? function(node, i, j) { node.__transition__[id].tween.set(name, tween(value.call(node, node.__data__, i, j))); }
-      : (value = tween(value), function(node) { node.__transition__[id].tween.set(name, value); }));
+      ? function(node, i, j) { node[ns][id].tween.set(name, tween(value.call(node, node.__data__, i, j))); }
+      : (value = tween(value), function(node) { node[ns][id].tween.set(name, value); }));
 }
 
 d3_transitionPrototype.attr = function(nameNS, value) {
@@ -2417,7 +2385,7 @@ d3_transitionPrototype.style = function(name, value, priority) {
   // Otherwise, a name, value and priority are specified, and handled as below.
   function styleString(b) {
     return b == null ? styleNull : (b += "", function() {
-      var a = d3_window.getComputedStyle(this, null).getPropertyValue(name), i;
+      var a = d3_window(this).getComputedStyle(this, null).getPropertyValue(name), i;
       return a !== b && (i = d3_interpolate(a, b), function(t) { this.style.setProperty(name, i(t), priority); });
     });
   }
@@ -2429,7 +2397,7 @@ d3_transitionPrototype.styleTween = function(name, tween, priority) {
   if (arguments.length < 3) priority = "";
 
   function styleTween(d, i) {
-    var f = tween.call(this, d, i, d3_window.getComputedStyle(this, null).getPropertyValue(name));
+    var f = tween.call(this, d, i, d3_window(this).getComputedStyle(this, null).getPropertyValue(name));
     return f && function(t) { this.style.setProperty(name, f(t), priority); };
   }
 
@@ -2446,38 +2414,147 @@ function d3_transition_text(b) {
 }
 
 d3_transitionPrototype.remove = function() {
+  var ns = this.namespace;
   return this.each("end.transition", function() {
     var p;
-    if (this.__transition__.count < 2 && (p = this.parentNode)) p.removeChild(this);
+    if (this[ns].count < 2 && (p = this.parentNode)) p.removeChild(this);
   });
 };
 
+var d3_ease_default = function() { return d3_identity; };
+
+var d3_ease = d3.map({
+  linear: d3_ease_default,
+  poly: d3_ease_poly,
+  quad: function() { return d3_ease_quad; },
+  cubic: function() { return d3_ease_cubic; },
+  sin: function() { return d3_ease_sin; },
+  exp: function() { return d3_ease_exp; },
+  circle: function() { return d3_ease_circle; },
+  elastic: d3_ease_elastic,
+  back: d3_ease_back,
+  bounce: function() { return d3_ease_bounce; }
+});
+
+var d3_ease_mode = d3.map({
+  "in": d3_identity,
+  "out": d3_ease_reverse,
+  "in-out": d3_ease_reflect,
+  "out-in": function(f) { return d3_ease_reflect(d3_ease_reverse(f)); }
+});
+
+d3.ease = function(name) {
+  var i = name.indexOf("-"),
+      t = i >= 0 ? name.slice(0, i) : name,
+      m = i >= 0 ? name.slice(i + 1) : "in";
+  t = d3_ease.get(t) || d3_ease_default;
+  m = d3_ease_mode.get(m) || d3_identity;
+  return d3_ease_clamp(m(t.apply(null, d3_arraySlice.call(arguments, 1))));
+};
+
+function d3_ease_clamp(f) {
+  return function(t) {
+    return t <= 0 ? 0 : t >= 1 ? 1 : f(t);
+  };
+}
+
+function d3_ease_reverse(f) {
+  return function(t) {
+    return 1 - f(1 - t);
+  };
+}
+
+function d3_ease_reflect(f) {
+  return function(t) {
+    return 0.5 * (t < 0.5 ? f(2 * t) : (2 - f(2 - 2 * t)));
+  };
+}
+
+function d3_ease_quad(t) {
+  return t * t;
+}
+
+function d3_ease_cubic(t) {
+  return t * t * t;
+}
+
+// Optimized clamp(reflect(poly(3))).
+function d3_ease_cubicInOut(t) {
+  if (t <= 0) return 0;
+  if (t >= 1) return 1;
+  var t2 = t * t, t3 = t2 * t;
+  return 4 * (t < 0.5 ? t3 : 3 * (t - t2) + t3 - 0.75);
+}
+
+function d3_ease_poly(e) {
+  return function(t) {
+    return Math.pow(t, e);
+  };
+}
+
+function d3_ease_sin(t) {
+  return 1 - Math.cos(t * halfπ);
+}
+
+function d3_ease_exp(t) {
+  return Math.pow(2, 10 * (t - 1));
+}
+
+function d3_ease_circle(t) {
+  return 1 - Math.sqrt(1 - t * t);
+}
+
+function d3_ease_elastic(a, p) {
+  var s;
+  if (arguments.length < 2) p = 0.45;
+  if (arguments.length) s = p / τ * Math.asin(1 / a);
+  else a = 1, s = p / 4;
+  return function(t) {
+    return 1 + a * Math.pow(2, -10 * t) * Math.sin((t - s) * τ / p);
+  };
+}
+
+function d3_ease_back(s) {
+  if (!s) s = 1.70158;
+  return function(t) {
+    return t * t * ((s + 1) * t - s);
+  };
+}
+
+function d3_ease_bounce(t) {
+  return t < 1 / 2.75 ? 7.5625 * t * t
+      : t < 2 / 2.75 ? 7.5625 * (t -= 1.5 / 2.75) * t + 0.75
+      : t < 2.5 / 2.75 ? 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375
+      : 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+}
+
 d3_transitionPrototype.ease = function(value) {
-  var id = this.id;
-  if (arguments.length < 1) return this.node().__transition__[id].ease;
+  var id = this.id, ns = this.namespace;
+  if (arguments.length < 1) return this.node()[ns][id].ease;
   if (typeof value !== "function") value = d3.ease.apply(d3, arguments);
-  return d3_selection_each(this, function(node) { node.__transition__[id].ease = value; });
+  return d3_selection_each(this, function(node) { node[ns][id].ease = value; });
 };
 
 d3_transitionPrototype.delay = function(value) {
-  var id = this.id;
-  if (arguments.length < 1) return this.node().__transition__[id].delay;
+  var id = this.id, ns = this.namespace;
+  if (arguments.length < 1) return this.node()[ns][id].delay;
   return d3_selection_each(this, typeof value === "function"
-      ? function(node, i, j) { node.__transition__[id].delay = +value.call(node, node.__data__, i, j); }
-      : (value = +value, function(node) { node.__transition__[id].delay = value; }));
+      ? function(node, i, j) { node[ns][id].delay = +value.call(node, node.__data__, i, j); }
+      : (value = +value, function(node) { node[ns][id].delay = value; }));
 };
 
 d3_transitionPrototype.duration = function(value) {
-  var id = this.id;
-  if (arguments.length < 1) return this.node().__transition__[id].duration;
+  var id = this.id, ns = this.namespace;
+  if (arguments.length < 1) return this.node()[ns][id].duration;
   return d3_selection_each(this, typeof value === "function"
-      ? function(node, i, j) { node.__transition__[id].duration = Math.max(1, value.call(node, node.__data__, i, j)); }
-      : (value = Math.max(1, value), function(node) { node.__transition__[id].duration = value; }));
+      ? function(node, i, j) { node[ns][id].duration = Math.max(1, value.call(node, node.__data__, i, j)); }
+      : (value = Math.max(1, value), function(node) { node[ns][id].duration = value; }));
 };
 
 d3_transitionPrototype.transition = function() {
   var id0 = this.id,
       id1 = ++d3_transitionId,
+      ns = this.namespace,
       subgroups = [],
       subgroup,
       group,
@@ -2488,105 +2565,146 @@ d3_transitionPrototype.transition = function() {
     subgroups.push(subgroup = []);
     for (var group = this[j], i = 0, n = group.length; i < n; i++) {
       if (node = group[i]) {
-        transition = Object.create(node.__transition__[id0]);
-        transition.delay += transition.duration;
-        d3_transitionNode(node, i, id1, transition);
+        transition = node[ns][id0];
+        d3_transitionNode(node, i, ns, id1, {time: transition.time, ease: transition.ease, delay: transition.delay + transition.duration, duration: transition.duration});
       }
       subgroup.push(node);
     }
   }
 
-  return d3_transition(subgroups, id1);
+  return d3_transition(subgroups, ns, id1);
 };
 
-function d3_transitionNode(node, i, id, inherit) {
-  var lock = node.__transition__ || (node.__transition__ = {active: 0, count: 0}),
-      transition = lock[id];
+function d3_transitionNamespace(name) {
+  return name == null ? "__transition__" : "__transition_" + name + "__";
+}
+
+function d3_transitionNode(node, i, ns, id, inherit) {
+  var lock = node[ns] || (node[ns] = {active: 0, count: 0}),
+      transition = lock[id],
+      time,
+      timer,
+      duration,
+      ease,
+      tweens;
+
+  function schedule(elapsed) {
+    var delay = transition.delay;
+    timer.t = delay + time;
+    if (delay <= elapsed) return start(elapsed - delay);
+    timer.c = start;
+  }
+
+  function start(elapsed) {
+
+    // Interrupt the active transition, if any.
+    var activeId = lock.active,
+        active = lock[activeId];
+    if (active) {
+      active.timer.c = null;
+      active.timer.t = NaN;
+      --lock.count;
+      delete lock[activeId];
+      active.event && active.event.interrupt.call(node, node.__data__, active.index);
+    }
+
+    // Cancel any pre-empted transitions. No interrupt event is dispatched
+    // because the cancelled transitions never started.
+    for (var cancelId in lock) {
+      if (+cancelId < id) {
+        var cancel = lock[cancelId];
+        cancel.timer.c = null;
+        cancel.timer.t = NaN;
+        --lock.count;
+        delete lock[cancelId];
+      }
+    }
+
+    // Defer tween invocation to end of current frame; see mbostock/d3#1576.
+    // Note that this transition may be canceled before then!
+    // This must be scheduled before the start event; see d3/d3-transition#16!
+    timer.c = tick;
+    d3_timer(function() {
+      if (timer.c && tick(elapsed || 1)) {
+        timer.c = null;
+        timer.t = NaN;
+      }
+      return 1;
+    }, 0, time);
+
+    // Start the transition.
+    lock.active = id;
+    transition.event && transition.event.start.call(node, node.__data__, i);
+
+    // Initialize the tweens.
+    tweens = [];
+    transition.tween.forEach(function(key, value) {
+      if (value = value.call(node, node.__data__, i)) {
+        tweens.push(value);
+      }
+    });
+
+    // Defer capture to allow tween initialization to set ease & duration.
+    ease = transition.ease;
+    duration = transition.duration;
+  }
+
+  function tick(elapsed) {
+    var t = elapsed / duration,
+        e = ease(t),
+        n = tweens.length;
+
+    while (n > 0) {
+      tweens[--n].call(node, e);
+    }
+
+    if (t >= 1) {
+      transition.event && transition.event.end.call(node, node.__data__, i);
+      if (--lock.count) delete lock[id];
+      else delete node[ns];
+      return 1;
+    }
+  }
 
   if (!transition) {
-    var time = inherit.time;
+    time = inherit.time;
+    timer = d3_timer(schedule, 0, time);
 
     transition = lock[id] = {
       tween: new d3_Map,
       time: time,
-      ease: inherit.ease,
+      timer: timer,
       delay: inherit.delay,
-      duration: inherit.duration
+      duration: inherit.duration,
+      ease: inherit.ease,
+      index: i
     };
 
+    inherit = null; // allow gc
+
     ++lock.count;
-
-    d3.timer(function(elapsed) {
-      var d = node.__data__,
-          ease = transition.ease,
-          delay = transition.delay,
-          duration = transition.duration,
-          timer = d3_timer_active,
-          tweened = [];
-
-      timer.t = delay + time;
-      if (delay <= elapsed) return start(elapsed - delay);
-      timer.c = start;
-
-      function start(elapsed) {
-        if (lock.active > id) return stop();
-        lock.active = id;
-        transition.event && transition.event.start.call(node, d, i);
-
-        transition.tween.forEach(function(key, value) {
-          if (value = value.call(node, d, i)) {
-            tweened.push(value);
-          }
-        });
-
-        d3.timer(function() { // defer to end of current frame
-          timer.c = tick(elapsed || 1) ? d3_true : tick;
-          return 1;
-        }, 0, time);
-      }
-
-      function tick(elapsed) {
-        if (lock.active !== id) return stop();
-
-        var t = elapsed / duration,
-            e = ease(t),
-            n = tweened.length;
-
-        while (n > 0) {
-          tweened[--n].call(node, e);
-        }
-
-        if (t >= 1) {
-          transition.event && transition.event.end.call(node, d, i);
-          return stop();
-        }
-      }
-
-      function stop() {
-        if (--lock.count) delete lock[id];
-        else delete node.__transition__;
-        return 1;
-      }
-    }, 0, time);
   }
 }
 
 d3_transitionPrototype.each = function(type, listener) {
-  var id = this.id;
+  var id = this.id, ns = this.namespace;
   if (arguments.length < 2) {
     var inherit = d3_transitionInherit,
         inheritId = d3_transitionInheritId;
-    d3_transitionInheritId = id;
-    d3_selection_each(this, function(node, i, j) {
-      d3_transitionInherit = node.__transition__[id];
-      type.call(node, node.__data__, i, j);
-    });
-    d3_transitionInherit = inherit;
-    d3_transitionInheritId = inheritId;
+    try {
+      d3_transitionInheritId = id;
+      d3_selection_each(this, function(node, i, j) {
+        d3_transitionInherit = node[ns][id];
+        type.call(node, node.__data__, i, j);
+      });
+    } finally {
+      d3_transitionInherit = inherit;
+      d3_transitionInheritId = inheritId;
+    }
   } else {
     d3_selection_each(this, function(node) {
-      var transition = node.__transition__[id];
-      (transition.event || (transition.event = d3.dispatch("start", "end"))).on(type, listener);
+      var transition = node[ns][id];
+      (transition.event || (transition.event = d3.dispatch("start", "end", "interrupt"))).on(type, listener);
     });
   }
   return this;
@@ -2609,7 +2727,7 @@ function d3_xhr(url, mimeType, response, callback) {
       responseType = null;
 
   // If IE does not support CORS, use XDomainRequest.
-  if (d3_window.XDomainRequest
+  if (this.XDomainRequest
       && !("withCredentials" in request)
       && /^(http(s)?:)?\/\//.test(url)) request = new XDomainRequest;
 
@@ -2619,7 +2737,7 @@ function d3_xhr(url, mimeType, response, callback) {
 
   function respond() {
     var status = request.status, result;
-    if (!status && request.responseText || status >= 200 && status < 300 || status === 304) {
+    if (!status && d3_xhrHasResponse(request) || status >= 200 && status < 300 || status === 304) {
       try {
         result = response.call(xhr, request);
       } catch (e) {
@@ -2706,6 +2824,13 @@ function d3_xhr_fixCallback(callback) {
       : callback;
 }
 
+function d3_xhrHasResponse(request) {
+  var type = request.responseType;
+  return type && type !== "text"
+      ? request.response // null on error
+      : request.responseText; // "" on error
+}
+
 d3.json = function(url, callback) {
   return d3_xhr(url, "application/json", d3_json, callback);
 };
@@ -2759,7 +2884,7 @@ var d3_formatPrefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P"
 
 d3.formatPrefix = function(value, precision) {
   var i = 0;
-  if (value) {
+  if (value = +value) {
     if (value < 0) value *= -1;
     if (precision) value = d3.round(value, d3_format_precision(value, precision));
     i = 1 + Math.floor(1e-12 + Math.log(value) / Math.LN10);
@@ -2781,13 +2906,16 @@ function d3_locale_numberFormat(locale) {
       locale_thousands = locale.thousands,
       locale_grouping = locale.grouping,
       locale_currency = locale.currency,
-      formatGroup = locale_grouping ? function(value) {
+      formatGroup = locale_grouping && locale_thousands ? function(value, width) {
         var i = value.length,
             t = [],
             j = 0,
-            g = locale_grouping[0];
+            g = locale_grouping[0],
+            length = 0;
         while (i > 0 && g > 0) {
+          if (length + g + 1 > width) g = Math.max(1, width - length);
           t.push(value.substring(i -= g, i + g));
+          if ((length += g + 1) > width) break;
           g = locale_grouping[j = (j + 1) % locale_grouping.length];
         }
         return t.reverse().join(locale_thousands);
@@ -2797,7 +2925,7 @@ function d3_locale_numberFormat(locale) {
     var match = d3_format_re.exec(specifier),
         fill = match[1] || " ",
         align = match[2] || ">",
-        sign = match[3] || "",
+        sign = match[3] || "-",
         symbol = match[4] || "",
         zfill = match[5],
         width = +match[6],
@@ -2807,14 +2935,14 @@ function d3_locale_numberFormat(locale) {
         scale = 1,
         prefix = "",
         suffix = "",
-        integer = false;
+        integer = false,
+        exponent = true;
 
     if (precision) precision = +precision.substring(1);
 
     if (zfill || fill === "0" && align === "=") {
       zfill = fill = "0";
       align = "=";
-      if (comma) width -= Math.floor((width - 1) / 4);
     }
 
     switch (type) {
@@ -2825,7 +2953,7 @@ function d3_locale_numberFormat(locale) {
       case "o":
       case "x":
       case "X": if (symbol === "#") prefix = "0" + type.toLowerCase();
-      case "c":
+      case "c": exponent = false;
       case "d": integer = true; precision = 0; break;
       case "s": scale = -1; type = "r"; break;
     }
@@ -2852,7 +2980,7 @@ function d3_locale_numberFormat(locale) {
       if (integer && (value % 1)) return "";
 
       // Convert negative to positive, and record the sign prefix.
-      var negative = value < 0 || value === 0 && 1 / value < 0 ? (value = -value, "-") : sign;
+      var negative = value < 0 || value === 0 && 1 / value < 0 ? (value = -value, "-") : sign === "-" ? "" : sign;
 
       // Apply the scale, computing it from the value's exponent for si format.
       // Preserve the existing suffix, if any, such as the currency symbol.
@@ -2869,17 +2997,26 @@ function d3_locale_numberFormat(locale) {
 
       // Break the value into the integer part (before) and decimal part (after).
       var i = value.lastIndexOf("."),
-          before = i < 0 ? value : value.substring(0, i),
-          after = i < 0 ? "" : locale_decimal + value.substring(i + 1);
+          before,
+          after;
+      if (i < 0) {
+        // If there is no decimal, break on "e" where appropriate.
+        var j = exponent ? value.lastIndexOf("e") : -1;
+        if (j < 0) before = value, after = "";
+        else before = value.substring(0, j), after = value.substring(j);
+      } else {
+        before = value.substring(0, i);
+        after = locale_decimal + value.substring(i + 1);
+      }
 
-       // If the fill character is not "0", grouping is applied before padding.
-      if (!zfill && comma) before = formatGroup(before);
+      // If the fill character is not "0", grouping is applied before padding.
+      if (!zfill && comma) before = formatGroup(before, Infinity);
 
       var length = prefix.length + before.length + after.length + (zcomma ? 0 : negative.length),
           padding = length < width ? new Array(length = width - length + 1).join(fill) : "";
 
       // If the fill character is "0", grouping is applied after padding.
-      if (zcomma) before = formatGroup(padding + before);
+      if (zcomma) before = formatGroup(padding + before, padding.length ? width - after.length : Infinity);
 
       // Apply prefix.
       negative += prefix;
@@ -3064,14 +3201,14 @@ function d3_locale_timeFormat(locale) {
           f;
       while (++i < n) {
         if (template.charCodeAt(i) === 37) {
-          string.push(template.substring(j, i));
+          string.push(template.slice(j, i));
           if ((p = d3_time_formatPads[c = template.charAt(++i)]) != null) c = template.charAt(++i);
           if (f = d3_time_formats[c]) c = f(date, p == null ? (c === "e" ? " " : "0") : p);
           string.push(c);
           j = i + 1;
         }
       }
-      string.push(template.substring(j, i));
+      string.push(template.slice(j, i));
       return string.join("");
     }
 
@@ -3090,7 +3227,8 @@ function d3_locale_timeFormat(locale) {
 
       // Set year, month, date.
       if ("j" in d) date.setFullYear(d.y, 0, d.j);
-      else if ("w" in d && ("W" in d || "U" in d)) {
+      else if ("W" in d || "U" in d) {
+        if (!("w" in d)) d.w = "W" in d ? 1 : 0;
         date.setFullYear(d.y, 0, 1);
         date.setFullYear(d.y, 0, "W" in d
             ? (d.w + 6) % 7 + d.W * 7 - (date.getDay() + 5) % 7
@@ -3098,7 +3236,7 @@ function d3_locale_timeFormat(locale) {
       } else date.setFullYear(d.y, d.m, d.d);
 
       // Set hours, minutes, seconds and milliseconds.
-      date.setHours(d.H + Math.floor(d.Z / 100), d.M + d.Z % 100, d.S, d.L);
+      date.setHours(d.H + (d.Z / 100 | 0), d.M + d.Z % 100, d.S, d.L);
 
       return localZ ? date._ : date;
     };
@@ -3233,25 +3371,25 @@ function d3_locale_timeFormat(locale) {
 
   function d3_time_parseWeekdayAbbrev(date, string, i) {
     d3_time_dayAbbrevRe.lastIndex = 0;
-    var n = d3_time_dayAbbrevRe.exec(string.substring(i));
+    var n = d3_time_dayAbbrevRe.exec(string.slice(i));
     return n ? (date.w = d3_time_dayAbbrevLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
   }
 
   function d3_time_parseWeekday(date, string, i) {
     d3_time_dayRe.lastIndex = 0;
-    var n = d3_time_dayRe.exec(string.substring(i));
+    var n = d3_time_dayRe.exec(string.slice(i));
     return n ? (date.w = d3_time_dayLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
   }
 
   function d3_time_parseMonthAbbrev(date, string, i) {
     d3_time_monthAbbrevRe.lastIndex = 0;
-    var n = d3_time_monthAbbrevRe.exec(string.substring(i));
+    var n = d3_time_monthAbbrevRe.exec(string.slice(i));
     return n ? (date.m = d3_time_monthAbbrevLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
   }
 
   function d3_time_parseMonth(date, string, i) {
     d3_time_monthRe.lastIndex = 0;
-    var n = d3_time_monthRe.exec(string.substring(i));
+    var n = d3_time_monthRe.exec(string.slice(i));
     return n ? (date.m = d3_time_monthLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
   }
 
@@ -3268,7 +3406,7 @@ function d3_locale_timeFormat(locale) {
   }
 
   function d3_time_parseAmPm(date, string, i) {
-    var n = d3_time_periodLookup.get(string.substring(i, i += 2).toLowerCase());
+    var n = d3_time_periodLookup.get(string.slice(i, i += 2).toLowerCase());
     return n == null ? -1 : (date.p = n, i);
   }
 
@@ -3298,36 +3436,36 @@ function d3_time_formatLookup(names) {
 
 function d3_time_parseWeekdayNumber(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i, i + 1));
+  var n = d3_time_numberRe.exec(string.slice(i, i + 1));
   return n ? (date.w = +n[0], i + n[0].length) : -1;
 }
 
 function d3_time_parseWeekNumberSunday(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i));
+  var n = d3_time_numberRe.exec(string.slice(i));
   return n ? (date.U = +n[0], i + n[0].length) : -1;
 }
 
 function d3_time_parseWeekNumberMonday(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i));
+  var n = d3_time_numberRe.exec(string.slice(i));
   return n ? (date.W = +n[0], i + n[0].length) : -1;
 }
 
 function d3_time_parseFullYear(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i, i + 4));
+  var n = d3_time_numberRe.exec(string.slice(i, i + 4));
   return n ? (date.y = +n[0], i + n[0].length) : -1;
 }
 
 function d3_time_parseYear(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i, i + 2));
+  var n = d3_time_numberRe.exec(string.slice(i, i + 2));
   return n ? (date.y = d3_time_expandYear(+n[0]), i + n[0].length) : -1;
 }
 
 function d3_time_parseZone(date, string, i) {
-  return /^[+-]\d{4}$/.test(string = string.substring(i, i + 5))
+  return /^[+-]\d{4}$/.test(string = string.slice(i, i + 5))
       ? (date.Z = -string, i + 5) // sign differs from getTimezoneOffset!
       : -1;
 }
@@ -3338,44 +3476,44 @@ function d3_time_expandYear(d) {
 
 function d3_time_parseMonthNumber(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i, i + 2));
+  var n = d3_time_numberRe.exec(string.slice(i, i + 2));
   return n ? (date.m = n[0] - 1, i + n[0].length) : -1;
 }
 
 function d3_time_parseDay(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i, i + 2));
+  var n = d3_time_numberRe.exec(string.slice(i, i + 2));
   return n ? (date.d = +n[0], i + n[0].length) : -1;
 }
 
 function d3_time_parseDayOfYear(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i, i + 3));
+  var n = d3_time_numberRe.exec(string.slice(i, i + 3));
   return n ? (date.j = +n[0], i + n[0].length) : -1;
 }
 
 // Note: we don't validate that the hour is in the range [0,23] or [1,12].
 function d3_time_parseHour24(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i, i + 2));
+  var n = d3_time_numberRe.exec(string.slice(i, i + 2));
   return n ? (date.H = +n[0], i + n[0].length) : -1;
 }
 
 function d3_time_parseMinutes(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i, i + 2));
+  var n = d3_time_numberRe.exec(string.slice(i, i + 2));
   return n ? (date.M = +n[0], i + n[0].length) : -1;
 }
 
 function d3_time_parseSeconds(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i, i + 2));
+  var n = d3_time_numberRe.exec(string.slice(i, i + 2));
   return n ? (date.S = +n[0], i + n[0].length) : -1;
 }
 
 function d3_time_parseMilliseconds(date, string, i) {
   d3_time_numberRe.lastIndex = 0;
-  var n = d3_time_numberRe.exec(string.substring(i, i + 3));
+  var n = d3_time_numberRe.exec(string.slice(i, i + 3));
   return n ? (date.L = +n[0], i + n[0].length) : -1;
 }
 
@@ -3383,14 +3521,14 @@ function d3_time_parseMilliseconds(date, string, i) {
 function d3_time_zone(d) {
   var z = d.getTimezoneOffset(),
       zs = z > 0 ? "-" : "+",
-      zh = ~~(abs(z) / 60),
+      zh = abs(z) / 60 | 0,
       zm = abs(z) % 60;
   return zs + d3_time_formatPad(zh, "0", 2) + d3_time_formatPad(zm, "0", 2);
 }
 
 function d3_time_parseLiteralPercent(date, string, i) {
   d3_time_percentRe.lastIndex = 0;
-  var n = d3_time_percentRe.exec(string.substring(i, i + 1));
+  var n = d3_time_percentRe.exec(string.slice(i, i + 1));
   return n ? i + n[0].length : -1;
 }
 
@@ -3711,6 +3849,315 @@ function d3_geo_clipSort(a, b) {
   return ((a = a.x)[0] < 0 ? a[1] - halfπ - ε : halfπ - a[1])
        - ((b = b.x)[0] < 0 ? b[1] - halfπ - ε : halfπ - b[1]);
 }
+
+var d3_geo_clipAntimeridian = d3_geo_clip(
+    d3_true,
+    d3_geo_clipAntimeridianLine,
+    d3_geo_clipAntimeridianInterpolate,
+    [-π, -π / 2]);
+
+// Takes a line and cuts into visible segments. Return values:
+//   0: there were intersections or the line was empty.
+//   1: no intersections.
+//   2: there were intersections, and the first and last segments should be
+//      rejoined.
+function d3_geo_clipAntimeridianLine(listener) {
+  var λ0 = NaN,
+      φ0 = NaN,
+      sλ0 = NaN,
+      clean; // no intersections
+
+  return {
+    lineStart: function() {
+      listener.lineStart();
+      clean = 1;
+    },
+    point: function(λ1, φ1) {
+      var sλ1 = λ1 > 0 ? π : -π,
+          dλ = abs(λ1 - λ0);
+      if (abs(dλ - π) < ε) { // line crosses a pole
+        listener.point(λ0, φ0 = (φ0 + φ1) / 2 > 0 ? halfπ : -halfπ);
+        listener.point(sλ0, φ0);
+        listener.lineEnd();
+        listener.lineStart();
+        listener.point(sλ1, φ0);
+        listener.point(λ1, φ0);
+        clean = 0;
+      } else if (sλ0 !== sλ1 && dλ >= π) { // line crosses antimeridian
+        // handle degeneracies
+        if (abs(λ0 - sλ0) < ε) λ0 -= sλ0 * ε;
+        if (abs(λ1 - sλ1) < ε) λ1 -= sλ1 * ε;
+        φ0 = d3_geo_clipAntimeridianIntersect(λ0, φ0, λ1, φ1);
+        listener.point(sλ0, φ0);
+        listener.lineEnd();
+        listener.lineStart();
+        listener.point(sλ1, φ0);
+        clean = 0;
+      }
+      listener.point(λ0 = λ1, φ0 = φ1);
+      sλ0 = sλ1;
+    },
+    lineEnd: function() {
+      listener.lineEnd();
+      λ0 = φ0 = NaN;
+    },
+    // if there are intersections, we always rejoin the first and last segments.
+    clean: function() { return 2 - clean; }
+  };
+}
+
+function d3_geo_clipAntimeridianIntersect(λ0, φ0, λ1, φ1) {
+  var cosφ0,
+      cosφ1,
+      sinλ0_λ1 = Math.sin(λ0 - λ1);
+  return abs(sinλ0_λ1) > ε
+      ? Math.atan((Math.sin(φ0) * (cosφ1 = Math.cos(φ1)) * Math.sin(λ1)
+                 - Math.sin(φ1) * (cosφ0 = Math.cos(φ0)) * Math.sin(λ0))
+                 / (cosφ0 * cosφ1 * sinλ0_λ1))
+      : (φ0 + φ1) / 2;
+}
+
+function d3_geo_clipAntimeridianInterpolate(from, to, direction, listener) {
+  var φ;
+  if (from == null) {
+    φ = direction * halfπ;
+    listener.point(-π,  φ);
+    listener.point( 0,  φ);
+    listener.point( π,  φ);
+    listener.point( π,  0);
+    listener.point( π, -φ);
+    listener.point( 0, -φ);
+    listener.point(-π, -φ);
+    listener.point(-π,  0);
+    listener.point(-π,  φ);
+  } else if (abs(from[0] - to[0]) > ε) {
+    var s = from[0] < to[0] ? π : -π;
+    φ = direction * s / 2;
+    listener.point(-s, φ);
+    listener.point( 0, φ);
+    listener.point( s, φ);
+  } else {
+    listener.point(to[0], to[1]);
+  }
+}
+// TODO
+// cross and scale return new vectors,
+// whereas add and normalize operate in-place
+
+function d3_geo_cartesian(spherical) {
+  var λ = spherical[0],
+      φ = spherical[1],
+      cosφ = Math.cos(φ);
+  return [
+    cosφ * Math.cos(λ),
+    cosφ * Math.sin(λ),
+    Math.sin(φ)
+  ];
+}
+
+function d3_geo_cartesianDot(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+function d3_geo_cartesianCross(a, b) {
+  return [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0]
+  ];
+}
+
+function d3_geo_cartesianAdd(a, b) {
+  a[0] += b[0];
+  a[1] += b[1];
+  a[2] += b[2];
+}
+
+function d3_geo_cartesianScale(vector, k) {
+  return [
+    vector[0] * k,
+    vector[1] * k,
+    vector[2] * k
+  ];
+}
+
+function d3_geo_cartesianNormalize(d) {
+  var l = Math.sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+  d[0] /= l;
+  d[1] /= l;
+  d[2] /= l;
+}
+function d3_geo_compose(a, b) {
+
+  function compose(x, y) {
+    return x = a(x, y), b(x[0], x[1]);
+  }
+
+  if (a.invert && b.invert) compose.invert = function(x, y) {
+    return x = b.invert(x, y), x && a.invert(x[0], x[1]);
+  };
+
+  return compose;
+}
+
+function d3_geo_equirectangular(λ, φ) {
+  return [λ, φ];
+}
+
+(d3.geo.equirectangular = function() {
+  return d3_geo_projection(d3_geo_equirectangular);
+}).raw = d3_geo_equirectangular.invert = d3_geo_equirectangular;
+
+d3.geo.rotation = function(rotate) {
+  rotate = d3_geo_rotation(rotate[0] % 360 * d3_radians, rotate[1] * d3_radians, rotate.length > 2 ? rotate[2] * d3_radians : 0);
+
+  function forward(coordinates) {
+    coordinates = rotate(coordinates[0] * d3_radians, coordinates[1] * d3_radians);
+    return coordinates[0] *= d3_degrees, coordinates[1] *= d3_degrees, coordinates;
+  }
+
+  forward.invert = function(coordinates) {
+    coordinates = rotate.invert(coordinates[0] * d3_radians, coordinates[1] * d3_radians);
+    return coordinates[0] *= d3_degrees, coordinates[1] *= d3_degrees, coordinates;
+  };
+
+  return forward;
+};
+
+function d3_geo_identityRotation(λ, φ) {
+  return [λ > π ? λ - τ : λ < -π ? λ + τ : λ, φ];
+}
+
+d3_geo_identityRotation.invert = d3_geo_equirectangular;
+
+// Note: |δλ| must be < 2π
+function d3_geo_rotation(δλ, δφ, δγ) {
+  return δλ ? (δφ || δγ ? d3_geo_compose(d3_geo_rotationλ(δλ), d3_geo_rotationφγ(δφ, δγ))
+    : d3_geo_rotationλ(δλ))
+    : (δφ || δγ ? d3_geo_rotationφγ(δφ, δγ)
+    : d3_geo_identityRotation);
+}
+
+function d3_geo_forwardRotationλ(δλ) {
+  return function(λ, φ) {
+    return λ += δλ, [λ > π ? λ - τ : λ < -π ? λ + τ : λ, φ];
+  };
+}
+
+function d3_geo_rotationλ(δλ) {
+  var rotation = d3_geo_forwardRotationλ(δλ);
+  rotation.invert = d3_geo_forwardRotationλ(-δλ);
+  return rotation;
+}
+
+function d3_geo_rotationφγ(δφ, δγ) {
+  var cosδφ = Math.cos(δφ),
+      sinδφ = Math.sin(δφ),
+      cosδγ = Math.cos(δγ),
+      sinδγ = Math.sin(δγ);
+
+  function rotation(λ, φ) {
+    var cosφ = Math.cos(φ),
+        x = Math.cos(λ) * cosφ,
+        y = Math.sin(λ) * cosφ,
+        z = Math.sin(φ),
+        k = z * cosδφ + x * sinδφ;
+    return [
+      Math.atan2(y * cosδγ - k * sinδγ, x * cosδφ - z * sinδφ),
+      d3_asin(k * cosδγ + y * sinδγ)
+    ];
+  }
+
+  rotation.invert = function(λ, φ) {
+    var cosφ = Math.cos(φ),
+        x = Math.cos(λ) * cosφ,
+        y = Math.sin(λ) * cosφ,
+        z = Math.sin(φ),
+        k = z * cosδγ - y * sinδγ;
+    return [
+      Math.atan2(y * cosδγ + z * sinδγ, x * cosδφ + k * sinδφ),
+      d3_asin(k * cosδφ - x * sinδφ)
+    ];
+  };
+
+  return rotation;
+}
+
+d3.geo.circle = function() {
+  var origin = [0, 0],
+      angle,
+      precision = 6,
+      interpolate;
+
+  function circle() {
+    var center = typeof origin === "function" ? origin.apply(this, arguments) : origin,
+        rotate = d3_geo_rotation(-center[0] * d3_radians, -center[1] * d3_radians, 0).invert,
+        ring = [];
+
+    interpolate(null, null, 1, {
+      point: function(x, y) {
+        ring.push(x = rotate(x, y));
+        x[0] *= d3_degrees, x[1] *= d3_degrees;
+      }
+    });
+
+    return {type: "Polygon", coordinates: [ring]};
+  }
+
+  circle.origin = function(x) {
+    if (!arguments.length) return origin;
+    origin = x;
+    return circle;
+  };
+
+  circle.angle = function(x) {
+    if (!arguments.length) return angle;
+    interpolate = d3_geo_circleInterpolate((angle = +x) * d3_radians, precision * d3_radians);
+    return circle;
+  };
+
+  circle.precision = function(_) {
+    if (!arguments.length) return precision;
+    interpolate = d3_geo_circleInterpolate(angle * d3_radians, (precision = +_) * d3_radians);
+    return circle;
+  };
+
+  return circle.angle(90);
+};
+
+// Interpolates along a circle centered at [0°, 0°], with a given radius and
+// precision.
+function d3_geo_circleInterpolate(radius, precision) {
+  var cr = Math.cos(radius),
+      sr = Math.sin(radius);
+  return function(from, to, direction, listener) {
+    var step = direction * precision;
+    if (from != null) {
+      from = d3_geo_circleAngle(cr, from);
+      to = d3_geo_circleAngle(cr, to);
+      if (direction > 0 ? from < to: from > to) from += direction * τ;
+    } else {
+      from = radius + direction * τ;
+      to = radius - 0.5 * step;
+    }
+    for (var point, t = from; direction > 0 ? t > to : t < to; t -= step) {
+      listener.point((point = d3_geo_spherical([
+        cr,
+        -sr * Math.cos(t),
+        -sr * Math.sin(t)
+      ]))[0], point[1]);
+    }
+  };
+}
+
+// Signed angle of a cartesian point relative to [cr, 0, 0].
+function d3_geo_circleAngle(cr, point) {
+  var a = d3_geo_cartesian(point);
+  a[0] -= cr;
+  d3_geo_cartesianNormalize(a);
+  var angle = d3_acos(-a[1]);
+  return ((-a[2] < 0 ? -angle : angle) + 2 * Math.PI - ε) % (2 * Math.PI);
+}
 // Adds floating point numbers with twice the normal precision.
 // Reference: J. R. Shewchuk, Adaptive Precision Floating-Point Arithmetic and
 // Fast Robust Geometric Predicates, Discrete & Computational Geometry 18(3)
@@ -3879,53 +4326,6 @@ function d3_geo_areaRingStart() {
     nextPoint(λ00, φ00);
   };
 }
-// TODO
-// cross and scale return new vectors,
-// whereas add and normalize operate in-place
-
-function d3_geo_cartesian(spherical) {
-  var λ = spherical[0],
-      φ = spherical[1],
-      cosφ = Math.cos(φ);
-  return [
-    cosφ * Math.cos(λ),
-    cosφ * Math.sin(λ),
-    Math.sin(φ)
-  ];
-}
-
-function d3_geo_cartesianDot(a, b) {
-  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-}
-
-function d3_geo_cartesianCross(a, b) {
-  return [
-    a[1] * b[2] - a[2] * b[1],
-    a[2] * b[0] - a[0] * b[2],
-    a[0] * b[1] - a[1] * b[0]
-  ];
-}
-
-function d3_geo_cartesianAdd(a, b) {
-  a[0] += b[0];
-  a[1] += b[1];
-  a[2] += b[2];
-}
-
-function d3_geo_cartesianScale(vector, k) {
-  return [
-    vector[0] * k,
-    vector[1] * k,
-    vector[2] * k
-  ];
-}
-
-function d3_geo_cartesianNormalize(d) {
-  var l = Math.sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
-  d[0] /= l;
-  d[1] /= l;
-  d[2] /= l;
-}
 
 function d3_geo_pointInPolygon(point, polygon) {
   var meridian = point[0],
@@ -3990,257 +4390,7 @@ function d3_geo_pointInPolygon(point, polygon) {
   // from the point to the South pole.  If it is zero, then the point is the
   // same side as the South pole.
 
-  return (polarAngle < -ε || polarAngle < ε && d3_geo_areaRingSum < 0) ^ (winding & 1);
-}
-
-var d3_geo_clipAntimeridian = d3_geo_clip(
-    d3_true,
-    d3_geo_clipAntimeridianLine,
-    d3_geo_clipAntimeridianInterpolate,
-    [-π, -π / 2]);
-
-// Takes a line and cuts into visible segments. Return values:
-//   0: there were intersections or the line was empty.
-//   1: no intersections.
-//   2: there were intersections, and the first and last segments should be
-//      rejoined.
-function d3_geo_clipAntimeridianLine(listener) {
-  var λ0 = NaN,
-      φ0 = NaN,
-      sλ0 = NaN,
-      clean; // no intersections
-
-  return {
-    lineStart: function() {
-      listener.lineStart();
-      clean = 1;
-    },
-    point: function(λ1, φ1) {
-      var sλ1 = λ1 > 0 ? π : -π,
-          dλ = abs(λ1 - λ0);
-      if (abs(dλ - π) < ε) { // line crosses a pole
-        listener.point(λ0, φ0 = (φ0 + φ1) / 2 > 0 ? halfπ : -halfπ);
-        listener.point(sλ0, φ0);
-        listener.lineEnd();
-        listener.lineStart();
-        listener.point(sλ1, φ0);
-        listener.point(λ1, φ0);
-        clean = 0;
-      } else if (sλ0 !== sλ1 && dλ >= π) { // line crosses antimeridian
-        // handle degeneracies
-        if (abs(λ0 - sλ0) < ε) λ0 -= sλ0 * ε;
-        if (abs(λ1 - sλ1) < ε) λ1 -= sλ1 * ε;
-        φ0 = d3_geo_clipAntimeridianIntersect(λ0, φ0, λ1, φ1);
-        listener.point(sλ0, φ0);
-        listener.lineEnd();
-        listener.lineStart();
-        listener.point(sλ1, φ0);
-        clean = 0;
-      }
-      listener.point(λ0 = λ1, φ0 = φ1);
-      sλ0 = sλ1;
-    },
-    lineEnd: function() {
-      listener.lineEnd();
-      λ0 = φ0 = NaN;
-    },
-    // if there are intersections, we always rejoin the first and last segments.
-    clean: function() { return 2 - clean; }
-  };
-}
-
-function d3_geo_clipAntimeridianIntersect(λ0, φ0, λ1, φ1) {
-  var cosφ0,
-      cosφ1,
-      sinλ0_λ1 = Math.sin(λ0 - λ1);
-  return abs(sinλ0_λ1) > ε
-      ? Math.atan((Math.sin(φ0) * (cosφ1 = Math.cos(φ1)) * Math.sin(λ1)
-                 - Math.sin(φ1) * (cosφ0 = Math.cos(φ0)) * Math.sin(λ0))
-                 / (cosφ0 * cosφ1 * sinλ0_λ1))
-      : (φ0 + φ1) / 2;
-}
-
-function d3_geo_clipAntimeridianInterpolate(from, to, direction, listener) {
-  var φ;
-  if (from == null) {
-    φ = direction * halfπ;
-    listener.point(-π,  φ);
-    listener.point( 0,  φ);
-    listener.point( π,  φ);
-    listener.point( π,  0);
-    listener.point( π, -φ);
-    listener.point( 0, -φ);
-    listener.point(-π, -φ);
-    listener.point(-π,  0);
-    listener.point(-π,  φ);
-  } else if (abs(from[0] - to[0]) > ε) {
-    var s = from[0] < to[0] ? π : -π;
-    φ = direction * s / 2;
-    listener.point(-s, φ);
-    listener.point( 0, φ);
-    listener.point( s, φ);
-  } else {
-    listener.point(to[0], to[1]);
-  }
-}
-
-function d3_geo_equirectangular(λ, φ) {
-  return [λ, φ];
-}
-
-(d3.geo.equirectangular = function() {
-  return d3_geo_projection(d3_geo_equirectangular);
-}).raw = d3_geo_equirectangular.invert = d3_geo_equirectangular;
-
-d3.geo.rotation = function(rotate) {
-  rotate = d3_geo_rotation(rotate[0] % 360 * d3_radians, rotate[1] * d3_radians, rotate.length > 2 ? rotate[2] * d3_radians : 0);
-
-  function forward(coordinates) {
-    coordinates = rotate(coordinates[0] * d3_radians, coordinates[1] * d3_radians);
-    return coordinates[0] *= d3_degrees, coordinates[1] *= d3_degrees, coordinates;
-  }
-
-  forward.invert = function(coordinates) {
-    coordinates = rotate.invert(coordinates[0] * d3_radians, coordinates[1] * d3_radians);
-    return coordinates[0] *= d3_degrees, coordinates[1] *= d3_degrees, coordinates;
-  };
-
-  return forward;
-};
-
-function d3_geo_identityRotation(λ, φ) {
-  return [λ > π ? λ - τ : λ < -π ? λ + τ : λ, φ];
-}
-
-d3_geo_identityRotation.invert = d3_geo_equirectangular;
-
-// Note: |δλ| must be < 2π
-function d3_geo_rotation(δλ, δφ, δγ) {
-  return δλ ? (δφ || δγ ? d3_geo_compose(d3_geo_rotationλ(δλ), d3_geo_rotationφγ(δφ, δγ))
-    : d3_geo_rotationλ(δλ))
-    : (δφ || δγ ? d3_geo_rotationφγ(δφ, δγ)
-    : d3_geo_identityRotation);
-}
-
-function d3_geo_forwardRotationλ(δλ) {
-  return function(λ, φ) {
-    return λ += δλ, [λ > π ? λ - τ : λ < -π ? λ + τ : λ, φ];
-  };
-}
-
-function d3_geo_rotationλ(δλ) {
-  var rotation = d3_geo_forwardRotationλ(δλ);
-  rotation.invert = d3_geo_forwardRotationλ(-δλ);
-  return rotation;
-}
-
-function d3_geo_rotationφγ(δφ, δγ) {
-  var cosδφ = Math.cos(δφ),
-      sinδφ = Math.sin(δφ),
-      cosδγ = Math.cos(δγ),
-      sinδγ = Math.sin(δγ);
-
-  function rotation(λ, φ) {
-    var cosφ = Math.cos(φ),
-        x = Math.cos(λ) * cosφ,
-        y = Math.sin(λ) * cosφ,
-        z = Math.sin(φ),
-        k = z * cosδφ + x * sinδφ;
-    return [
-      Math.atan2(y * cosδγ - k * sinδγ, x * cosδφ - z * sinδφ),
-      d3_asin(k * cosδγ + y * sinδγ)
-    ];
-  }
-
-  rotation.invert = function(λ, φ) {
-    var cosφ = Math.cos(φ),
-        x = Math.cos(λ) * cosφ,
-        y = Math.sin(λ) * cosφ,
-        z = Math.sin(φ),
-        k = z * cosδγ - y * sinδγ;
-    return [
-      Math.atan2(y * cosδγ + z * sinδγ, x * cosδφ + k * sinδφ),
-      d3_asin(k * cosδφ - x * sinδφ)
-    ];
-  };
-
-  return rotation;
-}
-
-d3.geo.circle = function() {
-  var origin = [0, 0],
-      angle,
-      precision = 6,
-      interpolate;
-
-  function circle() {
-    var center = typeof origin === "function" ? origin.apply(this, arguments) : origin,
-        rotate = d3_geo_rotation(-center[0] * d3_radians, -center[1] * d3_radians, 0).invert,
-        ring = [];
-
-    interpolate(null, null, 1, {
-      point: function(x, y) {
-        ring.push(x = rotate(x, y));
-        x[0] *= d3_degrees, x[1] *= d3_degrees;
-      }
-    });
-
-    return {type: "Polygon", coordinates: [ring]};
-  }
-
-  circle.origin = function(x) {
-    if (!arguments.length) return origin;
-    origin = x;
-    return circle;
-  };
-
-  circle.angle = function(x) {
-    if (!arguments.length) return angle;
-    interpolate = d3_geo_circleInterpolate((angle = +x) * d3_radians, precision * d3_radians);
-    return circle;
-  };
-
-  circle.precision = function(_) {
-    if (!arguments.length) return precision;
-    interpolate = d3_geo_circleInterpolate(angle * d3_radians, (precision = +_) * d3_radians);
-    return circle;
-  };
-
-  return circle.angle(90);
-};
-
-// Interpolates along a circle centered at [0°, 0°], with a given radius and
-// precision.
-function d3_geo_circleInterpolate(radius, precision) {
-  var cr = Math.cos(radius),
-      sr = Math.sin(radius);
-  return function(from, to, direction, listener) {
-    var step = direction * precision;
-    if (from != null) {
-      from = d3_geo_circleAngle(cr, from);
-      to = d3_geo_circleAngle(cr, to);
-      if (direction > 0 ? from < to: from > to) from += direction * τ;
-    } else {
-      from = radius + direction * τ;
-      to = radius - .5 * step;
-    }
-    for (var point, t = from; direction > 0 ? t > to : t < to; t -= step) {
-      listener.point((point = d3_geo_spherical([
-        cr,
-        -sr * Math.cos(t),
-        -sr * Math.sin(t)
-      ]))[0], point[1]);
-    }
-  };
-}
-
-// Signed angle of a cartesian point relative to [cr, 0, 0].
-function d3_geo_circleAngle(cr, point) {
-  var a = d3_geo_cartesian(point);
-  a[0] -= cr;
-  d3_geo_cartesianNormalize(a);
-  var angle = d3_acos(-a[1]);
-  return ((-a[2] < 0 ? -angle : angle) + 2 * Math.PI - ε) % (2 * Math.PI);
+  return (polarAngle < -ε || polarAngle < ε && d3_geo_areaRingSum < -ε) ^ (winding & 1);
 }
 
 // Clip features against a small circle centered at [0°, 0°].
@@ -4667,18 +4817,6 @@ function d3_geo_clipExtent(x0, y0, x1, y1) {
         : b[0] - a[0];
   }
 }
-function d3_geo_compose(a, b) {
-
-  function compose(x, y) {
-    return x = a(x, y), b(x[0], x[1]);
-  }
-
-  if (a.invert && b.invert) compose.invert = function(x, y) {
-    return x = b.invert(x, y), x && a.invert(x[0], x[1]);
-  };
-
-  return compose;
-}
 
 function d3_geo_conic(projectAt) {
   var φ0 = 0,
@@ -4727,7 +4865,7 @@ function d3_geo_conicEqualArea(φ0, φ1) {
 d3.geo.albers = function() {
   return d3.geo.conicEqualArea()
       .rotate([96, 0])
-      .center([-.6, 38.7])
+      .center([-0.6, 38.7])
       .parallels([29.5, 45.5])
       .scale(1070);
 };
@@ -4771,8 +4909,8 @@ d3.geo.albersUsa = function() {
         t = lower48.translate(),
         x = (coordinates[0] - t[0]) / k,
         y = (coordinates[1] - t[1]) / k;
-    return (y >= .120 && y < .234 && x >= -.425 && x < -.214 ? alaska
-        : y >= .166 && y < .234 && x >= -.214 && x < -.115 ? hawaii
+    return (y >= 0.120 && y < 0.234 && x >= -0.425 && x < -0.214 ? alaska
+        : y >= 0.166 && y < 0.234 && x >= -0.214 && x < -0.115 ? hawaii
         : lower48).invert(coordinates);
   };
 
@@ -4828,7 +4966,7 @@ d3.geo.albersUsa = function() {
   albersUsa.scale = function(_) {
     if (!arguments.length) return lower48.scale();
     lower48.scale(_);
-    alaska.scale(_ * .35);
+    alaska.scale(_ * 0.35);
     hawaii.scale(_);
     return albersUsa.translate(lower48.translate());
   };
@@ -4839,17 +4977,17 @@ d3.geo.albersUsa = function() {
 
     lower48Point = lower48
         .translate(_)
-        .clipExtent([[x - .455 * k, y - .238 * k], [x + .455 * k, y + .238 * k]])
+        .clipExtent([[x - 0.455 * k, y - 0.238 * k], [x + 0.455 * k, y + 0.238 * k]])
         .stream(pointStream).point;
 
     alaskaPoint = alaska
-        .translate([x - .307 * k, y + .201 * k])
-        .clipExtent([[x - .425 * k + ε, y + .120 * k + ε], [x - .214 * k - ε, y + .234 * k - ε]])
+        .translate([x - 0.307 * k, y + 0.201 * k])
+        .clipExtent([[x - 0.425 * k + ε, y + 0.120 * k + ε], [x - 0.214 * k - ε, y + 0.234 * k - ε]])
         .stream(pointStream).point;
 
     hawaiiPoint = hawaii
-        .translate([x - .205 * k, y + .212 * k])
-        .clipExtent([[x - .214 * k + ε, y + .166 * k + ε], [x - .115 * k - ε, y + .234 * k - ε]])
+        .translate([x - 0.205 * k, y + 0.212 * k])
+        .clipExtent([[x - 0.214 * k + ε, y + 0.166 * k + ε], [x - 0.115 * k - ε, y + 0.234 * k - ε]])
         .stream(pointStream).point;
 
     return albersUsa;
@@ -5383,7 +5521,7 @@ function d3_geo_pathContext(context) {
   };
 
   function point(x, y) {
-    context.moveTo(x, y);
+    context.moveTo(x + pointRadius, y);
     context.arc(x, y, pointRadius, 0, τ);
   }
 
@@ -5408,7 +5546,7 @@ function d3_geo_pathContext(context) {
 }
 
 function d3_geo_resample(project) {
-  var δ2 = .5, // precision, px²
+  var δ2 = 0.5, // precision, px²
       cosMinDistance = Math.cos(30 * d3_radians), // cos(minimum angular distance)
       maxDepth = 16;
 
@@ -5495,7 +5633,7 @@ function d3_geo_resample(project) {
           dy2 = y2 - y0,
           dz = dy * dx2 - dx * dy2;
       if (dz * dz / d2 > δ2 // perpendicular projected distance
-          || abs((dx * dx2 + dy * dy2) / d2 - .5) > .3 // midpoint close to an end
+          || abs((dx * dx2 + dy * dy2) / d2 - 0.5) > 0.3 // midpoint close to an end
           || a0 * a1 + b0 * b1 + c0 * c1 < cosMinDistance) { // angular distance
         resampleLineTo(x0, y0, λ0, a0, b0, c0, x2, y2, λ2, a /= m, b /= m, c, depth, stream);
         stream.point(x2, y2);
@@ -5772,9 +5910,9 @@ function d3_geo_mercatorProjection(project) {
 (d3.geo.mercator = function() {
   return d3_geo_mercatorProjection(d3_geo_mercator);
 }).raw = d3_geo_mercator;
-  if (typeof define === "function" && define.amd) define(d3);
+  if (typeof define === "function" && define.amd) this.d3 = d3, define(d3);
   else if (typeof module === "object" && module.exports) module.exports = d3;
-  this.d3 = d3;
+  else this.d3 = d3;
 }();
 /**
  * Hashchange Event Polyfill
@@ -6650,2883 +6788,6 @@ d3.selection.prototype.trigger = function (type) {
   }
 
 })();
-/*
-	Leaflet.draw, a plugin that adds drawing and editing tools to Leaflet powered maps.
-	(c) 2012-2013, Jacob Toye, Smartrak
-
-	https://github.com/Leaflet/Leaflet.draw
-	http://leafletjs.com
-	https://github.com/jacobtoye
-*/
-(function (window, document, undefined) {/*
- * Leaflet.draw assumes that you have already included the Leaflet library.
- */
-
-L.drawVersion = '0.2.3';
-
-L.drawLocal = {
-	draw: {
-		toolbar: {
-			actions: {
-				title: 'Cancel drawing',
-				text: 'Cancel'
-			},
-			undo: {
-				title: 'Delete last point drawn',
-				text: 'Delete last point'
-			},
-			buttons: {
-				polyline: 'Draw a polyline',
-				polygon: 'Draw a polygon',
-				rectangle: 'Draw a rectangle',
-				circle: 'Draw a circle',
-				marker: 'Draw a marker'
-			}
-		},
-		handlers: {
-			circle: {
-				tooltip: {
-					start: 'Click and drag to draw circle.'
-				}
-			},
-			marker: {
-				tooltip: {
-					start: 'Click map to place marker.'
-				}
-			},
-			polygon: {
-				tooltip: {
-					start: 'Click to start drawing shape.',
-					cont: 'Click to continue drawing shape.',
-					end: 'Click first point to close this shape.'
-				}
-			},
-			polyline: {
-				error: '<strong>Error:</strong> shape edges cannot cross!',
-				tooltip: {
-					start: 'Click to start drawing line.',
-					cont: 'Click to continue drawing line.',
-					end: 'Click last point to finish line.'
-				}
-			},
-			rectangle: {
-				tooltip: {
-					start: 'Click and drag to draw rectangle.'
-				}
-			},
-			simpleshape: {
-				tooltip: {
-					end: 'Release mouse to finish drawing.'
-				}
-			}
-		}
-	},
-	edit: {
-		toolbar: {
-			actions: {
-				save: {
-					title: 'Save changes.',
-					text: 'Save'
-				},
-				cancel: {
-					title: 'Cancel editing, discards all changes.',
-					text: 'Cancel'
-				}
-			},
-			buttons: {
-				edit: 'Edit layers.',
-				editDisabled: 'No layers to edit.',
-				remove: 'Delete layers.',
-				removeDisabled: 'No layers to delete.'
-			}
-		},
-		handlers: {
-			edit: {
-				tooltip: {
-					text: 'Drag handles, or marker to edit feature.',
-					subtext: 'Click cancel to undo changes.'
-				}
-			},
-			remove: {
-				tooltip: {
-					text: 'Click on a feature to remove'
-				}
-			}
-		}
-	}
-};
-
-
-L.Draw = {};
-
-L.Draw.Feature = L.Handler.extend({
-	includes: L.Mixin.Events,
-
-	initialize: function (map, options) {
-		this._map = map;
-		this._container = map._container;
-		this._overlayPane = map._panes.overlayPane;
-		this._popupPane = map._panes.popupPane;
-
-		// Merge default shapeOptions options with custom shapeOptions
-		if (options && options.shapeOptions) {
-			options.shapeOptions = L.Util.extend({}, this.options.shapeOptions, options.shapeOptions);
-		}
-		L.setOptions(this, options);
-	},
-
-	enable: function () {
-		if (this._enabled) { return; }
-
-		this.fire('enabled', { handler: this.type });
-
-		this._map.fire('draw:drawstart', { layerType: this.type });
-
-		L.Handler.prototype.enable.call(this);
-	},
-
-	disable: function () {
-		if (!this._enabled) { return; }
-
-		L.Handler.prototype.disable.call(this);
-
-		this._map.fire('draw:drawstop', { layerType: this.type });
-
-		this.fire('disabled', { handler: this.type });
-	},
-
-	addHooks: function () {
-		var map = this._map;
-
-		if (map) {
-			L.DomUtil.disableTextSelection();
-
-			map.getContainer().focus();
-
-			this._tooltip = new L.Tooltip(this._map);
-
-			L.DomEvent.on(this._container, 'keyup', this._cancelDrawing, this);
-		}
-	},
-
-	removeHooks: function () {
-		if (this._map) {
-			L.DomUtil.enableTextSelection();
-
-			this._tooltip.dispose();
-			this._tooltip = null;
-
-			L.DomEvent.off(this._container, 'keyup', this._cancelDrawing, this);
-		}
-	},
-
-	setOptions: function (options) {
-		L.setOptions(this, options);
-	},
-
-	_fireCreatedEvent: function (layer) {
-		this._map.fire('draw:created', { layer: layer, layerType: this.type });
-	},
-
-	// Cancel drawing when the escape key is pressed
-	_cancelDrawing: function (e) {
-		if (e.keyCode === 27) {
-			this.disable();
-		}
-	}
-});
-
-L.Draw.Polyline = L.Draw.Feature.extend({
-	statics: {
-		TYPE: 'polyline'
-	},
-
-	Poly: L.Polyline,
-
-	options: {
-		allowIntersection: true,
-		repeatMode: false,
-		drawError: {
-			color: '#b00b00',
-			timeout: 2500
-		},
-		icon: new L.DivIcon({
-			iconSize: new L.Point(8, 8),
-			className: 'leaflet-div-icon leaflet-editing-icon'
-		}),
-		guidelineDistance: 20,
-		maxGuideLineLength: 4000,
-		shapeOptions: {
-			stroke: true,
-			color: '#f06eaa',
-			weight: 4,
-			opacity: 0.5,
-			fill: false,
-			clickable: true
-		},
-		metric: true, // Whether to use the metric meaurement system or imperial
-		showLength: true, // Whether to display distance in the tooltip
-		zIndexOffset: 2000 // This should be > than the highest z-index any map layers
-	},
-
-	initialize: function (map, options) {
-		// Need to set this here to ensure the correct message is used.
-		this.options.drawError.message = L.drawLocal.draw.handlers.polyline.error;
-
-		// Merge default drawError options with custom options
-		if (options && options.drawError) {
-			options.drawError = L.Util.extend({}, this.options.drawError, options.drawError);
-		}
-
-		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
-		this.type = L.Draw.Polyline.TYPE;
-
-		L.Draw.Feature.prototype.initialize.call(this, map, options);
-	},
-
-	addHooks: function () {
-		L.Draw.Feature.prototype.addHooks.call(this);
-		if (this._map) {
-			this._markers = [];
-
-			this._markerGroup = new L.LayerGroup();
-			this._map.addLayer(this._markerGroup);
-
-			this._poly = new L.Polyline([], this.options.shapeOptions);
-
-			this._tooltip.updateContent(this._getTooltipText());
-
-			// Make a transparent marker that will used to catch click events. These click
-			// events will create the vertices. We need to do this so we can ensure that
-			// we can create vertices over other map layers (markers, vector layers). We
-			// also do not want to trigger any click handlers of objects we are clicking on
-			// while drawing.
-			if (!this._mouseMarker) {
-				this._mouseMarker = L.marker(this._map.getCenter(), {
-					icon: L.divIcon({
-						className: 'leaflet-mouse-marker',
-						iconAnchor: [20, 20],
-						iconSize: [40, 40]
-					}),
-					opacity: 0,
-					zIndexOffset: this.options.zIndexOffset
-				});
-			}
-
-			this._mouseMarker
-				.on('mousedown', this._onMouseDown, this)
-				.addTo(this._map);
-
-			this._map
-				.on('mousemove', this._onMouseMove, this)
-				.on('mouseup', this._onMouseUp, this)
-				.on('zoomend', this._onZoomEnd, this);
-		}
-	},
-
-	removeHooks: function () {
-		L.Draw.Feature.prototype.removeHooks.call(this);
-
-		this._clearHideErrorTimeout();
-
-		this._cleanUpShape();
-
-		// remove markers from map
-		this._map.removeLayer(this._markerGroup);
-		delete this._markerGroup;
-		delete this._markers;
-
-		this._map.removeLayer(this._poly);
-		delete this._poly;
-
-		this._mouseMarker
-			.off('mousedown', this._onMouseDown, this)
-			.off('mouseup', this._onMouseUp, this);
-		this._map.removeLayer(this._mouseMarker);
-		delete this._mouseMarker;
-
-		// clean up DOM
-		this._clearGuides();
-
-		this._map
-			.off('mousemove', this._onMouseMove, this)
-			.off('zoomend', this._onZoomEnd, this);
-	},
-
-	deleteLastVertex: function () {
-		if (this._markers.length <= 1) {
-			return;
-		}
-
-		var lastMarker = this._markers.pop(),
-			poly = this._poly,
-			latlng = this._poly.spliceLatLngs(poly.getLatLngs().length - 1, 1)[0];
-
-		this._markerGroup.removeLayer(lastMarker);
-
-		if (poly.getLatLngs().length < 2) {
-			this._map.removeLayer(poly);
-		}
-
-		this._vertexChanged(latlng, false);
-	},
-
-	addVertex: function (latlng) {
-		var markersLength = this._markers.length;
-
-		if (markersLength > 0 && !this.options.allowIntersection && this._poly.newLatLngIntersects(latlng)) {
-			this._showErrorTooltip();
-			return;
-		}
-		else if (this._errorShown) {
-			this._hideErrorTooltip();
-		}
-
-		this._markers.push(this._createMarker(latlng));
-
-		this._poly.addLatLng(latlng);
-
-		if (this._poly.getLatLngs().length === 2) {
-			this._map.addLayer(this._poly);
-		}
-
-		this._vertexChanged(latlng, true);
-	},
-
-	_finishShape: function () {
-		var intersects = this._poly.newLatLngIntersects(this._poly.getLatLngs()[0], true);
-
-		if ((!this.options.allowIntersection && intersects) || !this._shapeIsValid()) {
-			this._showErrorTooltip();
-			return;
-		}
-
-		this._fireCreatedEvent();
-		this.disable();
-		if (this.options.repeatMode) {
-			this.enable();
-		}
-	},
-
-	//Called to verify the shape is valid when the user tries to finish it
-	//Return false if the shape is not valid
-	_shapeIsValid: function () {
-		return true;
-	},
-
-	_onZoomEnd: function () {
-		this._updateGuide();
-	},
-
-	_onMouseMove: function (e) {
-		var newPos = e.layerPoint,
-			latlng = e.latlng;
-
-		// Save latlng
-		// should this be moved to _updateGuide() ?
-		this._currentLatLng = latlng;
-
-		this._updateTooltip(latlng);
-
-		// Update the guide line
-		this._updateGuide(newPos);
-
-		// Update the mouse marker position
-		this._mouseMarker.setLatLng(latlng);
-
-		L.DomEvent.preventDefault(e.originalEvent);
-	},
-
-	_vertexChanged: function (latlng, added) {
-		this._updateFinishHandler();
-
-		this._updateRunningMeasure(latlng, added);
-
-		this._clearGuides();
-
-		this._updateTooltip();
-	},
-
-	_onMouseDown: function (e) {
-		var originalEvent = e.originalEvent;
-		this._mouseDownOrigin = L.point(originalEvent.clientX, originalEvent.clientY);
-	},
-
-	_onMouseUp: function (e) {
-		if (this._mouseDownOrigin) {
-			// We detect clicks within a certain tolerance, otherwise let it
-			// be interpreted as a drag by the map
-			var distance = L.point(e.originalEvent.clientX, e.originalEvent.clientY)
-				.distanceTo(this._mouseDownOrigin);
-			if (Math.abs(distance) < 9 * (window.devicePixelRatio || 1)) {
-				this.addVertex(e.latlng);
-			}
-		}
-		this._mouseDownOrigin = null;
-	},
-
-	_updateFinishHandler: function () {
-		var markerCount = this._markers.length;
-		// The last marker should have a click handler to close the polyline
-		if (markerCount > 1) {
-			this._markers[markerCount - 1].on('click', this._finishShape, this);
-		}
-
-		// Remove the old marker click handler (as only the last point should close the polyline)
-		if (markerCount > 2) {
-			this._markers[markerCount - 2].off('click', this._finishShape, this);
-		}
-	},
-
-	_createMarker: function (latlng) {
-		var marker = new L.Marker(latlng, {
-			icon: this.options.icon,
-			zIndexOffset: this.options.zIndexOffset * 2
-		});
-
-		this._markerGroup.addLayer(marker);
-
-		return marker;
-	},
-
-	_updateGuide: function (newPos) {
-		var markerCount = this._markers.length;
-
-		if (markerCount > 0) {
-			newPos = newPos || this._map.latLngToLayerPoint(this._currentLatLng);
-
-			// draw the guide line
-			this._clearGuides();
-			this._drawGuide(
-				this._map.latLngToLayerPoint(this._markers[markerCount - 1].getLatLng()),
-				newPos
-			);
-		}
-	},
-
-	_updateTooltip: function (latLng) {
-		var text = this._getTooltipText();
-
-		if (latLng) {
-			this._tooltip.updatePosition(latLng);
-		}
-
-		if (!this._errorShown) {
-			this._tooltip.updateContent(text);
-		}
-	},
-
-	_drawGuide: function (pointA, pointB) {
-		var length = Math.floor(Math.sqrt(Math.pow((pointB.x - pointA.x), 2) + Math.pow((pointB.y - pointA.y), 2))),
-			guidelineDistance = this.options.guidelineDistance,
-			maxGuideLineLength = this.options.maxGuideLineLength,
-			// Only draw a guideline with a max length
-			i = length > maxGuideLineLength ? length - maxGuideLineLength : guidelineDistance,
-			fraction,
-			dashPoint,
-			dash;
-
-		//create the guides container if we haven't yet
-		if (!this._guidesContainer) {
-			this._guidesContainer = L.DomUtil.create('div', 'leaflet-draw-guides', this._overlayPane);
-		}
-
-		//draw a dash every GuildeLineDistance
-		for (; i < length; i += this.options.guidelineDistance) {
-			//work out fraction along line we are
-			fraction = i / length;
-
-			//calculate new x,y point
-			dashPoint = {
-				x: Math.floor((pointA.x * (1 - fraction)) + (fraction * pointB.x)),
-				y: Math.floor((pointA.y * (1 - fraction)) + (fraction * pointB.y))
-			};
-
-			//add guide dash to guide container
-			dash = L.DomUtil.create('div', 'leaflet-draw-guide-dash', this._guidesContainer);
-			dash.style.backgroundColor =
-				!this._errorShown ? this.options.shapeOptions.color : this.options.drawError.color;
-
-			L.DomUtil.setPosition(dash, dashPoint);
-		}
-	},
-
-	_updateGuideColor: function (color) {
-		if (this._guidesContainer) {
-			for (var i = 0, l = this._guidesContainer.childNodes.length; i < l; i++) {
-				this._guidesContainer.childNodes[i].style.backgroundColor = color;
-			}
-		}
-	},
-
-	// removes all child elements (guide dashes) from the guides container
-	_clearGuides: function () {
-		if (this._guidesContainer) {
-			while (this._guidesContainer.firstChild) {
-				this._guidesContainer.removeChild(this._guidesContainer.firstChild);
-			}
-		}
-	},
-
-	_getTooltipText: function () {
-		var showLength = this.options.showLength,
-			labelText, distanceStr;
-
-		if (this._markers.length === 0) {
-			labelText = {
-				text: L.drawLocal.draw.handlers.polyline.tooltip.start
-			};
-		} else {
-			distanceStr = showLength ? this._getMeasurementString() : '';
-
-			if (this._markers.length === 1) {
-				labelText = {
-					text: L.drawLocal.draw.handlers.polyline.tooltip.cont,
-					subtext: distanceStr
-				};
-			} else {
-				labelText = {
-					text: L.drawLocal.draw.handlers.polyline.tooltip.end,
-					subtext: distanceStr
-				};
-			}
-		}
-		return labelText;
-	},
-
-	_updateRunningMeasure: function (latlng, added) {
-		var markersLength = this._markers.length,
-			previousMarkerIndex, distance;
-
-		if (this._markers.length === 1) {
-			this._measurementRunningTotal = 0;
-		} else {
-			previousMarkerIndex = markersLength - (added ? 2 : 1);
-			distance = latlng.distanceTo(this._markers[previousMarkerIndex].getLatLng());
-
-			this._measurementRunningTotal += distance * (added ? 1 : -1);
-		}
-	},
-
-	_getMeasurementString: function () {
-		var currentLatLng = this._currentLatLng,
-			previousLatLng = this._markers[this._markers.length - 1].getLatLng(),
-			distance;
-
-		// calculate the distance from the last fixed point to the mouse position
-		distance = this._measurementRunningTotal + currentLatLng.distanceTo(previousLatLng);
-
-		return L.GeometryUtil.readableDistance(distance, this.options.metric);
-	},
-
-	_showErrorTooltip: function () {
-		this._errorShown = true;
-
-		// Update tooltip
-		this._tooltip
-			.showAsError()
-			.updateContent({ text: this.options.drawError.message });
-
-		// Update shape
-		this._updateGuideColor(this.options.drawError.color);
-		this._poly.setStyle({ color: this.options.drawError.color });
-
-		// Hide the error after 2 seconds
-		this._clearHideErrorTimeout();
-		this._hideErrorTimeout = setTimeout(L.Util.bind(this._hideErrorTooltip, this), this.options.drawError.timeout);
-	},
-
-	_hideErrorTooltip: function () {
-		this._errorShown = false;
-
-		this._clearHideErrorTimeout();
-
-		// Revert tooltip
-		this._tooltip
-			.removeError()
-			.updateContent(this._getTooltipText());
-
-		// Revert shape
-		this._updateGuideColor(this.options.shapeOptions.color);
-		this._poly.setStyle({ color: this.options.shapeOptions.color });
-	},
-
-	_clearHideErrorTimeout: function () {
-		if (this._hideErrorTimeout) {
-			clearTimeout(this._hideErrorTimeout);
-			this._hideErrorTimeout = null;
-		}
-	},
-
-	_cleanUpShape: function () {
-		if (this._markers.length > 1) {
-			this._markers[this._markers.length - 1].off('click', this._finishShape, this);
-		}
-	},
-
-	_fireCreatedEvent: function () {
-		var poly = new this.Poly(this._poly.getLatLngs(), this.options.shapeOptions);
-		L.Draw.Feature.prototype._fireCreatedEvent.call(this, poly);
-	}
-});
-
-
-L.Draw.Polygon = L.Draw.Polyline.extend({
-	statics: {
-		TYPE: 'polygon'
-	},
-
-	Poly: L.Polygon,
-
-	options: {
-		showArea: false,
-		shapeOptions: {
-			stroke: true,
-			color: '#f06eaa',
-			weight: 4,
-			opacity: 0.5,
-			fill: true,
-			fillColor: null, //same as color by default
-			fillOpacity: 0.2,
-			clickable: true
-		}
-	},
-
-	initialize: function (map, options) {
-		L.Draw.Polyline.prototype.initialize.call(this, map, options);
-
-		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
-		this.type = L.Draw.Polygon.TYPE;
-	},
-
-	_updateFinishHandler: function () {
-		var markerCount = this._markers.length;
-
-		// The first marker should have a click handler to close the polygon
-		if (markerCount === 1) {
-			this._markers[0].on('click', this._finishShape, this);
-		}
-
-		// Add and update the double click handler
-		if (markerCount > 2) {
-			this._markers[markerCount - 1].on('dblclick', this._finishShape, this);
-			// Only need to remove handler if has been added before
-			if (markerCount > 3) {
-				this._markers[markerCount - 2].off('dblclick', this._finishShape, this);
-			}
-		}
-	},
-
-	_getTooltipText: function () {
-		var text, subtext;
-
-		if (this._markers.length === 0) {
-			text = L.drawLocal.draw.handlers.polygon.tooltip.start;
-		} else if (this._markers.length < 3) {
-			text = L.drawLocal.draw.handlers.polygon.tooltip.cont;
-		} else {
-			text = L.drawLocal.draw.handlers.polygon.tooltip.end;
-			subtext = this._getMeasurementString();
-		}
-
-		return {
-			text: text,
-			subtext: subtext
-		};
-	},
-
-	_getMeasurementString: function () {
-		var area = this._area;
-
-		if (!area) {
-			return null;
-		}
-
-		return L.GeometryUtil.readableArea(area, this.options.metric);
-	},
-
-	_shapeIsValid: function () {
-		return this._markers.length >= 3;
-	},
-
-	_vertexAdded: function () {
-		// Check to see if we should show the area
-		if (this.options.allowIntersection || !this.options.showArea) {
-			return;
-		}
-
-		var latLngs = this._poly.getLatLngs();
-
-		this._area = L.GeometryUtil.geodesicArea(latLngs);
-	},
-
-	_cleanUpShape: function () {
-		var markerCount = this._markers.length;
-
-		if (markerCount > 0) {
-			this._markers[0].off('click', this._finishShape, this);
-
-			if (markerCount > 2) {
-				this._markers[markerCount - 1].off('dblclick', this._finishShape, this);
-			}
-		}
-	}
-});
-
-
-L.SimpleShape = {};
-
-L.Draw.SimpleShape = L.Draw.Feature.extend({
-	options: {
-		repeatMode: false
-	},
-
-	initialize: function (map, options) {
-		this._endLabelText = L.drawLocal.draw.handlers.simpleshape.tooltip.end;
-
-		L.Draw.Feature.prototype.initialize.call(this, map, options);
-	},
-
-	addHooks: function () {
-		L.Draw.Feature.prototype.addHooks.call(this);
-		if (this._map) {
-			this._mapDraggable = this._map.dragging.enabled();
-
-			if (this._mapDraggable) {
-				this._map.dragging.disable();
-			}
-
-			//TODO refactor: move cursor to styles
-			this._container.style.cursor = 'crosshair';
-
-			this._tooltip.updateContent({ text: this._initialLabelText });
-
-			this._map
-				.on('mousedown', this._onMouseDown, this)
-				.on('mousemove', this._onMouseMove, this);
-		}
-	},
-
-	removeHooks: function () {
-		L.Draw.Feature.prototype.removeHooks.call(this);
-		if (this._map) {
-			if (this._mapDraggable) {
-				this._map.dragging.enable();
-			}
-
-			//TODO refactor: move cursor to styles
-			this._container.style.cursor = '';
-
-			this._map
-				.off('mousedown', this._onMouseDown, this)
-				.off('mousemove', this._onMouseMove, this);
-
-			L.DomEvent.off(document, 'mouseup', this._onMouseUp, this);
-
-			// If the box element doesn't exist they must not have moved the mouse, so don't need to destroy/return
-			if (this._shape) {
-				this._map.removeLayer(this._shape);
-				delete this._shape;
-			}
-		}
-		this._isDrawing = false;
-	},
-
-	_onMouseDown: function (e) {
-		this._isDrawing = true;
-		this._startLatLng = e.latlng;
-
-		L.DomEvent
-			.on(document, 'mouseup', this._onMouseUp, this)
-			.preventDefault(e.originalEvent);
-	},
-
-	_onMouseMove: function (e) {
-		var latlng = e.latlng;
-
-		this._tooltip.updatePosition(latlng);
-		if (this._isDrawing) {
-			this._tooltip.updateContent({ text: this._endLabelText });
-			this._drawShape(latlng);
-		}
-	},
-
-	_onMouseUp: function () {
-		if (this._shape) {
-			this._fireCreatedEvent();
-		}
-
-		this.disable();
-		if (this.options.repeatMode) {
-			this.enable();
-		}
-	}
-});
-
-L.Draw.Rectangle = L.Draw.SimpleShape.extend({
-	statics: {
-		TYPE: 'rectangle'
-	},
-
-	options: {
-		shapeOptions: {
-			stroke: true,
-			color: '#f06eaa',
-			weight: 4,
-			opacity: 0.5,
-			fill: true,
-			fillColor: null, //same as color by default
-			fillOpacity: 0.2,
-			clickable: true
-		}
-	},
-
-	initialize: function (map, options) {
-		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
-		this.type = L.Draw.Rectangle.TYPE;
-
-		this._initialLabelText = L.drawLocal.draw.handlers.rectangle.tooltip.start;
-
-		L.Draw.SimpleShape.prototype.initialize.call(this, map, options);
-	},
-
-	_drawShape: function (latlng) {
-		if (!this._shape) {
-			this._shape = new L.Rectangle(new L.LatLngBounds(this._startLatLng, latlng), this.options.shapeOptions);
-			this._map.addLayer(this._shape);
-		} else {
-			this._shape.setBounds(new L.LatLngBounds(this._startLatLng, latlng));
-		}
-	},
-
-	_fireCreatedEvent: function () {
-		var rectangle = new L.Rectangle(this._shape.getBounds(), this.options.shapeOptions);
-		L.Draw.SimpleShape.prototype._fireCreatedEvent.call(this, rectangle);
-	}
-});
-
-
-L.Draw.Circle = L.Draw.SimpleShape.extend({
-	statics: {
-		TYPE: 'circle'
-	},
-
-	options: {
-		shapeOptions: {
-			stroke: true,
-			color: '#f06eaa',
-			weight: 4,
-			opacity: 0.5,
-			fill: true,
-			fillColor: null, //same as color by default
-			fillOpacity: 0.2,
-			clickable: true
-		},
-		showRadius: true,
-		metric: true // Whether to use the metric meaurement system or imperial
-	},
-
-	initialize: function (map, options) {
-		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
-		this.type = L.Draw.Circle.TYPE;
-
-		this._initialLabelText = L.drawLocal.draw.handlers.circle.tooltip.start;
-
-		L.Draw.SimpleShape.prototype.initialize.call(this, map, options);
-	},
-
-	_drawShape: function (latlng) {
-		if (!this._shape) {
-			this._shape = new L.Circle(this._startLatLng, this._startLatLng.distanceTo(latlng), this.options.shapeOptions);
-			this._map.addLayer(this._shape);
-		} else {
-			this._shape.setRadius(this._startLatLng.distanceTo(latlng));
-		}
-	},
-
-	_fireCreatedEvent: function () {
-		var circle = new L.Circle(this._startLatLng, this._shape.getRadius(), this.options.shapeOptions);
-		L.Draw.SimpleShape.prototype._fireCreatedEvent.call(this, circle);
-	},
-
-	_onMouseMove: function (e) {
-		var latlng = e.latlng,
-			showRadius = this.options.showRadius,
-			useMetric = this.options.metric,
-			radius;
-
-		this._tooltip.updatePosition(latlng);
-		if (this._isDrawing) {
-			this._drawShape(latlng);
-
-			// Get the new radius (rounded to 1 dp)
-			radius = this._shape.getRadius().toFixed(1);
-
-			this._tooltip.updateContent({
-				text: this._endLabelText,
-				subtext: showRadius ? 'Radius: ' + L.GeometryUtil.readableDistance(radius, useMetric) : ''
-			});
-		}
-	}
-});
-
-
-L.Draw.Marker = L.Draw.Feature.extend({
-	statics: {
-		TYPE: 'marker'
-	},
-
-	options: {
-		icon: new L.Icon.Default(),
-		repeatMode: false,
-		zIndexOffset: 2000 // This should be > than the highest z-index any markers
-	},
-
-	initialize: function (map, options) {
-		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
-		this.type = L.Draw.Marker.TYPE;
-
-		L.Draw.Feature.prototype.initialize.call(this, map, options);
-	},
-
-	addHooks: function () {
-		L.Draw.Feature.prototype.addHooks.call(this);
-
-		if (this._map) {
-			this._tooltip.updateContent({ text: L.drawLocal.draw.handlers.marker.tooltip.start });
-
-			// Same mouseMarker as in Draw.Polyline
-			if (!this._mouseMarker) {
-				this._mouseMarker = L.marker(this._map.getCenter(), {
-					icon: L.divIcon({
-						className: 'leaflet-mouse-marker',
-						iconAnchor: [20, 20],
-						iconSize: [40, 40]
-					}),
-					opacity: 0,
-					zIndexOffset: this.options.zIndexOffset
-				});
-			}
-
-			this._mouseMarker
-				.on('click', this._onClick, this)
-				.addTo(this._map);
-
-			this._map.on('mousemove', this._onMouseMove, this);
-		}
-	},
-
-	removeHooks: function () {
-		L.Draw.Feature.prototype.removeHooks.call(this);
-
-		if (this._map) {
-			if (this._marker) {
-				this._marker.off('click', this._onClick, this);
-				this._map
-					.off('click', this._onClick, this)
-					.removeLayer(this._marker);
-				delete this._marker;
-			}
-
-			this._mouseMarker.off('click', this._onClick, this);
-			this._map.removeLayer(this._mouseMarker);
-			delete this._mouseMarker;
-
-			this._map.off('mousemove', this._onMouseMove, this);
-		}
-	},
-
-	_onMouseMove: function (e) {
-		var latlng = e.latlng;
-
-		this._tooltip.updatePosition(latlng);
-		this._mouseMarker.setLatLng(latlng);
-
-		if (!this._marker) {
-			this._marker = new L.Marker(latlng, {
-				icon: this.options.icon,
-				zIndexOffset: this.options.zIndexOffset
-			});
-			// Bind to both marker and map to make sure we get the click event.
-			this._marker.on('click', this._onClick, this);
-			this._map
-				.on('click', this._onClick, this)
-				.addLayer(this._marker);
-		}
-		else {
-			latlng = this._mouseMarker.getLatLng();
-			this._marker.setLatLng(latlng);
-		}
-	},
-
-	_onClick: function () {
-		this._fireCreatedEvent();
-
-		this.disable();
-		if (this.options.repeatMode) {
-			this.enable();
-		}
-	},
-
-	_fireCreatedEvent: function () {
-		var marker = new L.Marker(this._marker.getLatLng(), { icon: this.options.icon });
-		L.Draw.Feature.prototype._fireCreatedEvent.call(this, marker);
-	}
-});
-
-
-L.Edit = L.Edit || {};
-
-/*
- * L.Edit.Poly is an editing handler for polylines and polygons.
- */
-
-L.Edit.Poly = L.Handler.extend({
-	options: {
-		icon: new L.DivIcon({
-			iconSize: new L.Point(8, 8),
-			className: 'leaflet-div-icon leaflet-editing-icon'
-		})
-	},
-
-	initialize: function (poly, options) {
-		this._poly = poly;
-		L.setOptions(this, options);
-	},
-
-	addHooks: function () {
-		if (this._poly._map) {
-			if (!this._markerGroup) {
-				this._initMarkers();
-			}
-			this._poly._map.addLayer(this._markerGroup);
-		}
-	},
-
-	removeHooks: function () {
-		if (this._poly._map) {
-			this._poly._map.removeLayer(this._markerGroup);
-			delete this._markerGroup;
-			delete this._markers;
-		}
-	},
-
-	updateMarkers: function () {
-		this._markerGroup.clearLayers();
-		this._initMarkers();
-	},
-
-	_initMarkers: function () {
-		if (!this._markerGroup) {
-			this._markerGroup = new L.LayerGroup();
-		}
-		this._markers = [];
-
-		var latlngs = this._poly._latlngs,
-			i, j, len, marker;
-
-		// TODO refactor holes implementation in Polygon to support it here
-
-		for (i = 0, len = latlngs.length; i < len; i++) {
-
-			marker = this._createMarker(latlngs[i], i);
-			marker.on('click', this._onMarkerClick, this);
-			this._markers.push(marker);
-		}
-
-		var markerLeft, markerRight;
-
-		for (i = 0, j = len - 1; i < len; j = i++) {
-			if (i === 0 && !(L.Polygon && (this._poly instanceof L.Polygon))) {
-				continue;
-			}
-
-			markerLeft = this._markers[j];
-			markerRight = this._markers[i];
-
-			this._createMiddleMarker(markerLeft, markerRight);
-			this._updatePrevNext(markerLeft, markerRight);
-		}
-	},
-
-	_createMarker: function (latlng, index) {
-		var marker = new L.Marker(latlng, {
-			draggable: true,
-			icon: this.options.icon
-		});
-
-		marker._origLatLng = latlng;
-		marker._index = index;
-
-		marker.on('drag', this._onMarkerDrag, this);
-		marker.on('dragend', this._fireEdit, this);
-
-		this._markerGroup.addLayer(marker);
-
-		return marker;
-	},
-
-	_removeMarker: function (marker) {
-		var i = marker._index;
-
-		this._markerGroup.removeLayer(marker);
-		this._markers.splice(i, 1);
-		this._poly.spliceLatLngs(i, 1);
-		this._updateIndexes(i, -1);
-
-		marker
-			.off('drag', this._onMarkerDrag, this)
-			.off('dragend', this._fireEdit, this)
-			.off('click', this._onMarkerClick, this);
-	},
-
-	_fireEdit: function () {
-		this._poly.edited = true;
-		this._poly.fire('edit');
-	},
-
-	_onMarkerDrag: function (e) {
-		var marker = e.target;
-
-		L.extend(marker._origLatLng, marker._latlng);
-
-		if (marker._middleLeft) {
-			marker._middleLeft.setLatLng(this._getMiddleLatLng(marker._prev, marker));
-		}
-		if (marker._middleRight) {
-			marker._middleRight.setLatLng(this._getMiddleLatLng(marker, marker._next));
-		}
-
-		this._poly.redraw();
-	},
-
-	_onMarkerClick: function (e) {
-		var minPoints = L.Polygon && (this._poly instanceof L.Polygon) ? 4 : 3,
-			marker = e.target;
-
-		// If removing this point would create an invalid polyline/polygon don't remove
-		if (this._poly._latlngs.length < minPoints) {
-			return;
-		}
-
-		// remove the marker
-		this._removeMarker(marker);
-
-		// update prev/next links of adjacent markers
-		this._updatePrevNext(marker._prev, marker._next);
-
-		// remove ghost markers near the removed marker
-		if (marker._middleLeft) {
-			this._markerGroup.removeLayer(marker._middleLeft);
-		}
-		if (marker._middleRight) {
-			this._markerGroup.removeLayer(marker._middleRight);
-		}
-
-		// create a ghost marker in place of the removed one
-		if (marker._prev && marker._next) {
-			this._createMiddleMarker(marker._prev, marker._next);
-
-		} else if (!marker._prev) {
-			marker._next._middleLeft = null;
-
-		} else if (!marker._next) {
-			marker._prev._middleRight = null;
-		}
-
-		this._fireEdit();
-	},
-
-	_updateIndexes: function (index, delta) {
-		this._markerGroup.eachLayer(function (marker) {
-			if (marker._index > index) {
-				marker._index += delta;
-			}
-		});
-	},
-
-	_createMiddleMarker: function (marker1, marker2) {
-		var latlng = this._getMiddleLatLng(marker1, marker2),
-		    marker = this._createMarker(latlng),
-		    onClick,
-		    onDragStart,
-		    onDragEnd;
-
-		marker.setOpacity(0.6);
-
-		marker1._middleRight = marker2._middleLeft = marker;
-
-		onDragStart = function () {
-			var i = marker2._index;
-
-			marker._index = i;
-
-			marker
-			    .off('click', onClick, this)
-			    .on('click', this._onMarkerClick, this);
-
-			latlng.lat = marker.getLatLng().lat;
-			latlng.lng = marker.getLatLng().lng;
-			this._poly.spliceLatLngs(i, 0, latlng);
-			this._markers.splice(i, 0, marker);
-
-			marker.setOpacity(1);
-
-			this._updateIndexes(i, 1);
-			marker2._index++;
-			this._updatePrevNext(marker1, marker);
-			this._updatePrevNext(marker, marker2);
-
-			this._poly.fire('editstart');
-		};
-
-		onDragEnd = function () {
-			marker.off('dragstart', onDragStart, this);
-			marker.off('dragend', onDragEnd, this);
-
-			this._createMiddleMarker(marker1, marker);
-			this._createMiddleMarker(marker, marker2);
-		};
-
-		onClick = function () {
-			onDragStart.call(this);
-			onDragEnd.call(this);
-			this._fireEdit();
-		};
-
-		marker
-		    .on('click', onClick, this)
-		    .on('dragstart', onDragStart, this)
-		    .on('dragend', onDragEnd, this);
-
-		this._markerGroup.addLayer(marker);
-	},
-
-	_updatePrevNext: function (marker1, marker2) {
-		if (marker1) {
-			marker1._next = marker2;
-		}
-		if (marker2) {
-			marker2._prev = marker1;
-		}
-	},
-
-	_getMiddleLatLng: function (marker1, marker2) {
-		var map = this._poly._map,
-		    p1 = map.project(marker1.getLatLng()),
-		    p2 = map.project(marker2.getLatLng());
-
-		return map.unproject(p1._add(p2)._divideBy(2));
-	}
-});
-
-L.Polyline.addInitHook(function () {
-
-	// Check to see if handler has already been initialized. This is to support versions of Leaflet that still have L.Handler.PolyEdit
-	if (this.editing) {
-		return;
-	}
-
-	if (L.Edit.Poly) {
-		this.editing = new L.Edit.Poly(this);
-
-		if (this.options.editable) {
-			this.editing.enable();
-		}
-	}
-
-	this.on('add', function () {
-		if (this.editing && this.editing.enabled()) {
-			this.editing.addHooks();
-		}
-	});
-
-	this.on('remove', function () {
-		if (this.editing && this.editing.enabled()) {
-			this.editing.removeHooks();
-		}
-	});
-});
-
-
-L.Edit = L.Edit || {};
-
-L.Edit.SimpleShape = L.Handler.extend({
-	options: {
-		moveIcon: new L.DivIcon({
-			iconSize: new L.Point(8, 8),
-			className: 'leaflet-div-icon leaflet-editing-icon leaflet-edit-move'
-		}),
-		resizeIcon: new L.DivIcon({
-			iconSize: new L.Point(8, 8),
-			className: 'leaflet-div-icon leaflet-editing-icon leaflet-edit-resize'
-		})
-	},
-
-	initialize: function (shape, options) {
-		this._shape = shape;
-		L.Util.setOptions(this, options);
-	},
-
-	addHooks: function () {
-		if (this._shape._map) {
-			this._map = this._shape._map;
-
-			if (!this._markerGroup) {
-				this._initMarkers();
-			}
-			this._map.addLayer(this._markerGroup);
-		}
-	},
-
-	removeHooks: function () {
-		if (this._shape._map) {
-			this._unbindMarker(this._moveMarker);
-
-			for (var i = 0, l = this._resizeMarkers.length; i < l; i++) {
-				this._unbindMarker(this._resizeMarkers[i]);
-			}
-			this._resizeMarkers = null;
-
-			this._map.removeLayer(this._markerGroup);
-			delete this._markerGroup;
-		}
-
-		this._map = null;
-	},
-
-	updateMarkers: function () {
-		this._markerGroup.clearLayers();
-		this._initMarkers();
-	},
-
-	_initMarkers: function () {
-		if (!this._markerGroup) {
-			this._markerGroup = new L.LayerGroup();
-		}
-
-		// Create center marker
-		this._createMoveMarker();
-
-		// Create edge marker
-		this._createResizeMarker();
-	},
-
-	_createMoveMarker: function () {
-		// Children override
-	},
-
-	_createResizeMarker: function () {
-		// Children override
-	},
-
-	_createMarker: function (latlng, icon) {
-		var marker = new L.Marker(latlng, {
-			draggable: true,
-			icon: icon,
-			zIndexOffset: 10
-		});
-
-		this._bindMarker(marker);
-
-		this._markerGroup.addLayer(marker);
-
-		return marker;
-	},
-
-	_bindMarker: function (marker) {
-		marker
-			.on('dragstart', this._onMarkerDragStart, this)
-			.on('drag', this._onMarkerDrag, this)
-			.on('dragend', this._onMarkerDragEnd, this);
-	},
-
-	_unbindMarker: function (marker) {
-		marker
-			.off('dragstart', this._onMarkerDragStart, this)
-			.off('drag', this._onMarkerDrag, this)
-			.off('dragend', this._onMarkerDragEnd, this);
-	},
-
-	_onMarkerDragStart: function (e) {
-		var marker = e.target;
-		marker.setOpacity(0);
-
-		this._shape.fire('editstart');
-	},
-
-	_fireEdit: function () {
-		this._shape.edited = true;
-		this._shape.fire('edit');
-	},
-
-	_onMarkerDrag: function (e) {
-		var marker = e.target,
-			latlng = marker.getLatLng();
-
-		if (marker === this._moveMarker) {
-			this._move(latlng);
-		} else {
-			this._resize(latlng);
-		}
-
-		this._shape.redraw();
-	},
-
-	_onMarkerDragEnd: function (e) {
-		var marker = e.target;
-		marker.setOpacity(1);
-
-		this._fireEdit();
-	},
-
-	_move: function () {
-		// Children override
-	},
-
-	_resize: function () {
-		// Children override
-	}
-});
-
-
-L.Edit = L.Edit || {};
-
-L.Edit.Rectangle = L.Edit.SimpleShape.extend({
-	_createMoveMarker: function () {
-		var bounds = this._shape.getBounds(),
-			center = bounds.getCenter();
-
-		this._moveMarker = this._createMarker(center, this.options.moveIcon);
-	},
-
-	_createResizeMarker: function () {
-		var corners = this._getCorners();
-
-		this._resizeMarkers = [];
-
-		for (var i = 0, l = corners.length; i < l; i++) {
-			this._resizeMarkers.push(this._createMarker(corners[i], this.options.resizeIcon));
-			// Monkey in the corner index as we will need to know this for dragging
-			this._resizeMarkers[i]._cornerIndex = i;
-		}
-	},
-
-	_onMarkerDragStart: function (e) {
-		L.Edit.SimpleShape.prototype._onMarkerDragStart.call(this, e);
-
-		// Save a reference to the opposite point
-		var corners = this._getCorners(),
-			marker = e.target,
-			currentCornerIndex = marker._cornerIndex;
-
-		this._oppositeCorner = corners[(currentCornerIndex + 2) % 4];
-
-		this._toggleCornerMarkers(0, currentCornerIndex);
-	},
-
-	_onMarkerDragEnd: function (e) {
-		var marker = e.target,
-			bounds, center;
-
-		// Reset move marker position to the center
-		if (marker === this._moveMarker) {
-			bounds = this._shape.getBounds();
-			center = bounds.getCenter();
-
-			marker.setLatLng(center);
-		}
-
-		this._toggleCornerMarkers(1);
-
-		this._repositionCornerMarkers();
-
-		L.Edit.SimpleShape.prototype._onMarkerDragEnd.call(this, e);
-	},
-
-	_move: function (newCenter) {
-		var latlngs = this._shape.getLatLngs(),
-			bounds = this._shape.getBounds(),
-			center = bounds.getCenter(),
-			offset, newLatLngs = [];
-
-		// Offset the latlngs to the new center
-		for (var i = 0, l = latlngs.length; i < l; i++) {
-			offset = [latlngs[i].lat - center.lat, latlngs[i].lng - center.lng];
-			newLatLngs.push([newCenter.lat + offset[0], newCenter.lng + offset[1]]);
-		}
-
-		this._shape.setLatLngs(newLatLngs);
-
-		// Reposition the resize markers
-		this._repositionCornerMarkers();
-	},
-
-	_resize: function (latlng) {
-		var bounds;
-
-		// Update the shape based on the current position of this corner and the opposite point
-		this._shape.setBounds(L.latLngBounds(latlng, this._oppositeCorner));
-
-		// Reposition the move marker
-		bounds = this._shape.getBounds();
-		this._moveMarker.setLatLng(bounds.getCenter());
-	},
-
-	_getCorners: function () {
-		var bounds = this._shape.getBounds(),
-			nw = bounds.getNorthWest(),
-			ne = bounds.getNorthEast(),
-			se = bounds.getSouthEast(),
-			sw = bounds.getSouthWest();
-
-		return [nw, ne, se, sw];
-	},
-
-	_toggleCornerMarkers: function (opacity) {
-		for (var i = 0, l = this._resizeMarkers.length; i < l; i++) {
-			this._resizeMarkers[i].setOpacity(opacity);
-		}
-	},
-
-	_repositionCornerMarkers: function () {
-		var corners = this._getCorners();
-
-		for (var i = 0, l = this._resizeMarkers.length; i < l; i++) {
-			this._resizeMarkers[i].setLatLng(corners[i]);
-		}
-	}
-});
-
-L.Rectangle.addInitHook(function () {
-	if (L.Edit.Rectangle) {
-		this.editing = new L.Edit.Rectangle(this);
-
-		if (this.options.editable) {
-			this.editing.enable();
-		}
-	}
-});
-
-
-L.Edit = L.Edit || {};
-
-L.Edit.Circle = L.Edit.SimpleShape.extend({
-	_createMoveMarker: function () {
-		var center = this._shape.getLatLng();
-
-		this._moveMarker = this._createMarker(center, this.options.moveIcon);
-	},
-
-	_createResizeMarker: function () {
-		var center = this._shape.getLatLng(),
-			resizemarkerPoint = this._getResizeMarkerPoint(center);
-
-		this._resizeMarkers = [];
-		this._resizeMarkers.push(this._createMarker(resizemarkerPoint, this.options.resizeIcon));
-	},
-
-	_getResizeMarkerPoint: function (latlng) {
-		// From L.shape.getBounds()
-		var delta = this._shape._radius * Math.cos(Math.PI / 4),
-			point = this._map.project(latlng);
-		return this._map.unproject([point.x + delta, point.y - delta]);
-	},
-
-	_move: function (latlng) {
-		var resizemarkerPoint = this._getResizeMarkerPoint(latlng);
-
-		// Move the resize marker
-		this._resizeMarkers[0].setLatLng(resizemarkerPoint);
-
-		// Move the circle
-		this._shape.setLatLng(latlng);
-	},
-
-	_resize: function (latlng) {
-		var moveLatLng = this._moveMarker.getLatLng(),
-			radius = moveLatLng.distanceTo(latlng);
-
-		this._shape.setRadius(radius);
-	}
-});
-
-L.Circle.addInitHook(function () {
-	if (L.Edit.Circle) {
-		this.editing = new L.Edit.Circle(this);
-
-		if (this.options.editable) {
-			this.editing.enable();
-		}
-	}
-
-	this.on('add', function () {
-		if (this.editing && this.editing.enabled()) {
-			this.editing.addHooks();
-		}
-	});
-
-	this.on('remove', function () {
-		if (this.editing && this.editing.enabled()) {
-			this.editing.removeHooks();
-		}
-	});
-});
-
-/*
- * L.LatLngUtil contains different utility functions for LatLngs.
- */
-
-L.LatLngUtil = {
-	// Clones a LatLngs[], returns [][]
-	cloneLatLngs: function (latlngs) {
-		var clone = [];
-		for (var i = 0, l = latlngs.length; i < l; i++) {
-			clone.push(this.cloneLatLng(latlngs[i]));
-		}
-		return clone;
-	},
-
-	cloneLatLng: function (latlng) {
-		return L.latLng(latlng.lat, latlng.lng);
-	}
-};
-
-L.GeometryUtil = L.extend(L.GeometryUtil || {}, {
-	// Ported from the OpenLayers implementation. See https://github.com/openlayers/openlayers/blob/master/lib/OpenLayers/Geometry/LinearRing.js#L270
-	geodesicArea: function (latLngs) {
-		var pointsCount = latLngs.length,
-			area = 0.0,
-			d2r = L.LatLng.DEG_TO_RAD,
-			p1, p2;
-
-		if (pointsCount > 2) {
-			for (var i = 0; i < pointsCount; i++) {
-				p1 = latLngs[i];
-				p2 = latLngs[(i + 1) % pointsCount];
-				area += ((p2.lng - p1.lng) * d2r) *
-						(2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
-			}
-			area = area * 6378137.0 * 6378137.0 / 2.0;
-		}
-
-		return Math.abs(area);
-	},
-
-	readableArea: function (area, isMetric) {
-		var areaStr;
-
-		if (isMetric) {
-			if (area >= 10000) {
-				areaStr = (area * 0.0001).toFixed(2) + ' ha';
-			} else {
-				areaStr = area.toFixed(2) + ' m&sup2;';
-			}
-		} else {
-			area *= 0.836127; // Square yards in 1 meter
-
-			if (area >= 3097600) { //3097600 square yards in 1 square mile
-				areaStr = (area / 3097600).toFixed(2) + ' mi&sup2;';
-			} else if (area >= 4840) {//48040 square yards in 1 acre
-				areaStr = (area / 4840).toFixed(2) + ' acres';
-			} else {
-				areaStr = Math.ceil(area) + ' yd&sup2;';
-			}
-		}
-
-		return areaStr;
-	},
-
-	readableDistance: function (distance, isMetric) {
-		var distanceStr;
-
-		if (isMetric) {
-			// show metres when distance is < 1km, then show km
-			if (distance > 1000) {
-				distanceStr = (distance  / 1000).toFixed(2) + ' km';
-			} else {
-				distanceStr = Math.ceil(distance) + ' m';
-			}
-		} else {
-			distance *= 1.09361;
-
-			if (distance > 1760) {
-				distanceStr = (distance / 1760).toFixed(2) + ' miles';
-			} else {
-				distanceStr = Math.ceil(distance) + ' yd';
-			}
-		}
-
-		return distanceStr;
-	}
-});
-
-L.Util.extend(L.LineUtil, {
-	// Checks to see if two line segments intersect. Does not handle degenerate cases.
-	// http://compgeom.cs.uiuc.edu/~jeffe/teaching/373/notes/x06-sweepline.pdf
-	segmentsIntersect: function (/*Point*/ p, /*Point*/ p1, /*Point*/ p2, /*Point*/ p3) {
-		return	this._checkCounterclockwise(p, p2, p3) !==
-				this._checkCounterclockwise(p1, p2, p3) &&
-				this._checkCounterclockwise(p, p1, p2) !==
-				this._checkCounterclockwise(p, p1, p3);
-	},
-
-	// check to see if points are in counterclockwise order
-	_checkCounterclockwise: function (/*Point*/ p, /*Point*/ p1, /*Point*/ p2) {
-		return (p2.y - p.y) * (p1.x - p.x) > (p1.y - p.y) * (p2.x - p.x);
-	}
-});
-
-L.Polyline.include({
-	// Check to see if this polyline has any linesegments that intersect.
-	// NOTE: does not support detecting intersection for degenerate cases.
-	intersects: function () {
-		var points = this._originalPoints,
-			len = points ? points.length : 0,
-			i, p, p1;
-
-		if (this._tooFewPointsForIntersection()) {
-			return false;
-		}
-
-		for (i = len - 1; i >= 3; i--) {
-			p = points[i - 1];
-			p1 = points[i];
-
-
-			if (this._lineSegmentsIntersectsRange(p, p1, i - 2)) {
-				return true;
-			}
-		}
-
-		return false;
-	},
-
-	// Check for intersection if new latlng was added to this polyline.
-	// NOTE: does not support detecting intersection for degenerate cases.
-	newLatLngIntersects: function (latlng, skipFirst) {
-		// Cannot check a polyline for intersecting lats/lngs when not added to the map
-		if (!this._map) {
-			return false;
-		}
-
-		return this.newPointIntersects(this._map.latLngToLayerPoint(latlng), skipFirst);
-	},
-
-	// Check for intersection if new point was added to this polyline.
-	// newPoint must be a layer point.
-	// NOTE: does not support detecting intersection for degenerate cases.
-	newPointIntersects: function (newPoint, skipFirst) {
-		var points = this._originalPoints,
-			len = points ? points.length : 0,
-			lastPoint = points ? points[len - 1] : null,
-			// The previous previous line segment. Previous line segment doesn't need testing.
-			maxIndex = len - 2;
-
-		if (this._tooFewPointsForIntersection(1)) {
-			return false;
-		}
-
-		return this._lineSegmentsIntersectsRange(lastPoint, newPoint, maxIndex, skipFirst ? 1 : 0);
-	},
-
-	// Polylines with 2 sides can only intersect in cases where points are collinear (we don't support detecting these).
-	// Cannot have intersection when < 3 line segments (< 4 points)
-	_tooFewPointsForIntersection: function (extraPoints) {
-		var points = this._originalPoints,
-			len = points ? points.length : 0;
-		// Increment length by extraPoints if present
-		len += extraPoints || 0;
-
-		return !this._originalPoints || len <= 3;
-	},
-
-	// Checks a line segment intersections with any line segments before its predecessor.
-	// Don't need to check the predecessor as will never intersect.
-	_lineSegmentsIntersectsRange: function (p, p1, maxIndex, minIndex) {
-		var points = this._originalPoints,
-			p2, p3;
-
-		minIndex = minIndex || 0;
-
-		// Check all previous line segments (beside the immediately previous) for intersections
-		for (var j = maxIndex; j > minIndex; j--) {
-			p2 = points[j - 1];
-			p3 = points[j];
-
-			if (L.LineUtil.segmentsIntersect(p, p1, p2, p3)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-});
-
-
-L.Polygon.include({
-	// Checks a polygon for any intersecting line segments. Ignores holes.
-	intersects: function () {
-		var polylineIntersects,
-			points = this._originalPoints,
-			len, firstPoint, lastPoint, maxIndex;
-
-		if (this._tooFewPointsForIntersection()) {
-			return false;
-		}
-
-		polylineIntersects = L.Polyline.prototype.intersects.call(this);
-
-		// If already found an intersection don't need to check for any more.
-		if (polylineIntersects) {
-			return true;
-		}
-
-		len = points.length;
-		firstPoint = points[0];
-		lastPoint = points[len - 1];
-		maxIndex = len - 2;
-
-		// Check the line segment between last and first point. Don't need to check the first line segment (minIndex = 1)
-		return this._lineSegmentsIntersectsRange(lastPoint, firstPoint, maxIndex, 1);
-	}
-});
-
-L.Control.Draw = L.Control.extend({
-
-	options: {
-		position: 'topleft',
-		draw: {},
-		edit: false
-	},
-
-	initialize: function (options) {
-		if (L.version < '0.7') {
-			throw new Error('Leaflet.draw 0.2.3+ requires Leaflet 0.7.0+. Download latest from https://github.com/Leaflet/Leaflet/');
-		}
-
-		L.Control.prototype.initialize.call(this, options);
-
-		var id, toolbar;
-
-		this._toolbars = {};
-
-		// Initialize toolbars
-		if (L.DrawToolbar && this.options.draw) {
-			toolbar = new L.DrawToolbar(this.options.draw);
-			id = L.stamp(toolbar);
-			this._toolbars[id] = toolbar;
-
-			// Listen for when toolbar is enabled
-			this._toolbars[id].on('enable', this._toolbarEnabled, this);
-		}
-
-		if (L.EditToolbar && this.options.edit) {
-			toolbar = new L.EditToolbar(this.options.edit);
-			id = L.stamp(toolbar);
-			this._toolbars[id] = toolbar;
-
-			// Listen for when toolbar is enabled
-			this._toolbars[id].on('enable', this._toolbarEnabled, this);
-		}
-	},
-
-	onAdd: function (map) {
-		var container = L.DomUtil.create('div', 'leaflet-draw'),
-			addedTopClass = false,
-			topClassName = 'leaflet-draw-toolbar-top',
-			toolbarContainer;
-
-		for (var toolbarId in this._toolbars) {
-			if (this._toolbars.hasOwnProperty(toolbarId)) {
-				toolbarContainer = this._toolbars[toolbarId].addToolbar(map);
-
-				if (toolbarContainer) {
-					// Add class to the first toolbar to remove the margin
-					if (!addedTopClass) {
-						if (!L.DomUtil.hasClass(toolbarContainer, topClassName)) {
-							L.DomUtil.addClass(toolbarContainer.childNodes[0], topClassName);
-						}
-						addedTopClass = true;
-					}
-
-					container.appendChild(toolbarContainer);
-				}
-			}
-		}
-
-		return container;
-	},
-
-	onRemove: function () {
-		for (var toolbarId in this._toolbars) {
-			if (this._toolbars.hasOwnProperty(toolbarId)) {
-				this._toolbars[toolbarId].removeToolbar();
-			}
-		}
-	},
-
-	setDrawingOptions: function (options) {
-		for (var toolbarId in this._toolbars) {
-			if (this._toolbars[toolbarId] instanceof L.DrawToolbar) {
-				this._toolbars[toolbarId].setOptions(options);
-			}
-		}
-	},
-
-	_toolbarEnabled: function (e) {
-		var id = '' + L.stamp(e.target);
-
-		for (var toolbarId in this._toolbars) {
-			if (this._toolbars.hasOwnProperty(toolbarId) && toolbarId !== id) {
-				this._toolbars[toolbarId].disable();
-			}
-		}
-	}
-});
-
-L.Map.mergeOptions({
-	drawControlTooltips: true,
-	drawControl: false
-});
-
-L.Map.addInitHook(function () {
-	if (this.options.drawControl) {
-		this.drawControl = new L.Control.Draw();
-		this.addControl(this.drawControl);
-	}
-});
-
-
-L.Toolbar = L.Class.extend({
-	includes: [L.Mixin.Events],
-
-	initialize: function (options) {
-		L.setOptions(this, options);
-
-		this._modes = {};
-		this._actionButtons = [];
-		this._activeMode = null;
-	},
-
-	enabled: function () {
-		return this._activeMode !== null;
-	},
-
-	disable: function () {
-		if (!this.enabled()) { return; }
-
-		this._activeMode.handler.disable();
-	},
-
-	addToolbar: function (map) {
-		var container = L.DomUtil.create('div', 'leaflet-draw-section'),
-			buttonIndex = 0,
-			buttonClassPrefix = this._toolbarClass || '',
-			modeHandlers = this.getModeHandlers(map),
-			i;
-
-		this._toolbarContainer = L.DomUtil.create('div', 'leaflet-draw-toolbar leaflet-bar');
-		this._map = map;
-
-		for (i = 0; i < modeHandlers.length; i++) {
-			if (modeHandlers[i].enabled) {
-				this._initModeHandler(
-					modeHandlers[i].handler,
-					this._toolbarContainer,
-					buttonIndex++,
-					buttonClassPrefix,
-					modeHandlers[i].title
-				);
-			}
-		}
-
-		// if no buttons were added, do not add the toolbar
-		if (!buttonIndex) {
-			return;
-		}
-
-		// Save button index of the last button, -1 as we would have ++ after the last button
-		this._lastButtonIndex = --buttonIndex;
-
-		// Create empty actions part of the toolbar
-		this._actionsContainer = L.DomUtil.create('ul', 'leaflet-draw-actions');
-
-		// Add draw and cancel containers to the control container
-		container.appendChild(this._toolbarContainer);
-		container.appendChild(this._actionsContainer);
-
-		return container;
-	},
-
-	removeToolbar: function () {
-		// Dispose each handler
-		for (var handlerId in this._modes) {
-			if (this._modes.hasOwnProperty(handlerId)) {
-				// Unbind handler button
-				this._disposeButton(
-					this._modes[handlerId].button,
-					this._modes[handlerId].handler.enable,
-					this._modes[handlerId].handler
-				);
-
-				// Make sure is disabled
-				this._modes[handlerId].handler.disable();
-
-				// Unbind handler
-				this._modes[handlerId].handler
-					.off('enabled', this._handlerActivated, this)
-					.off('disabled', this._handlerDeactivated, this);
-			}
-		}
-		this._modes = {};
-
-		// Dispose the actions toolbar
-		for (var i = 0, l = this._actionButtons.length; i < l; i++) {
-			this._disposeButton(
-				this._actionButtons[i].button,
-				this._actionButtons[i].callback,
-				this
-			);
-		}
-		this._actionButtons = [];
-		this._actionsContainer = null;
-	},
-
-	_initModeHandler: function (handler, container, buttonIndex, classNamePredix, buttonTitle) {
-		var type = handler.type;
-
-		this._modes[type] = {};
-
-		this._modes[type].handler = handler;
-
-		this._modes[type].button = this._createButton({
-			title: buttonTitle,
-			className: classNamePredix + '-' + type,
-			container: container,
-			callback: this._modes[type].handler.enable,
-			context: this._modes[type].handler
-		});
-
-		this._modes[type].buttonIndex = buttonIndex;
-
-		this._modes[type].handler
-			.on('enabled', this._handlerActivated, this)
-			.on('disabled', this._handlerDeactivated, this);
-	},
-
-	_createButton: function (options) {
-		var link = L.DomUtil.create('a', options.className || '', options.container);
-		link.href = '#';
-
-		if (options.text) {
-			link.innerHTML = options.text;
-		}
-
-		if (options.title) {
-			link.title = options.title;
-		}
-
-		L.DomEvent
-			.on(link, 'click', L.DomEvent.stopPropagation)
-			.on(link, 'mousedown', L.DomEvent.stopPropagation)
-			.on(link, 'dblclick', L.DomEvent.stopPropagation)
-			.on(link, 'click', L.DomEvent.preventDefault)
-			.on(link, 'click', options.callback, options.context);
-
-		return link;
-	},
-
-	_disposeButton: function (button, callback) {
-		L.DomEvent
-			.off(button, 'click', L.DomEvent.stopPropagation)
-			.off(button, 'mousedown', L.DomEvent.stopPropagation)
-			.off(button, 'dblclick', L.DomEvent.stopPropagation)
-			.off(button, 'click', L.DomEvent.preventDefault)
-			.off(button, 'click', callback);
-	},
-
-	_handlerActivated: function (e) {
-		// Disable active mode (if present)
-		this.disable();
-
-		// Cache new active feature
-		this._activeMode = this._modes[e.handler];
-
-		L.DomUtil.addClass(this._activeMode.button, 'leaflet-draw-toolbar-button-enabled');
-
-		this._showActionsToolbar();
-
-		this.fire('enable');
-	},
-
-	_handlerDeactivated: function () {
-		this._hideActionsToolbar();
-
-		L.DomUtil.removeClass(this._activeMode.button, 'leaflet-draw-toolbar-button-enabled');
-
-		this._activeMode = null;
-
-		this.fire('disable');
-	},
-
-	_createActions: function (handler) {
-		var container = this._actionsContainer,
-			buttons = this.getActions(handler),
-			l = buttons.length,
-			li, di, dl, button;
-
-		// Dispose the actions toolbar (todo: dispose only not used buttons)
-		for (di = 0, dl = this._actionButtons.length; di < dl; di++) {
-			this._disposeButton(this._actionButtons[di].button, this._actionButtons[di].callback);
-		}
-		this._actionButtons = [];
-
-		// Remove all old buttons
-		while (container.firstChild) {
-			container.removeChild(container.firstChild);
-		}
-
-		for (var i = 0; i < l; i++) {
-			if ('enabled' in buttons[i] && !buttons[i].enabled) {
-				continue;
-			}
-
-			li = L.DomUtil.create('li', '', container);
-
-			button = this._createButton({
-				title: buttons[i].title,
-				text: buttons[i].text,
-				container: li,
-				callback: buttons[i].callback,
-				context: buttons[i].context
-			});
-
-			this._actionButtons.push({
-				button: button,
-				callback: buttons[i].callback
-			});
-		}
-	},
-
-	_showActionsToolbar: function () {
-		var buttonIndex = this._activeMode.buttonIndex,
-			lastButtonIndex = this._lastButtonIndex,
-			toolbarPosition = this._activeMode.button.offsetTop - 1;
-
-		// Recreate action buttons on every click
-		this._createActions(this._activeMode.handler);
-
-		// Correctly position the cancel button
-		this._actionsContainer.style.top = toolbarPosition + 'px';
-
-		if (buttonIndex === 0) {
-			L.DomUtil.addClass(this._toolbarContainer, 'leaflet-draw-toolbar-notop');
-			L.DomUtil.addClass(this._actionsContainer, 'leaflet-draw-actions-top');
-		}
-
-		if (buttonIndex === lastButtonIndex) {
-			L.DomUtil.addClass(this._toolbarContainer, 'leaflet-draw-toolbar-nobottom');
-			L.DomUtil.addClass(this._actionsContainer, 'leaflet-draw-actions-bottom');
-		}
-
-		this._actionsContainer.style.display = 'block';
-	},
-
-	_hideActionsToolbar: function () {
-		this._actionsContainer.style.display = 'none';
-
-		L.DomUtil.removeClass(this._toolbarContainer, 'leaflet-draw-toolbar-notop');
-		L.DomUtil.removeClass(this._toolbarContainer, 'leaflet-draw-toolbar-nobottom');
-		L.DomUtil.removeClass(this._actionsContainer, 'leaflet-draw-actions-top');
-		L.DomUtil.removeClass(this._actionsContainer, 'leaflet-draw-actions-bottom');
-	}
-});
-
-
-L.Tooltip = L.Class.extend({
-	initialize: function (map) {
-		this._map = map;
-		this._popupPane = map._panes.popupPane;
-
-		this._container = map.options.drawControlTooltips ? L.DomUtil.create('div', 'leaflet-draw-tooltip', this._popupPane) : null;
-		this._singleLineLabel = false;
-	},
-
-	dispose: function () {
-		if (this._container) {
-			this._popupPane.removeChild(this._container);
-			this._container = null;
-		}
-	},
-
-	updateContent: function (labelText) {
-		if (!this._container) {
-			return this;
-		}
-		labelText.subtext = labelText.subtext || '';
-
-		// update the vertical position (only if changed)
-		if (labelText.subtext.length === 0 && !this._singleLineLabel) {
-			L.DomUtil.addClass(this._container, 'leaflet-draw-tooltip-single');
-			this._singleLineLabel = true;
-		}
-		else if (labelText.subtext.length > 0 && this._singleLineLabel) {
-			L.DomUtil.removeClass(this._container, 'leaflet-draw-tooltip-single');
-			this._singleLineLabel = false;
-		}
-
-		this._container.innerHTML =
-			(labelText.subtext.length > 0 ? '<span class="leaflet-draw-tooltip-subtext">' + labelText.subtext + '</span>' + '<br />' : '') +
-			'<span>' + labelText.text + '</span>';
-
-		return this;
-	},
-
-	updatePosition: function (latlng) {
-		var pos = this._map.latLngToLayerPoint(latlng),
-			tooltipContainer = this._container;
-
-		if (this._container) {
-			tooltipContainer.style.visibility = 'inherit';
-			L.DomUtil.setPosition(tooltipContainer, pos);
-		}
-
-		return this;
-	},
-
-	showAsError: function () {
-		if (this._container) {
-			L.DomUtil.addClass(this._container, 'leaflet-error-draw-tooltip');
-		}
-		return this;
-	},
-
-	removeError: function () {
-		if (this._container) {
-			L.DomUtil.removeClass(this._container, 'leaflet-error-draw-tooltip');
-		}
-		return this;
-	}
-});
-
-L.DrawToolbar = L.Toolbar.extend({
-
-	options: {
-		polyline: {},
-		polygon: {},
-		rectangle: {},
-		circle: {},
-		marker: {}
-	},
-
-	initialize: function (options) {
-		// Ensure that the options are merged correctly since L.extend is only shallow
-		for (var type in this.options) {
-			if (this.options.hasOwnProperty(type)) {
-				if (options[type]) {
-					options[type] = L.extend({}, this.options[type], options[type]);
-				}
-			}
-		}
-
-		this._toolbarClass = 'leaflet-draw-draw';
-		L.Toolbar.prototype.initialize.call(this, options);
-	},
-
-	getModeHandlers: function (map) {
-		return [
-			{
-				enabled: this.options.polyline,
-				handler: new L.Draw.Polyline(map, this.options.polyline),
-				title: L.drawLocal.draw.toolbar.buttons.polyline
-			},
-			{
-				enabled: this.options.polygon,
-				handler: new L.Draw.Polygon(map, this.options.polygon),
-				title: L.drawLocal.draw.toolbar.buttons.polygon
-			},
-			{
-				enabled: this.options.rectangle,
-				handler: new L.Draw.Rectangle(map, this.options.rectangle),
-				title: L.drawLocal.draw.toolbar.buttons.rectangle
-			},
-			{
-				enabled: this.options.circle,
-				handler: new L.Draw.Circle(map, this.options.circle),
-				title: L.drawLocal.draw.toolbar.buttons.circle
-			},
-			{
-				enabled: this.options.marker,
-				handler: new L.Draw.Marker(map, this.options.marker),
-				title: L.drawLocal.draw.toolbar.buttons.marker
-			}
-		];
-	},
-
-	// Get the actions part of the toolbar
-	getActions: function (handler) {
-		return [
-			{
-				enabled: handler.deleteLastVertex,
-				title: L.drawLocal.draw.toolbar.undo.title,
-				text: L.drawLocal.draw.toolbar.undo.text,
-				callback: handler.deleteLastVertex,
-				context: handler
-			},
-			{
-				title: L.drawLocal.draw.toolbar.actions.title,
-				text: L.drawLocal.draw.toolbar.actions.text,
-				callback: this.disable,
-				context: this
-			}
-		];
-	},
-
-	setOptions: function (options) {
-		L.setOptions(this, options);
-
-		for (var type in this._modes) {
-			if (this._modes.hasOwnProperty(type) && options.hasOwnProperty(type)) {
-				this._modes[type].handler.setOptions(options[type]);
-			}
-		}
-	}
-});
-
-
-/*L.Map.mergeOptions({
-	editControl: true
-});*/
-
-L.EditToolbar = L.Toolbar.extend({
-	options: {
-		edit: {
-			selectedPathOptions: {
-				color: '#fe57a1', /* Hot pink all the things! */
-				opacity: 0.6,
-				dashArray: '10, 10',
-
-				fill: true,
-				fillColor: '#fe57a1',
-				fillOpacity: 0.1
-			}
-		},
-		remove: {},
-		featureGroup: null /* REQUIRED! TODO: perhaps if not set then all layers on the map are selectable? */
-	},
-
-	initialize: function (options) {
-		// Need to set this manually since null is an acceptable value here
-		if (options.edit) {
-			if (typeof options.edit.selectedPathOptions === 'undefined') {
-				options.edit.selectedPathOptions = this.options.edit.selectedPathOptions;
-			}
-			options.edit = L.extend({}, this.options.edit, options.edit);
-		}
-
-		if (options.remove) {
-			options.remove = L.extend({}, this.options.remove, options.remove);
-		}
-
-		this._toolbarClass = 'leaflet-draw-edit';
-		L.Toolbar.prototype.initialize.call(this, options);
-
-		this._selectedFeatureCount = 0;
-	},
-
-	getModeHandlers: function (map) {
-		var featureGroup = this.options.featureGroup;
-		return [
-			{
-				enabled: this.options.edit,
-				handler: new L.EditToolbar.Edit(map, {
-					featureGroup: featureGroup,
-					selectedPathOptions: this.options.edit.selectedPathOptions
-				}),
-				title: L.drawLocal.edit.toolbar.buttons.edit
-			},
-			{
-				enabled: this.options.remove,
-				handler: new L.EditToolbar.Delete(map, {
-					featureGroup: featureGroup
-				}),
-				title: L.drawLocal.edit.toolbar.buttons.remove
-			}
-		];
-	},
-
-	getActions: function () {
-		return [
-			{
-				title: L.drawLocal.edit.toolbar.actions.save.title,
-				text: L.drawLocal.edit.toolbar.actions.save.text,
-				callback: this._save,
-				context: this
-			},
-			{
-				title: L.drawLocal.edit.toolbar.actions.cancel.title,
-				text: L.drawLocal.edit.toolbar.actions.cancel.text,
-				callback: this.disable,
-				context: this
-			}
-		];
-	},
-
-	addToolbar: function (map) {
-		var container = L.Toolbar.prototype.addToolbar.call(this, map);
-
-		this._checkDisabled();
-
-		this.options.featureGroup.on('layeradd layerremove', this._checkDisabled, this);
-
-		return container;
-	},
-
-	removeToolbar: function () {
-		this.options.featureGroup.off('layeradd layerremove', this._checkDisabled, this);
-
-		L.Toolbar.prototype.removeToolbar.call(this);
-	},
-
-	disable: function () {
-		if (!this.enabled()) { return; }
-
-		this._activeMode.handler.revertLayers();
-
-		L.Toolbar.prototype.disable.call(this);
-	},
-
-	_save: function () {
-		this._activeMode.handler.save();
-		this._activeMode.handler.disable();
-	},
-
-	_checkDisabled: function () {
-		var featureGroup = this.options.featureGroup,
-			hasLayers = featureGroup.getLayers().length !== 0,
-			button;
-
-		if (this.options.edit) {
-			button = this._modes[L.EditToolbar.Edit.TYPE].button;
-
-			if (hasLayers) {
-				L.DomUtil.removeClass(button, 'leaflet-disabled');
-			} else {
-				L.DomUtil.addClass(button, 'leaflet-disabled');
-			}
-
-			button.setAttribute(
-				'title',
-				hasLayers ?
-				L.drawLocal.edit.toolbar.buttons.edit
-				: L.drawLocal.edit.toolbar.buttons.editDisabled
-			);
-		}
-
-		if (this.options.remove) {
-			button = this._modes[L.EditToolbar.Delete.TYPE].button;
-
-			if (hasLayers) {
-				L.DomUtil.removeClass(button, 'leaflet-disabled');
-			} else {
-				L.DomUtil.addClass(button, 'leaflet-disabled');
-			}
-
-			button.setAttribute(
-				'title',
-				hasLayers ?
-				L.drawLocal.edit.toolbar.buttons.remove
-				: L.drawLocal.edit.toolbar.buttons.removeDisabled
-			);
-		}
-	}
-});
-
-
-L.EditToolbar.Edit = L.Handler.extend({
-	statics: {
-		TYPE: 'edit'
-	},
-
-	includes: L.Mixin.Events,
-
-	initialize: function (map, options) {
-		L.Handler.prototype.initialize.call(this, map);
-
-		// Set options to the default unless already set
-		this._selectedPathOptions = options.selectedPathOptions;
-
-		// Store the selectable layer group for ease of access
-		this._featureGroup = options.featureGroup;
-
-		if (!(this._featureGroup instanceof L.FeatureGroup)) {
-			throw new Error('options.featureGroup must be a L.FeatureGroup');
-		}
-
-		this._uneditedLayerProps = {};
-
-		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
-		this.type = L.EditToolbar.Edit.TYPE;
-	},
-
-	enable: function () {
-		if (this._enabled || !this._hasAvailableLayers()) {
-			return;
-		}
-		this.fire('enabled', {handler: this.type});
-			//this disable other handlers
-
-		this._map.fire('draw:editstart', { handler: this.type });
-			//allow drawLayer to be updated before beginning edition.
-
-		L.Handler.prototype.enable.call(this);
-		this._featureGroup
-			.on('layeradd', this._enableLayerEdit, this)
-			.on('layerremove', this._disableLayerEdit, this);
-	},
-
-	disable: function () {
-		if (!this._enabled) { return; }
-		this._featureGroup
-			.off('layeradd', this._enableLayerEdit, this)
-			.off('layerremove', this._disableLayerEdit, this);
-		L.Handler.prototype.disable.call(this);
-		this._map.fire('draw:editstop', { handler: this.type });
-		this.fire('disabled', {handler: this.type});
-	},
-
-	addHooks: function () {
-		var map = this._map;
-
-		if (map) {
-			map.getContainer().focus();
-
-			this._featureGroup.eachLayer(this._enableLayerEdit, this);
-
-			this._tooltip = new L.Tooltip(this._map);
-			this._tooltip.updateContent({
-				text: L.drawLocal.edit.handlers.edit.tooltip.text,
-				subtext: L.drawLocal.edit.handlers.edit.tooltip.subtext
-			});
-
-			this._map.on('mousemove', this._onMouseMove, this);
-		}
-	},
-
-	removeHooks: function () {
-		if (this._map) {
-			// Clean up selected layers.
-			this._featureGroup.eachLayer(this._disableLayerEdit, this);
-
-			// Clear the backups of the original layers
-			this._uneditedLayerProps = {};
-
-			this._tooltip.dispose();
-			this._tooltip = null;
-
-			this._map.off('mousemove', this._onMouseMove, this);
-		}
-	},
-
-	revertLayers: function () {
-		this._featureGroup.eachLayer(function (layer) {
-			this._revertLayer(layer);
-		}, this);
-	},
-
-	save: function () {
-		var editedLayers = new L.LayerGroup();
-		this._featureGroup.eachLayer(function (layer) {
-			if (layer.edited) {
-				editedLayers.addLayer(layer);
-				layer.edited = false;
-			}
-		});
-		this._map.fire('draw:edited', {layers: editedLayers});
-	},
-
-	_backupLayer: function (layer) {
-		var id = L.Util.stamp(layer);
-
-		if (!this._uneditedLayerProps[id]) {
-			// Polyline, Polygon or Rectangle
-			if (layer instanceof L.Polyline || layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-				this._uneditedLayerProps[id] = {
-					latlngs: L.LatLngUtil.cloneLatLngs(layer.getLatLngs())
-				};
-			} else if (layer instanceof L.Circle) {
-				this._uneditedLayerProps[id] = {
-					latlng: L.LatLngUtil.cloneLatLng(layer.getLatLng()),
-					radius: layer.getRadius()
-				};
-			} else if (layer instanceof L.Marker) { // Marker
-				this._uneditedLayerProps[id] = {
-					latlng: L.LatLngUtil.cloneLatLng(layer.getLatLng())
-				};
-			}
-		}
-	},
-
-	_revertLayer: function (layer) {
-		var id = L.Util.stamp(layer);
-		layer.edited = false;
-		if (this._uneditedLayerProps.hasOwnProperty(id)) {
-			// Polyline, Polygon or Rectangle
-			if (layer instanceof L.Polyline || layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-				layer.setLatLngs(this._uneditedLayerProps[id].latlngs);
-			} else if (layer instanceof L.Circle) {
-				layer.setLatLng(this._uneditedLayerProps[id].latlng);
-				layer.setRadius(this._uneditedLayerProps[id].radius);
-			} else if (layer instanceof L.Marker) { // Marker
-				layer.setLatLng(this._uneditedLayerProps[id].latlng);
-			}
-		}
-	},
-
-	_toggleMarkerHighlight: function (marker) {
-		if (!marker._icon) {
-			return;
-		}
-		// This is quite naughty, but I don't see another way of doing it. (short of setting a new icon)
-		var icon = marker._icon;
-
-		icon.style.display = 'none';
-
-		if (L.DomUtil.hasClass(icon, 'leaflet-edit-marker-selected')) {
-			L.DomUtil.removeClass(icon, 'leaflet-edit-marker-selected');
-			// Offset as the border will make the icon move.
-			this._offsetMarker(icon, -4);
-
-		} else {
-			L.DomUtil.addClass(icon, 'leaflet-edit-marker-selected');
-			// Offset as the border will make the icon move.
-			this._offsetMarker(icon, 4);
-		}
-
-		icon.style.display = '';
-	},
-
-	_offsetMarker: function (icon, offset) {
-		var iconMarginTop = parseInt(icon.style.marginTop, 10) - offset,
-			iconMarginLeft = parseInt(icon.style.marginLeft, 10) - offset;
-
-		icon.style.marginTop = iconMarginTop + 'px';
-		icon.style.marginLeft = iconMarginLeft + 'px';
-	},
-
-	_enableLayerEdit: function (e) {
-		var layer = e.layer || e.target || e,
-			isMarker = layer instanceof L.Marker,
-			pathOptions;
-
-		// Don't do anything if this layer is a marker but doesn't have an icon. Markers
-		// should usually have icons. If using Leaflet.draw with Leafler.markercluster there
-		// is a chance that a marker doesn't.
-		if (isMarker && !layer._icon) {
-			return;
-		}
-
-		// Back up this layer (if haven't before)
-		this._backupLayer(layer);
-
-		// Update layer style so appears editable
-		if (this._selectedPathOptions) {
-			pathOptions = L.Util.extend({}, this._selectedPathOptions);
-
-			if (isMarker) {
-				this._toggleMarkerHighlight(layer);
-			} else {
-				layer.options.previousOptions = L.Util.extend({ dashArray: null }, layer.options);
-
-				// Make sure that Polylines are not filled
-				if (!(layer instanceof L.Circle) && !(layer instanceof L.Polygon) && !(layer instanceof L.Rectangle)) {
-					pathOptions.fill = false;
-				}
-
-				layer.setStyle(pathOptions);
-			}
-		}
-
-		if (isMarker) {
-			layer.dragging.enable();
-			layer.on('dragend', this._onMarkerDragEnd);
-		} else {
-			layer.editing.enable();
-		}
-	},
-
-	_disableLayerEdit: function (e) {
-		var layer = e.layer || e.target || e;
-		layer.edited = false;
-
-		// Reset layer styles to that of before select
-		if (this._selectedPathOptions) {
-			if (layer instanceof L.Marker) {
-				this._toggleMarkerHighlight(layer);
-			} else {
-				// reset the layer style to what is was before being selected
-				layer.setStyle(layer.options.previousOptions);
-				// remove the cached options for the layer object
-				delete layer.options.previousOptions;
-			}
-		}
-
-		if (layer instanceof L.Marker) {
-			layer.dragging.disable();
-			layer.off('dragend', this._onMarkerDragEnd, this);
-		} else {
-			layer.editing.disable();
-		}
-	},
-
-	_onMarkerDragEnd: function (e) {
-		var layer = e.target;
-		layer.edited = true;
-	},
-
-	_onMouseMove: function (e) {
-		this._tooltip.updatePosition(e.latlng);
-	},
-
-	_hasAvailableLayers: function () {
-		return this._featureGroup.getLayers().length !== 0;
-	}
-});
-
-
-L.EditToolbar.Delete = L.Handler.extend({
-	statics: {
-		TYPE: 'remove' // not delete as delete is reserved in js
-	},
-
-	includes: L.Mixin.Events,
-
-	initialize: function (map, options) {
-		L.Handler.prototype.initialize.call(this, map);
-
-		L.Util.setOptions(this, options);
-
-		// Store the selectable layer group for ease of access
-		this._deletableLayers = this.options.featureGroup;
-
-		if (!(this._deletableLayers instanceof L.FeatureGroup)) {
-			throw new Error('options.featureGroup must be a L.FeatureGroup');
-		}
-
-		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
-		this.type = L.EditToolbar.Delete.TYPE;
-	},
-
-	enable: function () {
-		if (this._enabled || !this._hasAvailableLayers()) {
-			return;
-		}
-		this.fire('enabled', { handler: this.type});
-
-		this._map.fire('draw:deletestart', { handler: this.type });
-
-		L.Handler.prototype.enable.call(this);
-
-		this._deletableLayers
-			.on('layeradd', this._enableLayerDelete, this)
-			.on('layerremove', this._disableLayerDelete, this);
-	},
-
-	disable: function () {
-		if (!this._enabled) { return; }
-
-		this._deletableLayers
-			.off('layeradd', this._enableLayerDelete, this)
-			.off('layerremove', this._disableLayerDelete, this);
-
-		L.Handler.prototype.disable.call(this);
-
-		this._map.fire('draw:deletestop', { handler: this.type });
-
-		this.fire('disabled', { handler: this.type});
-	},
-
-	addHooks: function () {
-		var map = this._map;
-
-		if (map) {
-			map.getContainer().focus();
-
-			this._deletableLayers.eachLayer(this._enableLayerDelete, this);
-			this._deletedLayers = new L.layerGroup();
-
-			this._tooltip = new L.Tooltip(this._map);
-			this._tooltip.updateContent({ text: L.drawLocal.edit.handlers.remove.tooltip.text });
-
-			this._map.on('mousemove', this._onMouseMove, this);
-		}
-	},
-
-	removeHooks: function () {
-		if (this._map) {
-			this._deletableLayers.eachLayer(this._disableLayerDelete, this);
-			this._deletedLayers = null;
-
-			this._tooltip.dispose();
-			this._tooltip = null;
-
-			this._map.off('mousemove', this._onMouseMove, this);
-		}
-	},
-
-	revertLayers: function () {
-		// Iterate of the deleted layers and add them back into the featureGroup
-		this._deletedLayers.eachLayer(function (layer) {
-			this._deletableLayers.addLayer(layer);
-		}, this);
-	},
-
-	save: function () {
-		this._map.fire('draw:deleted', { layers: this._deletedLayers });
-	},
-
-	_enableLayerDelete: function (e) {
-		var layer = e.layer || e.target || e;
-
-		layer.on('click', this._removeLayer, this);
-	},
-
-	_disableLayerDelete: function (e) {
-		var layer = e.layer || e.target || e;
-
-		layer.off('click', this._removeLayer, this);
-
-		// Remove from the deleted layers so we can't accidently revert if the user presses cancel
-		this._deletedLayers.removeLayer(layer);
-	},
-
-	_removeLayer: function (e) {
-		var layer = e.layer || e.target || e;
-
-		this._deletableLayers.removeLayer(layer);
-
-		this._deletedLayers.addLayer(layer);
-	},
-
-	_onMouseMove: function (e) {
-		this._tooltip.updatePosition(e.latlng);
-	},
-
-	_hasAvailableLayers: function () {
-		return this._deletableLayers.getLayers().length !== 0;
-	}
-});
-
-
-}(window, document));/*
-  Drag feature functionality for Leaflet.draw
-	(c) Alexander Milevski
-
-	https://github.com/w8r/Leaflet.draw.drag
-	https://github.com/w8r/
-*/
-"use strict";if(L.Browser.svg){L.Path.include({_resetTransform:function(){this._container.setAttributeNS(null,"transform","")},_applyTransform:function(t){this._container.setAttributeNS(null,"transform","matrix("+t.join(" ")+")")}})}else{L.Path.include({_resetTransform:function(){if(this._skew){this._skew.on=false;this._container.removeChild(this._skew);this._skew=null}},_applyTransform:function(t){var e=this._skew;if(!e){e=this._createElement("skew");this._container.appendChild(e);e.style.behavior="url(#default#VML)";this._skew=e}var i=t[0].toFixed(8)+" "+t[1].toFixed(8)+" "+t[2].toFixed(8)+" "+t[3].toFixed(8)+" 0 0";var r=Math.floor(t[4]).toFixed()+", "+Math.floor(t[5]).toFixed()+"";var a=this._container.style;var s=parseFloat(a.left);var o=parseFloat(a.top);var n=parseFloat(a.width);var h=parseFloat(a.height);if(isNaN(s))s=0;if(isNaN(o))o=0;if(isNaN(n)||!n)n=1;if(isNaN(h)||!h)h=1;var _=(-s/n-.5).toFixed(8)+" "+(-o/h-.5).toFixed(8);e.on="f";e.matrix=i;e.origin=_;e.offset=r;e.on=true}})}L.Path.include({_onMouseClick:function(t){if(this.dragging&&this.dragging.moved()||this._map.dragging&&this._map.dragging.moved()){return}this._fireMouseEvent(t)}});"use strict";L.Handler.PathDrag=L.Handler.extend({statics:{DRAGGABLE_CLS:"leaflet-path-draggable"},initialize:function(t){this._path=t;this._matrix=null;this._startPoint=null;this._dragStartPoint=null;this._dragInProgress=false;this._dragMoved=false},addHooks:function(){var t=L.Handler.PathDrag.DRAGGABLE_CLS;var e=this._path._path;this._path.on("mousedown",this._onDragStart,this);this._path.options.className=(this._path.options.className||"")+" "+t;if(!L.Path.CANVAS&&e){L.DomUtil.addClass(e,t)}},removeHooks:function(){var t=L.Handler.PathDrag.DRAGGABLE_CLS;var e=this._path._path;this._path.off("mousedown",this._onDragStart,this);this._path.options.className=(this._path.options.className||"").replace(t,"");if(!L.Path.CANVAS&&e){L.DomUtil.removeClass(e,t)}this._dragMoved=false},moved:function(){return this._dragMoved},inProgress:function(){return this._dragInProgress},_onDragStart:function(t){this._dragInProgress=true;this._startPoint=t.containerPoint.clone();this._dragStartPoint=t.containerPoint.clone();this._matrix=[1,0,0,1,0,0];if(this._path._point){this._point=this._path._point.clone()}this._path._map.on("mousemove",this._onDrag,this).on("mouseup",this._onDragEnd,this);this._dragMoved=false},_onDrag:function(t){var e=t.containerPoint.x;var i=t.containerPoint.y;var r=this._matrix;var a=this._path;var s=this._startPoint;var o=e-s.x;var n=i-s.y;if(!this._dragMoved&&(o||n)){this._dragMoved=true;a.fire("dragstart");if(a._popup){a._popup._close();a.off("click",a._openPopup,a)}}r[4]+=o;r[5]+=n;s.x=e;s.y=i;a._applyTransform(r);if(a._point){a._point.x=this._point.x+r[4];a._point.y=this._point.y+r[5]}a.fire("drag");L.DomEvent.stop(t.originalEvent)},_onDragEnd:function(t){L.DomEvent.stop(t);L.DomEvent._fakeStop({type:"click"});this._dragInProgress=false;this._path._resetTransform();this._transformPoints(this._matrix);this._path._map.off("mousemove",this._onDrag,this).off("mouseup",this._onDragEnd,this);this._path.fire("dragend",{distance:Math.sqrt(L.LineUtil._sqDist(this._dragStartPoint,t.containerPoint))});if(this._path._popup){L.Util.requestAnimFrame(function(){this._path.on("click",this._path._openPopup,this._path)},this)}this._matrix=null;this._startPoint=null;this._point=null;this._dragStartPoint=null},_transformPoint:function(t,e){var i=this._path;var r=L.point(e[4],e[5]);var a=i._map.options.crs;var s=a.transformation;var o=a.scale(i._map.getZoom());var n=a.projection;var h=s.untransform(r,o).subtract(s.untransform(L.point(0,0),o));return n.unproject(n.project(t)._add(h))},_transformPoints:function(t){var e=this._path;var i,r,a;var s=L.point(t[4],t[5]);var o=e._map.options.crs;var n=o.transformation;var h=o.scale(e._map.getZoom());var _=o.projection;var g=n.untransform(s,h).subtract(n.untransform(L.point(0,0),h));if(e._point){e._latlng=_.unproject(_.project(e._latlng)._add(g));e._point=this._point._add(s)}else if(e._originalPoints){for(i=0,r=e._originalPoints.length;i<r;i++){a=e._latlngs[i];e._latlngs[i]=_.unproject(_.project(a)._add(g));e._originalPoints[i]._add(s)}}if(e._holes){for(i=0,r=e._holes.length;i<r;i++){for(var p=0,d=e._holes[i].length;p<d;p++){a=e._holes[i][p];e._holes[i][p]=_.unproject(_.project(a)._add(g));e._holePoints[i][p]._add(s)}}}e._updatePath()}});L.Path.addInitHook(function(){if(this.options.draggable){if(this.dragging){this.dragging.enable()}else{this.dragging=new L.Handler.PathDrag(this);this.dragging.enable()}}else if(this.dragging){this.dragging.disable()}});L.Circle.prototype._getLatLng=L.Circle.prototype.getLatLng;L.Circle.prototype.getLatLng=function(){if(this.dragging&&this.dragging.inProgress()){return this.dragging._transformPoint(this._latlng,this.dragging._matrix)}else{return this._getLatLng()}};L.Polyline.prototype._getLatLngs=L.Polyline.prototype.getLatLngs;L.Polyline.prototype.getLatLngs=function(){if(this.dragging&&this.dragging.inProgress()){var t=this.dragging._matrix;var e=this._getLatLngs();for(var i=0,r=e.length;i<r;i++){e[i]=this.dragging._transformPoint(e[i],t)}return e}else{return this._getLatLngs()}};(function(){L.FeatureGroup.EVENTS+=" dragstart";function t(t,e,i){for(var r=0,a=t.length;r<a;r++){var s=t[r];s.prototype["_"+e]=s.prototype[e];s.prototype[e]=i}}function e(t){if(this.hasLayer(t)){return this}t.on("drag",this._onDrag,this).on("dragend",this._onDragEnd,this);return this._addLayer.call(this,t)}function i(t){if(!this.hasLayer(t)){return this}t.off("drag",this._onDrag,this).off("dragend",this._onDragEnd,this);return this._removeLayer.call(this,t)}t([L.MultiPolygon,L.MultiPolyline],"addLayer",e);t([L.MultiPolygon,L.MultiPolyline],"removeLayer",i);var r={_onDrag:function(t){var e=t.target;this.eachLayer(function(t){if(t!==e){t._applyTransform(e.dragging._matrix)}});this._propagateEvent(t)},_onDragEnd:function(t){var e=t.target;this.eachLayer(function(t){if(t!==e){t._resetTransform();t.dragging._transformPoints(e.dragging._matrix)}});this._propagateEvent(t)}};L.MultiPolygon.include(r);L.MultiPolyline.include(r)})();L.Polygon.include(L.Polygon.prototype.getCenter?{}:{getCenter:function(){var t,e,i,r,a,s,o,n,h;var _=this._originalPoints;o=n=h=0;for(t=0,i=_.length,e=i-1;t<i;e=t++){r=_[t];a=_[e];s=r.y*a.x-a.y*r.x;n+=(r.x+a.x)*s;h+=(r.y+a.y)*s;o+=s*3}return this._map.layerPointToLatLng([n/o,h/o])}});"use strict";L.EditToolbar.Edit.MOVE_MARKERS=false;L.EditToolbar.Edit.include({initialize:function(t,e){L.EditToolbar.Edit.MOVE_MARKERS=!!e.selectedPathOptions.moveMarkers;this._initialize(t,e)},_initialize:L.EditToolbar.Edit.prototype.initialize});L.Edit.SimpleShape.include({_updateMoveMarker:function(){if(this._moveMarker){this._moveMarker.setLatLng(this._getShapeCenter())}},_getShapeCenter:function(){return this._shape.getBounds().getCenter()},_createMoveMarker:function(){if(L.EditToolbar.Edit.MOVE_MARKERS){this._moveMarker=this._createMarker(this._getShapeCenter(),this.options.moveIcon)}}});L.Edit.SimpleShape.mergeOptions({moveMarker:false});L.Edit.Circle.include({addHooks:function(){if(this._shape._map){this._map=this._shape._map;if(!this._markerGroup){this._enableDragging();this._initMarkers()}this._shape._map.addLayer(this._markerGroup)}},removeHooks:function(){if(this._shape._map){for(var t=0,e=this._resizeMarkers.length;t<e;t++){this._unbindMarker(this._resizeMarkers[t])}this._disableDragging();this._resizeMarkers=null;this._map.removeLayer(this._markerGroup);delete this._markerGroup}this._map=null},_createMoveMarker:L.Edit.SimpleShape.prototype._createMoveMarker,_resize:function(t){var e=this._shape.getLatLng();var i=e.distanceTo(t);this._shape.setRadius(i);this._updateMoveMarker();this._map.fire("draw:editresize",{layer:this._shape})},_enableDragging:function(){if(!this._shape.dragging){this._shape.dragging=new L.Handler.PathDrag(this._shape)}this._shape.dragging.enable();this._shape.on("dragstart",this._onStartDragFeature,this).on("dragend",this._onStopDragFeature,this)},_disableDragging:function(){this._shape.dragging.disable();this._shape.off("dragstart",this._onStartDragFeature,this).off("dragend",this._onStopDragFeature,this)},_onStartDragFeature:function(){this._shape._map.removeLayer(this._markerGroup);this._shape.fire("editstart")},_onStopDragFeature:function(){var t=this._shape.getLatLng();this._resizeMarkers[0].setLatLng(this._getResizeMarkerPoint(t));this._shape._map.addLayer(this._markerGroup);this._updateMoveMarker();this._fireEdit()}});L.Edit.Rectangle.include({addHooks:function(){if(this._shape._map){if(!this._markerGroup){this._enableDragging();this._initMarkers()}this._shape._map.addLayer(this._markerGroup)}},removeHooks:function(){if(this._shape._map){this._shape._map.removeLayer(this._markerGroup);this._disableDragging();delete this._markerGroup;delete this._markers}},_resize:function(t){this._shape.setBounds(L.latLngBounds(t,this._oppositeCorner));this._updateMoveMarker();this._map.fire("draw:editresize",{layer:this._shape})},_onMarkerDragEnd:function(t){this._toggleCornerMarkers(1);this._repositionCornerMarkers();L.Edit.SimpleShape.prototype._onMarkerDragEnd.call(this,t)},_enableDragging:function(){if(!this._shape.dragging){this._shape.dragging=new L.Handler.PathDrag(this._shape)}this._shape.dragging.enable();this._shape.on("dragstart",this._onStartDragFeature,this).on("dragend",this._onStopDragFeature,this)},_disableDragging:function(){this._shape.dragging.disable();this._shape.off("dragstart",this._onStartDragFeature,this).off("dragend",this._onStopDragFeature,this)},_onStartDragFeature:function(){this._shape._map.removeLayer(this._markerGroup);this._shape.fire("editstart")},_onStopDragFeature:function(){var t=this._shape;for(var e=0,i=t._latlngs.length;e<i;e++){var r=this._resizeMarkers[e];r.setLatLng(t._latlngs[e]);r._origLatLng=t._latlngs[e];if(r._middleLeft){r._middleLeft.setLatLng(this._getMiddleLatLng(r._prev,r))}if(r._middleRight){r._middleRight.setLatLng(this._getMiddleLatLng(r,r._next))}}this._shape._map.addLayer(this._markerGroup);this._updateMoveMarker();this._repositionCornerMarkers();this._fireEdit()}});L.Edit.Poly.include({__createMarker:L.Edit.Poly.prototype._createMarker,__removeMarker:L.Edit.Poly.prototype._removeMarker,addHooks:function(){if(this._poly._map){if(!this._markerGroup){this._enableDragging();this._initMarkers();this._createMoveMarker()}this._poly._map.addLayer(this._markerGroup)}},_createMoveMarker:function(){if(L.EditToolbar.Edit.MOVE_MARKERS&&this._poly instanceof L.Polygon){this._moveMarker=new L.Marker(this._getShapeCenter(),{icon:this.options.moveIcon});this._moveMarker.on("mousedown",this._delegateToShape,this);this._markerGroup.addLayer(this._moveMarker)}},_delegateToShape:function(t){var e=this._shape||this._poly;var i=t.target;e.fire("mousedown",L.Util.extend(t,{containerPoint:L.DomUtil.getPosition(i._icon).add(e._map._getMapPanePos())}))},_getShapeCenter:function(){return this._poly.getCenter()},removeHooks:function(){if(this._poly._map){this._poly._map.removeLayer(this._markerGroup);this._disableDragging();delete this._markerGroup;delete this._markers}},_enableDragging:function(){if(!this._poly.dragging){this._poly.dragging=new L.Handler.PathDrag(this._poly)}this._poly.dragging.enable();this._poly.on("dragstart",this._onStartDragFeature,this).on("dragend",this._onStopDragFeature,this)},_disableDragging:function(){this._poly.dragging.disable();this._poly.off("dragstart",this._onStartDragFeature,this).off("dragend",this._onStopDragFeature,this)},_onStartDragFeature:function(t){this._poly._map.removeLayer(this._markerGroup);this._poly.fire("editstart")},_onStopDragFeature:function(t){var e=this._poly;for(var i=0,r=e._latlngs.length;i<r;i++){var a=this._markers[i];a.setLatLng(e._latlngs[i]);a._origLatLng=e._latlngs[i];if(a._middleLeft){a._middleLeft.setLatLng(this._getMiddleLatLng(a._prev,a))}if(a._middleRight){a._middleRight.setLatLng(this._getMiddleLatLng(a,a._next))}}this._poly._map.addLayer(this._markerGroup);L.Edit.SimpleShape.prototype._updateMoveMarker.call(this);this._fireEdit()},_updateMoveMarker:L.Edit.SimpleShape.prototype._updateMoveMarker,_createMarker:function(t,e){var i=this.__createMarker(t,e);i.on("dragstart",this._hideMoveMarker,this).on("dragend",this._showUpdateMoveMarker,this);return i},_removeMarker:function(t){this.__removeMarker(t);t.off("dragstart",this._hideMoveMarker,this).off("dragend",this._showUpdateMoveMarker,this)},_hideMoveMarker:function(){if(this._moveMarker){this._markerGroup.removeLayer(this._moveMarker)}},_showUpdateMoveMarker:function(){if(this._moveMarker){this._markerGroup.addLayer(this._moveMarker);this._updateMoveMarker()}}});L.Edit.Poly.prototype.options.moveIcon=new L.DivIcon({iconSize:new L.Point(8,8),className:"leaflet-div-icon leaflet-editing-icon leaflet-edit-move"});L.Edit.Poly.mergeOptions({moveMarker:false});
 // CodeMirror version 3.14
 //
 // CodeMirror is the only global var we claim

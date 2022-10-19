@@ -1,4 +1,6 @@
 module.exports = function(context) {
-    var bounds = context.mapLayer.getBounds();
-    if (bounds.isValid()) context.map.fitBounds(bounds);
+  var bounds = turf.bbox(context.data.get('map'));
+  context.map.fitBounds(bounds, {
+    padding: 50
+  });
 };

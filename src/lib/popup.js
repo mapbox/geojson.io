@@ -1,62 +1,61 @@
-module.exports = function(context) {
-    return function(e) {
-        var sel = d3.select(e.popup._contentNode);
+module.exports = function (context) {
+  return function (e, id) {
+    var sel = d3.select(e.target._content);
 
-        sel.selectAll('.cancel')
-            .on('click', clickClose);
+    sel.selectAll('.cancel').on('click', clickClose);
 
-        sel.selectAll('.save')
-            .on('click', saveFeature);
+    sel.selectAll('.save').on('click', saveFeature);
 
-        sel.selectAll('.add')
-            .on('click', addRow);
+    sel.selectAll('.add').on('click', addRow);
 
-        sel.selectAll('.delete-invert')
-            .on('click', removeFeature);
+    sel.selectAll('.delete-invert').on('click', removeFeature);
 
-        function clickClose() {
-            context.map.closePopup(e.popup);
+    function clickClose() {
+      e.target._onClose();
+    }
+
+    function removeFeature() {
+      const data = context.data.get('map');
+      data.features.splice(id, 1);
+
+      context.data.set({ map: data }, 'popup');
+
+      // hide the popup
+      e.target._onClose();
+    }
+
+    function losslessNumber(x) {
+      var fl = parseFloat(x);
+      if (fl.toString() === x) return fl;
+      else return x;
+    }
+
+    function saveFeature() {
+      var obj = {};
+      var table = sel.select('table.marker-properties');
+      table.selectAll('tr').each(collectRow);
+      function collectRow() {
+        if (d3.select(this).selectAll('input')[0][0].value) {
+          obj[d3.select(this).selectAll('input')[0][0].value] = losslessNumber(
+            d3.select(this).selectAll('input')[0][1].value
+          );
         }
+      }
 
-        function removeFeature() {
-            if (e.popup._source && context.mapLayer.hasLayer(e.popup._source)) {
-                context.mapLayer.removeLayer(e.popup._source);
-                context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
-            }
-        }
+      const data = context.data.get('map');
+      const feature = data.features[id];
+      feature.properties = obj;
+      context.data.set({ map: data }, 'popup');
+      // hide the popup
+      e.target._onClose();
+    }
 
-        function losslessNumber(x) {
-            var fl = parseFloat(x);
-            if (fl.toString() === x) return fl;
-            else return x;
-        }
+    function addRow() {
+      var tr = sel.select('table.marker-properties tbody').append('tr');
 
-        function saveFeature() {
-            var obj = {};
-            var table = sel.select('table.marker-properties');
-            table.selectAll('tr').each(collectRow);
-            function collectRow() {
-                if (d3.select(this).selectAll('input')[0][0].value) {
-                    obj[d3.select(this).selectAll('input')[0][0].value] =
-                        losslessNumber(d3.select(this).selectAll('input')[0][1].value);
-                }
-            }
-            e.popup._source.feature.properties = obj;
-            context.data.set({map: context.mapLayer.toGeoJSON()}, 'popup');
-            context.map.closePopup(e.popup);
-        }
+      tr.append('th').append('input').attr('type', 'text');
 
-        function addRow() {
-            var tr = sel.select('table.marker-properties tbody')
-                .append('tr');
-
-            tr.append('th')
-                .append('input')
-                .attr('type', 'text');
-
-            tr.append('td')
-                .append('input')
-                .attr('type', 'text');
-        }
-    };
+      tr.append('td').append('input').attr('type', 'text');
+    }
+  };
 };
