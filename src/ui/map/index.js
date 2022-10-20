@@ -221,8 +221,8 @@ module.exports = function (context, readonly) {
         type: 'fill',
         source: 'map-data',
         paint: {
-          'fill-color': color,
-          'fill-opacity': 0.3,
+          'fill-color': ['coalesce', ['get', 'fill'], color],
+          'fill-opacity': ['coalesce', ['get', 'fill-opacity'], 0.3],
         },
         filter: ['==', ['geometry-type'], 'Polygon'],
       });
@@ -232,8 +232,9 @@ module.exports = function (context, readonly) {
         type: 'line',
         source: 'map-data',
         paint: {
-          'line-color': color,
-          'line-width': 2,
+          'line-color': ['coalesce', ['get', 'stroke'], color],
+          'line-width': ['coalesce', ['get', 'stroke-width'], 2],
+          'line-opacity': ['coalesce', ['get', 'stroke-opacity'], 1]
         },
         filter: ['==', ['geometry-type'], 'Polygon'],
       });
@@ -243,8 +244,9 @@ module.exports = function (context, readonly) {
         type: 'line',
         source: 'map-data',
         paint: {
-          'line-color': color,
-          'line-width': 2,
+          'line-color': ['coalesce', ['get', 'stroke'], color],
+          'line-width': ['coalesce', ['get', 'stroke-width'], 2],
+          'line-opacity': ['coalesce', ['get', 'stroke-opacity'], 1]
         },
         filter: ['==', ['geometry-type'], 'LineString'],
       });

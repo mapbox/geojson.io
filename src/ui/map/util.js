@@ -43,7 +43,7 @@ const addMarkers = (geojson, map, context, writable) => {
   
   pointFeatures.map((d, i) => {
     const marker = new ClickableMarker({
-      color: '#7e7e7e',
+      color: d.properties['marker-color'] || '#7e7e7e',
     })
       .setLngLat(d.geometry.coordinates)
       .onClick(() => {
