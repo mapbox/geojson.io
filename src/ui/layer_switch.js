@@ -29,6 +29,9 @@ module.exports = function (context) {
         return clicked === this;
       });
 
+      // set user-layer button to inactive
+      d3.select('.user-layer-button').classed('active', false);
+
       // this will likely run before the initial map style is loaded
       // streets is default, but on subsequent runs we must change styles
       if (context.map._loaded) {
