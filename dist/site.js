@@ -32183,7 +32183,7 @@ module.exports = function (context, readonly) {
     context.dispatch.on('change.map', function () {
       maybeShowEditControl();
 
-      geojsonToLayer(context.data.get('map'), context.map, context);
+      geojsonToLayer(context.data.get('map'), context, writable);
     });
   }
 
@@ -32214,7 +32214,7 @@ const addIds = (geojson) => {
   return geojson;
 };
   
-const addMarkers = (geojson, map, context, writable) => {
+const addMarkers = (geojson, context, writable) => {
   markers.forEach((d) => {
     d.remove();
   });
@@ -32254,15 +32254,15 @@ const addMarkers = (geojson, map, context, writable) => {
           writable
         );
       })
-      .addTo(map);
+      .addTo(context.map);
     markers.push(marker);
   });
 };
-function geojsonToLayer(geojson, map, context) {
-  if (map.isStyleLoaded()) {
-    map.getSource('map-data').setData(addIds(geojson));
+function geojsonToLayer(geojson, context, writable) {
+  if (context.map.isStyleLoaded()) {
+    context.map.getSource('map-data').setData(addIds(geojson));
   
-    addMarkers(geojson, map, context);
+    addMarkers(geojson, context, writable);
   }
 }
   

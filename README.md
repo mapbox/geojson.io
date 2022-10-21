@@ -27,15 +27,15 @@ Full API documentation can be found in [API.md](API.md).
 
 Install [browserify](https://github.com/substack/node-browserify)'ied libraries:
 
-    `npm install`
+`npm install`
 
 Browserify libraries, concat other libraries, build minimal d3:
 
-    `make`
+`make`
 
 Build tailwind css:
 
-    `npx tailwindcss -i ./css/tailwind_src.css -o ./css/tailwind_dist.css`
+`npx tailwindcss -i ./css/tailwind_src.css -o ./css/tailwind_dist.css`
 
 Run a local server to preview your changes.
 

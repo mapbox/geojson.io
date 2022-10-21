@@ -318,7 +318,7 @@ module.exports = function (context, readonly) {
     context.dispatch.on('change.map', function () {
       maybeShowEditControl();
 
-      geojsonToLayer(context.data.get('map'), context.map, context);
+      geojsonToLayer(context.data.get('map'), context, writable);
     });
   }
 
