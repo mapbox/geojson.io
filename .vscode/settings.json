@@ -2,14 +2,15 @@
   "emeraldwalk.runonsave": {
     "commands": [
       {
-        "match": ".*",
-        "isAsync": true,
-        "cmd": "npx tailwindcss -i ./css/tailwind_src.css -o ./css/tailwind_dist.css && make"
+        "match": "lib|src|css/tailwind_src.css",
+        "cmd": "make"
       }
     ]
   },
-  "liveServer.settings.ignoreFiles" : [
-    "css/site_dist.css",
-    "css/site_src.css"
-  ]
-} 
+  "liveServer.settings.ignoreFiles": [
+    "lib/*",
+    "src/*",
+    "css/tailwind_src.css"
+  ],
+  "liveServer.settings.wait": 500
+}

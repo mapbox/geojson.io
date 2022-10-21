@@ -4,7 +4,7 @@ CLEANCSS = node_modules/.bin/cleancss
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
 
-all: dist/site.js dist/site.mobile.js dist/delegate.js
+all: dist/site.js dist/site.mobile.js dist/delegate.js css/tailwind_dist.css
 
 node_modules: package.json
 	npm install
@@ -63,6 +63,9 @@ dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js
 
 dist/site.mobile.js: dist/lib.js src/mobile.js $(shell $(BROWSERIFY) --list src/mobile.js)
 	$(BROWSERIFY) --noparse=src/source/local.js -t brfs -r topojson src/mobile.js > dist/site.mobile.js
+
+css/tailwind_dist.css:
+	npx tailwindcss -i ./css/tailwind_src.css -o ./css/tailwind_dist.css
 
 clean:
 	rm -f dist/*

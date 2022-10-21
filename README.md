@@ -29,22 +29,19 @@ Install [browserify](https://github.com/substack/node-browserify)'ied libraries:
 
 `npm install`
 
-Browserify libraries, concat other libraries, build minimal d3:
+Browserify libraries, concat other libraries, build minimal d3, build tailwind css:
 
 `make`
 
-Build tailwind css:
-
-`npx tailwindcss -i ./css/tailwind_src.css -o ./css/tailwind_dist.css`
-
 Run a local server to preview your changes.
 
-### Development with VSCode
+### Development with VSCode (hot reloading)
 
-A streamlined dev workflow is possible with the `Live Server` and `Run on Save` VS Code extensions:
+An optimized development workflow is possible with the `Live Server` and `Run on Save` VS Code extensions.  Both have workspace-specific settings in `settings.json`:
 
 - Start a live server using `Live Server's` "Go Live" button
-- `Run on Save` reads it settings from `./vscode/settings.json` and will listen for changes to any file, then run both the `make` command and build the tailwind css file on each save.
+- `Run on Save` will watch `/lib`,`/src`, and `css/tailwind_src.css` and run `make` when any of them change.
+- `Live Server` will ignore `/lib`,`/src`, and `css/tailwind_src.css`, but will hot reload whenever any other file changes (including the files created by `make`)
 
 ## License
 
