@@ -28,7 +28,7 @@ module.exports = function(context) {
   }
 
   function mapDefault() {
-    return context.map.getZoom() == 2 || context.map.getCenter().equals(new L.LatLng(20, 0));
+    return context.map.getZoom() == 2 || JSON.stringify(context.map.getCenter()) === JSON.stringify({lng: 20, lat: 2});
   }
 
   function inlineJSON(data) {

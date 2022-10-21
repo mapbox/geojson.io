@@ -41,8 +41,8 @@ module.exports = function (context, readonly) {
     context.map = new mapboxgl.Map({
       container: selection.node(),
       style: 'mapbox://styles/mapbox/streets-v11',
-      center: [-96, 37.8],
-      zoom: 3,
+      center: [20, 0],
+      zoom: 2,
       projection: 'globe',
       hash: 'map',
     });
