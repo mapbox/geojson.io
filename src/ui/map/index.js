@@ -206,7 +206,7 @@ module.exports = function (context, readonly) {
     context.map.on('style.load', () => {
       const { name } = context.map.getStyle();
       let color = DARK_FEATURE_COLOR;
-      if (['Mapbox Satellite', 'Mapbox Dark'].includes(name)) {
+      if (['Mapbox Satellite Streets', 'Mapbox Dark'].includes(name)) {
         color = LIGHT_FEATURE_COLOR;
       }
       context.map.setFog({});
