@@ -29477,7 +29477,7 @@ module.exports = function(context) {
   }
 
   function mapDefault() {
-    return context.map.getZoom() == 2 || context.map.getCenter().equals(new L.LatLng(20, 0));
+    return context.map.getZoom() == 2 || JSON.stringify(context.map.getCenter()) === JSON.stringify({lng: 20, lat: 2});
   }
 
   function inlineJSON(data) {
@@ -31861,8 +31861,8 @@ module.exports = function (context, readonly) {
     context.map = new mapboxgl.Map({
       container: selection.node(),
       style: 'mapbox://styles/mapbox/streets-v11',
-      center: [-96, 37.8],
-      zoom: 3,
+      center: [20, 0],
+      zoom: 2,
       projection: 'globe',
       hash: 'map',
     });
