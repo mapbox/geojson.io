@@ -41658,7 +41658,7 @@ module.exports = function (context, readonly) {
         filter: ['==', ['geometry-type'], 'LineString'],
       });
 
-      addMarkers(context.data.get('map'), context.map, context, writable);
+      addMarkers(context.data.get('map'), context, writable);
     });
 
     // only show projection toggle on zoom < 6
