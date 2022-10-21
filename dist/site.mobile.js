@@ -41414,6 +41414,7 @@ const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
 const { addIds, addMarkers, geojsonToLayer, bindPopup } = require('./util');
 
 let writable = false;
+let drawing = false;
 
 const dummyGeojson = {
   type: 'FeatureCollection',
@@ -41479,6 +41480,7 @@ module.exports = function (context, readonly) {
           {
             on: 'click',
             action: () => {
+              drawing = true;
               context.Draw.changeMode('draw_point');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_point'],
@@ -41486,6 +41488,7 @@ module.exports = function (context, readonly) {
           {
             on: 'click',
             action: () => {
+              drawing = true;
               context.Draw.changeMode('draw_line_string');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_line'],
@@ -41493,6 +41496,7 @@ module.exports = function (context, readonly) {
           {
             on: 'click',
             action: () => {
+              drawing = true;
               context.Draw.changeMode('draw_polygon');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_polygon'],
@@ -41500,6 +41504,7 @@ module.exports = function (context, readonly) {
           {
             on: 'click',
             action: () => {
+              drawing = true;
               context.Draw.changeMode('draw_rectangle');
             },
             classes: [
@@ -41682,19 +41687,24 @@ module.exports = function (context, readonly) {
       }
     };
 
+    const handleLinestringOrPolygonClick = (e) => {
+      // prevent this popup from opening when the original click was on a marker
+      const el = e.originalEvent.target;
+      if (el.nodeName !== 'CANVAS') return;
+      // prevent this popup from opening when drawing new features
+      if (drawing) return;
+ 
+      bindPopup(e, context, writable);
+    };
+
     context.map.on('load', () => {
       context.map.on('mouseenter', 'map-data-fill', maybeSetCursorToPointer);
       context.map.on('mouseleave', 'map-data-fill', maybeResetCursor);
       context.map.on('mouseenter', 'map-data-line', maybeSetCursorToPointer);
       context.map.on('mouseleave', 'map-data-line', maybeResetCursor);
 
-      context.map.on('click', 'map-data-fill', (e) => {
-        bindPopup(e, context, writable);
-      });
-
-      context.map.on('click', 'map-data-line', (e) => {
-        bindPopup(e, context, writable);
-      });
+      context.map.on('click', 'map-data-fill', handleLinestringOrPolygonClick);
+      context.map.on('click', 'map-data-line', handleLinestringOrPolygonClick);
     });
 
     context.map.on('draw.create', created);
@@ -41709,6 +41719,13 @@ module.exports = function (context, readonly) {
     function created(e) {
       context.Draw.deleteAll();
       update(stripIds(e.features));
+
+      // delay setting drawing back to false after a drawn feature is created
+      // this allows the map click handler to ignore the click and prevents a popup
+      // if the drawn feature endeds within an existing feature
+      setTimeout(() => {
+        drawing = false;
+      }, 500);
     }
 
     function update(features) {
