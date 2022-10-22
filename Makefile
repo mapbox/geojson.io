@@ -4,7 +4,7 @@ CLEANCSS = node_modules/.bin/cleancss
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
 
-all: dist/site.js dist/site.mobile.js dist/delegate.js css/tailwind_dist.css
+all: dist/site.js dist/site.mobile.js dist/delegate.js css/tailwind_dist.css css/codemirror.css
 
 node_modules: package.json
 	npm install
@@ -48,12 +48,12 @@ dist/lib.js: dist dist/d3.js $(LIBS)
 		lib/d3.keybinding.js \
 		lib/d3.trigger.js \
 		lib/d3-compat.js \
-		lib/codemirror/lib/codemirror.js \
-		lib/codemirror/addon/fold/foldcode.js \
-		lib/codemirror/addon/fold/foldgutter.js \
-		lib/codemirror/addon/fold/brace-fold.js \
-		lib/codemirror/addon/edit/matchbrackets.js \
-		lib/codemirror/mode/javascript/javascript.js > dist/lib.js
+		node_modules/codemirror/lib/codemirror.js \
+		node_modules/codemirror/addon/fold/foldcode.js \
+		node_modules/codemirror/addon/fold/foldgutter.js \
+		node_modules/codemirror/addon/fold/brace-fold.js \
+		node_modules/codemirror/addon/edit/matchbrackets.js \
+		node_modules/codemirror/mode/javascript/javascript.js > dist/lib.js
 
 dist/delegate.js: src/delegate.js
 	$(BROWSERIFY)  src/delegate.js > dist/delegate.js
@@ -66,6 +66,10 @@ dist/site.mobile.js: dist/lib.js src/mobile.js $(shell $(BROWSERIFY) --list src/
 
 css/tailwind_dist.css:
 	npx tailwindcss -i ./css/tailwind_src.css -o ./css/tailwind_dist.css
+
+css/codemirror.css:
+	cat node_modules/codemirror/lib/codemirror.css \
+	node_modules/codemirror/addon/fold/foldgutter.css > ./css/codemirror.css
 
 clean:
 	rm -f dist/*
