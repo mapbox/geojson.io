@@ -6,6 +6,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.2.0",
     "@mapbox/geojson-extent": "^1.0.1",
+    "@mapbox/geojson-normalize": "0.0.1",
     "@mapbox/geojson-rewind": "0.5.2",
     "@mapbox/gist-map-browser": "0.2.1",
     "@mapbox/github-file-browser": "0.6.1",
@@ -27,7 +28,6 @@
     "escape-html": "^1.0.1",
     "file-saver": "2.0.5",
     "geojson-flatten": "~0.1.0",
-    "geojson-normalize": "0.0.0",
     "geojson-random": "0.1.0",
     "geojson2dsv": "0.0.0",
     "geojsonhint": "0.3.4",

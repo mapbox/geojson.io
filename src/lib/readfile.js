@@ -4,7 +4,7 @@ const topojson = require('topojson-client'),
   csv2geojson = require('csv2geojson'),
   osmtogeojson = require('osmtogeojson'),
   polytogeojson = require('polytogeojson'),
-  geojsonNormalize = require('geojson-normalize');
+  geojsonNormalize = require('@mapbox/geojson-normalize');
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;

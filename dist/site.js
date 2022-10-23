@@ -487,7 +487,7 @@ v.processMessage = processMessage;
 
 module.exports = v;
 
-},{"is-plain-obj":106,"xtend":3}],3:[function(require,module,exports){
+},{"is-plain-obj":105,"xtend":3}],3:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -598,7 +598,7 @@ function getExtent(_) {
     return ext;
 }
 
-},{"@mapbox/extent":1,"@mapbox/geojson-coords":5,"traverse":187}],8:[function(require,module,exports){
+},{"@mapbox/extent":1,"@mapbox/geojson-coords":5,"traverse":186}],8:[function(require,module,exports){
 module.exports = normalize;
 
 var types = {
@@ -920,7 +920,7 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":58,"queue-async":165,"treeui":188}],12:[function(require,module,exports){
+},{"browser-request":58,"queue-async":164,"treeui":187}],12:[function(require,module,exports){
 (function (global){(function (){
 !function (t, e) {
   "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = t || self).MapboxDraw = e();
@@ -4339,7 +4339,7 @@ MapboxEventManager.prototype = {
 
 module.exports = MapboxEventManager;
 
-},{"nanoid":152}],14:[function(require,module,exports){
+},{"nanoid":151}],14:[function(require,module,exports){
 module.exports = {
   'fr': {
     'name': 'France',
@@ -5738,7 +5738,7 @@ MapboxGeocoder.prototype = {
 
 module.exports = MapboxGeocoder;
 
-},{"./events":13,"./exceptions":14,"./geolocation":15,"./localization":17,"./utils":18,"@mapbox/mapbox-sdk":20,"@mapbox/mapbox-sdk/services/geocoding":32,"events":82,"lodash.debounce":148,"subtag":179,"suggestions":180,"xtend":19}],17:[function(require,module,exports){
+},{"./events":13,"./exceptions":14,"./geolocation":15,"./localization":17,"./utils":18,"@mapbox/mapbox-sdk":20,"@mapbox/mapbox-sdk/services/geocoding":32,"events":82,"lodash.debounce":147,"subtag":178,"suggestions":179,"xtend":19}],17:[function(require,module,exports){
 'use strict';
 
 /**
@@ -9218,7 +9218,7 @@ exports.preventOverflow = preventOverflow$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":163}],41:[function(require,module,exports){
+},{"_process":162}],41:[function(require,module,exports){
 !function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t="undefined"!=typeof globalThis?globalThis:t||self).toGeoJSON={})}(this,(function(t){"use strict";function e(t,e){return Array.from(t.getElementsByTagName(e))}function n(t){return"#"===t[0]?t:`#${t}`}function o(t){return t?.normalize(),t&&t.textContent||""}function r(t,e,n){const o=t.getElementsByTagName(e),r=o.length?o[0]:null;return r&&n&&n(r),r}function i(t,e,n){const o={};if(!t)return o;const r=t.getElementsByTagName(e),i=r.length?r[0]:null;return i&&n?n(i,o):o}function s(t,e,n){const i=o(r(t,e));return i&&n&&n(i)||{}}function c(t,e,n){const i=parseFloat(o(r(t,e)));if(!isNaN(i))return i&&n&&n(i)||{}}function a(t,e,n){const i=parseFloat(o(r(t,e)));if(!isNaN(i))return i&&n&&n(i),i}function l(t,e){const n={};for(const o of e)s(t,o,(t=>{n[o]=t}));return n}function u(t){return 1===t?.nodeType}function f(t){return i(t,"line",(t=>Object.assign({},s(t,"color",(t=>({stroke:`#${t}`}))),c(t,"opacity",(t=>({"stroke-opacity":t}))),c(t,"width",(t=>({"stroke-width":96*t/25.4}))))))}function p(t){let e=[];if(null===t)return e;for(const n of Array.from(t.childNodes)){if(!u(n))continue;const t=g(n.nodeName);if("gpxtpx:TrackPointExtension"===t)e=e.concat(p(n));else{const r=o(n);e.push([t,d(r)])}}return e}function g(t){return["heart","gpxtpx:hr","hr"].includes(t)?"heart":t}function d(t){const e=parseFloat(t);return isNaN(e)?t:e}function h(t){const e=[parseFloat(t.getAttribute("lon")||""),parseFloat(t.getAttribute("lat")||"")];if(isNaN(e[0])||isNaN(e[1]))return null;a(t,"ele",(t=>{e.push(t)}));const n=r(t,"time");return{coordinates:e,time:n?o(n):null,extendedValues:p(r(t,"extensions"))}}function m(t){const n=l(t,["name","cmt","desc","type","time","keywords"]),r=Array.from(t.getElementsByTagNameNS("http://www.garmin.com/xmlschemas/GpxExtensions/v3","*"));for(const e of r)e.parentNode?.parentNode===t&&(n[e.tagName.replace(":","_")]=o(e));const i=e(t,"link");return i.length&&(n.links=i.map((t=>Object.assign({href:t.getAttribute("href")},l(t,["text","type"]))))),n}function y(t,n){const o=e(t,n),r=[],i=[],s={};for(let t=0;t<o.length;t++){const e=h(o[t]);if(e){r.push(e.coordinates),e.time&&i.push(e.time);for(const[n,r]of e.extendedValues){const e="heart"===n?n:n.replace("gpxtpx:","")+"s";s[e]||(s[e]=Array(o.length).fill(null)),s[e][t]=r}}}if(!(r.length<2))return{line:r,times:i,extendedValues:s}}function b(t){const e=y(t,"rtept");if(e)return{type:"Feature",properties:Object.assign({_gpxType:"rte"},m(t),f(r(t,"extensions"))),geometry:{type:"LineString",coordinates:e.line}}}function N(t){const n=e(t,"trkseg"),o=[],i=[],s=[];for(const t of n){const e=y(t,"trkpt");e&&(s.push(e),e.times&&e.times.length&&i.push(e.times))}if(0===s.length)return null;const c=s.length>1,a=Object.assign({_gpxType:"trk"},m(t),f(r(t,"extensions")),i.length?{coordinateProperties:{times:c?i:i[0]}}:{});for(const t of s){o.push(t.line),a.coordinateProperties||(a.coordinateProperties={});const e=a.coordinateProperties,n=Object.entries(t.extendedValues);for(let t=0;t<n.length;t++){const[o,r]=n[t];c?(e[o]||(e[o]=s.map((t=>new Array(t.line.length).fill(null)))),e[o][t]=r):e[o]=r}}return{type:"Feature",properties:a,geometry:c?{type:"MultiLineString",coordinates:o}:{type:"LineString",coordinates:o[0]}}}function x(t){const e=Object.assign(m(t),l(t,["sym"])),n=h(t);return n?{type:"Feature",properties:e,geometry:{type:"Point",coordinates:n.coordinates}}:null}function*k(t){for(const n of e(t,"trk")){const t=N(n);t&&(yield t)}for(const n of e(t,"rte")){const t=b(n);t&&(yield t)}for(const n of e(t,"wpt")){const t=x(n);t&&(yield t)}}const A=[["heartRate","heartRates"],["Cadence","cadences"],["Speed","speeds"],["Watts","watts"]],S=[["TotalTimeSeconds","totalTimeSeconds"],["DistanceMeters","distanceMeters"],["MaximumSpeed","maxSpeed"],["AverageHeartRateBpm","avgHeartRate"],["MaximumHeartRateBpm","maxHeartRate"],["AvgSpeed","avgSpeed"],["AvgWatts","avgWatts"],["MaxWatts","maxWatts"]];function T(t,e){const n=[];for(const[i,s]of e){let e=r(t,i);if(!e){const n=t.getElementsByTagNameNS("http://www.garmin.com/xmlschemas/ActivityExtension/v2",i);n.length&&(e=n[0])}const c=parseFloat(o(e));isNaN(c)||n.push([s,c])}return n}function v(t){const e=[a(t,"LongitudeDegrees"),a(t,"LatitudeDegrees")];if(void 0===e[0]||isNaN(e[0])||void 0===e[1]||isNaN(e[1]))return null;const n=r(t,"HeartRateBpm"),i=o(r(t,"Time"));return r(t,"AltitudeMeters",(t=>{const n=parseFloat(o(t));isNaN(n)||e.push(n)})),{coordinates:e,time:i||null,heartRate:n?parseFloat(o(n)):null,extensions:T(t,A)}}function F(t){const n=e(t,"Trackpoint"),o=[],r=[],i=[];if(n.length<2)return null;const s={},c={extendedProperties:s};for(let t=0;t<n.length;t++){const e=v(n[t]);if(null===e)continue;o.push(e.coordinates);const{time:c,heartRate:a,extensions:l}=e;c&&r.push(c),a&&i.push(a);for(const[e,o]of l)s[e]||(s[e]=Array(n.length).fill(null)),s[e][t]=o}return o.length<2?null:Object.assign(c,{line:o,times:r,heartRates:i})}function P(t){const n=e(t,"Track"),r=[],s=[],c=[],a=[];let l;const u=Object.assign(Object.fromEntries(T(t,S)),i(t,"Name",(t=>({name:o(t)}))));for(const t of n)l=F(t),l&&(r.push(l.line),l.times.length&&s.push(l.times),l.heartRates.length&&c.push(l.heartRates),a.push(l.extendedProperties));for(let t=0;t<a.length;t++){const e=a[t];for(const o in e)1===n.length?l&&(u[o]=l.extendedProperties[o]):(u[o]||(u[o]=r.map((t=>Array(t.length).fill(null)))),u[o][t]=e[o])}return 0===r.length?null:((s.length||c.length)&&(u.coordinateProperties=Object.assign(s.length?{times:1===r.length?s[0]:s}:{},c.length?{heart:1===r.length?c[0]:c}:{})),{type:"Feature",properties:u,geometry:1===r.length?{type:"LineString",coordinates:r[0]}:{type:"MultiLineString",coordinates:r}})}function*j(t){for(const n of e(t,"Lap")){const t=P(n);t&&(yield t)}for(const n of e(t,"Courses")){const t=P(n);t&&(yield t)}}function O(t,e){const n={},o="stroke"==e||"fill"===e?e:e+"-color";return"#"===t[0]&&(t=t.substring(1)),6===t.length||3===t.length?n[o]="#"+t:8===t.length&&(n[e+"-opacity"]=parseInt(t.substring(0,2),16)/255,n[o]="#"+t.substring(6,8)+t.substring(4,6)+t.substring(2,4)),n}function w(t,e,n){const o={};return a(t,e,(t=>{o[n]=t})),o}function L(t,e){return i(t,"color",(t=>O(o(t),e)))}function M(t){return Object.assign({},function(t){return i(t,"PolyStyle",((t,e)=>Object.assign(e,i(t,"color",(t=>O(o(t),"fill"))),s(t,"fill",(t=>{if("0"===t)return{"fill-opacity":0}})),s(t,"outline",(t=>{if("0"===t)return{"stroke-opacity":0}})))))}(t),function(t){return i(t,"LineStyle",(t=>Object.assign(L(t,"stroke"),w(t,"width","stroke-width"))))}(t),function(t){return i(t,"LabelStyle",(t=>Object.assign(L(t,"label"),w(t,"scale","label-scale"))))}(t),function(t){return i(t,"IconStyle",(t=>Object.assign(L(t,"icon"),w(t,"scale","icon-scale"),w(t,"heading","icon-heading"),i(t,"hotSpot",(t=>{const e=parseFloat(t.getAttribute("x")||""),n=parseFloat(t.getAttribute("y")||""),o=t.getAttribute("xunits")||"",r=t.getAttribute("yunits")||"";return isNaN(e)||isNaN(n)?{}:{"icon-offset":[e,n],"icon-offset-units":[o,r]}})),i(t,"Icon",((t,e)=>(s(t,"href",(t=>{e.icon=t})),e))))))}(t))}const R=/\s*/g,E=/^\s*|\s*$/g,B=/\s+/;function C(t){return t.replace(R,"").split(",").map(parseFloat).filter((t=>!isNaN(t))).slice(0,3)}function G(t){return t.replace(E,"").split(B).map(C).filter((t=>t.length>=2))}function D(t){let n=e(t,"coord");var r,i,s;0===n.length&&(r=t,i="coord",s="*",n=Array.from(r.getElementsByTagNameNS(s,i)));const c=n.map((t=>o(t).split(" ").map(parseFloat)));return 0===c.length?null:{geometry:c.length>2?{type:"LineString",coordinates:c}:{type:"Point",coordinates:c[0]},times:e(t,"when").map((t=>o(t)))}}function W(t){if(0===t.length)return t;const e=t[0],n=t[t.length-1];let o=!0;for(let t=0;t<Math.max(e.length,n.length);t++)if(e[t]!==n[t]){o=!1;break}return o?t:t.concat([t[0]])}const H=["Polygon","LineString","Point","Track","gx:Track"];function _(t){return o(r(t,"coordinates"))}function U(t){const n=[],o=[];for(const e of["MultiGeometry","MultiTrack","gx:MultiTrack"]){const n=r(t,e);if(n)return U(n)}for(const r of H)for(const i of e(t,r))switch(r){case"Point":{const t=C(_(i));t.length>=2&&n.push({type:"Point",coordinates:t});break}case"LineString":{const t=G(_(i));t.length>=2&&n.push({type:"LineString",coordinates:t});break}case"Polygon":{const t=[];for(const n of e(i,"LinearRing")){const e=W(G(_(n)));e.length>=4&&t.push(e)}t.length&&n.push({type:"Polygon",coordinates:t});break}case"Track":case"gx:Track":{const t=D(i);if(!t)break;const{times:e,geometry:r}=t;n.push(r),e.length&&o.push(e);break}}return{geometries:n,coordTimes:o}}function V(t){return i(t,"ExtendedData",((t,n)=>{for(const i of e(t,"Data"))n[i.getAttribute("name")||""]=o(r(i,"value"));for(const r of e(t,"SimpleData"))n[r.getAttribute("name")||""]=o(r);return n}))}function I(t){return 0===t.length?null:1===t.length?t[0]:{type:"GeometryCollection",geometries:t}}function $(t){return i(t,"TimeSpan",(t=>({timespan:{begin:o(r(t,"begin")),end:o(r(t,"end"))}})))}function z(t){return i(t,"TimeStamp",(t=>({timestamp:o(r(t,"when"))})))}function J(t,e){return s(t,"styleUrl",(t=>(t=n(t),e[t]?Object.assign({styleUrl:t},e[t]):{styleUrl:t})))}function q(t){const e=r(t,"description");for(const t of Array.from(e?.childNodes||[]))if(4===t.nodeType)return{description:{"@type":"html",value:o(t)}};return{}}function K(t,e){const{coordTimes:n,geometries:o}=U(t),r={type:"Feature",geometry:I(o),properties:Object.assign(l(t,["name","address","visibility","open","phoneNumber","description"]),q(t),J(t,e),M(t),V(t),$(t),z(t),n.length?{coordinateProperties:{times:1===n.length?n[0]:n}}:{})};void 0!==r.properties?.visibility&&(r.properties.visibility="0"!==r.properties.visibility);const i=t.getAttribute("id");return null!==i&&""!==i&&(r.id=i),r}function Q(t){let e=t.getAttribute("id");const o=t.parentNode;return!e&&u(o)&&"CascadingStyle"===o.localName&&(e=o.getAttribute("kml:id")||o.getAttribute("id")),n(e||"")}function X(t){const o={};for(const n of e(t,"Style"))o[Q(n)]=M(n);for(const r of e(t,"StyleMap")){const t=n(r.getAttribute("id")||"");s(r,"styleUrl",(e=>{e=n(e),o[e]&&(o[t]=o[e])}))}return o}const Y=["name","visibility","open","address","description","phoneNumber","visibility"];function*Z(t){const n=X(t);for(const o of e(t,"Placemark")){const t=K(o,n);t&&(yield t)}}t.gpx=function(t){return{type:"FeatureCollection",features:Array.from(k(t))}},t.gpxGen=k,t.kml=function(t){return{type:"FeatureCollection",features:Array.from(Z(t))}},t.kmlGen=Z,t.kmlWithFolders=function(t){const e=X(t),n={type:"root",children:[]};return function t(n,r){if(u(n))switch(n.tagName){case"Placemark":{const t=K(n,e);t&&r.children.push(t);break}case"Folder":{const t=function(t){const e={};for(const n of Array.from(t.childNodes))u(n)&&Y.includes(n.tagName)&&(e[n.tagName]=o(n));return{type:"folder",meta:e,children:[]}}(n);r.children.push(t),r=t;break}}if(n.childNodes)for(let e=0;e<n.childNodes.length;e++)t(n.childNodes[e],r)}(t,n),n},t.tcx=function(t){return{type:"FeatureCollection",features:Array.from(j(t))}},t.tcxGen=j,Object.defineProperty(t,"__esModule",{value:!0})}));
 
 
@@ -12451,7 +12451,7 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"object-assign":155,"util/":54}],52:[function(require,module,exports){
+},{"object-assign":154,"util/":54}],52:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -13073,7 +13073,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":53,"_process":163,"inherits":52}],55:[function(require,module,exports){
+},{"./support/isBuffer":53,"_process":162,"inherits":52}],55:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -15704,7 +15704,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":57,"buffer":60,"ieee754":100}],61:[function(require,module,exports){
+},{"base64-js":57,"buffer":60,"ieee754":99}],61:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -15721,7 +15721,7 @@ module.exports = function callBoundIntrinsic(name, allowMissing) {
 	return intrinsic;
 };
 
-},{"./":62,"get-intrinsic":93}],62:[function(require,module,exports){
+},{"./":62,"get-intrinsic":92}],62:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
@@ -15770,7 +15770,7 @@ if ($defineProperty) {
 	module.exports.apply = applyBind;
 }
 
-},{"function-bind":86,"get-intrinsic":93}],63:[function(require,module,exports){
+},{"function-bind":86,"get-intrinsic":92}],63:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 
@@ -28175,7 +28175,7 @@ if ($gOPD) {
 
 module.exports = $gOPD;
 
-},{"get-intrinsic":93}],80:[function(require,module,exports){
+},{"get-intrinsic":92}],80:[function(require,module,exports){
 /*!
  * escape-html
  * Copyright(c) 2012-2013 TJ Holowaychuk
@@ -29162,7 +29162,7 @@ var forEach = function forEach(list, iterator, thisArg) {
 
 module.exports = forEach;
 
-},{"is-callable":104}],85:[function(require,module,exports){
+},{"is-callable":103}],85:[function(require,module,exports){
 'use strict';
 
 /* eslint no-invalid-this: 1 */
@@ -29411,8 +29411,6 @@ function flatten(gj, up) {
 }
 
 },{}],89:[function(require,module,exports){
-arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],90:[function(require,module,exports){
 module.exports = function(count, type) {
     switch (type) {
         case 'point':
@@ -29431,7 +29429,7 @@ function feature(geom) {
 }
 function collection(f) { return { type: 'FeatureCollection', features: f }; }
 
-},{}],91:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 var dsv = require('dsv');
 
 module.exports = function(_, delim) {
@@ -29458,7 +29456,7 @@ module.exports = function(_, delim) {
     }));
 };
 
-},{"dsv":78}],92:[function(require,module,exports){
+},{"dsv":78}],91:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -29777,7 +29775,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":108}],93:[function(require,module,exports){
+},{"jsonlint-lines":107}],92:[function(require,module,exports){
 'use strict';
 
 var undefined;
@@ -30113,7 +30111,7 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 	return value;
 };
 
-},{"function-bind":86,"has":99,"has-symbols":96}],94:[function(require,module,exports){
+},{"function-bind":86,"has":98,"has-symbols":95}],93:[function(require,module,exports){
 var parseCSV = require('dsv').csv.parse;
 
 /**
@@ -30155,12 +30153,12 @@ function gtfs2geojson(gtfs) {
 
 module.exports = gtfs2geojson;
 
-},{"dsv":95}],95:[function(require,module,exports){
+},{"dsv":94}],94:[function(require,module,exports){
 
 
 module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{}],96:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 'use strict';
 
 var origSymbol = typeof Symbol !== 'undefined' && Symbol;
@@ -30175,7 +30173,7 @@ module.exports = function hasNativeSymbols() {
 	return hasSymbolSham();
 };
 
-},{"./shams":97}],97:[function(require,module,exports){
+},{"./shams":96}],96:[function(require,module,exports){
 'use strict';
 
 /* eslint complexity: [2, 18], max-statements: [2, 33] */
@@ -30219,7 +30217,7 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{}],98:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 'use strict';
 
 var hasSymbols = require('has-symbols/shams');
@@ -30228,14 +30226,14 @@ module.exports = function hasToStringTagShams() {
 	return hasSymbols() && !!Symbol.toStringTag;
 };
 
-},{"has-symbols/shams":97}],99:[function(require,module,exports){
+},{"has-symbols/shams":96}],98:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":86}],100:[function(require,module,exports){
+},{"function-bind":86}],99:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -30322,7 +30320,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],101:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -30351,7 +30349,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],102:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 'use strict';
 
 var hasToStringTag = require('has-tostringtag/shams')();
@@ -30386,7 +30384,7 @@ isStandardArguments.isLegacyArguments = isLegacyArguments; // for tests
 
 module.exports = supportsStandardArguments ? isStandardArguments : isLegacyArguments;
 
-},{"call-bind/callBound":61,"has-tostringtag/shams":98}],103:[function(require,module,exports){
+},{"call-bind/callBound":61,"has-tostringtag/shams":97}],102:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -30409,7 +30407,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],104:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 'use strict';
 
 var fnToStr = Function.prototype.toString;
@@ -30512,7 +30510,7 @@ module.exports = reflectApply
 		return tryFunctionObject(value);
 	};
 
-},{}],105:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -30552,7 +30550,7 @@ module.exports = function isGeneratorFunction(fn) {
 	return getProto(fn) === GeneratorFunction;
 };
 
-},{"has-tostringtag/shams":98}],106:[function(require,module,exports){
+},{"has-tostringtag/shams":97}],105:[function(require,module,exports){
 'use strict';
 var toString = Object.prototype.toString;
 
@@ -30561,7 +30559,7 @@ module.exports = function (x) {
 	return toString.call(x) === '[object Object]' && (prototype = Object.getPrototypeOf(x), prototype === null || prototype === Object.getPrototypeOf({}));
 };
 
-},{}],107:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -30625,7 +30623,7 @@ module.exports = function isTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":55,"call-bind/callBound":61,"es-abstract/helpers/getOwnPropertyDescriptor":79,"for-each":84,"has-tostringtag/shams":98}],108:[function(require,module,exports){
+},{"available-typed-arrays":55,"call-bind/callBound":61,"es-abstract/helpers/getOwnPropertyDescriptor":79,"for-each":84,"has-tostringtag/shams":97}],107:[function(require,module,exports){
 (function (process){(function (){
 /* parser generated by jison 0.4.6 */
 /*
@@ -31282,7 +31280,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 }).call(this)}).call(this,require('_process'))
-},{"_process":163,"fs":59,"path":160}],109:[function(require,module,exports){
+},{"_process":162,"fs":59,"path":159}],108:[function(require,module,exports){
 'use strict';
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -31354,7 +31352,7 @@ exports.decode = function(input, utf8) {
 
 };
 
-},{}],110:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 'use strict';
 function CompressedObject() {
     this.compressedSize = 0;
@@ -31384,7 +31382,7 @@ CompressedObject.prototype = {
 };
 module.exports = CompressedObject;
 
-},{}],111:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 'use strict';
 exports.STORE = {
     magic: "\x00\x00",
@@ -31399,7 +31397,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":116}],112:[function(require,module,exports){
+},{"./flate":115}],111:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -31503,7 +31501,7 @@ module.exports = function crc32(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":129}],113:[function(require,module,exports){
+},{"./utils":128}],112:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -31612,7 +31610,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"./utils":129}],114:[function(require,module,exports){
+},{"./utils":128}],113:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -31625,7 +31623,7 @@ exports.comment = null;
 exports.unixPermissions = null;
 exports.dosPermissions = null;
 
-},{}],115:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -31732,7 +31730,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./utils":129}],116:[function(require,module,exports){
+},{"./utils":128}],115:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -31750,7 +31748,7 @@ exports.uncompress =  function(input) {
     return pako.inflateRaw(input);
 };
 
-},{"pako":132}],117:[function(require,module,exports){
+},{"pako":131}],116:[function(require,module,exports){
 'use strict';
 
 var base64 = require('./base64');
@@ -31831,7 +31829,7 @@ JSZip.base64 = {
 JSZip.compressions = require('./compressions');
 module.exports = JSZip;
 
-},{"./base64":109,"./compressions":111,"./defaults":114,"./deprecatedPublicUtils":115,"./load":118,"./object":121,"./support":125}],118:[function(require,module,exports){
+},{"./base64":108,"./compressions":110,"./defaults":113,"./deprecatedPublicUtils":114,"./load":117,"./object":120,"./support":124}],117:[function(require,module,exports){
 'use strict';
 var base64 = require('./base64');
 var ZipEntries = require('./zipEntries');
@@ -31864,7 +31862,7 @@ module.exports = function(data, options) {
     return this;
 };
 
-},{"./base64":109,"./zipEntries":130}],119:[function(require,module,exports){
+},{"./base64":108,"./zipEntries":129}],118:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 module.exports = function(data, encoding){
@@ -31875,7 +31873,7 @@ module.exports.test = function(b){
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60}],120:[function(require,module,exports){
+},{"buffer":60}],119:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./uint8ArrayReader');
 
@@ -31897,7 +31895,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"./uint8ArrayReader":126}],121:[function(require,module,exports){
+},{"./uint8ArrayReader":125}],120:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var utils = require('./utils');
@@ -32782,7 +32780,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./base64":109,"./compressedObject":110,"./compressions":111,"./crc32":112,"./defaults":114,"./nodeBuffer":119,"./signature":122,"./stringWriter":124,"./support":125,"./uint8ArrayWriter":127,"./utf8":128,"./utils":129}],122:[function(require,module,exports){
+},{"./base64":108,"./compressedObject":109,"./compressions":110,"./crc32":111,"./defaults":113,"./nodeBuffer":118,"./signature":121,"./stringWriter":123,"./support":124,"./uint8ArrayWriter":126,"./utf8":127,"./utils":128}],121:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -32791,7 +32789,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],123:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 var utils = require('./utils');
@@ -32829,7 +32827,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"./dataReader":113,"./utils":129}],124:[function(require,module,exports){
+},{"./dataReader":112,"./utils":128}],123:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -32861,7 +32859,7 @@ StringWriter.prototype = {
 
 module.exports = StringWriter;
 
-},{"./utils":129}],125:[function(require,module,exports){
+},{"./utils":128}],124:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 exports.base64 = true;
@@ -32899,7 +32897,7 @@ else {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60}],126:[function(require,module,exports){
+},{"buffer":60}],125:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 
@@ -32948,7 +32946,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"./dataReader":113}],127:[function(require,module,exports){
+},{"./dataReader":112}],126:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -32986,7 +32984,7 @@ Uint8ArrayWriter.prototype = {
 
 module.exports = Uint8ArrayWriter;
 
-},{"./utils":129}],128:[function(require,module,exports){
+},{"./utils":128}],127:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -33195,7 +33193,7 @@ exports.utf8decode = function utf8decode(buf) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./nodeBuffer":119,"./support":125,"./utils":129}],129:[function(require,module,exports){
+},{"./nodeBuffer":118,"./support":124,"./utils":128}],128:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var compressions = require('./compressions');
@@ -33523,7 +33521,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./compressions":111,"./nodeBuffer":119,"./support":125}],130:[function(require,module,exports){
+},{"./compressions":110,"./nodeBuffer":118,"./support":124}],129:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var NodeBufferReader = require('./nodeBufferReader');
@@ -33746,7 +33744,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./nodeBufferReader":120,"./object":121,"./signature":122,"./stringReader":123,"./support":125,"./uint8ArrayReader":126,"./utils":129,"./zipEntry":131}],131:[function(require,module,exports){
+},{"./nodeBufferReader":119,"./object":120,"./signature":121,"./stringReader":122,"./support":124,"./uint8ArrayReader":125,"./utils":128,"./zipEntry":130}],130:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var utils = require('./utils');
@@ -34058,7 +34056,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":110,"./object":121,"./stringReader":123,"./utils":129}],132:[function(require,module,exports){
+},{"./compressedObject":109,"./object":120,"./stringReader":122,"./utils":128}],131:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -34074,7 +34072,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":133,"./lib/inflate":134,"./lib/utils/common":135,"./lib/zlib/constants":138}],133:[function(require,module,exports){
+},{"./lib/deflate":132,"./lib/inflate":133,"./lib/utils/common":134,"./lib/zlib/constants":137}],132:[function(require,module,exports){
 'use strict';
 
 
@@ -34476,7 +34474,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":135,"./utils/strings":136,"./zlib/deflate":140,"./zlib/messages":145,"./zlib/zstream":147}],134:[function(require,module,exports){
+},{"./utils/common":134,"./utils/strings":135,"./zlib/deflate":139,"./zlib/messages":144,"./zlib/zstream":146}],133:[function(require,module,exports){
 'use strict';
 
 
@@ -34896,7 +34894,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":135,"./utils/strings":136,"./zlib/constants":138,"./zlib/gzheader":141,"./zlib/inflate":143,"./zlib/messages":145,"./zlib/zstream":147}],135:[function(require,module,exports){
+},{"./utils/common":134,"./utils/strings":135,"./zlib/constants":137,"./zlib/gzheader":140,"./zlib/inflate":142,"./zlib/messages":144,"./zlib/zstream":146}],134:[function(require,module,exports){
 'use strict';
 
 
@@ -35000,7 +34998,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],136:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -35187,7 +35185,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":135}],137:[function(require,module,exports){
+},{"./common":134}],136:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -35221,7 +35219,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],138:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 'use strict';
 
 
@@ -35273,7 +35271,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],139:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -35316,7 +35314,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],140:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -37173,7 +37171,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":135,"./adler32":137,"./crc32":139,"./messages":145,"./trees":146}],141:[function(require,module,exports){
+},{"../utils/common":134,"./adler32":136,"./crc32":138,"./messages":144,"./trees":145}],140:[function(require,module,exports){
 'use strict';
 
 
@@ -37215,7 +37213,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],142:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -37543,7 +37541,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],143:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 'use strict';
 
 
@@ -39083,7 +39081,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":135,"./adler32":137,"./crc32":139,"./inffast":142,"./inftrees":144}],144:[function(require,module,exports){
+},{"../utils/common":134,"./adler32":136,"./crc32":138,"./inffast":141,"./inftrees":143}],143:[function(require,module,exports){
 'use strict';
 
 
@@ -39412,7 +39410,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":135}],145:[function(require,module,exports){
+},{"../utils/common":134}],144:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -39427,7 +39425,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],146:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 'use strict';
 
 
@@ -40631,7 +40629,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":135}],147:[function(require,module,exports){
+},{"../utils/common":134}],146:[function(require,module,exports){
 'use strict';
 
 
@@ -40662,7 +40660,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],148:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 (function (global){(function (){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -41043,7 +41041,7 @@ function toNumber(value) {
 module.exports = debounce;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],149:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
@@ -58256,7 +58254,7 @@ module.exports = debounce;
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],150:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 (function (process){(function (){
 /* Mapbox GL JS is Copyright © 2020 Mapbox and subject to the Mapbox Terms of Service ((https://www.mapbox.com/legal/tos/). */
 (function (global, factory) {
@@ -58304,7 +58302,7 @@ return mapboxgl$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":163}],151:[function(require,module,exports){
+},{"_process":162}],150:[function(require,module,exports){
 (function (global){(function (){
 /**
  * marked - a markdown parser
@@ -59574,7 +59572,7 @@ if (typeof exports === 'object') {
 }());
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],152:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 let { urlAlphabet } = require('./url-alphabet/index.cjs')
 let random = bytes => crypto.getRandomValues(new Uint8Array(bytes))
 let customRandom = (alphabet, defaultSize, getRandom) => {
@@ -59610,12 +59608,12 @@ let nanoid = (size = 21) =>
   }, '')
 module.exports = { nanoid, customAlphabet, customRandom, urlAlphabet, random }
 
-},{"./url-alphabet/index.cjs":153}],153:[function(require,module,exports){
+},{"./url-alphabet/index.cjs":152}],152:[function(require,module,exports){
 let urlAlphabet =
   'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict'
 module.exports = { urlAlphabet }
 
-},{}],154:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 /*! @preserve
  * numeral.js
  * version : 2.0.6
@@ -60630,7 +60628,7 @@ module.exports = { urlAlphabet }
 return numeral;
 }));
 
-},{}],155:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -60722,10 +60720,10 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],156:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 module.exports = require('./polygon-features.json')
 
-},{"./polygon-features.json":157}],157:[function(require,module,exports){
+},{"./polygon-features.json":156}],156:[function(require,module,exports){
 module.exports=[
     {
         "key": "building",
@@ -60884,7 +60882,7 @@ module.exports=[
     }
 ]
 
-},{}],158:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 var _ = require("./lodash.custom.js");
 var rewind = require("@mapbox/geojson-rewind");
 
@@ -61951,7 +61949,7 @@ osmtogeojson.toGeojson = osmtogeojson;
 
 module.exports = osmtogeojson;
 
-},{"./lodash.custom.js":159,"@mapbox/geojson-rewind":9,"osm-polygon-features":156}],159:[function(require,module,exports){
+},{"./lodash.custom.js":158,"@mapbox/geojson-rewind":9,"osm-polygon-features":155}],158:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
@@ -65658,7 +65656,7 @@ module.exports = osmtogeojson;
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],160:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 (function (process){(function (){
 // 'path' module extracted from Node.js v8.11.1 (only the posix part)
 // transplited with Babel
@@ -66191,7 +66189,7 @@ posix.posix = posix;
 module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":163}],161:[function(require,module,exports){
+},{"_process":162}],160:[function(require,module,exports){
 'use strict';
 
 /**
@@ -66346,7 +66344,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = polyline;
 }
 
-},{}],162:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 module.exports = function (data) {
     var lines = data.split('\n'),
                 isNameLine = true,
@@ -66412,7 +66410,7 @@ module.exports = function (data) {
     return gj;
 };
 
-},{}],163:[function(require,module,exports){
+},{}],162:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -66598,7 +66596,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],164:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 /*
  * Given a querystring, return an object of that querystring's components.
  *
@@ -66631,7 +66629,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],165:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 (function() {
   var slice = [].slice;
 
@@ -66713,11 +66711,11 @@ module.exports.qsString = function(obj, noencode) {
   else this.queue = queue;
 })();
 
-},{}],166:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 module.exports.download = require('./src/download')
 module.exports.write = require('./src/write')
 module.exports.zip = require('./src/zip')
-},{"./src/download":167,"./src/write":175,"./src/zip":176}],167:[function(require,module,exports){
+},{"./src/download":166,"./src/write":174,"./src/zip":175}],166:[function(require,module,exports){
 var zip = require('./zip');
 
 module.exports = function(gj, options) {
@@ -66725,7 +66723,7 @@ module.exports = function(gj, options) {
     location.href = 'data:application/zip;base64,' + content;
 };
 
-},{"./zip":176}],168:[function(require,module,exports){
+},{"./zip":175}],167:[function(require,module,exports){
 module.exports.enlarge = function enlargeExtent(extent, pt) {
     if (pt[0] < extent.xmin) extent.xmin = pt[0];
     if (pt[0] > extent.xmax) extent.xmax = pt[0];
@@ -66751,7 +66749,7 @@ module.exports.blank = function() {
     };
 };
 
-},{}],169:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 var types = require('./types').jstypes;
 
 module.exports.geojson = geojson;
@@ -66781,7 +66779,7 @@ function obj(_) {
     return o;
 }
 
-},{"./types":174}],170:[function(require,module,exports){
+},{"./types":173}],169:[function(require,module,exports){
 module.exports.point = justType('Point', 'POINT');
 module.exports.line = justType('LineString', 'POLYLINE');
 module.exports.polygon = justType('Polygon', 'POLYGON');
@@ -66815,7 +66813,7 @@ function isType(t) {
     return function(f) { return f.geometry.type === t; };
 }
 
-},{}],171:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(coordinates, extent, shpView, shxView) {
@@ -66862,7 +66860,7 @@ module.exports.shpLength = function(coordinates) {
     return coordinates.length * 28;
 };
 
-},{"./extent":168}],172:[function(require,module,exports){
+},{"./extent":167}],171:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
@@ -66942,10 +66940,10 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":168}],173:[function(require,module,exports){
+},{"./extent":167}],172:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
-},{}],174:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 module.exports.geometries = {
     NULL: 0,
     POINT: 1,
@@ -66963,7 +66961,7 @@ module.exports.geometries = {
     MULTIPATCH: 31,
 };
 
-},{}],175:[function(require,module,exports){
+},{}],174:[function(require,module,exports){
 var types = require('./types'),
     dbf = require('dbf'),
     prj = require('./prj'),
@@ -67032,7 +67030,7 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":168,"./fields":169,"./points":171,"./poly":172,"./prj":173,"./types":174,"assert":51,"dbf":73}],176:[function(require,module,exports){
+},{"./extent":167,"./fields":168,"./points":170,"./poly":171,"./prj":172,"./types":173,"assert":51,"dbf":73}],175:[function(require,module,exports){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
@@ -67066,7 +67064,7 @@ module.exports = function(gj, options) {
     return zip.generate({compression:'STORE'});
 };
 
-},{"./geojson":170,"./prj":173,"./write":175,"jszip":117}],177:[function(require,module,exports){
+},{"./geojson":169,"./prj":172,"./write":174,"jszip":116}],176:[function(require,module,exports){
 (function (global){(function (){
 ;(function(win){
 	var store = {},
@@ -67234,7 +67232,7 @@ module.exports = function(gj, options) {
 })(this.window || global);
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],178:[function(require,module,exports){
+},{}],177:[function(require,module,exports){
 module.exports.attr = attr;
 module.exports.tagClose = tagClose;
 module.exports.tag = tag;
@@ -67280,7 +67278,7 @@ function encode(_) {
         .replace(/"/g, '&quot;');
 }
 
-},{}],179:[function(require,module,exports){
+},{}],178:[function(require,module,exports){
 !function(root, name, make) {
   if (typeof module != 'undefined' && module.exports) module.exports = make()
   else root[name] = make()
@@ -67332,7 +67330,7 @@ function encode(_) {
   return api
 });
 
-},{}],180:[function(require,module,exports){
+},{}],179:[function(require,module,exports){
 'use strict';
 
 /**
@@ -67397,9 +67395,9 @@ if (typeof window !== 'undefined') {
   window.Suggestions = Suggestions;
 }
 
-},{"./src/suggestions":183}],181:[function(require,module,exports){
+},{"./src/suggestions":182}],180:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3}],182:[function(require,module,exports){
+},{"dup":3}],181:[function(require,module,exports){
 'use strict';
 
 var List = function(component) {
@@ -67512,7 +67510,7 @@ List.prototype.drawError = function(msg){
 
 module.exports = List;
 
-},{}],183:[function(require,module,exports){
+},{}],182:[function(require,module,exports){
 'use strict';
 
 var extend = require('xtend');
@@ -67770,7 +67768,7 @@ Suggestions.prototype.renderError = function(msg){
 
 module.exports = Suggestions;
 
-},{"./list":182,"fuzzy":87,"xtend":181}],184:[function(require,module,exports){
+},{"./list":181,"fuzzy":87,"xtend":180}],183:[function(require,module,exports){
 var strxml = require('strxml'),
     tag = strxml.tag,
     encode = strxml.encode;
@@ -67967,7 +67965,7 @@ function pairs(_) {
     return o;
 }
 
-},{"strxml":178}],185:[function(require,module,exports){
+},{"strxml":177}],184:[function(require,module,exports){
 // https://github.com/topojson/topojson-client v3.1.0 Copyright 2019 Mike Bostock
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -68477,7 +68475,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
 
-},{}],186:[function(require,module,exports){
+},{}],185:[function(require,module,exports){
 // https://github.com/topojson/topojson-server v3.0.1 Copyright 2019 Mike Bostock
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -69317,7 +69315,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
 
-},{}],187:[function(require,module,exports){
+},{}],186:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -69633,7 +69631,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],188:[function(require,module,exports){
+},{}],187:[function(require,module,exports){
 module.exports = function(request) {
     var parent = ce('div', 'treeui'),
         onclick = function() { };
@@ -69732,9 +69730,9 @@ function ae(x, y, z) {
     return x.addEventListener(y, z);
 }
 
-},{}],189:[function(require,module,exports){
+},{}],188:[function(require,module,exports){
 arguments[4][53][0].apply(exports,arguments)
-},{"dup":53}],190:[function(require,module,exports){
+},{"dup":53}],189:[function(require,module,exports){
 // Currently in sync with Node.js lib/internal/util/types.js
 // https://github.com/nodejs/node/commit/112cc7c27551254aa2b17098fb774867f05ed0d9
 
@@ -70070,7 +70068,7 @@ exports.isAnyArrayBuffer = isAnyArrayBuffer;
   });
 });
 
-},{"is-arguments":102,"is-generator-function":105,"is-typed-array":107,"which-typed-array":193}],191:[function(require,module,exports){
+},{"is-arguments":101,"is-generator-function":104,"is-typed-array":106,"which-typed-array":192}],190:[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -70789,7 +70787,7 @@ function callbackify(original) {
 exports.callbackify = callbackify;
 
 }).call(this)}).call(this,require('_process'))
-},{"./support/isBuffer":189,"./support/types":190,"_process":163,"inherits":101}],192:[function(require,module,exports){
+},{"./support/isBuffer":188,"./support/types":189,"_process":162,"inherits":100}],191:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -71040,7 +71038,7 @@ function stringify(gj) {
     }
 }
 
-},{}],193:[function(require,module,exports){
+},{}],192:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -71099,7 +71097,7 @@ module.exports = function whichTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":55,"call-bind/callBound":61,"es-abstract/helpers/getOwnPropertyDescriptor":79,"for-each":84,"has-tostringtag/shams":98,"is-typed-array":107}],194:[function(require,module,exports){
+},{"available-typed-arrays":55,"call-bind/callBound":61,"es-abstract/helpers/getOwnPropertyDescriptor":79,"for-each":84,"has-tostringtag/shams":97,"is-typed-array":106}],193:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryReader;
 
@@ -71150,7 +71148,7 @@ BinaryReader.prototype.readVarInt = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60}],195:[function(require,module,exports){
+},{"buffer":60}],194:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryWriter;
 
@@ -71219,7 +71217,7 @@ BinaryWriter.prototype.ensureSize = function (size) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60}],196:[function(require,module,exports){
+},{"buffer":60}],195:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = Geometry;
 
@@ -71607,7 +71605,7 @@ Geometry.prototype.toGeoJSON = function (options) {
 };
 
 }).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":103,"./binaryreader":194,"./binarywriter":195,"./geometrycollection":197,"./linestring":198,"./multilinestring":199,"./multipoint":200,"./multipolygon":201,"./point":202,"./polygon":203,"./types":204,"./wktparser":205,"./zigzag.js":207}],197:[function(require,module,exports){
+},{"../../is-buffer/index.js":102,"./binaryreader":193,"./binarywriter":194,"./geometrycollection":196,"./linestring":197,"./multilinestring":198,"./multipoint":199,"./multipolygon":200,"./point":201,"./polygon":202,"./types":203,"./wktparser":204,"./zigzag.js":206}],196:[function(require,module,exports){
 module.exports = GeometryCollection;
 
 var util = require('util');
@@ -71778,7 +71776,7 @@ GeometryCollection.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":195,"./geometry":196,"./types":204,"util":191}],198:[function(require,module,exports){
+},{"./binarywriter":194,"./geometry":195,"./types":203,"util":190}],197:[function(require,module,exports){
 module.exports = LineString;
 
 var util = require('util');
@@ -71958,7 +71956,7 @@ LineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":195,"./geometry":196,"./point":202,"./types":204,"util":191}],199:[function(require,module,exports){
+},{"./binarywriter":194,"./geometry":195,"./point":201,"./types":203,"util":190}],198:[function(require,module,exports){
 module.exports = MultiLineString;
 
 var util = require('util');
@@ -72149,7 +72147,7 @@ MultiLineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":195,"./geometry":196,"./linestring":198,"./point":202,"./types":204,"util":191}],200:[function(require,module,exports){
+},{"./binarywriter":194,"./geometry":195,"./linestring":197,"./point":201,"./types":203,"util":190}],199:[function(require,module,exports){
 module.exports = MultiPoint;
 
 var util = require('util');
@@ -72323,7 +72321,7 @@ MultiPoint.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":195,"./geometry":196,"./point":202,"./types":204,"util":191}],201:[function(require,module,exports){
+},{"./binarywriter":194,"./geometry":195,"./point":201,"./types":203,"util":190}],200:[function(require,module,exports){
 module.exports = MultiPolygon;
 
 var util = require('util');
@@ -72551,7 +72549,7 @@ MultiPolygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":195,"./geometry":196,"./point":202,"./polygon":203,"./types":204,"util":191}],202:[function(require,module,exports){
+},{"./binarywriter":194,"./geometry":195,"./point":201,"./polygon":202,"./types":203,"util":190}],201:[function(require,module,exports){
 module.exports = Point;
 
 var util = require('util');
@@ -72770,7 +72768,7 @@ Point.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":195,"./geometry":196,"./types":204,"./zigzag.js":207,"util":191}],203:[function(require,module,exports){
+},{"./binarywriter":194,"./geometry":195,"./types":203,"./zigzag.js":206,"util":190}],202:[function(require,module,exports){
 module.exports = Polygon;
 
 var util = require('util');
@@ -73060,7 +73058,7 @@ Polygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":195,"./geometry":196,"./point":202,"./types":204,"util":191}],204:[function(require,module,exports){
+},{"./binarywriter":194,"./geometry":195,"./point":201,"./types":203,"util":190}],203:[function(require,module,exports){
 module.exports = {
     wkt: {
         Point: 'POINT',
@@ -73091,7 +73089,7 @@ module.exports = {
     }
 };
 
-},{}],205:[function(require,module,exports){
+},{}],204:[function(require,module,exports){
 module.exports = WktParser;
 
 var Types = require('./types');
@@ -73217,7 +73215,7 @@ WktParser.prototype.skipWhitespaces = function () {
         this.position++;
 };
 
-},{"./point":202,"./types":204}],206:[function(require,module,exports){
+},{"./point":201,"./types":203}],205:[function(require,module,exports){
 exports.Types = require('./types');
 exports.Geometry = require('./geometry');
 exports.Point = require('./point');
@@ -73227,7 +73225,7 @@ exports.MultiPoint = require('./multipoint');
 exports.MultiLineString = require('./multilinestring');
 exports.MultiPolygon = require('./multipolygon');
 exports.GeometryCollection = require('./geometrycollection');
-},{"./geometry":196,"./geometrycollection":197,"./linestring":198,"./multilinestring":199,"./multipoint":200,"./multipolygon":201,"./point":202,"./polygon":203,"./types":204}],207:[function(require,module,exports){
+},{"./geometry":195,"./geometrycollection":196,"./linestring":197,"./multilinestring":198,"./multipoint":199,"./multipolygon":200,"./point":201,"./polygon":202,"./types":203}],206:[function(require,module,exports){
 module.exports = {
     encode: function (value) {
         return (value << 1) ^ (value >> 31);
@@ -73237,7 +73235,7 @@ module.exports = {
     }
 };
 
-},{}],208:[function(require,module,exports){
+},{}],207:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -73256,20 +73254,20 @@ function extend() {
     return target
 }
 
-},{}],209:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
 module.exports = function () {
   return {
     GithubAPI: false
   };
 };
 
-},{}],210:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 module.exports = {
   DEFAULT_PROJECTION: 'globe',
   DEFAULT_STYLE: 'Streets'
 };
 
-},{}],211:[function(require,module,exports){
+},{}],210:[function(require,module,exports){
 const clone = require('clone'),
   xtend = require('xtend'),
   config = require('../config.js')(location.hostname),
@@ -73564,7 +73562,7 @@ module.exports = function (context) {
   return data;
 };
 
-},{"../config.js":209,"../source/gist":227,"../source/github":228,"../source/local":229,"clone":63,"xtend":208}],212:[function(require,module,exports){
+},{"../config.js":208,"../source/gist":226,"../source/github":227,"../source/local":228,"clone":63,"xtend":207}],211:[function(require,module,exports){
 const qs = require('qs-hash'),
   zoomextent = require('../lib/zoomextent'),
   flash = require('../ui/flash');
@@ -73663,7 +73661,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../lib/zoomextent":223,"../ui/flash":239,"qs-hash":164}],213:[function(require,module,exports){
+},{"../lib/zoomextent":222,"../ui/flash":238,"qs-hash":163}],212:[function(require,module,exports){
 const zoomextent = require('../lib/zoomextent'),
   qs = require('qs-hash');
 
@@ -73704,7 +73702,7 @@ module.exports = function (context) {
   }
 };
 
-},{"../lib/zoomextent":223,"qs-hash":164}],214:[function(require,module,exports){
+},{"../lib/zoomextent":222,"qs-hash":163}],213:[function(require,module,exports){
 const config = require('../config.js')(location.hostname);
 
 module.exports = function (context) {
@@ -73754,7 +73752,7 @@ module.exports = function (context) {
   return repo;
 };
 
-},{"../config.js":209}],215:[function(require,module,exports){
+},{"../config.js":208}],214:[function(require,module,exports){
 const qs = require('qs-hash'),
   xtend = require('xtend');
 
@@ -73828,7 +73826,7 @@ module.exports = function (context) {
   return router;
 };
 
-},{"qs-hash":164,"xtend":208}],216:[function(require,module,exports){
+},{"qs-hash":163,"xtend":207}],215:[function(require,module,exports){
 const config = require('../config.js')(location.hostname);
 
 module.exports = function (context) {
@@ -73926,7 +73924,7 @@ module.exports = function (context) {
   return user;
 };
 
-},{"../config.js":209}],217:[function(require,module,exports){
+},{"../config.js":208}],216:[function(require,module,exports){
 const ui = require('./ui'),
   map = require('./ui/map'),
   data = require('./core/data'),
@@ -73958,7 +73956,7 @@ function geojsonIO() {
   return context;
 }
 
-},{"./core/data":211,"./core/loader":212,"./core/recovery":213,"./core/repo":214,"./core/router":215,"./core/user":216,"./ui":230,"./ui/map":243,"store":177}],218:[function(require,module,exports){
+},{"./core/data":210,"./core/loader":211,"./core/recovery":212,"./core/repo":213,"./core/router":214,"./core/user":215,"./ui":229,"./ui/map":242,"store":176}],217:[function(require,module,exports){
 (function (Buffer){(function (){
 const escape = require('escape-html'),
   geojsonRandom = require('geojson-random'),
@@ -74084,7 +74082,7 @@ module.exports.wkxString = function (context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../lib/zoomextent":223,"@mapbox/geojson-extent":7,"buffer":60,"escape-html":80,"geojson-flatten":88,"geojson-random":90,"polyline":161,"wkx":206}],219:[function(require,module,exports){
+},{"../lib/zoomextent":222,"@mapbox/geojson-extent":7,"buffer":60,"escape-html":80,"geojson-flatten":88,"geojson-random":89,"polyline":160,"wkx":205}],218:[function(require,module,exports){
 module.exports = function (context) {
   return function (e, id) {
     const sel = d3.select(e.target._content);
@@ -74265,14 +74263,14 @@ module.exports = function (context) {
   };
 };
 
-},{}],220:[function(require,module,exports){
+},{}],219:[function(require,module,exports){
 const topojson = require('topojson-client'),
   toGeoJSON = require('@tmcw/togeojson'),
   gtfs2geojson = require('gtfs2geojson'),
   csv2geojson = require('csv2geojson'),
   osmtogeojson = require('osmtogeojson'),
   polytogeojson = require('polytogeojson'),
-  geojsonNormalize = require('geojson-normalize');
+  geojsonNormalize = require('@mapbox/geojson-normalize');
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
@@ -74468,7 +74466,7 @@ function readFile(f, text, callback) {
   }
 }
 
-},{"@tmcw/togeojson":41,"csv2geojson":70,"geojson-normalize":89,"gtfs2geojson":94,"osmtogeojson":158,"polytogeojson":162,"topojson-client":185}],221:[function(require,module,exports){
+},{"@mapbox/geojson-normalize":8,"@tmcw/togeojson":41,"csv2geojson":70,"gtfs2geojson":93,"osmtogeojson":157,"polytogeojson":161,"topojson-client":184}],220:[function(require,module,exports){
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (map, feature) {
@@ -74482,7 +74480,7 @@ module.exports = function (map, feature) {
   }
 };
 
-},{"@turf/bbox":43}],222:[function(require,module,exports){
+},{"@turf/bbox":43}],221:[function(require,module,exports){
 const geojsonhint = require('geojsonhint');
 
 module.exports = function (callback) {
@@ -74552,7 +74550,7 @@ module.exports = function (callback) {
   };
 };
 
-},{"geojsonhint":92}],223:[function(require,module,exports){
+},{"geojsonhint":91}],222:[function(require,module,exports){
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (context) {
@@ -74562,7 +74560,7 @@ module.exports = function (context) {
   });
 };
 
-},{"@turf/bbox":43}],224:[function(require,module,exports){
+},{"@turf/bbox":43}],223:[function(require,module,exports){
 (function (Buffer){(function (){
 
 const marked = require('marked');
@@ -74582,7 +74580,7 @@ module.exports = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60,"marked":151}],225:[function(require,module,exports){
+},{"buffer":60,"marked":150}],224:[function(require,module,exports){
 const _ = require('lodash');
 const { createPopper } = require('@popperjs/core');
 
@@ -74745,7 +74743,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/validate":222,"../lib/zoomextent":223,"../ui/saver.js":250,"@popperjs/core":40,"codemirror/addon/edit/matchbrackets":64,"codemirror/addon/fold/brace-fold":65,"codemirror/addon/fold/foldcode":66,"codemirror/addon/fold/foldgutter":67,"codemirror/lib/codemirror":68,"codemirror/mode/javascript/javascript":69,"lodash":149}],226:[function(require,module,exports){
+},{"../lib/validate":221,"../lib/zoomextent":222,"../ui/saver.js":249,"@popperjs/core":40,"codemirror/addon/edit/matchbrackets":64,"codemirror/addon/fold/brace-fold":65,"codemirror/addon/fold/foldcode":66,"codemirror/addon/fold/foldgutter":67,"codemirror/lib/codemirror":68,"codemirror/mode/javascript/javascript":69,"lodash":148}],225:[function(require,module,exports){
 const metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -74810,7 +74808,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/smartzoom.js":221,"d3-metatable":72}],227:[function(require,module,exports){
+},{"../lib/smartzoom.js":220,"d3-metatable":72}],226:[function(require,module,exports){
 
 const tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';\nvar map = L.mapbox.map('map');\n\nL.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties;\n    var table = document.createElement('table');\n    table.setAttribute('class', 'marker-properties display')\n    for (var key in properties) {\n        var tr = createTableRows(key, properties[key]);\n        table.appendChild(tr);\n    }\n    if (table) l.bindPopup(table);\n}\n\nfunction createTableRows(key, value) {\n    var tr = document.createElement('tr');\n    var th = document.createElement('th');\n    var td = document.createElement('td');\n    key = document.createTextNode(key);\n    value = document.createTextNode(value);\n    th.appendChild(key);\n    td.appendChild(value);\n    tr.appendChild(th);\n    tr.appendChild(td);\n    return tr\n}\n\n</script>\n</body>\n</html>\n";
 
@@ -74947,7 +74945,7 @@ function loadRaw(url, context, callback) {
   }
 }
 
-},{"../config.js":209}],228:[function(require,module,exports){
+},{"../config.js":208}],227:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -75094,7 +75092,7 @@ function shaUrl(parts, sha) {
   );
 }
 
-},{"../config.js":209}],229:[function(require,module,exports){
+},{"../config.js":208}],228:[function(require,module,exports){
 let fs;
 
 try {
@@ -75120,7 +75118,7 @@ function save(context, callback) {
   });
 }
 
-},{"fs":59}],230:[function(require,module,exports){
+},{"fs":59}],229:[function(require,module,exports){
 const buttons = require('./ui/mode_buttons'),
   file_bar = require('./ui/file_bar'),
   dnd = require('./ui/dnd'),
@@ -75195,7 +75193,7 @@ function ui(context) {
   };
 }
 
-},{"./ui/dnd":231,"./ui/file_bar":238,"./ui/layer_switch":240,"./ui/mode_buttons":248,"./ui/projection_switch":249}],231:[function(require,module,exports){
+},{"./ui/dnd":230,"./ui/file_bar":237,"./ui/layer_switch":239,"./ui/mode_buttons":247,"./ui/projection_switch":248}],230:[function(require,module,exports){
 const readDrop = require('../lib/readfile.js').readDrop,
   flash = require('./flash.js'),
   zoomextent = require('../lib/zoomextent');
@@ -75243,7 +75241,7 @@ module.exports = function (context) {
   }
 };
 
-},{"../lib/readfile.js":220,"../lib/zoomextent":223,"./flash.js":239}],232:[function(require,module,exports){
+},{"../lib/readfile.js":219,"../lib/zoomextent":222,"./flash.js":238}],231:[function(require,module,exports){
 // custom mapbopx-gl-draw mode that extends draw_line_string
 // shows a center point, radius line, and circle polygon while drawing
 // forces draw.create on creation of second vertex
@@ -75356,7 +75354,7 @@ const CircleMode = {
 
 module.exports = CircleMode;
 
-},{"./util.js":237,"@mapbox/mapbox-gl-draw":12,"@turf/circle":44,"@turf/length":49}],233:[function(require,module,exports){
+},{"./util.js":236,"@mapbox/mapbox-gl-draw":12,"@turf/circle":44,"@turf/length":49}],232:[function(require,module,exports){
 // from https://jsfiddle.net/fxi/xf51zet4/
 class extendDrawBar {
   constructor(opt) {
@@ -75404,7 +75402,7 @@ class extendDrawBar {
 
 module.exports = extendDrawBar;
 
-},{}],234:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
 // this mode extends the build-in linestring tool, displaying the current length
 // of the line as the user draws using a point feature and a symbol layer
 const MapboxDraw = require('@mapbox/mapbox-gl-draw');
@@ -75469,7 +75467,7 @@ const ExtendedLineStringMode = {
 
 module.exports = ExtendedLineStringMode;
 
-},{"./util.js":237,"@mapbox/mapbox-gl-draw":12}],235:[function(require,module,exports){
+},{"./util.js":236,"@mapbox/mapbox-gl-draw":12}],234:[function(require,module,exports){
 // from https://github.com/thegisdev/mapbox-gl-draw-rectangle-mode
 const doubleClickZoom = {
   enable: (ctx) => {
@@ -75611,7 +75609,7 @@ const DrawRectangle = {
 
 module.exports = DrawRectangle;
 
-},{}],236:[function(require,module,exports){
+},{}],235:[function(require,module,exports){
 module.exports = [
   {
     id: 'gl-draw-polygon-fill-inactive',
@@ -75866,7 +75864,7 @@ module.exports = [
   }
 ];
 
-},{}],237:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 const turfLength = require('@turf/length').default;
 const numeral = require('numeral');
 
@@ -75913,7 +75911,7 @@ module.exports = {
   getDisplayMeasurements
 };
 
-},{"@turf/length":49,"numeral":154}],238:[function(require,module,exports){
+},{"@turf/length":49,"numeral":153}],237:[function(require,module,exports){
 const shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
@@ -75922,7 +75920,7 @@ const shpwrite = require('shp-write'),
   tokml = require('tokml'),
   githubBrowser = require('@mapbox/github-file-browser'),
   gistBrowser = require('@mapbox/gist-map-browser'),
-  geojsonNormalize = require('geojson-normalize'),
+  geojsonNormalize = require('@mapbox/geojson-normalize'),
   wellknown = require('wellknown');
 
 const share = require('./share'),
@@ -76561,7 +76559,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":209,"../lib/meta.js":218,"../lib/readfile":220,"../lib/zoomextent":223,"../ui/saver.js":250,"./flash":239,"./modal.js":247,"./share":251,"@mapbox/gist-map-browser":10,"@mapbox/github-file-browser":11,"clone":63,"file-saver":83,"geojson-normalize":89,"geojson2dsv":91,"shp-write":166,"tokml":184,"topojson-server":186,"wellknown":192}],239:[function(require,module,exports){
+},{"../config.js":208,"../lib/meta.js":217,"../lib/readfile":219,"../lib/zoomextent":222,"../ui/saver.js":249,"./flash":238,"./modal.js":246,"./share":250,"@mapbox/geojson-normalize":8,"@mapbox/gist-map-browser":10,"@mapbox/github-file-browser":11,"clone":63,"file-saver":83,"geojson2dsv":90,"shp-write":165,"tokml":183,"topojson-server":185,"wellknown":191}],238:[function(require,module,exports){
 const message = require('./message');
 
 module.exports = flash;
@@ -76580,7 +76578,7 @@ function flash(selection, txt) {
   return msg;
 }
 
-},{"./message":246}],240:[function(require,module,exports){
+},{"./message":245}],239:[function(require,module,exports){
 const styles = require('./map/styles');
 const { DEFAULT_STYLE } = require('../constants');
 
@@ -76635,7 +76633,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":210,"./map/styles":244}],241:[function(require,module,exports){
+},{"../constants":209,"./map/styles":243}],240:[function(require,module,exports){
 // extend mapboxGL Marker so we can pass in an onClick handler
 const mapboxgl = require('mapbox-gl');
 
@@ -76663,7 +76661,7 @@ class ClickableMarker extends mapboxgl.Marker {
 
 module.exports = ClickableMarker;
 
-},{"mapbox-gl":150}],242:[function(require,module,exports){
+},{"mapbox-gl":149}],241:[function(require,module,exports){
 class EditControl {
   onAdd(map) {
     this.map = map;
@@ -76724,7 +76722,7 @@ module.exports = {
   TrashControl
 };
 
-},{}],243:[function(require,module,exports){
+},{}],242:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl');
 
 require('qs-hash');
@@ -77151,7 +77149,7 @@ module.exports = function (context, readonly) {
   return map;
 };
 
-},{"../../constants":210,"../draw/circle":232,"../draw/extend_draw_bar":233,"../draw/linestring":234,"../draw/rectangle":235,"../draw/styles":236,"./controls":242,"./styles":244,"./util":245,"@mapbox/geojson-rewind":9,"@mapbox/mapbox-gl-draw":12,"@mapbox/mapbox-gl-geocoder":16,"mapbox-gl":150,"qs-hash":164}],244:[function(require,module,exports){
+},{"../../constants":209,"../draw/circle":231,"../draw/extend_draw_bar":232,"../draw/linestring":233,"../draw/rectangle":234,"../draw/styles":235,"./controls":241,"./styles":243,"./util":244,"@mapbox/geojson-rewind":9,"@mapbox/mapbox-gl-draw":12,"@mapbox/mapbox-gl-geocoder":16,"mapbox-gl":149,"qs-hash":163}],243:[function(require,module,exports){
 module.exports = [
   {
     title: 'Streets',
@@ -77200,7 +77198,7 @@ module.exports = [
   }
 ];
 
-},{}],245:[function(require,module,exports){
+},{}],244:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl');
 const escape = require('escape-html');
 const length = require('@turf/length').default;
@@ -77570,7 +77568,7 @@ module.exports = {
   bindPopup
 };
 
-},{"../../lib/popup":219,"./clickable_marker":241,"@turf/area":42,"@turf/length":49,"escape-html":80,"mapbox-gl":150}],246:[function(require,module,exports){
+},{"../../lib/popup":218,"./clickable_marker":240,"@turf/area":42,"@turf/length":49,"escape-html":80,"mapbox-gl":149}],245:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -77599,7 +77597,7 @@ function message(selection) {
   return sel;
 }
 
-},{}],247:[function(require,module,exports){
+},{}],246:[function(require,module,exports){
 module.exports = function (selection, blocking) {
   const previous = selection.select('div.modal');
   const animate = previous.empty();
@@ -77651,7 +77649,7 @@ module.exports = function (selection, blocking) {
   return shaded;
 };
 
-},{}],248:[function(require,module,exports){
+},{}],247:[function(require,module,exports){
 const table = require('../panel/table'),
   json = require('../panel/json'),
   help = require('../panel/help');
@@ -77712,7 +77710,7 @@ module.exports = function (context, pane) {
   };
 };
 
-},{"../panel/help":224,"../panel/json":225,"../panel/table":226}],249:[function(require,module,exports){
+},{"../panel/help":223,"../panel/json":224,"../panel/table":225}],248:[function(require,module,exports){
 const { DEFAULT_PROJECTION } = require('../constants');
 
 module.exports = function (context) {
@@ -77769,7 +77767,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":210}],250:[function(require,module,exports){
+},{"../constants":209}],249:[function(require,module,exports){
 const flash = require('./flash');
 
 module.exports = function (context) {
@@ -77837,7 +77835,7 @@ module.exports = function (context) {
   }
 };
 
-},{"./flash":239}],251:[function(require,module,exports){
+},{"./flash":238}],250:[function(require,module,exports){
 const gist = require('../source/gist'),
   modal = require('./modal');
 
@@ -77896,4 +77894,4 @@ function share(context) {
   };
 }
 
-},{"../source/gist":227,"./modal":247}]},{},[217]);
+},{"../source/gist":226,"./modal":246}]},{},[216]);

@@ -6,7 +6,7 @@ const shpwrite = require('shp-write'),
   tokml = require('tokml'),
   githubBrowser = require('@mapbox/github-file-browser'),
   gistBrowser = require('@mapbox/gist-map-browser'),
-  geojsonNormalize = require('geojson-normalize'),
+  geojsonNormalize = require('@mapbox/geojson-normalize'),
   wellknown = require('wellknown');
 
 const share = require('./share'),
