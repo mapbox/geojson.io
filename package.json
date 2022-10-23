@@ -30,7 +30,7 @@
     "d3-metatable": "0.3.0",
     "escape-html": "^1.0.1",
     "file-saver": "2.0.5",
-    "geojson-flatten": "~0.1.0",
+    "geojson-flatten": "^1.0.4",
     "geojson-random": "0.1.0",
     "geojson2dsv": "0.0.0",
     "gtfs2geojson": "^2.0.0",
