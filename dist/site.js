@@ -487,7 +487,7 @@ v.processMessage = processMessage;
 
 module.exports = v;
 
-},{"is-plain-obj":107,"xtend":3}],3:[function(require,module,exports){
+},{"is-plain-obj":110,"xtend":3}],3:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -598,7 +598,7 @@ function getExtent(_) {
     return ext;
 }
 
-},{"@mapbox/extent":1,"@mapbox/geojson-coords":5,"traverse":185}],8:[function(require,module,exports){
+},{"@mapbox/extent":1,"@mapbox/geojson-coords":5,"traverse":187}],8:[function(require,module,exports){
 module.exports = normalize;
 
 var types = {
@@ -690,6 +690,1261 @@ function rewindRing(ring, dir) {
 }
 
 },{}],10:[function(require,module,exports){
+var jsonlint = require('jsonlint-lines'),
+  geojsonHintObject = require('./object');
+
+/**
+ * @alias geojsonhint
+ * @param {(string|object)} GeoJSON given as a string or as an object
+ * @param {Object} options
+ * @param {boolean} [options.noDuplicateMembers=true] forbid repeated
+ * properties. This is only available for string input, becaused parsed
+ * Objects cannot have duplicate properties.
+ * @param {boolean} [options.precisionWarning=true] warn if GeoJSON contains
+ * unnecessary coordinate precision.
+ * @param {boolean} [options.ignoreRightHandRule=false] ignore errors if the
+ * winding order of a polygon is not correct.
+ * @returns {Array<Object>} an array of errors
+ */
+function hint(str, options) {
+
+    var gj, errors = [];
+
+    if (typeof str === 'object') {
+        gj = str;
+    } else if (typeof str === 'string') {
+        try {
+            gj = jsonlint.parse(str);
+        } catch(e) {
+            var match = e.message.match(/line (\d+)/);
+            var lineNumber = parseInt(match[1], 10);
+            return [{
+                line: lineNumber - 1,
+                message: e.message,
+                error: e
+            }];
+        }
+    } else {
+        return [{
+            message: 'Expected string or object as input',
+            line: 0
+        }];
+    }
+
+    errors = errors.concat(geojsonHintObject.hint(gj, options));
+
+    return errors;
+}
+
+module.exports.hint = hint;
+
+},{"./object":11,"jsonlint-lines":13}],11:[function(require,module,exports){
+var rightHandRule = require('./rhr');
+
+/**
+ * @alias geojsonhint
+ * @param {(string|object)} GeoJSON given as a string or as an object
+ * @param {Object} options
+ * @param {boolean} [options.noDuplicateMembers=true] forbid repeated
+ * properties. This is only available for string input, becaused parsed
+ * Objects cannot have duplicate properties.
+ * @param {boolean} [options.precisionWarning=true] warn if GeoJSON contains
+ * unnecessary coordinate precision.
+ * @param {boolean} [options.ignoreRightHandRule=false] ignore errors if the
+ * winding order of a polygon is not correct.
+ * @returns {Array<Object>} an array of errors
+ */
+function hint(gj, options) {
+
+    var errors = [];
+    var precisionWarningCount = 0;
+    var maxPrecisionWarnings = 10;
+    var maxPrecision = 6;
+
+    function root(_) {
+
+        if ((!options || options.noDuplicateMembers !== false) &&
+           _.__duplicateProperties__) {
+            errors.push({
+                message: 'An object contained duplicate members, making parsing ambigous: ' + _.__duplicateProperties__.join(', '),
+                line: _.__line__
+            });
+        }
+
+        if (requiredProperty(_, 'type', 'string')) {
+            return;
+        }
+
+        if (!types[_.type]) {
+            var expectedType = typesLower[_.type.toLowerCase()];
+            if (expectedType !== undefined) {
+                errors.push({
+                    message: 'Expected ' + expectedType + ' but got ' + _.type + ' (case sensitive)',
+                    line: _.__line__
+                });
+            } else {
+                errors.push({
+                    message: 'The type ' + _.type + ' is unknown',
+                    line: _.__line__
+                });
+            }
+        } else if (_) {
+            types[_.type](_);
+        }
+    }
+
+    function everyIs(_, type) {
+        // make a single exception because typeof null === 'object'
+        return _.every(function(x) {
+            return x !== null && typeof x === type;
+        });
+    }
+
+    function requiredProperty(_, name, type) {
+        if (typeof _[name] === 'undefined') {
+            return errors.push({
+                message: '"' + name + '" member required',
+                line: _.__line__
+            });
+        } else if (type === 'array') {
+            if (!Array.isArray(_[name])) {
+                return errors.push({
+                    message: '"' + name +
+                        '" member should be an array, but is an ' +
+                        (typeof _[name]) + ' instead',
+                    line: _.__line__
+                });
+            }
+        } else if (type === 'object' && _[name] && _[name].constructor !== Object) {
+            return errors.push({
+                message: '"' + name +
+                    '" member should be ' + (type) +
+                    ', but is an ' + (_[name].constructor.name) + ' instead',
+                line: _.__line__
+            });
+        } else if (type && typeof _[name] !== type) {
+            return errors.push({
+                message: '"' + name +
+                    '" member should be ' + (type) +
+                    ', but is an ' + (typeof _[name]) + ' instead',
+                line: _.__line__
+            });
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.3
+    function FeatureCollection(featureCollection) {
+        crs(featureCollection);
+        bbox(featureCollection);
+        if (featureCollection.properties !== undefined) {
+            errors.push({
+                message: 'FeatureCollection object cannot contain a "properties" member',
+                line: featureCollection.__line__
+            });
+        }
+        if (featureCollection.coordinates !== undefined) {
+            errors.push({
+                message: 'FeatureCollection object cannot contain a "coordinates" member',
+                line: featureCollection.__line__
+            });
+        }
+        if (!requiredProperty(featureCollection, 'features', 'array')) {
+            if (!everyIs(featureCollection.features, 'object')) {
+                return errors.push({
+                    message: 'Every feature must be an object',
+                    line: featureCollection.__line__
+                });
+            }
+            featureCollection.features.forEach(Feature);
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.1
+    function position(_, line) {
+        if (!Array.isArray(_)) {
+            return errors.push({
+                message: 'position should be an array, is a ' + (typeof _) +
+                    ' instead',
+                line: _.__line__ || line
+            });
+        }
+        if (_.length < 2) {
+            return errors.push({
+                message: 'position must have 2 or more elements',
+                line: _.__line__ || line
+            });
+        }
+        if (_.length > 3) {
+            return errors.push({
+                message: 'position should not have more than 3 elements',
+                level: 'message',
+                line: _.__line__ || line
+            });
+        }
+        if (!everyIs(_, 'number')) {
+            return errors.push({
+                message: 'each element in a position must be a number',
+                line: _.__line__ || line
+            });
+        }
+
+        if (options && options.precisionWarning) {
+            if (precisionWarningCount === maxPrecisionWarnings) {
+                precisionWarningCount += 1;
+                return errors.push({
+                    message: 'truncated warnings: we\'ve encountered coordinate precision warning ' + maxPrecisionWarnings + ' times, no more warnings will be reported',
+                    level: 'message',
+                    line: _.__line__ || line
+                });
+            } else if (precisionWarningCount < maxPrecisionWarnings) {
+                _.forEach(function(num) {
+                    var precision = 0;
+                    var decimalStr = String(num).split('.')[1];
+                    if (decimalStr !== undefined)
+                        precision = decimalStr.length;
+                    if (precision > maxPrecision) {
+                        precisionWarningCount += 1;
+                        return errors.push({
+                            message: 'precision of coordinates should be reduced',
+                            level: 'message',
+                            line: _.__line__ || line
+                        });
+                    }
+                });
+            }
+        }
+    }
+
+    function positionArray(coords, type, depth, line) {
+        if (line === undefined && coords.__line__ !== undefined) {
+            line = coords.__line__;
+        }
+        if (depth === 0) {
+            return position(coords, line);
+        }
+        if (depth === 1 && type) {
+            if (type === 'LinearRing') {
+                if (!Array.isArray(coords[coords.length - 1])) {
+                    errors.push({
+                        message: 'a number was found where a coordinate array should have been found: this needs to be nested more deeply',
+                        line: line
+                    });
+                    return true;
+                }
+                if (coords.length < 4) {
+                    errors.push({
+                        message: 'a LinearRing of coordinates needs to have four or more positions',
+                        line: line
+                    });
+                }
+                if (coords.length &&
+                    (coords[coords.length - 1].length !== coords[0].length ||
+                    !coords[coords.length - 1].every(function(pos, index) {
+                        return coords[0][index] === pos;
+                }))) {
+                    errors.push({
+                        message: 'the first and last positions in a LinearRing of coordinates must be the same',
+                        line: line
+                    });
+                    return true;
+                }
+            } else if (type === 'Line' && coords.length < 2) {
+                return errors.push({
+                    message: 'a line needs to have two or more coordinates to be valid',
+                    line: line
+                });
+            }
+        }
+        if (!Array.isArray(coords)) {
+            errors.push({
+                message: 'a number was found where a coordinate array should have been found: this needs to be nested more deeply',
+                line: line
+            });
+        } else {
+            var results = coords.map(function(c) {
+                return positionArray(c, type, depth - 1, c.__line__ || line);
+            });
+            return results.some(function(r) {
+                return r;
+            });
+        }
+    }
+
+    function crs(_) {
+        if (!_.crs) return;
+        var defaultCRSName = 'urn:ogc:def:crs:OGC:1.3:CRS84';
+        if (typeof _.crs === 'object' && _.crs.properties && _.crs.properties.name === defaultCRSName) {
+            errors.push({
+                message: 'old-style crs member is not recommended, this object is equivalent to the default and should be removed',
+                line: _.__line__
+            });
+        } else {
+            errors.push({
+                message: 'old-style crs member is not recommended',
+                line: _.__line__
+            });
+        }
+    }
+
+    function bbox(_) {
+        if (!_.bbox) {
+            return;
+        }
+        if (Array.isArray(_.bbox)) {
+            if (!everyIs(_.bbox, 'number')) {
+                errors.push({
+                    message: 'each element in a bbox member must be a number',
+                    line: _.bbox.__line__
+                });
+            }
+            if (!(_.bbox.length === 4 || _.bbox.length === 6)) {
+                errors.push({
+                    message: 'bbox must contain 4 elements (for 2D) or 6 elements (for 3D)',
+                    line: _.bbox.__line__
+                });
+            }
+            return errors.length;
+        }
+        errors.push({
+            message: 'bbox member must be an array of numbers, but is a ' + (typeof _.bbox),
+            line: _.__line__
+        });
+    }
+
+    function geometrySemantics(geom) {
+        if (geom.properties !== undefined) {
+            errors.push({
+                message: 'geometry object cannot contain a "properties" member',
+                line: geom.__line__
+            });
+        }
+        if (geom.geometry !== undefined) {
+            errors.push({
+                message: 'geometry object cannot contain a "geometry" member',
+                line: geom.__line__
+            });
+        }
+        if (geom.features !== undefined) {
+            errors.push({
+                message: 'geometry object cannot contain a "features" member',
+                line: geom.__line__
+            });
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.2
+    function Point(point) {
+        crs(point);
+        bbox(point);
+        geometrySemantics(point);
+        if (!requiredProperty(point, 'coordinates', 'array')) {
+            position(point.coordinates);
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.6
+    function Polygon(polygon) {
+        crs(polygon);
+        bbox(polygon);
+        if (requiredProperty(polygon, 'coordinates', 'array')) return;
+        if (positionArray(polygon.coordinates, 'LinearRing', 2)) return;
+        if (options && options.ignoreRightHandRule === true) return;
+        rightHandRule(polygon, errors);
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.7
+    function MultiPolygon(multiPolygon) {
+        crs(multiPolygon);
+        bbox(multiPolygon);
+        if (requiredProperty(multiPolygon, 'coordinates', 'array')) return;
+        if (positionArray(multiPolygon.coordinates, 'LinearRing', 3)) return;
+        if (options && options.ignoreRightHandRule === true) return;
+        rightHandRule(multiPolygon, errors);
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.4
+    function LineString(lineString) {
+        crs(lineString);
+        bbox(lineString);
+        if (!requiredProperty(lineString, 'coordinates', 'array')) {
+            positionArray(lineString.coordinates, 'Line', 1);
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.5
+    function MultiLineString(multiLineString) {
+        crs(multiLineString);
+        bbox(multiLineString);
+        if (!requiredProperty(multiLineString, 'coordinates', 'array')) {
+            positionArray(multiLineString.coordinates, 'Line', 2);
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.3
+    function MultiPoint(multiPoint) {
+        crs(multiPoint);
+        bbox(multiPoint);
+        if (!requiredProperty(multiPoint, 'coordinates', 'array')) {
+            positionArray(multiPoint.coordinates, '', 1);
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.8
+    function GeometryCollection(geometryCollection) {
+        crs(geometryCollection);
+        bbox(geometryCollection);
+        if (!requiredProperty(geometryCollection, 'geometries', 'array')) {
+            if (!everyIs(geometryCollection.geometries, 'object')) {
+                errors.push({
+                    message: 'The geometries array in a GeometryCollection must contain only geometry objects',
+                    line: geometryCollection.__line__
+                });
+            }
+            if (geometryCollection.geometries.length === 1) {
+                errors.push({
+                    message: 'GeometryCollection with a single geometry should be avoided in favor of single part or a single object of multi-part type',
+                    line: geometryCollection.geometries.__line__
+                });
+            }
+            geometryCollection.geometries.forEach(function(geometry) {
+                if (geometry) {
+                    if (geometry.type === 'GeometryCollection') {
+                        errors.push({
+                            message: 'GeometryCollection should avoid nested geometry collections',
+                            line: geometryCollection.geometries.__line__
+                        });
+                    }
+                    root(geometry);
+                }
+            });
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.2
+    function Feature(feature) {
+        crs(feature);
+        bbox(feature);
+        // https://github.com/geojson/draft-geojson/blob/master/middle.mkd#feature-object
+        if (feature.id !== undefined &&
+            typeof feature.id !== 'string' &&
+            typeof feature.id !== 'number') {
+            errors.push({
+                message: 'Feature "id" member must have a string or number value',
+                line: feature.__line__
+            });
+        }
+        if (feature.features !== undefined) {
+            errors.push({
+                message: 'Feature object cannot contain a "features" member',
+                line: feature.__line__
+            });
+        }
+        if (feature.coordinates !== undefined) {
+            errors.push({
+                message: 'Feature object cannot contain a "coordinates" member',
+                line: feature.__line__
+            });
+        }
+        if (feature.type !== 'Feature') {
+            errors.push({
+                message: 'GeoJSON features must have a type=feature member',
+                line: feature.__line__
+            });
+        }
+        requiredProperty(feature, 'properties', 'object');
+        if (!requiredProperty(feature, 'geometry', 'object')) {
+            // https://tools.ietf.org/html/rfc7946#section-3.2
+            // tolerate null geometry
+            if (feature.geometry) root(feature.geometry);
+        }
+    }
+
+    var types = {
+        Point: Point,
+        Feature: Feature,
+        MultiPoint: MultiPoint,
+        LineString: LineString,
+        MultiLineString: MultiLineString,
+        FeatureCollection: FeatureCollection,
+        GeometryCollection: GeometryCollection,
+        Polygon: Polygon,
+        MultiPolygon: MultiPolygon
+    };
+
+    var typesLower = Object.keys(types).reduce(function(prev, curr) {
+        prev[curr.toLowerCase()] = curr;
+        return prev;
+    }, {});
+
+    if (typeof gj !== 'object' ||
+        gj === null ||
+        gj === undefined) {
+        errors.push({
+            message: 'The root of a GeoJSON object must be an object.',
+            line: 0
+        });
+        return errors;
+    }
+
+    root(gj);
+
+    errors.forEach(function(err) {
+        if ({}.hasOwnProperty.call(err, 'line') && err.line === undefined) {
+            delete err.line;
+        }
+    });
+
+    return errors;
+}
+
+module.exports.hint = hint;
+
+},{"./rhr":12}],12:[function(require,module,exports){
+function isRingClockwise (coords) {
+    var sum = 0;
+    if (coords.length > 2) {
+        var p1, p2;
+        for (var i = 0; i < coords.length - 1; i++) {
+            p1 = coords[i];
+            p2 = coords[i + 1];
+            sum += (p2[0] - p1[0]) * (p2[1] + p1[1]);
+        }
+    }
+
+    return sum >= 0;
+}
+
+function isPolyRHR (coords) {
+    if (coords && coords.length > 0) {
+        if (isRingClockwise(coords[0]))
+            return false;
+        var interiorCoords = coords.slice(1, coords.length);
+        if (!interiorCoords.every(isRingClockwise))
+            return false;
+    }
+    return true;
+}
+
+function rightHandRule (geometry) {
+    if (geometry.type === 'Polygon') {
+        return isPolyRHR(geometry.coordinates);
+    } else if (geometry.type === 'MultiPolygon') {
+        return geometry.coordinates.every(isPolyRHR);
+    }
+}
+
+module.exports = function validateRightHandRule(geometry, errors) {
+    if (!rightHandRule(geometry)) {
+        errors.push({
+            message: 'Polygons and MultiPolygons should follow the right-hand rule',
+            level: 'message',
+            line: geometry.__line__
+        });
+    }
+};
+
+},{}],13:[function(require,module,exports){
+(function (process){(function (){
+/* parser generated by jison 0.4.17 */
+/*
+  Returns a Parser object of the following structure:
+
+  Parser: {
+    yy: {}
+  }
+
+  Parser.prototype: {
+    yy: {},
+    trace: function(),
+    symbols_: {associative list: name ==> number},
+    terminals_: {associative list: number ==> name},
+    productions_: [...],
+    performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate, $$, _$),
+    table: [...],
+    defaultActions: {...},
+    parseError: function(str, hash),
+    parse: function(input),
+
+    lexer: {
+        EOF: 1,
+        parseError: function(str, hash),
+        setInput: function(input),
+        input: function(),
+        unput: function(str),
+        more: function(),
+        less: function(n),
+        pastInput: function(),
+        upcomingInput: function(),
+        showPosition: function(),
+        test_match: function(regex_match_array, rule_index),
+        next: function(),
+        lex: function(),
+        begin: function(condition),
+        popState: function(),
+        _currentRules: function(),
+        topState: function(),
+        pushState: function(condition),
+
+        options: {
+            ranges: boolean           (optional: true ==> token location info will include a .range[] member)
+            flex: boolean             (optional: true ==> flex-like lexing behaviour where the rules are tested exhaustively to find the longest match)
+            backtrack_lexer: boolean  (optional: true ==> lexer regexes are tested in order and for each matching regex the action code is invoked; the lexer terminates the scan when a token is returned by the action code)
+        },
+
+        performAction: function(yy, yy_, $avoiding_name_collisions, YY_START),
+        rules: [...],
+        conditions: {associative list: name ==> set},
+    }
+  }
+
+
+  token location info (@$, _$, etc.): {
+    first_line: n,
+    last_line: n,
+    first_column: n,
+    last_column: n,
+    range: [start_number, end_number]       (where the numbers are indexes into the input string, regular zero-based)
+  }
+
+
+  the parseError function receives a 'hash' object with these members for lexer and parser errors: {
+    text:        (matched text)
+    token:       (the produced terminal token, if any)
+    line:        (yylineno)
+  }
+  while parser (grammar) errors will also provide these members, i.e. parser errors deliver a superset of attributes: {
+    loc:         (yylloc)
+    expected:    (string describing the set of expected tokens)
+    recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
+  }
+*/
+var jsonlint = (function(){
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,12],$V1=[1,13],$V2=[1,9],$V3=[1,10],$V4=[1,11],$V5=[1,14],$V6=[1,15],$V7=[14,18,22,24],$V8=[18,22],$V9=[22,24];
+var parser = {trace: function trace() { },
+yy: {},
+symbols_: {"error":2,"JSONString":3,"STRING":4,"JSONNumber":5,"NUMBER":6,"JSONNullLiteral":7,"NULL":8,"JSONBooleanLiteral":9,"TRUE":10,"FALSE":11,"JSONText":12,"JSONValue":13,"EOF":14,"JSONObject":15,"JSONArray":16,"{":17,"}":18,"JSONMemberList":19,"JSONMember":20,":":21,",":22,"[":23,"]":24,"JSONElementList":25,"$accept":0,"$end":1},
+terminals_: {2:"error",4:"STRING",6:"NUMBER",8:"NULL",10:"TRUE",11:"FALSE",14:"EOF",17:"{",18:"}",21:":",22:",",23:"[",24:"]"},
+productions_: [0,[3,1],[5,1],[7,1],[9,1],[9,1],[12,2],[13,1],[13,1],[13,1],[13,1],[13,1],[13,1],[15,2],[15,3],[20,3],[19,1],[19,3],[16,2],[16,3],[25,1],[25,3]],
+performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
+/* this == yyval */
+
+var $0 = $$.length - 1;
+switch (yystate) {
+case 1:
+ // replace escaped characters with actual character
+          this.$ = yytext.replace(/\\(\\|")/g, "$"+"1")
+                     .replace(/\\n/g,'\n')
+                     .replace(/\\r/g,'\r')
+                     .replace(/\\t/g,'\t')
+                     .replace(/\\v/g,'\v')
+                     .replace(/\\f/g,'\f')
+                     .replace(/\\b/g,'\b');
+        
+break;
+case 2:
+this.$ = Number(yytext);
+break;
+case 3:
+this.$ = null;
+break;
+case 4:
+this.$ = true;
+break;
+case 5:
+this.$ = false;
+break;
+case 6:
+return this.$ = $$[$0-1];
+break;
+case 13:
+this.$ = {}; Object.defineProperty(this.$, '__line__', {
+            value: this._$.first_line,
+            enumerable: false
+        })
+break;
+case 14: case 19:
+this.$ = $$[$0-1]; Object.defineProperty(this.$, '__line__', {
+            value: this._$.first_line,
+            enumerable: false
+        })
+break;
+case 15:
+this.$ = [$$[$0-2], $$[$0]];
+break;
+case 16:
+this.$ = {}; this.$[$$[$0][0]] = $$[$0][1];
+break;
+case 17:
+
+            this.$ = $$[$0-2];
+            if ($$[$0-2][$$[$0][0]] !== undefined) {
+                if (!this.$.__duplicateProperties__) {
+                    Object.defineProperty(this.$, '__duplicateProperties__', {
+                        value: [],
+                        enumerable: false
+                    });
+                }
+                this.$.__duplicateProperties__.push($$[$0][0]);
+            }
+            $$[$0-2][$$[$0][0]] = $$[$0][1];
+        
+break;
+case 18:
+this.$ = []; Object.defineProperty(this.$, '__line__', {
+            value: this._$.first_line,
+            enumerable: false
+        })
+break;
+case 20:
+this.$ = [$$[$0]];
+break;
+case 21:
+this.$ = $$[$0-2]; $$[$0-2].push($$[$0]);
+break;
+}
+},
+table: [{3:5,4:$V0,5:6,6:$V1,7:3,8:$V2,9:4,10:$V3,11:$V4,12:1,13:2,15:7,16:8,17:$V5,23:$V6},{1:[3]},{14:[1,16]},o($V7,[2,7]),o($V7,[2,8]),o($V7,[2,9]),o($V7,[2,10]),o($V7,[2,11]),o($V7,[2,12]),o($V7,[2,3]),o($V7,[2,4]),o($V7,[2,5]),o([14,18,21,22,24],[2,1]),o($V7,[2,2]),{3:20,4:$V0,18:[1,17],19:18,20:19},{3:5,4:$V0,5:6,6:$V1,7:3,8:$V2,9:4,10:$V3,11:$V4,13:23,15:7,16:8,17:$V5,23:$V6,24:[1,21],25:22},{1:[2,6]},o($V7,[2,13]),{18:[1,24],22:[1,25]},o($V8,[2,16]),{21:[1,26]},o($V7,[2,18]),{22:[1,28],24:[1,27]},o($V9,[2,20]),o($V7,[2,14]),{3:20,4:$V0,20:29},{3:5,4:$V0,5:6,6:$V1,7:3,8:$V2,9:4,10:$V3,11:$V4,13:30,15:7,16:8,17:$V5,23:$V6},o($V7,[2,19]),{3:5,4:$V0,5:6,6:$V1,7:3,8:$V2,9:4,10:$V3,11:$V4,13:31,15:7,16:8,17:$V5,23:$V6},o($V8,[2,17]),o($V8,[2,15]),o($V9,[2,21])],
+defaultActions: {16:[2,6]},
+parseError: function parseError(str, hash) {
+    if (hash.recoverable) {
+        this.trace(str);
+    } else {
+        function _parseError (msg, hash) {
+            this.message = msg;
+            this.hash = hash;
+        }
+        _parseError.prototype = Error;
+
+        throw new _parseError(str, hash);
+    }
+},
+parse: function parse(input) {
+    var self = this, stack = [0], tstack = [], vstack = [null], lstack = [], table = this.table, yytext = '', yylineno = 0, yyleng = 0, recovering = 0, TERROR = 2, EOF = 1;
+    var args = lstack.slice.call(arguments, 1);
+    var lexer = Object.create(this.lexer);
+    var sharedState = { yy: {} };
+    for (var k in this.yy) {
+        if (Object.prototype.hasOwnProperty.call(this.yy, k)) {
+            sharedState.yy[k] = this.yy[k];
+        }
+    }
+    lexer.setInput(input, sharedState.yy);
+    sharedState.yy.lexer = lexer;
+    sharedState.yy.parser = this;
+    if (typeof lexer.yylloc == 'undefined') {
+        lexer.yylloc = {};
+    }
+    var yyloc = lexer.yylloc;
+    lstack.push(yyloc);
+    var ranges = lexer.options && lexer.options.ranges;
+    if (typeof sharedState.yy.parseError === 'function') {
+        this.parseError = sharedState.yy.parseError;
+    } else {
+        this.parseError = Object.getPrototypeOf(this).parseError;
+    }
+    function popStack(n) {
+        stack.length = stack.length - 2 * n;
+        vstack.length = vstack.length - n;
+        lstack.length = lstack.length - n;
+    }
+    _token_stack:
+        var lex = function () {
+            var token;
+            token = lexer.lex() || EOF;
+            if (typeof token !== 'number') {
+                token = self.symbols_[token] || token;
+            }
+            return token;
+        };
+    var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
+    while (true) {
+        state = stack[stack.length - 1];
+        if (this.defaultActions[state]) {
+            action = this.defaultActions[state];
+        } else {
+            if (symbol === null || typeof symbol == 'undefined') {
+                symbol = lex();
+            }
+            action = table[state] && table[state][symbol];
+        }
+                    if (typeof action === 'undefined' || !action.length || !action[0]) {
+                var errStr = '';
+                expected = [];
+                for (p in table[state]) {
+                    if (this.terminals_[p] && p > TERROR) {
+                        expected.push('\'' + this.terminals_[p] + '\'');
+                    }
+                }
+                if (lexer.showPosition) {
+                    errStr = 'Parse error on line ' + (yylineno + 1) + ':\n' + lexer.showPosition() + '\nExpecting ' + expected.join(', ') + ', got \'' + (this.terminals_[symbol] || symbol) + '\'';
+                } else {
+                    errStr = 'Parse error on line ' + (yylineno + 1) + ': Unexpected ' + (symbol == EOF ? 'end of input' : '\'' + (this.terminals_[symbol] || symbol) + '\'');
+                }
+                this.parseError(errStr, {
+                    text: lexer.match,
+                    token: this.terminals_[symbol] || symbol,
+                    line: lexer.yylineno,
+                    loc: yyloc,
+                    expected: expected
+                });
+            }
+        if (action[0] instanceof Array && action.length > 1) {
+            throw new Error('Parse Error: multiple actions possible at state: ' + state + ', token: ' + symbol);
+        }
+        switch (action[0]) {
+        case 1:
+            stack.push(symbol);
+            vstack.push(lexer.yytext);
+            lstack.push(lexer.yylloc);
+            stack.push(action[1]);
+            symbol = null;
+            if (!preErrorSymbol) {
+                yyleng = lexer.yyleng;
+                yytext = lexer.yytext;
+                yylineno = lexer.yylineno;
+                yyloc = lexer.yylloc;
+                if (recovering > 0) {
+                    recovering--;
+                }
+            } else {
+                symbol = preErrorSymbol;
+                preErrorSymbol = null;
+            }
+            break;
+        case 2:
+            len = this.productions_[action[1]][1];
+            yyval.$ = vstack[vstack.length - len];
+            yyval._$ = {
+                first_line: lstack[lstack.length - (len || 1)].first_line,
+                last_line: lstack[lstack.length - 1].last_line,
+                first_column: lstack[lstack.length - (len || 1)].first_column,
+                last_column: lstack[lstack.length - 1].last_column
+            };
+            if (ranges) {
+                yyval._$.range = [
+                    lstack[lstack.length - (len || 1)].range[0],
+                    lstack[lstack.length - 1].range[1]
+                ];
+            }
+            r = this.performAction.apply(yyval, [
+                yytext,
+                yyleng,
+                yylineno,
+                sharedState.yy,
+                action[1],
+                vstack,
+                lstack
+            ].concat(args));
+            if (typeof r !== 'undefined') {
+                return r;
+            }
+            if (len) {
+                stack = stack.slice(0, -1 * len * 2);
+                vstack = vstack.slice(0, -1 * len);
+                lstack = lstack.slice(0, -1 * len);
+            }
+            stack.push(this.productions_[action[1]][0]);
+            vstack.push(yyval.$);
+            lstack.push(yyval._$);
+            newState = table[stack[stack.length - 2]][stack[stack.length - 1]];
+            stack.push(newState);
+            break;
+        case 3:
+            return true;
+        }
+    }
+    return true;
+}};
+/* generated by jison-lex 0.3.4 */
+var lexer = (function(){
+var lexer = ({
+
+EOF:1,
+
+parseError:function parseError(str, hash) {
+        if (this.yy.parser) {
+            this.yy.parser.parseError(str, hash);
+        } else {
+            throw new Error(str);
+        }
+    },
+
+// resets the lexer, sets new input
+setInput:function (input, yy) {
+        this.yy = yy || this.yy || {};
+        this._input = input;
+        this._more = this._backtrack = this.done = false;
+        this.yylineno = this.yyleng = 0;
+        this.yytext = this.matched = this.match = '';
+        this.conditionStack = ['INITIAL'];
+        this.yylloc = {
+            first_line: 1,
+            first_column: 0,
+            last_line: 1,
+            last_column: 0
+        };
+        if (this.options.ranges) {
+            this.yylloc.range = [0,0];
+        }
+        this.offset = 0;
+        return this;
+    },
+
+// consumes and returns one char from the input
+input:function () {
+        var ch = this._input[0];
+        this.yytext += ch;
+        this.yyleng++;
+        this.offset++;
+        this.match += ch;
+        this.matched += ch;
+        var lines = ch.match(/(?:\r\n?|\n).*/g);
+        if (lines) {
+            this.yylineno++;
+            this.yylloc.last_line++;
+        } else {
+            this.yylloc.last_column++;
+        }
+        if (this.options.ranges) {
+            this.yylloc.range[1]++;
+        }
+
+        this._input = this._input.slice(1);
+        return ch;
+    },
+
+// unshifts one char (or a string) into the input
+unput:function (ch) {
+        var len = ch.length;
+        var lines = ch.split(/(?:\r\n?|\n)/g);
+
+        this._input = ch + this._input;
+        this.yytext = this.yytext.substr(0, this.yytext.length - len);
+        //this.yyleng -= len;
+        this.offset -= len;
+        var oldLines = this.match.split(/(?:\r\n?|\n)/g);
+        this.match = this.match.substr(0, this.match.length - 1);
+        this.matched = this.matched.substr(0, this.matched.length - 1);
+
+        if (lines.length - 1) {
+            this.yylineno -= lines.length - 1;
+        }
+        var r = this.yylloc.range;
+
+        this.yylloc = {
+            first_line: this.yylloc.first_line,
+            last_line: this.yylineno + 1,
+            first_column: this.yylloc.first_column,
+            last_column: lines ?
+                (lines.length === oldLines.length ? this.yylloc.first_column : 0)
+                 + oldLines[oldLines.length - lines.length].length - lines[0].length :
+              this.yylloc.first_column - len
+        };
+
+        if (this.options.ranges) {
+            this.yylloc.range = [r[0], r[0] + this.yyleng - len];
+        }
+        this.yyleng = this.yytext.length;
+        return this;
+    },
+
+// When called from action, caches matched text and appends it on next action
+more:function () {
+        this._more = true;
+        return this;
+    },
+
+// When called from action, signals the lexer that this rule fails to match the input, so the next matching rule (regex) should be tested instead.
+reject:function () {
+        if (this.options.backtrack_lexer) {
+            this._backtrack = true;
+        } else {
+            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. You can only invoke reject() in the lexer when the lexer is of the backtracking persuasion (options.backtrack_lexer = true).\n' + this.showPosition(), {
+                text: "",
+                token: null,
+                line: this.yylineno
+            });
+
+        }
+        return this;
+    },
+
+// retain first n characters of the match
+less:function (n) {
+        this.unput(this.match.slice(n));
+    },
+
+// displays already matched input, i.e. for error messages
+pastInput:function () {
+        var past = this.matched.substr(0, this.matched.length - this.match.length);
+        return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
+    },
+
+// displays upcoming input, i.e. for error messages
+upcomingInput:function () {
+        var next = this.match;
+        if (next.length < 20) {
+            next += this._input.substr(0, 20-next.length);
+        }
+        return (next.substr(0,20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
+    },
+
+// displays the character position where the lexing error occurred, i.e. for error messages
+showPosition:function () {
+        var pre = this.pastInput();
+        var c = new Array(pre.length + 1).join("-");
+        return pre + this.upcomingInput() + "\n" + c + "^";
+    },
+
+// test the lexed token: return FALSE when not a match, otherwise return token
+test_match:function (match, indexed_rule) {
+        var token,
+            lines,
+            backup;
+
+        if (this.options.backtrack_lexer) {
+            // save context
+            backup = {
+                yylineno: this.yylineno,
+                yylloc: {
+                    first_line: this.yylloc.first_line,
+                    last_line: this.last_line,
+                    first_column: this.yylloc.first_column,
+                    last_column: this.yylloc.last_column
+                },
+                yytext: this.yytext,
+                match: this.match,
+                matches: this.matches,
+                matched: this.matched,
+                yyleng: this.yyleng,
+                offset: this.offset,
+                _more: this._more,
+                _input: this._input,
+                yy: this.yy,
+                conditionStack: this.conditionStack.slice(0),
+                done: this.done
+            };
+            if (this.options.ranges) {
+                backup.yylloc.range = this.yylloc.range.slice(0);
+            }
+        }
+
+        lines = match[0].match(/(?:\r\n?|\n).*/g);
+        if (lines) {
+            this.yylineno += lines.length;
+        }
+        this.yylloc = {
+            first_line: this.yylloc.last_line,
+            last_line: this.yylineno + 1,
+            first_column: this.yylloc.last_column,
+            last_column: lines ?
+                         lines[lines.length - 1].length - lines[lines.length - 1].match(/\r?\n?/)[0].length :
+                         this.yylloc.last_column + match[0].length
+        };
+        this.yytext += match[0];
+        this.match += match[0];
+        this.matches = match;
+        this.yyleng = this.yytext.length;
+        if (this.options.ranges) {
+            this.yylloc.range = [this.offset, this.offset += this.yyleng];
+        }
+        this._more = false;
+        this._backtrack = false;
+        this._input = this._input.slice(match[0].length);
+        this.matched += match[0];
+        token = this.performAction.call(this, this.yy, this, indexed_rule, this.conditionStack[this.conditionStack.length - 1]);
+        if (this.done && this._input) {
+            this.done = false;
+        }
+        if (token) {
+            return token;
+        } else if (this._backtrack) {
+            // recover context
+            for (var k in backup) {
+                this[k] = backup[k];
+            }
+            return false; // rule action called reject() implying the next rule should be tested instead.
+        }
+        return false;
+    },
+
+// return next match in input
+next:function () {
+        if (this.done) {
+            return this.EOF;
+        }
+        if (!this._input) {
+            this.done = true;
+        }
+
+        var token,
+            match,
+            tempMatch,
+            index;
+        if (!this._more) {
+            this.yytext = '';
+            this.match = '';
+        }
+        var rules = this._currentRules();
+        for (var i = 0; i < rules.length; i++) {
+            tempMatch = this._input.match(this.rules[rules[i]]);
+            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
+                match = tempMatch;
+                index = i;
+                if (this.options.backtrack_lexer) {
+                    token = this.test_match(tempMatch, rules[i]);
+                    if (token !== false) {
+                        return token;
+                    } else if (this._backtrack) {
+                        match = false;
+                        continue; // rule action called reject() implying a rule MISmatch.
+                    } else {
+                        // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
+                        return false;
+                    }
+                } else if (!this.options.flex) {
+                    break;
+                }
+            }
+        }
+        if (match) {
+            token = this.test_match(match, rules[index]);
+            if (token !== false) {
+                return token;
+            }
+            // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
+            return false;
+        }
+        if (this._input === "") {
+            return this.EOF;
+        } else {
+            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. Unrecognized text.\n' + this.showPosition(), {
+                text: "",
+                token: null,
+                line: this.yylineno
+            });
+        }
+    },
+
+// return next match that has a token
+lex:function lex() {
+        var r = this.next();
+        if (r) {
+            return r;
+        } else {
+            return this.lex();
+        }
+    },
+
+// activates a new lexer condition state (pushes the new lexer condition state onto the condition stack)
+begin:function begin(condition) {
+        this.conditionStack.push(condition);
+    },
+
+// pop the previously active lexer condition state off the condition stack
+popState:function popState() {
+        var n = this.conditionStack.length - 1;
+        if (n > 0) {
+            return this.conditionStack.pop();
+        } else {
+            return this.conditionStack[0];
+        }
+    },
+
+// produce the lexer rule set which is active for the currently active lexer condition state
+_currentRules:function _currentRules() {
+        if (this.conditionStack.length && this.conditionStack[this.conditionStack.length - 1]) {
+            return this.conditions[this.conditionStack[this.conditionStack.length - 1]].rules;
+        } else {
+            return this.conditions["INITIAL"].rules;
+        }
+    },
+
+// return the currently active lexer condition state; when an index argument is provided it produces the N-th previous condition state, if available
+topState:function topState(n) {
+        n = this.conditionStack.length - 1 - Math.abs(n || 0);
+        if (n >= 0) {
+            return this.conditionStack[n];
+        } else {
+            return "INITIAL";
+        }
+    },
+
+// alias for begin(condition)
+pushState:function pushState(condition) {
+        this.begin(condition);
+    },
+
+// return the number of states currently on the stack
+stateStackSize:function stateStackSize() {
+        return this.conditionStack.length;
+    },
+options: {},
+performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
+var YYSTATE=YY_START;
+switch($avoiding_name_collisions) {
+case 0:/* skip whitespace */
+break;
+case 1:return 6
+break;
+case 2:yy_.yytext = yy_.yytext.substr(1,yy_.yyleng-2); return 4
+break;
+case 3:return 17
+break;
+case 4:return 18
+break;
+case 5:return 23
+break;
+case 6:return 24
+break;
+case 7:return 22
+break;
+case 8:return 21
+break;
+case 9:return 10
+break;
+case 10:return 11
+break;
+case 11:return 8
+break;
+case 12:return 14
+break;
+case 13:return 'INVALID'
+break;
+}
+},
+rules: [/^(?:\s+)/,/^(?:(-?([0-9]|[1-9][0-9]+))(\.[0-9]+)?([eE][-+]?[0-9]+)?\b)/,/^(?:"(?:\\[\\"bfnrt\/]|\\u[a-fA-F0-9]{4}|[^\\\0-\x09\x0a-\x1f"])*")/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?::)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:null\b)/,/^(?:$)/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13],"inclusive":true}}
+});
+return lexer;
+})();
+parser.lexer = lexer;
+function Parser () {
+  this.yy = {};
+}
+Parser.prototype = parser;parser.Parser = Parser;
+return new Parser;
+})();
+
+
+if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
+exports.parser = jsonlint;
+exports.Parser = jsonlint.Parser;
+exports.parse = function () { return jsonlint.parse.apply(jsonlint, arguments); };
+exports.main = function commonjsMain(args) {
+    if (!args[1]) {
+        console.log('Usage: '+args[0]+' FILE');
+        process.exit(1);
+    }
+    var source = require('fs').readFileSync(require('path').normalize(args[1]), "utf8");
+    return exports.parser.parse(source);
+};
+if (typeof module !== 'undefined' && require.main === module) {
+  exports.main(process.argv.slice(1));
+}
+}
+}).call(this)}).call(this,require('_process'))
+},{"_process":165,"fs":65,"path":163}],14:[function(require,module,exports){
 var request = require('browser-request'),
     token;
 
@@ -785,7 +2040,7 @@ function page(postfix, callback) {
     });
 }
 
-},{"browser-request":60}],11:[function(require,module,exports){
+},{"browser-request":64}],15:[function(require,module,exports){
 var queue = require('queue-async'),
     request = require('browser-request'),
     treeui = require('treeui'),
@@ -920,7 +2175,7 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":60,"queue-async":165,"treeui":186}],12:[function(require,module,exports){
+},{"browser-request":64,"queue-async":167,"treeui":188}],16:[function(require,module,exports){
 (function (global){(function (){
 !function (t, e) {
   "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = t || self).MapboxDraw = e();
@@ -4016,7 +5271,7 @@ function req(postfix, callback) {
 });
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],13:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 var nanoid = require('nanoid').nanoid;
 
@@ -4339,7 +5594,7 @@ MapboxEventManager.prototype = {
 
 module.exports = MapboxEventManager;
 
-},{"nanoid":153}],14:[function(require,module,exports){
+},{"nanoid":155}],18:[function(require,module,exports){
 module.exports = {
   'fr': {
     'name': 'France',
@@ -4359,7 +5614,7 @@ module.exports = {
   }
 };
 
-},{}],15:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 function Geolocation() {}
 
 Geolocation.prototype = {
@@ -4381,7 +5636,7 @@ Geolocation.prototype = {
 
 module.exports = Geolocation;
 
-},{}],16:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var Typeahead = require('suggestions');
@@ -5738,7 +6993,7 @@ MapboxGeocoder.prototype = {
 
 module.exports = MapboxGeocoder;
 
-},{"./events":13,"./exceptions":14,"./geolocation":15,"./localization":17,"./utils":18,"@mapbox/mapbox-sdk":20,"@mapbox/mapbox-sdk/services/geocoding":32,"events":84,"lodash.debounce":149,"subtag":178,"suggestions":179,"xtend":19}],17:[function(require,module,exports){
+},{"./events":17,"./exceptions":18,"./geolocation":19,"./localization":21,"./utils":22,"@mapbox/mapbox-sdk":24,"@mapbox/mapbox-sdk/services/geocoding":36,"events":88,"lodash.debounce":151,"subtag":180,"suggestions":181,"xtend":23}],21:[function(require,module,exports){
 'use strict';
 
 /**
@@ -5777,7 +7032,7 @@ var placeholder = {
 
 module.exports = {placeholder: placeholder};
 
-},{}],18:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * This function transforms the feature from reverse geocoding to plain text with specified accuracy
  * @param {object} feature 
@@ -5847,16 +7102,16 @@ module.exports = {
   getAddressInfo: getAddressInfo,
   REVERSE_GEOCODE_COORD_RGX: REVERSE_GEOCODE_COORD_RGX,
 }
-},{}],19:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3}],20:[function(require,module,exports){
+},{"dup":3}],24:[function(require,module,exports){
 'use strict';
 
 var client = require('./lib/client');
 
 module.exports = client;
 
-},{"./lib/client":21}],21:[function(require,module,exports){
+},{"./lib/client":25}],25:[function(require,module,exports){
 'use strict';
 
 var browser = require('./browser-layer');
@@ -5885,7 +7140,7 @@ function createBrowserClient(options) {
 
 module.exports = createBrowserClient;
 
-},{"../classes/mapi-client":23,"./browser-layer":22}],22:[function(require,module,exports){
+},{"../classes/mapi-client":27,"./browser-layer":26}],26:[function(require,module,exports){
 'use strict';
 
 var MapiResponse = require('../classes/mapi-response');
@@ -6012,7 +7267,7 @@ module.exports = {
   createRequestXhr: createRequestXhr
 };
 
-},{"../classes/mapi-error":24,"../classes/mapi-response":26,"../constants":27,"../helpers/parse-headers":28}],23:[function(require,module,exports){
+},{"../classes/mapi-error":28,"../classes/mapi-response":30,"../constants":31,"../helpers/parse-headers":32}],27:[function(require,module,exports){
 'use strict';
 
 var parseToken = require('@mapbox/parse-mapbox-token');
@@ -6052,7 +7307,7 @@ MapiClient.prototype.createRequest = function createRequest(requestOptions) {
 
 module.exports = MapiClient;
 
-},{"../constants":27,"./mapi-request":25,"@mapbox/parse-mapbox-token":38}],24:[function(require,module,exports){
+},{"../constants":31,"./mapi-request":29,"@mapbox/parse-mapbox-token":42}],28:[function(require,module,exports){
 'use strict';
 
 var constants = require('../constants');
@@ -6118,7 +7373,7 @@ function MapiError(options) {
 
 module.exports = MapiError;
 
-},{"../constants":27}],25:[function(require,module,exports){
+},{"../constants":31}],29:[function(require,module,exports){
 'use strict';
 
 var parseToken = require('@mapbox/parse-mapbox-token');
@@ -6382,7 +7637,7 @@ MapiRequest.prototype._extend = function _extend(options) {
 
 module.exports = MapiRequest;
 
-},{"../constants":27,"../helpers/url-utils":30,"@mapbox/parse-mapbox-token":38,"eventemitter3":83,"xtend":31}],26:[function(require,module,exports){
+},{"../constants":31,"../helpers/url-utils":34,"@mapbox/parse-mapbox-token":42,"eventemitter3":87,"xtend":35}],30:[function(require,module,exports){
 'use strict';
 
 var parseLinkHeader = require('../helpers/parse-link-header');
@@ -6444,7 +7699,7 @@ MapiResponse.prototype.nextPage = function nextPage() {
 
 module.exports = MapiResponse;
 
-},{"../helpers/parse-link-header":29}],27:[function(require,module,exports){
+},{"../helpers/parse-link-header":33}],31:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -6457,7 +7712,7 @@ module.exports = {
   ERROR_REQUEST_ABORTED: 'RequestAbortedError'
 };
 
-},{}],28:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 function parseSingleHeader(raw) {
@@ -6502,7 +7757,7 @@ function parseHeaders(raw) {
 
 module.exports = parseHeaders;
 
-},{}],29:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 // Like https://github.com/thlorenz/lib/parse-link-header but without any
@@ -6579,7 +7834,7 @@ function parseLinkHeader(linkHeader) {
 
 module.exports = parseLinkHeader;
 
-},{}],30:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 // Encode each item of an array individually. The comma
@@ -6701,9 +7956,9 @@ module.exports = {
   interpolateRouteParams: interpolateRouteParams
 };
 
-},{}],31:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3}],32:[function(require,module,exports){
+},{"dup":3}],36:[function(require,module,exports){
 'use strict';
 
 var xtend = require('xtend');
@@ -6913,7 +8168,7 @@ Geocoding.reverseGeocode = function(config) {
 
 module.exports = createServiceFactory(Geocoding);
 
-},{"./service-helpers/create-service-factory":33,"./service-helpers/pick":35,"./service-helpers/stringify-booleans":36,"./service-helpers/validator":37,"xtend":31}],33:[function(require,module,exports){
+},{"./service-helpers/create-service-factory":37,"./service-helpers/pick":39,"./service-helpers/stringify-booleans":40,"./service-helpers/validator":41,"xtend":35}],37:[function(require,module,exports){
 'use strict';
 
 var MapiClient = require('../../lib/classes/mapi-client');
@@ -6936,7 +8191,7 @@ function createServiceFactory(ServicePrototype) {
 
 module.exports = createServiceFactory;
 
-},{"../../lib/classes/mapi-client":23,"../../lib/client":21}],34:[function(require,module,exports){
+},{"../../lib/classes/mapi-client":27,"../../lib/client":25}],38:[function(require,module,exports){
 'use strict';
 
 function objectMap(obj, cb) {
@@ -6948,7 +8203,7 @@ function objectMap(obj, cb) {
 
 module.exports = objectMap;
 
-},{}],35:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 /**
@@ -6980,7 +8235,7 @@ function pick(source, keys) {
 
 module.exports = pick;
 
-},{}],36:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 
 var objectMap = require('./object-map');
@@ -6999,7 +8254,7 @@ function stringifyBoolean(obj) {
 
 module.exports = stringifyBoolean;
 
-},{"./object-map":34}],37:[function(require,module,exports){
+},{"./object-map":38}],41:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -7052,7 +8307,7 @@ module.exports = xtend(v, {
 });
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"@mapbox/fusspot":2,"xtend":31}],38:[function(require,module,exports){
+},{"@mapbox/fusspot":2,"xtend":35}],42:[function(require,module,exports){
 'use strict';
 
 var base64 = require('base-64');
@@ -7103,7 +8358,7 @@ function has(obj, key) {
 
 module.exports = parseToken;
 
-},{"base-64":58}],39:[function(require,module,exports){
+},{"base-64":62}],43:[function(require,module,exports){
 'use strict';
 
 /**
@@ -7266,7 +8521,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = polyline;
 }
 
-},{}],40:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = element;
 module.exports.pair = pair;
 module.exports.format = format;
@@ -7375,7 +8630,7 @@ function swapdim(a, b, dim) {
   if (dim === 'W' || dim === 'E') return [b, a];
 }
 
-},{}],41:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -8277,7 +9532,7 @@ exports.foldersToKML = foldersToKML;
 exports.toKML = toKML;
 
 
-},{}],42:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 (function (process){(function (){
 /**
  * @popperjs/core v2.11.6 - MIT License
@@ -10283,11 +11538,11 @@ exports.preventOverflow = preventOverflow$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":163}],43:[function(require,module,exports){
+},{"_process":165}],47:[function(require,module,exports){
 !function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t="undefined"!=typeof globalThis?globalThis:t||self).toGeoJSON={})}(this,(function(t){"use strict";function e(t,e){return Array.from(t.getElementsByTagName(e))}function n(t){return"#"===t[0]?t:`#${t}`}function o(t){return t?.normalize(),t&&t.textContent||""}function r(t,e,n){const o=t.getElementsByTagName(e),r=o.length?o[0]:null;return r&&n&&n(r),r}function i(t,e,n){const o={};if(!t)return o;const r=t.getElementsByTagName(e),i=r.length?r[0]:null;return i&&n?n(i,o):o}function s(t,e,n){const i=o(r(t,e));return i&&n&&n(i)||{}}function c(t,e,n){const i=parseFloat(o(r(t,e)));if(!isNaN(i))return i&&n&&n(i)||{}}function a(t,e,n){const i=parseFloat(o(r(t,e)));if(!isNaN(i))return i&&n&&n(i),i}function l(t,e){const n={};for(const o of e)s(t,o,(t=>{n[o]=t}));return n}function u(t){return 1===t?.nodeType}function f(t){return i(t,"line",(t=>Object.assign({},s(t,"color",(t=>({stroke:`#${t}`}))),c(t,"opacity",(t=>({"stroke-opacity":t}))),c(t,"width",(t=>({"stroke-width":96*t/25.4}))))))}function p(t){let e=[];if(null===t)return e;for(const n of Array.from(t.childNodes)){if(!u(n))continue;const t=g(n.nodeName);if("gpxtpx:TrackPointExtension"===t)e=e.concat(p(n));else{const r=o(n);e.push([t,d(r)])}}return e}function g(t){return["heart","gpxtpx:hr","hr"].includes(t)?"heart":t}function d(t){const e=parseFloat(t);return isNaN(e)?t:e}function h(t){const e=[parseFloat(t.getAttribute("lon")||""),parseFloat(t.getAttribute("lat")||"")];if(isNaN(e[0])||isNaN(e[1]))return null;a(t,"ele",(t=>{e.push(t)}));const n=r(t,"time");return{coordinates:e,time:n?o(n):null,extendedValues:p(r(t,"extensions"))}}function m(t){const n=l(t,["name","cmt","desc","type","time","keywords"]),r=Array.from(t.getElementsByTagNameNS("http://www.garmin.com/xmlschemas/GpxExtensions/v3","*"));for(const e of r)e.parentNode?.parentNode===t&&(n[e.tagName.replace(":","_")]=o(e));const i=e(t,"link");return i.length&&(n.links=i.map((t=>Object.assign({href:t.getAttribute("href")},l(t,["text","type"]))))),n}function y(t,n){const o=e(t,n),r=[],i=[],s={};for(let t=0;t<o.length;t++){const e=h(o[t]);if(e){r.push(e.coordinates),e.time&&i.push(e.time);for(const[n,r]of e.extendedValues){const e="heart"===n?n:n.replace("gpxtpx:","")+"s";s[e]||(s[e]=Array(o.length).fill(null)),s[e][t]=r}}}if(!(r.length<2))return{line:r,times:i,extendedValues:s}}function b(t){const e=y(t,"rtept");if(e)return{type:"Feature",properties:Object.assign({_gpxType:"rte"},m(t),f(r(t,"extensions"))),geometry:{type:"LineString",coordinates:e.line}}}function N(t){const n=e(t,"trkseg"),o=[],i=[],s=[];for(const t of n){const e=y(t,"trkpt");e&&(s.push(e),e.times&&e.times.length&&i.push(e.times))}if(0===s.length)return null;const c=s.length>1,a=Object.assign({_gpxType:"trk"},m(t),f(r(t,"extensions")),i.length?{coordinateProperties:{times:c?i:i[0]}}:{});for(const t of s){o.push(t.line),a.coordinateProperties||(a.coordinateProperties={});const e=a.coordinateProperties,n=Object.entries(t.extendedValues);for(let t=0;t<n.length;t++){const[o,r]=n[t];c?(e[o]||(e[o]=s.map((t=>new Array(t.line.length).fill(null)))),e[o][t]=r):e[o]=r}}return{type:"Feature",properties:a,geometry:c?{type:"MultiLineString",coordinates:o}:{type:"LineString",coordinates:o[0]}}}function x(t){const e=Object.assign(m(t),l(t,["sym"])),n=h(t);return n?{type:"Feature",properties:e,geometry:{type:"Point",coordinates:n.coordinates}}:null}function*k(t){for(const n of e(t,"trk")){const t=N(n);t&&(yield t)}for(const n of e(t,"rte")){const t=b(n);t&&(yield t)}for(const n of e(t,"wpt")){const t=x(n);t&&(yield t)}}const A=[["heartRate","heartRates"],["Cadence","cadences"],["Speed","speeds"],["Watts","watts"]],S=[["TotalTimeSeconds","totalTimeSeconds"],["DistanceMeters","distanceMeters"],["MaximumSpeed","maxSpeed"],["AverageHeartRateBpm","avgHeartRate"],["MaximumHeartRateBpm","maxHeartRate"],["AvgSpeed","avgSpeed"],["AvgWatts","avgWatts"],["MaxWatts","maxWatts"]];function T(t,e){const n=[];for(const[i,s]of e){let e=r(t,i);if(!e){const n=t.getElementsByTagNameNS("http://www.garmin.com/xmlschemas/ActivityExtension/v2",i);n.length&&(e=n[0])}const c=parseFloat(o(e));isNaN(c)||n.push([s,c])}return n}function v(t){const e=[a(t,"LongitudeDegrees"),a(t,"LatitudeDegrees")];if(void 0===e[0]||isNaN(e[0])||void 0===e[1]||isNaN(e[1]))return null;const n=r(t,"HeartRateBpm"),i=o(r(t,"Time"));return r(t,"AltitudeMeters",(t=>{const n=parseFloat(o(t));isNaN(n)||e.push(n)})),{coordinates:e,time:i||null,heartRate:n?parseFloat(o(n)):null,extensions:T(t,A)}}function F(t){const n=e(t,"Trackpoint"),o=[],r=[],i=[];if(n.length<2)return null;const s={},c={extendedProperties:s};for(let t=0;t<n.length;t++){const e=v(n[t]);if(null===e)continue;o.push(e.coordinates);const{time:c,heartRate:a,extensions:l}=e;c&&r.push(c),a&&i.push(a);for(const[e,o]of l)s[e]||(s[e]=Array(n.length).fill(null)),s[e][t]=o}return o.length<2?null:Object.assign(c,{line:o,times:r,heartRates:i})}function P(t){const n=e(t,"Track"),r=[],s=[],c=[],a=[];let l;const u=Object.assign(Object.fromEntries(T(t,S)),i(t,"Name",(t=>({name:o(t)}))));for(const t of n)l=F(t),l&&(r.push(l.line),l.times.length&&s.push(l.times),l.heartRates.length&&c.push(l.heartRates),a.push(l.extendedProperties));for(let t=0;t<a.length;t++){const e=a[t];for(const o in e)1===n.length?l&&(u[o]=l.extendedProperties[o]):(u[o]||(u[o]=r.map((t=>Array(t.length).fill(null)))),u[o][t]=e[o])}return 0===r.length?null:((s.length||c.length)&&(u.coordinateProperties=Object.assign(s.length?{times:1===r.length?s[0]:s}:{},c.length?{heart:1===r.length?c[0]:c}:{})),{type:"Feature",properties:u,geometry:1===r.length?{type:"LineString",coordinates:r[0]}:{type:"MultiLineString",coordinates:r}})}function*j(t){for(const n of e(t,"Lap")){const t=P(n);t&&(yield t)}for(const n of e(t,"Courses")){const t=P(n);t&&(yield t)}}function O(t,e){const n={},o="stroke"==e||"fill"===e?e:e+"-color";return"#"===t[0]&&(t=t.substring(1)),6===t.length||3===t.length?n[o]="#"+t:8===t.length&&(n[e+"-opacity"]=parseInt(t.substring(0,2),16)/255,n[o]="#"+t.substring(6,8)+t.substring(4,6)+t.substring(2,4)),n}function w(t,e,n){const o={};return a(t,e,(t=>{o[n]=t})),o}function L(t,e){return i(t,"color",(t=>O(o(t),e)))}function M(t){return Object.assign({},function(t){return i(t,"PolyStyle",((t,e)=>Object.assign(e,i(t,"color",(t=>O(o(t),"fill"))),s(t,"fill",(t=>{if("0"===t)return{"fill-opacity":0}})),s(t,"outline",(t=>{if("0"===t)return{"stroke-opacity":0}})))))}(t),function(t){return i(t,"LineStyle",(t=>Object.assign(L(t,"stroke"),w(t,"width","stroke-width"))))}(t),function(t){return i(t,"LabelStyle",(t=>Object.assign(L(t,"label"),w(t,"scale","label-scale"))))}(t),function(t){return i(t,"IconStyle",(t=>Object.assign(L(t,"icon"),w(t,"scale","icon-scale"),w(t,"heading","icon-heading"),i(t,"hotSpot",(t=>{const e=parseFloat(t.getAttribute("x")||""),n=parseFloat(t.getAttribute("y")||""),o=t.getAttribute("xunits")||"",r=t.getAttribute("yunits")||"";return isNaN(e)||isNaN(n)?{}:{"icon-offset":[e,n],"icon-offset-units":[o,r]}})),i(t,"Icon",((t,e)=>(s(t,"href",(t=>{e.icon=t})),e))))))}(t))}const R=/\s*/g,E=/^\s*|\s*$/g,B=/\s+/;function C(t){return t.replace(R,"").split(",").map(parseFloat).filter((t=>!isNaN(t))).slice(0,3)}function G(t){return t.replace(E,"").split(B).map(C).filter((t=>t.length>=2))}function D(t){let n=e(t,"coord");var r,i,s;0===n.length&&(r=t,i="coord",s="*",n=Array.from(r.getElementsByTagNameNS(s,i)));const c=n.map((t=>o(t).split(" ").map(parseFloat)));return 0===c.length?null:{geometry:c.length>2?{type:"LineString",coordinates:c}:{type:"Point",coordinates:c[0]},times:e(t,"when").map((t=>o(t)))}}function W(t){if(0===t.length)return t;const e=t[0],n=t[t.length-1];let o=!0;for(let t=0;t<Math.max(e.length,n.length);t++)if(e[t]!==n[t]){o=!1;break}return o?t:t.concat([t[0]])}const H=["Polygon","LineString","Point","Track","gx:Track"];function _(t){return o(r(t,"coordinates"))}function U(t){const n=[],o=[];for(const e of["MultiGeometry","MultiTrack","gx:MultiTrack"]){const n=r(t,e);if(n)return U(n)}for(const r of H)for(const i of e(t,r))switch(r){case"Point":{const t=C(_(i));t.length>=2&&n.push({type:"Point",coordinates:t});break}case"LineString":{const t=G(_(i));t.length>=2&&n.push({type:"LineString",coordinates:t});break}case"Polygon":{const t=[];for(const n of e(i,"LinearRing")){const e=W(G(_(n)));e.length>=4&&t.push(e)}t.length&&n.push({type:"Polygon",coordinates:t});break}case"Track":case"gx:Track":{const t=D(i);if(!t)break;const{times:e,geometry:r}=t;n.push(r),e.length&&o.push(e);break}}return{geometries:n,coordTimes:o}}function V(t){return i(t,"ExtendedData",((t,n)=>{for(const i of e(t,"Data"))n[i.getAttribute("name")||""]=o(r(i,"value"));for(const r of e(t,"SimpleData"))n[r.getAttribute("name")||""]=o(r);return n}))}function I(t){return 0===t.length?null:1===t.length?t[0]:{type:"GeometryCollection",geometries:t}}function $(t){return i(t,"TimeSpan",(t=>({timespan:{begin:o(r(t,"begin")),end:o(r(t,"end"))}})))}function z(t){return i(t,"TimeStamp",(t=>({timestamp:o(r(t,"when"))})))}function J(t,e){return s(t,"styleUrl",(t=>(t=n(t),e[t]?Object.assign({styleUrl:t},e[t]):{styleUrl:t})))}function q(t){const e=r(t,"description");for(const t of Array.from(e?.childNodes||[]))if(4===t.nodeType)return{description:{"@type":"html",value:o(t)}};return{}}function K(t,e){const{coordTimes:n,geometries:o}=U(t),r={type:"Feature",geometry:I(o),properties:Object.assign(l(t,["name","address","visibility","open","phoneNumber","description"]),q(t),J(t,e),M(t),V(t),$(t),z(t),n.length?{coordinateProperties:{times:1===n.length?n[0]:n}}:{})};void 0!==r.properties?.visibility&&(r.properties.visibility="0"!==r.properties.visibility);const i=t.getAttribute("id");return null!==i&&""!==i&&(r.id=i),r}function Q(t){let e=t.getAttribute("id");const o=t.parentNode;return!e&&u(o)&&"CascadingStyle"===o.localName&&(e=o.getAttribute("kml:id")||o.getAttribute("id")),n(e||"")}function X(t){const o={};for(const n of e(t,"Style"))o[Q(n)]=M(n);for(const r of e(t,"StyleMap")){const t=n(r.getAttribute("id")||"");s(r,"styleUrl",(e=>{e=n(e),o[e]&&(o[t]=o[e])}))}return o}const Y=["name","visibility","open","address","description","phoneNumber","visibility"];function*Z(t){const n=X(t);for(const o of e(t,"Placemark")){const t=K(o,n);t&&(yield t)}}t.gpx=function(t){return{type:"FeatureCollection",features:Array.from(k(t))}},t.gpxGen=k,t.kml=function(t){return{type:"FeatureCollection",features:Array.from(Z(t))}},t.kmlGen=Z,t.kmlWithFolders=function(t){const e=X(t),n={type:"root",children:[]};return function t(n,r){if(u(n))switch(n.tagName){case"Placemark":{const t=K(n,e);t&&r.children.push(t);break}case"Folder":{const t=function(t){const e={};for(const n of Array.from(t.childNodes))u(n)&&Y.includes(n.tagName)&&(e[n.tagName]=o(n));return{type:"folder",meta:e,children:[]}}(n);r.children.push(t),r=t;break}}if(n.childNodes)for(let e=0;e<n.childNodes.length;e++)t(n.childNodes[e],r)}(t,n),n},t.tcx=function(t){return{type:"FeatureCollection",features:Array.from(j(t))}},t.tcxGen=j,Object.defineProperty(t,"__esModule",{value:!0})}));
 
 
-},{}],44:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var meta_1 = require("@turf/meta");
@@ -10406,7 +11661,7 @@ function rad(num) {
     return (num * Math.PI) / 180;
 }
 
-},{"@turf/meta":52}],45:[function(require,module,exports){
+},{"@turf/meta":56}],49:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var meta_1 = require("@turf/meta");
@@ -10445,7 +11700,7 @@ function bbox(geojson) {
 bbox["default"] = bbox;
 exports.default = bbox;
 
-},{"@turf/meta":52}],46:[function(require,module,exports){
+},{"@turf/meta":56}],50:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -10493,7 +11748,7 @@ function circle(center, radius, options) {
 }
 exports.default = circle;
 
-},{"@turf/destination":47,"@turf/helpers":49}],47:[function(require,module,exports){
+},{"@turf/destination":51,"@turf/helpers":53}],51:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 // http://en.wikipedia.org/wiki/Haversine_formula
@@ -10545,7 +11800,7 @@ function destination(origin, distance, bearing, options) {
 }
 exports.default = destination;
 
-},{"@turf/helpers":49,"@turf/invariant":50}],48:[function(require,module,exports){
+},{"@turf/helpers":53,"@turf/invariant":54}],52:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var invariant_1 = require("@turf/invariant");
@@ -10588,7 +11843,7 @@ function distance(from, to, options) {
 }
 exports.default = distance;
 
-},{"@turf/helpers":49,"@turf/invariant":50}],49:[function(require,module,exports){
+},{"@turf/helpers":53,"@turf/invariant":54}],53:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -11314,7 +12569,7 @@ function validateId(id) {
 }
 exports.validateId = validateId;
 
-},{}],50:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var helpers_1 = require("@turf/helpers");
@@ -11549,7 +12804,7 @@ function getType(geojson, _name) {
 }
 exports.getType = getType;
 
-},{"@turf/helpers":49}],51:[function(require,module,exports){
+},{"@turf/helpers":53}],55:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -11583,7 +12838,7 @@ function length(geojson, options) {
 }
 exports.default = length;
 
-},{"@turf/distance":48,"@turf/meta":52}],52:[function(require,module,exports){
+},{"@turf/distance":52,"@turf/meta":56}],56:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -13006,7 +14261,7 @@ exports.propReduce = propReduce;
 exports.segmentEach = segmentEach;
 exports.segmentReduce = segmentReduce;
 
-},{"@turf/helpers":49}],53:[function(require,module,exports){
+},{"@turf/helpers":53}],57:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -13516,7 +14771,7 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"object-assign":156,"util/":56}],54:[function(require,module,exports){
+},{"object-assign":158,"util/":60}],58:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -13541,14 +14796,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],55:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],56:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -14138,7 +15393,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":55,"_process":163,"inherits":54}],57:[function(require,module,exports){
+},{"./support/isBuffer":59,"_process":165,"inherits":58}],61:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -14169,7 +15424,7 @@ module.exports = function availableTypedArrays() {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],58:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 (function (global){(function (){
 /*! http://mths.be/base64 v0.1.0 by @mathias | MIT license */
 ;(function(root) {
@@ -14338,7 +15593,7 @@ module.exports = function availableTypedArrays() {
 }(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],59:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -14490,7 +15745,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],60:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 // Browser Request
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14986,9 +16241,9 @@ function b64_enc (data) {
 }));
 //UMD FOOTER END
 
-},{}],61:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 
-},{}],62:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -16769,7 +18024,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":59,"buffer":62,"ieee754":101}],63:[function(require,module,exports){
+},{"base64-js":63,"buffer":66,"ieee754":104}],67:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -16786,7 +18041,7 @@ module.exports = function callBoundIntrinsic(name, allowMissing) {
 	return intrinsic;
 };
 
-},{"./":64,"get-intrinsic":94}],64:[function(require,module,exports){
+},{"./":68,"get-intrinsic":97}],68:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
@@ -16835,7 +18090,7 @@ if ($defineProperty) {
 	module.exports.apply = applyBind;
 }
 
-},{"function-bind":88,"get-intrinsic":94}],65:[function(require,module,exports){
+},{"function-bind":92,"get-intrinsic":97}],69:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 
@@ -16967,7 +18222,7 @@ clone.clonePrototype = function(parent) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":62}],66:[function(require,module,exports){
+},{"buffer":66}],70:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -17129,7 +18384,7 @@ clone.clonePrototype = function(parent) {
   });
 });
 
-},{"../../lib/codemirror":70}],67:[function(require,module,exports){
+},{"../../lib/codemirror":74}],71:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -17250,7 +18505,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
 });
 
-},{"../../lib/codemirror":70}],68:[function(require,module,exports){
+},{"../../lib/codemirror":74}],72:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -17411,7 +18666,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   });
 });
 
-},{"../../lib/codemirror":70}],69:[function(require,module,exports){
+},{"../../lib/codemirror":74}],73:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -17582,7 +18837,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 });
 
-},{"../../lib/codemirror":70,"./foldcode":68}],70:[function(require,module,exports){
+},{"../../lib/codemirror":74,"./foldcode":72}],74:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -27456,7 +28711,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
 })));
 
-},{}],71:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -28418,7 +29673,7 @@ CodeMirror.defineMIME("application/typescript", { name: "javascript", typescript
 
 });
 
-},{"../../lib/codemirror":70}],72:[function(require,module,exports){
+},{"../../lib/codemirror":74}],76:[function(require,module,exports){
 'use strict';
 
 var dsv = require('d3-dsv'),
@@ -28679,7 +29934,7 @@ module.exports = {
     toPolygon: toPolygon
 };
 
-},{"@mapbox/sexagesimal":40,"d3-dsv":73}],73:[function(require,module,exports){
+},{"@mapbox/sexagesimal":44,"d3-dsv":77}],77:[function(require,module,exports){
 // https://d3js.org/d3-dsv/ Version 1.0.1. Copyright 2016 Mike Bostock.
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -28849,7 +30104,7 @@ module.exports = {
   Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
-},{}],74:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -29040,10 +30295,10 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],75:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 module.exports.structure = require('./src/structure');
 
-},{"./src/structure":79}],76:[function(require,module,exports){
+},{"./src/structure":83}],80:[function(require,module,exports){
 var fieldSize = require('./fieldsize');
 
 var types = {
@@ -29087,7 +30342,7 @@ function bytesPer(fields) {
     return fields.reduce(function(memo, f) { return memo + f.size; }, 1);
 }
 
-},{"./fieldsize":77}],77:[function(require,module,exports){
+},{"./fieldsize":81}],81:[function(require,module,exports){
 module.exports = {
     // string
     C: 254,
@@ -29105,7 +30360,7 @@ module.exports = {
     B: 8,
 };
 
-},{}],78:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 module.exports.lpad = function lpad(str, len, char) {
     while (str.length < len) { str = char + str; } return str;
 };
@@ -29121,7 +30376,7 @@ module.exports.writeField = function writeField(view, fieldLength, str, offset) 
     return offset;
 };
 
-},{}],79:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 var fieldSize = require('./fieldsize'),
     lib = require('./lib'),
     fields = require('./fields');
@@ -29218,12 +30473,12 @@ module.exports = function structure(data) {
     return view;
 };
 
-},{"./fields":76,"./fieldsize":77,"./lib":78}],80:[function(require,module,exports){
+},{"./fields":80,"./fieldsize":81,"./lib":82}],84:[function(require,module,exports){
 
 
 module.exports = new Function("dsv.version = \"0.0.3\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.substring(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.substring(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.substring(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && !(a = f(a, n++))) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{}],81:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -29240,7 +30495,7 @@ if ($gOPD) {
 
 module.exports = $gOPD;
 
-},{"get-intrinsic":94}],82:[function(require,module,exports){
+},{"get-intrinsic":97}],86:[function(require,module,exports){
 /*!
  * escape-html
  * Copyright(c) 2012-2013 TJ Holowaychuk
@@ -29320,7 +30575,7 @@ function escapeHtml(string) {
     : html;
 }
 
-},{}],83:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty
@@ -29658,7 +30913,7 @@ if ('undefined' !== typeof module) {
   module.exports = EventEmitter;
 }
 
-},{}],84:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -30157,13 +31412,13 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
   }
 }
 
-},{}],85:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 (function (global){(function (){
 (function(a,b){if("function"==typeof define&&define.amd)define([],b);else if("undefined"!=typeof exports)b();else{b(),a.FileSaver={exports:{}}.exports}})(this,function(){"use strict";function b(a,b){return"undefined"==typeof b?b={autoBom:!1}:"object"!=typeof b&&(console.warn("Deprecated: Expected third argument to be a object"),b={autoBom:!b}),b.autoBom&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\uFEFF",a],{type:a.type}):a}function c(a,b,c){var d=new XMLHttpRequest;d.open("GET",a),d.responseType="blob",d.onload=function(){g(d.response,b,c)},d.onerror=function(){console.error("could not download file")},d.send()}function d(a){var b=new XMLHttpRequest;b.open("HEAD",a,!1);try{b.send()}catch(a){}return 200<=b.status&&299>=b.status}function e(a){try{a.dispatchEvent(new MouseEvent("click"))}catch(c){var b=document.createEvent("MouseEvents");b.initMouseEvent("click",!0,!0,window,0,0,0,80,20,!1,!1,!1,!1,0,null),a.dispatchEvent(b)}}var f="object"==typeof window&&window.window===window?window:"object"==typeof self&&self.self===self?self:"object"==typeof global&&global.global===global?global:void 0,a=f.navigator&&/Macintosh/.test(navigator.userAgent)&&/AppleWebKit/.test(navigator.userAgent)&&!/Safari/.test(navigator.userAgent),g=f.saveAs||("object"!=typeof window||window!==f?function(){}:"download"in HTMLAnchorElement.prototype&&!a?function(b,g,h){var i=f.URL||f.webkitURL,j=document.createElement("a");g=g||b.name||"download",j.download=g,j.rel="noopener","string"==typeof b?(j.href=b,j.origin===location.origin?e(j):d(j.href)?c(b,g,h):e(j,j.target="_blank")):(j.href=i.createObjectURL(b),setTimeout(function(){i.revokeObjectURL(j.href)},4E4),setTimeout(function(){e(j)},0))}:"msSaveOrOpenBlob"in navigator?function(f,g,h){if(g=g||f.name||"download","string"!=typeof f)navigator.msSaveOrOpenBlob(b(f,h),g);else if(d(f))c(f,g,h);else{var i=document.createElement("a");i.href=f,i.target="_blank",setTimeout(function(){e(i)})}}:function(b,d,e,g){if(g=g||open("","_blank"),g&&(g.document.title=g.document.body.innerText="downloading..."),"string"==typeof b)return c(b,d,e);var h="application/octet-stream"===b.type,i=/constructor/i.test(f.HTMLElement)||f.safari,j=/CriOS\/[\d]+/.test(navigator.userAgent);if((j||h&&i||a)&&"undefined"!=typeof FileReader){var k=new FileReader;k.onloadend=function(){var a=k.result;a=j?a:a.replace(/^data:[^;]*;/,"data:attachment/file;"),g?g.location.href=a:location=a,g=null},k.readAsDataURL(b)}else{var l=f.URL||f.webkitURL,m=l.createObjectURL(b);g?g.location=m:location.href=m,g=null,setTimeout(function(){l.revokeObjectURL(m)},4E4)}});f.saveAs=g.saveAs=g,"undefined"!=typeof module&&(module.exports=g)});
 
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],86:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 'use strict';
 
 var isCallable = require('is-callable');
@@ -30227,7 +31482,7 @@ var forEach = function forEach(list, iterator, thisArg) {
 
 module.exports = forEach;
 
-},{"is-callable":105}],87:[function(require,module,exports){
+},{"is-callable":108}],91:[function(require,module,exports){
 'use strict';
 
 /* eslint no-invalid-this: 1 */
@@ -30281,14 +31536,14 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],88:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":87}],89:[function(require,module,exports){
+},{"./implementation":91}],93:[function(require,module,exports){
 /*
  * Fuzzy
  * https://github.com/myork/fuzzy
@@ -30434,7 +31689,7 @@ fuzzy.filter = function(pattern, arr, opts) {
 }());
 
 
-},{}],90:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 module.exports = flatten;
 
 function flatten(gj, up) {
@@ -30475,7 +31730,7 @@ function flatten(gj, up) {
     }
 }
 
-},{}],91:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 module.exports = function(count, type) {
     switch (type) {
         case 'point':
@@ -30494,7 +31749,7 @@ function feature(geom) {
 }
 function collection(f) { return { type: 'FeatureCollection', features: f }; }
 
-},{}],92:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 var dsv = require('dsv');
 
 module.exports = function(_, delim) {
@@ -30521,326 +31776,7 @@ module.exports = function(_, delim) {
     }));
 };
 
-},{"dsv":80}],93:[function(require,module,exports){
-var jsonlint = require('jsonlint-lines');
-
-function hint(str) {
-
-    var errors = [], gj;
-
-    function root(_) {
-        if (!_.type) {
-            errors.push({
-                message: 'The type property is required and was not found',
-                line: _.__line__
-            });
-        } else if (!types[_.type]) {
-            errors.push({
-                message: 'The type ' + _.type + ' is unknown',
-                line: _.__line__
-            });
-        } else if (_) {
-            types[_.type](_);
-        }
-    }
-
-    function everyIs(_, type) {
-        // make a single exception because typeof null === 'object'
-        return _.every(function(x) { return (x !== null) && (typeof x === type); });
-    }
-
-    function requiredProperty(_, name, type) {
-        if (typeof _[name] == 'undefined') {
-            return errors.push({
-                message: '"' + name + '" property required',
-                line: _.__line__
-            });
-        } else if (type === 'array') {
-            if (!Array.isArray(_[name])) {
-                return errors.push({
-                    message: '"' + name +
-                        '" property should be an array, but is an ' +
-                        (typeof _[name]) + ' instead',
-                    line: _.__line__
-                });
-            }
-        } else if (type && typeof _[name] !== type) {
-            return errors.push({
-                message: '"' + name +
-                    '" property should be ' + (type) +
-                    ', but is an ' + (typeof _[name]) + ' instead',
-                line: _.__line__
-            });
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#feature-collection-objects
-    function FeatureCollection(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'features', 'array')) {
-            if (!everyIs(_.features, 'object')) {
-                return errors.push({
-                    message: 'Every feature must be an object',
-                    line: _.__line__
-                });
-            }
-            _.features.forEach(Feature);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#positions
-    function position(_, line) {
-        if (!Array.isArray(_)) {
-            return errors.push({
-                message: 'position should be an array, is a ' + (typeof _) +
-                    ' instead',
-                line: _.__line__ || line
-            });
-        } else {
-            if (_.length < 2) {
-                return errors.push({
-                    message: 'position must have 2 or more elements',
-                    line: _.__line__ || line
-                });
-            }
-            if (!everyIs(_, 'number')) {
-                return errors.push({
-                    message: 'each element in a position must be a number',
-                    line: _.__line__ || line
-                });
-            }
-        }
-    }
-
-    function positionArray(coords, type, depth, line) {
-        if (line === undefined && coords.__line__ !== undefined) {
-            line = coords.__line__;
-        }
-        if (depth === 0) {
-            return position(coords, line);
-        } else {
-            if (depth === 1 && type) {
-                if (type === 'LinearRing') {
-                    if (!Array.isArray(coords[coords.length - 1])) {
-                        return errors.push({
-                            message: 'a number was found where a coordinate array should have been found: this needs to be nested more deeply',
-                            line: line
-                        });
-                    }
-                    if (coords.length < 4) {
-                        errors.push({
-                            message: 'a LinearRing of coordinates needs to have four or more positions',
-                            line: line
-                        });
-                    }
-                    if (coords.length &&
-                        (coords[coords.length - 1].length !== coords[0].length ||
-                        !coords[coords.length - 1].every(function(position, index) {
-                        return coords[0][index] === position;
-                    }))) {
-                        errors.push({
-                            message: 'the first and last positions in a LinearRing of coordinates must be the same',
-                            line: line
-                        });
-                    }
-                } else if (type === 'Line' && coords.length < 2) {
-                    errors.push({
-                        message: 'a line needs to have two or more coordinates to be valid',
-                        line: line
-                    });
-                }
-            }
-            if (!Array.isArray(coords)) {
-                return errors.push({
-                    message: 'coordinates must be list of positions',
-                    line: line
-                });
-            }
-            coords.forEach(function(c) {
-                positionArray(c, type, depth - 1, c.__line__ || line);
-            });
-        }
-    }
-
-    function crs(_) {
-        if (!_.crs) return;
-        if (typeof _.crs === 'object') {
-            var strErr = requiredProperty(_.crs, 'type', 'string'),
-                propErr = requiredProperty(_.crs, 'properties', 'object');
-            if (!strErr && !propErr) {
-                // http://geojson.org/geojson-spec.html#named-crs
-                if (_.crs.type == 'name') {
-                    requiredProperty(_.crs.properties, 'name', 'string');
-                } else if (_.crs.type == 'link') {
-                    requiredProperty(_.crs.properties, 'href', 'string');
-                }
-            }
-        } else {
-            errors.push({
-                message: 'the value of the crs property must be an object, not a ' + (typeof _.crs),
-                line: _.__line__
-            });
-        }
-    }
-
-    function bbox(_) {
-        if (!_.bbox) return;
-        if (Array.isArray(_.bbox)) {
-            if (!everyIs(_.bbox, 'number')) {
-                return errors.push({
-                    message: 'each element in a bbox property must be a number',
-                    line: _.bbox.__line__
-                });
-            }
-        } else {
-            errors.push({
-                message: 'bbox property must be an array of numbers, but is a ' + (typeof _.bbox),
-                line: _.__line__
-            });
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#point
-    function Point(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            position(_.coordinates);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#polygon
-    function Polygon(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            positionArray(_.coordinates, 'LinearRing', 2);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#multipolygon
-    function MultiPolygon(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            positionArray(_.coordinates, 'LinearRing', 3);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#linestring
-    function LineString(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            positionArray(_.coordinates, 'Line', 1);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#multilinestring
-    function MultiLineString(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            positionArray(_.coordinates, 'Line', 2);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#multipoint
-    function MultiPoint(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            positionArray(_.coordinates, '', 1);
-        }
-    }
-
-    function GeometryCollection(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'geometries', 'array')) {
-            _.geometries.forEach(function(geometry) {
-                if (geometry) root(geometry);
-            });
-        }
-    }
-
-    function Feature(_) {
-        crs(_);
-        bbox(_);
-        // https://github.com/geojson/draft-geojson/blob/master/middle.mkd#feature-object
-        if (_.id !== undefined &&
-            typeof _.id !== 'string' &&
-            typeof _.id !== 'number') {
-            errors.push({
-                message: 'Feature "id" property must have a string or number value',
-                line: _.__line__
-            });
-        }
-        if (_.type !== 'Feature') {
-            errors.push({
-                message: 'GeoJSON features must have a type=feature property',
-                line: _.__line__
-            });
-        }
-        requiredProperty(_, 'properties', 'object');
-        if (!requiredProperty(_, 'geometry', 'object')) {
-            // http://geojson.org/geojson-spec.html#feature-objects
-            // tolerate null geometry
-            if (_.geometry) root(_.geometry);
-        }
-    }
-
-    var types = {
-        Point: Point,
-        Feature: Feature,
-        MultiPoint: MultiPoint,
-        LineString: LineString,
-        MultiLineString: MultiLineString,
-        FeatureCollection: FeatureCollection,
-        GeometryCollection: GeometryCollection,
-        Polygon: Polygon,
-        MultiPolygon: MultiPolygon
-    };
-
-    if (typeof str !== 'string') {
-        return [{
-            message: 'Expected string input',
-            line: 0
-        }];
-    }
-
-    try {
-        gj = jsonlint.parse(str);
-    } catch(e) {
-        var match = e.message.match(/line (\d+)/),
-            lineNumber = 0;
-        if (match) lineNumber = parseInt(match[1], 10);
-        return [{
-            line: lineNumber - 1,
-            message: e.message,
-            error: e
-        }];
-    }
-
-    if (typeof gj !== 'object' ||
-        gj === null ||
-        gj === undefined) {
-        errors.push({
-            message: 'The root of a GeoJSON object must be an object.',
-            line: 0
-        });
-        return errors;
-    }
-
-    root(gj);
-
-    return errors;
-}
-
-module.exports.hint = hint;
-
-},{"jsonlint-lines":109}],94:[function(require,module,exports){
+},{"dsv":84}],97:[function(require,module,exports){
 'use strict';
 
 var undefined;
@@ -31176,7 +32112,7 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 	return value;
 };
 
-},{"function-bind":88,"has":100,"has-symbols":97}],95:[function(require,module,exports){
+},{"function-bind":92,"has":103,"has-symbols":100}],98:[function(require,module,exports){
 var parseCSV = require('dsv').csv.parse;
 
 /**
@@ -31218,12 +32154,12 @@ function gtfs2geojson(gtfs) {
 
 module.exports = gtfs2geojson;
 
-},{"dsv":96}],96:[function(require,module,exports){
+},{"dsv":99}],99:[function(require,module,exports){
 
 
 module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{}],97:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 'use strict';
 
 var origSymbol = typeof Symbol !== 'undefined' && Symbol;
@@ -31238,7 +32174,7 @@ module.exports = function hasNativeSymbols() {
 	return hasSymbolSham();
 };
 
-},{"./shams":98}],98:[function(require,module,exports){
+},{"./shams":101}],101:[function(require,module,exports){
 'use strict';
 
 /* eslint complexity: [2, 18], max-statements: [2, 33] */
@@ -31282,7 +32218,7 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{}],99:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 'use strict';
 
 var hasSymbols = require('has-symbols/shams');
@@ -31291,14 +32227,14 @@ module.exports = function hasToStringTagShams() {
 	return hasSymbols() && !!Symbol.toStringTag;
 };
 
-},{"has-symbols/shams":98}],100:[function(require,module,exports){
+},{"has-symbols/shams":101}],103:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":88}],101:[function(require,module,exports){
+},{"function-bind":92}],104:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -31385,7 +32321,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],102:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -31414,7 +32350,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],103:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 'use strict';
 
 var hasToStringTag = require('has-tostringtag/shams')();
@@ -31449,7 +32385,7 @@ isStandardArguments.isLegacyArguments = isLegacyArguments; // for tests
 
 module.exports = supportsStandardArguments ? isStandardArguments : isLegacyArguments;
 
-},{"call-bind/callBound":63,"has-tostringtag/shams":99}],104:[function(require,module,exports){
+},{"call-bind/callBound":67,"has-tostringtag/shams":102}],107:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -31472,7 +32408,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],105:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 'use strict';
 
 var fnToStr = Function.prototype.toString;
@@ -31575,7 +32511,7 @@ module.exports = reflectApply
 		return tryFunctionObject(value);
 	};
 
-},{}],106:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -31615,7 +32551,7 @@ module.exports = function isGeneratorFunction(fn) {
 	return getProto(fn) === GeneratorFunction;
 };
 
-},{"has-tostringtag/shams":99}],107:[function(require,module,exports){
+},{"has-tostringtag/shams":102}],110:[function(require,module,exports){
 'use strict';
 var toString = Object.prototype.toString;
 
@@ -31624,7 +32560,7 @@ module.exports = function (x) {
 	return toString.call(x) === '[object Object]' && (prototype = Object.getPrototypeOf(x), prototype === null || prototype === Object.getPrototypeOf({}));
 };
 
-},{}],108:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -31688,664 +32624,7 @@ module.exports = function isTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":57,"call-bind/callBound":63,"es-abstract/helpers/getOwnPropertyDescriptor":81,"for-each":86,"has-tostringtag/shams":99}],109:[function(require,module,exports){
-(function (process){(function (){
-/* parser generated by jison 0.4.6 */
-/*
-  Returns a Parser object of the following structure:
-
-  Parser: {
-    yy: {}
-  }
-
-  Parser.prototype: {
-    yy: {},
-    trace: function(),
-    symbols_: {associative list: name ==> number},
-    terminals_: {associative list: number ==> name},
-    productions_: [...],
-    performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate, $$, _$),
-    table: [...],
-    defaultActions: {...},
-    parseError: function(str, hash),
-    parse: function(input),
-
-    lexer: {
-        EOF: 1,
-        parseError: function(str, hash),
-        setInput: function(input),
-        input: function(),
-        unput: function(str),
-        more: function(),
-        less: function(n),
-        pastInput: function(),
-        upcomingInput: function(),
-        showPosition: function(),
-        test_match: function(regex_match_array, rule_index),
-        next: function(),
-        lex: function(),
-        begin: function(condition),
-        popState: function(),
-        _currentRules: function(),
-        topState: function(),
-        pushState: function(condition),
-
-        options: {
-            ranges: boolean           (optional: true ==> token location info will include a .range[] member)
-            flex: boolean             (optional: true ==> flex-like lexing behaviour where the rules are tested exhaustively to find the longest match)
-            backtrack_lexer: boolean  (optional: true ==> lexer regexes are tested in order and for each matching regex the action code is invoked; the lexer terminates the scan when a token is returned by the action code)
-        },
-
-        performAction: function(yy, yy_, $avoiding_name_collisions, YY_START),
-        rules: [...],
-        conditions: {associative list: name ==> set},
-    }
-  }
-
-
-  token location info (@$, _$, etc.): {
-    first_line: n,
-    last_line: n,
-    first_column: n,
-    last_column: n,
-    range: [start_number, end_number]       (where the numbers are indexes into the input string, regular zero-based)
-  }
-
-
-  the parseError function receives a 'hash' object with these members for lexer and parser errors: {
-    text:        (matched text)
-    token:       (the produced terminal token, if any)
-    line:        (yylineno)
-  }
-  while parser (grammar) errors will also provide these members, i.e. parser errors deliver a superset of attributes: {
-    loc:         (yylloc)
-    expected:    (string describing the set of expected tokens)
-    recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
-  }
-*/
-var jsonlint = (function(){
-var parser = {trace: function trace() { },
-yy: {},
-symbols_: {"error":2,"JSONString":3,"STRING":4,"JSONNumber":5,"NUMBER":6,"JSONNullLiteral":7,"NULL":8,"JSONBooleanLiteral":9,"TRUE":10,"FALSE":11,"JSONText":12,"JSONValue":13,"EOF":14,"JSONObject":15,"JSONArray":16,"{":17,"}":18,"JSONMemberList":19,"JSONMember":20,":":21,",":22,"[":23,"]":24,"JSONElementList":25,"$accept":0,"$end":1},
-terminals_: {2:"error",4:"STRING",6:"NUMBER",8:"NULL",10:"TRUE",11:"FALSE",14:"EOF",17:"{",18:"}",21:":",22:",",23:"[",24:"]"},
-productions_: [0,[3,1],[5,1],[7,1],[9,1],[9,1],[12,2],[13,1],[13,1],[13,1],[13,1],[13,1],[13,1],[15,2],[15,3],[20,3],[19,1],[19,3],[16,2],[16,3],[25,1],[25,3]],
-performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
-/* this == yyval */
-
-var $0 = $$.length - 1;
-switch (yystate) {
-case 1: // replace escaped characters with actual character
-          this.$ = yytext.replace(/\\(\\|")/g, "$"+"1")
-                     .replace(/\\n/g,'\n')
-                     .replace(/\\r/g,'\r')
-                     .replace(/\\t/g,'\t')
-                     .replace(/\\v/g,'\v')
-                     .replace(/\\f/g,'\f')
-                     .replace(/\\b/g,'\b');
-        
-break;
-case 2:this.$ = Number(yytext);
-break;
-case 3:this.$ = null;
-break;
-case 4:this.$ = true;
-break;
-case 5:this.$ = false;
-break;
-case 6:return this.$ = $$[$0-1];
-break;
-case 13:this.$ = {}; Object.defineProperty(this.$, '__line__', {
-            value: this._$.first_line,
-            enumerable: false
-        })
-break;
-case 14:this.$ = $$[$0-1]; Object.defineProperty(this.$, '__line__', {
-            value: this._$.first_line,
-            enumerable: false
-        })
-break;
-case 15:this.$ = [$$[$0-2], $$[$0]];
-break;
-case 16:this.$ = {}; this.$[$$[$0][0]] = $$[$0][1];
-break;
-case 17:this.$ = $$[$0-2]; $$[$0-2][$$[$0][0]] = $$[$0][1];
-break;
-case 18:this.$ = []; Object.defineProperty(this.$, '__line__', {
-            value: this._$.first_line,
-            enumerable: false
-        })
-break;
-case 19:this.$ = $$[$0-1]; Object.defineProperty(this.$, '__line__', {
-            value: this._$.first_line,
-            enumerable: false
-        })
-break;
-case 20:this.$ = [$$[$0]];
-break;
-case 21:this.$ = $$[$0-2]; $$[$0-2].push($$[$0]);
-break;
-}
-},
-table: [{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],12:1,13:2,15:7,16:8,17:[1,14],23:[1,15]},{1:[3]},{14:[1,16]},{14:[2,7],18:[2,7],22:[2,7],24:[2,7]},{14:[2,8],18:[2,8],22:[2,8],24:[2,8]},{14:[2,9],18:[2,9],22:[2,9],24:[2,9]},{14:[2,10],18:[2,10],22:[2,10],24:[2,10]},{14:[2,11],18:[2,11],22:[2,11],24:[2,11]},{14:[2,12],18:[2,12],22:[2,12],24:[2,12]},{14:[2,3],18:[2,3],22:[2,3],24:[2,3]},{14:[2,4],18:[2,4],22:[2,4],24:[2,4]},{14:[2,5],18:[2,5],22:[2,5],24:[2,5]},{14:[2,1],18:[2,1],21:[2,1],22:[2,1],24:[2,1]},{14:[2,2],18:[2,2],22:[2,2],24:[2,2]},{3:20,4:[1,12],18:[1,17],19:18,20:19},{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],13:23,15:7,16:8,17:[1,14],23:[1,15],24:[1,21],25:22},{1:[2,6]},{14:[2,13],18:[2,13],22:[2,13],24:[2,13]},{18:[1,24],22:[1,25]},{18:[2,16],22:[2,16]},{21:[1,26]},{14:[2,18],18:[2,18],22:[2,18],24:[2,18]},{22:[1,28],24:[1,27]},{22:[2,20],24:[2,20]},{14:[2,14],18:[2,14],22:[2,14],24:[2,14]},{3:20,4:[1,12],20:29},{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],13:30,15:7,16:8,17:[1,14],23:[1,15]},{14:[2,19],18:[2,19],22:[2,19],24:[2,19]},{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],13:31,15:7,16:8,17:[1,14],23:[1,15]},{18:[2,17],22:[2,17]},{18:[2,15],22:[2,15]},{22:[2,21],24:[2,21]}],
-defaultActions: {16:[2,6]},
-parseError: function parseError(str, hash) {
-    if (hash.recoverable) {
-        this.trace(str);
-    } else {
-        throw new Error(str);
-    }
-},
-parse: function parse(input) {
-    var self = this, stack = [0], vstack = [null], lstack = [], table = this.table, yytext = '', yylineno = 0, yyleng = 0, recovering = 0, TERROR = 2, EOF = 1;
-    this.lexer.setInput(input);
-    this.lexer.yy = this.yy;
-    this.yy.lexer = this.lexer;
-    this.yy.parser = this;
-    if (typeof this.lexer.yylloc == 'undefined') {
-        this.lexer.yylloc = {};
-    }
-    var yyloc = this.lexer.yylloc;
-    lstack.push(yyloc);
-    var ranges = this.lexer.options && this.lexer.options.ranges;
-    if (typeof this.yy.parseError === 'function') {
-        this.parseError = this.yy.parseError;
-    } else {
-        this.parseError = Object.getPrototypeOf(this).parseError;
-    }
-    function popStack(n) {
-        stack.length = stack.length - 2 * n;
-        vstack.length = vstack.length - n;
-        lstack.length = lstack.length - n;
-    }
-    function lex() {
-        var token;
-        token = self.lexer.lex() || EOF;
-        if (typeof token !== 'number') {
-            token = self.symbols_[token] || token;
-        }
-        return token;
-    }
-    var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
-    while (true) {
-        state = stack[stack.length - 1];
-        if (this.defaultActions[state]) {
-            action = this.defaultActions[state];
-        } else {
-            if (symbol === null || typeof symbol == 'undefined') {
-                symbol = lex();
-            }
-            action = table[state] && table[state][symbol];
-        }
-                    if (typeof action === 'undefined' || !action.length || !action[0]) {
-                var errStr = '';
-                expected = [];
-                for (p in table[state]) {
-                    if (this.terminals_[p] && p > TERROR) {
-                        expected.push('\'' + this.terminals_[p] + '\'');
-                    }
-                }
-                if (this.lexer.showPosition) {
-                    errStr = 'Parse error on line ' + (yylineno + 1) + ':\n' + this.lexer.showPosition() + '\nExpecting ' + expected.join(', ') + ', got \'' + (this.terminals_[symbol] || symbol) + '\'';
-                } else {
-                    errStr = 'Parse error on line ' + (yylineno + 1) + ': Unexpected ' + (symbol == EOF ? 'end of input' : '\'' + (this.terminals_[symbol] || symbol) + '\'');
-                }
-                this.parseError(errStr, {
-                    text: this.lexer.match,
-                    token: this.terminals_[symbol] || symbol,
-                    line: this.lexer.yylineno,
-                    loc: yyloc,
-                    expected: expected
-                });
-            }
-        if (action[0] instanceof Array && action.length > 1) {
-            throw new Error('Parse Error: multiple actions possible at state: ' + state + ', token: ' + symbol);
-        }
-        switch (action[0]) {
-        case 1:
-            stack.push(symbol);
-            vstack.push(this.lexer.yytext);
-            lstack.push(this.lexer.yylloc);
-            stack.push(action[1]);
-            symbol = null;
-            if (!preErrorSymbol) {
-                yyleng = this.lexer.yyleng;
-                yytext = this.lexer.yytext;
-                yylineno = this.lexer.yylineno;
-                yyloc = this.lexer.yylloc;
-                if (recovering > 0) {
-                    recovering--;
-                }
-            } else {
-                symbol = preErrorSymbol;
-                preErrorSymbol = null;
-            }
-            break;
-        case 2:
-            len = this.productions_[action[1]][1];
-            yyval.$ = vstack[vstack.length - len];
-            yyval._$ = {
-                first_line: lstack[lstack.length - (len || 1)].first_line,
-                last_line: lstack[lstack.length - 1].last_line,
-                first_column: lstack[lstack.length - (len || 1)].first_column,
-                last_column: lstack[lstack.length - 1].last_column
-            };
-            if (ranges) {
-                yyval._$.range = [
-                    lstack[lstack.length - (len || 1)].range[0],
-                    lstack[lstack.length - 1].range[1]
-                ];
-            }
-            r = this.performAction.call(yyval, yytext, yyleng, yylineno, this.yy, action[1], vstack, lstack);
-            if (typeof r !== 'undefined') {
-                return r;
-            }
-            if (len) {
-                stack = stack.slice(0, -1 * len * 2);
-                vstack = vstack.slice(0, -1 * len);
-                lstack = lstack.slice(0, -1 * len);
-            }
-            stack.push(this.productions_[action[1]][0]);
-            vstack.push(yyval.$);
-            lstack.push(yyval._$);
-            newState = table[stack[stack.length - 2]][stack[stack.length - 1]];
-            stack.push(newState);
-            break;
-        case 3:
-            return true;
-        }
-    }
-    return true;
-}};
-/* generated by jison-lex 0.2.1 */
-var lexer = (function(){
-var lexer = {
-
-EOF:1,
-
-parseError:function parseError(str, hash) {
-        if (this.yy.parser) {
-            this.yy.parser.parseError(str, hash);
-        } else {
-            throw new Error(str);
-        }
-    },
-
-// resets the lexer, sets new input
-setInput:function (input) {
-        this._input = input;
-        this._more = this._backtrack = this.done = false;
-        this.yylineno = this.yyleng = 0;
-        this.yytext = this.matched = this.match = '';
-        this.conditionStack = ['INITIAL'];
-        this.yylloc = {
-            first_line: 1,
-            first_column: 0,
-            last_line: 1,
-            last_column: 0
-        };
-        if (this.options.ranges) {
-            this.yylloc.range = [0,0];
-        }
-        this.offset = 0;
-        return this;
-    },
-
-// consumes and returns one char from the input
-input:function () {
-        var ch = this._input[0];
-        this.yytext += ch;
-        this.yyleng++;
-        this.offset++;
-        this.match += ch;
-        this.matched += ch;
-        var lines = ch.match(/(?:\r\n?|\n).*/g);
-        if (lines) {
-            this.yylineno++;
-            this.yylloc.last_line++;
-        } else {
-            this.yylloc.last_column++;
-        }
-        if (this.options.ranges) {
-            this.yylloc.range[1]++;
-        }
-
-        this._input = this._input.slice(1);
-        return ch;
-    },
-
-// unshifts one char (or a string) into the input
-unput:function (ch) {
-        var len = ch.length;
-        var lines = ch.split(/(?:\r\n?|\n)/g);
-
-        this._input = ch + this._input;
-        this.yytext = this.yytext.substr(0, this.yytext.length - len - 1);
-        //this.yyleng -= len;
-        this.offset -= len;
-        var oldLines = this.match.split(/(?:\r\n?|\n)/g);
-        this.match = this.match.substr(0, this.match.length - 1);
-        this.matched = this.matched.substr(0, this.matched.length - 1);
-
-        if (lines.length - 1) {
-            this.yylineno -= lines.length - 1;
-        }
-        var r = this.yylloc.range;
-
-        this.yylloc = {
-            first_line: this.yylloc.first_line,
-            last_line: this.yylineno + 1,
-            first_column: this.yylloc.first_column,
-            last_column: lines ?
-                (lines.length === oldLines.length ? this.yylloc.first_column : 0)
-                 + oldLines[oldLines.length - lines.length].length - lines[0].length :
-              this.yylloc.first_column - len
-        };
-
-        if (this.options.ranges) {
-            this.yylloc.range = [r[0], r[0] + this.yyleng - len];
-        }
-        this.yyleng = this.yytext.length;
-        return this;
-    },
-
-// When called from action, caches matched text and appends it on next action
-more:function () {
-        this._more = true;
-        return this;
-    },
-
-// When called from action, signals the lexer that this rule fails to match the input, so the next matching rule (regex) should be tested instead.
-reject:function () {
-        if (this.options.backtrack_lexer) {
-            this._backtrack = true;
-        } else {
-            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. You can only invoke reject() in the lexer when the lexer is of the backtracking persuasion (options.backtrack_lexer = true).\n' + this.showPosition(), {
-                text: "",
-                token: null,
-                line: this.yylineno
-            });
-
-        }
-        return this;
-    },
-
-// retain first n characters of the match
-less:function (n) {
-        this.unput(this.match.slice(n));
-    },
-
-// displays already matched input, i.e. for error messages
-pastInput:function () {
-        var past = this.matched.substr(0, this.matched.length - this.match.length);
-        return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
-    },
-
-// displays upcoming input, i.e. for error messages
-upcomingInput:function () {
-        var next = this.match;
-        if (next.length < 20) {
-            next += this._input.substr(0, 20-next.length);
-        }
-        return (next.substr(0,20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
-    },
-
-// displays the character position where the lexing error occurred, i.e. for error messages
-showPosition:function () {
-        var pre = this.pastInput();
-        var c = new Array(pre.length + 1).join("-");
-        return pre + this.upcomingInput() + "\n" + c + "^";
-    },
-
-// test the lexed token: return FALSE when not a match, otherwise return token
-test_match:function (match, indexed_rule) {
-        var token,
-            lines,
-            backup;
-
-        if (this.options.backtrack_lexer) {
-            // save context
-            backup = {
-                yylineno: this.yylineno,
-                yylloc: {
-                    first_line: this.yylloc.first_line,
-                    last_line: this.last_line,
-                    first_column: this.yylloc.first_column,
-                    last_column: this.yylloc.last_column
-                },
-                yytext: this.yytext,
-                match: this.match,
-                matches: this.matches,
-                matched: this.matched,
-                yyleng: this.yyleng,
-                offset: this.offset,
-                _more: this._more,
-                _input: this._input,
-                yy: this.yy,
-                conditionStack: this.conditionStack.slice(0),
-                done: this.done
-            };
-            if (this.options.ranges) {
-                backup.yylloc.range = this.yylloc.range.slice(0);
-            }
-        }
-
-        lines = match[0].match(/(?:\r\n?|\n).*/g);
-        if (lines) {
-            this.yylineno += lines.length;
-        }
-        this.yylloc = {
-            first_line: this.yylloc.last_line,
-            last_line: this.yylineno + 1,
-            first_column: this.yylloc.last_column,
-            last_column: lines ?
-                         lines[lines.length - 1].length - lines[lines.length - 1].match(/\r?\n?/)[0].length :
-                         this.yylloc.last_column + match[0].length
-        };
-        this.yytext += match[0];
-        this.match += match[0];
-        this.matches = match;
-        this.yyleng = this.yytext.length;
-        if (this.options.ranges) {
-            this.yylloc.range = [this.offset, this.offset += this.yyleng];
-        }
-        this._more = false;
-        this._backtrack = false;
-        this._input = this._input.slice(match[0].length);
-        this.matched += match[0];
-        token = this.performAction.call(this, this.yy, this, indexed_rule, this.conditionStack[this.conditionStack.length - 1]);
-        if (this.done && this._input) {
-            this.done = false;
-        }
-        if (token) {
-            return token;
-        } else if (this._backtrack) {
-            // recover context
-            for (var k in backup) {
-                this[k] = backup[k];
-            }
-            return false; // rule action called reject() implying the next rule should be tested instead.
-        }
-        return false;
-    },
-
-// return next match in input
-next:function () {
-        if (this.done) {
-            return this.EOF;
-        }
-        if (!this._input) {
-            this.done = true;
-        }
-
-        var token,
-            match,
-            tempMatch,
-            index;
-        if (!this._more) {
-            this.yytext = '';
-            this.match = '';
-        }
-        var rules = this._currentRules();
-        for (var i = 0; i < rules.length; i++) {
-            tempMatch = this._input.match(this.rules[rules[i]]);
-            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
-                match = tempMatch;
-                index = i;
-                if (this.options.backtrack_lexer) {
-                    token = this.test_match(tempMatch, rules[i]);
-                    if (token !== false) {
-                        return token;
-                    } else if (this._backtrack) {
-                        match = false;
-                        continue; // rule action called reject() implying a rule MISmatch.
-                    } else {
-                        // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
-                        return false;
-                    }
-                } else if (!this.options.flex) {
-                    break;
-                }
-            }
-        }
-        if (match) {
-            token = this.test_match(match, rules[index]);
-            if (token !== false) {
-                return token;
-            }
-            // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
-            return false;
-        }
-        if (this._input === "") {
-            return this.EOF;
-        } else {
-            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. Unrecognized text.\n' + this.showPosition(), {
-                text: "",
-                token: null,
-                line: this.yylineno
-            });
-        }
-    },
-
-// return next match that has a token
-lex:function lex() {
-        var r = this.next();
-        if (r) {
-            return r;
-        } else {
-            return this.lex();
-        }
-    },
-
-// activates a new lexer condition state (pushes the new lexer condition state onto the condition stack)
-begin:function begin(condition) {
-        this.conditionStack.push(condition);
-    },
-
-// pop the previously active lexer condition state off the condition stack
-popState:function popState() {
-        var n = this.conditionStack.length - 1;
-        if (n > 0) {
-            return this.conditionStack.pop();
-        } else {
-            return this.conditionStack[0];
-        }
-    },
-
-// produce the lexer rule set which is active for the currently active lexer condition state
-_currentRules:function _currentRules() {
-        if (this.conditionStack.length && this.conditionStack[this.conditionStack.length - 1]) {
-            return this.conditions[this.conditionStack[this.conditionStack.length - 1]].rules;
-        } else {
-            return this.conditions["INITIAL"].rules;
-        }
-    },
-
-// return the currently active lexer condition state; when an index argument is provided it produces the N-th previous condition state, if available
-topState:function topState(n) {
-        n = this.conditionStack.length - 1 - Math.abs(n || 0);
-        if (n >= 0) {
-            return this.conditionStack[n];
-        } else {
-            return "INITIAL";
-        }
-    },
-
-// alias for begin(condition)
-pushState:function pushState(condition) {
-        this.begin(condition);
-    },
-
-// return the number of states currently on the stack
-stateStackSize:function stateStackSize() {
-        return this.conditionStack.length;
-    },
-options: {},
-performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
-
-var YYSTATE=YY_START;
-switch($avoiding_name_collisions) {
-case 0:/* skip whitespace */
-break;
-case 1:return 6
-break;
-case 2:yy_.yytext = yy_.yytext.substr(1,yy_.yyleng-2); return 4
-break;
-case 3:return 17
-break;
-case 4:return 18
-break;
-case 5:return 23
-break;
-case 6:return 24
-break;
-case 7:return 22
-break;
-case 8:return 21
-break;
-case 9:return 10
-break;
-case 10:return 11
-break;
-case 11:return 8
-break;
-case 12:return 14
-break;
-case 13:return 'INVALID'
-break;
-}
-},
-rules: [/^(?:\s+)/,/^(?:(-?([0-9]|[1-9][0-9]+))(\.[0-9]+)?([eE][-+]?[0-9]+)?\b)/,/^(?:"(?:\\[\\"bfnrt/]|\\u[a-fA-F0-9]{4}|[^\\\0-\x09\x0a-\x1f"])*")/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?::)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:null\b)/,/^(?:$)/,/^(?:.)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13],"inclusive":true}}
-};
-return lexer;
-})();
-parser.lexer = lexer;
-function Parser () {
-  this.yy = {};
-}
-Parser.prototype = parser;parser.Parser = Parser;
-return new Parser;
-})();
-
-
-if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
-exports.parser = jsonlint;
-exports.Parser = jsonlint.Parser;
-exports.parse = function () { return jsonlint.parse.apply(jsonlint, arguments); };
-exports.main = function commonjsMain(args) {
-    if (!args[1]) {
-        console.log('Usage: '+args[0]+' FILE');
-        process.exit(1);
-    }
-    var source = require('fs').readFileSync(require('path').normalize(args[1]), "utf8");
-    return exports.parser.parse(source);
-};
-if (typeof module !== 'undefined' && require.main === module) {
-  exports.main(process.argv.slice(1));
-}
-}
-}).call(this)}).call(this,require('_process'))
-},{"_process":163,"fs":61,"path":161}],110:[function(require,module,exports){
+},{"available-typed-arrays":61,"call-bind/callBound":67,"es-abstract/helpers/getOwnPropertyDescriptor":85,"for-each":90,"has-tostringtag/shams":102}],112:[function(require,module,exports){
 'use strict';
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -32417,7 +32696,7 @@ exports.decode = function(input, utf8) {
 
 };
 
-},{}],111:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 'use strict';
 function CompressedObject() {
     this.compressedSize = 0;
@@ -32447,7 +32726,7 @@ CompressedObject.prototype = {
 };
 module.exports = CompressedObject;
 
-},{}],112:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 'use strict';
 exports.STORE = {
     magic: "\x00\x00",
@@ -32462,7 +32741,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":117}],113:[function(require,module,exports){
+},{"./flate":119}],115:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -32566,7 +32845,7 @@ module.exports = function crc32(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":130}],114:[function(require,module,exports){
+},{"./utils":132}],116:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -32675,7 +32954,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"./utils":130}],115:[function(require,module,exports){
+},{"./utils":132}],117:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -32688,7 +32967,7 @@ exports.comment = null;
 exports.unixPermissions = null;
 exports.dosPermissions = null;
 
-},{}],116:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -32795,7 +33074,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./utils":130}],117:[function(require,module,exports){
+},{"./utils":132}],119:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -32813,7 +33092,7 @@ exports.uncompress =  function(input) {
     return pako.inflateRaw(input);
 };
 
-},{"pako":133}],118:[function(require,module,exports){
+},{"pako":135}],120:[function(require,module,exports){
 'use strict';
 
 var base64 = require('./base64');
@@ -32894,7 +33173,7 @@ JSZip.base64 = {
 JSZip.compressions = require('./compressions');
 module.exports = JSZip;
 
-},{"./base64":110,"./compressions":112,"./defaults":115,"./deprecatedPublicUtils":116,"./load":119,"./object":122,"./support":126}],119:[function(require,module,exports){
+},{"./base64":112,"./compressions":114,"./defaults":117,"./deprecatedPublicUtils":118,"./load":121,"./object":124,"./support":128}],121:[function(require,module,exports){
 'use strict';
 var base64 = require('./base64');
 var ZipEntries = require('./zipEntries');
@@ -32927,7 +33206,7 @@ module.exports = function(data, options) {
     return this;
 };
 
-},{"./base64":110,"./zipEntries":131}],120:[function(require,module,exports){
+},{"./base64":112,"./zipEntries":133}],122:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 module.exports = function(data, encoding){
@@ -32938,7 +33217,7 @@ module.exports.test = function(b){
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":62}],121:[function(require,module,exports){
+},{"buffer":66}],123:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./uint8ArrayReader');
 
@@ -32960,7 +33239,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"./uint8ArrayReader":127}],122:[function(require,module,exports){
+},{"./uint8ArrayReader":129}],124:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var utils = require('./utils');
@@ -33845,7 +34124,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./base64":110,"./compressedObject":111,"./compressions":112,"./crc32":113,"./defaults":115,"./nodeBuffer":120,"./signature":123,"./stringWriter":125,"./support":126,"./uint8ArrayWriter":128,"./utf8":129,"./utils":130}],123:[function(require,module,exports){
+},{"./base64":112,"./compressedObject":113,"./compressions":114,"./crc32":115,"./defaults":117,"./nodeBuffer":122,"./signature":125,"./stringWriter":127,"./support":128,"./uint8ArrayWriter":130,"./utf8":131,"./utils":132}],125:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -33854,7 +34133,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],124:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 var utils = require('./utils');
@@ -33892,7 +34171,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"./dataReader":114,"./utils":130}],125:[function(require,module,exports){
+},{"./dataReader":116,"./utils":132}],127:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -33924,7 +34203,7 @@ StringWriter.prototype = {
 
 module.exports = StringWriter;
 
-},{"./utils":130}],126:[function(require,module,exports){
+},{"./utils":132}],128:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 exports.base64 = true;
@@ -33962,7 +34241,7 @@ else {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":62}],127:[function(require,module,exports){
+},{"buffer":66}],129:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 
@@ -34011,7 +34290,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"./dataReader":114}],128:[function(require,module,exports){
+},{"./dataReader":116}],130:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -34049,7 +34328,7 @@ Uint8ArrayWriter.prototype = {
 
 module.exports = Uint8ArrayWriter;
 
-},{"./utils":130}],129:[function(require,module,exports){
+},{"./utils":132}],131:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -34258,7 +34537,7 @@ exports.utf8decode = function utf8decode(buf) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./nodeBuffer":120,"./support":126,"./utils":130}],130:[function(require,module,exports){
+},{"./nodeBuffer":122,"./support":128,"./utils":132}],132:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var compressions = require('./compressions');
@@ -34586,7 +34865,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./compressions":112,"./nodeBuffer":120,"./support":126}],131:[function(require,module,exports){
+},{"./compressions":114,"./nodeBuffer":122,"./support":128}],133:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var NodeBufferReader = require('./nodeBufferReader');
@@ -34809,7 +35088,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./nodeBufferReader":121,"./object":122,"./signature":123,"./stringReader":124,"./support":126,"./uint8ArrayReader":127,"./utils":130,"./zipEntry":132}],132:[function(require,module,exports){
+},{"./nodeBufferReader":123,"./object":124,"./signature":125,"./stringReader":126,"./support":128,"./uint8ArrayReader":129,"./utils":132,"./zipEntry":134}],134:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var utils = require('./utils');
@@ -35121,7 +35400,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":111,"./object":122,"./stringReader":124,"./utils":130}],133:[function(require,module,exports){
+},{"./compressedObject":113,"./object":124,"./stringReader":126,"./utils":132}],135:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -35137,7 +35416,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":134,"./lib/inflate":135,"./lib/utils/common":136,"./lib/zlib/constants":139}],134:[function(require,module,exports){
+},{"./lib/deflate":136,"./lib/inflate":137,"./lib/utils/common":138,"./lib/zlib/constants":141}],136:[function(require,module,exports){
 'use strict';
 
 
@@ -35539,7 +35818,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":136,"./utils/strings":137,"./zlib/deflate":141,"./zlib/messages":146,"./zlib/zstream":148}],135:[function(require,module,exports){
+},{"./utils/common":138,"./utils/strings":139,"./zlib/deflate":143,"./zlib/messages":148,"./zlib/zstream":150}],137:[function(require,module,exports){
 'use strict';
 
 
@@ -35959,7 +36238,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":136,"./utils/strings":137,"./zlib/constants":139,"./zlib/gzheader":142,"./zlib/inflate":144,"./zlib/messages":146,"./zlib/zstream":148}],136:[function(require,module,exports){
+},{"./utils/common":138,"./utils/strings":139,"./zlib/constants":141,"./zlib/gzheader":144,"./zlib/inflate":146,"./zlib/messages":148,"./zlib/zstream":150}],138:[function(require,module,exports){
 'use strict';
 
 
@@ -36063,7 +36342,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],137:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -36250,7 +36529,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":136}],138:[function(require,module,exports){
+},{"./common":138}],140:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -36284,7 +36563,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],139:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 'use strict';
 
 
@@ -36336,7 +36615,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],140:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -36379,7 +36658,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],141:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -38236,7 +38515,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":136,"./adler32":138,"./crc32":140,"./messages":146,"./trees":147}],142:[function(require,module,exports){
+},{"../utils/common":138,"./adler32":140,"./crc32":142,"./messages":148,"./trees":149}],144:[function(require,module,exports){
 'use strict';
 
 
@@ -38278,7 +38557,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],143:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -38606,7 +38885,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],144:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 'use strict';
 
 
@@ -40146,7 +40425,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":136,"./adler32":138,"./crc32":140,"./inffast":143,"./inftrees":145}],145:[function(require,module,exports){
+},{"../utils/common":138,"./adler32":140,"./crc32":142,"./inffast":145,"./inftrees":147}],147:[function(require,module,exports){
 'use strict';
 
 
@@ -40475,7 +40754,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":136}],146:[function(require,module,exports){
+},{"../utils/common":138}],148:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -40490,7 +40769,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],147:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 'use strict';
 
 
@@ -41694,7 +41973,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":136}],148:[function(require,module,exports){
+},{"../utils/common":138}],150:[function(require,module,exports){
 'use strict';
 
 
@@ -41725,7 +42004,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],149:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 (function (global){(function (){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -42106,7 +42385,7 @@ function toNumber(value) {
 module.exports = debounce;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],150:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
@@ -59319,7 +59598,7 @@ module.exports = debounce;
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],151:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 (function (process){(function (){
 /* Mapbox GL JS is Copyright © 2020 Mapbox and subject to the Mapbox Terms of Service ((https://www.mapbox.com/legal/tos/). */
 (function (global, factory) {
@@ -59367,7 +59646,7 @@ return mapboxgl$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":163}],152:[function(require,module,exports){
+},{"_process":165}],154:[function(require,module,exports){
 (function (global){(function (){
 /**
  * marked - a markdown parser
@@ -60637,7 +60916,7 @@ if (typeof exports === 'object') {
 }());
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],153:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 let { urlAlphabet } = require('./url-alphabet/index.cjs')
 let random = bytes => crypto.getRandomValues(new Uint8Array(bytes))
 let customRandom = (alphabet, defaultSize, getRandom) => {
@@ -60673,12 +60952,12 @@ let nanoid = (size = 21) =>
   }, '')
 module.exports = { nanoid, customAlphabet, customRandom, urlAlphabet, random }
 
-},{"./url-alphabet/index.cjs":154}],154:[function(require,module,exports){
+},{"./url-alphabet/index.cjs":156}],156:[function(require,module,exports){
 let urlAlphabet =
   'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict'
 module.exports = { urlAlphabet }
 
-},{}],155:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 /*! @preserve
  * numeral.js
  * version : 2.0.6
@@ -61693,7 +61972,7 @@ module.exports = { urlAlphabet }
 return numeral;
 }));
 
-},{}],156:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -61785,10 +62064,10 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],157:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 module.exports = require('./polygon-features.json')
 
-},{"./polygon-features.json":158}],158:[function(require,module,exports){
+},{"./polygon-features.json":160}],160:[function(require,module,exports){
 module.exports=[
     {
         "key": "building",
@@ -61947,7 +62226,7 @@ module.exports=[
     }
 ]
 
-},{}],159:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 var _ = require("./lodash.custom.js");
 var rewind = require("@mapbox/geojson-rewind");
 
@@ -63014,7 +63293,7 @@ osmtogeojson.toGeojson = osmtogeojson;
 
 module.exports = osmtogeojson;
 
-},{"./lodash.custom.js":160,"@mapbox/geojson-rewind":9,"osm-polygon-features":157}],160:[function(require,module,exports){
+},{"./lodash.custom.js":162,"@mapbox/geojson-rewind":9,"osm-polygon-features":159}],162:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
@@ -66721,7 +67000,7 @@ module.exports = osmtogeojson;
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],161:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 (function (process){(function (){
 // 'path' module extracted from Node.js v8.11.1 (only the posix part)
 // transplited with Babel
@@ -67254,7 +67533,7 @@ posix.posix = posix;
 module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":163}],162:[function(require,module,exports){
+},{"_process":165}],164:[function(require,module,exports){
 module.exports = function (data) {
     var lines = data.split('\n'),
                 isNameLine = true,
@@ -67320,7 +67599,7 @@ module.exports = function (data) {
     return gj;
 };
 
-},{}],163:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -67506,7 +67785,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],164:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 /*
  * Given a querystring, return an object of that querystring's components.
  *
@@ -67539,7 +67818,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],165:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 (function() {
   var slice = [].slice;
 
@@ -67621,11 +67900,11 @@ module.exports.qsString = function(obj, noencode) {
   else this.queue = queue;
 })();
 
-},{}],166:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 module.exports.download = require('./src/download')
 module.exports.write = require('./src/write')
 module.exports.zip = require('./src/zip')
-},{"./src/download":167,"./src/write":175,"./src/zip":176}],167:[function(require,module,exports){
+},{"./src/download":169,"./src/write":177,"./src/zip":178}],169:[function(require,module,exports){
 var zip = require('./zip');
 
 module.exports = function(gj, options) {
@@ -67633,7 +67912,7 @@ module.exports = function(gj, options) {
     location.href = 'data:application/zip;base64,' + content;
 };
 
-},{"./zip":176}],168:[function(require,module,exports){
+},{"./zip":178}],170:[function(require,module,exports){
 module.exports.enlarge = function enlargeExtent(extent, pt) {
     if (pt[0] < extent.xmin) extent.xmin = pt[0];
     if (pt[0] > extent.xmax) extent.xmax = pt[0];
@@ -67659,7 +67938,7 @@ module.exports.blank = function() {
     };
 };
 
-},{}],169:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 var types = require('./types').jstypes;
 
 module.exports.geojson = geojson;
@@ -67689,7 +67968,7 @@ function obj(_) {
     return o;
 }
 
-},{"./types":174}],170:[function(require,module,exports){
+},{"./types":176}],172:[function(require,module,exports){
 module.exports.point = justType('Point', 'POINT');
 module.exports.line = justType('LineString', 'POLYLINE');
 module.exports.polygon = justType('Polygon', 'POLYGON');
@@ -67723,7 +68002,7 @@ function isType(t) {
     return function(f) { return f.geometry.type === t; };
 }
 
-},{}],171:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(coordinates, extent, shpView, shxView) {
@@ -67770,7 +68049,7 @@ module.exports.shpLength = function(coordinates) {
     return coordinates.length * 28;
 };
 
-},{"./extent":168}],172:[function(require,module,exports){
+},{"./extent":170}],174:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
@@ -67850,10 +68129,10 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":168}],173:[function(require,module,exports){
+},{"./extent":170}],175:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
-},{}],174:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 module.exports.geometries = {
     NULL: 0,
     POINT: 1,
@@ -67871,7 +68150,7 @@ module.exports.geometries = {
     MULTIPATCH: 31,
 };
 
-},{}],175:[function(require,module,exports){
+},{}],177:[function(require,module,exports){
 var types = require('./types'),
     dbf = require('dbf'),
     prj = require('./prj'),
@@ -67940,7 +68219,7 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":168,"./fields":169,"./points":171,"./poly":172,"./prj":173,"./types":174,"assert":53,"dbf":75}],176:[function(require,module,exports){
+},{"./extent":170,"./fields":171,"./points":173,"./poly":174,"./prj":175,"./types":176,"assert":57,"dbf":79}],178:[function(require,module,exports){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
@@ -67974,7 +68253,7 @@ module.exports = function(gj, options) {
     return zip.generate({compression:'STORE'});
 };
 
-},{"./geojson":170,"./prj":173,"./write":175,"jszip":118}],177:[function(require,module,exports){
+},{"./geojson":172,"./prj":175,"./write":177,"jszip":120}],179:[function(require,module,exports){
 (function (global){(function (){
 ;(function(win){
 	var store = {},
@@ -68142,7 +68421,7 @@ module.exports = function(gj, options) {
 })(this.window || global);
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],178:[function(require,module,exports){
+},{}],180:[function(require,module,exports){
 !function(root, name, make) {
   if (typeof module != 'undefined' && module.exports) module.exports = make()
   else root[name] = make()
@@ -68194,7 +68473,7 @@ module.exports = function(gj, options) {
   return api
 });
 
-},{}],179:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 'use strict';
 
 /**
@@ -68259,9 +68538,9 @@ if (typeof window !== 'undefined') {
   window.Suggestions = Suggestions;
 }
 
-},{"./src/suggestions":182}],180:[function(require,module,exports){
+},{"./src/suggestions":184}],182:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3}],181:[function(require,module,exports){
+},{"dup":3}],183:[function(require,module,exports){
 'use strict';
 
 var List = function(component) {
@@ -68374,7 +68653,7 @@ List.prototype.drawError = function(msg){
 
 module.exports = List;
 
-},{}],182:[function(require,module,exports){
+},{}],184:[function(require,module,exports){
 'use strict';
 
 var extend = require('xtend');
@@ -68632,7 +68911,7 @@ Suggestions.prototype.renderError = function(msg){
 
 module.exports = Suggestions;
 
-},{"./list":181,"fuzzy":89,"xtend":180}],183:[function(require,module,exports){
+},{"./list":183,"fuzzy":93,"xtend":182}],185:[function(require,module,exports){
 // https://github.com/topojson/topojson-client v3.1.0 Copyright 2019 Mike Bostock
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -69142,7 +69421,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
 
-},{}],184:[function(require,module,exports){
+},{}],186:[function(require,module,exports){
 // https://github.com/topojson/topojson-server v3.0.1 Copyright 2019 Mike Bostock
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -69982,7 +70261,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
 
-},{}],185:[function(require,module,exports){
+},{}],187:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -70298,7 +70577,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],186:[function(require,module,exports){
+},{}],188:[function(require,module,exports){
 module.exports = function(request) {
     var parent = ce('div', 'treeui'),
         onclick = function() { };
@@ -70397,9 +70676,9 @@ function ae(x, y, z) {
     return x.addEventListener(y, z);
 }
 
-},{}],187:[function(require,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"dup":55}],188:[function(require,module,exports){
+},{}],189:[function(require,module,exports){
+arguments[4][59][0].apply(exports,arguments)
+},{"dup":59}],190:[function(require,module,exports){
 // Currently in sync with Node.js lib/internal/util/types.js
 // https://github.com/nodejs/node/commit/112cc7c27551254aa2b17098fb774867f05ed0d9
 
@@ -70735,7 +71014,7 @@ exports.isAnyArrayBuffer = isAnyArrayBuffer;
   });
 });
 
-},{"is-arguments":103,"is-generator-function":106,"is-typed-array":108,"which-typed-array":191}],189:[function(require,module,exports){
+},{"is-arguments":106,"is-generator-function":109,"is-typed-array":111,"which-typed-array":193}],191:[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -71454,7 +71733,7 @@ function callbackify(original) {
 exports.callbackify = callbackify;
 
 }).call(this)}).call(this,require('_process'))
-},{"./support/isBuffer":187,"./support/types":188,"_process":163,"inherits":102}],190:[function(require,module,exports){
+},{"./support/isBuffer":189,"./support/types":190,"_process":165,"inherits":105}],192:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -71705,7 +71984,7 @@ function stringify(gj) {
     }
 }
 
-},{}],191:[function(require,module,exports){
+},{}],193:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -71764,7 +72043,7 @@ module.exports = function whichTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":57,"call-bind/callBound":63,"es-abstract/helpers/getOwnPropertyDescriptor":81,"for-each":86,"has-tostringtag/shams":99,"is-typed-array":108}],192:[function(require,module,exports){
+},{"available-typed-arrays":61,"call-bind/callBound":67,"es-abstract/helpers/getOwnPropertyDescriptor":85,"for-each":90,"has-tostringtag/shams":102,"is-typed-array":111}],194:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryReader;
 
@@ -71815,7 +72094,7 @@ BinaryReader.prototype.readVarInt = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":62}],193:[function(require,module,exports){
+},{"buffer":66}],195:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryWriter;
 
@@ -71884,7 +72163,7 @@ BinaryWriter.prototype.ensureSize = function (size) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":62}],194:[function(require,module,exports){
+},{"buffer":66}],196:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = Geometry;
 
@@ -72272,7 +72551,7 @@ Geometry.prototype.toGeoJSON = function (options) {
 };
 
 }).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":104,"./binaryreader":192,"./binarywriter":193,"./geometrycollection":195,"./linestring":196,"./multilinestring":197,"./multipoint":198,"./multipolygon":199,"./point":200,"./polygon":201,"./types":202,"./wktparser":203,"./zigzag.js":205}],195:[function(require,module,exports){
+},{"../../is-buffer/index.js":107,"./binaryreader":194,"./binarywriter":195,"./geometrycollection":197,"./linestring":198,"./multilinestring":199,"./multipoint":200,"./multipolygon":201,"./point":202,"./polygon":203,"./types":204,"./wktparser":205,"./zigzag.js":207}],197:[function(require,module,exports){
 module.exports = GeometryCollection;
 
 var util = require('util');
@@ -72443,7 +72722,7 @@ GeometryCollection.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":193,"./geometry":194,"./types":202,"util":189}],196:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./types":204,"util":191}],198:[function(require,module,exports){
 module.exports = LineString;
 
 var util = require('util');
@@ -72623,7 +72902,7 @@ LineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":193,"./geometry":194,"./point":200,"./types":202,"util":189}],197:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./point":202,"./types":204,"util":191}],199:[function(require,module,exports){
 module.exports = MultiLineString;
 
 var util = require('util');
@@ -72814,7 +73093,7 @@ MultiLineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":193,"./geometry":194,"./linestring":196,"./point":200,"./types":202,"util":189}],198:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./linestring":198,"./point":202,"./types":204,"util":191}],200:[function(require,module,exports){
 module.exports = MultiPoint;
 
 var util = require('util');
@@ -72988,7 +73267,7 @@ MultiPoint.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":193,"./geometry":194,"./point":200,"./types":202,"util":189}],199:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./point":202,"./types":204,"util":191}],201:[function(require,module,exports){
 module.exports = MultiPolygon;
 
 var util = require('util');
@@ -73216,7 +73495,7 @@ MultiPolygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":193,"./geometry":194,"./point":200,"./polygon":201,"./types":202,"util":189}],200:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./point":202,"./polygon":203,"./types":204,"util":191}],202:[function(require,module,exports){
 module.exports = Point;
 
 var util = require('util');
@@ -73435,7 +73714,7 @@ Point.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":193,"./geometry":194,"./types":202,"./zigzag.js":205,"util":189}],201:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./types":204,"./zigzag.js":207,"util":191}],203:[function(require,module,exports){
 module.exports = Polygon;
 
 var util = require('util');
@@ -73725,7 +74004,7 @@ Polygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":193,"./geometry":194,"./point":200,"./types":202,"util":189}],202:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./point":202,"./types":204,"util":191}],204:[function(require,module,exports){
 module.exports = {
     wkt: {
         Point: 'POINT',
@@ -73756,7 +74035,7 @@ module.exports = {
     }
 };
 
-},{}],203:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 module.exports = WktParser;
 
 var Types = require('./types');
@@ -73882,7 +74161,7 @@ WktParser.prototype.skipWhitespaces = function () {
         this.position++;
 };
 
-},{"./point":200,"./types":202}],204:[function(require,module,exports){
+},{"./point":202,"./types":204}],206:[function(require,module,exports){
 exports.Types = require('./types');
 exports.Geometry = require('./geometry');
 exports.Point = require('./point');
@@ -73892,7 +74171,7 @@ exports.MultiPoint = require('./multipoint');
 exports.MultiLineString = require('./multilinestring');
 exports.MultiPolygon = require('./multipolygon');
 exports.GeometryCollection = require('./geometrycollection');
-},{"./geometry":194,"./geometrycollection":195,"./linestring":196,"./multilinestring":197,"./multipoint":198,"./multipolygon":199,"./point":200,"./polygon":201,"./types":202}],205:[function(require,module,exports){
+},{"./geometry":196,"./geometrycollection":197,"./linestring":198,"./multilinestring":199,"./multipoint":200,"./multipolygon":201,"./point":202,"./polygon":203,"./types":204}],207:[function(require,module,exports){
 module.exports = {
     encode: function (value) {
         return (value << 1) ^ (value >> 31);
@@ -73902,7 +74181,7 @@ module.exports = {
     }
 };
 
-},{}],206:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -73921,20 +74200,20 @@ function extend() {
     return target
 }
 
-},{}],207:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 module.exports = function () {
   return {
     GithubAPI: false
   };
 };
 
-},{}],208:[function(require,module,exports){
+},{}],210:[function(require,module,exports){
 module.exports = {
   DEFAULT_PROJECTION: 'globe',
   DEFAULT_STYLE: 'Streets'
 };
 
-},{}],209:[function(require,module,exports){
+},{}],211:[function(require,module,exports){
 const clone = require('clone'),
   xtend = require('xtend'),
   config = require('../config.js')(location.hostname),
@@ -74229,7 +74508,7 @@ module.exports = function (context) {
   return data;
 };
 
-},{"../config.js":207,"../source/gist":225,"../source/github":226,"../source/local":227,"clone":65,"xtend":206}],210:[function(require,module,exports){
+},{"../config.js":209,"../source/gist":227,"../source/github":228,"../source/local":229,"clone":69,"xtend":208}],212:[function(require,module,exports){
 const qs = require('qs-hash'),
   zoomextent = require('../lib/zoomextent'),
   flash = require('../ui/flash');
@@ -74328,7 +74607,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../lib/zoomextent":221,"../ui/flash":237,"qs-hash":164}],211:[function(require,module,exports){
+},{"../lib/zoomextent":223,"../ui/flash":239,"qs-hash":166}],213:[function(require,module,exports){
 const zoomextent = require('../lib/zoomextent'),
   qs = require('qs-hash');
 
@@ -74369,7 +74648,7 @@ module.exports = function (context) {
   }
 };
 
-},{"../lib/zoomextent":221,"qs-hash":164}],212:[function(require,module,exports){
+},{"../lib/zoomextent":223,"qs-hash":166}],214:[function(require,module,exports){
 const config = require('../config.js')(location.hostname);
 
 module.exports = function (context) {
@@ -74419,7 +74698,7 @@ module.exports = function (context) {
   return repo;
 };
 
-},{"../config.js":207}],213:[function(require,module,exports){
+},{"../config.js":209}],215:[function(require,module,exports){
 const qs = require('qs-hash'),
   xtend = require('xtend');
 
@@ -74493,7 +74772,7 @@ module.exports = function (context) {
   return router;
 };
 
-},{"qs-hash":164,"xtend":206}],214:[function(require,module,exports){
+},{"qs-hash":166,"xtend":208}],216:[function(require,module,exports){
 const config = require('../config.js')(location.hostname);
 
 module.exports = function (context) {
@@ -74591,7 +74870,7 @@ module.exports = function (context) {
   return user;
 };
 
-},{"../config.js":207}],215:[function(require,module,exports){
+},{"../config.js":209}],217:[function(require,module,exports){
 const ui = require('./ui'),
   map = require('./ui/map'),
   data = require('./core/data'),
@@ -74623,7 +74902,7 @@ function geojsonIO() {
   return context;
 }
 
-},{"./core/data":209,"./core/loader":210,"./core/recovery":211,"./core/repo":212,"./core/router":213,"./core/user":214,"./ui":228,"./ui/map":241,"store":177}],216:[function(require,module,exports){
+},{"./core/data":211,"./core/loader":212,"./core/recovery":213,"./core/repo":214,"./core/router":215,"./core/user":216,"./ui":230,"./ui/map":243,"store":179}],218:[function(require,module,exports){
 (function (Buffer){(function (){
 const escape = require('escape-html'),
   geojsonRandom = require('geojson-random'),
@@ -74749,7 +75028,7 @@ module.exports.wkxString = function (context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../lib/zoomextent":221,"@mapbox/geojson-extent":7,"@mapbox/polyline":39,"buffer":62,"escape-html":82,"geojson-flatten":90,"geojson-random":91,"wkx":204}],217:[function(require,module,exports){
+},{"../lib/zoomextent":223,"@mapbox/geojson-extent":7,"@mapbox/polyline":43,"buffer":66,"escape-html":86,"geojson-flatten":94,"geojson-random":95,"wkx":206}],219:[function(require,module,exports){
 module.exports = function (context) {
   return function (e, id) {
     const sel = d3.select(e.target._content);
@@ -74930,7 +75209,7 @@ module.exports = function (context) {
   };
 };
 
-},{}],218:[function(require,module,exports){
+},{}],220:[function(require,module,exports){
 const topojson = require('topojson-client'),
   toGeoJSON = require('@tmcw/togeojson'),
   gtfs2geojson = require('gtfs2geojson'),
@@ -75133,7 +75412,7 @@ function readFile(f, text, callback) {
   }
 }
 
-},{"@mapbox/geojson-normalize":8,"@tmcw/togeojson":43,"csv2geojson":72,"gtfs2geojson":95,"osmtogeojson":159,"polytogeojson":162,"topojson-client":183}],219:[function(require,module,exports){
+},{"@mapbox/geojson-normalize":8,"@tmcw/togeojson":47,"csv2geojson":76,"gtfs2geojson":98,"osmtogeojson":161,"polytogeojson":164,"topojson-client":185}],221:[function(require,module,exports){
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (map, feature) {
@@ -75147,8 +75426,8 @@ module.exports = function (map, feature) {
   }
 };
 
-},{"@turf/bbox":45}],220:[function(require,module,exports){
-const geojsonhint = require('geojsonhint');
+},{"@turf/bbox":49}],222:[function(require,module,exports){
+const geojsonhint = require('@mapbox/geojsonhint');
 
 module.exports = function (callback) {
   return function (editor, changeObj) {
@@ -75217,7 +75496,7 @@ module.exports = function (callback) {
   };
 };
 
-},{"geojsonhint":93}],221:[function(require,module,exports){
+},{"@mapbox/geojsonhint":10}],223:[function(require,module,exports){
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (context) {
@@ -75227,7 +75506,7 @@ module.exports = function (context) {
   });
 };
 
-},{"@turf/bbox":45}],222:[function(require,module,exports){
+},{"@turf/bbox":49}],224:[function(require,module,exports){
 (function (Buffer){(function (){
 
 const marked = require('marked');
@@ -75247,7 +75526,7 @@ module.exports = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":62,"marked":152}],223:[function(require,module,exports){
+},{"buffer":66,"marked":154}],225:[function(require,module,exports){
 const _ = require('lodash');
 const { createPopper } = require('@popperjs/core');
 
@@ -75410,7 +75689,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/validate":220,"../lib/zoomextent":221,"../ui/saver.js":248,"@popperjs/core":42,"codemirror/addon/edit/matchbrackets":66,"codemirror/addon/fold/brace-fold":67,"codemirror/addon/fold/foldcode":68,"codemirror/addon/fold/foldgutter":69,"codemirror/lib/codemirror":70,"codemirror/mode/javascript/javascript":71,"lodash":150}],224:[function(require,module,exports){
+},{"../lib/validate":222,"../lib/zoomextent":223,"../ui/saver.js":250,"@popperjs/core":46,"codemirror/addon/edit/matchbrackets":70,"codemirror/addon/fold/brace-fold":71,"codemirror/addon/fold/foldcode":72,"codemirror/addon/fold/foldgutter":73,"codemirror/lib/codemirror":74,"codemirror/mode/javascript/javascript":75,"lodash":152}],226:[function(require,module,exports){
 const metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -75475,7 +75754,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/smartzoom.js":219,"d3-metatable":74}],225:[function(require,module,exports){
+},{"../lib/smartzoom.js":221,"d3-metatable":78}],227:[function(require,module,exports){
 
 const tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';\nvar map = L.mapbox.map('map');\n\nL.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties;\n    var table = document.createElement('table');\n    table.setAttribute('class', 'marker-properties display')\n    for (var key in properties) {\n        var tr = createTableRows(key, properties[key]);\n        table.appendChild(tr);\n    }\n    if (table) l.bindPopup(table);\n}\n\nfunction createTableRows(key, value) {\n    var tr = document.createElement('tr');\n    var th = document.createElement('th');\n    var td = document.createElement('td');\n    key = document.createTextNode(key);\n    value = document.createTextNode(value);\n    th.appendChild(key);\n    td.appendChild(value);\n    tr.appendChild(th);\n    tr.appendChild(td);\n    return tr\n}\n\n</script>\n</body>\n</html>\n";
 
@@ -75612,7 +75891,7 @@ function loadRaw(url, context, callback) {
   }
 }
 
-},{"../config.js":207}],226:[function(require,module,exports){
+},{"../config.js":209}],228:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -75759,7 +76038,7 @@ function shaUrl(parts, sha) {
   );
 }
 
-},{"../config.js":207}],227:[function(require,module,exports){
+},{"../config.js":209}],229:[function(require,module,exports){
 let fs;
 
 try {
@@ -75785,7 +76064,7 @@ function save(context, callback) {
   });
 }
 
-},{"fs":61}],228:[function(require,module,exports){
+},{"fs":65}],230:[function(require,module,exports){
 const buttons = require('./ui/mode_buttons'),
   file_bar = require('./ui/file_bar'),
   dnd = require('./ui/dnd'),
@@ -75860,7 +76139,7 @@ function ui(context) {
   };
 }
 
-},{"./ui/dnd":229,"./ui/file_bar":236,"./ui/layer_switch":238,"./ui/mode_buttons":246,"./ui/projection_switch":247}],229:[function(require,module,exports){
+},{"./ui/dnd":231,"./ui/file_bar":238,"./ui/layer_switch":240,"./ui/mode_buttons":248,"./ui/projection_switch":249}],231:[function(require,module,exports){
 const readDrop = require('../lib/readfile.js').readDrop,
   flash = require('./flash.js'),
   zoomextent = require('../lib/zoomextent');
@@ -75908,7 +76187,7 @@ module.exports = function (context) {
   }
 };
 
-},{"../lib/readfile.js":218,"../lib/zoomextent":221,"./flash.js":237}],230:[function(require,module,exports){
+},{"../lib/readfile.js":220,"../lib/zoomextent":223,"./flash.js":239}],232:[function(require,module,exports){
 // custom mapbopx-gl-draw mode that extends draw_line_string
 // shows a center point, radius line, and circle polygon while drawing
 // forces draw.create on creation of second vertex
@@ -76021,7 +76300,7 @@ const CircleMode = {
 
 module.exports = CircleMode;
 
-},{"./util.js":235,"@mapbox/mapbox-gl-draw":12,"@turf/circle":46,"@turf/length":51}],231:[function(require,module,exports){
+},{"./util.js":237,"@mapbox/mapbox-gl-draw":16,"@turf/circle":50,"@turf/length":55}],233:[function(require,module,exports){
 // from https://jsfiddle.net/fxi/xf51zet4/
 class extendDrawBar {
   constructor(opt) {
@@ -76069,7 +76348,7 @@ class extendDrawBar {
 
 module.exports = extendDrawBar;
 
-},{}],232:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 // this mode extends the build-in linestring tool, displaying the current length
 // of the line as the user draws using a point feature and a symbol layer
 const MapboxDraw = require('@mapbox/mapbox-gl-draw');
@@ -76134,7 +76413,7 @@ const ExtendedLineStringMode = {
 
 module.exports = ExtendedLineStringMode;
 
-},{"./util.js":235,"@mapbox/mapbox-gl-draw":12}],233:[function(require,module,exports){
+},{"./util.js":237,"@mapbox/mapbox-gl-draw":16}],235:[function(require,module,exports){
 // from https://github.com/thegisdev/mapbox-gl-draw-rectangle-mode
 const doubleClickZoom = {
   enable: (ctx) => {
@@ -76276,7 +76555,7 @@ const DrawRectangle = {
 
 module.exports = DrawRectangle;
 
-},{}],234:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 module.exports = [
   {
     id: 'gl-draw-polygon-fill-inactive',
@@ -76531,7 +76810,7 @@ module.exports = [
   }
 ];
 
-},{}],235:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 const turfLength = require('@turf/length').default;
 const numeral = require('numeral');
 
@@ -76578,7 +76857,7 @@ module.exports = {
   getDisplayMeasurements
 };
 
-},{"@turf/length":51,"numeral":155}],236:[function(require,module,exports){
+},{"@turf/length":55,"numeral":157}],238:[function(require,module,exports){
 const shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
@@ -77226,7 +77505,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":207,"../lib/meta.js":216,"../lib/readfile":218,"../lib/zoomextent":221,"../ui/saver.js":248,"./flash":237,"./modal.js":245,"./share":249,"@mapbox/geojson-normalize":8,"@mapbox/gist-map-browser":10,"@mapbox/github-file-browser":11,"@placemarkio/tokml":41,"clone":65,"file-saver":85,"geojson2dsv":92,"shp-write":166,"topojson-server":184,"wellknown":190}],237:[function(require,module,exports){
+},{"../config.js":209,"../lib/meta.js":218,"../lib/readfile":220,"../lib/zoomextent":223,"../ui/saver.js":250,"./flash":239,"./modal.js":247,"./share":251,"@mapbox/geojson-normalize":8,"@mapbox/gist-map-browser":14,"@mapbox/github-file-browser":15,"@placemarkio/tokml":45,"clone":69,"file-saver":89,"geojson2dsv":96,"shp-write":168,"topojson-server":186,"wellknown":192}],239:[function(require,module,exports){
 const message = require('./message');
 
 module.exports = flash;
@@ -77245,7 +77524,7 @@ function flash(selection, txt) {
   return msg;
 }
 
-},{"./message":244}],238:[function(require,module,exports){
+},{"./message":246}],240:[function(require,module,exports){
 const styles = require('./map/styles');
 const { DEFAULT_STYLE } = require('../constants');
 
@@ -77300,7 +77579,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":208,"./map/styles":242}],239:[function(require,module,exports){
+},{"../constants":210,"./map/styles":244}],241:[function(require,module,exports){
 // extend mapboxGL Marker so we can pass in an onClick handler
 const mapboxgl = require('mapbox-gl');
 
@@ -77328,7 +77607,7 @@ class ClickableMarker extends mapboxgl.Marker {
 
 module.exports = ClickableMarker;
 
-},{"mapbox-gl":151}],240:[function(require,module,exports){
+},{"mapbox-gl":153}],242:[function(require,module,exports){
 class EditControl {
   onAdd(map) {
     this.map = map;
@@ -77389,7 +77668,7 @@ module.exports = {
   TrashControl
 };
 
-},{}],241:[function(require,module,exports){
+},{}],243:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl');
 
 require('qs-hash');
@@ -77816,7 +78095,7 @@ module.exports = function (context, readonly) {
   return map;
 };
 
-},{"../../constants":208,"../draw/circle":230,"../draw/extend_draw_bar":231,"../draw/linestring":232,"../draw/rectangle":233,"../draw/styles":234,"./controls":240,"./styles":242,"./util":243,"@mapbox/geojson-rewind":9,"@mapbox/mapbox-gl-draw":12,"@mapbox/mapbox-gl-geocoder":16,"mapbox-gl":151,"qs-hash":164}],242:[function(require,module,exports){
+},{"../../constants":210,"../draw/circle":232,"../draw/extend_draw_bar":233,"../draw/linestring":234,"../draw/rectangle":235,"../draw/styles":236,"./controls":242,"./styles":244,"./util":245,"@mapbox/geojson-rewind":9,"@mapbox/mapbox-gl-draw":16,"@mapbox/mapbox-gl-geocoder":20,"mapbox-gl":153,"qs-hash":166}],244:[function(require,module,exports){
 module.exports = [
   {
     title: 'Streets',
@@ -77865,7 +78144,7 @@ module.exports = [
   }
 ];
 
-},{}],243:[function(require,module,exports){
+},{}],245:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl');
 const escape = require('escape-html');
 const length = require('@turf/length').default;
@@ -78235,7 +78514,7 @@ module.exports = {
   bindPopup
 };
 
-},{"../../lib/popup":217,"./clickable_marker":239,"@turf/area":44,"@turf/length":51,"escape-html":82,"mapbox-gl":151}],244:[function(require,module,exports){
+},{"../../lib/popup":219,"./clickable_marker":241,"@turf/area":48,"@turf/length":55,"escape-html":86,"mapbox-gl":153}],246:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -78264,7 +78543,7 @@ function message(selection) {
   return sel;
 }
 
-},{}],245:[function(require,module,exports){
+},{}],247:[function(require,module,exports){
 module.exports = function (selection, blocking) {
   const previous = selection.select('div.modal');
   const animate = previous.empty();
@@ -78316,7 +78595,7 @@ module.exports = function (selection, blocking) {
   return shaded;
 };
 
-},{}],246:[function(require,module,exports){
+},{}],248:[function(require,module,exports){
 const table = require('../panel/table'),
   json = require('../panel/json'),
   help = require('../panel/help');
@@ -78377,7 +78656,7 @@ module.exports = function (context, pane) {
   };
 };
 
-},{"../panel/help":222,"../panel/json":223,"../panel/table":224}],247:[function(require,module,exports){
+},{"../panel/help":224,"../panel/json":225,"../panel/table":226}],249:[function(require,module,exports){
 const { DEFAULT_PROJECTION } = require('../constants');
 
 module.exports = function (context) {
@@ -78434,7 +78713,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":208}],248:[function(require,module,exports){
+},{"../constants":210}],250:[function(require,module,exports){
 const flash = require('./flash');
 
 module.exports = function (context) {
@@ -78502,7 +78781,7 @@ module.exports = function (context) {
   }
 };
 
-},{"./flash":237}],249:[function(require,module,exports){
+},{"./flash":239}],251:[function(require,module,exports){
 const gist = require('../source/gist'),
   modal = require('./modal');
 
@@ -78561,4 +78840,4 @@ function share(context) {
   };
 }
 
-},{"../source/gist":225,"./modal":245}]},{},[215]);
+},{"../source/gist":227,"./modal":247}]},{},[217]);
