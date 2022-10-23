@@ -30304,7 +30304,9 @@ var fieldSize = require('./fieldsize');
 var types = {
     string: 'C',
     number: 'N',
-    boolean: 'L'
+    boolean: 'L',
+    // type to use if all values of a field are null
+    null: 'C'
 };
 
 module.exports.multi = multi;
@@ -30318,25 +30320,41 @@ function multi(features) {
     return obj(fields);
 }
 
+/**
+ * @param {Object} a
+ * @param {Object} b
+ * @returns {Object}
+ */
 function inherit(a, b) {
-    for (var i in b) { a[i] = b[i]; }
+    for (var i in b) {
+        var isDef = typeof b[i] !== 'undefined' && b[i] !== null;
+        if (typeof a[i] === 'undefined' || isDef) {
+          a[i] = b[i];
+        }
+    }
     return a;
 }
 
 function obj(_) {
     var fields = {}, o = [];
-    for (var p in _) fields[p] = typeof _[p];
+    for (var p in _) fields[p] = _[p] === null ? 'null' : typeof _[p];
     for (var n in fields) {
         var t = types[fields[n]];
-        o.push({
-            name: n,
-            type: t,
-            size: fieldSize[t]
-        });
+        if(t){
+             o.push({
+                name: n,
+                type: t,
+                size: fieldSize[t]
+            });
+        }
     }
     return o;
 }
 
+/**
+ * @param {Array} fields
+ * @returns {Array}
+ */
 function bytesPer(fields) {
     // deleted flag
     return fields.reduce(function(memo, f) { return memo + f.size; }, 1);
@@ -30361,14 +30379,33 @@ module.exports = {
 };
 
 },{}],82:[function(require,module,exports){
+/**
+ * @param {string} str
+ * @param {number} len
+ * @param {string} char
+ * @returns {string}
+ */
 module.exports.lpad = function lpad(str, len, char) {
     while (str.length < len) { str = char + str; } return str;
 };
 
+/**
+ * @param {string} str
+ * @param {number} len
+ * @param {string} char
+ * @returns {string}
+ */
 module.exports.rpad = function rpad(str, len, char) {
     while (str.length < len) { str = str + char; } return str;
 };
 
+/**
+ * @param {object} view
+ * @param {number} fieldLength
+ * @param {string} str
+ * @param {number} offset
+ * @returns {number}
+ */
 module.exports.writeField = function writeField(view, fieldLength, str, offset) {
     for (var i = 0; i < fieldLength; i++) {
         view.setUint8(offset, str.charCodeAt(i)); offset++;
@@ -30381,9 +30418,14 @@ var fieldSize = require('./fieldsize'),
     lib = require('./lib'),
     fields = require('./fields');
 
-module.exports = function structure(data) {
+/**
+ * @param {Array} data
+ * @param {Array} meta
+ * @returns {Object} view
+ */
+module.exports = function structure(data, meta) {
 
-    var field_meta = fields.multi(data),
+    var field_meta = meta || fields.multi(data),
         fieldDescLength = (32 * field_meta.length) + 1,
         bytesPerRecord = fields.bytesPer(field_meta), // deleted flag
         buffer = new ArrayBuffer(
@@ -30392,13 +30434,15 @@ module.exports = function structure(data) {
             // header
             32 +
             // contents
-            (bytesPerRecord * data.length)
-        ),
+            (bytesPerRecord * data.length) +
+            // EOF marker
+            1
+    ),
         now = new Date(),
         view = new DataView(buffer);
 
-    // version number
-    view.setUint8(0, 3);
+    // version number - dBase III
+    view.setUint8(0, 0x03);
     // date of last update
     view.setUint8(1, now.getFullYear() - 1900);
     view.setUint8(2, now.getMonth());
@@ -30412,7 +30456,8 @@ module.exports = function structure(data) {
     // length of each record
     view.setUint16(10, bytesPerRecord, true);
 
-    view.setInt8(fieldDescLength - 1, 13);
+    // Terminator
+    view.setInt8(32 + fieldDescLength - 1, 0x0D);
 
     field_meta.forEach(function(f, i) {
         // field name
@@ -30423,7 +30468,7 @@ module.exports = function structure(data) {
         view.setInt8(32 + i * 32 + 11, f.type.charCodeAt(0));
         // field length
         view.setInt8(32 + i * 32 + 16, f.size);
-        if (f.type == 'N') view.setInt8(32 + i * 32 + 17, 0);
+        if (f.type == 'N') view.setInt8(32 + i * 32 + 17, 3);
     });
 
     offset = fieldDescLength + 32;
@@ -30433,7 +30478,8 @@ module.exports = function structure(data) {
         view.setUint8(offset, 32);
         offset++;
         field_meta.forEach(function(f) {
-            var val = row[f.name] || 0;
+            var val = row[f.name];
+            if (val === null || typeof val === 'undefined') val = '';
 
             switch (f.type) {
                 // boolean
@@ -30442,7 +30488,7 @@ module.exports = function structure(data) {
                     offset++;
                     break;
 
-                // decimal
+                // date
                 case 'D':
                     offset = lib.writeField(view, 8,
                         lib.lpad(val.toString(), 8, ' '), offset);
@@ -30468,7 +30514,7 @@ module.exports = function structure(data) {
     });
 
     // EOF flag
-    view.setUint8(offset - 1, 26);
+    view.setUint8(offset, 0x1A);
 
     return view;
 };
@@ -69703,6 +69749,7 @@ module.exports.qsString = function(obj, noencode) {
 module.exports.download = require('./src/download')
 module.exports.write = require('./src/write')
 module.exports.zip = require('./src/zip')
+
 },{"./src/download":169,"./src/write":177,"./src/zip":178}],169:[function(require,module,exports){
 var zip = require('./zip');
 
@@ -69776,7 +69823,7 @@ function justType(type, TYPE) {
     return function(gj) {
         var oftype = gj.features.filter(isType(type));
         return {
-            geometries: oftype.map(justCoords),
+            geometries: (TYPE === 'POLYGON' || TYPE === 'POLYLINE') ? [oftype.map(justCoords)] : oftype.map(justCoords),
             properties: oftype.map(justProps),
             type: TYPE
         };
@@ -69840,6 +69887,10 @@ module.exports.extent = function(coordinates) {
     }, ext.blank());
 };
 
+module.exports.parts = function parts(geometries, TYPE) {
+    return geometries.length;
+};
+
 module.exports.shxLength = function(coordinates) {
     return coordinates.length * 8;
 };
@@ -69849,7 +69900,8 @@ module.exports.shpLength = function(coordinates) {
 };
 
 },{"./extent":170}],174:[function(require,module,exports){
-var ext = require('./extent');
+var ext = require('./extent'),
+    types = require('./types');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
 
@@ -69862,7 +69914,8 @@ module.exports.write = function writePoints(geometries, extent, shpView, shxView
     function writePolyLine(coordinates, i) {
 
         var flattened = justCoords(coordinates),
-            contentLength = (flattened.length * 16) + 48;
+            noParts = parts([coordinates], TYPE),
+            contentLength = (flattened.length * 16) + 48 + (noParts - 1) * 4;
 
         var featureExtent = flattened.reduce(function(extent, c) {
             return ext.enlarge(extent, c);
@@ -69882,13 +69935,31 @@ module.exports.write = function writePoints(geometries, extent, shpView, shxView
         shpView.setFloat64(shpI + 20, featureExtent.ymin, true);
         shpView.setFloat64(shpI + 28, featureExtent.xmax, true);
         shpView.setFloat64(shpI + 36, featureExtent.ymax, true);
-        shpView.setInt32(shpI + 44, 1, true); // PARTS=1
+        shpView.setInt32(shpI + 44, noParts, true);
         shpView.setInt32(shpI + 48, flattened.length, true); // POINTS
-        shpView.setInt32(shpI + 52, 0, true); // The only part - index zero
+        shpView.setInt32(shpI + 52, 0, true); // The first part - index zero
+
+        var onlyParts = coordinates.reduce(function (arr, coords) {
+            if (Array.isArray(coords[0][0])) {
+                arr = arr.concat(coords);
+            } else {
+                arr.push(coords);
+            }
+            return arr;
+        }, []);
+        for (var p = 1; p < noParts; p++) {
+            shpView.setInt32( // set part index
+                shpI + 52 + (p * 4),
+                onlyParts.reduce(function (a, b, idx) {
+                    return idx < p ? a + b.length : a;
+                }, 0),
+                true
+            );
+        }
 
         flattened.forEach(function writeLine(coords, i) {
-            shpView.setFloat64(shpI + 56 + (i * 16), coords[0], true); // X
-            shpView.setFloat64(shpI + 56 + (i * 16) + 8, coords[1], true); // Y
+            shpView.setFloat64(shpI + 56 + (i * 16) + (noParts - 1) * 4, coords[0], true); // X
+            shpView.setFloat64(shpI + 56 + (i * 16) + (noParts - 1) * 4 + 8, coords[1], true); // Y
         });
 
         shpI += contentLength + 8;
@@ -69911,6 +69982,24 @@ module.exports.extent = function(coordinates) {
     }, ext.blank());
 };
 
+function parts(geometries, TYPE) {
+    var no = 1;
+    if (TYPE === types.geometries.POLYGON || TYPE === types.geometries.POLYLINE)  {
+        no = geometries.reduce(function (no, coords) {
+            no += coords.length;
+            if (Array.isArray(coords[0][0][0])) { // multi
+                no += coords.reduce(function (no, rings) {
+                    return no + rings.length - 1; // minus outer
+                }, 0);
+            }
+            return no;
+        }, 0);
+    }
+    return no;
+}
+
+module.exports.parts = parts;
+
 function totalPoints(geometries) {
     var sum = 0;
     geometries.forEach(function(g) { sum += g.length; });
@@ -69928,7 +70017,8 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":170}],175:[function(require,module,exports){
+
+},{"./extent":170,"./types":176}],175:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
 },{}],176:[function(require,module,exports){
@@ -69974,7 +70064,8 @@ function write(rows, geometry_type, geometries, callback) {
 
     var TYPE = types.geometries[geometry_type],
         writer = writers[TYPE],
-        shpLength = 100 + writer.shpLength(geometries),
+        parts = writer.parts(geometries, TYPE),
+        shpLength = 100 + (parts - geometries.length) * 4 + writer.shpLength(geometries),
         shxLength = 100 + writer.shxLength(geometries),
         shpBuffer = new ArrayBuffer(shpLength),
         shpView = new DataView(shpBuffer),
@@ -70019,19 +70110,20 @@ function writeExtent(extent, view) {
 }
 
 },{"./extent":170,"./fields":171,"./points":173,"./poly":174,"./prj":175,"./types":176,"assert":57,"dbf":79}],178:[function(require,module,exports){
+(function (process){(function (){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
     JSZip = require('jszip');
 
 module.exports = function(gj, options) {
-    
+
     var zip = new JSZip(),
         layers = zip.folder(options && options.folder ? options.folder : 'layers');
 
     [geojson.point(gj), geojson.line(gj), geojson.polygon(gj)]
         .forEach(function(l) {
-        if (l.geometries.length) {
+        if (l.geometries.length && l.geometries[0].length) {
             write(
                 // field definitions
                 l.properties,
@@ -70049,10 +70141,17 @@ module.exports = function(gj, options) {
         }
     });
 
-    return zip.generate({compression:'STORE'});
+    var generateOptions = { compression:'STORE' };
+
+    if (!process.browser) {
+      generateOptions.type = 'nodebuffer';
+    }
+
+    return zip.generate(generateOptions);
 };
 
-},{"./geojson":172,"./prj":175,"./write":177,"jszip":120}],179:[function(require,module,exports){
+}).call(this)}).call(this,require('_process'))
+},{"./geojson":172,"./prj":175,"./write":177,"_process":165,"jszip":120}],179:[function(require,module,exports){
 (function (global){(function (){
 ;(function(win){
 	var store = {},
