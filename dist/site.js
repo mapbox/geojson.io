@@ -487,7 +487,7 @@ v.processMessage = processMessage;
 
 module.exports = v;
 
-},{"is-plain-obj":105,"xtend":3}],3:[function(require,module,exports){
+},{"is-plain-obj":106,"xtend":3}],3:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -785,7 +785,7 @@ function page(postfix, callback) {
     });
 }
 
-},{"browser-request":58}],11:[function(require,module,exports){
+},{"browser-request":59}],11:[function(require,module,exports){
 var queue = require('queue-async'),
     request = require('browser-request'),
     treeui = require('treeui'),
@@ -920,7 +920,7 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":58,"queue-async":164,"treeui":187}],12:[function(require,module,exports){
+},{"browser-request":59,"queue-async":164,"treeui":187}],12:[function(require,module,exports){
 (function (global){(function (){
 !function (t, e) {
   "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = t || self).MapboxDraw = e();
@@ -4339,7 +4339,7 @@ MapboxEventManager.prototype = {
 
 module.exports = MapboxEventManager;
 
-},{"nanoid":151}],14:[function(require,module,exports){
+},{"nanoid":152}],14:[function(require,module,exports){
 module.exports = {
   'fr': {
     'name': 'France',
@@ -5738,7 +5738,7 @@ MapboxGeocoder.prototype = {
 
 module.exports = MapboxGeocoder;
 
-},{"./events":13,"./exceptions":14,"./geolocation":15,"./localization":17,"./utils":18,"@mapbox/mapbox-sdk":20,"@mapbox/mapbox-sdk/services/geocoding":32,"events":82,"lodash.debounce":147,"subtag":178,"suggestions":179,"xtend":19}],17:[function(require,module,exports){
+},{"./events":13,"./exceptions":14,"./geolocation":15,"./localization":17,"./utils":18,"@mapbox/mapbox-sdk":20,"@mapbox/mapbox-sdk/services/geocoding":32,"events":83,"lodash.debounce":148,"subtag":178,"suggestions":179,"xtend":19}],17:[function(require,module,exports){
 'use strict';
 
 /**
@@ -6382,7 +6382,7 @@ MapiRequest.prototype._extend = function _extend(options) {
 
 module.exports = MapiRequest;
 
-},{"../constants":27,"../helpers/url-utils":30,"@mapbox/parse-mapbox-token":38,"eventemitter3":81,"xtend":31}],26:[function(require,module,exports){
+},{"../constants":27,"../helpers/url-utils":30,"@mapbox/parse-mapbox-token":38,"eventemitter3":82,"xtend":31}],26:[function(require,module,exports){
 'use strict';
 
 var parseLinkHeader = require('../helpers/parse-link-header');
@@ -7103,7 +7103,170 @@ function has(obj, key) {
 
 module.exports = parseToken;
 
-},{"base-64":56}],39:[function(require,module,exports){
+},{"base-64":57}],39:[function(require,module,exports){
+'use strict';
+
+/**
+ * Based off of [the offical Google document](https://developers.google.com/maps/documentation/utilities/polylinealgorithm)
+ *
+ * Some parts from [this implementation](http://facstaff.unca.edu/mcmcclur/GoogleMaps/EncodePolyline/PolylineEncoder.js)
+ * by [Mark McClure](http://facstaff.unca.edu/mcmcclur/)
+ *
+ * @module polyline
+ */
+
+var polyline = {};
+
+function py2_round(value) {
+    // Google's polyline algorithm uses the same rounding strategy as Python 2, which is different from JS for negative values
+    return Math.floor(Math.abs(value) + 0.5) * (value >= 0 ? 1 : -1);
+}
+
+function encode(current, previous, factor) {
+    current = py2_round(current * factor);
+    previous = py2_round(previous * factor);
+    var coordinate = current - previous;
+    coordinate <<= 1;
+    if (current - previous < 0) {
+        coordinate = ~coordinate;
+    }
+    var output = '';
+    while (coordinate >= 0x20) {
+        output += String.fromCharCode((0x20 | (coordinate & 0x1f)) + 63);
+        coordinate >>= 5;
+    }
+    output += String.fromCharCode(coordinate + 63);
+    return output;
+}
+
+/**
+ * Decodes to a [latitude, longitude] coordinates array.
+ *
+ * This is adapted from the implementation in Project-OSRM.
+ *
+ * @param {String} str
+ * @param {Number} precision
+ * @returns {Array}
+ *
+ * @see https://github.com/Project-OSRM/osrm-frontend/blob/master/WebContent/routing/OSRM.RoutingGeometry.js
+ */
+polyline.decode = function(str, precision) {
+    var index = 0,
+        lat = 0,
+        lng = 0,
+        coordinates = [],
+        shift = 0,
+        result = 0,
+        byte = null,
+        latitude_change,
+        longitude_change,
+        factor = Math.pow(10, Number.isInteger(precision) ? precision : 5);
+
+    // Coordinates have variable length when encoded, so just keep
+    // track of whether we've hit the end of the string. In each
+    // loop iteration, a single coordinate is decoded.
+    while (index < str.length) {
+
+        // Reset shift, result, and byte
+        byte = null;
+        shift = 0;
+        result = 0;
+
+        do {
+            byte = str.charCodeAt(index++) - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+
+        latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+        shift = result = 0;
+
+        do {
+            byte = str.charCodeAt(index++) - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+
+        longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+        lat += latitude_change;
+        lng += longitude_change;
+
+        coordinates.push([lat / factor, lng / factor]);
+    }
+
+    return coordinates;
+};
+
+/**
+ * Encodes the given [latitude, longitude] coordinates array.
+ *
+ * @param {Array.<Array.<Number>>} coordinates
+ * @param {Number} precision
+ * @returns {String}
+ */
+polyline.encode = function(coordinates, precision) {
+    if (!coordinates.length) { return ''; }
+
+    var factor = Math.pow(10, Number.isInteger(precision) ? precision : 5),
+        output = encode(coordinates[0][0], 0, factor) + encode(coordinates[0][1], 0, factor);
+
+    for (var i = 1; i < coordinates.length; i++) {
+        var a = coordinates[i], b = coordinates[i - 1];
+        output += encode(a[0], b[0], factor);
+        output += encode(a[1], b[1], factor);
+    }
+
+    return output;
+};
+
+function flipped(coords) {
+    var flipped = [];
+    for (var i = 0; i < coords.length; i++) {
+        var coord = coords[i].slice();
+        flipped.push([coord[1], coord[0]]);
+    }
+    return flipped;
+}
+
+/**
+ * Encodes a GeoJSON LineString feature/geometry.
+ *
+ * @param {Object} geojson
+ * @param {Number} precision
+ * @returns {String}
+ */
+polyline.fromGeoJSON = function(geojson, precision) {
+    if (geojson && geojson.type === 'Feature') {
+        geojson = geojson.geometry;
+    }
+    if (!geojson || geojson.type !== 'LineString') {
+        throw new Error('Input must be a GeoJSON LineString');
+    }
+    return polyline.encode(flipped(geojson.coordinates), precision);
+};
+
+/**
+ * Decodes to a GeoJSON LineString geometry.
+ *
+ * @param {String} str
+ * @param {Number} precision
+ * @returns {Object}
+ */
+polyline.toGeoJSON = function(str, precision) {
+    var coords = polyline.decode(str, precision);
+    return {
+        type: 'LineString',
+        coordinates: flipped(coords)
+    };
+};
+
+if (typeof module === 'object' && module.exports) {
+    module.exports = polyline;
+}
+
+},{}],40:[function(require,module,exports){
 module.exports = element;
 module.exports.pair = pair;
 module.exports.format = format;
@@ -7212,7 +7375,7 @@ function swapdim(a, b, dim) {
   if (dim === 'W' || dim === 'E') return [b, a];
 }
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 (function (process){(function (){
 /**
  * @popperjs/core v2.11.6 - MIT License
@@ -9218,11 +9381,11 @@ exports.preventOverflow = preventOverflow$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":162}],41:[function(require,module,exports){
+},{"_process":162}],42:[function(require,module,exports){
 !function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t="undefined"!=typeof globalThis?globalThis:t||self).toGeoJSON={})}(this,(function(t){"use strict";function e(t,e){return Array.from(t.getElementsByTagName(e))}function n(t){return"#"===t[0]?t:`#${t}`}function o(t){return t?.normalize(),t&&t.textContent||""}function r(t,e,n){const o=t.getElementsByTagName(e),r=o.length?o[0]:null;return r&&n&&n(r),r}function i(t,e,n){const o={};if(!t)return o;const r=t.getElementsByTagName(e),i=r.length?r[0]:null;return i&&n?n(i,o):o}function s(t,e,n){const i=o(r(t,e));return i&&n&&n(i)||{}}function c(t,e,n){const i=parseFloat(o(r(t,e)));if(!isNaN(i))return i&&n&&n(i)||{}}function a(t,e,n){const i=parseFloat(o(r(t,e)));if(!isNaN(i))return i&&n&&n(i),i}function l(t,e){const n={};for(const o of e)s(t,o,(t=>{n[o]=t}));return n}function u(t){return 1===t?.nodeType}function f(t){return i(t,"line",(t=>Object.assign({},s(t,"color",(t=>({stroke:`#${t}`}))),c(t,"opacity",(t=>({"stroke-opacity":t}))),c(t,"width",(t=>({"stroke-width":96*t/25.4}))))))}function p(t){let e=[];if(null===t)return e;for(const n of Array.from(t.childNodes)){if(!u(n))continue;const t=g(n.nodeName);if("gpxtpx:TrackPointExtension"===t)e=e.concat(p(n));else{const r=o(n);e.push([t,d(r)])}}return e}function g(t){return["heart","gpxtpx:hr","hr"].includes(t)?"heart":t}function d(t){const e=parseFloat(t);return isNaN(e)?t:e}function h(t){const e=[parseFloat(t.getAttribute("lon")||""),parseFloat(t.getAttribute("lat")||"")];if(isNaN(e[0])||isNaN(e[1]))return null;a(t,"ele",(t=>{e.push(t)}));const n=r(t,"time");return{coordinates:e,time:n?o(n):null,extendedValues:p(r(t,"extensions"))}}function m(t){const n=l(t,["name","cmt","desc","type","time","keywords"]),r=Array.from(t.getElementsByTagNameNS("http://www.garmin.com/xmlschemas/GpxExtensions/v3","*"));for(const e of r)e.parentNode?.parentNode===t&&(n[e.tagName.replace(":","_")]=o(e));const i=e(t,"link");return i.length&&(n.links=i.map((t=>Object.assign({href:t.getAttribute("href")},l(t,["text","type"]))))),n}function y(t,n){const o=e(t,n),r=[],i=[],s={};for(let t=0;t<o.length;t++){const e=h(o[t]);if(e){r.push(e.coordinates),e.time&&i.push(e.time);for(const[n,r]of e.extendedValues){const e="heart"===n?n:n.replace("gpxtpx:","")+"s";s[e]||(s[e]=Array(o.length).fill(null)),s[e][t]=r}}}if(!(r.length<2))return{line:r,times:i,extendedValues:s}}function b(t){const e=y(t,"rtept");if(e)return{type:"Feature",properties:Object.assign({_gpxType:"rte"},m(t),f(r(t,"extensions"))),geometry:{type:"LineString",coordinates:e.line}}}function N(t){const n=e(t,"trkseg"),o=[],i=[],s=[];for(const t of n){const e=y(t,"trkpt");e&&(s.push(e),e.times&&e.times.length&&i.push(e.times))}if(0===s.length)return null;const c=s.length>1,a=Object.assign({_gpxType:"trk"},m(t),f(r(t,"extensions")),i.length?{coordinateProperties:{times:c?i:i[0]}}:{});for(const t of s){o.push(t.line),a.coordinateProperties||(a.coordinateProperties={});const e=a.coordinateProperties,n=Object.entries(t.extendedValues);for(let t=0;t<n.length;t++){const[o,r]=n[t];c?(e[o]||(e[o]=s.map((t=>new Array(t.line.length).fill(null)))),e[o][t]=r):e[o]=r}}return{type:"Feature",properties:a,geometry:c?{type:"MultiLineString",coordinates:o}:{type:"LineString",coordinates:o[0]}}}function x(t){const e=Object.assign(m(t),l(t,["sym"])),n=h(t);return n?{type:"Feature",properties:e,geometry:{type:"Point",coordinates:n.coordinates}}:null}function*k(t){for(const n of e(t,"trk")){const t=N(n);t&&(yield t)}for(const n of e(t,"rte")){const t=b(n);t&&(yield t)}for(const n of e(t,"wpt")){const t=x(n);t&&(yield t)}}const A=[["heartRate","heartRates"],["Cadence","cadences"],["Speed","speeds"],["Watts","watts"]],S=[["TotalTimeSeconds","totalTimeSeconds"],["DistanceMeters","distanceMeters"],["MaximumSpeed","maxSpeed"],["AverageHeartRateBpm","avgHeartRate"],["MaximumHeartRateBpm","maxHeartRate"],["AvgSpeed","avgSpeed"],["AvgWatts","avgWatts"],["MaxWatts","maxWatts"]];function T(t,e){const n=[];for(const[i,s]of e){let e=r(t,i);if(!e){const n=t.getElementsByTagNameNS("http://www.garmin.com/xmlschemas/ActivityExtension/v2",i);n.length&&(e=n[0])}const c=parseFloat(o(e));isNaN(c)||n.push([s,c])}return n}function v(t){const e=[a(t,"LongitudeDegrees"),a(t,"LatitudeDegrees")];if(void 0===e[0]||isNaN(e[0])||void 0===e[1]||isNaN(e[1]))return null;const n=r(t,"HeartRateBpm"),i=o(r(t,"Time"));return r(t,"AltitudeMeters",(t=>{const n=parseFloat(o(t));isNaN(n)||e.push(n)})),{coordinates:e,time:i||null,heartRate:n?parseFloat(o(n)):null,extensions:T(t,A)}}function F(t){const n=e(t,"Trackpoint"),o=[],r=[],i=[];if(n.length<2)return null;const s={},c={extendedProperties:s};for(let t=0;t<n.length;t++){const e=v(n[t]);if(null===e)continue;o.push(e.coordinates);const{time:c,heartRate:a,extensions:l}=e;c&&r.push(c),a&&i.push(a);for(const[e,o]of l)s[e]||(s[e]=Array(n.length).fill(null)),s[e][t]=o}return o.length<2?null:Object.assign(c,{line:o,times:r,heartRates:i})}function P(t){const n=e(t,"Track"),r=[],s=[],c=[],a=[];let l;const u=Object.assign(Object.fromEntries(T(t,S)),i(t,"Name",(t=>({name:o(t)}))));for(const t of n)l=F(t),l&&(r.push(l.line),l.times.length&&s.push(l.times),l.heartRates.length&&c.push(l.heartRates),a.push(l.extendedProperties));for(let t=0;t<a.length;t++){const e=a[t];for(const o in e)1===n.length?l&&(u[o]=l.extendedProperties[o]):(u[o]||(u[o]=r.map((t=>Array(t.length).fill(null)))),u[o][t]=e[o])}return 0===r.length?null:((s.length||c.length)&&(u.coordinateProperties=Object.assign(s.length?{times:1===r.length?s[0]:s}:{},c.length?{heart:1===r.length?c[0]:c}:{})),{type:"Feature",properties:u,geometry:1===r.length?{type:"LineString",coordinates:r[0]}:{type:"MultiLineString",coordinates:r}})}function*j(t){for(const n of e(t,"Lap")){const t=P(n);t&&(yield t)}for(const n of e(t,"Courses")){const t=P(n);t&&(yield t)}}function O(t,e){const n={},o="stroke"==e||"fill"===e?e:e+"-color";return"#"===t[0]&&(t=t.substring(1)),6===t.length||3===t.length?n[o]="#"+t:8===t.length&&(n[e+"-opacity"]=parseInt(t.substring(0,2),16)/255,n[o]="#"+t.substring(6,8)+t.substring(4,6)+t.substring(2,4)),n}function w(t,e,n){const o={};return a(t,e,(t=>{o[n]=t})),o}function L(t,e){return i(t,"color",(t=>O(o(t),e)))}function M(t){return Object.assign({},function(t){return i(t,"PolyStyle",((t,e)=>Object.assign(e,i(t,"color",(t=>O(o(t),"fill"))),s(t,"fill",(t=>{if("0"===t)return{"fill-opacity":0}})),s(t,"outline",(t=>{if("0"===t)return{"stroke-opacity":0}})))))}(t),function(t){return i(t,"LineStyle",(t=>Object.assign(L(t,"stroke"),w(t,"width","stroke-width"))))}(t),function(t){return i(t,"LabelStyle",(t=>Object.assign(L(t,"label"),w(t,"scale","label-scale"))))}(t),function(t){return i(t,"IconStyle",(t=>Object.assign(L(t,"icon"),w(t,"scale","icon-scale"),w(t,"heading","icon-heading"),i(t,"hotSpot",(t=>{const e=parseFloat(t.getAttribute("x")||""),n=parseFloat(t.getAttribute("y")||""),o=t.getAttribute("xunits")||"",r=t.getAttribute("yunits")||"";return isNaN(e)||isNaN(n)?{}:{"icon-offset":[e,n],"icon-offset-units":[o,r]}})),i(t,"Icon",((t,e)=>(s(t,"href",(t=>{e.icon=t})),e))))))}(t))}const R=/\s*/g,E=/^\s*|\s*$/g,B=/\s+/;function C(t){return t.replace(R,"").split(",").map(parseFloat).filter((t=>!isNaN(t))).slice(0,3)}function G(t){return t.replace(E,"").split(B).map(C).filter((t=>t.length>=2))}function D(t){let n=e(t,"coord");var r,i,s;0===n.length&&(r=t,i="coord",s="*",n=Array.from(r.getElementsByTagNameNS(s,i)));const c=n.map((t=>o(t).split(" ").map(parseFloat)));return 0===c.length?null:{geometry:c.length>2?{type:"LineString",coordinates:c}:{type:"Point",coordinates:c[0]},times:e(t,"when").map((t=>o(t)))}}function W(t){if(0===t.length)return t;const e=t[0],n=t[t.length-1];let o=!0;for(let t=0;t<Math.max(e.length,n.length);t++)if(e[t]!==n[t]){o=!1;break}return o?t:t.concat([t[0]])}const H=["Polygon","LineString","Point","Track","gx:Track"];function _(t){return o(r(t,"coordinates"))}function U(t){const n=[],o=[];for(const e of["MultiGeometry","MultiTrack","gx:MultiTrack"]){const n=r(t,e);if(n)return U(n)}for(const r of H)for(const i of e(t,r))switch(r){case"Point":{const t=C(_(i));t.length>=2&&n.push({type:"Point",coordinates:t});break}case"LineString":{const t=G(_(i));t.length>=2&&n.push({type:"LineString",coordinates:t});break}case"Polygon":{const t=[];for(const n of e(i,"LinearRing")){const e=W(G(_(n)));e.length>=4&&t.push(e)}t.length&&n.push({type:"Polygon",coordinates:t});break}case"Track":case"gx:Track":{const t=D(i);if(!t)break;const{times:e,geometry:r}=t;n.push(r),e.length&&o.push(e);break}}return{geometries:n,coordTimes:o}}function V(t){return i(t,"ExtendedData",((t,n)=>{for(const i of e(t,"Data"))n[i.getAttribute("name")||""]=o(r(i,"value"));for(const r of e(t,"SimpleData"))n[r.getAttribute("name")||""]=o(r);return n}))}function I(t){return 0===t.length?null:1===t.length?t[0]:{type:"GeometryCollection",geometries:t}}function $(t){return i(t,"TimeSpan",(t=>({timespan:{begin:o(r(t,"begin")),end:o(r(t,"end"))}})))}function z(t){return i(t,"TimeStamp",(t=>({timestamp:o(r(t,"when"))})))}function J(t,e){return s(t,"styleUrl",(t=>(t=n(t),e[t]?Object.assign({styleUrl:t},e[t]):{styleUrl:t})))}function q(t){const e=r(t,"description");for(const t of Array.from(e?.childNodes||[]))if(4===t.nodeType)return{description:{"@type":"html",value:o(t)}};return{}}function K(t,e){const{coordTimes:n,geometries:o}=U(t),r={type:"Feature",geometry:I(o),properties:Object.assign(l(t,["name","address","visibility","open","phoneNumber","description"]),q(t),J(t,e),M(t),V(t),$(t),z(t),n.length?{coordinateProperties:{times:1===n.length?n[0]:n}}:{})};void 0!==r.properties?.visibility&&(r.properties.visibility="0"!==r.properties.visibility);const i=t.getAttribute("id");return null!==i&&""!==i&&(r.id=i),r}function Q(t){let e=t.getAttribute("id");const o=t.parentNode;return!e&&u(o)&&"CascadingStyle"===o.localName&&(e=o.getAttribute("kml:id")||o.getAttribute("id")),n(e||"")}function X(t){const o={};for(const n of e(t,"Style"))o[Q(n)]=M(n);for(const r of e(t,"StyleMap")){const t=n(r.getAttribute("id")||"");s(r,"styleUrl",(e=>{e=n(e),o[e]&&(o[t]=o[e])}))}return o}const Y=["name","visibility","open","address","description","phoneNumber","visibility"];function*Z(t){const n=X(t);for(const o of e(t,"Placemark")){const t=K(o,n);t&&(yield t)}}t.gpx=function(t){return{type:"FeatureCollection",features:Array.from(k(t))}},t.gpxGen=k,t.kml=function(t){return{type:"FeatureCollection",features:Array.from(Z(t))}},t.kmlGen=Z,t.kmlWithFolders=function(t){const e=X(t),n={type:"root",children:[]};return function t(n,r){if(u(n))switch(n.tagName){case"Placemark":{const t=K(n,e);t&&r.children.push(t);break}case"Folder":{const t=function(t){const e={};for(const n of Array.from(t.childNodes))u(n)&&Y.includes(n.tagName)&&(e[n.tagName]=o(n));return{type:"folder",meta:e,children:[]}}(n);r.children.push(t),r=t;break}}if(n.childNodes)for(let e=0;e<n.childNodes.length;e++)t(n.childNodes[e],r)}(t,n),n},t.tcx=function(t){return{type:"FeatureCollection",features:Array.from(j(t))}},t.tcxGen=j,Object.defineProperty(t,"__esModule",{value:!0})}));
 
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var meta_1 = require("@turf/meta");
@@ -9341,7 +9504,7 @@ function rad(num) {
     return (num * Math.PI) / 180;
 }
 
-},{"@turf/meta":50}],43:[function(require,module,exports){
+},{"@turf/meta":51}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var meta_1 = require("@turf/meta");
@@ -9380,7 +9543,7 @@ function bbox(geojson) {
 bbox["default"] = bbox;
 exports.default = bbox;
 
-},{"@turf/meta":50}],44:[function(require,module,exports){
+},{"@turf/meta":51}],45:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -9428,7 +9591,7 @@ function circle(center, radius, options) {
 }
 exports.default = circle;
 
-},{"@turf/destination":45,"@turf/helpers":47}],45:[function(require,module,exports){
+},{"@turf/destination":46,"@turf/helpers":48}],46:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 // http://en.wikipedia.org/wiki/Haversine_formula
@@ -9480,7 +9643,7 @@ function destination(origin, distance, bearing, options) {
 }
 exports.default = destination;
 
-},{"@turf/helpers":47,"@turf/invariant":48}],46:[function(require,module,exports){
+},{"@turf/helpers":48,"@turf/invariant":49}],47:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var invariant_1 = require("@turf/invariant");
@@ -9523,7 +9686,7 @@ function distance(from, to, options) {
 }
 exports.default = distance;
 
-},{"@turf/helpers":47,"@turf/invariant":48}],47:[function(require,module,exports){
+},{"@turf/helpers":48,"@turf/invariant":49}],48:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -10249,7 +10412,7 @@ function validateId(id) {
 }
 exports.validateId = validateId;
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var helpers_1 = require("@turf/helpers");
@@ -10484,7 +10647,7 @@ function getType(geojson, _name) {
 }
 exports.getType = getType;
 
-},{"@turf/helpers":47}],49:[function(require,module,exports){
+},{"@turf/helpers":48}],50:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -10518,7 +10681,7 @@ function length(geojson, options) {
 }
 exports.default = length;
 
-},{"@turf/distance":46,"@turf/meta":50}],50:[function(require,module,exports){
+},{"@turf/distance":47,"@turf/meta":51}],51:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -11941,7 +12104,7 @@ exports.propReduce = propReduce;
 exports.segmentEach = segmentEach;
 exports.segmentReduce = segmentReduce;
 
-},{"@turf/helpers":47}],51:[function(require,module,exports){
+},{"@turf/helpers":48}],52:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -12451,7 +12614,7 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"object-assign":154,"util/":54}],52:[function(require,module,exports){
+},{"object-assign":155,"util/":55}],53:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -12476,14 +12639,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -13073,7 +13236,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":53,"_process":162,"inherits":52}],55:[function(require,module,exports){
+},{"./support/isBuffer":54,"_process":162,"inherits":53}],56:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -13104,7 +13267,7 @@ module.exports = function availableTypedArrays() {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 (function (global){(function (){
 /*! http://mths.be/base64 v0.1.0 by @mathias | MIT license */
 ;(function(root) {
@@ -13273,7 +13436,7 @@ module.exports = function availableTypedArrays() {
 }(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -13425,7 +13588,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 // Browser Request
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13921,9 +14084,9 @@ function b64_enc (data) {
 }));
 //UMD FOOTER END
 
-},{}],59:[function(require,module,exports){
-
 },{}],60:[function(require,module,exports){
+
+},{}],61:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -15704,7 +15867,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":57,"buffer":60,"ieee754":99}],61:[function(require,module,exports){
+},{"base64-js":58,"buffer":61,"ieee754":100}],62:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -15721,7 +15884,7 @@ module.exports = function callBoundIntrinsic(name, allowMissing) {
 	return intrinsic;
 };
 
-},{"./":62,"get-intrinsic":92}],62:[function(require,module,exports){
+},{"./":63,"get-intrinsic":93}],63:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
@@ -15770,7 +15933,7 @@ if ($defineProperty) {
 	module.exports.apply = applyBind;
 }
 
-},{"function-bind":86,"get-intrinsic":92}],63:[function(require,module,exports){
+},{"function-bind":87,"get-intrinsic":93}],64:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 
@@ -15902,7 +16065,7 @@ clone.clonePrototype = function(parent) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60}],64:[function(require,module,exports){
+},{"buffer":61}],65:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -16064,7 +16227,7 @@ clone.clonePrototype = function(parent) {
   });
 });
 
-},{"../../lib/codemirror":68}],65:[function(require,module,exports){
+},{"../../lib/codemirror":69}],66:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -16185,7 +16348,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
 });
 
-},{"../../lib/codemirror":68}],66:[function(require,module,exports){
+},{"../../lib/codemirror":69}],67:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -16346,7 +16509,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   });
 });
 
-},{"../../lib/codemirror":68}],67:[function(require,module,exports){
+},{"../../lib/codemirror":69}],68:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -16517,7 +16680,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 });
 
-},{"../../lib/codemirror":68,"./foldcode":66}],68:[function(require,module,exports){
+},{"../../lib/codemirror":69,"./foldcode":67}],69:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -26391,7 +26554,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
 })));
 
-},{}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -27353,7 +27516,7 @@ CodeMirror.defineMIME("application/typescript", { name: "javascript", typescript
 
 });
 
-},{"../../lib/codemirror":68}],70:[function(require,module,exports){
+},{"../../lib/codemirror":69}],71:[function(require,module,exports){
 'use strict';
 
 var dsv = require('d3-dsv'),
@@ -27614,7 +27777,7 @@ module.exports = {
     toPolygon: toPolygon
 };
 
-},{"@mapbox/sexagesimal":39,"d3-dsv":71}],71:[function(require,module,exports){
+},{"@mapbox/sexagesimal":40,"d3-dsv":72}],72:[function(require,module,exports){
 // https://d3js.org/d3-dsv/ Version 1.0.1. Copyright 2016 Mike Bostock.
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -27784,7 +27947,7 @@ module.exports = {
   Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -27975,10 +28138,10 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],73:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 module.exports.structure = require('./src/structure');
 
-},{"./src/structure":77}],74:[function(require,module,exports){
+},{"./src/structure":78}],75:[function(require,module,exports){
 var fieldSize = require('./fieldsize');
 
 var types = {
@@ -28022,7 +28185,7 @@ function bytesPer(fields) {
     return fields.reduce(function(memo, f) { return memo + f.size; }, 1);
 }
 
-},{"./fieldsize":75}],75:[function(require,module,exports){
+},{"./fieldsize":76}],76:[function(require,module,exports){
 module.exports = {
     // string
     C: 254,
@@ -28040,7 +28203,7 @@ module.exports = {
     B: 8,
 };
 
-},{}],76:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 module.exports.lpad = function lpad(str, len, char) {
     while (str.length < len) { str = char + str; } return str;
 };
@@ -28056,7 +28219,7 @@ module.exports.writeField = function writeField(view, fieldLength, str, offset) 
     return offset;
 };
 
-},{}],77:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 var fieldSize = require('./fieldsize'),
     lib = require('./lib'),
     fields = require('./fields');
@@ -28153,12 +28316,12 @@ module.exports = function structure(data) {
     return view;
 };
 
-},{"./fields":74,"./fieldsize":75,"./lib":76}],78:[function(require,module,exports){
+},{"./fields":75,"./fieldsize":76,"./lib":77}],79:[function(require,module,exports){
 
 
 module.exports = new Function("dsv.version = \"0.0.3\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.substring(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.substring(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.substring(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && !(a = f(a, n++))) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{}],79:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -28175,7 +28338,7 @@ if ($gOPD) {
 
 module.exports = $gOPD;
 
-},{"get-intrinsic":92}],80:[function(require,module,exports){
+},{"get-intrinsic":93}],81:[function(require,module,exports){
 /*!
  * escape-html
  * Copyright(c) 2012-2013 TJ Holowaychuk
@@ -28255,7 +28418,7 @@ function escapeHtml(string) {
     : html;
 }
 
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty
@@ -28593,7 +28756,7 @@ if ('undefined' !== typeof module) {
   module.exports = EventEmitter;
 }
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29092,13 +29255,13 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
   }
 }
 
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 (function (global){(function (){
 (function(a,b){if("function"==typeof define&&define.amd)define([],b);else if("undefined"!=typeof exports)b();else{b(),a.FileSaver={exports:{}}.exports}})(this,function(){"use strict";function b(a,b){return"undefined"==typeof b?b={autoBom:!1}:"object"!=typeof b&&(console.warn("Deprecated: Expected third argument to be a object"),b={autoBom:!b}),b.autoBom&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\uFEFF",a],{type:a.type}):a}function c(a,b,c){var d=new XMLHttpRequest;d.open("GET",a),d.responseType="blob",d.onload=function(){g(d.response,b,c)},d.onerror=function(){console.error("could not download file")},d.send()}function d(a){var b=new XMLHttpRequest;b.open("HEAD",a,!1);try{b.send()}catch(a){}return 200<=b.status&&299>=b.status}function e(a){try{a.dispatchEvent(new MouseEvent("click"))}catch(c){var b=document.createEvent("MouseEvents");b.initMouseEvent("click",!0,!0,window,0,0,0,80,20,!1,!1,!1,!1,0,null),a.dispatchEvent(b)}}var f="object"==typeof window&&window.window===window?window:"object"==typeof self&&self.self===self?self:"object"==typeof global&&global.global===global?global:void 0,a=f.navigator&&/Macintosh/.test(navigator.userAgent)&&/AppleWebKit/.test(navigator.userAgent)&&!/Safari/.test(navigator.userAgent),g=f.saveAs||("object"!=typeof window||window!==f?function(){}:"download"in HTMLAnchorElement.prototype&&!a?function(b,g,h){var i=f.URL||f.webkitURL,j=document.createElement("a");g=g||b.name||"download",j.download=g,j.rel="noopener","string"==typeof b?(j.href=b,j.origin===location.origin?e(j):d(j.href)?c(b,g,h):e(j,j.target="_blank")):(j.href=i.createObjectURL(b),setTimeout(function(){i.revokeObjectURL(j.href)},4E4),setTimeout(function(){e(j)},0))}:"msSaveOrOpenBlob"in navigator?function(f,g,h){if(g=g||f.name||"download","string"!=typeof f)navigator.msSaveOrOpenBlob(b(f,h),g);else if(d(f))c(f,g,h);else{var i=document.createElement("a");i.href=f,i.target="_blank",setTimeout(function(){e(i)})}}:function(b,d,e,g){if(g=g||open("","_blank"),g&&(g.document.title=g.document.body.innerText="downloading..."),"string"==typeof b)return c(b,d,e);var h="application/octet-stream"===b.type,i=/constructor/i.test(f.HTMLElement)||f.safari,j=/CriOS\/[\d]+/.test(navigator.userAgent);if((j||h&&i||a)&&"undefined"!=typeof FileReader){var k=new FileReader;k.onloadend=function(){var a=k.result;a=j?a:a.replace(/^data:[^;]*;/,"data:attachment/file;"),g?g.location.href=a:location=a,g=null},k.readAsDataURL(b)}else{var l=f.URL||f.webkitURL,m=l.createObjectURL(b);g?g.location=m:location.href=m,g=null,setTimeout(function(){l.revokeObjectURL(m)},4E4)}});f.saveAs=g.saveAs=g,"undefined"!=typeof module&&(module.exports=g)});
 
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],84:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 'use strict';
 
 var isCallable = require('is-callable');
@@ -29162,7 +29325,7 @@ var forEach = function forEach(list, iterator, thisArg) {
 
 module.exports = forEach;
 
-},{"is-callable":103}],85:[function(require,module,exports){
+},{"is-callable":104}],86:[function(require,module,exports){
 'use strict';
 
 /* eslint no-invalid-this: 1 */
@@ -29216,14 +29379,14 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],86:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":85}],87:[function(require,module,exports){
+},{"./implementation":86}],88:[function(require,module,exports){
 /*
  * Fuzzy
  * https://github.com/myork/fuzzy
@@ -29369,7 +29532,7 @@ fuzzy.filter = function(pattern, arr, opts) {
 }());
 
 
-},{}],88:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 module.exports = flatten;
 
 function flatten(gj, up) {
@@ -29410,7 +29573,7 @@ function flatten(gj, up) {
     }
 }
 
-},{}],89:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 module.exports = function(count, type) {
     switch (type) {
         case 'point':
@@ -29429,7 +29592,7 @@ function feature(geom) {
 }
 function collection(f) { return { type: 'FeatureCollection', features: f }; }
 
-},{}],90:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 var dsv = require('dsv');
 
 module.exports = function(_, delim) {
@@ -29456,7 +29619,7 @@ module.exports = function(_, delim) {
     }));
 };
 
-},{"dsv":78}],91:[function(require,module,exports){
+},{"dsv":79}],92:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -29775,7 +29938,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":107}],92:[function(require,module,exports){
+},{"jsonlint-lines":108}],93:[function(require,module,exports){
 'use strict';
 
 var undefined;
@@ -30111,7 +30274,7 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 	return value;
 };
 
-},{"function-bind":86,"has":98,"has-symbols":95}],93:[function(require,module,exports){
+},{"function-bind":87,"has":99,"has-symbols":96}],94:[function(require,module,exports){
 var parseCSV = require('dsv').csv.parse;
 
 /**
@@ -30153,12 +30316,12 @@ function gtfs2geojson(gtfs) {
 
 module.exports = gtfs2geojson;
 
-},{"dsv":94}],94:[function(require,module,exports){
+},{"dsv":95}],95:[function(require,module,exports){
 
 
 module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{}],95:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 'use strict';
 
 var origSymbol = typeof Symbol !== 'undefined' && Symbol;
@@ -30173,7 +30336,7 @@ module.exports = function hasNativeSymbols() {
 	return hasSymbolSham();
 };
 
-},{"./shams":96}],96:[function(require,module,exports){
+},{"./shams":97}],97:[function(require,module,exports){
 'use strict';
 
 /* eslint complexity: [2, 18], max-statements: [2, 33] */
@@ -30217,7 +30380,7 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{}],97:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 'use strict';
 
 var hasSymbols = require('has-symbols/shams');
@@ -30226,14 +30389,14 @@ module.exports = function hasToStringTagShams() {
 	return hasSymbols() && !!Symbol.toStringTag;
 };
 
-},{"has-symbols/shams":96}],98:[function(require,module,exports){
+},{"has-symbols/shams":97}],99:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":86}],99:[function(require,module,exports){
+},{"function-bind":87}],100:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -30320,7 +30483,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],100:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -30349,7 +30512,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],101:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 'use strict';
 
 var hasToStringTag = require('has-tostringtag/shams')();
@@ -30384,7 +30547,7 @@ isStandardArguments.isLegacyArguments = isLegacyArguments; // for tests
 
 module.exports = supportsStandardArguments ? isStandardArguments : isLegacyArguments;
 
-},{"call-bind/callBound":61,"has-tostringtag/shams":97}],102:[function(require,module,exports){
+},{"call-bind/callBound":62,"has-tostringtag/shams":98}],103:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -30407,7 +30570,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 'use strict';
 
 var fnToStr = Function.prototype.toString;
@@ -30510,7 +30673,7 @@ module.exports = reflectApply
 		return tryFunctionObject(value);
 	};
 
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -30550,7 +30713,7 @@ module.exports = function isGeneratorFunction(fn) {
 	return getProto(fn) === GeneratorFunction;
 };
 
-},{"has-tostringtag/shams":97}],105:[function(require,module,exports){
+},{"has-tostringtag/shams":98}],106:[function(require,module,exports){
 'use strict';
 var toString = Object.prototype.toString;
 
@@ -30559,7 +30722,7 @@ module.exports = function (x) {
 	return toString.call(x) === '[object Object]' && (prototype = Object.getPrototypeOf(x), prototype === null || prototype === Object.getPrototypeOf({}));
 };
 
-},{}],106:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -30623,7 +30786,7 @@ module.exports = function isTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":55,"call-bind/callBound":61,"es-abstract/helpers/getOwnPropertyDescriptor":79,"for-each":84,"has-tostringtag/shams":97}],107:[function(require,module,exports){
+},{"available-typed-arrays":56,"call-bind/callBound":62,"es-abstract/helpers/getOwnPropertyDescriptor":80,"for-each":85,"has-tostringtag/shams":98}],108:[function(require,module,exports){
 (function (process){(function (){
 /* parser generated by jison 0.4.6 */
 /*
@@ -31280,7 +31443,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 }).call(this)}).call(this,require('_process'))
-},{"_process":162,"fs":59,"path":159}],108:[function(require,module,exports){
+},{"_process":162,"fs":60,"path":160}],109:[function(require,module,exports){
 'use strict';
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -31352,7 +31515,7 @@ exports.decode = function(input, utf8) {
 
 };
 
-},{}],109:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 'use strict';
 function CompressedObject() {
     this.compressedSize = 0;
@@ -31382,7 +31545,7 @@ CompressedObject.prototype = {
 };
 module.exports = CompressedObject;
 
-},{}],110:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 'use strict';
 exports.STORE = {
     magic: "\x00\x00",
@@ -31397,7 +31560,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":115}],111:[function(require,module,exports){
+},{"./flate":116}],112:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -31501,7 +31664,7 @@ module.exports = function crc32(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":128}],112:[function(require,module,exports){
+},{"./utils":129}],113:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -31610,7 +31773,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"./utils":128}],113:[function(require,module,exports){
+},{"./utils":129}],114:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -31623,7 +31786,7 @@ exports.comment = null;
 exports.unixPermissions = null;
 exports.dosPermissions = null;
 
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -31730,7 +31893,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./utils":128}],115:[function(require,module,exports){
+},{"./utils":129}],116:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -31748,7 +31911,7 @@ exports.uncompress =  function(input) {
     return pako.inflateRaw(input);
 };
 
-},{"pako":131}],116:[function(require,module,exports){
+},{"pako":132}],117:[function(require,module,exports){
 'use strict';
 
 var base64 = require('./base64');
@@ -31829,7 +31992,7 @@ JSZip.base64 = {
 JSZip.compressions = require('./compressions');
 module.exports = JSZip;
 
-},{"./base64":108,"./compressions":110,"./defaults":113,"./deprecatedPublicUtils":114,"./load":117,"./object":120,"./support":124}],117:[function(require,module,exports){
+},{"./base64":109,"./compressions":111,"./defaults":114,"./deprecatedPublicUtils":115,"./load":118,"./object":121,"./support":125}],118:[function(require,module,exports){
 'use strict';
 var base64 = require('./base64');
 var ZipEntries = require('./zipEntries');
@@ -31862,7 +32025,7 @@ module.exports = function(data, options) {
     return this;
 };
 
-},{"./base64":108,"./zipEntries":129}],118:[function(require,module,exports){
+},{"./base64":109,"./zipEntries":130}],119:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 module.exports = function(data, encoding){
@@ -31873,7 +32036,7 @@ module.exports.test = function(b){
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60}],119:[function(require,module,exports){
+},{"buffer":61}],120:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./uint8ArrayReader');
 
@@ -31895,7 +32058,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"./uint8ArrayReader":125}],120:[function(require,module,exports){
+},{"./uint8ArrayReader":126}],121:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var utils = require('./utils');
@@ -32780,7 +32943,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./base64":108,"./compressedObject":109,"./compressions":110,"./crc32":111,"./defaults":113,"./nodeBuffer":118,"./signature":121,"./stringWriter":123,"./support":124,"./uint8ArrayWriter":126,"./utf8":127,"./utils":128}],121:[function(require,module,exports){
+},{"./base64":109,"./compressedObject":110,"./compressions":111,"./crc32":112,"./defaults":114,"./nodeBuffer":119,"./signature":122,"./stringWriter":124,"./support":125,"./uint8ArrayWriter":127,"./utf8":128,"./utils":129}],122:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -32789,7 +32952,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],122:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 var utils = require('./utils');
@@ -32827,7 +32990,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"./dataReader":112,"./utils":128}],123:[function(require,module,exports){
+},{"./dataReader":113,"./utils":129}],124:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -32859,7 +33022,7 @@ StringWriter.prototype = {
 
 module.exports = StringWriter;
 
-},{"./utils":128}],124:[function(require,module,exports){
+},{"./utils":129}],125:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 exports.base64 = true;
@@ -32897,7 +33060,7 @@ else {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60}],125:[function(require,module,exports){
+},{"buffer":61}],126:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 
@@ -32946,7 +33109,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"./dataReader":112}],126:[function(require,module,exports){
+},{"./dataReader":113}],127:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -32984,7 +33147,7 @@ Uint8ArrayWriter.prototype = {
 
 module.exports = Uint8ArrayWriter;
 
-},{"./utils":128}],127:[function(require,module,exports){
+},{"./utils":129}],128:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -33193,7 +33356,7 @@ exports.utf8decode = function utf8decode(buf) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./nodeBuffer":118,"./support":124,"./utils":128}],128:[function(require,module,exports){
+},{"./nodeBuffer":119,"./support":125,"./utils":129}],129:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var compressions = require('./compressions');
@@ -33521,7 +33684,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./compressions":110,"./nodeBuffer":118,"./support":124}],129:[function(require,module,exports){
+},{"./compressions":111,"./nodeBuffer":119,"./support":125}],130:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var NodeBufferReader = require('./nodeBufferReader');
@@ -33744,7 +33907,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./nodeBufferReader":119,"./object":120,"./signature":121,"./stringReader":122,"./support":124,"./uint8ArrayReader":125,"./utils":128,"./zipEntry":130}],130:[function(require,module,exports){
+},{"./nodeBufferReader":120,"./object":121,"./signature":122,"./stringReader":123,"./support":125,"./uint8ArrayReader":126,"./utils":129,"./zipEntry":131}],131:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var utils = require('./utils');
@@ -34056,7 +34219,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":109,"./object":120,"./stringReader":122,"./utils":128}],131:[function(require,module,exports){
+},{"./compressedObject":110,"./object":121,"./stringReader":123,"./utils":129}],132:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -34072,7 +34235,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":132,"./lib/inflate":133,"./lib/utils/common":134,"./lib/zlib/constants":137}],132:[function(require,module,exports){
+},{"./lib/deflate":133,"./lib/inflate":134,"./lib/utils/common":135,"./lib/zlib/constants":138}],133:[function(require,module,exports){
 'use strict';
 
 
@@ -34474,7 +34637,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":134,"./utils/strings":135,"./zlib/deflate":139,"./zlib/messages":144,"./zlib/zstream":146}],133:[function(require,module,exports){
+},{"./utils/common":135,"./utils/strings":136,"./zlib/deflate":140,"./zlib/messages":145,"./zlib/zstream":147}],134:[function(require,module,exports){
 'use strict';
 
 
@@ -34894,7 +35057,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":134,"./utils/strings":135,"./zlib/constants":137,"./zlib/gzheader":140,"./zlib/inflate":142,"./zlib/messages":144,"./zlib/zstream":146}],134:[function(require,module,exports){
+},{"./utils/common":135,"./utils/strings":136,"./zlib/constants":138,"./zlib/gzheader":141,"./zlib/inflate":143,"./zlib/messages":145,"./zlib/zstream":147}],135:[function(require,module,exports){
 'use strict';
 
 
@@ -34998,7 +35161,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],135:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -35185,7 +35348,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":134}],136:[function(require,module,exports){
+},{"./common":135}],137:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -35219,7 +35382,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],137:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 'use strict';
 
 
@@ -35271,7 +35434,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],138:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -35314,7 +35477,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],139:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -37171,7 +37334,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":134,"./adler32":136,"./crc32":138,"./messages":144,"./trees":145}],140:[function(require,module,exports){
+},{"../utils/common":135,"./adler32":137,"./crc32":139,"./messages":145,"./trees":146}],141:[function(require,module,exports){
 'use strict';
 
 
@@ -37213,7 +37376,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],141:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -37541,7 +37704,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],142:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 'use strict';
 
 
@@ -39081,7 +39244,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":134,"./adler32":136,"./crc32":138,"./inffast":141,"./inftrees":143}],143:[function(require,module,exports){
+},{"../utils/common":135,"./adler32":137,"./crc32":139,"./inffast":142,"./inftrees":144}],144:[function(require,module,exports){
 'use strict';
 
 
@@ -39410,7 +39573,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":134}],144:[function(require,module,exports){
+},{"../utils/common":135}],145:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -39425,7 +39588,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],145:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 'use strict';
 
 
@@ -40629,7 +40792,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":134}],146:[function(require,module,exports){
+},{"../utils/common":135}],147:[function(require,module,exports){
 'use strict';
 
 
@@ -40660,7 +40823,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],147:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 (function (global){(function (){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -41041,7 +41204,7 @@ function toNumber(value) {
 module.exports = debounce;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],148:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
@@ -58254,7 +58417,7 @@ module.exports = debounce;
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],149:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 (function (process){(function (){
 /* Mapbox GL JS is Copyright © 2020 Mapbox and subject to the Mapbox Terms of Service ((https://www.mapbox.com/legal/tos/). */
 (function (global, factory) {
@@ -58302,7 +58465,7 @@ return mapboxgl$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":162}],150:[function(require,module,exports){
+},{"_process":162}],151:[function(require,module,exports){
 (function (global){(function (){
 /**
  * marked - a markdown parser
@@ -59572,7 +59735,7 @@ if (typeof exports === 'object') {
 }());
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],151:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 let { urlAlphabet } = require('./url-alphabet/index.cjs')
 let random = bytes => crypto.getRandomValues(new Uint8Array(bytes))
 let customRandom = (alphabet, defaultSize, getRandom) => {
@@ -59608,12 +59771,12 @@ let nanoid = (size = 21) =>
   }, '')
 module.exports = { nanoid, customAlphabet, customRandom, urlAlphabet, random }
 
-},{"./url-alphabet/index.cjs":152}],152:[function(require,module,exports){
+},{"./url-alphabet/index.cjs":153}],153:[function(require,module,exports){
 let urlAlphabet =
   'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict'
 module.exports = { urlAlphabet }
 
-},{}],153:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 /*! @preserve
  * numeral.js
  * version : 2.0.6
@@ -60628,7 +60791,7 @@ module.exports = { urlAlphabet }
 return numeral;
 }));
 
-},{}],154:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -60720,10 +60883,10 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],155:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 module.exports = require('./polygon-features.json')
 
-},{"./polygon-features.json":156}],156:[function(require,module,exports){
+},{"./polygon-features.json":157}],157:[function(require,module,exports){
 module.exports=[
     {
         "key": "building",
@@ -60882,7 +61045,7 @@ module.exports=[
     }
 ]
 
-},{}],157:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 var _ = require("./lodash.custom.js");
 var rewind = require("@mapbox/geojson-rewind");
 
@@ -61949,7 +62112,7 @@ osmtogeojson.toGeojson = osmtogeojson;
 
 module.exports = osmtogeojson;
 
-},{"./lodash.custom.js":158,"@mapbox/geojson-rewind":9,"osm-polygon-features":155}],158:[function(require,module,exports){
+},{"./lodash.custom.js":159,"@mapbox/geojson-rewind":9,"osm-polygon-features":156}],159:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
@@ -65656,7 +65819,7 @@ module.exports = osmtogeojson;
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],159:[function(require,module,exports){
+},{}],160:[function(require,module,exports){
 (function (process){(function (){
 // 'path' module extracted from Node.js v8.11.1 (only the posix part)
 // transplited with Babel
@@ -66189,162 +66352,7 @@ posix.posix = posix;
 module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":162}],160:[function(require,module,exports){
-'use strict';
-
-/**
- * Based off of [the offical Google document](https://developers.google.com/maps/documentation/utilities/polylinealgorithm)
- *
- * Some parts from [this implementation](http://facstaff.unca.edu/mcmcclur/GoogleMaps/EncodePolyline/PolylineEncoder.js)
- * by [Mark McClure](http://facstaff.unca.edu/mcmcclur/)
- *
- * @module polyline
- */
-
-var polyline = {};
-
-function encode(coordinate, factor) {
-    coordinate = Math.round(coordinate * factor);
-    coordinate <<= 1;
-    if (coordinate < 0) {
-        coordinate = ~coordinate;
-    }
-    var output = '';
-    while (coordinate >= 0x20) {
-        output += String.fromCharCode((0x20 | (coordinate & 0x1f)) + 63);
-        coordinate >>= 5;
-    }
-    output += String.fromCharCode(coordinate + 63);
-    return output;
-}
-
-/**
- * Decodes to a [latitude, longitude] coordinates array.
- *
- * This is adapted from the implementation in Project-OSRM.
- *
- * @param {String} str
- * @param {Number} precision
- * @returns {Array}
- *
- * @see https://github.com/Project-OSRM/osrm-frontend/blob/master/WebContent/routing/OSRM.RoutingGeometry.js
- */
-polyline.decode = function(str, precision) {
-    var index = 0,
-        lat = 0,
-        lng = 0,
-        coordinates = [],
-        shift = 0,
-        result = 0,
-        byte = null,
-        latitude_change,
-        longitude_change,
-        factor = Math.pow(10, precision || 5);
-
-    // Coordinates have variable length when encoded, so just keep
-    // track of whether we've hit the end of the string. In each
-    // loop iteration, a single coordinate is decoded.
-    while (index < str.length) {
-
-        // Reset shift, result, and byte
-        byte = null;
-        shift = 0;
-        result = 0;
-
-        do {
-            byte = str.charCodeAt(index++) - 63;
-            result |= (byte & 0x1f) << shift;
-            shift += 5;
-        } while (byte >= 0x20);
-
-        latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
-
-        shift = result = 0;
-
-        do {
-            byte = str.charCodeAt(index++) - 63;
-            result |= (byte & 0x1f) << shift;
-            shift += 5;
-        } while (byte >= 0x20);
-
-        longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
-
-        lat += latitude_change;
-        lng += longitude_change;
-
-        coordinates.push([lat / factor, lng / factor]);
-    }
-
-    return coordinates;
-};
-
-/**
- * Encodes the given [latitude, longitude] coordinates array.
- *
- * @param {Array.<Array.<Number>>} coordinates
- * @param {Number} precision
- * @returns {String}
- */
-polyline.encode = function(coordinates, precision) {
-    if (!coordinates.length) { return ''; }
-
-    var factor = Math.pow(10, precision || 5),
-        output = encode(coordinates[0][0], factor) + encode(coordinates[0][1], factor);
-
-    for (var i = 1; i < coordinates.length; i++) {
-        var a = coordinates[i], b = coordinates[i - 1];
-        output += encode(a[0] - b[0], factor);
-        output += encode(a[1] - b[1], factor);
-    }
-
-    return output;
-};
-
-function flipped(coords) {
-    var flipped = [];
-    for (var i = 0; i < coords.length; i++) {
-        flipped.push(coords[i].slice().reverse());
-    }
-    return flipped;
-}
-
-/**
- * Encodes a GeoJSON LineString feature/geometry.
- *
- * @param {Object} geojson
- * @param {Number} precision
- * @returns {String}
- */
-polyline.fromGeoJSON = function(geojson, precision) {
-    if (geojson && geojson.type === 'Feature') {
-        geojson = geojson.geometry;
-    }
-    if (!geojson || geojson.type !== 'LineString') {
-        throw new Error('Input must be a GeoJSON LineString');
-    }
-    return polyline.encode(flipped(geojson.coordinates), precision);
-};
-
-/**
- * Decodes to a GeoJSON LineString geometry.
- *
- * @param {String} str
- * @param {Number} precision
- * @returns {Object}
- */
-polyline.toGeoJSON = function(str, precision) {
-    var coords = polyline.decode(str, precision);
-    return {
-        type: 'LineString',
-        coordinates: flipped(coords)
-    };
-};
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = polyline;
-}
-
-},{}],161:[function(require,module,exports){
+},{"_process":162}],161:[function(require,module,exports){
 module.exports = function (data) {
     var lines = data.split('\n'),
                 isNameLine = true,
@@ -67030,7 +67038,7 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":167,"./fields":168,"./points":170,"./poly":171,"./prj":172,"./types":173,"assert":51,"dbf":73}],175:[function(require,module,exports){
+},{"./extent":167,"./fields":168,"./points":170,"./poly":171,"./prj":172,"./types":173,"assert":52,"dbf":74}],175:[function(require,module,exports){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
@@ -67064,7 +67072,7 @@ module.exports = function(gj, options) {
     return zip.generate({compression:'STORE'});
 };
 
-},{"./geojson":169,"./prj":172,"./write":174,"jszip":116}],176:[function(require,module,exports){
+},{"./geojson":169,"./prj":172,"./write":174,"jszip":117}],176:[function(require,module,exports){
 (function (global){(function (){
 ;(function(win){
 	var store = {},
@@ -67768,7 +67776,7 @@ Suggestions.prototype.renderError = function(msg){
 
 module.exports = Suggestions;
 
-},{"./list":181,"fuzzy":87,"xtend":180}],183:[function(require,module,exports){
+},{"./list":181,"fuzzy":88,"xtend":180}],183:[function(require,module,exports){
 var strxml = require('strxml'),
     tag = strxml.tag,
     encode = strxml.encode;
@@ -69731,8 +69739,8 @@ function ae(x, y, z) {
 }
 
 },{}],188:[function(require,module,exports){
-arguments[4][53][0].apply(exports,arguments)
-},{"dup":53}],189:[function(require,module,exports){
+arguments[4][54][0].apply(exports,arguments)
+},{"dup":54}],189:[function(require,module,exports){
 // Currently in sync with Node.js lib/internal/util/types.js
 // https://github.com/nodejs/node/commit/112cc7c27551254aa2b17098fb774867f05ed0d9
 
@@ -70068,7 +70076,7 @@ exports.isAnyArrayBuffer = isAnyArrayBuffer;
   });
 });
 
-},{"is-arguments":101,"is-generator-function":104,"is-typed-array":106,"which-typed-array":192}],190:[function(require,module,exports){
+},{"is-arguments":102,"is-generator-function":105,"is-typed-array":107,"which-typed-array":192}],190:[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -70787,7 +70795,7 @@ function callbackify(original) {
 exports.callbackify = callbackify;
 
 }).call(this)}).call(this,require('_process'))
-},{"./support/isBuffer":188,"./support/types":189,"_process":162,"inherits":100}],191:[function(require,module,exports){
+},{"./support/isBuffer":188,"./support/types":189,"_process":162,"inherits":101}],191:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -71097,7 +71105,7 @@ module.exports = function whichTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":55,"call-bind/callBound":61,"es-abstract/helpers/getOwnPropertyDescriptor":79,"for-each":84,"has-tostringtag/shams":97,"is-typed-array":106}],193:[function(require,module,exports){
+},{"available-typed-arrays":56,"call-bind/callBound":62,"es-abstract/helpers/getOwnPropertyDescriptor":80,"for-each":85,"has-tostringtag/shams":98,"is-typed-array":107}],193:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryReader;
 
@@ -71148,7 +71156,7 @@ BinaryReader.prototype.readVarInt = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60}],194:[function(require,module,exports){
+},{"buffer":61}],194:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryWriter;
 
@@ -71217,7 +71225,7 @@ BinaryWriter.prototype.ensureSize = function (size) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60}],195:[function(require,module,exports){
+},{"buffer":61}],195:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = Geometry;
 
@@ -71605,7 +71613,7 @@ Geometry.prototype.toGeoJSON = function (options) {
 };
 
 }).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":102,"./binaryreader":193,"./binarywriter":194,"./geometrycollection":196,"./linestring":197,"./multilinestring":198,"./multipoint":199,"./multipolygon":200,"./point":201,"./polygon":202,"./types":203,"./wktparser":204,"./zigzag.js":206}],196:[function(require,module,exports){
+},{"../../is-buffer/index.js":103,"./binaryreader":193,"./binarywriter":194,"./geometrycollection":196,"./linestring":197,"./multilinestring":198,"./multipoint":199,"./multipolygon":200,"./point":201,"./polygon":202,"./types":203,"./wktparser":204,"./zigzag.js":206}],196:[function(require,module,exports){
 module.exports = GeometryCollection;
 
 var util = require('util');
@@ -73562,7 +73570,7 @@ module.exports = function (context) {
   return data;
 };
 
-},{"../config.js":208,"../source/gist":226,"../source/github":227,"../source/local":228,"clone":63,"xtend":207}],211:[function(require,module,exports){
+},{"../config.js":208,"../source/gist":226,"../source/github":227,"../source/local":228,"clone":64,"xtend":207}],211:[function(require,module,exports){
 const qs = require('qs-hash'),
   zoomextent = require('../lib/zoomextent'),
   flash = require('../ui/flash');
@@ -73962,7 +73970,7 @@ const escape = require('escape-html'),
   geojsonRandom = require('geojson-random'),
   geojsonExtent = require('@mapbox/geojson-extent'),
   geojsonFlatten = require('geojson-flatten'),
-  polyline = require('polyline'),
+  polyline = require('@mapbox/polyline'),
   wkx = require('wkx'),
   zoomextent = require('../lib/zoomextent');
 
@@ -74082,7 +74090,7 @@ module.exports.wkxString = function (context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../lib/zoomextent":222,"@mapbox/geojson-extent":7,"buffer":60,"escape-html":80,"geojson-flatten":88,"geojson-random":89,"polyline":160,"wkx":205}],218:[function(require,module,exports){
+},{"../lib/zoomextent":222,"@mapbox/geojson-extent":7,"@mapbox/polyline":39,"buffer":61,"escape-html":81,"geojson-flatten":89,"geojson-random":90,"wkx":205}],218:[function(require,module,exports){
 module.exports = function (context) {
   return function (e, id) {
     const sel = d3.select(e.target._content);
@@ -74466,7 +74474,7 @@ function readFile(f, text, callback) {
   }
 }
 
-},{"@mapbox/geojson-normalize":8,"@tmcw/togeojson":41,"csv2geojson":70,"gtfs2geojson":93,"osmtogeojson":157,"polytogeojson":161,"topojson-client":184}],220:[function(require,module,exports){
+},{"@mapbox/geojson-normalize":8,"@tmcw/togeojson":42,"csv2geojson":71,"gtfs2geojson":94,"osmtogeojson":158,"polytogeojson":161,"topojson-client":184}],220:[function(require,module,exports){
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (map, feature) {
@@ -74480,7 +74488,7 @@ module.exports = function (map, feature) {
   }
 };
 
-},{"@turf/bbox":43}],221:[function(require,module,exports){
+},{"@turf/bbox":44}],221:[function(require,module,exports){
 const geojsonhint = require('geojsonhint');
 
 module.exports = function (callback) {
@@ -74550,7 +74558,7 @@ module.exports = function (callback) {
   };
 };
 
-},{"geojsonhint":91}],222:[function(require,module,exports){
+},{"geojsonhint":92}],222:[function(require,module,exports){
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (context) {
@@ -74560,7 +74568,7 @@ module.exports = function (context) {
   });
 };
 
-},{"@turf/bbox":43}],223:[function(require,module,exports){
+},{"@turf/bbox":44}],223:[function(require,module,exports){
 (function (Buffer){(function (){
 
 const marked = require('marked');
@@ -74580,7 +74588,7 @@ module.exports = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":60,"marked":150}],224:[function(require,module,exports){
+},{"buffer":61,"marked":151}],224:[function(require,module,exports){
 const _ = require('lodash');
 const { createPopper } = require('@popperjs/core');
 
@@ -74743,7 +74751,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/validate":221,"../lib/zoomextent":222,"../ui/saver.js":249,"@popperjs/core":40,"codemirror/addon/edit/matchbrackets":64,"codemirror/addon/fold/brace-fold":65,"codemirror/addon/fold/foldcode":66,"codemirror/addon/fold/foldgutter":67,"codemirror/lib/codemirror":68,"codemirror/mode/javascript/javascript":69,"lodash":148}],225:[function(require,module,exports){
+},{"../lib/validate":221,"../lib/zoomextent":222,"../ui/saver.js":249,"@popperjs/core":41,"codemirror/addon/edit/matchbrackets":65,"codemirror/addon/fold/brace-fold":66,"codemirror/addon/fold/foldcode":67,"codemirror/addon/fold/foldgutter":68,"codemirror/lib/codemirror":69,"codemirror/mode/javascript/javascript":70,"lodash":149}],225:[function(require,module,exports){
 const metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -74808,7 +74816,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/smartzoom.js":220,"d3-metatable":72}],226:[function(require,module,exports){
+},{"../lib/smartzoom.js":220,"d3-metatable":73}],226:[function(require,module,exports){
 
 const tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';\nvar map = L.mapbox.map('map');\n\nL.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties;\n    var table = document.createElement('table');\n    table.setAttribute('class', 'marker-properties display')\n    for (var key in properties) {\n        var tr = createTableRows(key, properties[key]);\n        table.appendChild(tr);\n    }\n    if (table) l.bindPopup(table);\n}\n\nfunction createTableRows(key, value) {\n    var tr = document.createElement('tr');\n    var th = document.createElement('th');\n    var td = document.createElement('td');\n    key = document.createTextNode(key);\n    value = document.createTextNode(value);\n    th.appendChild(key);\n    td.appendChild(value);\n    tr.appendChild(th);\n    tr.appendChild(td);\n    return tr\n}\n\n</script>\n</body>\n</html>\n";
 
@@ -75118,7 +75126,7 @@ function save(context, callback) {
   });
 }
 
-},{"fs":59}],229:[function(require,module,exports){
+},{"fs":60}],229:[function(require,module,exports){
 const buttons = require('./ui/mode_buttons'),
   file_bar = require('./ui/file_bar'),
   dnd = require('./ui/dnd'),
@@ -75354,7 +75362,7 @@ const CircleMode = {
 
 module.exports = CircleMode;
 
-},{"./util.js":236,"@mapbox/mapbox-gl-draw":12,"@turf/circle":44,"@turf/length":49}],232:[function(require,module,exports){
+},{"./util.js":236,"@mapbox/mapbox-gl-draw":12,"@turf/circle":45,"@turf/length":50}],232:[function(require,module,exports){
 // from https://jsfiddle.net/fxi/xf51zet4/
 class extendDrawBar {
   constructor(opt) {
@@ -75911,7 +75919,7 @@ module.exports = {
   getDisplayMeasurements
 };
 
-},{"@turf/length":49,"numeral":153}],237:[function(require,module,exports){
+},{"@turf/length":50,"numeral":154}],237:[function(require,module,exports){
 const shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
@@ -76559,7 +76567,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":208,"../lib/meta.js":217,"../lib/readfile":219,"../lib/zoomextent":222,"../ui/saver.js":249,"./flash":238,"./modal.js":246,"./share":250,"@mapbox/geojson-normalize":8,"@mapbox/gist-map-browser":10,"@mapbox/github-file-browser":11,"clone":63,"file-saver":83,"geojson2dsv":90,"shp-write":165,"tokml":183,"topojson-server":185,"wellknown":191}],238:[function(require,module,exports){
+},{"../config.js":208,"../lib/meta.js":217,"../lib/readfile":219,"../lib/zoomextent":222,"../ui/saver.js":249,"./flash":238,"./modal.js":246,"./share":250,"@mapbox/geojson-normalize":8,"@mapbox/gist-map-browser":10,"@mapbox/github-file-browser":11,"clone":64,"file-saver":84,"geojson2dsv":91,"shp-write":165,"tokml":183,"topojson-server":185,"wellknown":191}],238:[function(require,module,exports){
 const message = require('./message');
 
 module.exports = flash;
@@ -76661,7 +76669,7 @@ class ClickableMarker extends mapboxgl.Marker {
 
 module.exports = ClickableMarker;
 
-},{"mapbox-gl":149}],241:[function(require,module,exports){
+},{"mapbox-gl":150}],241:[function(require,module,exports){
 class EditControl {
   onAdd(map) {
     this.map = map;
@@ -77149,7 +77157,7 @@ module.exports = function (context, readonly) {
   return map;
 };
 
-},{"../../constants":209,"../draw/circle":231,"../draw/extend_draw_bar":232,"../draw/linestring":233,"../draw/rectangle":234,"../draw/styles":235,"./controls":241,"./styles":243,"./util":244,"@mapbox/geojson-rewind":9,"@mapbox/mapbox-gl-draw":12,"@mapbox/mapbox-gl-geocoder":16,"mapbox-gl":149,"qs-hash":163}],243:[function(require,module,exports){
+},{"../../constants":209,"../draw/circle":231,"../draw/extend_draw_bar":232,"../draw/linestring":233,"../draw/rectangle":234,"../draw/styles":235,"./controls":241,"./styles":243,"./util":244,"@mapbox/geojson-rewind":9,"@mapbox/mapbox-gl-draw":12,"@mapbox/mapbox-gl-geocoder":16,"mapbox-gl":150,"qs-hash":163}],243:[function(require,module,exports){
 module.exports = [
   {
     title: 'Streets',
@@ -77568,7 +77576,7 @@ module.exports = {
   bindPopup
 };
 
-},{"../../lib/popup":218,"./clickable_marker":240,"@turf/area":42,"@turf/length":49,"escape-html":80,"mapbox-gl":149}],245:[function(require,module,exports){
+},{"../../lib/popup":218,"./clickable_marker":240,"@turf/area":43,"@turf/length":50,"escape-html":81,"mapbox-gl":150}],245:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {

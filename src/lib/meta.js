@@ -2,7 +2,7 @@ const escape = require('escape-html'),
   geojsonRandom = require('geojson-random'),
   geojsonExtent = require('@mapbox/geojson-extent'),
   geojsonFlatten = require('geojson-flatten'),
-  polyline = require('polyline'),
+  polyline = require('@mapbox/polyline'),
   wkx = require('wkx'),
   zoomextent = require('../lib/zoomextent');
 
