@@ -18,7 +18,7 @@
     "brfs": "^2.0.2",
     "clone": "0.1.16",
     "codemirror": "5.65.9",
-    "csv2geojson": "3.6.1",
+    "csv2geojson": "5.1.2",
     "d3": "3.5.17",
     "d3-metatable": "0.3.0",
     "escape-html": "^1.0.1",
