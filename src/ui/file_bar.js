@@ -3,7 +3,7 @@ const shpwrite = require('shp-write'),
   geojson2dsv = require('geojson2dsv'),
   topojson = require('topojson-server'),
   saveAs = require('file-saver'),
-  tokml = require('tokml'),
+  tokml = require('@placemarkio/tokml'),
   githubBrowser = require('@mapbox/github-file-browser'),
   gistBrowser = require('@mapbox/gist-map-browser'),
   geojsonNormalize = require('@mapbox/geojson-normalize'),
@@ -605,7 +605,7 @@ module.exports = function fileBar(context) {
 
   function downloadKML() {
     if (d3.event) d3.event.preventDefault();
-    const content = tokml(context.data.get('map'));
+    const content = tokml.toKML(context.data.get('map'));
     saveAs(
       new Blob([content], {
         type: 'text/plain;charset=utf-8'
