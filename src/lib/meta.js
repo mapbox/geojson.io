@@ -1,6 +1,6 @@
 const escape = require('escape-html'),
   geojsonRandom = require('geojson-random'),
-  geojsonExtent = require('geojson-extent'),
+  geojsonExtent = require('@mapbox/geojson-extent'),
   geojsonFlatten = require('geojson-flatten'),
   polyline = require('polyline'),
   wkx = require('wkx'),
