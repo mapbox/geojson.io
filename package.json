@@ -33,7 +33,7 @@
     "geojson-flatten": "~0.1.0",
     "geojson-random": "0.1.0",
     "geojson2dsv": "0.0.0",
-    "gtfs2geojson": "^1.0.0",
+    "gtfs2geojson": "^2.0.0",
     "lodash": "^4.17.21",
     "marked": "0.3.2",
     "numeral": "^2.0.6",

@@ -32115,41 +32115,77 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 },{"function-bind":92,"has":103,"has-symbols":100}],98:[function(require,module,exports){
 var parseCSV = require('dsv').csv.parse;
 
-/**
- * Parse GTFS data given as a string and return a GeoJSON FeatureCollection
+
+var gtfs2geojson = {
+  /**
+ * Parse GTFS shapes.txt data given as a string and return a GeoJSON FeatureCollection
  * of features with LineString geometries.
  *
  * @param {string} gtfs csv content of shapes.txt
  * @returns {Object} geojson featurecollection
  */
-function gtfs2geojson(gtfs) {
-  var shapes = parseCSV(gtfs).reduce(function(memo, row) {
-    memo[row.shape_id] = (memo[row.shape_id] || []).concat(row);
-    return memo;
-  }, {});
-  return {
-    type: 'FeatureCollection',
-    features: Object.keys(shapes).map(function(id) {
-      return {
-        type: 'Feature',
-        id: id,
-        properties: {
-          shape_id: id
-        },
-        geometry: {
-          type: 'LineString',
-          coordinates: shapes[id].sort(function(a, b) {
-            return +a.shape_pt_sequence - b.shape_pt_sequence;
-          }).map(function(coord) {
-            return [
-              parseFloat(coord.shape_pt_lon),
-              parseFloat(coord.shape_pt_lat)
-            ];
-          })
-        }
-      };
-    })
-  };
+  lines: function(gtfs) {
+    var shapes = parseCSV(gtfs).reduce(function(memo, row) {
+      memo[row.shape_id] = (memo[row.shape_id] || []).concat(row);
+      return memo;
+    }, {});
+    return {
+      type: 'FeatureCollection',
+      features: Object.keys(shapes).map(function(id) {
+        return {
+          type: 'Feature',
+          id: id,
+          properties: {
+            shape_id: id
+          },
+          geometry: {
+            type: 'LineString',
+            coordinates: shapes[id].sort(function(a, b) {
+              return +a.shape_pt_sequence - b.shape_pt_sequence;
+            }).map(function(coord) {
+              return [
+                parseFloat(coord.shape_pt_lon),
+                parseFloat(coord.shape_pt_lat)
+              ];
+            })
+          }
+        };
+      })
+    };
+  },
+
+  /**
+ * Parse GTFS stops.txt data given as a string and return a GeoJSON FeatureCollection
+ * of features with Point geometries.
+ *
+ * @param {string} gtfs csv content of stops.txt
+ * @returns {Object} geojson featurecollection
+ *
+ */
+
+  stops: function(gtfs) {
+    var stops = parseCSV(gtfs)
+    return {
+      type: 'FeatureCollection',
+      features: Object.keys(stops).map(function(id) {
+        return {
+          type: 'Feature',
+          id: stops[id].stop_id,
+          properties: {
+            stop_id: stops[id].stop_id,
+            stop_name: stops[id].stop_name
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: [
+              parseFloat(stops[id].stop_lon),
+              parseFloat(stops[id].stop_lat)
+            ]
+          }
+        };
+      })
+    };
+  }
 }
 
 module.exports = gtfs2geojson;
@@ -75218,6 +75254,8 @@ const topojson = require('topojson-client'),
   polytogeojson = require('polytogeojson'),
   geojsonNormalize = require('@mapbox/geojson-normalize');
 
+console.log(gtfs2geojson);
+
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
 module.exports.readFile = readFile;
@@ -75377,11 +75415,19 @@ function readFile(f, text, callback) {
         }
       }
     );
-  } else if (fileType === 'gtfs') {
+  } else if (fileType === 'gtfs-shapes') {
     try {
-      return callback(null, gtfs2geojson(text));
+      return callback(null, gtfs2geojson.lines(text));
     } catch (e) {
-      return callback({ message: 'Invalid GTFS file' });
+      console.log(e);
+      return callback({ message: 'Invalid GTFS shapes.txt file' });
+    }
+  } else if (fileType === 'gtfs-stops') {
+    try {
+      return callback(null, gtfs2geojson.stops(text));
+    } catch (e) {
+      console.log(e);
+      return callback({ message: 'Invalid GTFS stops.txt file' });
     }
   } else if (fileType === 'poly') {
     callback(null, polytogeojson(text));
@@ -75407,7 +75453,15 @@ function readFile(f, text, callback) {
     if (ext('.xml') || ext('.osm')) return 'xml';
     if (ext('.poly')) return 'poly';
     if (text && text.indexOf('shape_id,shape_pt_lat,shape_pt_lon') !== -1) {
-      return 'gtfs';
+      return 'gtfs-shapes';
+    }
+    if (
+      text &&
+      text.indexOf(
+        'stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon'
+      ) !== -1
+    ) {
+      return 'gtfs-stops';
     }
   }
 }
