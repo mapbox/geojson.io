@@ -34,7 +34,7 @@
     "lodash": "^4.17.21",
     "marked": "0.3.2",
     "numeral": "^2.0.6",
-    "osmtogeojson": "2.0.5",
+    "osmtogeojson": "3.0.0-beta.5",
     "polyline": "^0.2.0",
     "polytogeojson": "0.0.1",
     "qs-hash": "0.0.0",

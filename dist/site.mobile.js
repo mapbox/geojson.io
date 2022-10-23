@@ -487,7 +487,7 @@ v.processMessage = processMessage;
 
 module.exports = v;
 
-},{"is-plain-obj":107,"xtend":3}],3:[function(require,module,exports){
+},{"is-plain-obj":108,"xtend":3}],3:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -598,7 +598,7 @@ function getExtent(_) {
     return ext;
 }
 
-},{"@mapbox/extent":1,"@mapbox/geojson-coords":5,"traverse":217}],8:[function(require,module,exports){
+},{"@mapbox/extent":1,"@mapbox/geojson-coords":5,"traverse":218}],8:[function(require,module,exports){
 module.exports = normalize;
 
 var types = {
@@ -644,6 +644,52 @@ function normalize(gj) {
 }
 
 },{}],9:[function(require,module,exports){
+
+module.exports = rewind;
+
+function rewind(gj, outer) {
+    var type = gj && gj.type, i;
+
+    if (type === 'FeatureCollection') {
+        for (i = 0; i < gj.features.length; i++) rewind(gj.features[i], outer);
+
+    } else if (type === 'GeometryCollection') {
+        for (i = 0; i < gj.geometries.length; i++) rewind(gj.geometries[i], outer);
+
+    } else if (type === 'Feature') {
+        rewind(gj.geometry, outer);
+
+    } else if (type === 'Polygon') {
+        rewindRings(gj.coordinates, outer);
+
+    } else if (type === 'MultiPolygon') {
+        for (i = 0; i < gj.coordinates.length; i++) rewindRings(gj.coordinates[i], outer);
+    }
+
+    return gj;
+}
+
+function rewindRings(rings, outer) {
+    if (rings.length === 0) return;
+
+    rewindRing(rings[0], outer);
+    for (var i = 1; i < rings.length; i++) {
+        rewindRing(rings[i], !outer);
+    }
+}
+
+function rewindRing(ring, dir) {
+    var area = 0, err = 0;
+    for (var i = 0, len = ring.length, j = len - 1; i < len; j = i++) {
+        var k = (ring[i][0] - ring[j][0]) * (ring[j][1] + ring[i][1]);
+        var m = area + k;
+        err += Math.abs(area) >= Math.abs(k) ? area - m + k : k - m + area;
+        area = m;
+    }
+    if (area + err >= 0 !== !!dir) ring.reverse();
+}
+
+},{}],10:[function(require,module,exports){
 var request = require('browser-request'),
     token;
 
@@ -739,7 +785,7 @@ function page(postfix, callback) {
     });
 }
 
-},{"browser-request":56}],10:[function(require,module,exports){
+},{"browser-request":57}],11:[function(require,module,exports){
 var queue = require('queue-async'),
     request = require('browser-request'),
     treeui = require('treeui'),
@@ -874,7 +920,7 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":56,"queue-async":166,"treeui":218}],11:[function(require,module,exports){
+},{"browser-request":57,"queue-async":167,"treeui":219}],12:[function(require,module,exports){
 (function (global){(function (){
 !function (t, e) {
   "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = t || self).MapboxDraw = e();
@@ -3970,7 +4016,7 @@ function req(postfix, callback) {
 });
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 var nanoid = require('nanoid').nanoid;
 
@@ -4293,7 +4339,7 @@ MapboxEventManager.prototype = {
 
 module.exports = MapboxEventManager;
 
-},{"nanoid":153}],13:[function(require,module,exports){
+},{"nanoid":154}],14:[function(require,module,exports){
 module.exports = {
   'fr': {
     'name': 'France',
@@ -4313,7 +4359,7 @@ module.exports = {
   }
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 function Geolocation() {}
 
 Geolocation.prototype = {
@@ -4335,7 +4381,7 @@ Geolocation.prototype = {
 
 module.exports = Geolocation;
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 var Typeahead = require('suggestions');
@@ -5692,7 +5738,7 @@ MapboxGeocoder.prototype = {
 
 module.exports = MapboxGeocoder;
 
-},{"./events":12,"./exceptions":13,"./geolocation":14,"./localization":16,"./utils":17,"@mapbox/mapbox-sdk":19,"@mapbox/mapbox-sdk/services/geocoding":31,"events":81,"lodash.debounce":149,"subtag":180,"suggestions":181,"xtend":18}],16:[function(require,module,exports){
+},{"./events":13,"./exceptions":14,"./geolocation":15,"./localization":17,"./utils":18,"@mapbox/mapbox-sdk":20,"@mapbox/mapbox-sdk/services/geocoding":32,"events":82,"lodash.debounce":150,"subtag":181,"suggestions":182,"xtend":19}],17:[function(require,module,exports){
 'use strict';
 
 /**
@@ -5731,7 +5777,7 @@ var placeholder = {
 
 module.exports = {placeholder: placeholder};
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /**
  * This function transforms the feature from reverse geocoding to plain text with specified accuracy
  * @param {object} feature 
@@ -5801,16 +5847,16 @@ module.exports = {
   getAddressInfo: getAddressInfo,
   REVERSE_GEOCODE_COORD_RGX: REVERSE_GEOCODE_COORD_RGX,
 }
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3}],19:[function(require,module,exports){
+},{"dup":3}],20:[function(require,module,exports){
 'use strict';
 
 var client = require('./lib/client');
 
 module.exports = client;
 
-},{"./lib/client":20}],20:[function(require,module,exports){
+},{"./lib/client":21}],21:[function(require,module,exports){
 'use strict';
 
 var browser = require('./browser-layer');
@@ -5839,7 +5885,7 @@ function createBrowserClient(options) {
 
 module.exports = createBrowserClient;
 
-},{"../classes/mapi-client":22,"./browser-layer":21}],21:[function(require,module,exports){
+},{"../classes/mapi-client":23,"./browser-layer":22}],22:[function(require,module,exports){
 'use strict';
 
 var MapiResponse = require('../classes/mapi-response');
@@ -5966,7 +6012,7 @@ module.exports = {
   createRequestXhr: createRequestXhr
 };
 
-},{"../classes/mapi-error":23,"../classes/mapi-response":25,"../constants":26,"../helpers/parse-headers":27}],22:[function(require,module,exports){
+},{"../classes/mapi-error":24,"../classes/mapi-response":26,"../constants":27,"../helpers/parse-headers":28}],23:[function(require,module,exports){
 'use strict';
 
 var parseToken = require('@mapbox/parse-mapbox-token');
@@ -6006,7 +6052,7 @@ MapiClient.prototype.createRequest = function createRequest(requestOptions) {
 
 module.exports = MapiClient;
 
-},{"../constants":26,"./mapi-request":24,"@mapbox/parse-mapbox-token":37}],23:[function(require,module,exports){
+},{"../constants":27,"./mapi-request":25,"@mapbox/parse-mapbox-token":38}],24:[function(require,module,exports){
 'use strict';
 
 var constants = require('../constants');
@@ -6072,7 +6118,7 @@ function MapiError(options) {
 
 module.exports = MapiError;
 
-},{"../constants":26}],24:[function(require,module,exports){
+},{"../constants":27}],25:[function(require,module,exports){
 'use strict';
 
 var parseToken = require('@mapbox/parse-mapbox-token');
@@ -6336,7 +6382,7 @@ MapiRequest.prototype._extend = function _extend(options) {
 
 module.exports = MapiRequest;
 
-},{"../constants":26,"../helpers/url-utils":29,"@mapbox/parse-mapbox-token":37,"eventemitter3":80,"xtend":30}],25:[function(require,module,exports){
+},{"../constants":27,"../helpers/url-utils":30,"@mapbox/parse-mapbox-token":38,"eventemitter3":81,"xtend":31}],26:[function(require,module,exports){
 'use strict';
 
 var parseLinkHeader = require('../helpers/parse-link-header');
@@ -6398,7 +6444,7 @@ MapiResponse.prototype.nextPage = function nextPage() {
 
 module.exports = MapiResponse;
 
-},{"../helpers/parse-link-header":28}],26:[function(require,module,exports){
+},{"../helpers/parse-link-header":29}],27:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -6411,7 +6457,7 @@ module.exports = {
   ERROR_REQUEST_ABORTED: 'RequestAbortedError'
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 function parseSingleHeader(raw) {
@@ -6456,7 +6502,7 @@ function parseHeaders(raw) {
 
 module.exports = parseHeaders;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 // Like https://github.com/thlorenz/lib/parse-link-header but without any
@@ -6533,7 +6579,7 @@ function parseLinkHeader(linkHeader) {
 
 module.exports = parseLinkHeader;
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 // Encode each item of an array individually. The comma
@@ -6655,9 +6701,9 @@ module.exports = {
   interpolateRouteParams: interpolateRouteParams
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3}],31:[function(require,module,exports){
+},{"dup":3}],32:[function(require,module,exports){
 'use strict';
 
 var xtend = require('xtend');
@@ -6867,7 +6913,7 @@ Geocoding.reverseGeocode = function(config) {
 
 module.exports = createServiceFactory(Geocoding);
 
-},{"./service-helpers/create-service-factory":32,"./service-helpers/pick":34,"./service-helpers/stringify-booleans":35,"./service-helpers/validator":36,"xtend":30}],32:[function(require,module,exports){
+},{"./service-helpers/create-service-factory":33,"./service-helpers/pick":35,"./service-helpers/stringify-booleans":36,"./service-helpers/validator":37,"xtend":31}],33:[function(require,module,exports){
 'use strict';
 
 var MapiClient = require('../../lib/classes/mapi-client');
@@ -6890,7 +6936,7 @@ function createServiceFactory(ServicePrototype) {
 
 module.exports = createServiceFactory;
 
-},{"../../lib/classes/mapi-client":22,"../../lib/client":20}],33:[function(require,module,exports){
+},{"../../lib/classes/mapi-client":23,"../../lib/client":21}],34:[function(require,module,exports){
 'use strict';
 
 function objectMap(obj, cb) {
@@ -6902,7 +6948,7 @@ function objectMap(obj, cb) {
 
 module.exports = objectMap;
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 /**
@@ -6934,7 +6980,7 @@ function pick(source, keys) {
 
 module.exports = pick;
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 var objectMap = require('./object-map');
@@ -6953,7 +6999,7 @@ function stringifyBoolean(obj) {
 
 module.exports = stringifyBoolean;
 
-},{"./object-map":33}],36:[function(require,module,exports){
+},{"./object-map":34}],37:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -7006,7 +7052,7 @@ module.exports = xtend(v, {
 });
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"@mapbox/fusspot":2,"xtend":30}],37:[function(require,module,exports){
+},{"@mapbox/fusspot":2,"xtend":31}],38:[function(require,module,exports){
 'use strict';
 
 var base64 = require('base-64');
@@ -7057,7 +7103,7 @@ function has(obj, key) {
 
 module.exports = parseToken;
 
-},{"base-64":54}],38:[function(require,module,exports){
+},{"base-64":55}],39:[function(require,module,exports){
 module.exports = element;
 module.exports.pair = pair;
 module.exports.format = format;
@@ -7166,7 +7212,7 @@ function swapdim(a, b, dim) {
   if (dim === 'W' || dim === 'E') return [b, a];
 }
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 (function (process){(function (){
 /**
  * @popperjs/core v2.11.6 - MIT License
@@ -9172,7 +9218,7 @@ exports.preventOverflow = preventOverflow$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":164}],40:[function(require,module,exports){
+},{"_process":165}],41:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var meta_1 = require("@turf/meta");
@@ -9291,7 +9337,7 @@ function rad(num) {
     return (num * Math.PI) / 180;
 }
 
-},{"@turf/meta":48}],41:[function(require,module,exports){
+},{"@turf/meta":49}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var meta_1 = require("@turf/meta");
@@ -9330,7 +9376,7 @@ function bbox(geojson) {
 bbox["default"] = bbox;
 exports.default = bbox;
 
-},{"@turf/meta":48}],42:[function(require,module,exports){
+},{"@turf/meta":49}],43:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -9378,7 +9424,7 @@ function circle(center, radius, options) {
 }
 exports.default = circle;
 
-},{"@turf/destination":43,"@turf/helpers":45}],43:[function(require,module,exports){
+},{"@turf/destination":44,"@turf/helpers":46}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 // http://en.wikipedia.org/wiki/Haversine_formula
@@ -9430,7 +9476,7 @@ function destination(origin, distance, bearing, options) {
 }
 exports.default = destination;
 
-},{"@turf/helpers":45,"@turf/invariant":46}],44:[function(require,module,exports){
+},{"@turf/helpers":46,"@turf/invariant":47}],45:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var invariant_1 = require("@turf/invariant");
@@ -9473,7 +9519,7 @@ function distance(from, to, options) {
 }
 exports.default = distance;
 
-},{"@turf/helpers":45,"@turf/invariant":46}],45:[function(require,module,exports){
+},{"@turf/helpers":46,"@turf/invariant":47}],46:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -10199,7 +10245,7 @@ function validateId(id) {
 }
 exports.validateId = validateId;
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var helpers_1 = require("@turf/helpers");
@@ -10434,7 +10480,7 @@ function getType(geojson, _name) {
 }
 exports.getType = getType;
 
-},{"@turf/helpers":45}],47:[function(require,module,exports){
+},{"@turf/helpers":46}],48:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -10468,7 +10514,7 @@ function length(geojson, options) {
 }
 exports.default = length;
 
-},{"@turf/distance":44,"@turf/meta":48}],48:[function(require,module,exports){
+},{"@turf/distance":45,"@turf/meta":49}],49:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -11891,7 +11937,7 @@ exports.propReduce = propReduce;
 exports.segmentEach = segmentEach;
 exports.segmentReduce = segmentReduce;
 
-},{"@turf/helpers":45}],49:[function(require,module,exports){
+},{"@turf/helpers":46}],50:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -12401,7 +12447,7 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"object-assign":156,"util/":52}],50:[function(require,module,exports){
+},{"object-assign":157,"util/":53}],51:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -12426,14 +12472,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -13023,7 +13069,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":51,"_process":164,"inherits":50}],53:[function(require,module,exports){
+},{"./support/isBuffer":52,"_process":165,"inherits":51}],54:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -13054,7 +13100,7 @@ module.exports = function availableTypedArrays() {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 (function (global){(function (){
 /*! http://mths.be/base64 v0.1.0 by @mathias | MIT license */
 ;(function(root) {
@@ -13223,7 +13269,7 @@ module.exports = function availableTypedArrays() {
 }(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -13375,7 +13421,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 // Browser Request
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13871,11 +13917,11 @@ function b64_enc (data) {
 }));
 //UMD FOOTER END
 
-},{}],57:[function(require,module,exports){
-
 },{}],58:[function(require,module,exports){
-arguments[4][57][0].apply(exports,arguments)
-},{"dup":57}],59:[function(require,module,exports){
+
+},{}],59:[function(require,module,exports){
+arguments[4][58][0].apply(exports,arguments)
+},{"dup":58}],60:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -15656,7 +15702,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":55,"buffer":59,"ieee754":101}],60:[function(require,module,exports){
+},{"base64-js":56,"buffer":60,"ieee754":102}],61:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -15673,7 +15719,7 @@ module.exports = function callBoundIntrinsic(name, allowMissing) {
 	return intrinsic;
 };
 
-},{"./":61,"get-intrinsic":94}],61:[function(require,module,exports){
+},{"./":62,"get-intrinsic":95}],62:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
@@ -15722,7 +15768,7 @@ if ($defineProperty) {
 	module.exports.apply = applyBind;
 }
 
-},{"function-bind":85,"get-intrinsic":94}],62:[function(require,module,exports){
+},{"function-bind":86,"get-intrinsic":95}],63:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 
@@ -15854,7 +15900,7 @@ clone.clonePrototype = function(parent) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":59}],63:[function(require,module,exports){
+},{"buffer":60}],64:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -16016,7 +16062,7 @@ clone.clonePrototype = function(parent) {
   });
 });
 
-},{"../../lib/codemirror":67}],64:[function(require,module,exports){
+},{"../../lib/codemirror":68}],65:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -16137,7 +16183,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
 });
 
-},{"../../lib/codemirror":67}],65:[function(require,module,exports){
+},{"../../lib/codemirror":68}],66:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -16298,7 +16344,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   });
 });
 
-},{"../../lib/codemirror":67}],66:[function(require,module,exports){
+},{"../../lib/codemirror":68}],67:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -16469,7 +16515,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 });
 
-},{"../../lib/codemirror":67,"./foldcode":65}],67:[function(require,module,exports){
+},{"../../lib/codemirror":68,"./foldcode":66}],68:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -26343,7 +26389,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
 })));
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -27305,7 +27351,7 @@ CodeMirror.defineMIME("application/typescript", { name: "javascript", typescript
 
 });
 
-},{"../../lib/codemirror":67}],69:[function(require,module,exports){
+},{"../../lib/codemirror":68}],70:[function(require,module,exports){
 'use strict';
 
 var dsv = require('d3-dsv'),
@@ -27566,7 +27612,7 @@ module.exports = {
     toPolygon: toPolygon
 };
 
-},{"@mapbox/sexagesimal":38,"d3-dsv":70}],70:[function(require,module,exports){
+},{"@mapbox/sexagesimal":39,"d3-dsv":71}],71:[function(require,module,exports){
 // https://d3js.org/d3-dsv/ Version 1.0.1. Copyright 2016 Mike Bostock.
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -27736,7 +27782,7 @@ module.exports = {
   Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
-},{}],71:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -27927,10 +27973,10 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports.structure = require('./src/structure');
 
-},{"./src/structure":76}],73:[function(require,module,exports){
+},{"./src/structure":77}],74:[function(require,module,exports){
 var fieldSize = require('./fieldsize');
 
 var types = {
@@ -27974,7 +28020,7 @@ function bytesPer(fields) {
     return fields.reduce(function(memo, f) { return memo + f.size; }, 1);
 }
 
-},{"./fieldsize":74}],74:[function(require,module,exports){
+},{"./fieldsize":75}],75:[function(require,module,exports){
 module.exports = {
     // string
     C: 254,
@@ -27992,7 +28038,7 @@ module.exports = {
     B: 8,
 };
 
-},{}],75:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 module.exports.lpad = function lpad(str, len, char) {
     while (str.length < len) { str = char + str; } return str;
 };
@@ -28008,7 +28054,7 @@ module.exports.writeField = function writeField(view, fieldLength, str, offset) 
     return offset;
 };
 
-},{}],76:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 var fieldSize = require('./fieldsize'),
     lib = require('./lib'),
     fields = require('./fields');
@@ -28105,12 +28151,12 @@ module.exports = function structure(data) {
     return view;
 };
 
-},{"./fields":73,"./fieldsize":74,"./lib":75}],77:[function(require,module,exports){
+},{"./fields":74,"./fieldsize":75,"./lib":76}],78:[function(require,module,exports){
 
 
 module.exports = new Function("dsv.version = \"0.0.3\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.substring(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.substring(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.substring(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && !(a = f(a, n++))) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{}],78:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -28127,7 +28173,7 @@ if ($gOPD) {
 
 module.exports = $gOPD;
 
-},{"get-intrinsic":94}],79:[function(require,module,exports){
+},{"get-intrinsic":95}],80:[function(require,module,exports){
 /*!
  * escape-html
  * Copyright(c) 2012-2013 TJ Holowaychuk
@@ -28207,7 +28253,7 @@ function escapeHtml(string) {
     : html;
 }
 
-},{}],80:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty
@@ -28545,7 +28591,7 @@ if ('undefined' !== typeof module) {
   module.exports = EventEmitter;
 }
 
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -29044,13 +29090,13 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
   }
 }
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 (function (global){(function (){
 (function(a,b){if("function"==typeof define&&define.amd)define([],b);else if("undefined"!=typeof exports)b();else{b(),a.FileSaver={exports:{}}.exports}})(this,function(){"use strict";function b(a,b){return"undefined"==typeof b?b={autoBom:!1}:"object"!=typeof b&&(console.warn("Deprecated: Expected third argument to be a object"),b={autoBom:!b}),b.autoBom&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\uFEFF",a],{type:a.type}):a}function c(a,b,c){var d=new XMLHttpRequest;d.open("GET",a),d.responseType="blob",d.onload=function(){g(d.response,b,c)},d.onerror=function(){console.error("could not download file")},d.send()}function d(a){var b=new XMLHttpRequest;b.open("HEAD",a,!1);try{b.send()}catch(a){}return 200<=b.status&&299>=b.status}function e(a){try{a.dispatchEvent(new MouseEvent("click"))}catch(c){var b=document.createEvent("MouseEvents");b.initMouseEvent("click",!0,!0,window,0,0,0,80,20,!1,!1,!1,!1,0,null),a.dispatchEvent(b)}}var f="object"==typeof window&&window.window===window?window:"object"==typeof self&&self.self===self?self:"object"==typeof global&&global.global===global?global:void 0,a=f.navigator&&/Macintosh/.test(navigator.userAgent)&&/AppleWebKit/.test(navigator.userAgent)&&!/Safari/.test(navigator.userAgent),g=f.saveAs||("object"!=typeof window||window!==f?function(){}:"download"in HTMLAnchorElement.prototype&&!a?function(b,g,h){var i=f.URL||f.webkitURL,j=document.createElement("a");g=g||b.name||"download",j.download=g,j.rel="noopener","string"==typeof b?(j.href=b,j.origin===location.origin?e(j):d(j.href)?c(b,g,h):e(j,j.target="_blank")):(j.href=i.createObjectURL(b),setTimeout(function(){i.revokeObjectURL(j.href)},4E4),setTimeout(function(){e(j)},0))}:"msSaveOrOpenBlob"in navigator?function(f,g,h){if(g=g||f.name||"download","string"!=typeof f)navigator.msSaveOrOpenBlob(b(f,h),g);else if(d(f))c(f,g,h);else{var i=document.createElement("a");i.href=f,i.target="_blank",setTimeout(function(){e(i)})}}:function(b,d,e,g){if(g=g||open("","_blank"),g&&(g.document.title=g.document.body.innerText="downloading..."),"string"==typeof b)return c(b,d,e);var h="application/octet-stream"===b.type,i=/constructor/i.test(f.HTMLElement)||f.safari,j=/CriOS\/[\d]+/.test(navigator.userAgent);if((j||h&&i||a)&&"undefined"!=typeof FileReader){var k=new FileReader;k.onloadend=function(){var a=k.result;a=j?a:a.replace(/^data:[^;]*;/,"data:attachment/file;"),g?g.location.href=a:location=a,g=null},k.readAsDataURL(b)}else{var l=f.URL||f.webkitURL,m=l.createObjectURL(b);g?g.location=m:location.href=m,g=null,setTimeout(function(){l.revokeObjectURL(m)},4E4)}});f.saveAs=g.saveAs=g,"undefined"!=typeof module&&(module.exports=g)});
 
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 'use strict';
 
 var isCallable = require('is-callable');
@@ -29114,7 +29160,7 @@ var forEach = function forEach(list, iterator, thisArg) {
 
 module.exports = forEach;
 
-},{"is-callable":105}],84:[function(require,module,exports){
+},{"is-callable":106}],85:[function(require,module,exports){
 'use strict';
 
 /* eslint no-invalid-this: 1 */
@@ -29168,14 +29214,14 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],85:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":84}],86:[function(require,module,exports){
+},{"./implementation":85}],87:[function(require,module,exports){
 /*
  * Fuzzy
  * https://github.com/myork/fuzzy
@@ -29321,7 +29367,7 @@ fuzzy.filter = function(pattern, arr, opts) {
 }());
 
 
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
 module.exports.geometry = geometry;
@@ -29387,7 +29433,7 @@ function rad(_) {
     return _ * Math.PI / 180;
 }
 
-},{"wgs84":223}],88:[function(require,module,exports){
+},{"wgs84":224}],89:[function(require,module,exports){
 module.exports = flatten;
 
 function flatten(gj, up) {
@@ -29428,9 +29474,9 @@ function flatten(gj, up) {
     }
 }
 
-},{}],89:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],90:[function(require,module,exports){
+},{"dup":8}],91:[function(require,module,exports){
 module.exports = function(count, type) {
     switch (type) {
         case 'point':
@@ -29449,7 +29495,7 @@ function feature(geom) {
 }
 function collection(f) { return { type: 'FeatureCollection', features: f }; }
 
-},{}],91:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 var geojsonArea = require('geojson-area');
 
 module.exports = rewind;
@@ -29500,7 +29546,7 @@ function cw(_) {
     return geojsonArea.ring(_) >= 0;
 }
 
-},{"geojson-area":87}],92:[function(require,module,exports){
+},{"geojson-area":88}],93:[function(require,module,exports){
 var dsv = require('dsv');
 
 module.exports = function(_, delim) {
@@ -29527,7 +29573,7 @@ module.exports = function(_, delim) {
     }));
 };
 
-},{"dsv":77}],93:[function(require,module,exports){
+},{"dsv":78}],94:[function(require,module,exports){
 var jsonlint = require('jsonlint-lines');
 
 function hint(str) {
@@ -29846,7 +29892,7 @@ function hint(str) {
 
 module.exports.hint = hint;
 
-},{"jsonlint-lines":109}],94:[function(require,module,exports){
+},{"jsonlint-lines":110}],95:[function(require,module,exports){
 'use strict';
 
 var undefined;
@@ -30182,7 +30228,7 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 	return value;
 };
 
-},{"function-bind":85,"has":100,"has-symbols":97}],95:[function(require,module,exports){
+},{"function-bind":86,"has":101,"has-symbols":98}],96:[function(require,module,exports){
 var parseCSV = require('dsv').csv.parse;
 
 /**
@@ -30224,12 +30270,12 @@ function gtfs2geojson(gtfs) {
 
 module.exports = gtfs2geojson;
 
-},{"dsv":96}],96:[function(require,module,exports){
+},{"dsv":97}],97:[function(require,module,exports){
 
 
 module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{}],97:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 'use strict';
 
 var origSymbol = typeof Symbol !== 'undefined' && Symbol;
@@ -30244,7 +30290,7 @@ module.exports = function hasNativeSymbols() {
 	return hasSymbolSham();
 };
 
-},{"./shams":98}],98:[function(require,module,exports){
+},{"./shams":99}],99:[function(require,module,exports){
 'use strict';
 
 /* eslint complexity: [2, 18], max-statements: [2, 33] */
@@ -30288,7 +30334,7 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{}],99:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 'use strict';
 
 var hasSymbols = require('has-symbols/shams');
@@ -30297,14 +30343,14 @@ module.exports = function hasToStringTagShams() {
 	return hasSymbols() && !!Symbol.toStringTag;
 };
 
-},{"has-symbols/shams":98}],100:[function(require,module,exports){
+},{"has-symbols/shams":99}],101:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":85}],101:[function(require,module,exports){
+},{"function-bind":86}],102:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -30391,7 +30437,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],102:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -30420,7 +30466,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 'use strict';
 
 var hasToStringTag = require('has-tostringtag/shams')();
@@ -30455,7 +30501,7 @@ isStandardArguments.isLegacyArguments = isLegacyArguments; // for tests
 
 module.exports = supportsStandardArguments ? isStandardArguments : isLegacyArguments;
 
-},{"call-bind/callBound":60,"has-tostringtag/shams":99}],104:[function(require,module,exports){
+},{"call-bind/callBound":61,"has-tostringtag/shams":100}],105:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -30478,7 +30524,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],105:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 'use strict';
 
 var fnToStr = Function.prototype.toString;
@@ -30581,7 +30627,7 @@ module.exports = reflectApply
 		return tryFunctionObject(value);
 	};
 
-},{}],106:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -30621,7 +30667,7 @@ module.exports = function isGeneratorFunction(fn) {
 	return getProto(fn) === GeneratorFunction;
 };
 
-},{"has-tostringtag/shams":99}],107:[function(require,module,exports){
+},{"has-tostringtag/shams":100}],108:[function(require,module,exports){
 'use strict';
 var toString = Object.prototype.toString;
 
@@ -30630,7 +30676,7 @@ module.exports = function (x) {
 	return toString.call(x) === '[object Object]' && (prototype = Object.getPrototypeOf(x), prototype === null || prototype === Object.getPrototypeOf({}));
 };
 
-},{}],108:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -30694,7 +30740,7 @@ module.exports = function isTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":53,"call-bind/callBound":60,"es-abstract/helpers/getOwnPropertyDescriptor":78,"for-each":83,"has-tostringtag/shams":99}],109:[function(require,module,exports){
+},{"available-typed-arrays":54,"call-bind/callBound":61,"es-abstract/helpers/getOwnPropertyDescriptor":79,"for-each":84,"has-tostringtag/shams":100}],110:[function(require,module,exports){
 (function (process){(function (){
 /* parser generated by jison 0.4.6 */
 /*
@@ -31351,7 +31397,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 }).call(this)}).call(this,require('_process'))
-},{"_process":164,"fs":58,"path":161}],110:[function(require,module,exports){
+},{"_process":165,"fs":59,"path":162}],111:[function(require,module,exports){
 'use strict';
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -31423,7 +31469,7 @@ exports.decode = function(input, utf8) {
 
 };
 
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 'use strict';
 function CompressedObject() {
     this.compressedSize = 0;
@@ -31453,7 +31499,7 @@ CompressedObject.prototype = {
 };
 module.exports = CompressedObject;
 
-},{}],112:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 'use strict';
 exports.STORE = {
     magic: "\x00\x00",
@@ -31468,7 +31514,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":117}],113:[function(require,module,exports){
+},{"./flate":118}],114:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -31572,7 +31618,7 @@ module.exports = function crc32(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":130}],114:[function(require,module,exports){
+},{"./utils":131}],115:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -31681,7 +31727,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"./utils":130}],115:[function(require,module,exports){
+},{"./utils":131}],116:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -31694,7 +31740,7 @@ exports.comment = null;
 exports.unixPermissions = null;
 exports.dosPermissions = null;
 
-},{}],116:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -31801,7 +31847,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./utils":130}],117:[function(require,module,exports){
+},{"./utils":131}],118:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -31819,7 +31865,7 @@ exports.uncompress =  function(input) {
     return pako.inflateRaw(input);
 };
 
-},{"pako":133}],118:[function(require,module,exports){
+},{"pako":134}],119:[function(require,module,exports){
 'use strict';
 
 var base64 = require('./base64');
@@ -31900,7 +31946,7 @@ JSZip.base64 = {
 JSZip.compressions = require('./compressions');
 module.exports = JSZip;
 
-},{"./base64":110,"./compressions":112,"./defaults":115,"./deprecatedPublicUtils":116,"./load":119,"./object":122,"./support":126}],119:[function(require,module,exports){
+},{"./base64":111,"./compressions":113,"./defaults":116,"./deprecatedPublicUtils":117,"./load":120,"./object":123,"./support":127}],120:[function(require,module,exports){
 'use strict';
 var base64 = require('./base64');
 var ZipEntries = require('./zipEntries');
@@ -31933,7 +31979,7 @@ module.exports = function(data, options) {
     return this;
 };
 
-},{"./base64":110,"./zipEntries":131}],120:[function(require,module,exports){
+},{"./base64":111,"./zipEntries":132}],121:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 module.exports = function(data, encoding){
@@ -31944,7 +31990,7 @@ module.exports.test = function(b){
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":59}],121:[function(require,module,exports){
+},{"buffer":60}],122:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./uint8ArrayReader');
 
@@ -31966,7 +32012,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"./uint8ArrayReader":127}],122:[function(require,module,exports){
+},{"./uint8ArrayReader":128}],123:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var utils = require('./utils');
@@ -32851,7 +32897,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./base64":110,"./compressedObject":111,"./compressions":112,"./crc32":113,"./defaults":115,"./nodeBuffer":120,"./signature":123,"./stringWriter":125,"./support":126,"./uint8ArrayWriter":128,"./utf8":129,"./utils":130}],123:[function(require,module,exports){
+},{"./base64":111,"./compressedObject":112,"./compressions":113,"./crc32":114,"./defaults":116,"./nodeBuffer":121,"./signature":124,"./stringWriter":126,"./support":127,"./uint8ArrayWriter":129,"./utf8":130,"./utils":131}],124:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -32860,7 +32906,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],124:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 var utils = require('./utils');
@@ -32898,7 +32944,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"./dataReader":114,"./utils":130}],125:[function(require,module,exports){
+},{"./dataReader":115,"./utils":131}],126:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -32930,7 +32976,7 @@ StringWriter.prototype = {
 
 module.exports = StringWriter;
 
-},{"./utils":130}],126:[function(require,module,exports){
+},{"./utils":131}],127:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 exports.base64 = true;
@@ -32968,7 +33014,7 @@ else {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":59}],127:[function(require,module,exports){
+},{"buffer":60}],128:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 
@@ -33017,7 +33063,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"./dataReader":114}],128:[function(require,module,exports){
+},{"./dataReader":115}],129:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -33055,7 +33101,7 @@ Uint8ArrayWriter.prototype = {
 
 module.exports = Uint8ArrayWriter;
 
-},{"./utils":130}],129:[function(require,module,exports){
+},{"./utils":131}],130:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -33264,7 +33310,7 @@ exports.utf8decode = function utf8decode(buf) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./nodeBuffer":120,"./support":126,"./utils":130}],130:[function(require,module,exports){
+},{"./nodeBuffer":121,"./support":127,"./utils":131}],131:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var compressions = require('./compressions');
@@ -33592,7 +33638,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./compressions":112,"./nodeBuffer":120,"./support":126}],131:[function(require,module,exports){
+},{"./compressions":113,"./nodeBuffer":121,"./support":127}],132:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var NodeBufferReader = require('./nodeBufferReader');
@@ -33815,7 +33861,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./nodeBufferReader":121,"./object":122,"./signature":123,"./stringReader":124,"./support":126,"./uint8ArrayReader":127,"./utils":130,"./zipEntry":132}],132:[function(require,module,exports){
+},{"./nodeBufferReader":122,"./object":123,"./signature":124,"./stringReader":125,"./support":127,"./uint8ArrayReader":128,"./utils":131,"./zipEntry":133}],133:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var utils = require('./utils');
@@ -34127,7 +34173,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":111,"./object":122,"./stringReader":124,"./utils":130}],133:[function(require,module,exports){
+},{"./compressedObject":112,"./object":123,"./stringReader":125,"./utils":131}],134:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -34143,7 +34189,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":134,"./lib/inflate":135,"./lib/utils/common":136,"./lib/zlib/constants":139}],134:[function(require,module,exports){
+},{"./lib/deflate":135,"./lib/inflate":136,"./lib/utils/common":137,"./lib/zlib/constants":140}],135:[function(require,module,exports){
 'use strict';
 
 
@@ -34545,7 +34591,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":136,"./utils/strings":137,"./zlib/deflate":141,"./zlib/messages":146,"./zlib/zstream":148}],135:[function(require,module,exports){
+},{"./utils/common":137,"./utils/strings":138,"./zlib/deflate":142,"./zlib/messages":147,"./zlib/zstream":149}],136:[function(require,module,exports){
 'use strict';
 
 
@@ -34965,7 +35011,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":136,"./utils/strings":137,"./zlib/constants":139,"./zlib/gzheader":142,"./zlib/inflate":144,"./zlib/messages":146,"./zlib/zstream":148}],136:[function(require,module,exports){
+},{"./utils/common":137,"./utils/strings":138,"./zlib/constants":140,"./zlib/gzheader":143,"./zlib/inflate":145,"./zlib/messages":147,"./zlib/zstream":149}],137:[function(require,module,exports){
 'use strict';
 
 
@@ -35069,7 +35115,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],137:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -35256,7 +35302,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":136}],138:[function(require,module,exports){
+},{"./common":137}],139:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -35290,7 +35336,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],139:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 'use strict';
 
 
@@ -35342,7 +35388,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],140:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -35385,7 +35431,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],141:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -37242,7 +37288,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":136,"./adler32":138,"./crc32":140,"./messages":146,"./trees":147}],142:[function(require,module,exports){
+},{"../utils/common":137,"./adler32":139,"./crc32":141,"./messages":147,"./trees":148}],143:[function(require,module,exports){
 'use strict';
 
 
@@ -37284,7 +37330,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],143:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -37612,7 +37658,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],144:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 'use strict';
 
 
@@ -39152,7 +39198,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":136,"./adler32":138,"./crc32":140,"./inffast":143,"./inftrees":145}],145:[function(require,module,exports){
+},{"../utils/common":137,"./adler32":139,"./crc32":141,"./inffast":144,"./inftrees":146}],146:[function(require,module,exports){
 'use strict';
 
 
@@ -39481,7 +39527,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":136}],146:[function(require,module,exports){
+},{"../utils/common":137}],147:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -39496,7 +39542,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],147:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 'use strict';
 
 
@@ -40700,7 +40746,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":136}],148:[function(require,module,exports){
+},{"../utils/common":137}],149:[function(require,module,exports){
 'use strict';
 
 
@@ -40731,7 +40777,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],149:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 (function (global){(function (){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -41112,7 +41158,7 @@ function toNumber(value) {
 module.exports = debounce;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],150:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
@@ -58325,7 +58371,7 @@ module.exports = debounce;
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],151:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 (function (process){(function (){
 /* Mapbox GL JS is Copyright © 2020 Mapbox and subject to the Mapbox Terms of Service ((https://www.mapbox.com/legal/tos/). */
 (function (global, factory) {
@@ -58373,7 +58419,7 @@ return mapboxgl$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":164}],152:[function(require,module,exports){
+},{"_process":165}],153:[function(require,module,exports){
 (function (global){(function (){
 /**
  * marked - a markdown parser
@@ -59643,7 +59689,7 @@ if (typeof exports === 'object') {
 }());
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],153:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 let { urlAlphabet } = require('./url-alphabet/index.cjs')
 let random = bytes => crypto.getRandomValues(new Uint8Array(bytes))
 let customRandom = (alphabet, defaultSize, getRandom) => {
@@ -59679,12 +59725,12 @@ let nanoid = (size = 21) =>
   }, '')
 module.exports = { nanoid, customAlphabet, customRandom, urlAlphabet, random }
 
-},{"./url-alphabet/index.cjs":154}],154:[function(require,module,exports){
+},{"./url-alphabet/index.cjs":155}],155:[function(require,module,exports){
 let urlAlphabet =
   'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict'
 module.exports = { urlAlphabet }
 
-},{}],155:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 /*! @preserve
  * numeral.js
  * version : 2.0.6
@@ -60699,7 +60745,7 @@ module.exports = { urlAlphabet }
 return numeral;
 }));
 
-},{}],156:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -60791,20 +60837,208 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],157:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
+module.exports = require('./polygon-features.json')
+
+},{"./polygon-features.json":159}],159:[function(require,module,exports){
+module.exports=[
+    {
+        "key": "building",
+        "polygon": "all"
+    },
+    {
+        "key": "highway",
+        "polygon": "whitelist",
+        "values": [
+            "services",
+            "rest_area",
+            "escape",
+            "elevator"
+        ]
+    },
+    {
+        "key": "natural",
+        "polygon": "blacklist",
+        "values": [
+            "coastline",
+            "cliff",
+            "ridge",
+            "arete",
+            "tree_row"
+        ]
+    },
+    {
+        "key": "landuse",
+        "polygon": "all"
+    },
+    {
+        "key": "waterway",
+        "polygon": "whitelist",
+        "values": [
+            "riverbank",
+            "dock",
+            "boatyard",
+            "dam"
+        ]
+    },
+    {
+        "key": "amenity",
+        "polygon": "all"
+    },
+    {
+        "key": "leisure",
+        "polygon": "all"
+    },
+    {
+        "key": "barrier",
+        "polygon": "whitelist",
+        "values": [
+            "city_wall",
+            "ditch",
+            "hedge",
+            "retaining_wall",
+            "wall",
+            "spikes"
+        ]
+    },
+    {
+        "key": "railway",
+        "polygon": "whitelist",
+        "values": [
+            "station",
+            "turntable",
+            "roundhouse",
+            "platform"
+        ]
+    },
+    {
+        "key": "area",
+        "polygon": "all"
+    },
+    {
+        "key": "boundary",
+        "polygon": "all"
+    },
+    {
+        "key": "man_made",
+        "polygon": "blacklist",
+        "values": [
+            "cutline",
+            "embankment",
+            "pipeline"
+        ]
+    },
+    {
+        "key": "power",
+        "polygon": "whitelist",
+        "values": [
+            "plant",
+            "substation",
+            "generator",
+            "transformer"
+        ]
+    },
+    {
+        "key": "place",
+        "polygon": "all"
+    },
+    {
+        "key": "shop",
+        "polygon": "all"
+    },
+    {
+        "key": "aeroway",
+        "polygon": "blacklist",
+        "values": [
+            "taxiway"
+        ]
+    },
+    {
+        "key": "tourism",
+        "polygon": "all"
+    },
+    {
+        "key": "historic",
+        "polygon": "all"
+    },
+    {
+        "key": "public_transport",
+        "polygon": "all"
+    },
+    {
+        "key": "office",
+        "polygon": "all"
+    },
+    {
+        "key": "building:part",
+        "polygon": "all"
+    },
+    {
+        "key": "military",
+        "polygon": "all"
+    },
+    {
+        "key": "ruins",
+        "polygon": "all"
+    },
+    {
+        "key": "area:highway",
+        "polygon": "all"
+    },
+    {
+        "key": "craft",
+        "polygon": "all"
+    },
+    {
+        "key": "golf",
+        "polygon": "all"
+    },
+    {
+        "key": "indoor",
+        "polygon": "all"
+    }
+]
+
+},{}],160:[function(require,module,exports){
 var _ = require("./lodash.custom.js");
-var rewind = require("geojson-rewind");
+var rewind = require("@mapbox/geojson-rewind");
 
 // see https://wiki.openstreetmap.org/wiki/Overpass_turbo/Polygon_Features
-var polygonFeatures = require("./polygon_features.json");
+var polygonFeatures = {};
+require("osm-polygon-features").forEach(function(tags) {
+  if (tags.polygon === "all")
+    polygonFeatures[tags.key] = true;
+  else {
+    var list = (tags.polygon === "whitelist") ? "included_values" : "excluded_values",
+        tagValuesObj = {};
+    tags.values.forEach(function(value) { tagValuesObj[value] = true; });
+    polygonFeatures[tags.key] = {};
+    polygonFeatures[tags.key][list] = tagValuesObj;
+  }
+});
+
+// default deduplication helper function
+function default_deduplicator(objectA, objectB) {
+  // default deduplication handler:
+  // if object versions differ, use highest available version
+  if ((objectA.version || objectB.version) &&
+      (objectA.version !== objectB.version)) {
+    return (+objectA.version || 0) > (+objectB.version || 0)
+      ? objectA
+      : objectB;
+  }
+  // otherwise: return merged obj properties
+  return _.merge(objectA, objectB);
+}
 
 var osmtogeojson = {};
 
-osmtogeojson = function( data, options ) {
+osmtogeojson = function( data, options, featureCallback ) {
 
   options = _.merge(
     {
-      flatProperties: false,
+      verbose: false,
+      flatProperties: true,
       uninterestingTags: {
         "source": true,
         "source_ref": true,
@@ -60817,6 +61051,7 @@ osmtogeojson = function( data, options ) {
         "tiger:upload_uuid": true
       },
       polygonFeatures: polygonFeatures,
+      deduplicator: default_deduplicator
     },
     options
   );
@@ -60834,6 +61069,126 @@ osmtogeojson = function( data, options ) {
     var nodes = new Array();
     var ways  = new Array();
     var rels  = new Array();
+    // helper functions
+    function centerGeometry(object) {
+      var pseudoNode = _.clone(object);
+      pseudoNode.lat = object.center.lat;
+      pseudoNode.lon = object.center.lon;
+      pseudoNode.__is_center_placeholder = true;
+      nodes.push(pseudoNode);
+    }
+    function boundsGeometry(object) {
+      var pseudoWay = _.clone(object);
+      pseudoWay.nodes = [];
+      function addPseudoNode(lat,lon,i) {
+        var pseudoNode = {
+          type:"node",
+          id:  "_"+pseudoWay.type+"/"+pseudoWay.id+"bounds"+i,
+          lat: lat,
+          lon: lon
+        }
+        pseudoWay.nodes.push(pseudoNode.id);
+        nodes.push(pseudoNode);
+      }
+      addPseudoNode(pseudoWay.bounds.minlat,pseudoWay.bounds.minlon,1);
+      addPseudoNode(pseudoWay.bounds.maxlat,pseudoWay.bounds.minlon,2);
+      addPseudoNode(pseudoWay.bounds.maxlat,pseudoWay.bounds.maxlon,3);
+      addPseudoNode(pseudoWay.bounds.minlat,pseudoWay.bounds.maxlon,4);
+      pseudoWay.nodes.push(pseudoWay.nodes[0]);
+      pseudoWay.__is_bounds_placeholder = true;
+      ways.push(pseudoWay);
+    }
+    function fullGeometryWay(way) {
+      function addFullGeometryNode(lat,lon,id) {
+        var geometryNode = {
+          type:"node",
+          id:  id,
+          lat: lat,
+          lon: lon
+        }
+        nodes.push(geometryNode);
+      }
+      if (!_.isArray(way.nodes)) {
+        way.nodes = way.geometry.map(function(nd) {
+          if (nd !== null) // have to skip ref-less nodes
+            return "_anonymous@"+nd.lat+"/"+nd.lon;
+          else
+            return "_anonymous@unknown_location";
+        });
+      }
+      way.geometry.forEach(function(nd, i) {
+        if (nd) {
+          addFullGeometryNode(
+            nd.lat,
+            nd.lon,
+            way.nodes[i]
+          );
+        }
+      });
+    }
+    function fullGeometryRelation(rel) {
+      function addFullGeometryNode(lat,lon,id) {
+        var geometryNode = {
+          type:"node",
+          id:  id,
+          lat: lat,
+          lon: lon
+        }
+        nodes.push(geometryNode);
+      }
+      function addFullGeometryWay(geometry,id) {
+        // shared multipolygon ways cannot be defined multiple times with the same id.
+        if (ways.some(function (way) { // todo: this is slow :(
+          return way.type == "way" && way.id == id;
+        })) return;
+        var geometryWay = {
+          type: "way",
+          id:   id,
+          nodes:[]
+        }
+        function addFullGeometryWayPseudoNode(lat,lon) {
+          // todo? do not save the same pseudo node multiple times
+          var geometryPseudoNode = {
+            type:"node",
+            id:  "_anonymous@"+lat+"/"+lon,
+            lat: lat,
+            lon: lon
+          }
+          geometryWay.nodes.push(geometryPseudoNode.id);
+          nodes.push(geometryPseudoNode);
+        }
+        geometry.forEach(function(nd) {
+          if (nd) {
+            addFullGeometryWayPseudoNode(
+              nd.lat,
+              nd.lon
+            );
+          } else {
+            geometryWay.nodes.push(undefined);
+          }
+        });
+        ways.push(geometryWay);
+      }
+      rel.members.forEach(function(member, i) {
+        if (member.type == "node") {
+          if (member.lat) {
+            addFullGeometryNode(
+              member.lat,
+              member.lon,
+              member.ref
+            );
+          }
+        } else if (member.type == "way") {
+          if (member.geometry) {
+            member.ref = "_fullGeom"+member.ref;
+            addFullGeometryWay(
+              member.geometry,
+              member.ref
+            );
+          }
+        }
+      });
+    }
     // create copies of individual json objects to make sure the original data doesn't get altered
     // todo: cloning is slow: see if this can be done differently!
     for (var i=0;i<json.elements.length;i++) {
@@ -60846,11 +61201,27 @@ osmtogeojson = function( data, options ) {
         var way = _.clone(json.elements[i]);
         way.nodes = _.clone(way.nodes);
         ways.push(way);
+        if (way.center)
+          centerGeometry(way);
+        if (way.geometry)
+          fullGeometryWay(way);
+        else if (way.bounds)
+          boundsGeometry(way);
       break;
       case "relation":
         var rel = _.clone(json.elements[i]);
         rel.members = _.clone(rel.members);
         rels.push(rel);
+        var has_full_geometry = rel.members && rel.members.some(function (member) {
+          return member.type == "node" && member.lat ||
+                 member.type == "way"  && member.geometry && member.geometry.length > 0
+        });
+        if (rel.center)
+          centerGeometry(rel);
+        if (has_full_geometry)
+          fullGeometryRelation(rel);
+        else if (rel.bounds)
+          boundsGeometry(rel);
       break;
       default:
       // type=area (from coord-query) is an example for this case.
@@ -60859,58 +61230,190 @@ osmtogeojson = function( data, options ) {
     return _convert2geoJSON(nodes,ways,rels);
   }
   function _osmXML2geoJSON(xml) {
+    // sort elements
+    var nodes = new Array();
+    var ways  = new Array();
+    var rels  = new Array();
     // helper function
     function copy_attribute( x, o, attr ) {
       if (x.hasAttribute(attr))
         o[attr] = x.getAttribute(attr);
     }
-    // sort elements
-    var nodes = new Array();
-    var ways  = new Array();
-    var rels  = new Array();
+    function centerGeometry(object, centroid) {
+      var pseudoNode = _.clone(object);
+      copy_attribute(centroid, pseudoNode, 'lat');
+      copy_attribute(centroid, pseudoNode, 'lon');
+      pseudoNode.__is_center_placeholder = true;
+      nodes.push(pseudoNode);
+    }
+    function boundsGeometry(object, bounds) {
+      var pseudoWay = _.clone(object);
+      pseudoWay.nodes = [];
+      function addPseudoNode(lat,lon,i) {
+        var pseudoNode = {
+          type:"node",
+          id:  "_"+pseudoWay.type+"/"+pseudoWay.id+"bounds"+i,
+          lat: lat,
+          lon: lon
+        }
+        pseudoWay.nodes.push(pseudoNode.id);
+        nodes.push(pseudoNode);
+      }
+      addPseudoNode(bounds.getAttribute('minlat'),bounds.getAttribute('minlon'),1);
+      addPseudoNode(bounds.getAttribute('maxlat'),bounds.getAttribute('minlon'),2);
+      addPseudoNode(bounds.getAttribute('maxlat'),bounds.getAttribute('maxlon'),3);
+      addPseudoNode(bounds.getAttribute('minlat'),bounds.getAttribute('maxlon'),4);
+      pseudoWay.nodes.push(pseudoWay.nodes[0]);
+      pseudoWay.__is_bounds_placeholder = true;
+      ways.push(pseudoWay);
+    }
+    function fullGeometryWay(way, nds) {
+      function addFullGeometryNode(lat,lon,id) {
+        var geometryNode = {
+          type:"node",
+          id:  id,
+          lat: lat,
+          lon: lon
+        }
+        nodes.push(geometryNode);
+        return geometryNode.id;
+      }
+      if (!_.isArray(way.nodes)) {
+        way.nodes = [];
+        _.each( nds, function( nd, i ) {
+          way.nodes.push("_anonymous@"+nd.getAttribute('lat')+"/"+nd.getAttribute('lon'));
+        });
+      }
+      _.each( nds, function( nd, i ) {
+        if (nd.getAttribute('lat')) {
+          addFullGeometryNode(
+            nd.getAttribute('lat'),
+            nd.getAttribute('lon'),
+            way.nodes[i]
+          );
+        }
+      });
+    }
+    function fullGeometryRelation(rel, members) {
+      function addFullGeometryNode(lat,lon,id) {
+        var geometryNode = {
+          type:"node",
+          id:  id,
+          lat: lat,
+          lon: lon
+        }
+        nodes.push(geometryNode);
+      }
+      function addFullGeometryWay(nds,id) {
+        // shared multipolygon ways cannot be defined multiple times with the same id.
+        if (ways.some(function (way) { // todo: this is slow :(
+          return way.type == "way" && way.id == id;
+        })) return;
+        var geometryWay = {
+          type: "way",
+          id:   id,
+          nodes:[]
+        }
+        function addFullGeometryWayPseudoNode(lat,lon) {
+          // todo? do not save the same pseudo node multiple times
+          var geometryPseudoNode = {
+            type:"node",
+            id:  "_anonymous@"+lat+"/"+lon,
+            lat: lat,
+            lon: lon
+          }
+          geometryWay.nodes.push(geometryPseudoNode.id);
+          nodes.push(geometryPseudoNode);
+        }
+        _.each(nds, function(nd) {
+          if (nd.getAttribute('lat')) {
+            addFullGeometryWayPseudoNode(
+              nd.getAttribute('lat'),
+              nd.getAttribute('lon')
+            );
+          } else {
+            geometryWay.nodes.push(undefined);
+          }
+        });
+        ways.push(geometryWay);
+      }
+      _.each( members, function( member, i ) {
+        if (rel.members[i].type == "node") {
+          if (member.getAttribute('lat')) {
+            addFullGeometryNode(
+              member.getAttribute('lat'),
+              member.getAttribute('lon'),
+              rel.members[i].ref
+            );
+          }
+        } else if (rel.members[i].type == "way") {
+          if (member.getElementsByTagName('nd').length > 0) {
+            rel.members[i].ref = "_fullGeom"+rel.members[i].ref;
+            addFullGeometryWay(
+              member.getElementsByTagName('nd'),
+              rel.members[i].ref
+            );
+          }
+        }
+      });
+    }
     // nodes
     _.each( xml.getElementsByTagName('node'), function( node, i ) {
       var tags = {};
       _.each( node.getElementsByTagName('tag'), function( tag ) {
         tags[tag.getAttribute('k')] = tag.getAttribute('v');
       });
-      nodes[i] = {
+      var nodeObject = {
         'type': 'node'
       };
-      copy_attribute( node, nodes[i], 'id' );
-      copy_attribute( node, nodes[i], 'lat' );
-      copy_attribute( node, nodes[i], 'lon' );
-      copy_attribute( node, nodes[i], 'version' );
-      copy_attribute( node, nodes[i], 'timestamp' );
-      copy_attribute( node, nodes[i], 'changeset' );
-      copy_attribute( node, nodes[i], 'uid' );
-      copy_attribute( node, nodes[i], 'user' );
+      copy_attribute( node, nodeObject, 'id' );
+      copy_attribute( node, nodeObject, 'lat' );
+      copy_attribute( node, nodeObject, 'lon' );
+      copy_attribute( node, nodeObject, 'version' );
+      copy_attribute( node, nodeObject, 'timestamp' );
+      copy_attribute( node, nodeObject, 'changeset' );
+      copy_attribute( node, nodeObject, 'uid' );
+      copy_attribute( node, nodeObject, 'user' );
       if (!_.isEmpty(tags))
-        nodes[i].tags = tags;
+        nodeObject.tags = tags;
+      nodes.push(nodeObject);
     });
     // ways
+    var centroid,bounds;
     _.each( xml.getElementsByTagName('way'), function( way, i ) {
       var tags = {};
       var wnodes = [];
       _.each( way.getElementsByTagName('tag'), function( tag ) {
         tags[tag.getAttribute('k')] = tag.getAttribute('v');
       });
+      var has_full_geometry = false;
       _.each( way.getElementsByTagName('nd'), function( nd, i ) {
-        wnodes[i] = nd.getAttribute('ref');
+        var id;
+        if (id = nd.getAttribute('ref'))
+          wnodes[i] = id;
+        if (!has_full_geometry && nd.getAttribute('lat'))
+          has_full_geometry = true;
       });
-      ways[i] = {
+      var wayObject = {
         "type": "way"
       };
-      copy_attribute( way, ways[i], 'id' );
-      copy_attribute( way, ways[i], 'version' );
-      copy_attribute( way, ways[i], 'timestamp' );
-      copy_attribute( way, ways[i], 'changeset' );
-      copy_attribute( way, ways[i], 'uid' );
-      copy_attribute( way, ways[i], 'user' );
+      copy_attribute( way, wayObject, 'id' );
+      copy_attribute( way, wayObject, 'version' );
+      copy_attribute( way, wayObject, 'timestamp' );
+      copy_attribute( way, wayObject, 'changeset' );
+      copy_attribute( way, wayObject, 'uid' );
+      copy_attribute( way, wayObject, 'user' );
       if (wnodes.length > 0)
-        ways[i].nodes = wnodes;
+        wayObject.nodes = wnodes;
       if (!_.isEmpty(tags))
-        ways[i].tags = tags;
+        wayObject.tags = tags;
+      if (centroid = way.getElementsByTagName('center')[0])
+        centerGeometry(wayObject,centroid);
+      if (has_full_geometry)
+        fullGeometryWay(wayObject, way.getElementsByTagName('nd'));
+      else if (bounds = way.getElementsByTagName('bounds')[0])
+        boundsGeometry(wayObject,bounds);
+      ways.push(wayObject);
     });
     // relations
     _.each( xml.getElementsByTagName('relation'), function( relation, i ) {
@@ -60919,25 +61422,37 @@ osmtogeojson = function( data, options ) {
       _.each( relation.getElementsByTagName('tag'), function( tag ) {
         tags[tag.getAttribute('k')] = tag.getAttribute('v');
       });
+      var has_full_geometry = false;
       _.each( relation.getElementsByTagName('member'), function( member, i ) {
         members[i] = {};
         copy_attribute( member, members[i], 'ref' );
         copy_attribute( member, members[i], 'role' );
         copy_attribute( member, members[i], 'type' );
+        if (!has_full_geometry &&
+             (members[i].type == 'node' && member.getAttribute('lat')) ||
+             (members[i].type == 'way'  && member.getElementsByTagName('nd').length>0) )
+          has_full_geometry = true;
       });
-      rels[i] = {
+      var relObject = {
         "type": "relation"
       }
-      copy_attribute( relation, rels[i], 'id' );
-      copy_attribute( relation, rels[i], 'version' );
-      copy_attribute( relation, rels[i], 'timestamp' );
-      copy_attribute( relation, rels[i], 'changeset' );
-      copy_attribute( relation, rels[i], 'uid' );
-      copy_attribute( relation, rels[i], 'user' );
+      copy_attribute( relation, relObject, 'id' );
+      copy_attribute( relation, relObject, 'version' );
+      copy_attribute( relation, relObject, 'timestamp' );
+      copy_attribute( relation, relObject, 'changeset' );
+      copy_attribute( relation, relObject, 'uid' );
+      copy_attribute( relation, relObject, 'user' );
       if (members.length > 0)
-        rels[i].members = members;
+        relObject.members = members;
       if (!_.isEmpty(tags))
-        rels[i].tags = tags;
+        relObject.tags = tags;
+      if (centroid = relation.getElementsByTagName('center')[0])
+        centerGeometry(relObject,centroid);
+      if (has_full_geometry)
+        fullGeometryRelation(relObject, relation.getElementsByTagName('member'));
+      else if (bounds = relation.getElementsByTagName('bounds')[0])
+        boundsGeometry(relObject,bounds);
+      rels.push(relObject);
     });
     return _convert2geoJSON(nodes,ways,rels);
   }
@@ -60964,7 +61479,7 @@ osmtogeojson = function( data, options ) {
         "user": object.user,
         "uid": object.uid
       };
-      for (k in res)
+      for (var k in res)
         if (res[k] === undefined)
           delete res[k];
       return res;
@@ -60972,90 +61487,99 @@ osmtogeojson = function( data, options ) {
 
     // some data processing (e.g. filter nodes only used for ways)
     var nodeids = new Object();
-    for (var i=0;i<nodes.length;i++) {
-      if (nodes[i].lat === undefined)
-        continue; // ignore nodes without coordinates (e.g. returned by an ids_only query)
-      nodeids[nodes[i].id] = nodes[i];
-    }
     var poinids = new Object();
     for (var i=0;i<nodes.length;i++) {
-      if (typeof nodes[i].tags != 'undefined' &&
-          has_interesting_tags(nodes[i].tags)) // this checks if the node has any tags other than "created_by"
-        poinids[nodes[i].id] = true;
+      var node = nodes[i];
+      if (nodeids[node.id] !== undefined) {
+        // handle input data duplication
+        node = options.deduplicator(node, nodeids[node.id]);
+      }
+      nodeids[node.id] = node;
+      if (typeof node.tags != 'undefined' &&
+          has_interesting_tags(node.tags)) // this checks if the node has any tags other than "created_by"
+        poinids[node.id] = true;
     }
+    // todo -> after deduplication of relations??
     for (var i=0;i<rels.length;i++) {
-      if (!_.isArray(rels[i].members))
-        continue; // ignore relations without members (e.g. returned by an ids_only query)
-      for (var j=0;j<rels[i].members.length;j++) {
-        if (rels[i].members[j].type == "node")
-          poinids[rels[i].members[j].ref] = true;
+      if (_.isArray(rels[i].members)) {
+        for (var j=0;j<rels[i].members.length;j++) {
+          if (rels[i].members[j].type == "node")
+            poinids[rels[i].members[j].ref] = true;
+        }
       }
     }
     var wayids = new Object();
     var waynids = new Object();
     for (var i=0;i<ways.length;i++) {
-      if (!_.isArray(ways[i].nodes))
-        continue; // ignore ways without nodes (e.g. returned by an ids_only query)
-      wayids[ways[i].id] = ways[i];
-      for (var j=0;j<ways[i].nodes.length;j++) {
-        waynids[ways[i].nodes[j]] = true;
-        ways[i].nodes[j] = nodeids[ways[i].nodes[j]];
+      var way = ways[i];
+      if (wayids[way.id]) {
+        // handle input data duplication
+        way = options.deduplicator(way, wayids[way.id]);
+      }
+      wayids[way.id] = way;
+      if (_.isArray(way.nodes)) {
+        for (var j=0;j<way.nodes.length;j++) {
+          if (typeof way.nodes[j] === "object") continue; // ignore already replaced way node objects
+          waynids[way.nodes[j]] = true;
+          way.nodes[j] = nodeids[way.nodes[j]];
+        }
       }
     }
     var pois = new Array();
-    for (var i=0;i<nodes.length;i++) {
-      if ((!waynids[nodes[i].id]) ||
-          (poinids[nodes[i].id]))
-        pois.push(nodes[i]);
+    for (var id in nodeids) {
+      var node = nodeids[id];
+      if (!waynids[id] || poinids[id])
+        pois.push(node);
     }
     var relids = new Array();
     for (var i=0;i<rels.length;i++) {
-      if (!_.isArray(rels[i].members))
-        continue; // ignore relations without members (e.g. returned by an ids_only query)
-      relids[rels[i].id] = rels[i];
+      var rel = rels[i];
+      if (relids[rel.id]) {
+        // handle input data duplication
+        rel = options.deduplicator(rel, relids[rel.id]);
+      }
+      relids[rel.id] = rel;
     }
     var relsmap = {node: {}, way: {}, relation: {}};
-    for (var i=0;i<rels.length;i++) {
-      if (!_.isArray(rels[i].members))
+    for (var id in relids) {
+      var rel = relids[id];
+      if (!_.isArray(rel.members)) {
+        if (options.verbose) console.warn('Relation',rel.type+'/'+rel.id,'ignored because it has no members');
         continue; // ignore relations without members (e.g. returned by an ids_only query)
-      for (var j=0;j<rels[i].members.length;j++) {
-        var m;
-        switch (rels[i].members[j].type) {
-          case "node":
-            m = nodeids[rels[i].members[j].ref];
-          break;
-          case "way":
-            m = wayids[rels[i].members[j].ref];
-          break;
-          case "relation":
-            m = relids[rels[i].members[j].ref];
-          break;
+      }
+      for (var j=0;j<rel.members.length;j++) {
+        var m_type = rel.members[j].type;
+        var m_ref = rel.members[j].ref;
+        if (typeof m_ref !== "number") {
+          // de-namespace full geometry content
+          m_ref = m_ref.replace("_fullGeom", "");
         }
-        if (!m) continue;
-        var m_type = rels[i].members[j].type;
-        var m_ref = rels[i].members[j].ref;
+        if (!relsmap[m_type]) {
+          if (options.verbose) console.warn('Relation',rel.type+'/'+rel.id,'member',m_type+'/'+m_ref,'ignored because it has an invalid type');
+          continue;
+        }
         if (typeof relsmap[m_type][m_ref] === "undefined")
           relsmap[m_type][m_ref] = [];
         relsmap[m_type][m_ref].push({
-          "role" : rels[i].members[j].role,
-          "rel" : rels[i].id,
-          "reltags" : rels[i].tags,
+          "role" : rel.members[j].role,
+          "rel" : rel.id,
+          "reltags" : rel.tags,
         });
       }
     }
     // construct geojson
     var geojson;
-    var geojsonnodes = {
-      "type"     : "FeatureCollection",
-      "features" : new Array()};
+    var geojsonnodes = [];
     for (i=0;i<pois.length;i++) {
-      if (typeof pois[i].lon == "undefined" || typeof pois[i].lat == "undefined")
+      if (typeof pois[i].lon == "undefined" || typeof pois[i].lat == "undefined") {
+        if (options.verbose) console.warn('POI',pois[i].type+'/'+pois[i].id,'ignored because it lacks coordinates');
         continue; // lon and lat are required for showing a point
-      geojsonnodes.features.push({
+      }
+      var feature = {
         "type"       : "Feature",
-        "id"         : "node/"+pois[i].id,
+        "id"         : pois[i].type+"/"+pois[i].id,
         "properties" : {
-          "type" : "node",
+          "type" : pois[i].type,
           "id"   : pois[i].id,
           "tags" : pois[i].tags || {},
           "relations" : relsmap["node"][pois[i].id] || [],
@@ -61065,37 +61589,136 @@ osmtogeojson = function( data, options ) {
           "type" : "Point",
           "coordinates" : [+pois[i].lon, +pois[i].lat],
         }
-      });
+      };
+      if (pois[i].__is_center_placeholder)
+        feature.properties["geometry"] = "center";
+      if (!featureCallback)
+        geojsonnodes.push(feature);
+      else
+        featureCallback(feature);
     }
-    var geojsonlines = {
-      "type"     : "FeatureCollection",
-      "features" : new Array()};
-    var geojsonpolygons = {
-      "type"     : "FeatureCollection",
-      "features" : new Array()};
+    var geojsonlines = [];
+    var geojsonpolygons = [];
     // process multipolygons
     for (var i=0;i<rels.length;i++) {
+      // todo: refactor such that this loops over relids instead of rels?
+      if (relids[rels[i].id] !== rels[i]) {
+        // skip relation because it's a deduplication artifact
+        continue;
+      }
+      if ((typeof rels[i].tags != "undefined") &&
+          (rels[i].tags["type"] == "route" || rels[i].tags["type"] == "waterway")) {
+        if (!_.isArray(rels[i].members)) {
+          if (options.verbose) console.warn('Route',rels[i].type+'/'+rels[i].id,'ignored because it has no members');
+          continue; // ignore relations without members (e.g. returned by an ids_only query)
+        }
+        rels[i].members.forEach(function(m) {
+          if (wayids[m.ref] && !has_interesting_tags(wayids[m.ref].tags))
+              wayids[m.ref].is_skippablerelationmember = true;
+        });
+        feature = construct_multilinestring(rels[i]);
+        if (feature === false) {
+          if (options.verbose) console.warn('Route relation',rels[i].type+'/'+rels[i].id,'ignored because it has invalid geometry');
+          continue; // abort if feature could not be constructed
+        }
+        if (!featureCallback)
+          geojsonpolygons.push(feature);
+        else
+          featureCallback(rewind(feature));
+
+        function construct_multilinestring(rel) {
+          var is_tainted = false;
+          // prepare route members
+          var members;
+          members = rel.members.filter(function(m) {return m.type === "way";});
+          members = members.map(function(m) {
+            var way = wayids[m.ref];
+            if (way === undefined || way.nodes === undefined) { // check for missing ways
+              if (options.verbose) console.warn('Route '+rel.type+'/'+rel.id, 'tainted by a missing or incomplete  way', m.type+'/'+m.ref);
+              is_tainted = true;
+              return;
+            }
+            return { // TODO: this is slow! :(
+              id: m.ref,
+              role: m.role,
+              way: way,
+              nodes: way.nodes.filter(function(n) {
+                if (n !== undefined)
+                  return true;
+                is_tainted = true;
+                if (options.verbose) console.warn('Route', rel.type+'/'+rel.id,  'tainted by a way', m.type+'/'+m.ref, 'with a missing node');
+                return false;
+              })
+            };
+          });
+          members = _.compact(members);
+          // construct connected linestrings
+          var linestrings;
+          linestrings = join(members);
+
+          // sanitize mp-coordinates (remove empty clusters or rings, {lat,lon,...} to [lon,lat]
+          var coords = [];
+          coords = _.compact(linestrings.map(function(linestring) {
+            return _.compact(linestring.map(function(node) {
+              return [+node.lon,+node.lat];
+            }));
+          }));
+
+          if (coords.length == 0) {
+            if (options.verbose) console.warn('Route', rel.type+'/'+rel.id, 'contains no coordinates');
+            return false; // ignore routes without coordinates
+          }
+
+          // mp parsed, now construct the geoJSON
+          var feature = {
+            "type"       : "Feature",
+            "id"         : rel.type+"/"+rel.id,
+            "properties" : {
+              "type" : rel.type,
+              "id"   : rel.id,
+              "tags" : rel.tags || {},
+              "relations" :  relsmap[rel.type][rel.id] || [],
+              "meta": build_meta_information(rel)
+            },
+            "geometry"   : {
+              "type" : coords.length === 1 ? "LineString" : "MultiLineString",
+              "coordinates" : coords.length === 1 ? coords[0] : coords,
+            }
+          }
+          if (is_tainted) {
+            if (options.verbose) console.warn('Route', rel.type+'/'+rel.id, 'is tainted');
+            feature.properties["tainted"] = true;
+          }
+          return feature;
+        }
+      } // end construct multilinestring for route relations
       if ((typeof rels[i].tags != "undefined") &&
           (rels[i].tags["type"] == "multipolygon" || rels[i].tags["type"] == "boundary")) {
-        if (!_.isArray(rels[i].members))
+        if (!_.isArray(rels[i].members)) {
+          if (options.verbose) console.warn('Multipolygon',rels[i].type+'/'+rels[i].id,'ignored because it has no members');
           continue; // ignore relations without members (e.g. returned by an ids_only query)
+        }
         var outer_count = 0;
         for (var j=0;j<rels[i].members.length;j++)
           if (rels[i].members[j].role == "outer")
             outer_count++;
+          else if (options.verbose && rels[i].members[j].role != "inner")
+            console.warn('Multipolygon',rels[i].type+'/'+rels[i].id,'member',rels[i].members[j].type+'/'+rels[i].members[j].ref,'ignored because it has an invalid role: "' + rels[i].members[j].role + '"');
         rels[i].members.forEach(function(m) {
           if (wayids[m.ref]) {
             // this even works in the following corner case:
             // a multipolygon amenity=xxx with outer line tagged amenity=yyy
             // see https://github.com/tyrasd/osmtogeojson/issues/7
             if (m.role==="outer" && !has_interesting_tags(wayids[m.ref].tags,rels[i].tags))
-              wayids[m.ref].is_multipolygon_outline = true;
+              wayids[m.ref].is_skippablerelationmember = true;
             if (m.role==="inner" && !has_interesting_tags(wayids[m.ref].tags))
-              wayids[m.ref].is_multipolygon_outline = true;
+              wayids[m.ref].is_skippablerelationmember = true;
           }
         });
-        if (outer_count == 0)
+        if (outer_count == 0) {
+          if (options.verbose) console.warn('Multipolygon relation',rels[i].type+'/'+rels[i].id,'ignored because it has no outer ways');
           continue; // ignore multipolygons without outer ways
+        }
         var simple_mp = false;
         if (outer_count == 1 && !has_interesting_tags(rels[i].tags, {"type":true}))
           simple_mp = true;
@@ -61106,22 +61729,33 @@ osmtogeojson = function( data, options ) {
           // simple multipolygon
           var outer_way = rels[i].members.filter(function(m) {return m.role === "outer";})[0];
           outer_way = wayids[outer_way.ref];
-          if (outer_way === undefined)
+          if (outer_way === undefined) {
+            if (options.verbose) console.warn('Multipolygon relation',rels[i].type+'/'+rels[i].id,'ignored because outer way', outer_way.type+'/'+outer_way.ref,'is missing');
             continue; // abort if outer way object is not present
-          outer_way.is_multipolygon_outline = true;
+          }
+          outer_way.is_skippablerelationmember = true;
           feature = construct_multipolygon(outer_way, rels[i]);
         }
-        if (feature === false)
+        if (feature === false) {
+          if (options.verbose) console.warn('Multipolygon relation',rels[i].type+'/'+rels[i].id,'ignored because it has invalid geometry');
           continue; // abort if feature could not be constructed
-        geojsonpolygons.features.push(feature);
+        }
+        if (!featureCallback)
+          geojsonpolygons.push(feature);
+        else
+          featureCallback(rewind(feature));
+
         function construct_multipolygon(tag_object, rel) {
           var is_tainted = false;
+          var mp_geometry = simple_mp ? 'way' : 'relation',
+              mp_id = typeof tag_object.id === "number" ? tag_object.id : +(tag_object.id.replace("_fullGeom", ""));
           // prepare mp members
           var members;
           members = rel.members.filter(function(m) {return m.type === "way";});
           members = members.map(function(m) {
             var way = wayids[m.ref];
-            if (way === undefined) { // check for missing ways
+            if (way === undefined || way.nodes === undefined) { // check for missing ways
+              if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'tainted by a missing or incomplete way', m.type+'/'+m.ref);
               is_tainted = true;
               return;
             }
@@ -61133,6 +61767,7 @@ osmtogeojson = function( data, options ) {
                 if (n !== undefined)
                   return true;
                 is_tainted = true;
+                if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id,  'tainted by a way', m.type+'/'+m.ref, 'with a missing node');
                 return false;
               })
             };
@@ -61140,47 +61775,6 @@ osmtogeojson = function( data, options ) {
           members = _.compact(members);
           // construct outer and inner rings
           var outers, inners;
-          function join(ways) {
-            var _first = function(arr) {return arr[0]};
-            var _last  = function(arr) {return arr[arr.length-1]};
-            // stolen from iD/relation.js
-            var joined = [], current, first, last, i, how, what;
-            while (ways.length) {
-              current = ways.pop().nodes.slice();
-              joined.push(current);
-              while (ways.length && _first(current) !== _last(current)) {
-                first = _first(current);
-                last  = _last(current);
-                for (i = 0; i < ways.length; i++) {
-                  what = ways[i].nodes;
-                  if (last === _first(what)) {
-                    how  = current.push;
-                    what = what.slice(1);
-                    break;
-                  } else if (last === _last(what)) {
-                    how  = current.push;
-                    what = what.slice(0, -1).reverse();
-                    break;
-                  } else if (first == _last(what)) {
-                    how  = current.unshift;
-                    what = what.slice(0, -1);
-                    break;
-                  } else if (first == _first(what)) {
-                    how  = current.unshift;
-                    what = what.slice(1).reverse();
-                    break;
-                  } else {
-                    what = how = null;
-                  }
-                }
-                if (!what)
-                  break; // Invalid geometry (dangling way, unclosed ring)
-                ways.splice(i, 1);
-                how.apply(current, what);
-              }
-            }
-            return joined;
-          }
           outers = join(members.filter(function(m) {return m.role==="outer";}));
           inners = join(members.filter(function(m) {return m.role==="inner";}));
           // sort rings
@@ -61197,8 +61791,8 @@ osmtogeojson = function( data, options ) {
                 return [+n.lat,+n.lon];
               });
             }
-            // stolen from iD/geo.js, 
-            // based on https://github.com/substack/point-in-polygon, 
+            // stolen from iD/geo.js,
+            // based on https://github.com/substack/point-in-polygon,
             // ray-casting algorithm based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
             var pointInPolygon = function(point, polygon) {
               var x = point[0], y = point[1], inside = false;
@@ -61233,27 +61827,34 @@ osmtogeojson = function( data, options ) {
             if (o !== undefined)
               mp[o].push(inners[j]);
             else
+              if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'contains an inner ring with no containing outer');
               // so, no outer ring for this inner ring is found.
               // We're going to ignore holes in empty space.
               ;
           }
           // sanitize mp-coordinates (remove empty clusters or rings, {lat,lon,...} to [lon,lat]
           var mp_coords = [];
-          mp_coords = _.compact(mp.map(function(cluster) { 
+          mp_coords = _.compact(mp.map(function(cluster) {
             var cl = _.compact(cluster.map(function(ring) {
-              if (ring.length < 4) // todo: is this correct: ring.length < 4 ?
+              if (ring.length < 4) { // todo: is this correct: ring.length < 4 ?
+                if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'contains a ring with less than four nodes');
                 return;
+              }
               return _.compact(ring.map(function(node) {
                 return [+node.lon,+node.lat];
               }));
             }));
-            if (cl.length == 0)
+            if (cl.length == 0) {
+              if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'contains an empty ring cluster');
               return;
+            }
             return cl;
           }));
 
-          if (mp_coords.length == 0)
+          if (mp_coords.length == 0) {
+            if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'contains no coordinates');
             return false; // ignore multipolygons without coordinates
+          }
           var mp_type = "MultiPolygon";
           if (mp_coords.length === 1) {
             mp_type = "Polygon";
@@ -61262,10 +61863,10 @@ osmtogeojson = function( data, options ) {
           // mp parsed, now construct the geoJSON
           var feature = {
             "type"       : "Feature",
-            "id"         : tag_object.type+"/"+tag_object.id,
+            "id"         : tag_object.type+"/"+mp_id,
             "properties" : {
               "type" : tag_object.type,
-              "id"   : tag_object.id,
+              "id"   : mp_id,
               "tags" : tag_object.tags || {},
               "relations" :  relsmap[tag_object.type][tag_object.id] || [],
               "meta": build_meta_information(tag_object)
@@ -61275,43 +61876,64 @@ osmtogeojson = function( data, options ) {
               "coordinates" : mp_coords,
             }
           }
-          if (is_tainted)
+          if (is_tainted) {
+            if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'is tainted');
             feature.properties["tainted"] = true;
+          }
           return feature;
         }
       }
     }
     // process lines and polygons
     for (var i=0;i<ways.length;i++) {
-      if (!_.isArray(ways[i].nodes))
+      // todo: refactor such that this loops over wayids instead of ways?
+      if (wayids[ways[i].id] !== ways[i]) {
+        // skip way because it's a deduplication artifact
+        continue;
+      }
+      if (!_.isArray(ways[i].nodes)) {
+        if (options.verbose) console.warn('Way',ways[i].type+'/'+ways[i].id,'ignored because it has no nodes');
         continue; // ignore ways without nodes (e.g. returned by an ids_only query)
-      if (ways[i].is_multipolygon_outline)
+      }
+      if (ways[i].is_skippablerelationmember)
         continue; // ignore ways which are already rendered as (part of) a multipolygon
+      if (typeof ways[i].id !== "number") {
+        // remove full geometry namespace for output
+        ways[i].id = +ways[i].id.replace("_fullGeom", "");
+      }
       ways[i].tainted = false;
       ways[i].hidden = false;
-      coords = new Array();
+      var coords = new Array();
       for (j=0;j<ways[i].nodes.length;j++) {
         if (typeof ways[i].nodes[j] == "object")
           coords.push([+ways[i].nodes[j].lon, +ways[i].nodes[j].lat]);
-        else
+        else {
+          if (options.verbose) console.warn('Way',ways[i].type+'/'+ways[i].id,'is tainted by an invalid node');
           ways[i].tainted = true;
+        }
       }
-      if (coords.length <= 1) // invalid way geometry
+      if (coords.length <= 1) { // invalid way geometry
+        if (options.verbose) console.warn('Way',ways[i].type+'/'+ways[i].id,'ignored because it contains too few nodes');
         continue;
+      }
       var way_type = "LineString"; // default
-      if (typeof ways[i].nodes[0] != "undefined" && // way has its nodes loaded
-        ways[i].nodes[0] === ways[i].nodes[ways[i].nodes.length-1] && // ... and forms a closed ring
-        typeof ways[i].tags != "undefined" && // ... and has tags
-        _isPolygonFeature(ways[i].tags) // ... and tags say it is a polygon
+      if (typeof ways[i].nodes[0] != "undefined" && typeof ways[i].nodes[ways[i].nodes.length-1] != "undefined" && // way has its start/end nodes loaded
+        ways[i].nodes[0].id === ways[i].nodes[ways[i].nodes.length-1].id && // ... and forms a closed ring
+        (
+          typeof ways[i].tags != "undefined" && // ... and has tags
+          _isPolygonFeature(ways[i].tags) // ... and tags say it is a polygon
+          || // or is a placeholder for a bounds geometry
+          ways[i].__is_bounds_placeholder
+        )
       ) {
         way_type = "Polygon";
         coords = [coords];
       }
       var feature = {
         "type"       : "Feature",
-        "id"         : "way/"+ways[i].id,
+        "id"         : ways[i].type+"/"+ways[i].id,
         "properties" : {
-          "type" : "way",
+          "type" : ways[i].type,
           "id"   : ways[i].id,
           "tags" : ways[i].tags || {},
           "relations" : relsmap["way"][ways[i].id] || [],
@@ -61322,21 +61944,32 @@ osmtogeojson = function( data, options ) {
           "coordinates" : coords,
         }
       }
-      if (ways[i].tainted)
+      if (ways[i].tainted) {
+        if (options.verbose) console.warn('Way',ways[i].type+'/'+ways[i].id,'is tainted');
         feature.properties["tainted"] = true;
-      if (way_type == "LineString")
-        geojsonlines.features.push(feature);
-      else
-        geojsonpolygons.features.push(feature);
+      }
+      if (ways[i].__is_bounds_placeholder)
+        feature.properties["geometry"] = "bounds";
+      if (!featureCallback) {
+        if (way_type == "LineString")
+          geojsonlines.push(feature);
+        else
+          geojsonpolygons.push(feature);
+      } else {
+        featureCallback(rewind(feature));
+      }
     }
+
+    if (featureCallback)
+      return true;
 
     geojson = {
       "type": "FeatureCollection",
       "features": []
     };
-    geojson.features = geojson.features.concat(geojsonpolygons.features);
-    geojson.features = geojson.features.concat(geojsonlines.features);
-    geojson.features = geojson.features.concat(geojsonnodes.features);
+    geojson.features = geojson.features.concat(geojsonpolygons);
+    geojson.features = geojson.features.concat(geojsonlines);
+    geojson.features = geojson.features.concat(geojsonnodes);
     // optionally, flatten properties
     if (options.flatProperties) {
       geojson.features.forEach(function(f) {
@@ -61348,7 +61981,7 @@ osmtogeojson = function( data, options ) {
       });
     }
     // fix polygon winding
-    geojson = rewind(geojson, true /*remove for geojson-rewind >0.1.0*/);
+    geojson = rewind(geojson);
     return geojson;
   }
   function _isPolygonFeature( tags ) {
@@ -61377,329 +62010,667 @@ osmtogeojson = function( data, options ) {
       if ( pfk.excluded_values && pfk.excluded_values[val] !== true )
         return true;
     }
-    // if no tags matched, this ain't no area. 
+    // if no tags matched, this ain't no area.
     return false;
   }
 };
+
+// helper that joins adjacent osm ways into linestrings or linear rings
+function join(ways) {
+  var _first = function(arr) {return arr[0]};
+  var _last  = function(arr) {return arr[arr.length-1]};
+  var _fitTogether = function(n1, n2) {
+    return n1 !== undefined && n2 !== undefined && n1.id === n2.id;
+  }
+  // stolen from iD/relation.js
+  var joined = [], current, first, last, i, how, what;
+  while (ways.length) {
+    current = ways.pop().nodes.slice();
+    joined.push(current);
+    while (ways.length && !_fitTogether(_first(current), _last(current))) {
+      first = _first(current);
+      last  = _last(current);
+      for (i = 0; i < ways.length; i++) {
+        what = ways[i].nodes;
+        if (_fitTogether(last, _first(what))) {
+          how  = current.push;
+          what = what.slice(1);
+          break;
+        } else if (_fitTogether(last, _last(what))) {
+          how  = current.push;
+          what = what.slice(0, -1).reverse();
+          break;
+        } else if (_fitTogether(first, _last(what))) {
+          how  = current.unshift;
+          what = what.slice(0, -1);
+          break;
+        } else if (_fitTogether(first, _first(what))) {
+          how  = current.unshift;
+          what = what.slice(1).reverse();
+          break;
+        } else {
+          what = how = null;
+        }
+      }
+      if (!what)
+        break; // Invalid geometry (dangling way, unclosed ring)
+      ways.splice(i, 1);
+      how.apply(current, what);
+    }
+  }
+  return joined;
+}
 
 // for backwards compatibility
 osmtogeojson.toGeojson = osmtogeojson;
 
 module.exports = osmtogeojson;
 
-},{"./lodash.custom.js":158,"./polygon_features.json":160,"geojson-rewind":159}],158:[function(require,module,exports){
+},{"./lodash.custom.js":161,"@mapbox/geojson-rewind":9,"osm-polygon-features":158}],161:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
- * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * lodash (Custom Build) <https://lodash.com/>
  * Build: `lodash exports="node" include="clone,merge,isEmpty,isArray,compact,each" -d`
- * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
- * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
- * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- * Available under MIT license <http://lodash.com/license>
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
  */
 ;(function() {
 
-  /** Used to pool arrays and objects used internally */
-  var arrayPool = [];
+  /** Used as a safe reference for `undefined` in pre-ES5 environments. */
+  var undefined;
 
-  /** Used internally to indicate various things */
-  var indicatorObject = {};
+  /** Used as the semantic version number. */
+  var VERSION = '4.15.0';
 
-  /** Used as the max size of the `arrayPool` and `objectPool` */
-  var maxPoolSize = 40;
+  /** Used as the size to enable large array optimizations. */
+  var LARGE_ARRAY_SIZE = 200;
 
-  /** Used to match regexp flags from their coerced string values */
+  /** Used as the `TypeError` message for "Functions" methods. */
+  var FUNC_ERROR_TEXT = 'Expected a function';
+
+  /** Used to stand-in for `undefined` hash values. */
+  var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+  /** Used to compose bitmasks for comparison styles. */
+  var UNORDERED_COMPARE_FLAG = 1,
+      PARTIAL_COMPARE_FLAG = 2;
+
+  /** Used as references for various `Number` constants. */
+  var INFINITY = 1 / 0,
+      MAX_SAFE_INTEGER = 9007199254740991;
+
+  /** `Object#toString` result references. */
+  var argsTag = '[object Arguments]',
+      arrayTag = '[object Array]',
+      boolTag = '[object Boolean]',
+      dateTag = '[object Date]',
+      errorTag = '[object Error]',
+      funcTag = '[object Function]',
+      genTag = '[object GeneratorFunction]',
+      mapTag = '[object Map]',
+      numberTag = '[object Number]',
+      objectTag = '[object Object]',
+      promiseTag = '[object Promise]',
+      regexpTag = '[object RegExp]',
+      setTag = '[object Set]',
+      stringTag = '[object String]',
+      symbolTag = '[object Symbol]',
+      weakMapTag = '[object WeakMap]';
+
+  var arrayBufferTag = '[object ArrayBuffer]',
+      dataViewTag = '[object DataView]',
+      float32Tag = '[object Float32Array]',
+      float64Tag = '[object Float64Array]',
+      int8Tag = '[object Int8Array]',
+      int16Tag = '[object Int16Array]',
+      int32Tag = '[object Int32Array]',
+      uint8Tag = '[object Uint8Array]',
+      uint8ClampedTag = '[object Uint8ClampedArray]',
+      uint16Tag = '[object Uint16Array]',
+      uint32Tag = '[object Uint32Array]';
+
+  /** Used to match property names within property paths. */
+  var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+      reIsPlainProp = /^\w*$/,
+      reLeadingDot = /^\./,
+      rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+  /**
+   * Used to match `RegExp`
+   * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+   */
+  var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+  /** Used to match backslashes in property paths. */
+  var reEscapeChar = /\\(\\)?/g;
+
+  /** Used to match `RegExp` flags from their coerced string values. */
   var reFlags = /\w*$/;
 
-  /** Used to detected named functions */
-  var reFuncName = /^\s*function[ \n\r\t]+\w/;
+  /** Used to detect host constructors (Safari). */
+  var reIsHostCtor = /^\[object .+?Constructor\]$/;
 
-  /** Used to detect functions containing a `this` reference */
-  var reThis = /\bthis\b/;
+  /** Used to detect unsigned integer values. */
+  var reIsUint = /^(?:0|[1-9]\d*)$/;
 
-  /** Used to fix the JScript [[DontEnum]] bug */
-  var shadowedProps = [
-    'constructor', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable',
-    'toLocaleString', 'toString', 'valueOf'
-  ];
+  /** Used to identify `toStringTag` values of typed arrays. */
+  var typedArrayTags = {};
+  typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
+  typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
+  typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
+  typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
+  typedArrayTags[uint32Tag] = true;
+  typedArrayTags[argsTag] = typedArrayTags[arrayTag] =
+  typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
+  typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
+  typedArrayTags[errorTag] = typedArrayTags[funcTag] =
+  typedArrayTags[mapTag] = typedArrayTags[numberTag] =
+  typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
+  typedArrayTags[setTag] = typedArrayTags[stringTag] =
+  typedArrayTags[weakMapTag] = false;
 
-  /** `Object#toString` result shortcuts */
-  var argsClass = '[object Arguments]',
-      arrayClass = '[object Array]',
-      boolClass = '[object Boolean]',
-      dateClass = '[object Date]',
-      errorClass = '[object Error]',
-      funcClass = '[object Function]',
-      numberClass = '[object Number]',
-      objectClass = '[object Object]',
-      regexpClass = '[object RegExp]',
-      stringClass = '[object String]';
+  /** Used to identify `toStringTag` values supported by `_.clone`. */
+  var cloneableTags = {};
+  cloneableTags[argsTag] = cloneableTags[arrayTag] =
+  cloneableTags[arrayBufferTag] = cloneableTags[dataViewTag] =
+  cloneableTags[boolTag] = cloneableTags[dateTag] =
+  cloneableTags[float32Tag] = cloneableTags[float64Tag] =
+  cloneableTags[int8Tag] = cloneableTags[int16Tag] =
+  cloneableTags[int32Tag] = cloneableTags[mapTag] =
+  cloneableTags[numberTag] = cloneableTags[objectTag] =
+  cloneableTags[regexpTag] = cloneableTags[setTag] =
+  cloneableTags[stringTag] = cloneableTags[symbolTag] =
+  cloneableTags[uint8Tag] = cloneableTags[uint8ClampedTag] =
+  cloneableTags[uint16Tag] = cloneableTags[uint32Tag] = true;
+  cloneableTags[errorTag] = cloneableTags[funcTag] =
+  cloneableTags[weakMapTag] = false;
 
-  /** Used to identify object classifications that `_.clone` supports */
-  var cloneableClasses = {};
-  cloneableClasses[funcClass] = false;
-  cloneableClasses[argsClass] = cloneableClasses[arrayClass] =
-  cloneableClasses[boolClass] = cloneableClasses[dateClass] =
-  cloneableClasses[numberClass] = cloneableClasses[objectClass] =
-  cloneableClasses[regexpClass] = cloneableClasses[stringClass] = true;
+  /** Detect free variable `global` from Node.js. */
+  var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
 
-  /** Used as the property descriptor for `__bindData__` */
-  var descriptor = {
-    'configurable': false,
-    'enumerable': false,
-    'value': null,
-    'writable': false
-  };
+  /** Detect free variable `self`. */
+  var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
 
-  /** Used as the data object for `iteratorTemplate` */
-  var iteratorData = {
-    'args': '',
-    'array': null,
-    'bottom': '',
-    'firstArg': '',
-    'init': '',
-    'keys': null,
-    'loop': '',
-    'shadowedProps': null,
-    'support': null,
-    'top': '',
-    'useHas': false
-  };
+  /** Used as a reference to the global object. */
+  var root = freeGlobal || freeSelf || Function('return this')();
 
-  /** Used to determine if values are of the language type Object */
-  var objectTypes = {
-    'boolean': false,
-    'function': true,
-    'object': true,
-    'number': false,
-    'string': false,
-    'undefined': false
-  };
+  /** Detect free variable `exports`. */
+  var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
 
-  /** Used as a reference to the global object */
-  var root = (objectTypes[typeof window] && window) || this;
+  /** Detect free variable `module`. */
+  var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
 
-  /** Detect free variable `exports` */
-  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;
+  /** Detect the popular CommonJS extension `module.exports`. */
+  var moduleExports = freeModule && freeModule.exports === freeExports;
 
-  /** Detect free variable `module` */
-  var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;
+  /** Detect free variable `process` from Node.js. */
+  var freeProcess = moduleExports && freeGlobal.process;
 
-  /** Detect the popular CommonJS extension `module.exports` */
-  var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;
+  /** Used to access faster Node.js helpers. */
+  var nodeUtil = (function() {
+    try {
+      return freeProcess && freeProcess.binding('util');
+    } catch (e) {}
+  }());
 
-  /** Detect free variable `global` from Node.js or Browserified code and use it as `root` */
-  var freeGlobal = objectTypes[typeof global] && global;
-  if (freeGlobal && (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal)) {
-    root = freeGlobal;
-  }
+  /* Node.js helper references. */
+  var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
 
   /*--------------------------------------------------------------------------*/
 
   /**
-   * Gets an array from the array pool or creates a new one if the pool is empty.
+   * Adds the key-value `pair` to `map`.
    *
    * @private
-   * @returns {Array} The array from the pool.
+   * @param {Object} map The map to modify.
+   * @param {Array} pair The key-value pair to add.
+   * @returns {Object} Returns `map`.
    */
-  function getArray() {
-    return arrayPool.pop() || [];
+  function addMapEntry(map, pair) {
+    // Don't return `map.set` because it's not chainable in IE 11.
+    map.set(pair[0], pair[1]);
+    return map;
   }
 
   /**
-   * Checks if `value` is a DOM node in IE < 9.
+   * Adds `value` to `set`.
+   *
+   * @private
+   * @param {Object} set The set to modify.
+   * @param {*} value The value to add.
+   * @returns {Object} Returns `set`.
+   */
+  function addSetEntry(set, value) {
+    // Don't return `set.add` because it's not chainable in IE 11.
+    set.add(value);
+    return set;
+  }
+
+  /**
+   * A faster alternative to `Function#apply`, this function invokes `func`
+   * with the `this` binding of `thisArg` and the arguments of `args`.
+   *
+   * @private
+   * @param {Function} func The function to invoke.
+   * @param {*} thisArg The `this` binding of `func`.
+   * @param {Array} args The arguments to invoke `func` with.
+   * @returns {*} Returns the result of `func`.
+   */
+  function apply(func, thisArg, args) {
+    switch (args.length) {
+      case 0: return func.call(thisArg);
+      case 1: return func.call(thisArg, args[0]);
+      case 2: return func.call(thisArg, args[0], args[1]);
+      case 3: return func.call(thisArg, args[0], args[1], args[2]);
+    }
+    return func.apply(thisArg, args);
+  }
+
+  /**
+   * A specialized version of `_.forEach` for arrays without support for
+   * iteratee shorthands.
+   *
+   * @private
+   * @param {Array} [array] The array to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @returns {Array} Returns `array`.
+   */
+  function arrayEach(array, iteratee) {
+    var index = -1,
+        length = array ? array.length : 0;
+
+    while (++index < length) {
+      if (iteratee(array[index], index, array) === false) {
+        break;
+      }
+    }
+    return array;
+  }
+
+  /**
+   * Appends the elements of `values` to `array`.
+   *
+   * @private
+   * @param {Array} array The array to modify.
+   * @param {Array} values The values to append.
+   * @returns {Array} Returns `array`.
+   */
+  function arrayPush(array, values) {
+    var index = -1,
+        length = values.length,
+        offset = array.length;
+
+    while (++index < length) {
+      array[offset + index] = values[index];
+    }
+    return array;
+  }
+
+  /**
+   * A specialized version of `_.reduce` for arrays without support for
+   * iteratee shorthands.
+   *
+   * @private
+   * @param {Array} [array] The array to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @param {*} [accumulator] The initial value.
+   * @param {boolean} [initAccum] Specify using the first element of `array` as
+   *  the initial value.
+   * @returns {*} Returns the accumulated value.
+   */
+  function arrayReduce(array, iteratee, accumulator, initAccum) {
+    var index = -1,
+        length = array ? array.length : 0;
+
+    if (initAccum && length) {
+      accumulator = array[++index];
+    }
+    while (++index < length) {
+      accumulator = iteratee(accumulator, array[index], index, array);
+    }
+    return accumulator;
+  }
+
+  /**
+   * A specialized version of `_.some` for arrays without support for iteratee
+   * shorthands.
+   *
+   * @private
+   * @param {Array} [array] The array to iterate over.
+   * @param {Function} predicate The function invoked per iteration.
+   * @returns {boolean} Returns `true` if any element passes the predicate check,
+   *  else `false`.
+   */
+  function arraySome(array, predicate) {
+    var index = -1,
+        length = array ? array.length : 0;
+
+    while (++index < length) {
+      if (predicate(array[index], index, array)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * The base implementation of `_.property` without support for deep paths.
+   *
+   * @private
+   * @param {string} key The key of the property to get.
+   * @returns {Function} Returns the new accessor function.
+   */
+  function baseProperty(key) {
+    return function(object) {
+      return object == null ? undefined : object[key];
+    };
+  }
+
+  /**
+   * The base implementation of `_.times` without support for iteratee shorthands
+   * or max array length checks.
+   *
+   * @private
+   * @param {number} n The number of times to invoke `iteratee`.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @returns {Array} Returns the array of results.
+   */
+  function baseTimes(n, iteratee) {
+    var index = -1,
+        result = Array(n);
+
+    while (++index < n) {
+      result[index] = iteratee(index);
+    }
+    return result;
+  }
+
+  /**
+   * The base implementation of `_.unary` without support for storing metadata.
+   *
+   * @private
+   * @param {Function} func The function to cap arguments for.
+   * @returns {Function} Returns the new capped function.
+   */
+  function baseUnary(func) {
+    return function(value) {
+      return func(value);
+    };
+  }
+
+  /**
+   * Gets the value at `key` of `object`.
+   *
+   * @private
+   * @param {Object} [object] The object to query.
+   * @param {string} key The key of the property to get.
+   * @returns {*} Returns the property value.
+   */
+  function getValue(object, key) {
+    return object == null ? undefined : object[key];
+  }
+
+  /**
+   * Checks if `value` is a host object in IE < 9.
    *
    * @private
    * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a DOM node, else `false`.
+   * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
    */
-  function isNode(value) {
-    // IE < 9 presents DOM nodes as `Object` objects except they have `toString`
-    // methods that are `typeof` "string" and still can coerce nodes to strings
-    return typeof value.toString != 'function' && typeof (value + '') == 'string';
+  function isHostObject(value) {
+    // Many host objects are `Object` objects that can coerce to strings
+    // despite having improperly defined `toString` methods.
+    var result = false;
+    if (value != null && typeof value.toString != 'function') {
+      try {
+        result = !!(value + '');
+      } catch (e) {}
+    }
+    return result;
   }
 
   /**
-   * Releases the given array back to the array pool.
+   * Converts `map` to its key-value pairs.
    *
    * @private
-   * @param {Array} [array] The array to release.
+   * @param {Object} map The map to convert.
+   * @returns {Array} Returns the key-value pairs.
    */
-  function releaseArray(array) {
-    array.length = 0;
-    if (arrayPool.length < maxPoolSize) {
-      arrayPool.push(array);
-    }
-  }
-
-  /**
-   * Slices the `collection` from the `start` index up to, but not including,
-   * the `end` index.
-   *
-   * Note: This function is used instead of `Array#slice` to support node lists
-   * in IE < 9 and to ensure dense arrays are returned.
-   *
-   * @private
-   * @param {Array|Object|string} collection The collection to slice.
-   * @param {number} start The start index.
-   * @param {number} end The end index.
-   * @returns {Array} Returns the new array.
-   */
-  function slice(array, start, end) {
-    start || (start = 0);
-    if (typeof end == 'undefined') {
-      end = array ? array.length : 0;
-    }
+  function mapToArray(map) {
     var index = -1,
-        length = end - start || 0,
-        result = Array(length < 0 ? 0 : length);
+        result = Array(map.size);
 
-    while (++index < length) {
-      result[index] = array[start + index];
-    }
+    map.forEach(function(value, key) {
+      result[++index] = [key, value];
+    });
+    return result;
+  }
+
+  /**
+   * Creates a unary function that invokes `func` with its argument transformed.
+   *
+   * @private
+   * @param {Function} func The function to wrap.
+   * @param {Function} transform The argument transform.
+   * @returns {Function} Returns the new function.
+   */
+  function overArg(func, transform) {
+    return function(arg) {
+      return func(transform(arg));
+    };
+  }
+
+  /**
+   * Converts `set` to an array of its values.
+   *
+   * @private
+   * @param {Object} set The set to convert.
+   * @returns {Array} Returns the values.
+   */
+  function setToArray(set) {
+    var index = -1,
+        result = Array(set.size);
+
+    set.forEach(function(value) {
+      result[++index] = value;
+    });
     return result;
   }
 
   /*--------------------------------------------------------------------------*/
 
+  /** Used for built-in method references. */
+  var arrayProto = Array.prototype,
+      funcProto = Function.prototype,
+      objectProto = Object.prototype;
+
+  /** Used to detect overreaching core-js shims. */
+  var coreJsData = root['__core-js_shared__'];
+
+  /** Used to detect methods masquerading as native. */
+  var maskSrcKey = (function() {
+    var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+    return uid ? ('Symbol(src)_1.' + uid) : '';
+  }());
+
+  /** Used to resolve the decompiled source of functions. */
+  var funcToString = funcProto.toString;
+
+  /** Used to check objects for own properties. */
+  var hasOwnProperty = objectProto.hasOwnProperty;
+
+  /** Used to infer the `Object` constructor. */
+  var objectCtorString = funcToString.call(Object);
+
   /**
-   * Used for `Array` method references.
-   *
-   * Normally `Array.prototype` would suffice, however, using an array literal
-   * avoids issues in Narwhal.
+   * Used to resolve the
+   * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+   * of values.
    */
-  var arrayRef = [];
+  var objectToString = objectProto.toString;
 
-  /** Used for native method references */
-  var errorProto = Error.prototype,
-      objectProto = Object.prototype,
-      stringProto = String.prototype;
-
-  /** Used to resolve the internal [[Class]] of values */
-  var toString = objectProto.toString;
-
-  /** Used to detect if a method is native */
-  var reNative = RegExp('^' +
-    String(toString)
-      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      .replace(/toString| for [^\]]+/g, '.*?') + '$'
+  /** Used to detect if a method is native. */
+  var reIsNative = RegExp('^' +
+    funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+    .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
   );
 
-  /** Native method shortcuts */
-  var fnToString = Function.prototype.toString,
-      getPrototypeOf = isNative(getPrototypeOf = Object.getPrototypeOf) && getPrototypeOf,
-      hasOwnProperty = objectProto.hasOwnProperty,
-      push = arrayRef.push,
+  /** Built-in value references. */
+  var Buffer = moduleExports ? root.Buffer : undefined,
+      Symbol = root.Symbol,
+      Uint8Array = root.Uint8Array,
+      getPrototype = overArg(Object.getPrototypeOf, Object),
+      objectCreate = Object.create,
       propertyIsEnumerable = objectProto.propertyIsEnumerable,
-      unshift = arrayRef.unshift;
+      splice = arrayProto.splice;
 
-  /** Used to set meta data on functions */
-  var defineProperty = (function() {
-    // IE 8 only accepts DOM elements
-    try {
-      var o = {},
-          func = isNative(func = Object.defineProperty) && func,
-          result = func(o, o, o) && func;
-    } catch(e) { }
-    return result;
-  }());
+  /* Built-in method references for those with the same name as other `lodash` methods. */
+  var nativeGetSymbols = Object.getOwnPropertySymbols,
+      nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined,
+      nativeKeys = overArg(Object.keys, Object),
+      nativeMax = Math.max;
 
-  /* Native method shortcuts for methods with the same name as other `lodash` methods */
-  var nativeCreate = isNative(nativeCreate = Object.create) && nativeCreate,
-      nativeIsArray = isNative(nativeIsArray = Array.isArray) && nativeIsArray,
-      nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys;
+  /* Built-in method references that are verified to be native. */
+  var DataView = getNative(root, 'DataView'),
+      Map = getNative(root, 'Map'),
+      Promise = getNative(root, 'Promise'),
+      Set = getNative(root, 'Set'),
+      WeakMap = getNative(root, 'WeakMap'),
+      nativeCreate = getNative(Object, 'create');
 
-  /** Used to lookup a built-in constructor by [[Class]] */
-  var ctorByClass = {};
-  ctorByClass[arrayClass] = Array;
-  ctorByClass[boolClass] = Boolean;
-  ctorByClass[dateClass] = Date;
-  ctorByClass[funcClass] = Function;
-  ctorByClass[objectClass] = Object;
-  ctorByClass[numberClass] = Number;
-  ctorByClass[regexpClass] = RegExp;
-  ctorByClass[stringClass] = String;
+  /** Detect if properties shadowing those on `Object.prototype` are non-enumerable. */
+  var nonEnumShadows = !propertyIsEnumerable.call({ 'valueOf': 1 }, 'valueOf');
 
-  /** Used to avoid iterating non-enumerable properties in IE < 9 */
-  var nonEnumProps = {};
-  nonEnumProps[arrayClass] = nonEnumProps[dateClass] = nonEnumProps[numberClass] = { 'constructor': true, 'toLocaleString': true, 'toString': true, 'valueOf': true };
-  nonEnumProps[boolClass] = nonEnumProps[stringClass] = { 'constructor': true, 'toString': true, 'valueOf': true };
-  nonEnumProps[errorClass] = nonEnumProps[funcClass] = nonEnumProps[regexpClass] = { 'constructor': true, 'toString': true };
-  nonEnumProps[objectClass] = { 'constructor': true };
+  /** Used to lookup unminified function names. */
+  var realNames = {};
 
-  (function() {
-    var length = shadowedProps.length;
-    while (length--) {
-      var key = shadowedProps[length];
-      for (var className in nonEnumProps) {
-        if (hasOwnProperty.call(nonEnumProps, className) && !hasOwnProperty.call(nonEnumProps[className], key)) {
-          nonEnumProps[className][key] = false;
-        }
-      }
-    }
-  }());
+  /** Used to detect maps, sets, and weakmaps. */
+  var dataViewCtorString = toSource(DataView),
+      mapCtorString = toSource(Map),
+      promiseCtorString = toSource(Promise),
+      setCtorString = toSource(Set),
+      weakMapCtorString = toSource(WeakMap);
 
-  /*--------------------------------------------------------------------------*/
+  /** Used to convert symbols to primitives and strings. */
+  var symbolProto = Symbol ? Symbol.prototype : undefined,
+      symbolValueOf = symbolProto ? symbolProto.valueOf : undefined,
+      symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+  /*------------------------------------------------------------------------*/
 
   /**
-   * Creates a `lodash` object which wraps the given value to enable intuitive
-   * method chaining.
+   * Creates a `lodash` object which wraps `value` to enable implicit method
+   * chain sequences. Methods that operate on and return arrays, collections,
+   * and functions can be chained together. Methods that retrieve a single value
+   * or may return a primitive value will automatically end the chain sequence
+   * and return the unwrapped value. Otherwise, the value must be unwrapped
+   * with `_#value`.
    *
-   * In addition to Lo-Dash methods, wrappers also have the following `Array` methods:
-   * `concat`, `join`, `pop`, `push`, `reverse`, `shift`, `slice`, `sort`, `splice`,
-   * and `unshift`
+   * Explicit chain sequences, which must be unwrapped with `_#value`, may be
+   * enabled using `_.chain`.
    *
-   * Chaining is supported in custom builds as long as the `value` method is
-   * implicitly or explicitly included in the build.
+   * The execution of chained methods is lazy, that is, it's deferred until
+   * `_#value` is implicitly or explicitly called.
    *
-   * The chainable wrapper functions are:
-   * `after`, `assign`, `bind`, `bindAll`, `bindKey`, `chain`, `compact`,
-   * `compose`, `concat`, `countBy`, `create`, `createCallback`, `curry`,
-   * `debounce`, `defaults`, `defer`, `delay`, `difference`, `filter`, `flatten`,
-   * `forEach`, `forEachRight`, `forIn`, `forInRight`, `forOwn`, `forOwnRight`,
-   * `functions`, `groupBy`, `indexBy`, `initial`, `intersection`, `invert`,
-   * `invoke`, `keys`, `map`, `max`, `memoize`, `merge`, `min`, `object`, `omit`,
-   * `once`, `pairs`, `partial`, `partialRight`, `pick`, `pluck`, `pull`, `push`,
-   * `range`, `reject`, `remove`, `rest`, `reverse`, `shuffle`, `slice`, `sort`,
-   * `sortBy`, `splice`, `tap`, `throttle`, `times`, `toArray`, `transform`,
-   * `union`, `uniq`, `unshift`, `unzip`, `values`, `where`, `without`, `wrap`,
-   * and `zip`
+   * Lazy evaluation allows several methods to support shortcut fusion.
+   * Shortcut fusion is an optimization to merge iteratee calls; this avoids
+   * the creation of intermediate arrays and can greatly reduce the number of
+   * iteratee executions. Sections of a chain sequence qualify for shortcut
+   * fusion if the section is applied to an array of at least `200` elements
+   * and any iteratees accept only one argument. The heuristic for whether a
+   * section qualifies for shortcut fusion is subject to change.
    *
-   * The non-chainable wrapper functions are:
-   * `clone`, `cloneDeep`, `contains`, `escape`, `every`, `find`, `findIndex`,
-   * `findKey`, `findLast`, `findLastIndex`, `findLastKey`, `has`, `identity`,
-   * `indexOf`, `isArguments`, `isArray`, `isBoolean`, `isDate`, `isElement`,
-   * `isEmpty`, `isEqual`, `isFinite`, `isFunction`, `isNaN`, `isNull`, `isNumber`,
-   * `isObject`, `isPlainObject`, `isRegExp`, `isString`, `isUndefined`, `join`,
-   * `lastIndexOf`, `mixin`, `noConflict`, `parseInt`, `pop`, `random`, `reduce`,
-   * `reduceRight`, `result`, `shift`, `size`, `some`, `sortedIndex`, `runInContext`,
-   * `template`, `unescape`, `uniqueId`, and `value`
+   * Chaining is supported in custom builds as long as the `_#value` method is
+   * directly or indirectly included in the build.
    *
-   * The wrapper functions `first` and `last` return wrapped values when `n` is
-   * provided, otherwise they return unwrapped values.
+   * In addition to lodash methods, wrappers have `Array` and `String` methods.
    *
-   * Explicit chaining can be enabled by using the `_.chain` method.
+   * The wrapper `Array` methods are:
+   * `concat`, `join`, `pop`, `push`, `shift`, `sort`, `splice`, and `unshift`
+   *
+   * The wrapper `String` methods are:
+   * `replace` and `split`
+   *
+   * The wrapper methods that support shortcut fusion are:
+   * `at`, `compact`, `drop`, `dropRight`, `dropWhile`, `filter`, `find`,
+   * `findLast`, `head`, `initial`, `last`, `map`, `reject`, `reverse`, `slice`,
+   * `tail`, `take`, `takeRight`, `takeRightWhile`, `takeWhile`, and `toArray`
+   *
+   * The chainable wrapper methods are:
+   * `after`, `ary`, `assign`, `assignIn`, `assignInWith`, `assignWith`, `at`,
+   * `before`, `bind`, `bindAll`, `bindKey`, `castArray`, `chain`, `chunk`,
+   * `commit`, `compact`, `concat`, `conforms`, `constant`, `countBy`, `create`,
+   * `curry`, `debounce`, `defaults`, `defaultsDeep`, `defer`, `delay`,
+   * `difference`, `differenceBy`, `differenceWith`, `drop`, `dropRight`,
+   * `dropRightWhile`, `dropWhile`, `extend`, `extendWith`, `fill`, `filter`,
+   * `flatMap`, `flatMapDeep`, `flatMapDepth`, `flatten`, `flattenDeep`,
+   * `flattenDepth`, `flip`, `flow`, `flowRight`, `fromPairs`, `functions`,
+   * `functionsIn`, `groupBy`, `initial`, `intersection`, `intersectionBy`,
+   * `intersectionWith`, `invert`, `invertBy`, `invokeMap`, `iteratee`, `keyBy`,
+   * `keys`, `keysIn`, `map`, `mapKeys`, `mapValues`, `matches`, `matchesProperty`,
+   * `memoize`, `merge`, `mergeWith`, `method`, `methodOf`, `mixin`, `negate`,
+   * `nthArg`, `omit`, `omitBy`, `once`, `orderBy`, `over`, `overArgs`,
+   * `overEvery`, `overSome`, `partial`, `partialRight`, `partition`, `pick`,
+   * `pickBy`, `plant`, `property`, `propertyOf`, `pull`, `pullAll`, `pullAllBy`,
+   * `pullAllWith`, `pullAt`, `push`, `range`, `rangeRight`, `rearg`, `reject`,
+   * `remove`, `rest`, `reverse`, `sampleSize`, `set`, `setWith`, `shuffle`,
+   * `slice`, `sort`, `sortBy`, `splice`, `spread`, `tail`, `take`, `takeRight`,
+   * `takeRightWhile`, `takeWhile`, `tap`, `throttle`, `thru`, `toArray`,
+   * `toPairs`, `toPairsIn`, `toPath`, `toPlainObject`, `transform`, `unary`,
+   * `union`, `unionBy`, `unionWith`, `uniq`, `uniqBy`, `uniqWith`, `unset`,
+   * `unshift`, `unzip`, `unzipWith`, `update`, `updateWith`, `values`,
+   * `valuesIn`, `without`, `wrap`, `xor`, `xorBy`, `xorWith`, `zip`,
+   * `zipObject`, `zipObjectDeep`, and `zipWith`
+   *
+   * The wrapper methods that are **not** chainable by default are:
+   * `add`, `attempt`, `camelCase`, `capitalize`, `ceil`, `clamp`, `clone`,
+   * `cloneDeep`, `cloneDeepWith`, `cloneWith`, `conformsTo`, `deburr`,
+   * `defaultTo`, `divide`, `each`, `eachRight`, `endsWith`, `eq`, `escape`,
+   * `escapeRegExp`, `every`, `find`, `findIndex`, `findKey`, `findLast`,
+   * `findLastIndex`, `findLastKey`, `first`, `floor`, `forEach`, `forEachRight`,
+   * `forIn`, `forInRight`, `forOwn`, `forOwnRight`, `get`, `gt`, `gte`, `has`,
+   * `hasIn`, `head`, `identity`, `includes`, `indexOf`, `inRange`, `invoke`,
+   * `isArguments`, `isArray`, `isArrayBuffer`, `isArrayLike`, `isArrayLikeObject`,
+   * `isBoolean`, `isBuffer`, `isDate`, `isElement`, `isEmpty`, `isEqual`,
+   * `isEqualWith`, `isError`, `isFinite`, `isFunction`, `isInteger`, `isLength`,
+   * `isMap`, `isMatch`, `isMatchWith`, `isNaN`, `isNative`, `isNil`, `isNull`,
+   * `isNumber`, `isObject`, `isObjectLike`, `isPlainObject`, `isRegExp`,
+   * `isSafeInteger`, `isSet`, `isString`, `isUndefined`, `isTypedArray`,
+   * `isWeakMap`, `isWeakSet`, `join`, `kebabCase`, `last`, `lastIndexOf`,
+   * `lowerCase`, `lowerFirst`, `lt`, `lte`, `max`, `maxBy`, `mean`, `meanBy`,
+   * `min`, `minBy`, `multiply`, `noConflict`, `noop`, `now`, `nth`, `pad`,
+   * `padEnd`, `padStart`, `parseInt`, `pop`, `random`, `reduce`, `reduceRight`,
+   * `repeat`, `result`, `round`, `runInContext`, `sample`, `shift`, `size`,
+   * `snakeCase`, `some`, `sortedIndex`, `sortedIndexBy`, `sortedLastIndex`,
+   * `sortedLastIndexBy`, `startCase`, `startsWith`, `stubArray`, `stubFalse`,
+   * `stubObject`, `stubString`, `stubTrue`, `subtract`, `sum`, `sumBy`,
+   * `template`, `times`, `toFinite`, `toInteger`, `toJSON`, `toLength`,
+   * `toLower`, `toNumber`, `toSafeInteger`, `toString`, `toUpper`, `trim`,
+   * `trimEnd`, `trimStart`, `truncate`, `unescape`, `uniqueId`, `upperCase`,
+   * `upperFirst`, `value`, and `words`
    *
    * @name _
    * @constructor
-   * @category Chaining
+   * @category Seq
    * @param {*} value The value to wrap in a `lodash` instance.
-   * @returns {Object} Returns a `lodash` instance.
+   * @returns {Object} Returns the new `lodash` wrapper instance.
    * @example
+   *
+   * function square(n) {
+   *   return n * n;
+   * }
    *
    * var wrapped = _([1, 2, 3]);
    *
-   * // returns an unwrapped value
-   * wrapped.reduce(function(sum, num) {
-   *   return sum + num;
-   * });
+   * // Returns an unwrapped value.
+   * wrapped.reduce(_.add);
    * // => 6
    *
-   * // returns a wrapped value
-   * var squares = wrapped.map(function(num) {
-   *   return num * num;
-   * });
+   * // Returns a wrapped value.
+   * var squares = wrapped.map(square);
    *
    * _.isArray(squares);
    * // => false
@@ -61708,378 +62679,631 @@ module.exports = osmtogeojson;
    * // => true
    */
   function lodash() {
-    // no operation performed
+    // No operation performed.
+  }
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates a hash object.
+   *
+   * @private
+   * @constructor
+   * @param {Array} [entries] The key-value pairs to cache.
+   */
+  function Hash(entries) {
+    var index = -1,
+        length = entries ? entries.length : 0;
+
+    this.clear();
+    while (++index < length) {
+      var entry = entries[index];
+      this.set(entry[0], entry[1]);
+    }
   }
 
   /**
-   * An object used to flag environments features.
-   *
-   * @static
-   * @memberOf _
-   * @type Object
-   */
-  var support = lodash.support = {};
-
-  (function() {
-    var ctor = function() { this.x = 1; },
-        object = { '0': 1, 'length': 1 },
-        props = [];
-
-    ctor.prototype = { 'valueOf': 1, 'y': 1 };
-    for (var key in new ctor) { props.push(key); }
-    for (key in arguments) { }
-
-    /**
-     * Detect if an `arguments` object's [[Class]] is resolvable (all but Firefox < 4, IE < 9).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.argsClass = toString.call(arguments) == argsClass;
-
-    /**
-     * Detect if `arguments` objects are `Object` objects (all but Narwhal and Opera < 10.5).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.argsObject = arguments.constructor == Object && !(arguments instanceof Array);
-
-    /**
-     * Detect if `name` or `message` properties of `Error.prototype` are
-     * enumerable by default. (IE < 9, Safari < 5.1)
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.enumErrorProps = propertyIsEnumerable.call(errorProto, 'message') || propertyIsEnumerable.call(errorProto, 'name');
-
-    /**
-     * Detect if `prototype` properties are enumerable by default.
-     *
-     * Firefox < 3.6, Opera > 9.50 - Opera < 11.60, and Safari < 5.1
-     * (if the prototype or a property on the prototype has been set)
-     * incorrectly sets a function's `prototype` property [[Enumerable]]
-     * value to `true`.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.enumPrototypes = propertyIsEnumerable.call(ctor, 'prototype');
-
-    /**
-     * Detect if functions can be decompiled by `Function#toString`
-     * (all but PS3 and older Opera mobile browsers & avoided in Windows 8 apps).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.funcDecomp = !isNative(root.WinRTError) && reThis.test(function() { return this; });
-
-    /**
-     * Detect if `Function#name` is supported (all but IE).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.funcNames = typeof Function.name == 'string';
-
-    /**
-     * Detect if `arguments` object indexes are non-enumerable
-     * (Firefox < 4, IE < 9, PhantomJS, Safari < 5.1).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.nonEnumArgs = key != 0;
-
-    /**
-     * Detect if properties shadowing those on `Object.prototype` are non-enumerable.
-     *
-     * In IE < 9 an objects own properties, shadowing non-enumerable ones, are
-     * made non-enumerable as well (a.k.a the JScript [[DontEnum]] bug).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.nonEnumShadows = !/valueOf/.test(props);
-
-    /**
-     * Detect if own properties are iterated after inherited properties (all but IE < 9).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.ownLast = props[0] != 'x';
-
-    /**
-     * Detect if `Array#shift` and `Array#splice` augment array-like objects correctly.
-     *
-     * Firefox < 10, IE compatibility mode, and IE < 9 have buggy Array `shift()`
-     * and `splice()` functions that fail to remove the last element, `value[0]`,
-     * of array-like objects even though the `length` property is set to `0`.
-     * The `shift()` method is buggy in IE 8 compatibility mode, while `splice()`
-     * is buggy regardless of mode in IE < 9 and buggy in compatibility mode in IE 9.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.spliceObjects = (arrayRef.splice.call(object, 0, 1), !object[0]);
-
-    /**
-     * Detect lack of support for accessing string characters by index.
-     *
-     * IE < 8 can't access characters by index and IE 8 can only access
-     * characters by index on string literals.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.unindexedChars = ('x'[0] + Object('x')[0]) != 'xx';
-
-    /**
-     * Detect if a DOM node's [[Class]] is resolvable (all but IE < 9)
-     * and that the JS engine errors when attempting to coerce an object to
-     * a string without a `toString` function.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    try {
-      support.nodeClass = !(toString.call(document) == objectClass && !({ 'toString': 0 } + ''));
-    } catch(e) {
-      support.nodeClass = true;
-    }
-  }(1));
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * The template used to create iterator functions.
+   * Removes all key-value entries from the hash.
    *
    * @private
-   * @param {Object} data The data object used to populate the text.
-   * @returns {string} Returns the interpolated text.
+   * @name clear
+   * @memberOf Hash
    */
-  var iteratorTemplate = function(obj) {
-
-    var __p = 'var index, iterable = ' +
-    (obj.firstArg) +
-    ', result = ' +
-    (obj.init) +
-    ';\nif (!iterable) return result;\n' +
-    (obj.top) +
-    ';';
-     if (obj.array) {
-    __p += '\nvar length = iterable.length; index = -1;\nif (' +
-    (obj.array) +
-    ') {  ';
-     if (support.unindexedChars) {
-    __p += '\n  if (isString(iterable)) {\n    iterable = iterable.split(\'\')\n  }  ';
-     }
-    __p += '\n  while (++index < length) {\n    ' +
-    (obj.loop) +
-    ';\n  }\n}\nelse {  ';
-     } else if (support.nonEnumArgs) {
-    __p += '\n  var length = iterable.length; index = -1;\n  if (length && isArguments(iterable)) {\n    while (++index < length) {\n      index += \'\';\n      ' +
-    (obj.loop) +
-    ';\n    }\n  } else {  ';
-     }
-
-     if (support.enumPrototypes) {
-    __p += '\n  var skipProto = typeof iterable == \'function\';\n  ';
-     }
-
-     if (support.enumErrorProps) {
-    __p += '\n  var skipErrorProps = iterable === errorProto || iterable instanceof Error;\n  ';
-     }
-
-        var conditions = [];    if (support.enumPrototypes) { conditions.push('!(skipProto && index == "prototype")'); }    if (support.enumErrorProps)  { conditions.push('!(skipErrorProps && (index == "message" || index == "name"))'); }
-
-     if (obj.useHas && obj.keys) {
-    __p += '\n  var ownIndex = -1,\n      ownProps = objectTypes[typeof iterable] && keys(iterable),\n      length = ownProps ? ownProps.length : 0;\n\n  while (++ownIndex < length) {\n    index = ownProps[ownIndex];\n';
-        if (conditions.length) {
-    __p += '    if (' +
-    (conditions.join(' && ')) +
-    ') {\n  ';
-     }
-    __p +=
-    (obj.loop) +
-    ';    ';
-     if (conditions.length) {
-    __p += '\n    }';
-     }
-    __p += '\n  }  ';
-     } else {
-    __p += '\n  for (index in iterable) {\n';
-        if (obj.useHas) { conditions.push("hasOwnProperty.call(iterable, index)"); }    if (conditions.length) {
-    __p += '    if (' +
-    (conditions.join(' && ')) +
-    ') {\n  ';
-     }
-    __p +=
-    (obj.loop) +
-    ';    ';
-     if (conditions.length) {
-    __p += '\n    }';
-     }
-    __p += '\n  }    ';
-     if (support.nonEnumShadows) {
-    __p += '\n\n  if (iterable !== objectProto) {\n    var ctor = iterable.constructor,\n        isProto = iterable === (ctor && ctor.prototype),\n        className = iterable === stringProto ? stringClass : iterable === errorProto ? errorClass : toString.call(iterable),\n        nonEnum = nonEnumProps[className];\n      ';
-     for (k = 0; k < 7; k++) {
-    __p += '\n    index = \'' +
-    (obj.shadowedProps[k]) +
-    '\';\n    if ((!(isProto && nonEnum[index]) && hasOwnProperty.call(iterable, index))';
-            if (!obj.useHas) {
-    __p += ' || (!nonEnum[index] && iterable[index] !== objectProto[index])';
-     }
-    __p += ') {\n      ' +
-    (obj.loop) +
-    ';\n    }      ';
-     }
-    __p += '\n  }    ';
-     }
-
-     }
-
-     if (obj.array || support.nonEnumArgs) {
-    __p += '\n}';
-     }
-    __p +=
-    (obj.bottom) +
-    ';\nreturn result';
-
-    return __p
-  };
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * The base implementation of `_.bind` that creates the bound function and
-   * sets its meta data.
-   *
-   * @private
-   * @param {Array} bindData The bind data array.
-   * @returns {Function} Returns the new bound function.
-   */
-  function baseBind(bindData) {
-    var func = bindData[0],
-        partialArgs = bindData[2],
-        thisArg = bindData[4];
-
-    function bound() {
-      // `Function#bind` spec
-      // http://es5.github.io/#x15.3.4.5
-      if (partialArgs) {
-        // avoid `arguments` object deoptimizations by using `slice` instead
-        // of `Array.prototype.slice.call` and not assigning `arguments` to a
-        // variable as a ternary expression
-        var args = slice(partialArgs);
-        push.apply(args, arguments);
-      }
-      // mimic the constructor's `return` behavior
-      // http://es5.github.io/#x13.2.2
-      if (this instanceof bound) {
-        // ensure `new bound` is an instance of `func`
-        var thisBinding = baseCreate(func.prototype),
-            result = func.apply(thisBinding, args || arguments);
-        return isObject(result) ? result : thisBinding;
-      }
-      return func.apply(thisArg, args || arguments);
-    }
-    setBindData(bound, bindData);
-    return bound;
+  function hashClear() {
+    this.__data__ = nativeCreate ? nativeCreate(null) : {};
   }
 
   /**
-   * The base implementation of `_.clone` without argument juggling or support
-   * for `thisArg` binding.
+   * Removes `key` and its value from the hash.
+   *
+   * @private
+   * @name delete
+   * @memberOf Hash
+   * @param {Object} hash The hash to modify.
+   * @param {string} key The key of the value to remove.
+   * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+   */
+  function hashDelete(key) {
+    return this.has(key) && delete this.__data__[key];
+  }
+
+  /**
+   * Gets the hash value for `key`.
+   *
+   * @private
+   * @name get
+   * @memberOf Hash
+   * @param {string} key The key of the value to get.
+   * @returns {*} Returns the entry value.
+   */
+  function hashGet(key) {
+    var data = this.__data__;
+    if (nativeCreate) {
+      var result = data[key];
+      return result === HASH_UNDEFINED ? undefined : result;
+    }
+    return hasOwnProperty.call(data, key) ? data[key] : undefined;
+  }
+
+  /**
+   * Checks if a hash value for `key` exists.
+   *
+   * @private
+   * @name has
+   * @memberOf Hash
+   * @param {string} key The key of the entry to check.
+   * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+   */
+  function hashHas(key) {
+    var data = this.__data__;
+    return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+  }
+
+  /**
+   * Sets the hash `key` to `value`.
+   *
+   * @private
+   * @name set
+   * @memberOf Hash
+   * @param {string} key The key of the value to set.
+   * @param {*} value The value to set.
+   * @returns {Object} Returns the hash instance.
+   */
+  function hashSet(key, value) {
+    var data = this.__data__;
+    data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+    return this;
+  }
+
+  // Add methods to `Hash`.
+  Hash.prototype.clear = hashClear;
+  Hash.prototype['delete'] = hashDelete;
+  Hash.prototype.get = hashGet;
+  Hash.prototype.has = hashHas;
+  Hash.prototype.set = hashSet;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates an list cache object.
+   *
+   * @private
+   * @constructor
+   * @param {Array} [entries] The key-value pairs to cache.
+   */
+  function ListCache(entries) {
+    var index = -1,
+        length = entries ? entries.length : 0;
+
+    this.clear();
+    while (++index < length) {
+      var entry = entries[index];
+      this.set(entry[0], entry[1]);
+    }
+  }
+
+  /**
+   * Removes all key-value entries from the list cache.
+   *
+   * @private
+   * @name clear
+   * @memberOf ListCache
+   */
+  function listCacheClear() {
+    this.__data__ = [];
+  }
+
+  /**
+   * Removes `key` and its value from the list cache.
+   *
+   * @private
+   * @name delete
+   * @memberOf ListCache
+   * @param {string} key The key of the value to remove.
+   * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+   */
+  function listCacheDelete(key) {
+    var data = this.__data__,
+        index = assocIndexOf(data, key);
+
+    if (index < 0) {
+      return false;
+    }
+    var lastIndex = data.length - 1;
+    if (index == lastIndex) {
+      data.pop();
+    } else {
+      splice.call(data, index, 1);
+    }
+    return true;
+  }
+
+  /**
+   * Gets the list cache value for `key`.
+   *
+   * @private
+   * @name get
+   * @memberOf ListCache
+   * @param {string} key The key of the value to get.
+   * @returns {*} Returns the entry value.
+   */
+  function listCacheGet(key) {
+    var data = this.__data__,
+        index = assocIndexOf(data, key);
+
+    return index < 0 ? undefined : data[index][1];
+  }
+
+  /**
+   * Checks if a list cache value for `key` exists.
+   *
+   * @private
+   * @name has
+   * @memberOf ListCache
+   * @param {string} key The key of the entry to check.
+   * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+   */
+  function listCacheHas(key) {
+    return assocIndexOf(this.__data__, key) > -1;
+  }
+
+  /**
+   * Sets the list cache `key` to `value`.
+   *
+   * @private
+   * @name set
+   * @memberOf ListCache
+   * @param {string} key The key of the value to set.
+   * @param {*} value The value to set.
+   * @returns {Object} Returns the list cache instance.
+   */
+  function listCacheSet(key, value) {
+    var data = this.__data__,
+        index = assocIndexOf(data, key);
+
+    if (index < 0) {
+      data.push([key, value]);
+    } else {
+      data[index][1] = value;
+    }
+    return this;
+  }
+
+  // Add methods to `ListCache`.
+  ListCache.prototype.clear = listCacheClear;
+  ListCache.prototype['delete'] = listCacheDelete;
+  ListCache.prototype.get = listCacheGet;
+  ListCache.prototype.has = listCacheHas;
+  ListCache.prototype.set = listCacheSet;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates a map cache object to store key-value pairs.
+   *
+   * @private
+   * @constructor
+   * @param {Array} [entries] The key-value pairs to cache.
+   */
+  function MapCache(entries) {
+    var index = -1,
+        length = entries ? entries.length : 0;
+
+    this.clear();
+    while (++index < length) {
+      var entry = entries[index];
+      this.set(entry[0], entry[1]);
+    }
+  }
+
+  /**
+   * Removes all key-value entries from the map.
+   *
+   * @private
+   * @name clear
+   * @memberOf MapCache
+   */
+  function mapCacheClear() {
+    this.__data__ = {
+      'hash': new Hash,
+      'map': new (Map || ListCache),
+      'string': new Hash
+    };
+  }
+
+  /**
+   * Removes `key` and its value from the map.
+   *
+   * @private
+   * @name delete
+   * @memberOf MapCache
+   * @param {string} key The key of the value to remove.
+   * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+   */
+  function mapCacheDelete(key) {
+    return getMapData(this, key)['delete'](key);
+  }
+
+  /**
+   * Gets the map value for `key`.
+   *
+   * @private
+   * @name get
+   * @memberOf MapCache
+   * @param {string} key The key of the value to get.
+   * @returns {*} Returns the entry value.
+   */
+  function mapCacheGet(key) {
+    return getMapData(this, key).get(key);
+  }
+
+  /**
+   * Checks if a map value for `key` exists.
+   *
+   * @private
+   * @name has
+   * @memberOf MapCache
+   * @param {string} key The key of the entry to check.
+   * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+   */
+  function mapCacheHas(key) {
+    return getMapData(this, key).has(key);
+  }
+
+  /**
+   * Sets the map `key` to `value`.
+   *
+   * @private
+   * @name set
+   * @memberOf MapCache
+   * @param {string} key The key of the value to set.
+   * @param {*} value The value to set.
+   * @returns {Object} Returns the map cache instance.
+   */
+  function mapCacheSet(key, value) {
+    getMapData(this, key).set(key, value);
+    return this;
+  }
+
+  // Add methods to `MapCache`.
+  MapCache.prototype.clear = mapCacheClear;
+  MapCache.prototype['delete'] = mapCacheDelete;
+  MapCache.prototype.get = mapCacheGet;
+  MapCache.prototype.has = mapCacheHas;
+  MapCache.prototype.set = mapCacheSet;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   *
+   * Creates an array cache object to store unique values.
+   *
+   * @private
+   * @constructor
+   * @param {Array} [values] The values to cache.
+   */
+  function SetCache(values) {
+    var index = -1,
+        length = values ? values.length : 0;
+
+    this.__data__ = new MapCache;
+    while (++index < length) {
+      this.add(values[index]);
+    }
+  }
+
+  /**
+   * Adds `value` to the array cache.
+   *
+   * @private
+   * @name add
+   * @memberOf SetCache
+   * @alias push
+   * @param {*} value The value to cache.
+   * @returns {Object} Returns the cache instance.
+   */
+  function setCacheAdd(value) {
+    this.__data__.set(value, HASH_UNDEFINED);
+    return this;
+  }
+
+  /**
+   * Checks if `value` is in the array cache.
+   *
+   * @private
+   * @name has
+   * @memberOf SetCache
+   * @param {*} value The value to search for.
+   * @returns {number} Returns `true` if `value` is found, else `false`.
+   */
+  function setCacheHas(value) {
+    return this.__data__.has(value);
+  }
+
+  // Add methods to `SetCache`.
+  SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;
+  SetCache.prototype.has = setCacheHas;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates a stack cache object to store key-value pairs.
+   *
+   * @private
+   * @constructor
+   * @param {Array} [entries] The key-value pairs to cache.
+   */
+  function Stack(entries) {
+    this.__data__ = new ListCache(entries);
+  }
+
+  /**
+   * Removes all key-value entries from the stack.
+   *
+   * @private
+   * @name clear
+   * @memberOf Stack
+   */
+  function stackClear() {
+    this.__data__ = new ListCache;
+  }
+
+  /**
+   * Removes `key` and its value from the stack.
+   *
+   * @private
+   * @name delete
+   * @memberOf Stack
+   * @param {string} key The key of the value to remove.
+   * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+   */
+  function stackDelete(key) {
+    return this.__data__['delete'](key);
+  }
+
+  /**
+   * Gets the stack value for `key`.
+   *
+   * @private
+   * @name get
+   * @memberOf Stack
+   * @param {string} key The key of the value to get.
+   * @returns {*} Returns the entry value.
+   */
+  function stackGet(key) {
+    return this.__data__.get(key);
+  }
+
+  /**
+   * Checks if a stack value for `key` exists.
+   *
+   * @private
+   * @name has
+   * @memberOf Stack
+   * @param {string} key The key of the entry to check.
+   * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+   */
+  function stackHas(key) {
+    return this.__data__.has(key);
+  }
+
+  /**
+   * Sets the stack `key` to `value`.
+   *
+   * @private
+   * @name set
+   * @memberOf Stack
+   * @param {string} key The key of the value to set.
+   * @param {*} value The value to set.
+   * @returns {Object} Returns the stack cache instance.
+   */
+  function stackSet(key, value) {
+    var cache = this.__data__;
+    if (cache instanceof ListCache) {
+      var pairs = cache.__data__;
+      if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
+        pairs.push([key, value]);
+        return this;
+      }
+      cache = this.__data__ = new MapCache(pairs);
+    }
+    cache.set(key, value);
+    return this;
+  }
+
+  // Add methods to `Stack`.
+  Stack.prototype.clear = stackClear;
+  Stack.prototype['delete'] = stackDelete;
+  Stack.prototype.get = stackGet;
+  Stack.prototype.has = stackHas;
+  Stack.prototype.set = stackSet;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates an array of the enumerable property names of the array-like `value`.
+   *
+   * @private
+   * @param {*} value The value to query.
+   * @param {boolean} inherited Specify returning inherited property names.
+   * @returns {Array} Returns the array of property names.
+   */
+  function arrayLikeKeys(value, inherited) {
+    // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+    // Safari 9 makes `arguments.length` enumerable in strict mode.
+    var result = (isArray(value) || isArguments(value))
+      ? baseTimes(value.length, String)
+      : [];
+
+    var length = result.length,
+        skipIndexes = !!length;
+
+    for (var key in value) {
+      if ((inherited || hasOwnProperty.call(value, key)) &&
+          !(skipIndexes && (key == 'length' || isIndex(key, length)))) {
+        result.push(key);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * This function is like `assignValue` except that it doesn't assign
+   * `undefined` values.
+   *
+   * @private
+   * @param {Object} object The object to modify.
+   * @param {string} key The key of the property to assign.
+   * @param {*} value The value to assign.
+   */
+  function assignMergeValue(object, key, value) {
+    if ((value !== undefined && !eq(object[key], value)) ||
+        (typeof key == 'number' && value === undefined && !(key in object))) {
+      object[key] = value;
+    }
+  }
+
+  /**
+   * Assigns `value` to `key` of `object` if the existing value is not equivalent
+   * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+   * for equality comparisons.
+   *
+   * @private
+   * @param {Object} object The object to modify.
+   * @param {string} key The key of the property to assign.
+   * @param {*} value The value to assign.
+   */
+  function assignValue(object, key, value) {
+    var objValue = object[key];
+    if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
+        (value === undefined && !(key in object))) {
+      object[key] = value;
+    }
+  }
+
+  /**
+   * Gets the index at which the `key` is found in `array` of key-value pairs.
+   *
+   * @private
+   * @param {Array} array The array to inspect.
+   * @param {*} key The key to search for.
+   * @returns {number} Returns the index of the matched value, else `-1`.
+   */
+  function assocIndexOf(array, key) {
+    var length = array.length;
+    while (length--) {
+      if (eq(array[length][0], key)) {
+        return length;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * The base implementation of `_.assign` without support for multiple sources
+   * or `customizer` functions.
+   *
+   * @private
+   * @param {Object} object The destination object.
+   * @param {Object} source The source object.
+   * @returns {Object} Returns `object`.
+   */
+  function baseAssign(object, source) {
+    return object && copyObject(source, keys(source), object);
+  }
+
+  /**
+   * The base implementation of `_.clone` and `_.cloneDeep` which tracks
+   * traversed objects.
    *
    * @private
    * @param {*} value The value to clone.
-   * @param {boolean} [isDeep=false] Specify a deep clone.
-   * @param {Function} [callback] The function to customize cloning values.
-   * @param {Array} [stackA=[]] Tracks traversed source objects.
-   * @param {Array} [stackB=[]] Associates clones with source counterparts.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @param {boolean} [isFull] Specify a clone including symbols.
+   * @param {Function} [customizer] The function to customize cloning.
+   * @param {string} [key] The key of `value`.
+   * @param {Object} [object] The parent object of `value`.
+   * @param {Object} [stack] Tracks traversed objects and their clone counterparts.
    * @returns {*} Returns the cloned value.
    */
-  function baseClone(value, isDeep, callback, stackA, stackB) {
-    if (callback) {
-      var result = callback(value);
-      if (typeof result != 'undefined') {
-        return result;
-      }
+  function baseClone(value, isDeep, isFull, customizer, key, object, stack) {
+    var result;
+    if (customizer) {
+      result = object ? customizer(value, key, object, stack) : customizer(value);
     }
-    // inspect [[Class]]
-    var isObj = isObject(value);
-    if (isObj) {
-      var className = toString.call(value);
-      if (!cloneableClasses[className] || (!support.nodeClass && isNode(value))) {
-        return value;
-      }
-      var ctor = ctorByClass[className];
-      switch (className) {
-        case boolClass:
-        case dateClass:
-          return new ctor(+value);
-
-        case numberClass:
-        case stringClass:
-          return new ctor(value);
-
-        case regexpClass:
-          result = ctor(value.source, reFlags.exec(value));
-          result.lastIndex = value.lastIndex;
-          return result;
-      }
-    } else {
+    if (result !== undefined) {
+      return result;
+    }
+    if (!isObject(value)) {
       return value;
     }
     var isArr = isArray(value);
-    if (isDeep) {
-      // check for circular references and return corresponding clone
-      var initedStack = !stackA;
-      stackA || (stackA = getArray());
-      stackB || (stackB = getArray());
-
-      var length = stackA.length;
-      while (length--) {
-        if (stackA[length] == value) {
-          return stackB[length];
-        }
-      }
-      result = isArr ? ctor(value.length) : {};
-    }
-    else {
-      result = isArr ? slice(value) : assign({}, value);
-    }
-    // add array properties assigned by `RegExp#exec`
     if (isArr) {
-      if (hasOwnProperty.call(value, 'index')) {
-        result.index = value.index;
+      result = initCloneArray(value);
+      if (!isDeep) {
+        return copyArray(value, result);
       }
-      if (hasOwnProperty.call(value, 'input')) {
-        result.input = value.input;
-      }
-    }
-    // exit for shallow clone
-    if (!isDeep) {
-      return result;
-    }
-    // add the source value to the stack of traversed objects
-    // and associate it with its clone
-    stackA.push(value);
-    stackB.push(result);
+    } else {
+      var tag = getTag(value),
+          isFunc = tag == funcTag || tag == genTag;
 
-    // recursively populate clone (susceptible to call stack limits)
-    (isArr ? baseEach : forOwn)(value, function(objValue, key) {
-      result[key] = baseClone(objValue, isDeep, callback, stackA, stackB);
+      if (isBuffer(value)) {
+        return cloneBuffer(value, isDeep);
+      }
+      if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
+        if (isHostObject(value)) {
+          return object ? value : {};
+        }
+        result = initCloneObject(isFunc ? {} : value);
+        if (!isDeep) {
+          return copySymbols(value, baseAssign(result, value));
+        }
+      } else {
+        if (!cloneableTags[tag]) {
+          return object ? value : {};
+        }
+        result = initCloneByTag(value, tag, baseClone, isDeep);
+      }
+    }
+    // Check for circular references and return its corresponding clone.
+    stack || (stack = new Stack);
+    var stacked = stack.get(value);
+    if (stacked) {
+      return stacked;
+    }
+    stack.set(value, result);
+
+    if (!isArr) {
+      var props = isFull ? getAllKeys(value) : keys(value);
+    }
+    arrayEach(props || value, function(subValue, key) {
+      if (props) {
+        key = subValue;
+        subValue = value[key];
+      }
+      // Recursively populate clone (susceptible to call stack limits).
+      assignValue(result, key, baseClone(subValue, isDeep, isFull, customizer, key, value, stack));
     });
-
-    if (initedStack) {
-      releaseArray(stackA);
-      releaseArray(stackB);
-    }
     return result;
   }
 
@@ -62091,963 +63315,1489 @@ module.exports = osmtogeojson;
    * @param {Object} prototype The object to inherit from.
    * @returns {Object} Returns the new object.
    */
-  function baseCreate(prototype, properties) {
-    return isObject(prototype) ? nativeCreate(prototype) : {};
-  }
-  // fallback for browsers without `Object.create`
-  if (!nativeCreate) {
-    baseCreate = (function() {
-      function Object() {}
-      return function(prototype) {
-        if (isObject(prototype)) {
-          Object.prototype = prototype;
-          var result = new Object;
-          Object.prototype = null;
-        }
-        return result || root.Object();
-      };
-    }());
+  function baseCreate(proto) {
+    return isObject(proto) ? objectCreate(proto) : {};
   }
 
   /**
-   * The base implementation of `_.createCallback` without support for creating
-   * "_.pluck" or "_.where" style callbacks.
+   * The base implementation of `_.forEach` without support for iteratee shorthands.
    *
    * @private
-   * @param {*} [func=identity] The value to convert to a callback.
-   * @param {*} [thisArg] The `this` binding of the created callback.
-   * @param {number} [argCount] The number of arguments the callback accepts.
-   * @returns {Function} Returns a callback function.
+   * @param {Array|Object} collection The collection to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @returns {Array|Object} Returns `collection`.
    */
-  function baseCreateCallback(func, thisArg, argCount) {
-    if (typeof func != 'function') {
-      return identity;
-    }
-    // exit early for no `thisArg` or already bound by `Function#bind`
-    if (typeof thisArg == 'undefined' || !('prototype' in func)) {
-      return func;
-    }
-    var bindData = func.__bindData__;
-    if (typeof bindData == 'undefined') {
-      if (support.funcNames) {
-        bindData = !func.name;
-      }
-      bindData = bindData || !support.funcDecomp;
-      if (!bindData) {
-        var source = fnToString.call(func);
-        if (!support.funcNames) {
-          bindData = !reFuncName.test(source);
-        }
-        if (!bindData) {
-          // checks if `func` references the `this` keyword and stores the result
-          bindData = reThis.test(source);
-          setBindData(func, bindData);
-        }
-      }
-    }
-    // exit early if there are no `this` references or `func` is bound
-    if (bindData === false || (bindData !== true && bindData[1] & 1)) {
-      return func;
-    }
-    switch (argCount) {
-      case 1: return function(value) {
-        return func.call(thisArg, value);
-      };
-      case 2: return function(a, b) {
-        return func.call(thisArg, a, b);
-      };
-      case 3: return function(value, index, collection) {
-        return func.call(thisArg, value, index, collection);
-      };
-      case 4: return function(accumulator, value, index, collection) {
-        return func.call(thisArg, accumulator, value, index, collection);
-      };
-    }
-    return bind(func, thisArg);
-  }
+  var baseEach = createBaseEach(baseForOwn);
 
   /**
-   * The base implementation of `createWrapper` that creates the wrapper and
-   * sets its meta data.
+   * The base implementation of `baseForOwn` which iterates over `object`
+   * properties returned by `keysFunc` and invokes `iteratee` for each property.
+   * Iteratee functions may exit iteration early by explicitly returning `false`.
    *
    * @private
-   * @param {Array} bindData The bind data array.
-   * @returns {Function} Returns the new function.
+   * @param {Object} object The object to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @param {Function} keysFunc The function to get the keys of `object`.
+   * @returns {Object} Returns `object`.
    */
-  function baseCreateWrapper(bindData) {
-    var func = bindData[0],
-        bitmask = bindData[1],
-        partialArgs = bindData[2],
-        partialRightArgs = bindData[3],
-        thisArg = bindData[4],
-        arity = bindData[5];
-
-    var isBind = bitmask & 1,
-        isBindKey = bitmask & 2,
-        isCurry = bitmask & 4,
-        isCurryBound = bitmask & 8,
-        key = func;
-
-    function bound() {
-      var thisBinding = isBind ? thisArg : this;
-      if (partialArgs) {
-        var args = slice(partialArgs);
-        push.apply(args, arguments);
-      }
-      if (partialRightArgs || isCurry) {
-        args || (args = slice(arguments));
-        if (partialRightArgs) {
-          push.apply(args, partialRightArgs);
-        }
-        if (isCurry && args.length < arity) {
-          bitmask |= 16 & ~32;
-          return baseCreateWrapper([func, (isCurryBound ? bitmask : bitmask & ~3), args, null, thisArg, arity]);
-        }
-      }
-      args || (args = arguments);
-      if (isBindKey) {
-        func = thisBinding[key];
-      }
-      if (this instanceof bound) {
-        thisBinding = baseCreate(func.prototype);
-        var result = func.apply(thisBinding, args);
-        return isObject(result) ? result : thisBinding;
-      }
-      return func.apply(thisBinding, args);
-    }
-    setBindData(bound, bindData);
-    return bound;
-  }
+  var baseFor = createBaseFor();
 
   /**
-   * The base implementation of `_.merge` without argument juggling or support
-   * for `thisArg` binding.
+   * The base implementation of `_.forOwn` without support for iteratee shorthands.
    *
    * @private
-   * @param {Object} object The destination object.
-   * @param {Object} source The source object.
-   * @param {Function} [callback] The function to customize merging properties.
-   * @param {Array} [stackA=[]] Tracks traversed source objects.
-   * @param {Array} [stackB=[]] Associates values with source counterparts.
+   * @param {Object} object The object to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @returns {Object} Returns `object`.
    */
-  function baseMerge(object, source, callback, stackA, stackB) {
-    (isArray(source) ? forEach : forOwn)(source, function(source, key) {
-      var found,
-          isArr,
-          result = source,
-          value = object[key];
-
-      if (source && ((isArr = isArray(source)) || isPlainObject(source))) {
-        // avoid merging previously merged cyclic sources
-        var stackLength = stackA.length;
-        while (stackLength--) {
-          if ((found = stackA[stackLength] == source)) {
-            value = stackB[stackLength];
-            break;
-          }
-        }
-        if (!found) {
-          var isShallow;
-          if (callback) {
-            result = callback(value, source);
-            if ((isShallow = typeof result != 'undefined')) {
-              value = result;
-            }
-          }
-          if (!isShallow) {
-            value = isArr
-              ? (isArray(value) ? value : [])
-              : (isPlainObject(value) ? value : {});
-          }
-          // add `source` and associated `value` to the stack of traversed objects
-          stackA.push(source);
-          stackB.push(value);
-
-          // recursively merge objects and arrays (susceptible to call stack limits)
-          if (!isShallow) {
-            baseMerge(value, source, callback, stackA, stackB);
-          }
-        }
-      }
-      else {
-        if (callback) {
-          result = callback(value, source);
-          if (typeof result == 'undefined') {
-            result = source;
-          }
-        }
-        if (typeof result != 'undefined') {
-          value = result;
-        }
-      }
-      object[key] = value;
-    });
+  function baseForOwn(object, iteratee) {
+    return object && baseFor(object, iteratee, keys);
   }
 
   /**
-   * Creates a function that, when called, either curries or invokes `func`
-   * with an optional `this` binding and partially applied arguments.
+   * The base implementation of `_.get` without support for default values.
    *
    * @private
-   * @param {Function|string} func The function or method name to reference.
-   * @param {number} bitmask The bitmask of method flags to compose.
+   * @param {Object} object The object to query.
+   * @param {Array|string} path The path of the property to get.
+   * @returns {*} Returns the resolved value.
+   */
+  function baseGet(object, path) {
+    path = isKey(path, object) ? [path] : castPath(path);
+
+    var index = 0,
+        length = path.length;
+
+    while (object != null && index < length) {
+      object = object[toKey(path[index++])];
+    }
+    return (index && index == length) ? object : undefined;
+  }
+
+  /**
+   * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
+   * `keysFunc` and `symbolsFunc` to get the enumerable property names and
+   * symbols of `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @param {Function} keysFunc The function to get the keys of `object`.
+   * @param {Function} symbolsFunc The function to get the symbols of `object`.
+   * @returns {Array} Returns the array of property names and symbols.
+   */
+  function baseGetAllKeys(object, keysFunc, symbolsFunc) {
+    var result = keysFunc(object);
+    return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
+  }
+
+  /**
+   * The base implementation of `getTag`.
+   *
+   * @private
+   * @param {*} value The value to query.
+   * @returns {string} Returns the `toStringTag`.
+   */
+  function baseGetTag(value) {
+    return objectToString.call(value);
+  }
+
+  /**
+   * The base implementation of `_.hasIn` without support for deep paths.
+   *
+   * @private
+   * @param {Object} [object] The object to query.
+   * @param {Array|string} key The key to check.
+   * @returns {boolean} Returns `true` if `key` exists, else `false`.
+   */
+  function baseHasIn(object, key) {
+    return object != null && key in Object(object);
+  }
+
+  /**
+   * The base implementation of `_.isEqual` which supports partial comparisons
+   * and tracks traversed objects.
+   *
+   * @private
+   * @param {*} value The value to compare.
+   * @param {*} other The other value to compare.
+   * @param {Function} [customizer] The function to customize comparisons.
+   * @param {boolean} [bitmask] The bitmask of comparison flags.
    *  The bitmask may be composed of the following flags:
-   *  1 - `_.bind`
-   *  2 - `_.bindKey`
-   *  4 - `_.curry`
-   *  8 - `_.curry` (bound)
-   *  16 - `_.partial`
-   *  32 - `_.partialRight`
-   * @param {Array} [partialArgs] An array of arguments to prepend to those
-   *  provided to the new function.
-   * @param {Array} [partialRightArgs] An array of arguments to append to those
-   *  provided to the new function.
-   * @param {*} [thisArg] The `this` binding of `func`.
-   * @param {number} [arity] The arity of `func`.
-   * @returns {Function} Returns the new function.
+   *     1 - Unordered comparison
+   *     2 - Partial comparison
+   * @param {Object} [stack] Tracks traversed `value` and `other` objects.
+   * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
    */
-  function createWrapper(func, bitmask, partialArgs, partialRightArgs, thisArg, arity) {
-    var isBind = bitmask & 1,
-        isBindKey = bitmask & 2,
-        isCurry = bitmask & 4,
-        isCurryBound = bitmask & 8,
-        isPartial = bitmask & 16,
-        isPartialRight = bitmask & 32;
-
-    if (!isBindKey && !isFunction(func)) {
-      throw new TypeError;
+  function baseIsEqual(value, other, customizer, bitmask, stack) {
+    if (value === other) {
+      return true;
     }
-    if (isPartial && !partialArgs.length) {
-      bitmask &= ~16;
-      isPartial = partialArgs = false;
+    if (value == null || other == null || (!isObject(value) && !isObjectLike(other))) {
+      return value !== value && other !== other;
     }
-    if (isPartialRight && !partialRightArgs.length) {
-      bitmask &= ~32;
-      isPartialRight = partialRightArgs = false;
-    }
-    var bindData = func && func.__bindData__;
-    if (bindData && bindData !== true) {
-      // clone `bindData`
-      bindData = slice(bindData);
-      if (bindData[2]) {
-        bindData[2] = slice(bindData[2]);
-      }
-      if (bindData[3]) {
-        bindData[3] = slice(bindData[3]);
-      }
-      // set `thisBinding` is not previously bound
-      if (isBind && !(bindData[1] & 1)) {
-        bindData[4] = thisArg;
-      }
-      // set if previously bound but not currently (subsequent curried functions)
-      if (!isBind && bindData[1] & 1) {
-        bitmask |= 8;
-      }
-      // set curried arity if not yet set
-      if (isCurry && !(bindData[1] & 4)) {
-        bindData[5] = arity;
-      }
-      // append partial left arguments
-      if (isPartial) {
-        push.apply(bindData[2] || (bindData[2] = []), partialArgs);
-      }
-      // append partial right arguments
-      if (isPartialRight) {
-        unshift.apply(bindData[3] || (bindData[3] = []), partialRightArgs);
-      }
-      // merge flags
-      bindData[1] |= bitmask;
-      return createWrapper.apply(null, bindData);
-    }
-    // fast path for `_.bind`
-    var creater = (bitmask == 1 || bitmask === 17) ? baseBind : baseCreateWrapper;
-    return creater([func, bitmask, partialArgs, partialRightArgs, thisArg, arity]);
+    return baseIsEqualDeep(value, other, baseIsEqual, customizer, bitmask, stack);
   }
 
   /**
-   * Creates compiled iteration functions.
+   * A specialized version of `baseIsEqual` for arrays and objects which performs
+   * deep comparisons and tracks traversed objects enabling objects with circular
+   * references to be compared.
    *
    * @private
-   * @param {...Object} [options] The compile options object(s).
-   * @param {string} [options.array] Code to determine if the iterable is an array or array-like.
-   * @param {boolean} [options.useHas] Specify using `hasOwnProperty` checks in the object loop.
-   * @param {Function} [options.keys] A reference to `_.keys` for use in own property iteration.
-   * @param {string} [options.args] A comma separated string of iteration function arguments.
-   * @param {string} [options.top] Code to execute before the iteration branches.
-   * @param {string} [options.loop] Code to execute in the object loop.
-   * @param {string} [options.bottom] Code to execute after the iteration branches.
-   * @returns {Function} Returns the compiled function.
+   * @param {Object} object The object to compare.
+   * @param {Object} other The other object to compare.
+   * @param {Function} equalFunc The function to determine equivalents of values.
+   * @param {Function} [customizer] The function to customize comparisons.
+   * @param {number} [bitmask] The bitmask of comparison flags. See `baseIsEqual`
+   *  for more details.
+   * @param {Object} [stack] Tracks traversed `object` and `other` objects.
+   * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
    */
-  function createIterator() {
-    // data properties
-    iteratorData.shadowedProps = shadowedProps;
+  function baseIsEqualDeep(object, other, equalFunc, customizer, bitmask, stack) {
+    var objIsArr = isArray(object),
+        othIsArr = isArray(other),
+        objTag = arrayTag,
+        othTag = arrayTag;
 
-    // iterator options
-    iteratorData.array = iteratorData.bottom = iteratorData.loop = iteratorData.top = '';
-    iteratorData.init = 'iterable';
-    iteratorData.useHas = true;
+    if (!objIsArr) {
+      objTag = getTag(object);
+      objTag = objTag == argsTag ? objectTag : objTag;
+    }
+    if (!othIsArr) {
+      othTag = getTag(other);
+      othTag = othTag == argsTag ? objectTag : othTag;
+    }
+    var objIsObj = objTag == objectTag && !isHostObject(object),
+        othIsObj = othTag == objectTag && !isHostObject(other),
+        isSameTag = objTag == othTag;
 
-    // merge options into a template data object
-    for (var object, index = 0; object = arguments[index]; index++) {
-      for (var key in object) {
-        iteratorData[key] = object[key];
+    if (isSameTag && !objIsObj) {
+      stack || (stack = new Stack);
+      return (objIsArr || isTypedArray(object))
+        ? equalArrays(object, other, equalFunc, customizer, bitmask, stack)
+        : equalByTag(object, other, objTag, equalFunc, customizer, bitmask, stack);
+    }
+    if (!(bitmask & PARTIAL_COMPARE_FLAG)) {
+      var objIsWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__'),
+          othIsWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__');
+
+      if (objIsWrapped || othIsWrapped) {
+        var objUnwrapped = objIsWrapped ? object.value() : object,
+            othUnwrapped = othIsWrapped ? other.value() : other;
+
+        stack || (stack = new Stack);
+        return equalFunc(objUnwrapped, othUnwrapped, customizer, bitmask, stack);
       }
     }
-    var args = iteratorData.args;
-    iteratorData.firstArg = /^[^,]+/.exec(args)[0];
-
-    // create the function factory
-    var factory = Function(
-        'baseCreateCallback, errorClass, errorProto, hasOwnProperty, ' +
-        'indicatorObject, isArguments, isArray, isString, keys, objectProto, ' +
-        'objectTypes, nonEnumProps, stringClass, stringProto, toString',
-      'return function(' + args + ') {\n' + iteratorTemplate(iteratorData) + '\n}'
-    );
-
-    // return the compiled function
-    return factory(
-      baseCreateCallback, errorClass, errorProto, hasOwnProperty,
-      indicatorObject, isArguments, isArray, isString, iteratorData.keys, objectProto,
-      objectTypes, nonEnumProps, stringClass, stringProto, toString
-    );
-  }
-
-  /**
-   * Checks if `value` is a native function.
-   *
-   * @private
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a native function, else `false`.
-   */
-  function isNative(value) {
-    return typeof value == 'function' && reNative.test(value);
-  }
-
-  /**
-   * Sets `this` binding data on a given function.
-   *
-   * @private
-   * @param {Function} func The function to set data on.
-   * @param {Array} value The data array to set.
-   */
-  var setBindData = !defineProperty ? noop : function(func, value) {
-    descriptor.value = value;
-    defineProperty(func, '__bindData__', descriptor);
-  };
-
-  /**
-   * A fallback implementation of `isPlainObject` which checks if a given value
-   * is an object created by the `Object` constructor, assuming objects created
-   * by the `Object` constructor have no inherited enumerable properties and that
-   * there are no `Object.prototype` extensions.
-   *
-   * @private
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
-   */
-  function shimIsPlainObject(value) {
-    var ctor,
-        result;
-
-    // avoid non Object objects, `arguments` objects, and DOM elements
-    if (!(value && toString.call(value) == objectClass) ||
-        (ctor = value.constructor, isFunction(ctor) && !(ctor instanceof ctor)) ||
-        (!support.argsClass && isArguments(value)) ||
-        (!support.nodeClass && isNode(value))) {
+    if (!isSameTag) {
       return false;
     }
-    // IE < 9 iterates inherited properties before own properties. If the first
-    // iterated property is an object's own property then there are no inherited
-    // enumerable properties.
-    if (support.ownLast) {
-      forIn(value, function(value, key, object) {
-        result = hasOwnProperty.call(object, key);
-        return false;
-      });
-      return result !== false;
-    }
-    // In most environments an object's own properties are iterated before
-    // its inherited properties. If the last iterated property is an object's
-    // own property then there are no inherited enumerable properties.
-    forIn(value, function(value, key) {
-      result = key;
-    });
-    return typeof result == 'undefined' || hasOwnProperty.call(value, result);
-  }
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Checks if `value` is an `arguments` object.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is an `arguments` object, else `false`.
-   * @example
-   *
-   * (function() { return _.isArguments(arguments); })(1, 2, 3);
-   * // => true
-   *
-   * _.isArguments([1, 2, 3]);
-   * // => false
-   */
-  function isArguments(value) {
-    return value && typeof value == 'object' && typeof value.length == 'number' &&
-      toString.call(value) == argsClass || false;
-  }
-  // fallback for browsers that can't detect `arguments` objects by [[Class]]
-  if (!support.argsClass) {
-    isArguments = function(value) {
-      return value && typeof value == 'object' && typeof value.length == 'number' &&
-        hasOwnProperty.call(value, 'callee') && !propertyIsEnumerable.call(value, 'callee') || false;
-    };
+    stack || (stack = new Stack);
+    return equalObjects(object, other, equalFunc, customizer, bitmask, stack);
   }
 
   /**
-   * Checks if `value` is an array.
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is an array, else `false`.
-   * @example
-   *
-   * (function() { return _.isArray(arguments); })();
-   * // => false
-   *
-   * _.isArray([1, 2, 3]);
-   * // => true
-   */
-  var isArray = nativeIsArray || function(value) {
-    return value && typeof value == 'object' && typeof value.length == 'number' &&
-      toString.call(value) == arrayClass || false;
-  };
-
-  /**
-   * A fallback implementation of `Object.keys` which produces an array of the
-   * given object's own enumerable property names.
+   * The base implementation of `_.isMatch` without support for iteratee shorthands.
    *
    * @private
-   * @type Function
    * @param {Object} object The object to inspect.
-   * @returns {Array} Returns an array of property names.
+   * @param {Object} source The object of property values to match.
+   * @param {Array} matchData The property names, values, and compare flags to match.
+   * @param {Function} [customizer] The function to customize comparisons.
+   * @returns {boolean} Returns `true` if `object` is a match, else `false`.
    */
-  var shimKeys = createIterator({
-    'args': 'object',
-    'init': '[]',
-    'top': 'if (!(objectTypes[typeof object])) return result',
-    'loop': 'result.push(index)'
-  });
+  function baseIsMatch(object, source, matchData, customizer) {
+    var index = matchData.length,
+        length = index,
+        noCustomizer = !customizer;
 
-  /**
-   * Creates an array composed of the own enumerable property names of an object.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {Object} object The object to inspect.
-   * @returns {Array} Returns an array of property names.
-   * @example
-   *
-   * _.keys({ 'one': 1, 'two': 2, 'three': 3 });
-   * // => ['one', 'two', 'three'] (property order is not guaranteed across environments)
-   */
-  var keys = !nativeKeys ? shimKeys : function(object) {
-    if (!isObject(object)) {
-      return [];
-    }
-    if ((support.enumPrototypes && typeof object == 'function') ||
-        (support.nonEnumArgs && object.length && isArguments(object))) {
-      return shimKeys(object);
-    }
-    return nativeKeys(object);
-  };
-
-  /** Reusable iterator options shared by `each`, `forIn`, and `forOwn` */
-  var eachIteratorOptions = {
-    'args': 'collection, callback, thisArg',
-    'top': "callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3)",
-    'array': "typeof length == 'number'",
-    'keys': keys,
-    'loop': 'if (callback(iterable[index], index, collection) === false) return result'
-  };
-
-  /** Reusable iterator options for `assign` and `defaults` */
-  var defaultsIteratorOptions = {
-    'args': 'object, source, guard',
-    'top':
-      'var args = arguments,\n' +
-      '    argsIndex = 0,\n' +
-      "    argsLength = typeof guard == 'number' ? 2 : args.length;\n" +
-      'while (++argsIndex < argsLength) {\n' +
-      '  iterable = args[argsIndex];\n' +
-      '  if (iterable && objectTypes[typeof iterable]) {',
-    'keys': keys,
-    'loop': "if (typeof result[index] == 'undefined') result[index] = iterable[index]",
-    'bottom': '  }\n}'
-  };
-
-  /** Reusable iterator options for `forIn` and `forOwn` */
-  var forOwnIteratorOptions = {
-    'top': 'if (!objectTypes[typeof iterable]) return result;\n' + eachIteratorOptions.top,
-    'array': false
-  };
-
-  /**
-   * A function compiled to iterate `arguments` objects, arrays, objects, and
-   * strings consistenly across environments, executing the callback for each
-   * element in the collection. The callback is bound to `thisArg` and invoked
-   * with three arguments; (value, index|key, collection). Callbacks may exit
-   * iteration early by explicitly returning `false`.
-   *
-   * @private
-   * @type Function
-   * @param {Array|Object|string} collection The collection to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Array|Object|string} Returns `collection`.
-   */
-  var baseEach = createIterator(eachIteratorOptions);
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Assigns own enumerable properties of source object(s) to the destination
-   * object. Subsequent sources will overwrite property assignments of previous
-   * sources. If a callback is provided it will be executed to produce the
-   * assigned values. The callback is bound to `thisArg` and invoked with two
-   * arguments; (objectValue, sourceValue).
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @alias extend
-   * @category Objects
-   * @param {Object} object The destination object.
-   * @param {...Object} [source] The source objects.
-   * @param {Function} [callback] The function to customize assigning values.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns the destination object.
-   * @example
-   *
-   * _.assign({ 'name': 'fred' }, { 'employer': 'slate' });
-   * // => { 'name': 'fred', 'employer': 'slate' }
-   *
-   * var defaults = _.partialRight(_.assign, function(a, b) {
-   *   return typeof a == 'undefined' ? b : a;
-   * });
-   *
-   * var object = { 'name': 'barney' };
-   * defaults(object, { 'name': 'fred', 'employer': 'slate' });
-   * // => { 'name': 'barney', 'employer': 'slate' }
-   */
-  var assign = createIterator(defaultsIteratorOptions, {
-    'top':
-      defaultsIteratorOptions.top.replace(';',
-        ';\n' +
-        "if (argsLength > 3 && typeof args[argsLength - 2] == 'function') {\n" +
-        '  var callback = baseCreateCallback(args[--argsLength - 1], args[argsLength--], 2);\n' +
-        "} else if (argsLength > 2 && typeof args[argsLength - 1] == 'function') {\n" +
-        '  callback = args[--argsLength];\n' +
-        '}'
-      ),
-    'loop': 'result[index] = callback ? callback(result[index], iterable[index]) : iterable[index]'
-  });
-
-  /**
-   * Creates a clone of `value`. If `isDeep` is `true` nested objects will also
-   * be cloned, otherwise they will be assigned by reference. If a callback
-   * is provided it will be executed to produce the cloned values. If the
-   * callback returns `undefined` cloning will be handled by the method instead.
-   * The callback is bound to `thisArg` and invoked with one argument; (value).
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to clone.
-   * @param {boolean} [isDeep=false] Specify a deep clone.
-   * @param {Function} [callback] The function to customize cloning values.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {*} Returns the cloned value.
-   * @example
-   *
-   * var characters = [
-   *   { 'name': 'barney', 'age': 36 },
-   *   { 'name': 'fred',   'age': 40 }
-   * ];
-   *
-   * var shallow = _.clone(characters);
-   * shallow[0] === characters[0];
-   * // => true
-   *
-   * var deep = _.clone(characters, true);
-   * deep[0] === characters[0];
-   * // => false
-   *
-   * _.mixin({
-   *   'clone': _.partialRight(_.clone, function(value) {
-   *     return _.isElement(value) ? value.cloneNode(false) : undefined;
-   *   })
-   * });
-   *
-   * var clone = _.clone(document.body);
-   * clone.childNodes.length;
-   * // => 0
-   */
-  function clone(value, isDeep, callback, thisArg) {
-    // allows working with "Collections" methods without using their `index`
-    // and `collection` arguments for `isDeep` and `callback`
-    if (typeof isDeep != 'boolean' && isDeep != null) {
-      thisArg = callback;
-      callback = isDeep;
-      isDeep = false;
-    }
-    return baseClone(value, isDeep, typeof callback == 'function' && baseCreateCallback(callback, thisArg, 1));
-  }
-
-  /**
-   * Iterates over own and inherited enumerable properties of an object,
-   * executing the callback for each property. The callback is bound to `thisArg`
-   * and invoked with three arguments; (value, key, object). Callbacks may exit
-   * iteration early by explicitly returning `false`.
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @category Objects
-   * @param {Object} object The object to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns `object`.
-   * @example
-   *
-   * function Shape() {
-   *   this.x = 0;
-   *   this.y = 0;
-   * }
-   *
-   * Shape.prototype.move = function(x, y) {
-   *   this.x += x;
-   *   this.y += y;
-   * };
-   *
-   * _.forIn(new Shape, function(value, key) {
-   *   console.log(key);
-   * });
-   * // => logs 'x', 'y', and 'move' (property order is not guaranteed across environments)
-   */
-  var forIn = createIterator(eachIteratorOptions, forOwnIteratorOptions, {
-    'useHas': false
-  });
-
-  /**
-   * Iterates over own enumerable properties of an object, executing the callback
-   * for each property. The callback is bound to `thisArg` and invoked with three
-   * arguments; (value, key, object). Callbacks may exit iteration early by
-   * explicitly returning `false`.
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @category Objects
-   * @param {Object} object The object to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns `object`.
-   * @example
-   *
-   * _.forOwn({ '0': 'zero', '1': 'one', 'length': 2 }, function(num, key) {
-   *   console.log(key);
-   * });
-   * // => logs '0', '1', and 'length' (property order is not guaranteed across environments)
-   */
-  var forOwn = createIterator(eachIteratorOptions, forOwnIteratorOptions);
-
-  /**
-   * Checks if `value` is empty. Arrays, strings, or `arguments` objects with a
-   * length of `0` and objects with no own enumerable properties are considered
-   * "empty".
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {Array|Object|string} value The value to inspect.
-   * @returns {boolean} Returns `true` if the `value` is empty, else `false`.
-   * @example
-   *
-   * _.isEmpty([1, 2, 3]);
-   * // => false
-   *
-   * _.isEmpty({});
-   * // => true
-   *
-   * _.isEmpty('');
-   * // => true
-   */
-  function isEmpty(value) {
-    var result = true;
-    if (!value) {
-      return result;
-    }
-    var className = toString.call(value),
-        length = value.length;
-
-    if ((className == arrayClass || className == stringClass ||
-        (support.argsClass ? className == argsClass : isArguments(value))) ||
-        (className == objectClass && typeof length == 'number' && isFunction(value.splice))) {
+    if (object == null) {
       return !length;
     }
-    forOwn(value, function() {
-      return (result = false);
-    });
+    object = Object(object);
+    while (index--) {
+      var data = matchData[index];
+      if ((noCustomizer && data[2])
+            ? data[1] !== object[data[0]]
+            : !(data[0] in object)
+          ) {
+        return false;
+      }
+    }
+    while (++index < length) {
+      data = matchData[index];
+      var key = data[0],
+          objValue = object[key],
+          srcValue = data[1];
+
+      if (noCustomizer && data[2]) {
+        if (objValue === undefined && !(key in object)) {
+          return false;
+        }
+      } else {
+        var stack = new Stack;
+        if (customizer) {
+          var result = customizer(objValue, srcValue, key, object, source, stack);
+        }
+        if (!(result === undefined
+              ? baseIsEqual(srcValue, objValue, customizer, UNORDERED_COMPARE_FLAG | PARTIAL_COMPARE_FLAG, stack)
+              : result
+            )) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * The base implementation of `_.isNative` without bad shim checks.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a native function,
+   *  else `false`.
+   */
+  function baseIsNative(value) {
+    if (!isObject(value) || isMasked(value)) {
+      return false;
+    }
+    var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+    return pattern.test(toSource(value));
+  }
+
+  /**
+   * The base implementation of `_.isTypedArray` without Node.js optimizations.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+   */
+  function baseIsTypedArray(value) {
+    return isObjectLike(value) &&
+      isLength(value.length) && !!typedArrayTags[objectToString.call(value)];
+  }
+
+  /**
+   * The base implementation of `_.iteratee`.
+   *
+   * @private
+   * @param {*} [value=_.identity] The value to convert to an iteratee.
+   * @returns {Function} Returns the iteratee.
+   */
+  function baseIteratee(value) {
+    // Don't store the `typeof` result in a variable to avoid a JIT bug in Safari 9.
+    // See https://bugs.webkit.org/show_bug.cgi?id=156034 for more details.
+    if (typeof value == 'function') {
+      return value;
+    }
+    if (value == null) {
+      return identity;
+    }
+    if (typeof value == 'object') {
+      return isArray(value)
+        ? baseMatchesProperty(value[0], value[1])
+        : baseMatches(value);
+    }
+    return property(value);
+  }
+
+  /**
+   * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names.
+   */
+  function baseKeys(object) {
+    if (!isPrototype(object)) {
+      return nativeKeys(object);
+    }
+    var result = [];
+    for (var key in Object(object)) {
+      if (hasOwnProperty.call(object, key) && key != 'constructor') {
+        result.push(key);
+      }
+    }
     return result;
   }
 
   /**
-   * Checks if `value` is a function.
+   * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
    *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a function, else `false`.
-   * @example
-   *
-   * _.isFunction(_);
-   * // => true
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names.
    */
-  function isFunction(value) {
-    return typeof value == 'function';
+  function baseKeysIn(object) {
+    if (!isObject(object)) {
+      return nativeKeysIn(object);
+    }
+    var isProto = isPrototype(object),
+        result = [];
+
+    for (var key in object) {
+      if (!(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {
+        result.push(key);
+      }
+    }
+    return result;
   }
-  // fallback for older versions of Chrome and Safari
-  if (isFunction(/x/)) {
-    isFunction = function(value) {
-      return typeof value == 'function' && toString.call(value) == funcClass;
+
+  /**
+   * The base implementation of `_.matches` which doesn't clone `source`.
+   *
+   * @private
+   * @param {Object} source The object of property values to match.
+   * @returns {Function} Returns the new spec function.
+   */
+  function baseMatches(source) {
+    var matchData = getMatchData(source);
+    if (matchData.length == 1 && matchData[0][2]) {
+      return matchesStrictComparable(matchData[0][0], matchData[0][1]);
+    }
+    return function(object) {
+      return object === source || baseIsMatch(object, source, matchData);
     };
   }
 
   /**
-   * Checks if `value` is the language type of Object.
-   * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+   * The base implementation of `_.matchesProperty` which doesn't clone `srcValue`.
    *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is an object, else `false`.
-   * @example
-   *
-   * _.isObject({});
-   * // => true
-   *
-   * _.isObject([1, 2, 3]);
-   * // => true
-   *
-   * _.isObject(1);
-   * // => false
+   * @private
+   * @param {string} path The path of the property to get.
+   * @param {*} srcValue The value to match.
+   * @returns {Function} Returns the new spec function.
    */
-  function isObject(value) {
-    // check if the value is the ECMAScript language type of Object
-    // http://es5.github.io/#x8
-    // and avoid a V8 bug
-    // http://code.google.com/p/v8/issues/detail?id=2291
-    return !!(value && objectTypes[typeof value]);
-  }
-
-  /**
-   * Checks if `value` is an object created by the `Object` constructor.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
-   * @example
-   *
-   * function Shape() {
-   *   this.x = 0;
-   *   this.y = 0;
-   * }
-   *
-   * _.isPlainObject(new Shape);
-   * // => false
-   *
-   * _.isPlainObject([1, 2, 3]);
-   * // => false
-   *
-   * _.isPlainObject({ 'x': 0, 'y': 0 });
-   * // => true
-   */
-  var isPlainObject = !getPrototypeOf ? shimIsPlainObject : function(value) {
-    if (!(value && toString.call(value) == objectClass) || (!support.argsClass && isArguments(value))) {
-      return false;
+  function baseMatchesProperty(path, srcValue) {
+    if (isKey(path) && isStrictComparable(srcValue)) {
+      return matchesStrictComparable(toKey(path), srcValue);
     }
-    var valueOf = value.valueOf,
-        objProto = isNative(valueOf) && (objProto = getPrototypeOf(valueOf)) && getPrototypeOf(objProto);
-
-    return objProto
-      ? (value == objProto || getPrototypeOf(value) == objProto)
-      : shimIsPlainObject(value);
-  };
-
-  /**
-   * Checks if `value` is a string.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a string, else `false`.
-   * @example
-   *
-   * _.isString('fred');
-   * // => true
-   */
-  function isString(value) {
-    return typeof value == 'string' ||
-      value && typeof value == 'object' && toString.call(value) == stringClass || false;
+    return function(object) {
+      var objValue = get(object, path);
+      return (objValue === undefined && objValue === srcValue)
+        ? hasIn(object, path)
+        : baseIsEqual(srcValue, objValue, undefined, UNORDERED_COMPARE_FLAG | PARTIAL_COMPARE_FLAG);
+    };
   }
 
   /**
-   * Recursively merges own enumerable properties of the source object(s), that
-   * don't resolve to `undefined` into the destination object. Subsequent sources
-   * will overwrite property assignments of previous sources. If a callback is
-   * provided it will be executed to produce the merged values of the destination
-   * and source properties. If the callback returns `undefined` merging will
-   * be handled by the method instead. The callback is bound to `thisArg` and
-   * invoked with two arguments; (objectValue, sourceValue).
+   * The base implementation of `_.merge` without support for multiple sources.
    *
-   * @static
-   * @memberOf _
-   * @category Objects
+   * @private
    * @param {Object} object The destination object.
-   * @param {...Object} [source] The source objects.
-   * @param {Function} [callback] The function to customize merging properties.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns the destination object.
-   * @example
-   *
-   * var names = {
-   *   'characters': [
-   *     { 'name': 'barney' },
-   *     { 'name': 'fred' }
-   *   ]
-   * };
-   *
-   * var ages = {
-   *   'characters': [
-   *     { 'age': 36 },
-   *     { 'age': 40 }
-   *   ]
-   * };
-   *
-   * _.merge(names, ages);
-   * // => { 'characters': [{ 'name': 'barney', 'age': 36 }, { 'name': 'fred', 'age': 40 }] }
-   *
-   * var food = {
-   *   'fruits': ['apple'],
-   *   'vegetables': ['beet']
-   * };
-   *
-   * var otherFood = {
-   *   'fruits': ['banana'],
-   *   'vegetables': ['carrot']
-   * };
-   *
-   * _.merge(food, otherFood, function(a, b) {
-   *   return _.isArray(a) ? a.concat(b) : undefined;
-   * });
-   * // => { 'fruits': ['apple', 'banana'], 'vegetables': ['beet', 'carrot] }
+   * @param {Object} source The source object.
+   * @param {number} srcIndex The index of `source`.
+   * @param {Function} [customizer] The function to customize merged values.
+   * @param {Object} [stack] Tracks traversed source values and their merged
+   *  counterparts.
    */
-  function merge(object) {
-    var args = arguments,
-        length = 2;
+  function baseMerge(object, source, srcIndex, customizer, stack) {
+    if (object === source) {
+      return;
+    }
+    if (!(isArray(source) || isTypedArray(source))) {
+      var props = baseKeysIn(source);
+    }
+    arrayEach(props || source, function(srcValue, key) {
+      if (props) {
+        key = srcValue;
+        srcValue = source[key];
+      }
+      if (isObject(srcValue)) {
+        stack || (stack = new Stack);
+        baseMergeDeep(object, source, key, srcIndex, baseMerge, customizer, stack);
+      }
+      else {
+        var newValue = customizer
+          ? customizer(object[key], srcValue, (key + ''), object, source, stack)
+          : undefined;
 
-    if (!isObject(object)) {
-      return object;
+        if (newValue === undefined) {
+          newValue = srcValue;
+        }
+        assignMergeValue(object, key, newValue);
+      }
+    });
+  }
+
+  /**
+   * A specialized version of `baseMerge` for arrays and objects which performs
+   * deep merges and tracks traversed objects enabling objects with circular
+   * references to be merged.
+   *
+   * @private
+   * @param {Object} object The destination object.
+   * @param {Object} source The source object.
+   * @param {string} key The key of the value to merge.
+   * @param {number} srcIndex The index of `source`.
+   * @param {Function} mergeFunc The function to merge values.
+   * @param {Function} [customizer] The function to customize assigned values.
+   * @param {Object} [stack] Tracks traversed source values and their merged
+   *  counterparts.
+   */
+  function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, stack) {
+    var objValue = object[key],
+        srcValue = source[key],
+        stacked = stack.get(srcValue);
+
+    if (stacked) {
+      assignMergeValue(object, key, stacked);
+      return;
     }
-    // allows working with `_.reduce` and `_.reduceRight` without using
-    // their `index` and `collection` arguments
-    if (typeof args[2] != 'number') {
-      length = args.length;
+    var newValue = customizer
+      ? customizer(objValue, srcValue, (key + ''), object, source, stack)
+      : undefined;
+
+    var isCommon = newValue === undefined;
+
+    if (isCommon) {
+      newValue = srcValue;
+      if (isArray(srcValue) || isTypedArray(srcValue)) {
+        if (isArray(objValue)) {
+          newValue = objValue;
+        }
+        else if (isArrayLikeObject(objValue)) {
+          newValue = copyArray(objValue);
+        }
+        else {
+          isCommon = false;
+          newValue = baseClone(srcValue, true);
+        }
+      }
+      else if (isPlainObject(srcValue) || isArguments(srcValue)) {
+        if (isArguments(objValue)) {
+          newValue = toPlainObject(objValue);
+        }
+        else if (!isObject(objValue) || (srcIndex && isFunction(objValue))) {
+          isCommon = false;
+          newValue = baseClone(srcValue, true);
+        }
+        else {
+          newValue = objValue;
+        }
+      }
+      else {
+        isCommon = false;
+      }
     }
-    if (length > 3 && typeof args[length - 2] == 'function') {
-      var callback = baseCreateCallback(args[--length - 1], args[length--], 2);
-    } else if (length > 2 && typeof args[length - 1] == 'function') {
-      callback = args[--length];
+    if (isCommon) {
+      // Recursively merge objects and arrays (susceptible to call stack limits).
+      stack.set(srcValue, newValue);
+      mergeFunc(newValue, srcValue, srcIndex, customizer, stack);
+      stack['delete'](srcValue);
     }
-    var sources = slice(arguments, 1, length),
-        index = -1,
-        stackA = getArray(),
-        stackB = getArray();
+    assignMergeValue(object, key, newValue);
+  }
+
+  /**
+   * A specialized version of `baseProperty` which supports deep paths.
+   *
+   * @private
+   * @param {Array|string} path The path of the property to get.
+   * @returns {Function} Returns the new accessor function.
+   */
+  function basePropertyDeep(path) {
+    return function(object) {
+      return baseGet(object, path);
+    };
+  }
+
+  /**
+   * The base implementation of `_.rest` which doesn't validate or coerce arguments.
+   *
+   * @private
+   * @param {Function} func The function to apply a rest parameter to.
+   * @param {number} [start=func.length-1] The start position of the rest parameter.
+   * @returns {Function} Returns the new function.
+   */
+  function baseRest(func, start) {
+    start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+    return function() {
+      var args = arguments,
+          index = -1,
+          length = nativeMax(args.length - start, 0),
+          array = Array(length);
+
+      while (++index < length) {
+        array[index] = args[start + index];
+      }
+      index = -1;
+      var otherArgs = Array(start + 1);
+      while (++index < start) {
+        otherArgs[index] = args[index];
+      }
+      otherArgs[start] = array;
+      return apply(func, this, otherArgs);
+    };
+  }
+
+  /**
+   * The base implementation of `_.toString` which doesn't convert nullish
+   * values to empty strings.
+   *
+   * @private
+   * @param {*} value The value to process.
+   * @returns {string} Returns the string.
+   */
+  function baseToString(value) {
+    // Exit early for strings to avoid a performance hit in some environments.
+    if (typeof value == 'string') {
+      return value;
+    }
+    if (isSymbol(value)) {
+      return symbolToString ? symbolToString.call(value) : '';
+    }
+    var result = (value + '');
+    return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+  }
+
+  /**
+   * Casts `value` to a path array if it's not one.
+   *
+   * @private
+   * @param {*} value The value to inspect.
+   * @returns {Array} Returns the cast property path array.
+   */
+  function castPath(value) {
+    return isArray(value) ? value : stringToPath(value);
+  }
+
+  /**
+   * Creates a clone of  `buffer`.
+   *
+   * @private
+   * @param {Buffer} buffer The buffer to clone.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Buffer} Returns the cloned buffer.
+   */
+  function cloneBuffer(buffer, isDeep) {
+    if (isDeep) {
+      return buffer.slice();
+    }
+    var result = new buffer.constructor(buffer.length);
+    buffer.copy(result);
+    return result;
+  }
+
+  /**
+   * Creates a clone of `arrayBuffer`.
+   *
+   * @private
+   * @param {ArrayBuffer} arrayBuffer The array buffer to clone.
+   * @returns {ArrayBuffer} Returns the cloned array buffer.
+   */
+  function cloneArrayBuffer(arrayBuffer) {
+    var result = new arrayBuffer.constructor(arrayBuffer.byteLength);
+    new Uint8Array(result).set(new Uint8Array(arrayBuffer));
+    return result;
+  }
+
+  /**
+   * Creates a clone of `dataView`.
+   *
+   * @private
+   * @param {Object} dataView The data view to clone.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Object} Returns the cloned data view.
+   */
+  function cloneDataView(dataView, isDeep) {
+    var buffer = isDeep ? cloneArrayBuffer(dataView.buffer) : dataView.buffer;
+    return new dataView.constructor(buffer, dataView.byteOffset, dataView.byteLength);
+  }
+
+  /**
+   * Creates a clone of `map`.
+   *
+   * @private
+   * @param {Object} map The map to clone.
+   * @param {Function} cloneFunc The function to clone values.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Object} Returns the cloned map.
+   */
+  function cloneMap(map, isDeep, cloneFunc) {
+    var array = isDeep ? cloneFunc(mapToArray(map), true) : mapToArray(map);
+    return arrayReduce(array, addMapEntry, new map.constructor);
+  }
+
+  /**
+   * Creates a clone of `regexp`.
+   *
+   * @private
+   * @param {Object} regexp The regexp to clone.
+   * @returns {Object} Returns the cloned regexp.
+   */
+  function cloneRegExp(regexp) {
+    var result = new regexp.constructor(regexp.source, reFlags.exec(regexp));
+    result.lastIndex = regexp.lastIndex;
+    return result;
+  }
+
+  /**
+   * Creates a clone of `set`.
+   *
+   * @private
+   * @param {Object} set The set to clone.
+   * @param {Function} cloneFunc The function to clone values.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Object} Returns the cloned set.
+   */
+  function cloneSet(set, isDeep, cloneFunc) {
+    var array = isDeep ? cloneFunc(setToArray(set), true) : setToArray(set);
+    return arrayReduce(array, addSetEntry, new set.constructor);
+  }
+
+  /**
+   * Creates a clone of the `symbol` object.
+   *
+   * @private
+   * @param {Object} symbol The symbol object to clone.
+   * @returns {Object} Returns the cloned symbol object.
+   */
+  function cloneSymbol(symbol) {
+    return symbolValueOf ? Object(symbolValueOf.call(symbol)) : {};
+  }
+
+  /**
+   * Creates a clone of `typedArray`.
+   *
+   * @private
+   * @param {Object} typedArray The typed array to clone.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Object} Returns the cloned typed array.
+   */
+  function cloneTypedArray(typedArray, isDeep) {
+    var buffer = isDeep ? cloneArrayBuffer(typedArray.buffer) : typedArray.buffer;
+    return new typedArray.constructor(buffer, typedArray.byteOffset, typedArray.length);
+  }
+
+  /**
+   * Copies the values of `source` to `array`.
+   *
+   * @private
+   * @param {Array} source The array to copy values from.
+   * @param {Array} [array=[]] The array to copy values to.
+   * @returns {Array} Returns `array`.
+   */
+  function copyArray(source, array) {
+    var index = -1,
+        length = source.length;
+
+    array || (array = Array(length));
+    while (++index < length) {
+      array[index] = source[index];
+    }
+    return array;
+  }
+
+  /**
+   * Copies properties of `source` to `object`.
+   *
+   * @private
+   * @param {Object} source The object to copy properties from.
+   * @param {Array} props The property identifiers to copy.
+   * @param {Object} [object={}] The object to copy properties to.
+   * @param {Function} [customizer] The function to customize copied values.
+   * @returns {Object} Returns `object`.
+   */
+  function copyObject(source, props, object, customizer) {
+    object || (object = {});
+
+    var index = -1,
+        length = props.length;
 
     while (++index < length) {
-      baseMerge(object, sources[index], callback, stackA, stackB);
+      var key = props[index];
+
+      var newValue = customizer
+        ? customizer(object[key], source[key], key, object, source)
+        : undefined;
+
+      assignValue(object, key, newValue === undefined ? source[key] : newValue);
     }
-    releaseArray(stackA);
-    releaseArray(stackB);
     return object;
   }
 
-  /*--------------------------------------------------------------------------*/
+  /**
+   * Copies own symbol properties of `source` to `object`.
+   *
+   * @private
+   * @param {Object} source The object to copy symbols from.
+   * @param {Object} [object={}] The object to copy symbols to.
+   * @returns {Object} Returns `object`.
+   */
+  function copySymbols(source, object) {
+    return copyObject(source, getSymbols(source), object);
+  }
 
   /**
-   * Iterates over elements of a collection, executing the callback for each
-   * element. The callback is bound to `thisArg` and invoked with three arguments;
-   * (value, index|key, collection). Callbacks may exit iteration early by
-   * explicitly returning `false`.
+   * Creates a function like `_.assign`.
    *
-   * Note: As with other "Collections" methods, objects with a `length` property
-   * are iterated like arrays. To avoid this behavior `_.forIn` or `_.forOwn`
-   * may be used for object iteration.
-   *
-   * @static
-   * @memberOf _
-   * @alias each
-   * @category Collections
-   * @param {Array|Object|string} collection The collection to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Array|Object|string} Returns `collection`.
-   * @example
-   *
-   * _([1, 2, 3]).forEach(function(num) { console.log(num); }).join(',');
-   * // => logs each number and returns '1,2,3'
-   *
-   * _.forEach({ 'one': 1, 'two': 2, 'three': 3 }, function(num) { console.log(num); });
-   * // => logs each number and returns the object (property order is not guaranteed across environments)
+   * @private
+   * @param {Function} assigner The function to assign values.
+   * @returns {Function} Returns the new assigner function.
    */
-  function forEach(collection, callback, thisArg) {
-    if (callback && typeof thisArg == 'undefined' && isArray(collection)) {
+  function createAssigner(assigner) {
+    return baseRest(function(object, sources) {
       var index = -1,
-          length = collection.length;
+          length = sources.length,
+          customizer = length > 1 ? sources[length - 1] : undefined,
+          guard = length > 2 ? sources[2] : undefined;
 
+      customizer = (assigner.length > 3 && typeof customizer == 'function')
+        ? (length--, customizer)
+        : undefined;
+
+      if (guard && isIterateeCall(sources[0], sources[1], guard)) {
+        customizer = length < 3 ? undefined : customizer;
+        length = 1;
+      }
+      object = Object(object);
       while (++index < length) {
-        if (callback(collection[index], index, collection) === false) {
+        var source = sources[index];
+        if (source) {
+          assigner(object, source, index, customizer);
+        }
+      }
+      return object;
+    });
+  }
+
+  /**
+   * Creates a `baseEach` or `baseEachRight` function.
+   *
+   * @private
+   * @param {Function} eachFunc The function to iterate over a collection.
+   * @param {boolean} [fromRight] Specify iterating from right to left.
+   * @returns {Function} Returns the new base function.
+   */
+  function createBaseEach(eachFunc, fromRight) {
+    return function(collection, iteratee) {
+      if (collection == null) {
+        return collection;
+      }
+      if (!isArrayLike(collection)) {
+        return eachFunc(collection, iteratee);
+      }
+      var length = collection.length,
+          index = fromRight ? length : -1,
+          iterable = Object(collection);
+
+      while ((fromRight ? index-- : ++index < length)) {
+        if (iteratee(iterable[index], index, iterable) === false) {
           break;
         }
       }
-    } else {
-      baseEach(collection, callback, thisArg);
-    }
-    return collection;
+      return collection;
+    };
   }
 
-  /*--------------------------------------------------------------------------*/
+  /**
+   * Creates a base function for methods like `_.forIn` and `_.forOwn`.
+   *
+   * @private
+   * @param {boolean} [fromRight] Specify iterating from right to left.
+   * @returns {Function} Returns the new base function.
+   */
+  function createBaseFor(fromRight) {
+    return function(object, iteratee, keysFunc) {
+      var index = -1,
+          iterable = Object(object),
+          props = keysFunc(object),
+          length = props.length;
+
+      while (length--) {
+        var key = props[fromRight ? length : ++index];
+        if (iteratee(iterable[key], key, iterable) === false) {
+          break;
+        }
+      }
+      return object;
+    };
+  }
+
+  /**
+   * A specialized version of `baseIsEqualDeep` for arrays with support for
+   * partial deep comparisons.
+   *
+   * @private
+   * @param {Array} array The array to compare.
+   * @param {Array} other The other array to compare.
+   * @param {Function} equalFunc The function to determine equivalents of values.
+   * @param {Function} customizer The function to customize comparisons.
+   * @param {number} bitmask The bitmask of comparison flags. See `baseIsEqual`
+   *  for more details.
+   * @param {Object} stack Tracks traversed `array` and `other` objects.
+   * @returns {boolean} Returns `true` if the arrays are equivalent, else `false`.
+   */
+  function equalArrays(array, other, equalFunc, customizer, bitmask, stack) {
+    var isPartial = bitmask & PARTIAL_COMPARE_FLAG,
+        arrLength = array.length,
+        othLength = other.length;
+
+    if (arrLength != othLength && !(isPartial && othLength > arrLength)) {
+      return false;
+    }
+    // Assume cyclic values are equal.
+    var stacked = stack.get(array);
+    if (stacked && stack.get(other)) {
+      return stacked == other;
+    }
+    var index = -1,
+        result = true,
+        seen = (bitmask & UNORDERED_COMPARE_FLAG) ? new SetCache : undefined;
+
+    stack.set(array, other);
+    stack.set(other, array);
+
+    // Ignore non-index properties.
+    while (++index < arrLength) {
+      var arrValue = array[index],
+          othValue = other[index];
+
+      if (customizer) {
+        var compared = isPartial
+          ? customizer(othValue, arrValue, index, other, array, stack)
+          : customizer(arrValue, othValue, index, array, other, stack);
+      }
+      if (compared !== undefined) {
+        if (compared) {
+          continue;
+        }
+        result = false;
+        break;
+      }
+      // Recursively compare arrays (susceptible to call stack limits).
+      if (seen) {
+        if (!arraySome(other, function(othValue, othIndex) {
+              if (!seen.has(othIndex) &&
+                  (arrValue === othValue || equalFunc(arrValue, othValue, customizer, bitmask, stack))) {
+                return seen.add(othIndex);
+              }
+            })) {
+          result = false;
+          break;
+        }
+      } else if (!(
+            arrValue === othValue ||
+              equalFunc(arrValue, othValue, customizer, bitmask, stack)
+          )) {
+        result = false;
+        break;
+      }
+    }
+    stack['delete'](array);
+    stack['delete'](other);
+    return result;
+  }
+
+  /**
+   * A specialized version of `baseIsEqualDeep` for comparing objects of
+   * the same `toStringTag`.
+   *
+   * **Note:** This function only supports comparing values with tags of
+   * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
+   *
+   * @private
+   * @param {Object} object The object to compare.
+   * @param {Object} other The other object to compare.
+   * @param {string} tag The `toStringTag` of the objects to compare.
+   * @param {Function} equalFunc The function to determine equivalents of values.
+   * @param {Function} customizer The function to customize comparisons.
+   * @param {number} bitmask The bitmask of comparison flags. See `baseIsEqual`
+   *  for more details.
+   * @param {Object} stack Tracks traversed `object` and `other` objects.
+   * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+   */
+  function equalByTag(object, other, tag, equalFunc, customizer, bitmask, stack) {
+    switch (tag) {
+      case dataViewTag:
+        if ((object.byteLength != other.byteLength) ||
+            (object.byteOffset != other.byteOffset)) {
+          return false;
+        }
+        object = object.buffer;
+        other = other.buffer;
+
+      case arrayBufferTag:
+        if ((object.byteLength != other.byteLength) ||
+            !equalFunc(new Uint8Array(object), new Uint8Array(other))) {
+          return false;
+        }
+        return true;
+
+      case boolTag:
+      case dateTag:
+      case numberTag:
+        // Coerce booleans to `1` or `0` and dates to milliseconds.
+        // Invalid dates are coerced to `NaN`.
+        return eq(+object, +other);
+
+      case errorTag:
+        return object.name == other.name && object.message == other.message;
+
+      case regexpTag:
+      case stringTag:
+        // Coerce regexes to strings and treat strings, primitives and objects,
+        // as equal. See http://www.ecma-international.org/ecma-262/7.0/#sec-regexp.prototype.tostring
+        // for more details.
+        return object == (other + '');
+
+      case mapTag:
+        var convert = mapToArray;
+
+      case setTag:
+        var isPartial = bitmask & PARTIAL_COMPARE_FLAG;
+        convert || (convert = setToArray);
+
+        if (object.size != other.size && !isPartial) {
+          return false;
+        }
+        // Assume cyclic values are equal.
+        var stacked = stack.get(object);
+        if (stacked) {
+          return stacked == other;
+        }
+        bitmask |= UNORDERED_COMPARE_FLAG;
+
+        // Recursively compare objects (susceptible to call stack limits).
+        stack.set(object, other);
+        var result = equalArrays(convert(object), convert(other), equalFunc, customizer, bitmask, stack);
+        stack['delete'](object);
+        return result;
+
+      case symbolTag:
+        if (symbolValueOf) {
+          return symbolValueOf.call(object) == symbolValueOf.call(other);
+        }
+    }
+    return false;
+  }
+
+  /**
+   * A specialized version of `baseIsEqualDeep` for objects with support for
+   * partial deep comparisons.
+   *
+   * @private
+   * @param {Object} object The object to compare.
+   * @param {Object} other The other object to compare.
+   * @param {Function} equalFunc The function to determine equivalents of values.
+   * @param {Function} customizer The function to customize comparisons.
+   * @param {number} bitmask The bitmask of comparison flags. See `baseIsEqual`
+   *  for more details.
+   * @param {Object} stack Tracks traversed `object` and `other` objects.
+   * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+   */
+  function equalObjects(object, other, equalFunc, customizer, bitmask, stack) {
+    var isPartial = bitmask & PARTIAL_COMPARE_FLAG,
+        objProps = keys(object),
+        objLength = objProps.length,
+        othProps = keys(other),
+        othLength = othProps.length;
+
+    if (objLength != othLength && !isPartial) {
+      return false;
+    }
+    var index = objLength;
+    while (index--) {
+      var key = objProps[index];
+      if (!(isPartial ? key in other : hasOwnProperty.call(other, key))) {
+        return false;
+      }
+    }
+    // Assume cyclic values are equal.
+    var stacked = stack.get(object);
+    if (stacked && stack.get(other)) {
+      return stacked == other;
+    }
+    var result = true;
+    stack.set(object, other);
+    stack.set(other, object);
+
+    var skipCtor = isPartial;
+    while (++index < objLength) {
+      key = objProps[index];
+      var objValue = object[key],
+          othValue = other[key];
+
+      if (customizer) {
+        var compared = isPartial
+          ? customizer(othValue, objValue, key, other, object, stack)
+          : customizer(objValue, othValue, key, object, other, stack);
+      }
+      // Recursively compare objects (susceptible to call stack limits).
+      if (!(compared === undefined
+            ? (objValue === othValue || equalFunc(objValue, othValue, customizer, bitmask, stack))
+            : compared
+          )) {
+        result = false;
+        break;
+      }
+      skipCtor || (skipCtor = key == 'constructor');
+    }
+    if (result && !skipCtor) {
+      var objCtor = object.constructor,
+          othCtor = other.constructor;
+
+      // Non `Object` object instances with different constructors are not equal.
+      if (objCtor != othCtor &&
+          ('constructor' in object && 'constructor' in other) &&
+          !(typeof objCtor == 'function' && objCtor instanceof objCtor &&
+            typeof othCtor == 'function' && othCtor instanceof othCtor)) {
+        result = false;
+      }
+    }
+    stack['delete'](object);
+    stack['delete'](other);
+    return result;
+  }
+
+  /**
+   * Creates an array of own enumerable property names and symbols of `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names and symbols.
+   */
+  function getAllKeys(object) {
+    return baseGetAllKeys(object, keys, getSymbols);
+  }
+
+  /**
+   * Gets the appropriate "iteratee" function. If `_.iteratee` is customized,
+   * this function returns the custom method, otherwise it returns `baseIteratee`.
+   * If arguments are provided, the chosen function is invoked with them and
+   * its result is returned.
+   *
+   * @private
+   * @param {*} [value] The value to convert to an iteratee.
+   * @param {number} [arity] The arity of the created iteratee.
+   * @returns {Function} Returns the chosen function or its result.
+   */
+  function getIteratee() {
+    var result = lodash.iteratee || iteratee;
+    result = result === iteratee ? baseIteratee : result;
+    return arguments.length ? result(arguments[0], arguments[1]) : result;
+  }
+
+  /**
+   * Gets the data for `map`.
+   *
+   * @private
+   * @param {Object} map The map to query.
+   * @param {string} key The reference key.
+   * @returns {*} Returns the map data.
+   */
+  function getMapData(map, key) {
+    var data = map.__data__;
+    return isKeyable(key)
+      ? data[typeof key == 'string' ? 'string' : 'hash']
+      : data.map;
+  }
+
+  /**
+   * Gets the property names, values, and compare flags of `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the match data of `object`.
+   */
+  function getMatchData(object) {
+    var result = keys(object),
+        length = result.length;
+
+    while (length--) {
+      var key = result[length],
+          value = object[key];
+
+      result[length] = [key, value, isStrictComparable(value)];
+    }
+    return result;
+  }
+
+  /**
+   * Gets the native function at `key` of `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @param {string} key The key of the method to get.
+   * @returns {*} Returns the function if it's native, else `undefined`.
+   */
+  function getNative(object, key) {
+    var value = getValue(object, key);
+    return baseIsNative(value) ? value : undefined;
+  }
+
+  /**
+   * Creates an array of the own enumerable symbol properties of `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of symbols.
+   */
+  var getSymbols = nativeGetSymbols ? overArg(nativeGetSymbols, Object) : stubArray;
+
+  /**
+   * Gets the `toStringTag` of `value`.
+   *
+   * @private
+   * @param {*} value The value to query.
+   * @returns {string} Returns the `toStringTag`.
+   */
+  var getTag = baseGetTag;
+
+  // Fallback for data views, maps, sets, and weak maps in IE 11,
+  // for data views in Edge < 14, and promises in Node.js.
+  if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
+      (Map && getTag(new Map) != mapTag) ||
+      (Promise && getTag(Promise.resolve()) != promiseTag) ||
+      (Set && getTag(new Set) != setTag) ||
+      (WeakMap && getTag(new WeakMap) != weakMapTag)) {
+    getTag = function(value) {
+      var result = objectToString.call(value),
+          Ctor = result == objectTag ? value.constructor : undefined,
+          ctorString = Ctor ? toSource(Ctor) : undefined;
+
+      if (ctorString) {
+        switch (ctorString) {
+          case dataViewCtorString: return dataViewTag;
+          case mapCtorString: return mapTag;
+          case promiseCtorString: return promiseTag;
+          case setCtorString: return setTag;
+          case weakMapCtorString: return weakMapTag;
+        }
+      }
+      return result;
+    };
+  }
+
+  /**
+   * Checks if `path` exists on `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @param {Array|string} path The path to check.
+   * @param {Function} hasFunc The function to check properties.
+   * @returns {boolean} Returns `true` if `path` exists, else `false`.
+   */
+  function hasPath(object, path, hasFunc) {
+    path = isKey(path, object) ? [path] : castPath(path);
+
+    var result,
+        index = -1,
+        length = path.length;
+
+    while (++index < length) {
+      var key = toKey(path[index]);
+      if (!(result = object != null && hasFunc(object, key))) {
+        break;
+      }
+      object = object[key];
+    }
+    if (result) {
+      return result;
+    }
+    var length = object ? object.length : 0;
+    return !!length && isLength(length) && isIndex(key, length) &&
+      (isArray(object) || isArguments(object));
+  }
+
+  /**
+   * Initializes an array clone.
+   *
+   * @private
+   * @param {Array} array The array to clone.
+   * @returns {Array} Returns the initialized clone.
+   */
+  function initCloneArray(array) {
+    var length = array.length,
+        result = array.constructor(length);
+
+    // Add properties assigned by `RegExp#exec`.
+    if (length && typeof array[0] == 'string' && hasOwnProperty.call(array, 'index')) {
+      result.index = array.index;
+      result.input = array.input;
+    }
+    return result;
+  }
+
+  /**
+   * Initializes an object clone.
+   *
+   * @private
+   * @param {Object} object The object to clone.
+   * @returns {Object} Returns the initialized clone.
+   */
+  function initCloneObject(object) {
+    return (typeof object.constructor == 'function' && !isPrototype(object))
+      ? baseCreate(getPrototype(object))
+      : {};
+  }
+
+  /**
+   * Initializes an object clone based on its `toStringTag`.
+   *
+   * **Note:** This function only supports cloning values with tags of
+   * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
+   *
+   * @private
+   * @param {Object} object The object to clone.
+   * @param {string} tag The `toStringTag` of the object to clone.
+   * @param {Function} cloneFunc The function to clone values.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Object} Returns the initialized clone.
+   */
+  function initCloneByTag(object, tag, cloneFunc, isDeep) {
+    var Ctor = object.constructor;
+    switch (tag) {
+      case arrayBufferTag:
+        return cloneArrayBuffer(object);
+
+      case boolTag:
+      case dateTag:
+        return new Ctor(+object);
+
+      case dataViewTag:
+        return cloneDataView(object, isDeep);
+
+      case float32Tag: case float64Tag:
+      case int8Tag: case int16Tag: case int32Tag:
+      case uint8Tag: case uint8ClampedTag: case uint16Tag: case uint32Tag:
+        return cloneTypedArray(object, isDeep);
+
+      case mapTag:
+        return cloneMap(object, isDeep, cloneFunc);
+
+      case numberTag:
+      case stringTag:
+        return new Ctor(object);
+
+      case regexpTag:
+        return cloneRegExp(object);
+
+      case setTag:
+        return cloneSet(object, isDeep, cloneFunc);
+
+      case symbolTag:
+        return cloneSymbol(object);
+    }
+  }
+
+  /**
+   * Checks if `value` is a valid array-like index.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+   * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+   */
+  function isIndex(value, length) {
+    length = length == null ? MAX_SAFE_INTEGER : length;
+    return !!length &&
+      (typeof value == 'number' || reIsUint.test(value)) &&
+      (value > -1 && value % 1 == 0 && value < length);
+  }
+
+  /**
+   * Checks if the given arguments are from an iteratee call.
+   *
+   * @private
+   * @param {*} value The potential iteratee value argument.
+   * @param {*} index The potential iteratee index or key argument.
+   * @param {*} object The potential iteratee object argument.
+   * @returns {boolean} Returns `true` if the arguments are from an iteratee call,
+   *  else `false`.
+   */
+  function isIterateeCall(value, index, object) {
+    if (!isObject(object)) {
+      return false;
+    }
+    var type = typeof index;
+    if (type == 'number'
+          ? (isArrayLike(object) && isIndex(index, object.length))
+          : (type == 'string' && index in object)
+        ) {
+      return eq(object[index], value);
+    }
+    return false;
+  }
+
+  /**
+   * Checks if `value` is a property name and not a property path.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @param {Object} [object] The object to query keys on.
+   * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+   */
+  function isKey(value, object) {
+    if (isArray(value)) {
+      return false;
+    }
+    var type = typeof value;
+    if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+        value == null || isSymbol(value)) {
+      return true;
+    }
+    return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+      (object != null && value in Object(object));
+  }
+
+  /**
+   * Checks if `value` is suitable for use as unique object key.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+   */
+  function isKeyable(value) {
+    var type = typeof value;
+    return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+      ? (value !== '__proto__')
+      : (value === null);
+  }
+
+  /**
+   * Checks if `func` has its source masked.
+   *
+   * @private
+   * @param {Function} func The function to check.
+   * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+   */
+  function isMasked(func) {
+    return !!maskSrcKey && (maskSrcKey in func);
+  }
+
+  /**
+   * Checks if `value` is likely a prototype object.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
+   */
+  function isPrototype(value) {
+    var Ctor = value && value.constructor,
+        proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
+
+    return value === proto;
+  }
+
+  /**
+   * Checks if `value` is suitable for strict equality comparisons, i.e. `===`.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` if suitable for strict
+   *  equality comparisons, else `false`.
+   */
+  function isStrictComparable(value) {
+    return value === value && !isObject(value);
+  }
+
+  /**
+   * A specialized version of `matchesProperty` for source values suitable
+   * for strict equality comparisons, i.e. `===`.
+   *
+   * @private
+   * @param {string} key The key of the property to get.
+   * @param {*} srcValue The value to match.
+   * @returns {Function} Returns the new spec function.
+   */
+  function matchesStrictComparable(key, srcValue) {
+    return function(object) {
+      if (object == null) {
+        return false;
+      }
+      return object[key] === srcValue &&
+        (srcValue !== undefined || (key in Object(object)));
+    };
+  }
+
+  /**
+   * This function is like
+   * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+   * except that it includes inherited enumerable properties.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names.
+   */
+  function nativeKeysIn(object) {
+    var result = [];
+    if (object != null) {
+      for (var key in Object(object)) {
+        result.push(key);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Converts `string` to a property path array.
+   *
+   * @private
+   * @param {string} string The string to convert.
+   * @returns {Array} Returns the property path array.
+   */
+  var stringToPath = memoize(function(string) {
+    string = toString(string);
+
+    var result = [];
+    if (reLeadingDot.test(string)) {
+      result.push('');
+    }
+    string.replace(rePropName, function(match, number, quote, string) {
+      result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+    });
+    return result;
+  });
+
+  /**
+   * Converts `value` to a string key if it's not a string or symbol.
+   *
+   * @private
+   * @param {*} value The value to inspect.
+   * @returns {string|symbol} Returns the key.
+   */
+  function toKey(value) {
+    if (typeof value == 'string' || isSymbol(value)) {
+      return value;
+    }
+    var result = (value + '');
+    return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+  }
+
+  /**
+   * Converts `func` to its source code.
+   *
+   * @private
+   * @param {Function} func The function to process.
+   * @returns {string} Returns the source code.
+   */
+  function toSource(func) {
+    if (func != null) {
+      try {
+        return funcToString.call(func);
+      } catch (e) {}
+      try {
+        return (func + '');
+      } catch (e) {}
+    }
+    return '';
+  }
+
+  /*------------------------------------------------------------------------*/
 
   /**
    * Creates an array with all falsey values removed. The values `false`, `null`,
-   * `0`, `""`, `undefined`, and `NaN` are all falsey.
+   * `0`, `""`, `undefined`, and `NaN` are falsey.
    *
    * @static
    * @memberOf _
-   * @category Arrays
+   * @since 0.1.0
+   * @category Array
    * @param {Array} array The array to compact.
-   * @returns {Array} Returns a new array of filtered values.
+   * @returns {Array} Returns the new array of filtered values.
    * @example
    *
    * _.compact([0, 1, false, 2, '', 3]);
@@ -63056,61 +64806,793 @@ module.exports = osmtogeojson;
   function compact(array) {
     var index = -1,
         length = array ? array.length : 0,
+        resIndex = 0,
         result = [];
 
     while (++index < length) {
       var value = array[index];
       if (value) {
-        result.push(value);
+        result[resIndex++] = value;
       }
     }
     return result;
   }
 
-  /*--------------------------------------------------------------------------*/
+  /*------------------------------------------------------------------------*/
 
   /**
-   * Creates a function that, when called, invokes `func` with the `this`
-   * binding of `thisArg` and prepends any additional `bind` arguments to those
-   * provided to the bound function.
+   * Iterates over elements of `collection` and invokes `iteratee` for each element.
+   * The iteratee is invoked with three arguments: (value, index|key, collection).
+   * Iteratee functions may exit iteration early by explicitly returning `false`.
+   *
+   * **Note:** As with other "Collections" methods, objects with a "length"
+   * property are iterated like arrays. To avoid this behavior use `_.forIn`
+   * or `_.forOwn` for object iteration.
    *
    * @static
    * @memberOf _
-   * @category Functions
-   * @param {Function} func The function to bind.
-   * @param {*} [thisArg] The `this` binding of `func`.
-   * @param {...*} [arg] Arguments to be partially applied.
-   * @returns {Function} Returns the new bound function.
+   * @since 0.1.0
+   * @alias each
+   * @category Collection
+   * @param {Array|Object} collection The collection to iterate over.
+   * @param {Function} [iteratee=_.identity] The function invoked per iteration.
+   * @returns {Array|Object} Returns `collection`.
+   * @see _.forEachRight
    * @example
    *
-   * var func = function(greeting) {
-   *   return greeting + ' ' + this.name;
-   * };
+   * _([1, 2]).forEach(function(value) {
+   *   console.log(value);
+   * });
+   * // => Logs `1` then `2`.
    *
-   * func = _.bind(func, { 'name': 'fred' }, 'hi');
-   * func();
-   * // => 'hi fred'
+   * _.forEach({ 'a': 1, 'b': 2 }, function(value, key) {
+   *   console.log(key);
+   * });
+   * // => Logs 'a' then 'b' (iteration order is not guaranteed).
    */
-  function bind(func, thisArg) {
-    return arguments.length > 2
-      ? createWrapper(func, 17, slice(arguments, 2), null, thisArg)
-      : createWrapper(func, 1, null, null, thisArg);
+  function forEach(collection, iteratee) {
+    var func = isArray(collection) ? arrayEach : baseEach;
+    return func(collection, getIteratee(iteratee, 3));
   }
 
-  /*--------------------------------------------------------------------------*/
+  /*------------------------------------------------------------------------*/
 
   /**
-   * This method returns the first argument provided to it.
+   * Creates a function that memoizes the result of `func`. If `resolver` is
+   * provided, it determines the cache key for storing the result based on the
+   * arguments provided to the memoized function. By default, the first argument
+   * provided to the memoized function is used as the map cache key. The `func`
+   * is invoked with the `this` binding of the memoized function.
+   *
+   * **Note:** The cache is exposed as the `cache` property on the memoized
+   * function. Its creation may be customized by replacing the `_.memoize.Cache`
+   * constructor with one whose instances implement the
+   * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+   * method interface of `delete`, `get`, `has`, and `set`.
    *
    * @static
    * @memberOf _
-   * @category Utilities
+   * @since 0.1.0
+   * @category Function
+   * @param {Function} func The function to have its output memoized.
+   * @param {Function} [resolver] The function to resolve the cache key.
+   * @returns {Function} Returns the new memoized function.
+   * @example
+   *
+   * var object = { 'a': 1, 'b': 2 };
+   * var other = { 'c': 3, 'd': 4 };
+   *
+   * var values = _.memoize(_.values);
+   * values(object);
+   * // => [1, 2]
+   *
+   * values(other);
+   * // => [3, 4]
+   *
+   * object.a = 2;
+   * values(object);
+   * // => [1, 2]
+   *
+   * // Modify the result cache.
+   * values.cache.set(object, ['a', 'b']);
+   * values(object);
+   * // => ['a', 'b']
+   *
+   * // Replace `_.memoize.Cache`.
+   * _.memoize.Cache = WeakMap;
+   */
+  function memoize(func, resolver) {
+    if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
+      throw new TypeError(FUNC_ERROR_TEXT);
+    }
+    var memoized = function() {
+      var args = arguments,
+          key = resolver ? resolver.apply(this, args) : args[0],
+          cache = memoized.cache;
+
+      if (cache.has(key)) {
+        return cache.get(key);
+      }
+      var result = func.apply(this, args);
+      memoized.cache = cache.set(key, result);
+      return result;
+    };
+    memoized.cache = new (memoize.Cache || MapCache);
+    return memoized;
+  }
+
+  // Assign cache to `_.memoize`.
+  memoize.Cache = MapCache;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates a shallow clone of `value`.
+   *
+   * **Note:** This method is loosely based on the
+   * [structured clone algorithm](https://mdn.io/Structured_clone_algorithm)
+   * and supports cloning arrays, array buffers, booleans, date objects, maps,
+   * numbers, `Object` objects, regexes, sets, strings, symbols, and typed
+   * arrays. The own enumerable properties of `arguments` objects are cloned
+   * as plain objects. An empty object is returned for uncloneable values such
+   * as error objects, functions, DOM nodes, and WeakMaps.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to clone.
+   * @returns {*} Returns the cloned value.
+   * @see _.cloneDeep
+   * @example
+   *
+   * var objects = [{ 'a': 1 }, { 'b': 2 }];
+   *
+   * var shallow = _.clone(objects);
+   * console.log(shallow[0] === objects[0]);
+   * // => true
+   */
+  function clone(value) {
+    return baseClone(value, false, true);
+  }
+
+  /**
+   * Performs a
+   * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+   * comparison between two values to determine if they are equivalent.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to compare.
+   * @param {*} other The other value to compare.
+   * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+   * @example
+   *
+   * var object = { 'a': 1 };
+   * var other = { 'a': 1 };
+   *
+   * _.eq(object, object);
+   * // => true
+   *
+   * _.eq(object, other);
+   * // => false
+   *
+   * _.eq('a', 'a');
+   * // => true
+   *
+   * _.eq('a', Object('a'));
+   * // => false
+   *
+   * _.eq(NaN, NaN);
+   * // => true
+   */
+  function eq(value, other) {
+    return value === other || (value !== value && other !== other);
+  }
+
+  /**
+   * Checks if `value` is likely an `arguments` object.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+   *  else `false`.
+   * @example
+   *
+   * _.isArguments(function() { return arguments; }());
+   * // => true
+   *
+   * _.isArguments([1, 2, 3]);
+   * // => false
+   */
+  function isArguments(value) {
+    // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+    return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
+      (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
+  }
+
+  /**
+   * Checks if `value` is classified as an `Array` object.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+   * @example
+   *
+   * _.isArray([1, 2, 3]);
+   * // => true
+   *
+   * _.isArray(document.body.children);
+   * // => false
+   *
+   * _.isArray('abc');
+   * // => false
+   *
+   * _.isArray(_.noop);
+   * // => false
+   */
+  var isArray = Array.isArray;
+
+  /**
+   * Checks if `value` is array-like. A value is considered array-like if it's
+   * not a function and has a `value.length` that's an integer greater than or
+   * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+   * @example
+   *
+   * _.isArrayLike([1, 2, 3]);
+   * // => true
+   *
+   * _.isArrayLike(document.body.children);
+   * // => true
+   *
+   * _.isArrayLike('abc');
+   * // => true
+   *
+   * _.isArrayLike(_.noop);
+   * // => false
+   */
+  function isArrayLike(value) {
+    return value != null && isLength(value.length) && !isFunction(value);
+  }
+
+  /**
+   * This method is like `_.isArrayLike` except that it also checks if `value`
+   * is an object.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is an array-like object,
+   *  else `false`.
+   * @example
+   *
+   * _.isArrayLikeObject([1, 2, 3]);
+   * // => true
+   *
+   * _.isArrayLikeObject(document.body.children);
+   * // => true
+   *
+   * _.isArrayLikeObject('abc');
+   * // => false
+   *
+   * _.isArrayLikeObject(_.noop);
+   * // => false
+   */
+  function isArrayLikeObject(value) {
+    return isObjectLike(value) && isArrayLike(value);
+  }
+
+  /**
+   * Checks if `value` is a buffer.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.3.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
+   * @example
+   *
+   * _.isBuffer(new Buffer(2));
+   * // => true
+   *
+   * _.isBuffer(new Uint8Array(2));
+   * // => false
+   */
+  var isBuffer = nativeIsBuffer || stubFalse;
+
+  /**
+   * Checks if `value` is an empty object, collection, map, or set.
+   *
+   * Objects are considered empty if they have no own enumerable string keyed
+   * properties.
+   *
+   * Array-like values such as `arguments` objects, arrays, buffers, strings, or
+   * jQuery-like collections are considered empty if they have a `length` of `0`.
+   * Similarly, maps and sets are considered empty if they have a `size` of `0`.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is empty, else `false`.
+   * @example
+   *
+   * _.isEmpty(null);
+   * // => true
+   *
+   * _.isEmpty(true);
+   * // => true
+   *
+   * _.isEmpty(1);
+   * // => true
+   *
+   * _.isEmpty([1, 2, 3]);
+   * // => false
+   *
+   * _.isEmpty({ 'a': 1 });
+   * // => false
+   */
+  function isEmpty(value) {
+    if (isArrayLike(value) &&
+        (isArray(value) || typeof value == 'string' ||
+          typeof value.splice == 'function' || isBuffer(value) || isArguments(value))) {
+      return !value.length;
+    }
+    var tag = getTag(value);
+    if (tag == mapTag || tag == setTag) {
+      return !value.size;
+    }
+    if (nonEnumShadows || isPrototype(value)) {
+      return !nativeKeys(value).length;
+    }
+    for (var key in value) {
+      if (hasOwnProperty.call(value, key)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Checks if `value` is classified as a `Function` object.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+   * @example
+   *
+   * _.isFunction(_);
+   * // => true
+   *
+   * _.isFunction(/abc/);
+   * // => false
+   */
+  function isFunction(value) {
+    // The use of `Object#toString` avoids issues with the `typeof` operator
+    // in Safari 8-9 which returns 'object' for typed array and other constructors.
+    var tag = isObject(value) ? objectToString.call(value) : '';
+    return tag == funcTag || tag == genTag;
+  }
+
+  /**
+   * Checks if `value` is a valid array-like length.
+   *
+   * **Note:** This method is loosely based on
+   * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+   * @example
+   *
+   * _.isLength(3);
+   * // => true
+   *
+   * _.isLength(Number.MIN_VALUE);
+   * // => false
+   *
+   * _.isLength(Infinity);
+   * // => false
+   *
+   * _.isLength('3');
+   * // => false
+   */
+  function isLength(value) {
+    return typeof value == 'number' &&
+      value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+  }
+
+  /**
+   * Checks if `value` is the
+   * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+   * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+   * @example
+   *
+   * _.isObject({});
+   * // => true
+   *
+   * _.isObject([1, 2, 3]);
+   * // => true
+   *
+   * _.isObject(_.noop);
+   * // => true
+   *
+   * _.isObject(null);
+   * // => false
+   */
+  function isObject(value) {
+    var type = typeof value;
+    return !!value && (type == 'object' || type == 'function');
+  }
+
+  /**
+   * Checks if `value` is object-like. A value is object-like if it's not `null`
+   * and has a `typeof` result of "object".
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+   * @example
+   *
+   * _.isObjectLike({});
+   * // => true
+   *
+   * _.isObjectLike([1, 2, 3]);
+   * // => true
+   *
+   * _.isObjectLike(_.noop);
+   * // => false
+   *
+   * _.isObjectLike(null);
+   * // => false
+   */
+  function isObjectLike(value) {
+    return !!value && typeof value == 'object';
+  }
+
+  /**
+   * Checks if `value` is a plain object, that is, an object created by the
+   * `Object` constructor or one with a `[[Prototype]]` of `null`.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.8.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+   * @example
+   *
+   * function Foo() {
+   *   this.a = 1;
+   * }
+   *
+   * _.isPlainObject(new Foo);
+   * // => false
+   *
+   * _.isPlainObject([1, 2, 3]);
+   * // => false
+   *
+   * _.isPlainObject({ 'x': 0, 'y': 0 });
+   * // => true
+   *
+   * _.isPlainObject(Object.create(null));
+   * // => true
+   */
+  function isPlainObject(value) {
+    if (!isObjectLike(value) ||
+        objectToString.call(value) != objectTag || isHostObject(value)) {
+      return false;
+    }
+    var proto = getPrototype(value);
+    if (proto === null) {
+      return true;
+    }
+    var Ctor = hasOwnProperty.call(proto, 'constructor') && proto.constructor;
+    return (typeof Ctor == 'function' &&
+      Ctor instanceof Ctor && funcToString.call(Ctor) == objectCtorString);
+  }
+
+  /**
+   * Checks if `value` is classified as a `Symbol` primitive or object.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+   * @example
+   *
+   * _.isSymbol(Symbol.iterator);
+   * // => true
+   *
+   * _.isSymbol('abc');
+   * // => false
+   */
+  function isSymbol(value) {
+    return typeof value == 'symbol' ||
+      (isObjectLike(value) && objectToString.call(value) == symbolTag);
+  }
+
+  /**
+   * Checks if `value` is classified as a typed array.
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+   * @example
+   *
+   * _.isTypedArray(new Uint8Array);
+   * // => true
+   *
+   * _.isTypedArray([]);
+   * // => false
+   */
+  var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
+
+  /**
+   * Converts `value` to a plain object flattening inherited enumerable string
+   * keyed properties of `value` to own properties of the plain object.
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category Lang
+   * @param {*} value The value to convert.
+   * @returns {Object} Returns the converted plain object.
+   * @example
+   *
+   * function Foo() {
+   *   this.b = 2;
+   * }
+   *
+   * Foo.prototype.c = 3;
+   *
+   * _.assign({ 'a': 1 }, new Foo);
+   * // => { 'a': 1, 'b': 2 }
+   *
+   * _.assign({ 'a': 1 }, _.toPlainObject(new Foo));
+   * // => { 'a': 1, 'b': 2, 'c': 3 }
+   */
+  function toPlainObject(value) {
+    return copyObject(value, keysIn(value));
+  }
+
+  /**
+   * Converts `value` to a string. An empty string is returned for `null`
+   * and `undefined` values. The sign of `-0` is preserved.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to process.
+   * @returns {string} Returns the string.
+   * @example
+   *
+   * _.toString(null);
+   * // => ''
+   *
+   * _.toString(-0);
+   * // => '-0'
+   *
+   * _.toString([1, 2, 3]);
+   * // => '1,2,3'
+   */
+  function toString(value) {
+    return value == null ? '' : baseToString(value);
+  }
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Gets the value at `path` of `object`. If the resolved value is
+   * `undefined`, the `defaultValue` is returned in its place.
+   *
+   * @static
+   * @memberOf _
+   * @since 3.7.0
+   * @category Object
+   * @param {Object} object The object to query.
+   * @param {Array|string} path The path of the property to get.
+   * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+   * @returns {*} Returns the resolved value.
+   * @example
+   *
+   * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+   *
+   * _.get(object, 'a[0].b.c');
+   * // => 3
+   *
+   * _.get(object, ['a', '0', 'b', 'c']);
+   * // => 3
+   *
+   * _.get(object, 'a.b.c', 'default');
+   * // => 'default'
+   */
+  function get(object, path, defaultValue) {
+    var result = object == null ? undefined : baseGet(object, path);
+    return result === undefined ? defaultValue : result;
+  }
+
+  /**
+   * Checks if `path` is a direct or inherited property of `object`.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Object
+   * @param {Object} object The object to query.
+   * @param {Array|string} path The path to check.
+   * @returns {boolean} Returns `true` if `path` exists, else `false`.
+   * @example
+   *
+   * var object = _.create({ 'a': _.create({ 'b': 2 }) });
+   *
+   * _.hasIn(object, 'a');
+   * // => true
+   *
+   * _.hasIn(object, 'a.b');
+   * // => true
+   *
+   * _.hasIn(object, ['a', 'b']);
+   * // => true
+   *
+   * _.hasIn(object, 'b');
+   * // => false
+   */
+  function hasIn(object, path) {
+    return object != null && hasPath(object, path, baseHasIn);
+  }
+
+  /**
+   * Creates an array of the own enumerable property names of `object`.
+   *
+   * **Note:** Non-object values are coerced to objects. See the
+   * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+   * for more details.
+   *
+   * @static
+   * @since 0.1.0
+   * @memberOf _
+   * @category Object
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names.
+   * @example
+   *
+   * function Foo() {
+   *   this.a = 1;
+   *   this.b = 2;
+   * }
+   *
+   * Foo.prototype.c = 3;
+   *
+   * _.keys(new Foo);
+   * // => ['a', 'b'] (iteration order is not guaranteed)
+   *
+   * _.keys('hi');
+   * // => ['0', '1']
+   */
+  function keys(object) {
+    return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
+  }
+
+  /**
+   * Creates an array of the own and inherited enumerable property names of `object`.
+   *
+   * **Note:** Non-object values are coerced to objects.
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category Object
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names.
+   * @example
+   *
+   * function Foo() {
+   *   this.a = 1;
+   *   this.b = 2;
+   * }
+   *
+   * Foo.prototype.c = 3;
+   *
+   * _.keysIn(new Foo);
+   * // => ['a', 'b', 'c'] (iteration order is not guaranteed)
+   */
+  function keysIn(object) {
+    return isArrayLike(object) ? arrayLikeKeys(object, true) : baseKeysIn(object);
+  }
+
+  /**
+   * This method is like `_.assign` except that it recursively merges own and
+   * inherited enumerable string keyed properties of source objects into the
+   * destination object. Source properties that resolve to `undefined` are
+   * skipped if a destination value exists. Array and plain object properties
+   * are merged recursively. Other objects and value types are overridden by
+   * assignment. Source objects are applied from left to right. Subsequent
+   * sources overwrite property assignments of previous sources.
+   *
+   * **Note:** This method mutates `object`.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.5.0
+   * @category Object
+   * @param {Object} object The destination object.
+   * @param {...Object} [sources] The source objects.
+   * @returns {Object} Returns `object`.
+   * @example
+   *
+   * var object = {
+   *   'a': [{ 'b': 2 }, { 'd': 4 }]
+   * };
+   *
+   * var other = {
+   *   'a': [{ 'c': 3 }, { 'e': 5 }]
+   * };
+   *
+   * _.merge(object, other);
+   * // => { 'a': [{ 'b': 2, 'c': 3 }, { 'd': 4, 'e': 5 }] }
+   */
+  var merge = createAssigner(function(object, source, srcIndex) {
+    baseMerge(object, source, srcIndex);
+  });
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * This method returns the first argument it receives.
+   *
+   * @static
+   * @since 0.1.0
+   * @memberOf _
+   * @category Util
    * @param {*} value Any value.
    * @returns {*} Returns `value`.
    * @example
    *
-   * var object = { 'name': 'fred' };
-   * _.identity(object) === object;
+   * var object = { 'a': 1 };
+   *
+   * console.log(_.identity(object) === object);
    * // => true
    */
   function identity(value) {
@@ -63118,206 +65600,180 @@ module.exports = osmtogeojson;
   }
 
   /**
-   * A no-operation function.
+   * Creates a function that invokes `func` with the arguments of the created
+   * function. If `func` is a property name, the created function returns the
+   * property value for a given element. If `func` is an array or object, the
+   * created function returns `true` for elements that contain the equivalent
+   * source properties, otherwise it returns `false`.
+   *
+   * @static
+   * @since 4.0.0
+   * @memberOf _
+   * @category Util
+   * @param {*} [func=_.identity] The value to convert to a callback.
+   * @returns {Function} Returns the callback.
+   * @example
+   *
+   * var users = [
+   *   { 'user': 'barney', 'age': 36, 'active': true },
+   *   { 'user': 'fred',   'age': 40, 'active': false }
+   * ];
+   *
+   * // The `_.matches` iteratee shorthand.
+   * _.filter(users, _.iteratee({ 'user': 'barney', 'active': true }));
+   * // => [{ 'user': 'barney', 'age': 36, 'active': true }]
+   *
+   * // The `_.matchesProperty` iteratee shorthand.
+   * _.filter(users, _.iteratee(['user', 'fred']));
+   * // => [{ 'user': 'fred', 'age': 40 }]
+   *
+   * // The `_.property` iteratee shorthand.
+   * _.map(users, _.iteratee('user'));
+   * // => ['barney', 'fred']
+   *
+   * // Create custom iteratee shorthands.
+   * _.iteratee = _.wrap(_.iteratee, function(iteratee, func) {
+   *   return !_.isRegExp(func) ? iteratee(func) : function(string) {
+   *     return func.test(string);
+   *   };
+   * });
+   *
+   * _.filter(['abc', 'def'], /ef/);
+   * // => ['def']
+   */
+  function iteratee(func) {
+    return baseIteratee(typeof func == 'function' ? func : baseClone(func, true));
+  }
+
+  /**
+   * Creates a function that returns the value at `path` of a given object.
    *
    * @static
    * @memberOf _
-   * @category Utilities
+   * @since 2.4.0
+   * @category Util
+   * @param {Array|string} path The path of the property to get.
+   * @returns {Function} Returns the new accessor function.
    * @example
    *
-   * var object = { 'name': 'fred' };
-   * _.noop(object) === undefined;
-   * // => true
+   * var objects = [
+   *   { 'a': { 'b': 2 } },
+   *   { 'a': { 'b': 1 } }
+   * ];
+   *
+   * _.map(objects, _.property('a.b'));
+   * // => [2, 1]
+   *
+   * _.map(_.sortBy(objects, _.property(['a', 'b'])), 'a.b');
+   * // => [1, 2]
    */
-  function noop() {
-    // no operation performed
+  function property(path) {
+    return isKey(path) ? baseProperty(toKey(path)) : basePropertyDeep(path);
   }
 
-  /*--------------------------------------------------------------------------*/
+  /**
+   * This method returns a new empty array.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.13.0
+   * @category Util
+   * @returns {Array} Returns the new empty array.
+   * @example
+   *
+   * var arrays = _.times(2, _.stubArray);
+   *
+   * console.log(arrays);
+   * // => [[], []]
+   *
+   * console.log(arrays[0] === arrays[1]);
+   * // => false
+   */
+  function stubArray() {
+    return [];
+  }
 
-  lodash.assign = assign;
-  lodash.bind = bind;
+  /**
+   * This method returns `false`.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.13.0
+   * @category Util
+   * @returns {boolean} Returns `false`.
+   * @example
+   *
+   * _.times(2, _.stubFalse);
+   * // => [false, false]
+   */
+  function stubFalse() {
+    return false;
+  }
+
+  /*------------------------------------------------------------------------*/
+
+  // Add methods that return wrapped values in chain sequences.
   lodash.compact = compact;
-  lodash.forEach = forEach;
-  lodash.forIn = forIn;
-  lodash.forOwn = forOwn;
+  lodash.iteratee = iteratee;
   lodash.keys = keys;
+  lodash.keysIn = keysIn;
+  lodash.memoize = memoize;
   lodash.merge = merge;
+  lodash.property = property;
+  lodash.toPlainObject = toPlainObject;
 
-  lodash.each = forEach;
-  lodash.extend = assign;
+  /*------------------------------------------------------------------------*/
 
-  /*--------------------------------------------------------------------------*/
-
-  // add functions that return unwrapped values when chaining
+  // Add methods that return unwrapped values in chain sequences.
   lodash.clone = clone;
+  lodash.eq = eq;
+  lodash.forEach = forEach;
+  lodash.get = get;
+  lodash.hasIn = hasIn;
   lodash.identity = identity;
   lodash.isArguments = isArguments;
   lodash.isArray = isArray;
+  lodash.isArrayLike = isArrayLike;
+  lodash.isArrayLikeObject = isArrayLikeObject;
+  lodash.isBuffer = isBuffer;
   lodash.isEmpty = isEmpty;
   lodash.isFunction = isFunction;
+  lodash.isLength = isLength;
   lodash.isObject = isObject;
+  lodash.isObjectLike = isObjectLike;
   lodash.isPlainObject = isPlainObject;
-  lodash.isString = isString;
-  lodash.noop = noop;
+  lodash.isSymbol = isSymbol;
+  lodash.isTypedArray = isTypedArray;
+  lodash.stubArray = stubArray;
+  lodash.stubFalse = stubFalse;
+  lodash.toString = toString;
 
-  /*--------------------------------------------------------------------------*/
+  // Add aliases.
+  lodash.each = forEach;
+
+  /*------------------------------------------------------------------------*/
 
   /**
    * The semantic version number.
    *
    * @static
    * @memberOf _
-   * @type string
+   * @type {string}
    */
-  lodash.VERSION = '2.4.1';
+  lodash.VERSION = VERSION;
 
   /*--------------------------------------------------------------------------*/
 
-  if (freeExports && freeModule) {
-    // in Node.js or RingoJS
-    if (moduleExports) {
-      (freeModule.exports = lodash)._ = lodash;
-    }
-
+  if (freeModule) {
+    // Export for Node.js.
+    (freeModule.exports = lodash)._ = lodash;
+    // Export for CommonJS support.
+    freeExports._ = lodash;
   }
-
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],159:[function(require,module,exports){
-var geojsonArea = require('geojson-area');
-
-module.exports = rewind;
-
-function rewind(gj, outer) {
-    switch ((gj && gj.type) || null) {
-        case 'FeatureCollection':
-            gj.features = gj.features.map(curryOuter(rewind, outer));
-            return gj;
-        case 'Feature':
-            gj.geometry = rewind(gj.geometry, outer);
-            return gj;
-        case 'Polygon':
-        case 'MultiPolygon':
-            return correct(gj, outer);
-        default:
-            return gj;
-    }
-}
-
-function curryOuter(a, b) {
-    return function(_) { return a(_, b); };
-}
-
-function correct(_, outer) {
-    if (_.type === 'Polygon') {
-        _.coordinates = correctRings(_.coordinates, outer);
-    } else if (_.type === 'MultiPolygon') {
-        _.coordinates = _.coordinates.map(curryOuter(correctRings, outer));
-    }
-    return _;
-}
-
-function correctRings(_, outer) {
-    outer = !!outer;
-    _[0] = wind(_[0], !outer);
-    for (var i = 1; i < _.length; i++) {
-        _[i] = wind(_[i], outer);
-    }
-    return _;
-}
-
-function wind(_, dir) {
-    return cw(_) === dir ? _ : _.reverse();
-}
-
-function cw(_) {
-    return geojsonArea.ring(_) >= 0;
-}
-
-},{"geojson-area":87}],160:[function(require,module,exports){
-module.exports={
-    "building": true,
-    "highway": {
-        "included_values": {
-            "services": true,
-            "rest_area": true,
-            "escape": true
-        }
-    },
-    "natural": {
-        "excluded_values": {
-            "coastline": true,
-            "ridge": true,
-            "arete": true,
-            "tree_row": true
-        }
-    },
-    "landuse": true,
-    "waterway": {
-        "included_values": {
-            "riverbank": true,
-            "dock": true,
-            "boatyard": true,
-            "dam": true
-        }
-    },
-    "amenity": true,
-    "leisure": true,
-    "barrier": {
-        "included_values": {
-            "city_wall": true,
-            "ditch": true,
-            "hedge": true,
-            "retaining_wall": true,
-            "wall": true,
-            "spikes": true
-        }
-    },
-    "railway": {
-        "included_values": {
-            "station": true,
-            "turntable": true,
-            "roundhouse": true,
-            "platform": true
-        }
-    },
-    "area": true,
-    "boundary": true,
-    "man_made": {
-        "excluded_values": {
-            "cutline": true,
-            "embankment": true,
-            "pipeline": true
-        }
-    },
-    "power": {
-        "included_values": {
-            "generator": true,
-            "station": true,
-            "sub_station": true,
-            "transformer": true
-        }
-    },
-    "place": true,
-    "shop": true,
-    "aeroway": {
-        "excluded_values": {
-            "taxiway": true
-        }
-    },
-    "tourism": true,
-    "historic": true,
-    "public_transport": true,
-    "office": true,
-    "building:part": true,
-    "military": true,
-    "ruins": true,
-    "area:highway": true,
-    "craft": true
-}
-},{}],161:[function(require,module,exports){
+},{}],162:[function(require,module,exports){
 (function (process){(function (){
 // 'path' module extracted from Node.js v8.11.1 (only the posix part)
 // transplited with Babel
@@ -63850,7 +66306,7 @@ posix.posix = posix;
 module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":164}],162:[function(require,module,exports){
+},{"_process":165}],163:[function(require,module,exports){
 'use strict';
 
 /**
@@ -64005,7 +66461,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = polyline;
 }
 
-},{}],163:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 module.exports = function (data) {
     var lines = data.split('\n'),
                 isNameLine = true,
@@ -64071,7 +66527,7 @@ module.exports = function (data) {
     return gj;
 };
 
-},{}],164:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -64257,7 +66713,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],165:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 /*
  * Given a querystring, return an object of that querystring's components.
  *
@@ -64290,7 +66746,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],166:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 (function() {
   var slice = [].slice;
 
@@ -64372,11 +66828,11 @@ module.exports.qsString = function(obj, noencode) {
   else this.queue = queue;
 })();
 
-},{}],167:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 module.exports.download = require('./src/download')
 module.exports.write = require('./src/write')
 module.exports.zip = require('./src/zip')
-},{"./src/download":168,"./src/write":176,"./src/zip":177}],168:[function(require,module,exports){
+},{"./src/download":169,"./src/write":177,"./src/zip":178}],169:[function(require,module,exports){
 var zip = require('./zip');
 
 module.exports = function(gj, options) {
@@ -64384,7 +66840,7 @@ module.exports = function(gj, options) {
     location.href = 'data:application/zip;base64,' + content;
 };
 
-},{"./zip":177}],169:[function(require,module,exports){
+},{"./zip":178}],170:[function(require,module,exports){
 module.exports.enlarge = function enlargeExtent(extent, pt) {
     if (pt[0] < extent.xmin) extent.xmin = pt[0];
     if (pt[0] > extent.xmax) extent.xmax = pt[0];
@@ -64410,7 +66866,7 @@ module.exports.blank = function() {
     };
 };
 
-},{}],170:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 var types = require('./types').jstypes;
 
 module.exports.geojson = geojson;
@@ -64440,7 +66896,7 @@ function obj(_) {
     return o;
 }
 
-},{"./types":175}],171:[function(require,module,exports){
+},{"./types":176}],172:[function(require,module,exports){
 module.exports.point = justType('Point', 'POINT');
 module.exports.line = justType('LineString', 'POLYLINE');
 module.exports.polygon = justType('Polygon', 'POLYGON');
@@ -64474,7 +66930,7 @@ function isType(t) {
     return function(f) { return f.geometry.type === t; };
 }
 
-},{}],172:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(coordinates, extent, shpView, shxView) {
@@ -64521,7 +66977,7 @@ module.exports.shpLength = function(coordinates) {
     return coordinates.length * 28;
 };
 
-},{"./extent":169}],173:[function(require,module,exports){
+},{"./extent":170}],174:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
@@ -64601,10 +67057,10 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":169}],174:[function(require,module,exports){
+},{"./extent":170}],175:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
-},{}],175:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 module.exports.geometries = {
     NULL: 0,
     POINT: 1,
@@ -64622,7 +67078,7 @@ module.exports.geometries = {
     MULTIPATCH: 31,
 };
 
-},{}],176:[function(require,module,exports){
+},{}],177:[function(require,module,exports){
 var types = require('./types'),
     dbf = require('dbf'),
     prj = require('./prj'),
@@ -64691,7 +67147,7 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":169,"./fields":170,"./points":172,"./poly":173,"./prj":174,"./types":175,"assert":49,"dbf":72}],177:[function(require,module,exports){
+},{"./extent":170,"./fields":171,"./points":173,"./poly":174,"./prj":175,"./types":176,"assert":50,"dbf":73}],178:[function(require,module,exports){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
@@ -64725,7 +67181,7 @@ module.exports = function(gj, options) {
     return zip.generate({compression:'STORE'});
 };
 
-},{"./geojson":171,"./prj":174,"./write":176,"jszip":118}],178:[function(require,module,exports){
+},{"./geojson":172,"./prj":175,"./write":177,"jszip":119}],179:[function(require,module,exports){
 (function (global){(function (){
 ;(function(win){
 	var store = {},
@@ -64893,7 +67349,7 @@ module.exports = function(gj, options) {
 })(this.window || global);
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],179:[function(require,module,exports){
+},{}],180:[function(require,module,exports){
 module.exports.attr = attr;
 module.exports.tagClose = tagClose;
 module.exports.tag = tag;
@@ -64939,7 +67395,7 @@ function encode(_) {
         .replace(/"/g, '&quot;');
 }
 
-},{}],180:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 !function(root, name, make) {
   if (typeof module != 'undefined' && module.exports) module.exports = make()
   else root[name] = make()
@@ -64991,7 +67447,7 @@ function encode(_) {
   return api
 });
 
-},{}],181:[function(require,module,exports){
+},{}],182:[function(require,module,exports){
 'use strict';
 
 /**
@@ -65056,9 +67512,9 @@ if (typeof window !== 'undefined') {
   window.Suggestions = Suggestions;
 }
 
-},{"./src/suggestions":184}],182:[function(require,module,exports){
+},{"./src/suggestions":185}],183:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3}],183:[function(require,module,exports){
+},{"dup":3}],184:[function(require,module,exports){
 'use strict';
 
 var List = function(component) {
@@ -65171,7 +67627,7 @@ List.prototype.drawError = function(msg){
 
 module.exports = List;
 
-},{}],184:[function(require,module,exports){
+},{}],185:[function(require,module,exports){
 'use strict';
 
 var extend = require('xtend');
@@ -65429,7 +67885,7 @@ Suggestions.prototype.renderError = function(msg){
 
 module.exports = Suggestions;
 
-},{"./list":183,"fuzzy":86,"xtend":182}],185:[function(require,module,exports){
+},{"./list":184,"fuzzy":87,"xtend":183}],186:[function(require,module,exports){
 (function (process){(function (){
 toGeoJSON = (function() {
     'use strict';
@@ -65668,7 +68124,7 @@ toGeoJSON = (function() {
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":164,"xmldom":57}],186:[function(require,module,exports){
+},{"_process":165,"xmldom":58}],187:[function(require,module,exports){
 var strxml = require('strxml'),
     tag = strxml.tag,
     encode = strxml.encode;
@@ -65865,7 +68321,7 @@ function pairs(_) {
     return o;
 }
 
-},{"strxml":179}],187:[function(require,module,exports){
+},{"strxml":180}],188:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -65895,7 +68351,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"topojson","./type":215}],188:[function(require,module,exports){
+},{"../../":"topojson","./type":216}],189:[function(require,module,exports){
 
 // Computes the bounding box of the specified hash of GeoJSON objects.
 module.exports = function(objects) {
@@ -65942,7 +68398,7 @@ module.exports = function(objects) {
   return [x0, y0, x1, y1];
 };
 
-},{}],189:[function(require,module,exports){
+},{}],190:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -65982,7 +68438,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],190:[function(require,module,exports){
+},{}],191:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -66073,7 +68529,7 @@ function clockwisePolygonSystem(ringArea, reverse) {
 
 function noop() {}
 
-},{"../../":"topojson","./coordinate-systems":192,"./type":215}],191:[function(require,module,exports){
+},{"../../":"topojson","./coordinate-systems":193,"./type":216}],192:[function(require,module,exports){
 // Given a hash of GeoJSON objects and an id function, invokes the id function
 // to compute a new id for each object that is a feature. The function is passed
 // the feature and is expected to return the new feature id, or null if the
@@ -66103,13 +68559,13 @@ module.exports = function(objects, id) {
   return objects;
 };
 
-},{}],192:[function(require,module,exports){
+},{}],193:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":189,"./spherical":202}],193:[function(require,module,exports){
+},{"./cartesian":190,"./spherical":203}],194:[function(require,module,exports){
 // Given a TopoJSON topology in absolute (quantized) coordinates,
 // converts to fixed-point delta encoding.
 // This is a destructive operation that modifies the given topology!
@@ -66140,7 +68596,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{}],194:[function(require,module,exports){
+},{}],195:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -66269,7 +68725,7 @@ function preserveNone() {
   return false;
 }
 
-},{"../../":"topojson","./clockwise":190,"./coordinate-systems":192,"./prune":198,"./type":215}],195:[function(require,module,exports){
+},{"../../":"topojson","./clockwise":191,"./coordinate-systems":193,"./prune":199,"./type":216}],196:[function(require,module,exports){
 // Given a hash of GeoJSON objects, replaces Features with geometry objects.
 // This is a destructive operation that modifies the input objects!
 module.exports = function(objects) {
@@ -66388,7 +68844,7 @@ module.exports = function(objects) {
   return objects;
 };
 
-},{}],196:[function(require,module,exports){
+},{}],197:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(topology, Q0, Q1) {
@@ -66436,7 +68892,7 @@ module.exports = function(topology, Q0, Q1) {
   return topology;
 };
 
-},{"./quantize":199}],197:[function(require,module,exports){
+},{"./quantize":200}],198:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(objects, bbox, Q0, Q1) {
@@ -66495,7 +68951,7 @@ module.exports = function(objects, bbox, Q0, Q1) {
   return q.transform;
 };
 
-},{"./quantize":199}],198:[function(require,module,exports){
+},{"./quantize":200}],199:[function(require,module,exports){
 module.exports = function(topology, options) {
   var verbose = false,
       objects = topology.objects,
@@ -66552,7 +69008,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{}],199:[function(require,module,exports){
+},{}],200:[function(require,module,exports){
 module.exports = function(dx, dy, kx, ky) {
 
   function quantizePoint(coordinates) {
@@ -66596,7 +69052,7 @@ module.exports = function(dx, dy, kx, ky) {
   };
 };
 
-},{}],200:[function(require,module,exports){
+},{}],201:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(topology, options) {
@@ -66676,7 +69132,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":215}],201:[function(require,module,exports){
+},{"./type":216}],202:[function(require,module,exports){
 var topojson = require("../../"),
     systems = require("./coordinate-systems");
 
@@ -66785,7 +69241,7 @@ module.exports = function(topology, options) {
   return topology;
 };
 
-},{"../../":"topojson","./coordinate-systems":192}],202:[function(require,module,exports){
+},{"../../":"topojson","./coordinate-systems":193}],203:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -66866,7 +69322,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],203:[function(require,module,exports){
+},{}],204:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, transform) {
@@ -67049,7 +69505,7 @@ module.exports = function(objects, transform) {
   }
 };
 
-},{"./type":215}],204:[function(require,module,exports){
+},{"./type":216}],205:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch"),
     systems = require("./coordinate-systems"),
@@ -67162,7 +69618,7 @@ module.exports = function(objects, options) {
   return topology;
 };
 
-},{"./bounds":188,"./compute-id":191,"./coordinate-systems":192,"./delta":193,"./geomify":195,"./post-quantize":196,"./pre-quantize":197,"./stitch":203,"./topology/index":210,"./transform-properties":214,"./type":215}],205:[function(require,module,exports){
+},{"./bounds":189,"./compute-id":192,"./coordinate-systems":193,"./delta":194,"./geomify":196,"./post-quantize":197,"./pre-quantize":198,"./stitch":204,"./topology/index":211,"./transform-properties":215,"./type":216}],206:[function(require,module,exports){
 var join = require("./join");
 
 // Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
@@ -67224,7 +69680,7 @@ function reverse(array, start, end) {
   }
 }
 
-},{"./join":211}],206:[function(require,module,exports){
+},{"./join":212}],207:[function(require,module,exports){
 var join = require("./join"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -67410,7 +69866,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{"./hashmap":208,"./join":211,"./point-equal":212,"./point-hash":213}],207:[function(require,module,exports){
+},{"./hashmap":209,"./join":212,"./point-equal":213,"./point-hash":214}],208:[function(require,module,exports){
 // Extracts the lines and rings from the specified hash of geometry objects.
 //
 // Returns an object with three properties:
@@ -67477,7 +69933,7 @@ module.exports = function(objects) {
   };
 };
 
-},{}],208:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   if (arguments.length === 3) {
     keyType = valueType = Array;
@@ -67552,7 +70008,7 @@ module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   };
 };
 
-},{}],209:[function(require,module,exports){
+},{}],210:[function(require,module,exports){
 module.exports = function(size, hash, equal, type, empty) {
   if (arguments.length === 3) {
     type = Array;
@@ -67609,7 +70065,7 @@ module.exports = function(size, hash, equal, type, empty) {
   };
 };
 
-},{}],210:[function(require,module,exports){
+},{}],211:[function(require,module,exports){
 var hashmap = require("./hashmap"),
     extract = require("./extract"),
     cut = require("./cut"),
@@ -67679,7 +70135,7 @@ function equalArc(arcA, arcB) {
   return ia === ib && ja === jb;
 }
 
-},{"./cut":205,"./dedup":206,"./extract":207,"./hashmap":208}],211:[function(require,module,exports){
+},{"./cut":206,"./dedup":207,"./extract":208,"./hashmap":209}],212:[function(require,module,exports){
 var hashset = require("./hashset"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -67794,12 +70250,12 @@ module.exports = function(topology) {
   return junctionByPoint;
 };
 
-},{"./hashmap":208,"./hashset":209,"./point-equal":212,"./point-hash":213}],212:[function(require,module,exports){
+},{"./hashmap":209,"./hashset":210,"./point-equal":213,"./point-hash":214}],213:[function(require,module,exports){
 module.exports = function(pointA, pointB) {
   return pointA[0] === pointB[0] && pointA[1] === pointB[1];
 };
 
-},{}],213:[function(require,module,exports){
+},{}],214:[function(require,module,exports){
 // TODO if quantized, use simpler Int32 hashing?
 
 var buffer = new ArrayBuffer(16),
@@ -67814,7 +70270,7 @@ module.exports = function(point) {
   return hash & 0x7fffffff;
 };
 
-},{}],214:[function(require,module,exports){
+},{}],215:[function(require,module,exports){
 // Given a hash of GeoJSON objects, transforms any properties on features using
 // the specified transform function. The function is invoked for each existing
 // property on the current feature, being passed the new properties hash, the
@@ -67859,7 +70315,7 @@ module.exports = function(objects, propertyTransform) {
   return objects;
 };
 
-},{}],215:[function(require,module,exports){
+},{}],216:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -67953,7 +70409,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],216:[function(require,module,exports){
+},{}],217:[function(require,module,exports){
 !function() {
   var topojson = {
     version: "1.6.8",
@@ -68487,7 +70943,7 @@ var typeObjects = {
   else this.topojson = topojson;
 }();
 
-},{}],217:[function(require,module,exports){
+},{}],218:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -68803,7 +71259,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],218:[function(require,module,exports){
+},{}],219:[function(require,module,exports){
 module.exports = function(request) {
     var parent = ce('div', 'treeui'),
         onclick = function() { };
@@ -68902,9 +71358,9 @@ function ae(x, y, z) {
     return x.addEventListener(y, z);
 }
 
-},{}],219:[function(require,module,exports){
-arguments[4][51][0].apply(exports,arguments)
-},{"dup":51}],220:[function(require,module,exports){
+},{}],220:[function(require,module,exports){
+arguments[4][52][0].apply(exports,arguments)
+},{"dup":52}],221:[function(require,module,exports){
 // Currently in sync with Node.js lib/internal/util/types.js
 // https://github.com/nodejs/node/commit/112cc7c27551254aa2b17098fb774867f05ed0d9
 
@@ -69240,7 +71696,7 @@ exports.isAnyArrayBuffer = isAnyArrayBuffer;
   });
 });
 
-},{"is-arguments":103,"is-generator-function":106,"is-typed-array":108,"which-typed-array":224}],221:[function(require,module,exports){
+},{"is-arguments":104,"is-generator-function":107,"is-typed-array":109,"which-typed-array":225}],222:[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -69959,7 +72415,7 @@ function callbackify(original) {
 exports.callbackify = callbackify;
 
 }).call(this)}).call(this,require('_process'))
-},{"./support/isBuffer":219,"./support/types":220,"_process":164,"inherits":102}],222:[function(require,module,exports){
+},{"./support/isBuffer":220,"./support/types":221,"_process":165,"inherits":103}],223:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -70210,12 +72666,12 @@ function stringify(gj) {
     }
 }
 
-},{}],223:[function(require,module,exports){
+},{}],224:[function(require,module,exports){
 module.exports.RADIUS = 6378137;
 module.exports.FLATTENING = 1/298.257223563;
 module.exports.POLAR_RADIUS = 6356752.3142;
 
-},{}],224:[function(require,module,exports){
+},{}],225:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -70274,7 +72730,7 @@ module.exports = function whichTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":53,"call-bind/callBound":60,"es-abstract/helpers/getOwnPropertyDescriptor":78,"for-each":83,"has-tostringtag/shams":99,"is-typed-array":108}],225:[function(require,module,exports){
+},{"available-typed-arrays":54,"call-bind/callBound":61,"es-abstract/helpers/getOwnPropertyDescriptor":79,"for-each":84,"has-tostringtag/shams":100,"is-typed-array":109}],226:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryReader;
 
@@ -70325,7 +72781,7 @@ BinaryReader.prototype.readVarInt = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":59}],226:[function(require,module,exports){
+},{"buffer":60}],227:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryWriter;
 
@@ -70394,7 +72850,7 @@ BinaryWriter.prototype.ensureSize = function (size) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":59}],227:[function(require,module,exports){
+},{"buffer":60}],228:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = Geometry;
 
@@ -70782,7 +73238,7 @@ Geometry.prototype.toGeoJSON = function (options) {
 };
 
 }).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":104,"./binaryreader":225,"./binarywriter":226,"./geometrycollection":228,"./linestring":229,"./multilinestring":230,"./multipoint":231,"./multipolygon":232,"./point":233,"./polygon":234,"./types":235,"./wktparser":236,"./zigzag.js":238}],228:[function(require,module,exports){
+},{"../../is-buffer/index.js":105,"./binaryreader":226,"./binarywriter":227,"./geometrycollection":229,"./linestring":230,"./multilinestring":231,"./multipoint":232,"./multipolygon":233,"./point":234,"./polygon":235,"./types":236,"./wktparser":237,"./zigzag.js":239}],229:[function(require,module,exports){
 module.exports = GeometryCollection;
 
 var util = require('util');
@@ -70953,7 +73409,7 @@ GeometryCollection.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":226,"./geometry":227,"./types":235,"util":221}],229:[function(require,module,exports){
+},{"./binarywriter":227,"./geometry":228,"./types":236,"util":222}],230:[function(require,module,exports){
 module.exports = LineString;
 
 var util = require('util');
@@ -71133,7 +73589,7 @@ LineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":226,"./geometry":227,"./point":233,"./types":235,"util":221}],230:[function(require,module,exports){
+},{"./binarywriter":227,"./geometry":228,"./point":234,"./types":236,"util":222}],231:[function(require,module,exports){
 module.exports = MultiLineString;
 
 var util = require('util');
@@ -71324,7 +73780,7 @@ MultiLineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":226,"./geometry":227,"./linestring":229,"./point":233,"./types":235,"util":221}],231:[function(require,module,exports){
+},{"./binarywriter":227,"./geometry":228,"./linestring":230,"./point":234,"./types":236,"util":222}],232:[function(require,module,exports){
 module.exports = MultiPoint;
 
 var util = require('util');
@@ -71498,7 +73954,7 @@ MultiPoint.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":226,"./geometry":227,"./point":233,"./types":235,"util":221}],232:[function(require,module,exports){
+},{"./binarywriter":227,"./geometry":228,"./point":234,"./types":236,"util":222}],233:[function(require,module,exports){
 module.exports = MultiPolygon;
 
 var util = require('util');
@@ -71726,7 +74182,7 @@ MultiPolygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":226,"./geometry":227,"./point":233,"./polygon":234,"./types":235,"util":221}],233:[function(require,module,exports){
+},{"./binarywriter":227,"./geometry":228,"./point":234,"./polygon":235,"./types":236,"util":222}],234:[function(require,module,exports){
 module.exports = Point;
 
 var util = require('util');
@@ -71945,7 +74401,7 @@ Point.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":226,"./geometry":227,"./types":235,"./zigzag.js":238,"util":221}],234:[function(require,module,exports){
+},{"./binarywriter":227,"./geometry":228,"./types":236,"./zigzag.js":239,"util":222}],235:[function(require,module,exports){
 module.exports = Polygon;
 
 var util = require('util');
@@ -72235,7 +74691,7 @@ Polygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":226,"./geometry":227,"./point":233,"./types":235,"util":221}],235:[function(require,module,exports){
+},{"./binarywriter":227,"./geometry":228,"./point":234,"./types":236,"util":222}],236:[function(require,module,exports){
 module.exports = {
     wkt: {
         Point: 'POINT',
@@ -72266,7 +74722,7 @@ module.exports = {
     }
 };
 
-},{}],236:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 module.exports = WktParser;
 
 var Types = require('./types');
@@ -72392,7 +74848,7 @@ WktParser.prototype.skipWhitespaces = function () {
         this.position++;
 };
 
-},{"./point":233,"./types":235}],237:[function(require,module,exports){
+},{"./point":234,"./types":236}],238:[function(require,module,exports){
 exports.Types = require('./types');
 exports.Geometry = require('./geometry');
 exports.Point = require('./point');
@@ -72402,7 +74858,7 @@ exports.MultiPoint = require('./multipoint');
 exports.MultiLineString = require('./multilinestring');
 exports.MultiPolygon = require('./multipolygon');
 exports.GeometryCollection = require('./geometrycollection');
-},{"./geometry":227,"./geometrycollection":228,"./linestring":229,"./multilinestring":230,"./multipoint":231,"./multipolygon":232,"./point":233,"./polygon":234,"./types":235}],238:[function(require,module,exports){
+},{"./geometry":228,"./geometrycollection":229,"./linestring":230,"./multilinestring":231,"./multipoint":232,"./multipolygon":233,"./point":234,"./polygon":235,"./types":236}],239:[function(require,module,exports){
 module.exports = {
     encode: function (value) {
         return (value << 1) ^ (value >> 31);
@@ -72412,7 +74868,7 @@ module.exports = {
     }
 };
 
-},{}],239:[function(require,module,exports){
+},{}],240:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -72431,20 +74887,20 @@ function extend() {
     return target
 }
 
-},{}],240:[function(require,module,exports){
+},{}],241:[function(require,module,exports){
 module.exports = function () {
   return {
     GithubAPI: false
   };
 };
 
-},{}],241:[function(require,module,exports){
+},{}],242:[function(require,module,exports){
 module.exports = {
   DEFAULT_PROJECTION: 'globe',
   DEFAULT_STYLE: 'Streets'
 };
 
-},{}],242:[function(require,module,exports){
+},{}],243:[function(require,module,exports){
 const clone = require('clone'),
   xtend = require('xtend'),
   config = require('../config.js')(location.hostname),
@@ -72739,7 +75195,7 @@ module.exports = function (context) {
   return data;
 };
 
-},{"../config.js":240,"../source/gist":257,"../source/github":258,"../source/local":259,"clone":62,"xtend":239}],243:[function(require,module,exports){
+},{"../config.js":241,"../source/gist":258,"../source/github":259,"../source/local":260,"clone":63,"xtend":240}],244:[function(require,module,exports){
 const qs = require('qs-hash'),
   zoomextent = require('../lib/zoomextent'),
   flash = require('../ui/flash');
@@ -72838,7 +75294,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../lib/zoomextent":252,"../ui/flash":269,"qs-hash":165}],244:[function(require,module,exports){
+},{"../lib/zoomextent":253,"../ui/flash":270,"qs-hash":166}],245:[function(require,module,exports){
 const config = require('../config.js')(location.hostname);
 
 module.exports = function (context) {
@@ -72888,7 +75344,7 @@ module.exports = function (context) {
   return repo;
 };
 
-},{"../config.js":240}],245:[function(require,module,exports){
+},{"../config.js":241}],246:[function(require,module,exports){
 const qs = require('qs-hash'),
   xtend = require('xtend');
 
@@ -72962,7 +75418,7 @@ module.exports = function (context) {
   return router;
 };
 
-},{"qs-hash":165,"xtend":239}],246:[function(require,module,exports){
+},{"qs-hash":166,"xtend":240}],247:[function(require,module,exports){
 const config = require('../config.js')(location.hostname);
 
 module.exports = function (context) {
@@ -73060,7 +75516,7 @@ module.exports = function (context) {
   return user;
 };
 
-},{"../config.js":240}],247:[function(require,module,exports){
+},{"../config.js":241}],248:[function(require,module,exports){
 (function (Buffer){(function (){
 const escape = require('escape-html'),
   geojsonRandom = require('geojson-random'),
@@ -73186,7 +75642,7 @@ module.exports.wkxString = function (context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../lib/zoomextent":252,"@mapbox/geojson-extent":7,"buffer":59,"escape-html":79,"geojson-flatten":88,"geojson-random":90,"polyline":162,"wkx":237}],248:[function(require,module,exports){
+},{"../lib/zoomextent":253,"@mapbox/geojson-extent":7,"buffer":60,"escape-html":80,"geojson-flatten":89,"geojson-random":91,"polyline":163,"wkx":238}],249:[function(require,module,exports){
 module.exports = function (context) {
   return function (e, id) {
     const sel = d3.select(e.target._content);
@@ -73367,7 +75823,7 @@ module.exports = function (context) {
   };
 };
 
-},{}],249:[function(require,module,exports){
+},{}],250:[function(require,module,exports){
 const topojson = require('topojson'),
   toGeoJSON = require('togeojson'),
   gtfs2geojson = require('gtfs2geojson'),
@@ -73570,7 +76026,7 @@ function readFile(f, text, callback) {
   }
 }
 
-},{"csv2geojson":69,"geojson-normalize":89,"gtfs2geojson":95,"osmtogeojson":157,"polytogeojson":163,"togeojson":185,"topojson":"topojson"}],250:[function(require,module,exports){
+},{"csv2geojson":70,"geojson-normalize":90,"gtfs2geojson":96,"osmtogeojson":160,"polytogeojson":164,"togeojson":186,"topojson":"topojson"}],251:[function(require,module,exports){
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (map, feature) {
@@ -73584,7 +76040,7 @@ module.exports = function (map, feature) {
   }
 };
 
-},{"@turf/bbox":41}],251:[function(require,module,exports){
+},{"@turf/bbox":42}],252:[function(require,module,exports){
 const geojsonhint = require('geojsonhint');
 
 module.exports = function (callback) {
@@ -73654,7 +76110,7 @@ module.exports = function (callback) {
   };
 };
 
-},{"geojsonhint":93}],252:[function(require,module,exports){
+},{"geojsonhint":94}],253:[function(require,module,exports){
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (context) {
@@ -73664,7 +76120,7 @@ module.exports = function (context) {
   });
 };
 
-},{"@turf/bbox":41}],253:[function(require,module,exports){
+},{"@turf/bbox":42}],254:[function(require,module,exports){
 const ui = require('./ui'),
   map = require('./ui/map'),
   data = require('./core/data'),
@@ -73694,7 +76150,7 @@ function geojsonIO() {
   return context;
 }
 
-},{"./core/data":242,"./core/loader":243,"./core/repo":244,"./core/router":245,"./core/user":246,"./ui":260,"./ui/map":273,"store":178}],254:[function(require,module,exports){
+},{"./core/data":243,"./core/loader":244,"./core/repo":245,"./core/router":246,"./core/user":247,"./ui":261,"./ui/map":274,"store":179}],255:[function(require,module,exports){
 (function (Buffer){(function (){
 
 const marked = require('marked');
@@ -73714,7 +76170,7 @@ module.exports = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":59,"marked":152}],255:[function(require,module,exports){
+},{"buffer":60,"marked":153}],256:[function(require,module,exports){
 const _ = require('lodash');
 const { createPopper } = require('@popperjs/core');
 
@@ -73877,7 +76333,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/validate":251,"../lib/zoomextent":252,"../ui/saver.js":280,"@popperjs/core":39,"codemirror/addon/edit/matchbrackets":63,"codemirror/addon/fold/brace-fold":64,"codemirror/addon/fold/foldcode":65,"codemirror/addon/fold/foldgutter":66,"codemirror/lib/codemirror":67,"codemirror/mode/javascript/javascript":68,"lodash":150}],256:[function(require,module,exports){
+},{"../lib/validate":252,"../lib/zoomextent":253,"../ui/saver.js":281,"@popperjs/core":40,"codemirror/addon/edit/matchbrackets":64,"codemirror/addon/fold/brace-fold":65,"codemirror/addon/fold/foldcode":66,"codemirror/addon/fold/foldgutter":67,"codemirror/lib/codemirror":68,"codemirror/mode/javascript/javascript":69,"lodash":151}],257:[function(require,module,exports){
 const metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -73942,7 +76398,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/smartzoom.js":250,"d3-metatable":71}],257:[function(require,module,exports){
+},{"../lib/smartzoom.js":251,"d3-metatable":72}],258:[function(require,module,exports){
 
 const tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';\nvar map = L.mapbox.map('map');\n\nL.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties;\n    var table = document.createElement('table');\n    table.setAttribute('class', 'marker-properties display')\n    for (var key in properties) {\n        var tr = createTableRows(key, properties[key]);\n        table.appendChild(tr);\n    }\n    if (table) l.bindPopup(table);\n}\n\nfunction createTableRows(key, value) {\n    var tr = document.createElement('tr');\n    var th = document.createElement('th');\n    var td = document.createElement('td');\n    key = document.createTextNode(key);\n    value = document.createTextNode(value);\n    th.appendChild(key);\n    td.appendChild(value);\n    tr.appendChild(th);\n    tr.appendChild(td);\n    return tr\n}\n\n</script>\n</body>\n</html>\n";
 
@@ -74079,7 +76535,7 @@ function loadRaw(url, context, callback) {
   }
 }
 
-},{"../config.js":240}],258:[function(require,module,exports){
+},{"../config.js":241}],259:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -74226,7 +76682,7 @@ function shaUrl(parts, sha) {
   );
 }
 
-},{"../config.js":240}],259:[function(require,module,exports){
+},{"../config.js":241}],260:[function(require,module,exports){
 let fs;
 
 try {
@@ -74252,7 +76708,7 @@ function save(context, callback) {
   });
 }
 
-},{"fs":58}],260:[function(require,module,exports){
+},{"fs":59}],261:[function(require,module,exports){
 const buttons = require('./ui/mode_buttons'),
   file_bar = require('./ui/file_bar'),
   dnd = require('./ui/dnd'),
@@ -74327,7 +76783,7 @@ function ui(context) {
   };
 }
 
-},{"./ui/dnd":261,"./ui/file_bar":268,"./ui/layer_switch":270,"./ui/mode_buttons":278,"./ui/projection_switch":279}],261:[function(require,module,exports){
+},{"./ui/dnd":262,"./ui/file_bar":269,"./ui/layer_switch":271,"./ui/mode_buttons":279,"./ui/projection_switch":280}],262:[function(require,module,exports){
 const readDrop = require('../lib/readfile.js').readDrop,
   flash = require('./flash.js'),
   zoomextent = require('../lib/zoomextent');
@@ -74375,7 +76831,7 @@ module.exports = function (context) {
   }
 };
 
-},{"../lib/readfile.js":249,"../lib/zoomextent":252,"./flash.js":269}],262:[function(require,module,exports){
+},{"../lib/readfile.js":250,"../lib/zoomextent":253,"./flash.js":270}],263:[function(require,module,exports){
 // custom mapbopx-gl-draw mode that extends draw_line_string
 // shows a center point, radius line, and circle polygon while drawing
 // forces draw.create on creation of second vertex
@@ -74488,7 +76944,7 @@ const CircleMode = {
 
 module.exports = CircleMode;
 
-},{"./util.js":267,"@mapbox/mapbox-gl-draw":11,"@turf/circle":42,"@turf/length":47}],263:[function(require,module,exports){
+},{"./util.js":268,"@mapbox/mapbox-gl-draw":12,"@turf/circle":43,"@turf/length":48}],264:[function(require,module,exports){
 // from https://jsfiddle.net/fxi/xf51zet4/
 class extendDrawBar {
   constructor(opt) {
@@ -74536,7 +76992,7 @@ class extendDrawBar {
 
 module.exports = extendDrawBar;
 
-},{}],264:[function(require,module,exports){
+},{}],265:[function(require,module,exports){
 // this mode extends the build-in linestring tool, displaying the current length
 // of the line as the user draws using a point feature and a symbol layer
 const MapboxDraw = require('@mapbox/mapbox-gl-draw');
@@ -74601,7 +77057,7 @@ const ExtendedLineStringMode = {
 
 module.exports = ExtendedLineStringMode;
 
-},{"./util.js":267,"@mapbox/mapbox-gl-draw":11}],265:[function(require,module,exports){
+},{"./util.js":268,"@mapbox/mapbox-gl-draw":12}],266:[function(require,module,exports){
 // from https://github.com/thegisdev/mapbox-gl-draw-rectangle-mode
 const doubleClickZoom = {
   enable: (ctx) => {
@@ -74743,7 +77199,7 @@ const DrawRectangle = {
 
 module.exports = DrawRectangle;
 
-},{}],266:[function(require,module,exports){
+},{}],267:[function(require,module,exports){
 module.exports = [
   {
     id: 'gl-draw-polygon-fill-inactive',
@@ -74998,7 +77454,7 @@ module.exports = [
   }
 ];
 
-},{}],267:[function(require,module,exports){
+},{}],268:[function(require,module,exports){
 const turfLength = require('@turf/length').default;
 const numeral = require('numeral');
 
@@ -75045,7 +77501,7 @@ module.exports = {
   getDisplayMeasurements
 };
 
-},{"@turf/length":47,"numeral":155}],268:[function(require,module,exports){
+},{"@turf/length":48,"numeral":156}],269:[function(require,module,exports){
 const shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
@@ -75693,7 +78149,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":240,"../lib/meta.js":247,"../lib/readfile":249,"../lib/zoomextent":252,"../ui/saver.js":280,"./flash":269,"./modal.js":277,"./share":281,"@mapbox/gist-map-browser":9,"@mapbox/github-file-browser":10,"clone":62,"file-saver":82,"geojson-normalize":89,"geojson2dsv":92,"shp-write":167,"tokml":186,"topojson":"topojson","wellknown":222}],269:[function(require,module,exports){
+},{"../config.js":241,"../lib/meta.js":248,"../lib/readfile":250,"../lib/zoomextent":253,"../ui/saver.js":281,"./flash":270,"./modal.js":278,"./share":282,"@mapbox/gist-map-browser":10,"@mapbox/github-file-browser":11,"clone":63,"file-saver":83,"geojson-normalize":90,"geojson2dsv":93,"shp-write":168,"tokml":187,"topojson":"topojson","wellknown":223}],270:[function(require,module,exports){
 const message = require('./message');
 
 module.exports = flash;
@@ -75712,7 +78168,7 @@ function flash(selection, txt) {
   return msg;
 }
 
-},{"./message":276}],270:[function(require,module,exports){
+},{"./message":277}],271:[function(require,module,exports){
 const styles = require('./map/styles');
 const { DEFAULT_STYLE } = require('../constants');
 
@@ -75767,7 +78223,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":241,"./map/styles":274}],271:[function(require,module,exports){
+},{"../constants":242,"./map/styles":275}],272:[function(require,module,exports){
 // extend mapboxGL Marker so we can pass in an onClick handler
 const mapboxgl = require('mapbox-gl');
 
@@ -75795,7 +78251,7 @@ class ClickableMarker extends mapboxgl.Marker {
 
 module.exports = ClickableMarker;
 
-},{"mapbox-gl":151}],272:[function(require,module,exports){
+},{"mapbox-gl":152}],273:[function(require,module,exports){
 class EditControl {
   onAdd(map) {
     this.map = map;
@@ -75856,7 +78312,7 @@ module.exports = {
   TrashControl
 };
 
-},{}],273:[function(require,module,exports){
+},{}],274:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl');
 
 require('qs-hash');
@@ -76283,7 +78739,7 @@ module.exports = function (context, readonly) {
   return map;
 };
 
-},{"../../constants":241,"../draw/circle":262,"../draw/extend_draw_bar":263,"../draw/linestring":264,"../draw/rectangle":265,"../draw/styles":266,"./controls":272,"./styles":274,"./util":275,"@mapbox/mapbox-gl-draw":11,"@mapbox/mapbox-gl-geocoder":15,"geojson-rewind":91,"mapbox-gl":151,"qs-hash":165}],274:[function(require,module,exports){
+},{"../../constants":242,"../draw/circle":263,"../draw/extend_draw_bar":264,"../draw/linestring":265,"../draw/rectangle":266,"../draw/styles":267,"./controls":273,"./styles":275,"./util":276,"@mapbox/mapbox-gl-draw":12,"@mapbox/mapbox-gl-geocoder":16,"geojson-rewind":92,"mapbox-gl":152,"qs-hash":166}],275:[function(require,module,exports){
 module.exports = [
   {
     title: 'Streets',
@@ -76332,7 +78788,7 @@ module.exports = [
   }
 ];
 
-},{}],275:[function(require,module,exports){
+},{}],276:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl');
 const escape = require('escape-html');
 const length = require('@turf/length').default;
@@ -76702,7 +79158,7 @@ module.exports = {
   bindPopup
 };
 
-},{"../../lib/popup":248,"./clickable_marker":271,"@turf/area":40,"@turf/length":47,"escape-html":79,"mapbox-gl":151}],276:[function(require,module,exports){
+},{"../../lib/popup":249,"./clickable_marker":272,"@turf/area":41,"@turf/length":48,"escape-html":80,"mapbox-gl":152}],277:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -76731,7 +79187,7 @@ function message(selection) {
   return sel;
 }
 
-},{}],277:[function(require,module,exports){
+},{}],278:[function(require,module,exports){
 module.exports = function (selection, blocking) {
   const previous = selection.select('div.modal');
   const animate = previous.empty();
@@ -76783,7 +79239,7 @@ module.exports = function (selection, blocking) {
   return shaded;
 };
 
-},{}],278:[function(require,module,exports){
+},{}],279:[function(require,module,exports){
 const table = require('../panel/table'),
   json = require('../panel/json'),
   help = require('../panel/help');
@@ -76844,7 +79300,7 @@ module.exports = function (context, pane) {
   };
 };
 
-},{"../panel/help":254,"../panel/json":255,"../panel/table":256}],279:[function(require,module,exports){
+},{"../panel/help":255,"../panel/json":256,"../panel/table":257}],280:[function(require,module,exports){
 const { DEFAULT_PROJECTION } = require('../constants');
 
 module.exports = function (context) {
@@ -76901,7 +79357,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":241}],280:[function(require,module,exports){
+},{"../constants":242}],281:[function(require,module,exports){
 const flash = require('./flash');
 
 module.exports = function (context) {
@@ -76969,7 +79425,7 @@ module.exports = function (context) {
   }
 };
 
-},{"./flash":269}],281:[function(require,module,exports){
+},{"./flash":270}],282:[function(require,module,exports){
 const gist = require('../source/gist'),
   modal = require('./modal');
 
@@ -77028,7 +79484,7 @@ function share(context) {
   };
 }
 
-},{"../source/gist":257,"./modal":277}],"topojson":[function(require,module,exports){
+},{"../source/gist":258,"./modal":278}],"topojson":[function(require,module,exports){
 var topojson = module.exports = require("./topojson");
 topojson.topology = require("./lib/topojson/topology");
 topojson.simplify = require("./lib/topojson/simplify");
@@ -77039,4 +79495,4 @@ topojson.bind = require("./lib/topojson/bind");
 topojson.stitch = require("./lib/topojson/stitch");
 topojson.scale = require("./lib/topojson/scale");
 
-},{"./lib/topojson/bind":187,"./lib/topojson/clockwise":190,"./lib/topojson/filter":194,"./lib/topojson/prune":198,"./lib/topojson/scale":200,"./lib/topojson/simplify":201,"./lib/topojson/stitch":203,"./lib/topojson/topology":204,"./topojson":216}]},{},[253]);
+},{"./lib/topojson/bind":188,"./lib/topojson/clockwise":191,"./lib/topojson/filter":195,"./lib/topojson/prune":199,"./lib/topojson/scale":201,"./lib/topojson/simplify":202,"./lib/topojson/stitch":204,"./lib/topojson/topology":205,"./topojson":217}]},{},[254]);
