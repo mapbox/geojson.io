@@ -22,7 +22,7 @@
     "d3": "3.5.17",
     "d3-metatable": "0.3.0",
     "escape-html": "^1.0.1",
-    "filesaver.js": "0.1.0",
+    "file-saver": "2.0.5",
     "@mapbox/geojson-extent": "^1.0.1",
     "geojson-flatten": "~0.1.0",
     "geojson-normalize": "0.0.0",
