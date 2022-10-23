@@ -1,7 +1,7 @@
 const shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
-  topojson = require('topojson'),
+  topojson = require('topojson-server'),
   saveAs = require('file-saver'),
   tokml = require('tokml'),
   githubBrowser = require('@mapbox/github-file-browser'),

@@ -1,4 +1,4 @@
-const topojson = require('topojson'),
+const topojson = require('topojson-client'),
   toGeoJSON = require('togeojson'),
   gtfs2geojson = require('gtfs2geojson'),
   csv2geojson = require('csv2geojson'),
