@@ -41802,24 +41802,60 @@ const addIds = (geojson) => {
 };
   
 const addMarkers = (geojson, context, writable) => {
+  // remove all existing markers
   markers.forEach((d) => {
     d.remove();
   });
   let pointFeatures = [];
-  let pointFeaturesIndices = [];
-  // add markers
-  if (geojson.features) {
-    geojson.features.forEach((d, i) => {
-      if (d.geometry.type === 'Point') {
-        pointFeatures.push(d);
-        pointFeaturesIndices.push(i);
-      }
+
+  // wrap point geometry in a feature and push
+  const handlePointGeometry = (geometry, properties, id) => {
+    pointFeatures.push({
+      type: 'Feature',
+      id,
+      geometry,
+      properties
     });
+  };
+
+  // the three geometry types that may need markers are Point, MultiPoint, or GeometryCollection
+  // for each point to be rendered, create a separate feature with the parent's properties
+  // so that they will show up properly in the popup
+  // TODO: indicate in the popup and/or elsewhere when a point is part of a MultiPoint or GeometryCollection
+  const handleGeometry = (geometry, properties, index) => {
+    if (geometry.type === 'Point') {
+      handlePointGeometry(geometry, properties, index);
+    }
+
+    if (geometry.type === 'MultiPoint') {
+      geometry.coordinates.forEach((coordinatePair) => {
+        handlePointGeometry({
+          type: 'Point',
+          coordinates: coordinatePair
+        }, properties, index);
+      });
+    }
+
+    if (geometry.type === 'GeometryCollection') {
+      geometry.geometries.forEach((geometry) => {
+        handleGeometry(geometry, properties, index);
+      });
+    }
+  };
+
+  switch (geojson.type) {
+  case 'FeatureCollection':
+    geojson.features.forEach((d, i) => {
+      const { geometry, properties } = d;
+      handleGeometry(geometry, properties, i);
+    });
+    break;
   }
-  
+
   if (pointFeatures.length === 0) {
     return;
   }
+
   
   pointFeatures.map((d, i) => {
     const marker = new ClickableMarker({
@@ -41830,12 +41866,7 @@ const addMarkers = (geojson, context, writable) => {
         bindPopup(
           {
             lngLat: d.geometry.coordinates,
-            features: [
-              {
-                id: pointFeaturesIndices[i],
-                ...d,
-              },
-            ],
+            features: [d],
           },
           context,
           writable
@@ -41845,6 +41876,7 @@ const addMarkers = (geojson, context, writable) => {
     markers.push(marker);
   });
 };
+
 function geojsonToLayer(geojson, context, writable) {
   if (context.map.isStyleLoaded()) {
     context.map.getSource('map-data').setData(addIds(geojson));
