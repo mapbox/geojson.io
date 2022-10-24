@@ -35,8 +35,7 @@ module.exports = function (context, readonly) {
   }
 
   function map(selection) {
-    mapboxgl.accessToken =
-      'pk.eyJ1IjoiY2hyaXN3aG9uZ21hcGJveCIsImEiOiJjbDR5OTNyY2cxZGg1M2luejcxZmJpaG1yIn0.mUZ2xk8CLeBFotkPvPJHGg';
+    mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
 
     context.map = new mapboxgl.Map({
       container: selection.node(),
