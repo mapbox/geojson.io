@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2022-10-24
+
+* Fix the handling of points in MultiPoint and GeometryCollection geometries (#736)
+
 ## 2022-10-21
 
 * Update the default map view, `fix mapDefault() check` (#727)
