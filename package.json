@@ -25,6 +25,7 @@
     "geojsonhint": "0.3.4",
     "gtfs2geojson": "^1.0.0",
     "jsonlint": "1.6.0",
+    "lodash": "^4.17.21",
     "marked": "0.3.2",
     "osmtogeojson": "2.0.5",
     "polyline": "^0.2.0",
