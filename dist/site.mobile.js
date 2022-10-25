@@ -41832,9 +41832,9 @@ const addMarkers = (geojson, context, writable) => {
 };
 
 function geojsonToLayer(geojson, context, writable) {
-  if (context.map.isStyleLoaded()) {
-    context.map.getSource('map-data').setData(addIds(geojson));
-  
+  const dataLoaded = context.map.getSource('map-data');
+  if (dataLoaded) {
+    dataLoaded.setData(addIds(geojson));
     addMarkers(geojson, context, writable);
   }
 }

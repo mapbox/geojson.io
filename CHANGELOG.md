@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2022-10-25
+
+* Fix a bug that was checking for map load in an unreliable way before adding data from externally loaded geojson (#733)
+
 ## 2022-10-24
 
 * Fix the handling of points in MultiPoint and GeometryCollection geometries (#736)
