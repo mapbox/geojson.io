@@ -5,7 +5,7 @@
 * Fix a bug that was checking for map load in an unreliable way before adding data from externally loaded geojson (#733)
 
 ## 2022-10-24
-
+* prevent line or polygon popup if marker was clicked (#730)
 * Fix the handling of points in MultiPoint and GeometryCollection geometries (#736)
 
 ## 2022-10-21
