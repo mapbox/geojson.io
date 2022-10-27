@@ -1,3 +1,4 @@
+var _ = require('lodash');
 var validate = require('../lib/validate'),
   zoomextent = require('../lib/zoomextent'),
   saver = require('../ui/saver.js');
@@ -54,8 +55,11 @@ module.exports = function(context) {
 
     function changeValidated(err, data, zoom) {
       if (!err) {
-        context.data.set({map: data}, 'json');
-        if (zoom) zoomextent(context);
+        // don't set data unless it has actually changed
+        if (!_.isEqual(data, context.data.get('map'))) {
+          context.data.set({map: data}, 'json');
+          if (zoom) zoomextent(context);
+        }
       }
     }
 
