@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2022-10-27
+
+* prevent editor data update when data is unchanged (#734)
+
+* move codemirror to package.json dependencies (#731)
+
 ## 2022-10-25
 
 * Fix a bug that was checking for map load in an unreliable way before adding data from externally loaded geojson (#733)
