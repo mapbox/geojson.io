@@ -232,6 +232,7 @@ module.exports = [
       'text-size': 15,
       'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
       'text-anchor': 'left',
+      'text-justify': 'left',
       'text-offset': [.8, .8],
       'text-field': ['get', 'radius'],
       'text-max-width': 7

@@ -59329,7 +59329,7 @@ module.exports = function(context) {
   };
 };
 
-},{"../lib/zoomextent":192,"../ui/flash":207,"qs-hash":109}],184:[function(require,module,exports){
+},{"../lib/zoomextent":192,"../ui/flash":209,"qs-hash":109}],184:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -60024,7 +60024,7 @@ function geojsonIO() {
     return context;
 }
 
-},{"./core/data":182,"./core/loader":183,"./core/repo":184,"./core/router":185,"./core/user":186,"./ui":200,"./ui/map":211,"store":123}],194:[function(require,module,exports){
+},{"./core/data":182,"./core/loader":183,"./core/repo":184,"./core/router":185,"./core/user":186,"./ui":200,"./ui/map":213,"store":123}],194:[function(require,module,exports){
 (function (Buffer){(function (){
 
 var marked = require('marked');
@@ -60194,7 +60194,7 @@ module.exports = function(context) {
   return render;
 };
 
-},{"../lib/validate":191,"../lib/zoomextent":192,"../ui/saver.js":218,"@popperjs/core":3,"lodash":97}],196:[function(require,module,exports){
+},{"../lib/validate":191,"../lib/zoomextent":192,"../ui/saver.js":220,"@popperjs/core":3,"lodash":97}],196:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -60627,7 +60627,7 @@ function ui(context) {
   };
 }
 
-},{"./ui/dnd":201,"./ui/file_bar":206,"./ui/layer_switch":208,"./ui/mode_buttons":216,"./ui/projection_switch":217,"./ui/user":220}],201:[function(require,module,exports){
+},{"./ui/dnd":201,"./ui/file_bar":208,"./ui/layer_switch":210,"./ui/mode_buttons":218,"./ui/projection_switch":219,"./ui/user":222}],201:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -60671,12 +60671,13 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":189,"../lib/zoomextent":192,"./flash.js":207}],202:[function(require,module,exports){
+},{"../lib/readfile.js":189,"../lib/zoomextent":192,"./flash.js":209}],202:[function(require,module,exports){
 // custom mapbopx-gl-draw mode that extends draw_line_string
 // shows a center point, radius line, and circle polygon while drawing
 // forces draw.create on creation of second vertex
 
-const numeral = require('numeral');
+
+const { getDisplayMeasurements } = require('./util.js');
 
 function circleFromTwoVertexLineString(geojson) {
 
@@ -60684,41 +60685,6 @@ function circleFromTwoVertexLineString(geojson) {
   const radiusInKm = turf.lineDistance(geojson, 'kilometers');
 
   return turf.circle(center, radiusInKm);
-}
-
-function getDisplayMeasurements(feature) {
-  // should log both metric and standard display strings for the current drawn feature
-  
-  // metric calculation
-  const drawnLength = (turf.lineDistance(feature) * 1000); // meters
-
-  let metricUnits = 'm';
-  let metricFormat = '0,0';
-  let metricMeasurement;
-
-  let standardUnits = 'feet';
-  let standardFormat = '0,0';
-  let standardMeasurement;
-
-  metricMeasurement = drawnLength;
-  if (drawnLength >= 1000) { // if over 1000 meters, upgrade metric
-    metricMeasurement = drawnLength / 1000;
-    metricUnits = 'km';
-    metricFormat = '0.00';
-  }
-
-  standardMeasurement = drawnLength * 3.28084;
-  if (standardMeasurement >= 5280) { // if over 5280 feet, upgrade standard
-    standardMeasurement /= 5280;
-    standardUnits = 'mi';
-    standardFormat = '0.00';
-  }
-
-  const displayMeasurements = {
-    metric: `${numeral(metricMeasurement).format(metricFormat)} ${metricUnits}`,
-    standard: `${numeral(standardMeasurement).format(standardFormat)} ${standardUnits}`,
-  };
-  return displayMeasurements;
 }
 
 const CircleMode = {
@@ -60813,7 +60779,7 @@ const CircleMode = {
 
 
 module.exports = CircleMode;
-},{"numeral":99}],203:[function(require,module,exports){
+},{"./util.js":207}],203:[function(require,module,exports){
 // from https://jsfiddle.net/fxi/xf51zet4/
 class extendDrawBar {
   constructor(opt) {
@@ -60860,6 +60826,60 @@ class extendDrawBar {
 
 module.exports = extendDrawBar;
 },{}],204:[function(require,module,exports){
+// this mode extends the build-in linestring tool, displaying the current length
+// of the line as the user draws using a point feature and a symbol layer
+
+const { getDisplayMeasurements } = require('./util.js');
+
+const ExtendedLineStringMode = {
+  ...MapboxDraw.modes.draw_line_string,
+
+  toDisplayFeatures: function(state, geojson, display) {
+    const isActiveLine = geojson.properties.id === state.line.id;
+    geojson.properties.active = (isActiveLine) ? 'true' : 'false';
+    if (!isActiveLine) return display(geojson);
+    // Only render the line if it has at least one real coordinate
+    if (geojson.geometry.coordinates.length < 2) return;
+    geojson.properties.meta = 'feature';
+    display({
+      type: 'Feature',
+      properties: {
+        meta: 'vertex',
+        parent: state.line.id,
+        coord_path: `${state.direction === 'forward' ? geojson.geometry.coordinates.length - 2 : 1}`,
+        active: 'false'
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: geojson.geometry.coordinates[state.direction === 'forward' ? geojson.geometry.coordinates.length - 2 : 1]
+      }
+    });
+  
+    display(geojson);
+
+    const displayMeasurements = getDisplayMeasurements(geojson);
+  
+    // create custom feature for the current pointer position
+    const currentVertex = {
+      type: 'Feature',
+      properties: {
+        meta: 'currentPosition',
+        radius: `${displayMeasurements.metric}\n${displayMeasurements.standard}`,
+        parent: state.line.id,
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: geojson.geometry.coordinates[geojson.geometry.coordinates.length - 1],
+      },
+    };
+  
+    display(currentVertex);
+  }
+  
+};
+
+module.exports = ExtendedLineStringMode;
+},{"./util.js":207}],205:[function(require,module,exports){
 // from https://github.com/thegisdev/mapbox-gl-draw-rectangle-mode
 const doubleClickZoom = {
   enable: ctx => {
@@ -61000,7 +61020,7 @@ const DrawRectangle = {
 };
   
 module.exports =  DrawRectangle;
-},{}],205:[function(require,module,exports){
+},{}],206:[function(require,module,exports){
 module.exports = [
   {
     'id': 'gl-draw-polygon-fill-inactive',
@@ -61235,6 +61255,7 @@ module.exports = [
       'text-size': 15,
       'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
       'text-anchor': 'left',
+      'text-justify': 'left',
       'text-offset': [.8, .8],
       'text-field': ['get', 'radius'],
       'text-max-width': 7
@@ -61248,7 +61269,48 @@ module.exports = [
     filter: ['==', 'meta', 'currentPosition'],
   }
 ];
-},{}],206:[function(require,module,exports){
+},{}],207:[function(require,module,exports){
+const numeral = require('numeral');
+
+function getDisplayMeasurements(feature) {
+  // should log both metric and standard display strings for the current drawn feature
+    
+  // metric calculation
+  const drawnLength = (turf.length(feature) * 1000); // meters
+  
+  let metricUnits = 'm';
+  let metricFormat = '0,0';
+  let metricMeasurement;
+  
+  let standardUnits = 'ft';
+  let standardFormat = '0,0';
+  let standardMeasurement;
+  
+  metricMeasurement = drawnLength;
+  if (drawnLength >= 1000) { // if over 1000 meters, upgrade metric
+    metricMeasurement = drawnLength / 1000;
+    metricUnits = 'km';
+    metricFormat = '0.00';
+  }
+  
+  standardMeasurement = drawnLength * 3.28084;
+  if (standardMeasurement >= 5280) { // if over 5280 feet, upgrade standard
+    standardMeasurement /= 5280;
+    standardUnits = 'mi';
+    standardFormat = '0.00';
+  }
+  
+  const displayMeasurements = {
+    metric: `${numeral(metricMeasurement).format(metricFormat)} ${metricUnits}`,
+    standard: `${numeral(standardMeasurement).format(standardFormat)} ${standardUnits}`,
+  };
+  return displayMeasurements;
+}
+
+module.exports = {
+  getDisplayMeasurements
+};
+},{"numeral":99}],208:[function(require,module,exports){
 var shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
@@ -61904,7 +61966,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":180,"../lib/meta.js":187,"../lib/readfile":189,"../lib/zoomextent":192,"../ui/saver.js":218,"./flash":207,"./modal.js":215,"./share":219,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":16,"filesaver.js":29,"geojson-normalize":38,"geojson2dsv":41,"shp-write":112,"tokml":126,"topojson":"topojson","wellknown":162}],207:[function(require,module,exports){
+},{"../config.js":180,"../lib/meta.js":187,"../lib/readfile":189,"../lib/zoomextent":192,"../ui/saver.js":220,"./flash":209,"./modal.js":217,"./share":221,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":16,"filesaver.js":29,"geojson-normalize":38,"geojson2dsv":41,"shp-write":112,"tokml":126,"topojson":"topojson","wellknown":162}],209:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -61926,7 +61988,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":214}],208:[function(require,module,exports){
+},{"./message":216}],210:[function(require,module,exports){
 const styles = require('./map/styles');
 const { DEFAULT_STYLE } = require('../constants');
 
@@ -61981,7 +62043,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":181,"./map/styles":212}],209:[function(require,module,exports){
+},{"../constants":181,"./map/styles":214}],211:[function(require,module,exports){
 // extend mapboxGL Marker so we can pass in an onClick handler
 class ClickableMarker extends mapboxgl.Marker {
   // new method onClick, sets _handleClick to a function you pass in
@@ -62007,7 +62069,7 @@ class ClickableMarker extends mapboxgl.Marker {
 }
 
 module.exports = ClickableMarker;
-},{}],210:[function(require,module,exports){
+},{}],212:[function(require,module,exports){
   
 class EditControl {
   onAdd(map) {
@@ -62068,10 +62130,11 @@ module.exports = {
   SaveCancelControl,
   TrashControl
 };
-},{}],211:[function(require,module,exports){
+},{}],213:[function(require,module,exports){
 require('qs-hash');
 const geojsonRewind = require('geojson-rewind');
 
+const DrawLineString = require('../draw/linestring');
 const DrawRectangle = require('../draw/rectangle');
 const DrawCircle = require('../draw/circle');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
@@ -62142,6 +62205,7 @@ module.exports = function (context, readonly) {
         displayControlsDefault: false,
         modes: {
           ...MapboxDraw.modes,
+          draw_line_string: DrawLineString,
           draw_rectangle: DrawRectangle,
           draw_circle: DrawCircle,
         },
@@ -62448,7 +62512,7 @@ module.exports = function (context, readonly) {
   return map;
 };
 
-},{"../../constants":181,"../draw/circle":202,"../draw/extend_draw_bar":203,"../draw/rectangle":204,"../draw/styles":205,"./controls":210,"./styles":212,"./util":213,"geojson-rewind":40,"qs-hash":109}],212:[function(require,module,exports){
+},{"../../constants":181,"../draw/circle":202,"../draw/extend_draw_bar":203,"../draw/linestring":204,"../draw/rectangle":205,"../draw/styles":206,"./controls":212,"./styles":214,"./util":215,"geojson-rewind":40,"qs-hash":109}],214:[function(require,module,exports){
 module.exports = [
   {
     title: 'Streets',
@@ -62497,7 +62561,7 @@ module.exports = [
     },
   },
 ];
-},{}],213:[function(require,module,exports){
+},{}],215:[function(require,module,exports){
 const escape = require('escape-html');
 
 const popup = require('../../lib/popup');
@@ -62748,7 +62812,7 @@ module.exports = {
   bindPopup
 };
   
-},{"../../lib/popup":188,"./clickable_marker":209,"escape-html":27}],214:[function(require,module,exports){
+},{"../../lib/popup":188,"./clickable_marker":211,"escape-html":27}],216:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -62789,7 +62853,7 @@ function message(selection) {
   return sel;
 }
 
-},{}],215:[function(require,module,exports){
+},{}],217:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -62857,7 +62921,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],216:[function(require,module,exports){
+},{}],218:[function(require,module,exports){
 var table = require('../panel/table'),
   json = require('../panel/json'),
   help = require('../panel/help');
@@ -62909,7 +62973,7 @@ module.exports = function(context, pane) {
   };
 };
 
-},{"../panel/help":194,"../panel/json":195,"../panel/table":196}],217:[function(require,module,exports){
+},{"../panel/help":194,"../panel/json":195,"../panel/table":196}],219:[function(require,module,exports){
 const { DEFAULT_PROJECTION } = require('../constants');
 
 module.exports = function(context) {
@@ -62959,7 +63023,7 @@ module.exports = function(context) {
   };
 };
   
-},{"../constants":181}],218:[function(require,module,exports){
+},{"../constants":181}],220:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -63027,7 +63091,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":207}],219:[function(require,module,exports){
+},{"./flash":209}],221:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -63076,7 +63140,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":197,"./modal":215}],220:[function(require,module,exports){
+},{"../source/gist":197,"./modal":217}],222:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};

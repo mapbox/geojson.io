@@ -1,6 +1,7 @@
 require('qs-hash');
 const geojsonRewind = require('geojson-rewind');
 
+const DrawLineString = require('../draw/linestring');
 const DrawRectangle = require('../draw/rectangle');
 const DrawCircle = require('../draw/circle');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
@@ -71,6 +72,7 @@ module.exports = function (context, readonly) {
         displayControlsDefault: false,
         modes: {
           ...MapboxDraw.modes,
+          draw_line_string: DrawLineString,
           draw_rectangle: DrawRectangle,
           draw_circle: DrawCircle,
         },
