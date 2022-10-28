@@ -2,11 +2,13 @@ require('qs-hash');
 const geojsonRewind = require('geojson-rewind');
 
 const DrawRectangle = require('../draw/rectangle');
+const DrawCircle = require('../draw/circle');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
 const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
 const { addIds, addMarkers, geojsonToLayer, bindPopup } = require('./util');
 const styles = require('./styles');
 const { DEFAULT_STYLE, DEFAULT_PROJECTION } = require('../../constants');
+const drawStyles = require('../draw/styles');
 
 let writable = false;
 let drawing = false;
@@ -70,8 +72,10 @@ module.exports = function (context, readonly) {
         modes: {
           ...MapboxDraw.modes,
           draw_rectangle: DrawRectangle,
+          draw_circle: DrawCircle,
         },
         controls: {},
+        styles: drawStyles
       });
 
       const drawControl = new ExtendDrawBar({
@@ -84,6 +88,7 @@ module.exports = function (context, readonly) {
               context.Draw.changeMode('draw_point');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_point'],
+            title: 'Draw Point'
           },
           {
             on: 'click',
@@ -92,6 +97,7 @@ module.exports = function (context, readonly) {
               context.Draw.changeMode('draw_line_string');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_line'],
+            title: 'Draw LineString'
           },
           {
             on: 'click',
@@ -100,6 +106,7 @@ module.exports = function (context, readonly) {
               context.Draw.changeMode('draw_polygon');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_polygon'],
+            title: 'Draw Polygon'
           },
           {
             on: 'click',
@@ -111,6 +118,19 @@ module.exports = function (context, readonly) {
               'mapbox-gl-draw_ctrl-draw-btn',
               'mapbox-gl-draw_rectangle',
             ],
+            title: 'Draw Rectangular Polygon'
+          },
+          {
+            on: 'click',
+            action: () => {
+              drawing = true;
+              context.Draw.changeMode('draw_circle');
+            },
+            classes: [
+              'mapbox-gl-draw_ctrl-draw-btn',
+              'mapbox-gl-draw_circle',
+            ],
+            title: 'Draw Circular Polygon'
           },
         ],
       });

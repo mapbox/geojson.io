@@ -32,6 +32,7 @@ class extendDrawBar {
       });
     }
     elButton.addEventListener(opt.on, opt.action);
+    elButton.title = opt.title;
     ctrl.elContainer.appendChild(elButton);
     opt.elButton = elButton;
   }

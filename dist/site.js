@@ -229,7 +229,7 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":10,"queue-async":109,"treeui":157}],3:[function(require,module,exports){
+},{"browser-request":10,"queue-async":110,"treeui":158}],3:[function(require,module,exports){
 (function (process){(function (){
 /**
  * @popperjs/core v2.11.6 - MIT License
@@ -2235,7 +2235,7 @@ exports.preventOverflow = preventOverflow$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":107}],4:[function(require,module,exports){
+},{"_process":108}],4:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -2745,7 +2745,7 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"object-assign":99,"util/":7}],5:[function(require,module,exports){
+},{"object-assign":100,"util/":7}],5:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -3367,7 +3367,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"_process":107,"inherits":5}],8:[function(require,module,exports){
+},{"./support/isBuffer":6,"_process":108,"inherits":5}],8:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -6216,7 +6216,7 @@ module.exports = {
     toPolygon: toPolygon
 };
 
-},{"dsv":25,"sexagesimal":110}],18:[function(require,module,exports){
+},{"dsv":25,"sexagesimal":111}],18:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -16739,7 +16739,7 @@ function rad(_) {
     return _ * Math.PI / 180;
 }
 
-},{"wgs84":162}],34:[function(require,module,exports){
+},{"wgs84":163}],34:[function(require,module,exports){
 module.exports = function flatten(list, depth) {
     return _flatten(list);
 
@@ -16805,7 +16805,7 @@ function getExtent(_) {
     return ext;
 }
 
-},{"extent":28,"geojson-coords":35,"traverse":156}],37:[function(require,module,exports){
+},{"extent":28,"geojson-coords":35,"traverse":157}],37:[function(require,module,exports){
 module.exports = flatten;
 
 function flatten(gj, up) {
@@ -18803,7 +18803,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 }
 }
 }).call(this)}).call(this,require('_process'))
-},{"_process":107,"fs":12,"path":104}],58:[function(require,module,exports){
+},{"_process":108,"fs":12,"path":105}],58:[function(require,module,exports){
 'use strict';
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -46667,6 +46667,1021 @@ if (typeof exports === 'object') {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],99:[function(require,module,exports){
+/*! @preserve
+ * numeral.js
+ * version : 2.0.6
+ * author : Adam Draper
+ * license : MIT
+ * http://adamwdraper.github.com/Numeral-js/
+ */
+
+(function (global, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(factory);
+    } else if (typeof module === 'object' && module.exports) {
+        module.exports = factory();
+    } else {
+        global.numeral = factory();
+    }
+}(this, function () {
+    /************************************
+        Variables
+    ************************************/
+
+    var numeral,
+        _,
+        VERSION = '2.0.6',
+        formats = {},
+        locales = {},
+        defaults = {
+            currentLocale: 'en',
+            zeroFormat: null,
+            nullFormat: null,
+            defaultFormat: '0,0',
+            scalePercentBy100: true
+        },
+        options = {
+            currentLocale: defaults.currentLocale,
+            zeroFormat: defaults.zeroFormat,
+            nullFormat: defaults.nullFormat,
+            defaultFormat: defaults.defaultFormat,
+            scalePercentBy100: defaults.scalePercentBy100
+        };
+
+
+    /************************************
+        Constructors
+    ************************************/
+
+    // Numeral prototype object
+    function Numeral(input, number) {
+        this._input = input;
+
+        this._value = number;
+    }
+
+    numeral = function(input) {
+        var value,
+            kind,
+            unformatFunction,
+            regexp;
+
+        if (numeral.isNumeral(input)) {
+            value = input.value();
+        } else if (input === 0 || typeof input === 'undefined') {
+            value = 0;
+        } else if (input === null || _.isNaN(input)) {
+            value = null;
+        } else if (typeof input === 'string') {
+            if (options.zeroFormat && input === options.zeroFormat) {
+                value = 0;
+            } else if (options.nullFormat && input === options.nullFormat || !input.replace(/[^0-9]+/g, '').length) {
+                value = null;
+            } else {
+                for (kind in formats) {
+                    regexp = typeof formats[kind].regexps.unformat === 'function' ? formats[kind].regexps.unformat() : formats[kind].regexps.unformat;
+
+                    if (regexp && input.match(regexp)) {
+                        unformatFunction = formats[kind].unformat;
+
+                        break;
+                    }
+                }
+
+                unformatFunction = unformatFunction || numeral._.stringToNumber;
+
+                value = unformatFunction(input);
+            }
+        } else {
+            value = Number(input)|| null;
+        }
+
+        return new Numeral(input, value);
+    };
+
+    // version number
+    numeral.version = VERSION;
+
+    // compare numeral object
+    numeral.isNumeral = function(obj) {
+        return obj instanceof Numeral;
+    };
+
+    // helper functions
+    numeral._ = _ = {
+        // formats numbers separators, decimals places, signs, abbreviations
+        numberToFormat: function(value, format, roundingFunction) {
+            var locale = locales[numeral.options.currentLocale],
+                negP = false,
+                optDec = false,
+                leadingCount = 0,
+                abbr = '',
+                trillion = 1000000000000,
+                billion = 1000000000,
+                million = 1000000,
+                thousand = 1000,
+                decimal = '',
+                neg = false,
+                abbrForce, // force abbreviation
+                abs,
+                min,
+                max,
+                power,
+                int,
+                precision,
+                signed,
+                thousands,
+                output;
+
+            // make sure we never format a null value
+            value = value || 0;
+
+            abs = Math.abs(value);
+
+            // see if we should use parentheses for negative number or if we should prefix with a sign
+            // if both are present we default to parentheses
+            if (numeral._.includes(format, '(')) {
+                negP = true;
+                format = format.replace(/[\(|\)]/g, '');
+            } else if (numeral._.includes(format, '+') || numeral._.includes(format, '-')) {
+                signed = numeral._.includes(format, '+') ? format.indexOf('+') : value < 0 ? format.indexOf('-') : -1;
+                format = format.replace(/[\+|\-]/g, '');
+            }
+
+            // see if abbreviation is wanted
+            if (numeral._.includes(format, 'a')) {
+                abbrForce = format.match(/a(k|m|b|t)?/);
+
+                abbrForce = abbrForce ? abbrForce[1] : false;
+
+                // check for space before abbreviation
+                if (numeral._.includes(format, ' a')) {
+                    abbr = ' ';
+                }
+
+                format = format.replace(new RegExp(abbr + 'a[kmbt]?'), '');
+
+                if (abs >= trillion && !abbrForce || abbrForce === 't') {
+                    // trillion
+                    abbr += locale.abbreviations.trillion;
+                    value = value / trillion;
+                } else if (abs < trillion && abs >= billion && !abbrForce || abbrForce === 'b') {
+                    // billion
+                    abbr += locale.abbreviations.billion;
+                    value = value / billion;
+                } else if (abs < billion && abs >= million && !abbrForce || abbrForce === 'm') {
+                    // million
+                    abbr += locale.abbreviations.million;
+                    value = value / million;
+                } else if (abs < million && abs >= thousand && !abbrForce || abbrForce === 'k') {
+                    // thousand
+                    abbr += locale.abbreviations.thousand;
+                    value = value / thousand;
+                }
+            }
+
+            // check for optional decimals
+            if (numeral._.includes(format, '[.]')) {
+                optDec = true;
+                format = format.replace('[.]', '.');
+            }
+
+            // break number and format
+            int = value.toString().split('.')[0];
+            precision = format.split('.')[1];
+            thousands = format.indexOf(',');
+            leadingCount = (format.split('.')[0].split(',')[0].match(/0/g) || []).length;
+
+            if (precision) {
+                if (numeral._.includes(precision, '[')) {
+                    precision = precision.replace(']', '');
+                    precision = precision.split('[');
+                    decimal = numeral._.toFixed(value, (precision[0].length + precision[1].length), roundingFunction, precision[1].length);
+                } else {
+                    decimal = numeral._.toFixed(value, precision.length, roundingFunction);
+                }
+
+                int = decimal.split('.')[0];
+
+                if (numeral._.includes(decimal, '.')) {
+                    decimal = locale.delimiters.decimal + decimal.split('.')[1];
+                } else {
+                    decimal = '';
+                }
+
+                if (optDec && Number(decimal.slice(1)) === 0) {
+                    decimal = '';
+                }
+            } else {
+                int = numeral._.toFixed(value, 0, roundingFunction);
+            }
+
+            // check abbreviation again after rounding
+            if (abbr && !abbrForce && Number(int) >= 1000 && abbr !== locale.abbreviations.trillion) {
+                int = String(Number(int) / 1000);
+
+                switch (abbr) {
+                    case locale.abbreviations.thousand:
+                        abbr = locale.abbreviations.million;
+                        break;
+                    case locale.abbreviations.million:
+                        abbr = locale.abbreviations.billion;
+                        break;
+                    case locale.abbreviations.billion:
+                        abbr = locale.abbreviations.trillion;
+                        break;
+                }
+            }
+
+
+            // format number
+            if (numeral._.includes(int, '-')) {
+                int = int.slice(1);
+                neg = true;
+            }
+
+            if (int.length < leadingCount) {
+                for (var i = leadingCount - int.length; i > 0; i--) {
+                    int = '0' + int;
+                }
+            }
+
+            if (thousands > -1) {
+                int = int.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1' + locale.delimiters.thousands);
+            }
+
+            if (format.indexOf('.') === 0) {
+                int = '';
+            }
+
+            output = int + decimal + (abbr ? abbr : '');
+
+            if (negP) {
+                output = (negP && neg ? '(' : '') + output + (negP && neg ? ')' : '');
+            } else {
+                if (signed >= 0) {
+                    output = signed === 0 ? (neg ? '-' : '+') + output : output + (neg ? '-' : '+');
+                } else if (neg) {
+                    output = '-' + output;
+                }
+            }
+
+            return output;
+        },
+        // unformats numbers separators, decimals places, signs, abbreviations
+        stringToNumber: function(string) {
+            var locale = locales[options.currentLocale],
+                stringOriginal = string,
+                abbreviations = {
+                    thousand: 3,
+                    million: 6,
+                    billion: 9,
+                    trillion: 12
+                },
+                abbreviation,
+                value,
+                i,
+                regexp;
+
+            if (options.zeroFormat && string === options.zeroFormat) {
+                value = 0;
+            } else if (options.nullFormat && string === options.nullFormat || !string.replace(/[^0-9]+/g, '').length) {
+                value = null;
+            } else {
+                value = 1;
+
+                if (locale.delimiters.decimal !== '.') {
+                    string = string.replace(/\./g, '').replace(locale.delimiters.decimal, '.');
+                }
+
+                for (abbreviation in abbreviations) {
+                    regexp = new RegExp('[^a-zA-Z]' + locale.abbreviations[abbreviation] + '(?:\\)|(\\' + locale.currency.symbol + ')?(?:\\))?)?$');
+
+                    if (stringOriginal.match(regexp)) {
+                        value *= Math.pow(10, abbreviations[abbreviation]);
+                        break;
+                    }
+                }
+
+                // check for negative number
+                value *= (string.split('-').length + Math.min(string.split('(').length - 1, string.split(')').length - 1)) % 2 ? 1 : -1;
+
+                // remove non numbers
+                string = string.replace(/[^0-9\.]+/g, '');
+
+                value *= Number(string);
+            }
+
+            return value;
+        },
+        isNaN: function(value) {
+            return typeof value === 'number' && isNaN(value);
+        },
+        includes: function(string, search) {
+            return string.indexOf(search) !== -1;
+        },
+        insert: function(string, subString, start) {
+            return string.slice(0, start) + subString + string.slice(start);
+        },
+        reduce: function(array, callback /*, initialValue*/) {
+            if (this === null) {
+                throw new TypeError('Array.prototype.reduce called on null or undefined');
+            }
+
+            if (typeof callback !== 'function') {
+                throw new TypeError(callback + ' is not a function');
+            }
+
+            var t = Object(array),
+                len = t.length >>> 0,
+                k = 0,
+                value;
+
+            if (arguments.length === 3) {
+                value = arguments[2];
+            } else {
+                while (k < len && !(k in t)) {
+                    k++;
+                }
+
+                if (k >= len) {
+                    throw new TypeError('Reduce of empty array with no initial value');
+                }
+
+                value = t[k++];
+            }
+            for (; k < len; k++) {
+                if (k in t) {
+                    value = callback(value, t[k], k, t);
+                }
+            }
+            return value;
+        },
+        /**
+         * Computes the multiplier necessary to make x >= 1,
+         * effectively eliminating miscalculations caused by
+         * finite precision.
+         */
+        multiplier: function (x) {
+            var parts = x.toString().split('.');
+
+            return parts.length < 2 ? 1 : Math.pow(10, parts[1].length);
+        },
+        /**
+         * Given a variable number of arguments, returns the maximum
+         * multiplier that must be used to normalize an operation involving
+         * all of them.
+         */
+        correctionFactor: function () {
+            var args = Array.prototype.slice.call(arguments);
+
+            return args.reduce(function(accum, next) {
+                var mn = _.multiplier(next);
+                return accum > mn ? accum : mn;
+            }, 1);
+        },
+        /**
+         * Implementation of toFixed() that treats floats more like decimals
+         *
+         * Fixes binary rounding issues (eg. (0.615).toFixed(2) === '0.61') that present
+         * problems for accounting- and finance-related software.
+         */
+        toFixed: function(value, maxDecimals, roundingFunction, optionals) {
+            var splitValue = value.toString().split('.'),
+                minDecimals = maxDecimals - (optionals || 0),
+                boundedPrecision,
+                optionalsRegExp,
+                power,
+                output;
+
+            // Use the smallest precision value possible to avoid errors from floating point representation
+            if (splitValue.length === 2) {
+              boundedPrecision = Math.min(Math.max(splitValue[1].length, minDecimals), maxDecimals);
+            } else {
+              boundedPrecision = minDecimals;
+            }
+
+            power = Math.pow(10, boundedPrecision);
+
+            // Multiply up by precision, round accurately, then divide and use native toFixed():
+            output = (roundingFunction(value + 'e+' + boundedPrecision) / power).toFixed(boundedPrecision);
+
+            if (optionals > maxDecimals - boundedPrecision) {
+                optionalsRegExp = new RegExp('\\.?0{1,' + (optionals - (maxDecimals - boundedPrecision)) + '}$');
+                output = output.replace(optionalsRegExp, '');
+            }
+
+            return output;
+        }
+    };
+
+    // avaliable options
+    numeral.options = options;
+
+    // avaliable formats
+    numeral.formats = formats;
+
+    // avaliable formats
+    numeral.locales = locales;
+
+    // This function sets the current locale.  If
+    // no arguments are passed in, it will simply return the current global
+    // locale key.
+    numeral.locale = function(key) {
+        if (key) {
+            options.currentLocale = key.toLowerCase();
+        }
+
+        return options.currentLocale;
+    };
+
+    // This function provides access to the loaded locale data.  If
+    // no arguments are passed in, it will simply return the current
+    // global locale object.
+    numeral.localeData = function(key) {
+        if (!key) {
+            return locales[options.currentLocale];
+        }
+
+        key = key.toLowerCase();
+
+        if (!locales[key]) {
+            throw new Error('Unknown locale : ' + key);
+        }
+
+        return locales[key];
+    };
+
+    numeral.reset = function() {
+        for (var property in defaults) {
+            options[property] = defaults[property];
+        }
+    };
+
+    numeral.zeroFormat = function(format) {
+        options.zeroFormat = typeof(format) === 'string' ? format : null;
+    };
+
+    numeral.nullFormat = function (format) {
+        options.nullFormat = typeof(format) === 'string' ? format : null;
+    };
+
+    numeral.defaultFormat = function(format) {
+        options.defaultFormat = typeof(format) === 'string' ? format : '0.0';
+    };
+
+    numeral.register = function(type, name, format) {
+        name = name.toLowerCase();
+
+        if (this[type + 's'][name]) {
+            throw new TypeError(name + ' ' + type + ' already registered.');
+        }
+
+        this[type + 's'][name] = format;
+
+        return format;
+    };
+
+
+    numeral.validate = function(val, culture) {
+        var _decimalSep,
+            _thousandSep,
+            _currSymbol,
+            _valArray,
+            _abbrObj,
+            _thousandRegEx,
+            localeData,
+            temp;
+
+        //coerce val to string
+        if (typeof val !== 'string') {
+            val += '';
+
+            if (console.warn) {
+                console.warn('Numeral.js: Value is not string. It has been co-erced to: ', val);
+            }
+        }
+
+        //trim whitespaces from either sides
+        val = val.trim();
+
+        //if val is just digits return true
+        if (!!val.match(/^\d+$/)) {
+            return true;
+        }
+
+        //if val is empty return false
+        if (val === '') {
+            return false;
+        }
+
+        //get the decimal and thousands separator from numeral.localeData
+        try {
+            //check if the culture is understood by numeral. if not, default it to current locale
+            localeData = numeral.localeData(culture);
+        } catch (e) {
+            localeData = numeral.localeData(numeral.locale());
+        }
+
+        //setup the delimiters and currency symbol based on culture/locale
+        _currSymbol = localeData.currency.symbol;
+        _abbrObj = localeData.abbreviations;
+        _decimalSep = localeData.delimiters.decimal;
+        if (localeData.delimiters.thousands === '.') {
+            _thousandSep = '\\.';
+        } else {
+            _thousandSep = localeData.delimiters.thousands;
+        }
+
+        // validating currency symbol
+        temp = val.match(/^[^\d]+/);
+        if (temp !== null) {
+            val = val.substr(1);
+            if (temp[0] !== _currSymbol) {
+                return false;
+            }
+        }
+
+        //validating abbreviation symbol
+        temp = val.match(/[^\d]+$/);
+        if (temp !== null) {
+            val = val.slice(0, -1);
+            if (temp[0] !== _abbrObj.thousand && temp[0] !== _abbrObj.million && temp[0] !== _abbrObj.billion && temp[0] !== _abbrObj.trillion) {
+                return false;
+            }
+        }
+
+        _thousandRegEx = new RegExp(_thousandSep + '{2}');
+
+        if (!val.match(/[^\d.,]/g)) {
+            _valArray = val.split(_decimalSep);
+            if (_valArray.length > 2) {
+                return false;
+            } else {
+                if (_valArray.length < 2) {
+                    return ( !! _valArray[0].match(/^\d+.*\d$/) && !_valArray[0].match(_thousandRegEx));
+                } else {
+                    if (_valArray[0].length === 1) {
+                        return ( !! _valArray[0].match(/^\d+$/) && !_valArray[0].match(_thousandRegEx) && !! _valArray[1].match(/^\d+$/));
+                    } else {
+                        return ( !! _valArray[0].match(/^\d+.*\d$/) && !_valArray[0].match(_thousandRegEx) && !! _valArray[1].match(/^\d+$/));
+                    }
+                }
+            }
+        }
+
+        return false;
+    };
+
+
+    /************************************
+        Numeral Prototype
+    ************************************/
+
+    numeral.fn = Numeral.prototype = {
+        clone: function() {
+            return numeral(this);
+        },
+        format: function(inputString, roundingFunction) {
+            var value = this._value,
+                format = inputString || options.defaultFormat,
+                kind,
+                output,
+                formatFunction;
+
+            // make sure we have a roundingFunction
+            roundingFunction = roundingFunction || Math.round;
+
+            // format based on value
+            if (value === 0 && options.zeroFormat !== null) {
+                output = options.zeroFormat;
+            } else if (value === null && options.nullFormat !== null) {
+                output = options.nullFormat;
+            } else {
+                for (kind in formats) {
+                    if (format.match(formats[kind].regexps.format)) {
+                        formatFunction = formats[kind].format;
+
+                        break;
+                    }
+                }
+
+                formatFunction = formatFunction || numeral._.numberToFormat;
+
+                output = formatFunction(value, format, roundingFunction);
+            }
+
+            return output;
+        },
+        value: function() {
+            return this._value;
+        },
+        input: function() {
+            return this._input;
+        },
+        set: function(value) {
+            this._value = Number(value);
+
+            return this;
+        },
+        add: function(value) {
+            var corrFactor = _.correctionFactor.call(null, this._value, value);
+
+            function cback(accum, curr, currI, O) {
+                return accum + Math.round(corrFactor * curr);
+            }
+
+            this._value = _.reduce([this._value, value], cback, 0) / corrFactor;
+
+            return this;
+        },
+        subtract: function(value) {
+            var corrFactor = _.correctionFactor.call(null, this._value, value);
+
+            function cback(accum, curr, currI, O) {
+                return accum - Math.round(corrFactor * curr);
+            }
+
+            this._value = _.reduce([value], cback, Math.round(this._value * corrFactor)) / corrFactor;
+
+            return this;
+        },
+        multiply: function(value) {
+            function cback(accum, curr, currI, O) {
+                var corrFactor = _.correctionFactor(accum, curr);
+                return Math.round(accum * corrFactor) * Math.round(curr * corrFactor) / Math.round(corrFactor * corrFactor);
+            }
+
+            this._value = _.reduce([this._value, value], cback, 1);
+
+            return this;
+        },
+        divide: function(value) {
+            function cback(accum, curr, currI, O) {
+                var corrFactor = _.correctionFactor(accum, curr);
+                return Math.round(accum * corrFactor) / Math.round(curr * corrFactor);
+            }
+
+            this._value = _.reduce([this._value, value], cback);
+
+            return this;
+        },
+        difference: function(value) {
+            return Math.abs(numeral(this._value).subtract(value).value());
+        }
+    };
+
+    /************************************
+        Default Locale && Format
+    ************************************/
+
+    numeral.register('locale', 'en', {
+        delimiters: {
+            thousands: ',',
+            decimal: '.'
+        },
+        abbreviations: {
+            thousand: 'k',
+            million: 'm',
+            billion: 'b',
+            trillion: 't'
+        },
+        ordinal: function(number) {
+            var b = number % 10;
+            return (~~(number % 100 / 10) === 1) ? 'th' :
+                (b === 1) ? 'st' :
+                (b === 2) ? 'nd' :
+                (b === 3) ? 'rd' : 'th';
+        },
+        currency: {
+            symbol: '$'
+        }
+    });
+
+    
+
+(function() {
+        numeral.register('format', 'bps', {
+            regexps: {
+                format: /(BPS)/,
+                unformat: /(BPS)/
+            },
+            format: function(value, format, roundingFunction) {
+                var space = numeral._.includes(format, ' BPS') ? ' ' : '',
+                    output;
+
+                value = value * 10000;
+
+                // check for space before BPS
+                format = format.replace(/\s?BPS/, '');
+
+                output = numeral._.numberToFormat(value, format, roundingFunction);
+
+                if (numeral._.includes(output, ')')) {
+                    output = output.split('');
+
+                    output.splice(-1, 0, space + 'BPS');
+
+                    output = output.join('');
+                } else {
+                    output = output + space + 'BPS';
+                }
+
+                return output;
+            },
+            unformat: function(string) {
+                return +(numeral._.stringToNumber(string) * 0.0001).toFixed(15);
+            }
+        });
+})();
+
+
+(function() {
+        var decimal = {
+            base: 1000,
+            suffixes: ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+        },
+        binary = {
+            base: 1024,
+            suffixes: ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+        };
+
+    var allSuffixes =  decimal.suffixes.concat(binary.suffixes.filter(function (item) {
+            return decimal.suffixes.indexOf(item) < 0;
+        }));
+        var unformatRegex = allSuffixes.join('|');
+        // Allow support for BPS (http://www.investopedia.com/terms/b/basispoint.asp)
+        unformatRegex = '(' + unformatRegex.replace('B', 'B(?!PS)') + ')';
+
+    numeral.register('format', 'bytes', {
+        regexps: {
+            format: /([0\s]i?b)/,
+            unformat: new RegExp(unformatRegex)
+        },
+        format: function(value, format, roundingFunction) {
+            var output,
+                bytes = numeral._.includes(format, 'ib') ? binary : decimal,
+                suffix = numeral._.includes(format, ' b') || numeral._.includes(format, ' ib') ? ' ' : '',
+                power,
+                min,
+                max;
+
+            // check for space before
+            format = format.replace(/\s?i?b/, '');
+
+            for (power = 0; power <= bytes.suffixes.length; power++) {
+                min = Math.pow(bytes.base, power);
+                max = Math.pow(bytes.base, power + 1);
+
+                if (value === null || value === 0 || value >= min && value < max) {
+                    suffix += bytes.suffixes[power];
+
+                    if (min > 0) {
+                        value = value / min;
+                    }
+
+                    break;
+                }
+            }
+
+            output = numeral._.numberToFormat(value, format, roundingFunction);
+
+            return output + suffix;
+        },
+        unformat: function(string) {
+            var value = numeral._.stringToNumber(string),
+                power,
+                bytesMultiplier;
+
+            if (value) {
+                for (power = decimal.suffixes.length - 1; power >= 0; power--) {
+                    if (numeral._.includes(string, decimal.suffixes[power])) {
+                        bytesMultiplier = Math.pow(decimal.base, power);
+
+                        break;
+                    }
+
+                    if (numeral._.includes(string, binary.suffixes[power])) {
+                        bytesMultiplier = Math.pow(binary.base, power);
+
+                        break;
+                    }
+                }
+
+                value *= (bytesMultiplier || 1);
+            }
+
+            return value;
+        }
+    });
+})();
+
+
+(function() {
+        numeral.register('format', 'currency', {
+        regexps: {
+            format: /(\$)/
+        },
+        format: function(value, format, roundingFunction) {
+            var locale = numeral.locales[numeral.options.currentLocale],
+                symbols = {
+                    before: format.match(/^([\+|\-|\(|\s|\$]*)/)[0],
+                    after: format.match(/([\+|\-|\)|\s|\$]*)$/)[0]
+                },
+                output,
+                symbol,
+                i;
+
+            // strip format of spaces and $
+            format = format.replace(/\s?\$\s?/, '');
+
+            // format the number
+            output = numeral._.numberToFormat(value, format, roundingFunction);
+
+            // update the before and after based on value
+            if (value >= 0) {
+                symbols.before = symbols.before.replace(/[\-\(]/, '');
+                symbols.after = symbols.after.replace(/[\-\)]/, '');
+            } else if (value < 0 && (!numeral._.includes(symbols.before, '-') && !numeral._.includes(symbols.before, '('))) {
+                symbols.before = '-' + symbols.before;
+            }
+
+            // loop through each before symbol
+            for (i = 0; i < symbols.before.length; i++) {
+                symbol = symbols.before[i];
+
+                switch (symbol) {
+                    case '$':
+                        output = numeral._.insert(output, locale.currency.symbol, i);
+                        break;
+                    case ' ':
+                        output = numeral._.insert(output, ' ', i + locale.currency.symbol.length - 1);
+                        break;
+                }
+            }
+
+            // loop through each after symbol
+            for (i = symbols.after.length - 1; i >= 0; i--) {
+                symbol = symbols.after[i];
+
+                switch (symbol) {
+                    case '$':
+                        output = i === symbols.after.length - 1 ? output + locale.currency.symbol : numeral._.insert(output, locale.currency.symbol, -(symbols.after.length - (1 + i)));
+                        break;
+                    case ' ':
+                        output = i === symbols.after.length - 1 ? output + ' ' : numeral._.insert(output, ' ', -(symbols.after.length - (1 + i) + locale.currency.symbol.length - 1));
+                        break;
+                }
+            }
+
+
+            return output;
+        }
+    });
+})();
+
+
+(function() {
+        numeral.register('format', 'exponential', {
+        regexps: {
+            format: /(e\+|e-)/,
+            unformat: /(e\+|e-)/
+        },
+        format: function(value, format, roundingFunction) {
+            var output,
+                exponential = typeof value === 'number' && !numeral._.isNaN(value) ? value.toExponential() : '0e+0',
+                parts = exponential.split('e');
+
+            format = format.replace(/e[\+|\-]{1}0/, '');
+
+            output = numeral._.numberToFormat(Number(parts[0]), format, roundingFunction);
+
+            return output + 'e' + parts[1];
+        },
+        unformat: function(string) {
+            var parts = numeral._.includes(string, 'e+') ? string.split('e+') : string.split('e-'),
+                value = Number(parts[0]),
+                power = Number(parts[1]);
+
+            power = numeral._.includes(string, 'e-') ? power *= -1 : power;
+
+            function cback(accum, curr, currI, O) {
+                var corrFactor = numeral._.correctionFactor(accum, curr),
+                    num = (accum * corrFactor) * (curr * corrFactor) / (corrFactor * corrFactor);
+                return num;
+            }
+
+            return numeral._.reduce([value, Math.pow(10, power)], cback, 1);
+        }
+    });
+})();
+
+
+(function() {
+        numeral.register('format', 'ordinal', {
+        regexps: {
+            format: /(o)/
+        },
+        format: function(value, format, roundingFunction) {
+            var locale = numeral.locales[numeral.options.currentLocale],
+                output,
+                ordinal = numeral._.includes(format, ' o') ? ' ' : '';
+
+            // check for space before
+            format = format.replace(/\s?o/, '');
+
+            ordinal += locale.ordinal(value);
+
+            output = numeral._.numberToFormat(value, format, roundingFunction);
+
+            return output + ordinal;
+        }
+    });
+})();
+
+
+(function() {
+        numeral.register('format', 'percentage', {
+        regexps: {
+            format: /(%)/,
+            unformat: /(%)/
+        },
+        format: function(value, format, roundingFunction) {
+            var space = numeral._.includes(format, ' %') ? ' ' : '',
+                output;
+
+            if (numeral.options.scalePercentBy100) {
+                value = value * 100;
+            }
+
+            // check for space before %
+            format = format.replace(/\s?\%/, '');
+
+            output = numeral._.numberToFormat(value, format, roundingFunction);
+
+            if (numeral._.includes(output, ')')) {
+                output = output.split('');
+
+                output.splice(-1, 0, space + '%');
+
+                output = output.join('');
+            } else {
+                output = output + space + '%';
+            }
+
+            return output;
+        },
+        unformat: function(string) {
+            var number = numeral._.stringToNumber(string);
+            if (numeral.options.scalePercentBy100) {
+                return number * 0.01;
+            }
+            return number;
+        }
+    });
+})();
+
+
+(function() {
+        numeral.register('format', 'time', {
+        regexps: {
+            format: /(:)/,
+            unformat: /(:)/
+        },
+        format: function(value, format, roundingFunction) {
+            var hours = Math.floor(value / 60 / 60),
+                minutes = Math.floor((value - (hours * 60 * 60)) / 60),
+                seconds = Math.round(value - (hours * 60 * 60) - (minutes * 60));
+
+            return hours + ':' + (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds);
+        },
+        unformat: function(string) {
+            var timeArray = string.split(':'),
+                seconds = 0;
+
+            // turn hours and minutes into seconds and add them all up
+            if (timeArray.length === 3) {
+                // hours
+                seconds = seconds + (Number(timeArray[0]) * 60 * 60);
+                // minutes
+                seconds = seconds + (Number(timeArray[1]) * 60);
+                // seconds
+                seconds = seconds + Number(timeArray[2]);
+            } else if (timeArray.length === 2) {
+                // minutes
+                seconds = seconds + (Number(timeArray[0]) * 60);
+                // seconds
+                seconds = seconds + Number(timeArray[1]);
+            }
+            return Number(seconds);
+        }
+    });
+})();
+
+return numeral;
+}));
+
+},{}],100:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -46758,7 +47773,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],100:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 var _ = require("./lodash.custom.js");
 var rewind = require("geojson-rewind");
 
@@ -47354,7 +48369,7 @@ osmtogeojson.toGeojson = osmtogeojson;
 
 module.exports = osmtogeojson;
 
-},{"./lodash.custom.js":101,"./polygon_features.json":103,"geojson-rewind":102}],101:[function(require,module,exports){
+},{"./lodash.custom.js":102,"./polygon_features.json":104,"geojson-rewind":103}],102:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
@@ -49152,7 +50167,7 @@ module.exports = osmtogeojson;
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],102:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 var geojsonArea = require('geojson-area');
 
 module.exports = rewind;
@@ -49203,7 +50218,7 @@ function cw(_) {
     return geojsonArea.ring(_) >= 0;
 }
 
-},{"geojson-area":33}],103:[function(require,module,exports){
+},{"geojson-area":33}],104:[function(require,module,exports){
 module.exports={
     "building": true,
     "highway": {
@@ -49284,7 +50299,7 @@ module.exports={
     "area:highway": true,
     "craft": true
 }
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 (function (process){(function (){
 // 'path' module extracted from Node.js v8.11.1 (only the posix part)
 // transplited with Babel
@@ -49817,7 +50832,7 @@ posix.posix = posix;
 module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":107}],105:[function(require,module,exports){
+},{"_process":108}],106:[function(require,module,exports){
 'use strict';
 
 /**
@@ -49972,7 +50987,7 @@ if (typeof module === 'object' && module.exports) {
     module.exports = polyline;
 }
 
-},{}],106:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 module.exports = function (data) {
     var lines = data.split('\n'),
                 isNameLine = true,
@@ -50038,7 +51053,7 @@ module.exports = function (data) {
     return gj;
 };
 
-},{}],107:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -50224,7 +51239,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],108:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 /*
  * Given a querystring, return an object of that querystring's components.
  *
@@ -50257,7 +51272,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],109:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 (function() {
   var slice = [].slice;
 
@@ -50339,7 +51354,7 @@ module.exports.qsString = function(obj, noencode) {
   else this.queue = queue;
 })();
 
-},{}],110:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 module.exports = function(x, dims) {
     if (!dims) dims = 'NSEW';
     if (typeof x !== 'string') return null;
@@ -50353,11 +51368,11 @@ module.exports = function(x, dims) {
         ((m[4] && m[4] === 'S' || m[4] === 'W') ? -1 : 1);
 };
 
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 module.exports.download = require('./src/download')
 module.exports.write = require('./src/write')
 module.exports.zip = require('./src/zip')
-},{"./src/download":112,"./src/write":120,"./src/zip":121}],112:[function(require,module,exports){
+},{"./src/download":113,"./src/write":121,"./src/zip":122}],113:[function(require,module,exports){
 var zip = require('./zip');
 
 module.exports = function(gj, options) {
@@ -50365,7 +51380,7 @@ module.exports = function(gj, options) {
     location.href = 'data:application/zip;base64,' + content;
 };
 
-},{"./zip":121}],113:[function(require,module,exports){
+},{"./zip":122}],114:[function(require,module,exports){
 module.exports.enlarge = function enlargeExtent(extent, pt) {
     if (pt[0] < extent.xmin) extent.xmin = pt[0];
     if (pt[0] > extent.xmax) extent.xmax = pt[0];
@@ -50391,7 +51406,7 @@ module.exports.blank = function() {
     };
 };
 
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 var types = require('./types').jstypes;
 
 module.exports.geojson = geojson;
@@ -50421,7 +51436,7 @@ function obj(_) {
     return o;
 }
 
-},{"./types":119}],115:[function(require,module,exports){
+},{"./types":120}],116:[function(require,module,exports){
 module.exports.point = justType('Point', 'POINT');
 module.exports.line = justType('LineString', 'POLYLINE');
 module.exports.polygon = justType('Polygon', 'POLYGON');
@@ -50455,7 +51470,7 @@ function isType(t) {
     return function(f) { return f.geometry.type === t; };
 }
 
-},{}],116:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(coordinates, extent, shpView, shxView) {
@@ -50502,7 +51517,7 @@ module.exports.shpLength = function(coordinates) {
     return coordinates.length * 28;
 };
 
-},{"./extent":113}],117:[function(require,module,exports){
+},{"./extent":114}],118:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
@@ -50582,10 +51597,10 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":113}],118:[function(require,module,exports){
+},{"./extent":114}],119:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
-},{}],119:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 module.exports.geometries = {
     NULL: 0,
     POINT: 1,
@@ -50603,7 +51618,7 @@ module.exports.geometries = {
     MULTIPATCH: 31,
 };
 
-},{}],120:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 var types = require('./types'),
     dbf = require('dbf'),
     prj = require('./prj'),
@@ -50672,7 +51687,7 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":113,"./fields":114,"./points":116,"./poly":117,"./prj":118,"./types":119,"assert":4,"dbf":20}],121:[function(require,module,exports){
+},{"./extent":114,"./fields":115,"./points":117,"./poly":118,"./prj":119,"./types":120,"assert":4,"dbf":20}],122:[function(require,module,exports){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
@@ -50706,7 +51721,7 @@ module.exports = function(gj, options) {
     return zip.generate({compression:'STORE'});
 };
 
-},{"./geojson":115,"./prj":118,"./write":120,"jszip":66}],122:[function(require,module,exports){
+},{"./geojson":116,"./prj":119,"./write":121,"jszip":66}],123:[function(require,module,exports){
 (function (global){(function (){
 ;(function(win){
 	var store = {},
@@ -50874,7 +51889,7 @@ module.exports = function(gj, options) {
 })(this.window || global);
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],123:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 module.exports.attr = attr;
 module.exports.tagClose = tagClose;
 module.exports.tag = tag;
@@ -50920,7 +51935,7 @@ function encode(_) {
         .replace(/"/g, '&quot;');
 }
 
-},{}],124:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 (function (process){(function (){
 toGeoJSON = (function() {
     'use strict';
@@ -51159,7 +52174,7 @@ toGeoJSON = (function() {
 if (typeof module !== 'undefined') module.exports = toGeoJSON;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":107,"xmldom":11}],125:[function(require,module,exports){
+},{"_process":108,"xmldom":11}],126:[function(require,module,exports){
 var strxml = require('strxml'),
     tag = strxml.tag,
     encode = strxml.encode;
@@ -51356,7 +52371,7 @@ function pairs(_) {
     return o;
 }
 
-},{"strxml":123}],126:[function(require,module,exports){
+},{"strxml":124}],127:[function(require,module,exports){
 var type = require("./type"),
     topojson = require("../../");
 
@@ -51386,7 +52401,7 @@ module.exports = function(topology, propertiesById) {
 
 function noop() {}
 
-},{"../../":"topojson","./type":154}],127:[function(require,module,exports){
+},{"../../":"topojson","./type":155}],128:[function(require,module,exports){
 
 // Computes the bounding box of the specified hash of GeoJSON objects.
 module.exports = function(objects) {
@@ -51433,7 +52448,7 @@ module.exports = function(objects) {
   return [x0, y0, x1, y1];
 };
 
-},{}],128:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 exports.name = "cartesian";
 exports.formatDistance = formatDistance;
 exports.ringArea = ringArea;
@@ -51473,7 +52488,7 @@ function distance(x0, y0, x1, y1) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-},{}],129:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 var type = require("./type"),
     systems = require("./coordinate-systems"),
     topojson = require("../../");
@@ -51564,7 +52579,7 @@ function clockwisePolygonSystem(ringArea, reverse) {
 
 function noop() {}
 
-},{"../../":"topojson","./coordinate-systems":131,"./type":154}],130:[function(require,module,exports){
+},{"../../":"topojson","./coordinate-systems":132,"./type":155}],131:[function(require,module,exports){
 // Given a hash of GeoJSON objects and an id function, invokes the id function
 // to compute a new id for each object that is a feature. The function is passed
 // the feature and is expected to return the new feature id, or null if the
@@ -51594,13 +52609,13 @@ module.exports = function(objects, id) {
   return objects;
 };
 
-},{}],131:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 module.exports = {
   cartesian: require("./cartesian"),
   spherical: require("./spherical")
 };
 
-},{"./cartesian":128,"./spherical":141}],132:[function(require,module,exports){
+},{"./cartesian":129,"./spherical":142}],133:[function(require,module,exports){
 // Given a TopoJSON topology in absolute (quantized) coordinates,
 // converts to fixed-point delta encoding.
 // This is a destructive operation that modifies the given topology!
@@ -51631,7 +52646,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{}],133:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 var type = require("./type"),
     prune = require("./prune"),
     clockwise = require("./clockwise"),
@@ -51760,7 +52775,7 @@ function preserveNone() {
   return false;
 }
 
-},{"../../":"topojson","./clockwise":129,"./coordinate-systems":131,"./prune":137,"./type":154}],134:[function(require,module,exports){
+},{"../../":"topojson","./clockwise":130,"./coordinate-systems":132,"./prune":138,"./type":155}],135:[function(require,module,exports){
 // Given a hash of GeoJSON objects, replaces Features with geometry objects.
 // This is a destructive operation that modifies the input objects!
 module.exports = function(objects) {
@@ -51879,7 +52894,7 @@ module.exports = function(objects) {
   return objects;
 };
 
-},{}],135:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(topology, Q0, Q1) {
@@ -51927,7 +52942,7 @@ module.exports = function(topology, Q0, Q1) {
   return topology;
 };
 
-},{"./quantize":138}],136:[function(require,module,exports){
+},{"./quantize":139}],137:[function(require,module,exports){
 var quantize = require("./quantize");
 
 module.exports = function(objects, bbox, Q0, Q1) {
@@ -51986,7 +53001,7 @@ module.exports = function(objects, bbox, Q0, Q1) {
   return q.transform;
 };
 
-},{"./quantize":138}],137:[function(require,module,exports){
+},{"./quantize":139}],138:[function(require,module,exports){
 module.exports = function(topology, options) {
   var verbose = false,
       objects = topology.objects,
@@ -52043,7 +53058,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{}],138:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 module.exports = function(dx, dy, kx, ky) {
 
   function quantizePoint(coordinates) {
@@ -52087,7 +53102,7 @@ module.exports = function(dx, dy, kx, ky) {
   };
 };
 
-},{}],139:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(topology, options) {
@@ -52167,7 +53182,7 @@ module.exports = function(topology, options) {
 
 function noop() {}
 
-},{"./type":154}],140:[function(require,module,exports){
+},{"./type":155}],141:[function(require,module,exports){
 var topojson = require("../../"),
     systems = require("./coordinate-systems");
 
@@ -52276,7 +53291,7 @@ module.exports = function(topology, options) {
   return topology;
 };
 
-},{"../../":"topojson","./coordinate-systems":131}],141:[function(require,module,exports){
+},{"../../":"topojson","./coordinate-systems":132}],142:[function(require,module,exports){
 var π = Math.PI,
     π_4 = π / 4,
     radians = π / 180;
@@ -52357,7 +53372,7 @@ function haversin(x) {
   return (x = Math.sin(x / 2)) * x;
 }
 
-},{}],142:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 var type = require("./type");
 
 module.exports = function(objects, transform) {
@@ -52540,7 +53555,7 @@ module.exports = function(objects, transform) {
   }
 };
 
-},{"./type":154}],143:[function(require,module,exports){
+},{"./type":155}],144:[function(require,module,exports){
 var type = require("./type"),
     stitch = require("./stitch"),
     systems = require("./coordinate-systems"),
@@ -52653,7 +53668,7 @@ module.exports = function(objects, options) {
   return topology;
 };
 
-},{"./bounds":127,"./compute-id":130,"./coordinate-systems":131,"./delta":132,"./geomify":134,"./post-quantize":135,"./pre-quantize":136,"./stitch":142,"./topology/index":149,"./transform-properties":153,"./type":154}],144:[function(require,module,exports){
+},{"./bounds":128,"./compute-id":131,"./coordinate-systems":132,"./delta":133,"./geomify":135,"./post-quantize":136,"./pre-quantize":137,"./stitch":143,"./topology/index":150,"./transform-properties":154,"./type":155}],145:[function(require,module,exports){
 var join = require("./join");
 
 // Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
@@ -52715,7 +53730,7 @@ function reverse(array, start, end) {
   }
 }
 
-},{"./join":150}],145:[function(require,module,exports){
+},{"./join":151}],146:[function(require,module,exports){
 var join = require("./join"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -52901,7 +53916,7 @@ module.exports = function(topology) {
   return topology;
 };
 
-},{"./hashmap":147,"./join":150,"./point-equal":151,"./point-hash":152}],146:[function(require,module,exports){
+},{"./hashmap":148,"./join":151,"./point-equal":152,"./point-hash":153}],147:[function(require,module,exports){
 // Extracts the lines and rings from the specified hash of geometry objects.
 //
 // Returns an object with three properties:
@@ -52968,7 +53983,7 @@ module.exports = function(objects) {
   };
 };
 
-},{}],147:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   if (arguments.length === 3) {
     keyType = valueType = Array;
@@ -53043,7 +54058,7 @@ module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
   };
 };
 
-},{}],148:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 module.exports = function(size, hash, equal, type, empty) {
   if (arguments.length === 3) {
     type = Array;
@@ -53100,7 +54115,7 @@ module.exports = function(size, hash, equal, type, empty) {
   };
 };
 
-},{}],149:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 var hashmap = require("./hashmap"),
     extract = require("./extract"),
     cut = require("./cut"),
@@ -53170,7 +54185,7 @@ function equalArc(arcA, arcB) {
   return ia === ib && ja === jb;
 }
 
-},{"./cut":144,"./dedup":145,"./extract":146,"./hashmap":147}],150:[function(require,module,exports){
+},{"./cut":145,"./dedup":146,"./extract":147,"./hashmap":148}],151:[function(require,module,exports){
 var hashset = require("./hashset"),
     hashmap = require("./hashmap"),
     hashPoint = require("./point-hash"),
@@ -53285,12 +54300,12 @@ module.exports = function(topology) {
   return junctionByPoint;
 };
 
-},{"./hashmap":147,"./hashset":148,"./point-equal":151,"./point-hash":152}],151:[function(require,module,exports){
+},{"./hashmap":148,"./hashset":149,"./point-equal":152,"./point-hash":153}],152:[function(require,module,exports){
 module.exports = function(pointA, pointB) {
   return pointA[0] === pointB[0] && pointA[1] === pointB[1];
 };
 
-},{}],152:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 // TODO if quantized, use simpler Int32 hashing?
 
 var buffer = new ArrayBuffer(16),
@@ -53305,7 +54320,7 @@ module.exports = function(point) {
   return hash & 0x7fffffff;
 };
 
-},{}],153:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 // Given a hash of GeoJSON objects, transforms any properties on features using
 // the specified transform function. The function is invoked for each existing
 // property on the current feature, being passed the new properties hash, the
@@ -53350,7 +54365,7 @@ module.exports = function(objects, propertyTransform) {
   return objects;
 };
 
-},{}],154:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 module.exports = function(types) {
   for (var type in typeDefaults) {
     if (!(type in types)) {
@@ -53444,7 +54459,7 @@ var typeObjects = {
   FeatureCollection: 1
 };
 
-},{}],155:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 !function() {
   var topojson = {
     version: "1.6.8",
@@ -53978,7 +54993,7 @@ var typeObjects = {
   else this.topojson = topojson;
 }();
 
-},{}],156:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -54294,7 +55309,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],157:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 module.exports = function(request) {
     var parent = ce('div', 'treeui'),
         onclick = function() { };
@@ -54393,9 +55408,9 @@ function ae(x, y, z) {
     return x.addEventListener(y, z);
 }
 
-},{}],158:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],159:[function(require,module,exports){
+},{"dup":6}],160:[function(require,module,exports){
 // Currently in sync with Node.js lib/internal/util/types.js
 // https://github.com/nodejs/node/commit/112cc7c27551254aa2b17098fb774867f05ed0d9
 
@@ -54731,7 +55746,7 @@ exports.isAnyArrayBuffer = isAnyArrayBuffer;
   });
 });
 
-},{"is-arguments":52,"is-generator-function":55,"is-typed-array":56,"which-typed-array":163}],160:[function(require,module,exports){
+},{"is-arguments":52,"is-generator-function":55,"is-typed-array":56,"which-typed-array":164}],161:[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -55450,7 +56465,7 @@ function callbackify(original) {
 exports.callbackify = callbackify;
 
 }).call(this)}).call(this,require('_process'))
-},{"./support/isBuffer":158,"./support/types":159,"_process":107,"inherits":51}],161:[function(require,module,exports){
+},{"./support/isBuffer":159,"./support/types":160,"_process":108,"inherits":51}],162:[function(require,module,exports){
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
@@ -55701,12 +56716,12 @@ function stringify(gj) {
     }
 }
 
-},{}],162:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 module.exports.RADIUS = 6378137;
 module.exports.FLATTENING = 1/298.257223563;
 module.exports.POLAR_RADIUS = 6356752.3142;
 
-},{}],163:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -55765,7 +56780,7 @@ module.exports = function whichTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":8,"call-bind/callBound":14,"es-abstract/helpers/getOwnPropertyDescriptor":26,"for-each":30,"has-tostringtag/shams":48,"is-typed-array":56}],164:[function(require,module,exports){
+},{"available-typed-arrays":8,"call-bind/callBound":14,"es-abstract/helpers/getOwnPropertyDescriptor":26,"for-each":30,"has-tostringtag/shams":48,"is-typed-array":56}],165:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryReader;
 
@@ -55816,7 +56831,7 @@ BinaryReader.prototype.readVarInt = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":13}],165:[function(require,module,exports){
+},{"buffer":13}],166:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryWriter;
 
@@ -55885,7 +56900,7 @@ BinaryWriter.prototype.ensureSize = function (size) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":13}],166:[function(require,module,exports){
+},{"buffer":13}],167:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = Geometry;
 
@@ -56273,7 +57288,7 @@ Geometry.prototype.toGeoJSON = function (options) {
 };
 
 }).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":53,"./binaryreader":164,"./binarywriter":165,"./geometrycollection":167,"./linestring":168,"./multilinestring":169,"./multipoint":170,"./multipolygon":171,"./point":172,"./polygon":173,"./types":174,"./wktparser":175,"./zigzag.js":177}],167:[function(require,module,exports){
+},{"../../is-buffer/index.js":53,"./binaryreader":165,"./binarywriter":166,"./geometrycollection":168,"./linestring":169,"./multilinestring":170,"./multipoint":171,"./multipolygon":172,"./point":173,"./polygon":174,"./types":175,"./wktparser":176,"./zigzag.js":178}],168:[function(require,module,exports){
 module.exports = GeometryCollection;
 
 var util = require('util');
@@ -56444,7 +57459,7 @@ GeometryCollection.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":165,"./geometry":166,"./types":174,"util":160}],168:[function(require,module,exports){
+},{"./binarywriter":166,"./geometry":167,"./types":175,"util":161}],169:[function(require,module,exports){
 module.exports = LineString;
 
 var util = require('util');
@@ -56624,7 +57639,7 @@ LineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":165,"./geometry":166,"./point":172,"./types":174,"util":160}],169:[function(require,module,exports){
+},{"./binarywriter":166,"./geometry":167,"./point":173,"./types":175,"util":161}],170:[function(require,module,exports){
 module.exports = MultiLineString;
 
 var util = require('util');
@@ -56815,7 +57830,7 @@ MultiLineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":165,"./geometry":166,"./linestring":168,"./point":172,"./types":174,"util":160}],170:[function(require,module,exports){
+},{"./binarywriter":166,"./geometry":167,"./linestring":169,"./point":173,"./types":175,"util":161}],171:[function(require,module,exports){
 module.exports = MultiPoint;
 
 var util = require('util');
@@ -56989,7 +58004,7 @@ MultiPoint.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":165,"./geometry":166,"./point":172,"./types":174,"util":160}],171:[function(require,module,exports){
+},{"./binarywriter":166,"./geometry":167,"./point":173,"./types":175,"util":161}],172:[function(require,module,exports){
 module.exports = MultiPolygon;
 
 var util = require('util');
@@ -57217,7 +58232,7 @@ MultiPolygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":165,"./geometry":166,"./point":172,"./polygon":173,"./types":174,"util":160}],172:[function(require,module,exports){
+},{"./binarywriter":166,"./geometry":167,"./point":173,"./polygon":174,"./types":175,"util":161}],173:[function(require,module,exports){
 module.exports = Point;
 
 var util = require('util');
@@ -57436,7 +58451,7 @@ Point.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":165,"./geometry":166,"./types":174,"./zigzag.js":177,"util":160}],173:[function(require,module,exports){
+},{"./binarywriter":166,"./geometry":167,"./types":175,"./zigzag.js":178,"util":161}],174:[function(require,module,exports){
 module.exports = Polygon;
 
 var util = require('util');
@@ -57726,7 +58741,7 @@ Polygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":165,"./geometry":166,"./point":172,"./types":174,"util":160}],174:[function(require,module,exports){
+},{"./binarywriter":166,"./geometry":167,"./point":173,"./types":175,"util":161}],175:[function(require,module,exports){
 module.exports = {
     wkt: {
         Point: 'POINT',
@@ -57757,7 +58772,7 @@ module.exports = {
     }
 };
 
-},{}],175:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 module.exports = WktParser;
 
 var Types = require('./types');
@@ -57883,7 +58898,7 @@ WktParser.prototype.skipWhitespaces = function () {
         this.position++;
 };
 
-},{"./point":172,"./types":174}],176:[function(require,module,exports){
+},{"./point":173,"./types":175}],177:[function(require,module,exports){
 exports.Types = require('./types');
 exports.Geometry = require('./geometry');
 exports.Point = require('./point');
@@ -57893,7 +58908,7 @@ exports.MultiPoint = require('./multipoint');
 exports.MultiLineString = require('./multilinestring');
 exports.MultiPolygon = require('./multipolygon');
 exports.GeometryCollection = require('./geometrycollection');
-},{"./geometry":166,"./geometrycollection":167,"./linestring":168,"./multilinestring":169,"./multipoint":170,"./multipolygon":171,"./point":172,"./polygon":173,"./types":174}],177:[function(require,module,exports){
+},{"./geometry":167,"./geometrycollection":168,"./linestring":169,"./multilinestring":170,"./multipoint":171,"./multipolygon":172,"./point":173,"./polygon":174,"./types":175}],178:[function(require,module,exports){
 module.exports = {
     encode: function (value) {
         return (value << 1) ^ (value >> 31);
@@ -57903,7 +58918,7 @@ module.exports = {
     }
 };
 
-},{}],178:[function(require,module,exports){
+},{}],179:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -57922,19 +58937,19 @@ function extend() {
     return target
 }
 
-},{}],179:[function(require,module,exports){
+},{}],180:[function(require,module,exports){
 module.exports = function(hostname) {
   return {
     GithubAPI: false
   };
 };
 
-},{}],180:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 module.exports = {
   DEFAULT_PROJECTION: 'globe',
   DEFAULT_STYLE: 'Streets'
 };
-},{}],181:[function(require,module,exports){
+},{}],182:[function(require,module,exports){
 var clone = require('clone'),
   xtend = require('xtend'),
   config = require('../config.js')(location.hostname),
@@ -58226,7 +59241,7 @@ module.exports = function(context) {
   return data;
 };
 
-},{"../config.js":179,"../source/gist":197,"../source/github":198,"../source/local":199,"clone":16,"xtend":178}],182:[function(require,module,exports){
+},{"../config.js":180,"../source/gist":198,"../source/github":199,"../source/local":200,"clone":16,"xtend":179}],183:[function(require,module,exports){
 var qs = require('qs-hash'),
   zoomextent = require('../lib/zoomextent'),
   flash = require('../ui/flash');
@@ -58314,7 +59329,7 @@ module.exports = function(context) {
   };
 };
 
-},{"../lib/zoomextent":193,"../ui/flash":205,"qs-hash":108}],183:[function(require,module,exports){
+},{"../lib/zoomextent":194,"../ui/flash":208,"qs-hash":109}],184:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('qs-hash');
 
@@ -58356,7 +59371,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/zoomextent":193,"qs-hash":108}],184:[function(require,module,exports){
+},{"../lib/zoomextent":194,"qs-hash":109}],185:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -58400,7 +59415,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":179}],185:[function(require,module,exports){
+},{"../config.js":180}],186:[function(require,module,exports){
 var qs = require('qs-hash'),
     xtend = require('xtend');
 
@@ -58467,7 +59482,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"qs-hash":108,"xtend":178}],186:[function(require,module,exports){
+},{"qs-hash":109,"xtend":179}],187:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -58555,7 +59570,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":179}],187:[function(require,module,exports){
+},{"../config.js":180}],188:[function(require,module,exports){
 var ui = require('./ui'),
   map = require('./ui/map'),
   data = require('./core/data'),
@@ -58588,7 +59603,7 @@ function geojsonIO() {
 }
 
 
-},{"./core/data":181,"./core/loader":182,"./core/recovery":183,"./core/repo":184,"./core/router":185,"./core/user":186,"./ui":200,"./ui/map":209,"store":122}],188:[function(require,module,exports){
+},{"./core/data":182,"./core/loader":183,"./core/recovery":184,"./core/repo":185,"./core/router":186,"./core/user":187,"./ui":201,"./ui/map":212,"store":123}],189:[function(require,module,exports){
 (function (Buffer){(function (){
 const { map } = require('d3');
 var escape = require('escape-html'),
@@ -58716,7 +59731,7 @@ module.exports.wkxString = function(context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../lib/zoomextent":193,"buffer":13,"d3":19,"escape-html":27,"geojson-extent":36,"geojson-flatten":37,"geojson-random":39,"polyline":105,"wkx":176}],189:[function(require,module,exports){
+},{"../lib/zoomextent":194,"buffer":13,"d3":19,"escape-html":27,"geojson-extent":36,"geojson-flatten":37,"geojson-random":39,"polyline":106,"wkx":177}],190:[function(require,module,exports){
 module.exports = function (context) {
   return function (e, id) {
     var sel = d3.select(e.target._content);
@@ -58779,7 +59794,7 @@ module.exports = function (context) {
   };
 };
 
-},{}],190:[function(require,module,exports){
+},{}],191:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     gtfs2geojson = require('gtfs2geojson'),
@@ -58971,7 +59986,7 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":17,"geojson-normalize":38,"gtfs2geojson":44,"osmtogeojson":100,"polytogeojson":106,"togeojson":124,"topojson":"topojson"}],191:[function(require,module,exports){
+},{"csv2geojson":17,"geojson-normalize":38,"gtfs2geojson":44,"osmtogeojson":101,"polytogeojson":107,"togeojson":125,"topojson":"topojson"}],192:[function(require,module,exports){
 module.exports = function (map, feature) {
   var zoomLevel;
 
@@ -58985,7 +60000,7 @@ module.exports = function (map, feature) {
   }
 };
 
-},{}],192:[function(require,module,exports){
+},{}],193:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -59046,7 +60061,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":42}],193:[function(require,module,exports){
+},{"geojsonhint":42}],194:[function(require,module,exports){
 module.exports = function(context) {
   var bounds = turf.bbox(context.data.get('map'));
   context.map.fitBounds(bounds, {
@@ -59054,7 +60069,7 @@ module.exports = function(context) {
   });
 };
 
-},{}],194:[function(require,module,exports){
+},{}],195:[function(require,module,exports){
 (function (Buffer){(function (){
 
 var marked = require('marked');
@@ -59078,7 +60093,7 @@ module.exports = function(context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":13,"marked":98}],195:[function(require,module,exports){
+},{"buffer":13,"marked":98}],196:[function(require,module,exports){
 var _ = require('lodash');
 var { createPopper } = require('@popperjs/core');
 
@@ -59224,7 +60239,7 @@ module.exports = function(context) {
   return render;
 };
 
-},{"../lib/validate":192,"../lib/zoomextent":193,"../ui/saver.js":216,"@popperjs/core":3,"lodash":97}],196:[function(require,module,exports){
+},{"../lib/validate":193,"../lib/zoomextent":194,"../ui/saver.js":219,"@popperjs/core":3,"lodash":97}],197:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -59298,7 +60313,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/smartzoom.js":191,"d3-metatable":18}],197:[function(require,module,exports){
+},{"../lib/smartzoom.js":192,"d3-metatable":18}],198:[function(require,module,exports){
 
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';\nvar map = L.mapbox.map('map');\n\nL.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties;\n    var table = document.createElement('table');\n    table.setAttribute('class', 'marker-properties display')\n    for (var key in properties) {\n        var tr = createTableRows(key, properties[key]);\n        table.appendChild(tr);\n    }\n    if (table) l.bindPopup(table);\n}\n\nfunction createTableRows(key, value) {\n    var tr = document.createElement('tr');\n    var th = document.createElement('th');\n    var td = document.createElement('td');\n    key = document.createTextNode(key);\n    value = document.createTextNode(value);\n    th.appendChild(key);\n    td.appendChild(value);\n    tr.appendChild(th);\n    tr.appendChild(td);\n    return tr\n}\n\n</script>\n</body>\n</html>\n";
 
@@ -59412,7 +60427,7 @@ function loadRaw(url, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"../config.js":179}],198:[function(require,module,exports){
+},{"../config.js":180}],199:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -59544,7 +60559,7 @@ function shaUrl(parts, sha) {
         '/git/blobs/' + sha;
 }
 
-},{"../config.js":179}],199:[function(require,module,exports){
+},{"../config.js":180}],200:[function(require,module,exports){
 try {
     var fs = require('fs');
 } catch(e) {
@@ -59569,7 +60584,7 @@ function save(context, callback) {
     });
 }
 
-},{"fs":12}],200:[function(require,module,exports){
+},{"fs":12}],201:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
   file_bar = require('./ui/file_bar'),
   dnd = require('./ui/dnd'),
@@ -59657,7 +60672,7 @@ function ui(context) {
   };
 }
 
-},{"./ui/dnd":201,"./ui/file_bar":204,"./ui/layer_switch":206,"./ui/mode_buttons":214,"./ui/projection_switch":215,"./ui/user":218}],201:[function(require,module,exports){
+},{"./ui/dnd":202,"./ui/file_bar":207,"./ui/layer_switch":209,"./ui/mode_buttons":217,"./ui/projection_switch":218,"./ui/user":221}],202:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -59701,7 +60716,149 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":190,"../lib/zoomextent":193,"./flash.js":205}],202:[function(require,module,exports){
+},{"../lib/readfile.js":191,"../lib/zoomextent":194,"./flash.js":208}],203:[function(require,module,exports){
+// custom mapbopx-gl-draw mode that extends draw_line_string
+// shows a center point, radius line, and circle polygon while drawing
+// forces draw.create on creation of second vertex
+
+const numeral = require('numeral');
+
+function circleFromTwoVertexLineString(geojson) {
+
+  const center = geojson.geometry.coordinates[0];
+  const radiusInKm = turf.lineDistance(geojson, 'kilometers');
+
+  return turf.circle(center, radiusInKm);
+}
+
+function getDisplayMeasurements(feature) {
+  // should log both metric and standard display strings for the current drawn feature
+  
+  // metric calculation
+  const drawnLength = (turf.lineDistance(feature) * 1000); // meters
+
+  let metricUnits = 'm';
+  let metricFormat = '0,0';
+  let metricMeasurement;
+
+  let standardUnits = 'feet';
+  let standardFormat = '0,0';
+  let standardMeasurement;
+
+  metricMeasurement = drawnLength;
+  if (drawnLength >= 1000) { // if over 1000 meters, upgrade metric
+    metricMeasurement = drawnLength / 1000;
+    metricUnits = 'km';
+    metricFormat = '0.00';
+  }
+
+  standardMeasurement = drawnLength * 3.28084;
+  if (standardMeasurement >= 5280) { // if over 5280 feet, upgrade standard
+    standardMeasurement /= 5280;
+    standardUnits = 'mi';
+    standardFormat = '0.00';
+  }
+
+  const displayMeasurements = {
+    metric: `${numeral(metricMeasurement).format(metricFormat)} ${metricUnits}`,
+    standard: `${numeral(standardMeasurement).format(standardFormat)} ${standardUnits}`,
+  };
+  return displayMeasurements;
+}
+
+const CircleMode = {
+  ...MapboxDraw.modes.draw_line_string,
+
+  clickAnywhere: function(state, e) {
+    // this ends the drawing after the user creates a second point, triggering this.onStop
+    if (state.currentVertexPosition === 1) {
+      state.line.addCoordinate(0, e.lngLat.lng, e.lngLat.lat);
+      return this.changeMode('simple_select', { featureIds: [state.line.id] });
+    }
+
+    state.line.updateCoordinate(state.currentVertexPosition, e.lngLat.lng, e.lngLat.lat);
+    if (state.direction === 'forward') {
+      state.currentVertexPosition += 1;
+      state.line.updateCoordinate(state.currentVertexPosition, e.lngLat.lng, e.lngLat.lat);
+    } else {
+      state.line.addCoordinate(0, e.lngLat.lng, e.lngLat.lat);
+    }
+      
+    return null;
+  },
+
+  onStop: function(state) {
+    
+    // remove last added coordinate
+    state.line.removeCoordinate('0');
+    if (state.line.isValid()) {
+      const lineGeoJson = state.line.toGeoJSON();
+      const circleFeature = circleFromTwoVertexLineString(lineGeoJson);
+
+      this.map.fire('draw.create', {
+        features: [circleFeature],
+      });
+    } else {
+      this.deleteFeature([state.line.id], { silent: true });
+      this.changeMode('simple_select', {}, { silent: true });
+    }
+  },
+
+  toDisplayFeatures: function(state, geojson, display) {
+  
+    // Only render the line if it has at least one real coordinate
+    if (geojson.geometry.coordinates.length < 2) return null;
+  
+    display({
+      type: 'Feature',
+      properties: {
+        active: 'true'
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: geojson.geometry.coordinates[0],
+      },
+    });
+  
+    // displays the line as it is drawn
+    geojson.properties.active = 'true';
+    display(geojson);
+  
+    const displayMeasurements = getDisplayMeasurements(geojson);
+  
+    // create custom feature for the current pointer position
+    const currentVertex = {
+      type: 'Feature',
+      properties: {
+        meta: 'currentPosition',
+        radius: `${displayMeasurements.metric} ${displayMeasurements.standard}`,
+        parent: state.line.id,
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: geojson.geometry.coordinates[1],
+      },
+    };
+  
+    display(currentVertex);
+  
+    const circleFeature = circleFromTwoVertexLineString(geojson);
+    
+    circleFeature.properties = {
+      active: 'true'
+    };
+  
+    display(circleFeature);
+  
+    return null;
+  }
+};
+
+
+
+
+module.exports = CircleMode;
+},{"numeral":99}],204:[function(require,module,exports){
 // from https://jsfiddle.net/fxi/xf51zet4/
 class extendDrawBar {
   constructor(opt) {
@@ -59736,6 +60893,7 @@ class extendDrawBar {
       });
     }
     elButton.addEventListener(opt.on, opt.action);
+    elButton.title = opt.title;
     ctrl.elContainer.appendChild(elButton);
     opt.elButton = elButton;
   }
@@ -59746,7 +60904,7 @@ class extendDrawBar {
 }
 
 module.exports = extendDrawBar;
-},{}],203:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 // from https://github.com/thegisdev/mapbox-gl-draw-rectangle-mode
 const doubleClickZoom = {
   enable: ctx => {
@@ -59887,7 +61045,255 @@ const DrawRectangle = {
 };
   
 module.exports =  DrawRectangle;
-},{}],204:[function(require,module,exports){
+},{}],206:[function(require,module,exports){
+module.exports = [
+  {
+    'id': 'gl-draw-polygon-fill-inactive',
+    'type': 'fill',
+    'filter': ['all',
+      ['==', 'active', 'false'],
+      ['==', '$type', 'Polygon'],
+      ['!=', 'mode', 'static']
+    ],
+    'paint': {
+      'fill-color': '#3bb2d0',
+      'fill-outline-color': '#3bb2d0',
+      'fill-opacity': 0.1
+    }
+  },
+  {
+    'id': 'gl-draw-polygon-fill-active',
+    'type': 'fill',
+    'filter': ['all', ['==', 'active', 'true'], ['==', '$type', 'Polygon']],
+    'paint': {
+      'fill-color': '#fbb03b',
+      'fill-outline-color': '#fbb03b',
+      'fill-opacity': 0.1
+    }
+  },
+  {
+    'id': 'gl-draw-polygon-midpoint',
+    'type': 'circle',
+    'filter': ['all',
+      ['==', '$type', 'Point'],
+      ['==', 'meta', 'midpoint']],
+    'paint': {
+      'circle-radius': 3,
+      'circle-color': '#fbb03b'
+    }
+  },
+  {
+    'id': 'gl-draw-polygon-stroke-inactive',
+    'type': 'line',
+    'filter': ['all',
+      ['==', 'active', 'false'],
+      ['==', '$type', 'Polygon'],
+      ['!=', 'mode', 'static']
+    ],
+    'layout': {
+      'line-cap': 'round',
+      'line-join': 'round'
+    },
+    'paint': {
+      'line-color': '#3bb2d0',
+      'line-width': 2
+    }
+  },
+  {
+    'id': 'gl-draw-polygon-stroke-active',
+    'type': 'line',
+    'filter': ['all', ['==', 'active', 'true'], ['==', '$type', 'Polygon']],
+    'layout': {
+      'line-cap': 'round',
+      'line-join': 'round'
+    },
+    'paint': {
+      'line-color': '#fbb03b',
+      'line-dasharray': [0.2, 2],
+      'line-width': 2
+    }
+  },
+  {
+    'id': 'gl-draw-line-inactive',
+    'type': 'line',
+    'filter': ['all',
+      ['==', 'active', 'false'],
+      ['==', '$type', 'LineString'],
+      ['!=', 'mode', 'static']
+    ],
+    'layout': {
+      'line-cap': 'round',
+      'line-join': 'round'
+    },
+    'paint': {
+      'line-color': '#3bb2d0',
+      'line-width': 2
+    }
+  },
+  {
+    'id': 'gl-draw-line-active',
+    'type': 'line',
+    'filter': ['all',
+      ['==', '$type', 'LineString'],
+      ['==', 'active', 'true']
+    ],
+    'layout': {
+      'line-cap': 'round',
+      'line-join': 'round'
+    },
+    'paint': {
+      'line-color': '#fbb03b',
+      'line-dasharray': [0.2, 2],
+      'line-width': 2
+    }
+  },
+  {
+    'id': 'gl-draw-polygon-and-line-vertex-stroke-inactive',
+    'type': 'circle',
+    'filter': ['all',
+      ['==', 'meta', 'vertex'],
+      ['==', '$type', 'Point'],
+      ['!=', 'mode', 'static']
+    ],
+    'paint': {
+      'circle-radius': 5,
+      'circle-color': '#fff'
+    }
+  },
+  {
+    'id': 'gl-draw-polygon-and-line-vertex-inactive',
+    'type': 'circle',
+    'filter': ['all',
+      ['==', 'meta', 'vertex'],
+      ['==', '$type', 'Point'],
+      ['!=', 'mode', 'static']
+    ],
+    'paint': {
+      'circle-radius': 3,
+      'circle-color': '#fbb03b'
+    }
+  },
+  {
+    'id': 'gl-draw-point-point-stroke-inactive',
+    'type': 'circle',
+    'filter': ['all',
+      ['==', 'active', 'false'],
+      ['==', '$type', 'Point'],
+      ['==', 'meta', 'feature'],
+      ['!=', 'mode', 'static']
+    ],
+    'paint': {
+      'circle-radius': 5,
+      'circle-opacity': 1,
+      'circle-color': '#fff'
+    }
+  },
+  {
+    'id': 'gl-draw-point-inactive',
+    'type': 'circle',
+    'filter': ['all',
+      ['==', 'active', 'false'],
+      ['==', '$type', 'Point'],
+      ['==', 'meta', 'feature'],
+      ['!=', 'mode', 'static']
+    ],
+    'paint': {
+      'circle-radius': 3,
+      'circle-color': '#3bb2d0'
+    }
+  },
+  {
+    'id': 'gl-draw-point-stroke-active',
+    'type': 'circle',
+    'filter': ['all',
+      ['==', '$type', 'Point'],
+      ['==', 'active', 'true'],
+      ['!=', 'meta', 'midpoint']
+    ],
+    'paint': {
+      'circle-radius': 7,
+      'circle-color': '#fff'
+    }
+  },
+  {
+    'id': 'gl-draw-point-active',
+    'type': 'circle',
+    'filter': ['all',
+      ['==', '$type', 'Point'],
+      ['!=', 'meta', 'midpoint'],
+      ['==', 'active', 'true']],
+    'paint': {
+      'circle-radius': 5,
+      'circle-color': '#fbb03b'
+    }
+  },
+  {
+    'id': 'gl-draw-polygon-fill-static',
+    'type': 'fill',
+    'filter': ['all', ['==', 'mode', 'static'], ['==', '$type', 'Polygon']],
+    'paint': {
+      'fill-color': '#404040',
+      'fill-outline-color': '#404040',
+      'fill-opacity': 0.1
+    }
+  },
+  {
+    'id': 'gl-draw-polygon-stroke-static',
+    'type': 'line',
+    'filter': ['all', ['==', 'mode', 'static'], ['==', '$type', 'Polygon']],
+    'layout': {
+      'line-cap': 'round',
+      'line-join': 'round'
+    },
+    'paint': {
+      'line-color': '#404040',
+      'line-width': 2
+    }
+  },
+  {
+    'id': 'gl-draw-line-static',
+    'type': 'line',
+    'filter': ['all', ['==', 'mode', 'static'], ['==', '$type', 'LineString']],
+    'layout': {
+      'line-cap': 'round',
+      'line-join': 'round'
+    },
+    'paint': {
+      'line-color': '#404040',
+      'line-width': 2
+    }
+  },
+  {
+    'id': 'gl-draw-point-static',
+    'type': 'circle',
+    'filter': ['all', ['==', 'mode', 'static'], ['==', '$type', 'Point']],
+    'paint': {
+      'circle-radius': 5,
+      'circle-color': '#404040'
+    }
+  },
+  {
+    id: 'gl-draw-symbol',
+    type: 'symbol',
+    layout: {
+      'text-line-height': 1.1,
+      'text-size': 15,
+      'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+      'text-anchor': 'left',
+      'text-offset': [.8, .8],
+      'text-field': ['get', 'radius'],
+      'text-max-width': 7
+    },
+    'paint': {
+      'text-color': 'hsl(0, 0%, 95%)',
+      'text-halo-color': 'hsl(0, 5%, 0%)',
+      'text-halo-width': 1,
+      'text-halo-blur': 1
+    },
+    filter: ['==', 'meta', 'currentPosition'],
+  }
+];
+},{}],207:[function(require,module,exports){
 var shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
@@ -60543,7 +61949,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":179,"../lib/meta.js":188,"../lib/readfile":190,"../lib/zoomextent":193,"../ui/saver.js":216,"./flash":205,"./modal.js":213,"./share":217,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":16,"filesaver.js":29,"geojson-normalize":38,"geojson2dsv":41,"shp-write":111,"tokml":125,"topojson":"topojson","wellknown":161}],205:[function(require,module,exports){
+},{"../config.js":180,"../lib/meta.js":189,"../lib/readfile":191,"../lib/zoomextent":194,"../ui/saver.js":219,"./flash":208,"./modal.js":216,"./share":220,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":16,"filesaver.js":29,"geojson-normalize":38,"geojson2dsv":41,"shp-write":112,"tokml":126,"topojson":"topojson","wellknown":162}],208:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -60565,7 +61971,7 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":212}],206:[function(require,module,exports){
+},{"./message":215}],209:[function(require,module,exports){
 const styles = require('./map/styles');
 const { DEFAULT_STYLE } = require('../constants');
 
@@ -60620,7 +62026,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":180,"./map/styles":210}],207:[function(require,module,exports){
+},{"../constants":181,"./map/styles":213}],210:[function(require,module,exports){
 // extend mapboxGL Marker so we can pass in an onClick handler
 class ClickableMarker extends mapboxgl.Marker {
   // new method onClick, sets _handleClick to a function you pass in
@@ -60646,7 +62052,7 @@ class ClickableMarker extends mapboxgl.Marker {
 }
 
 module.exports = ClickableMarker;
-},{}],208:[function(require,module,exports){
+},{}],211:[function(require,module,exports){
   
 class EditControl {
   onAdd(map) {
@@ -60707,16 +62113,18 @@ module.exports = {
   SaveCancelControl,
   TrashControl
 };
-},{}],209:[function(require,module,exports){
+},{}],212:[function(require,module,exports){
 require('qs-hash');
 const geojsonRewind = require('geojson-rewind');
 
 const DrawRectangle = require('../draw/rectangle');
+const DrawCircle = require('../draw/circle');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
 const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
 const { addIds, addMarkers, geojsonToLayer, bindPopup } = require('./util');
 const styles = require('./styles');
 const { DEFAULT_STYLE, DEFAULT_PROJECTION } = require('../../constants');
+const drawStyles = require('../draw/styles');
 
 let writable = false;
 let drawing = false;
@@ -60780,8 +62188,10 @@ module.exports = function (context, readonly) {
         modes: {
           ...MapboxDraw.modes,
           draw_rectangle: DrawRectangle,
+          draw_circle: DrawCircle,
         },
         controls: {},
+        styles: drawStyles
       });
 
       const drawControl = new ExtendDrawBar({
@@ -60794,6 +62204,7 @@ module.exports = function (context, readonly) {
               context.Draw.changeMode('draw_point');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_point'],
+            title: 'Draw Point'
           },
           {
             on: 'click',
@@ -60802,6 +62213,7 @@ module.exports = function (context, readonly) {
               context.Draw.changeMode('draw_line_string');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_line'],
+            title: 'Draw LineString'
           },
           {
             on: 'click',
@@ -60810,6 +62222,7 @@ module.exports = function (context, readonly) {
               context.Draw.changeMode('draw_polygon');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_polygon'],
+            title: 'Draw Polygon'
           },
           {
             on: 'click',
@@ -60821,6 +62234,19 @@ module.exports = function (context, readonly) {
               'mapbox-gl-draw_ctrl-draw-btn',
               'mapbox-gl-draw_rectangle',
             ],
+            title: 'Draw Rectangular Polygon'
+          },
+          {
+            on: 'click',
+            action: () => {
+              drawing = true;
+              context.Draw.changeMode('draw_circle');
+            },
+            classes: [
+              'mapbox-gl-draw_ctrl-draw-btn',
+              'mapbox-gl-draw_circle',
+            ],
+            title: 'Draw Circular Polygon'
           },
         ],
       });
@@ -61067,7 +62493,7 @@ module.exports = function (context, readonly) {
   return map;
 };
 
-},{"../../constants":180,"../draw/extend_draw_bar":202,"../draw/rectangle":203,"./controls":208,"./styles":210,"./util":211,"geojson-rewind":40,"qs-hash":108}],210:[function(require,module,exports){
+},{"../../constants":181,"../draw/circle":203,"../draw/extend_draw_bar":204,"../draw/rectangle":205,"../draw/styles":206,"./controls":211,"./styles":213,"./util":214,"geojson-rewind":40,"qs-hash":109}],213:[function(require,module,exports){
 module.exports = [
   {
     title: 'Streets',
@@ -61116,7 +62542,7 @@ module.exports = [
     },
   },
 ];
-},{}],211:[function(require,module,exports){
+},{}],214:[function(require,module,exports){
 const escape = require('escape-html');
 
 const popup = require('../../lib/popup');
@@ -61367,7 +62793,7 @@ module.exports = {
   bindPopup
 };
   
-},{"../../lib/popup":189,"./clickable_marker":207,"escape-html":27}],212:[function(require,module,exports){
+},{"../../lib/popup":190,"./clickable_marker":210,"escape-html":27}],215:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -61408,7 +62834,7 @@ function message(selection) {
   return sel;
 }
 
-},{}],213:[function(require,module,exports){
+},{}],216:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -61476,7 +62902,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],214:[function(require,module,exports){
+},{}],217:[function(require,module,exports){
 var table = require('../panel/table'),
   json = require('../panel/json'),
   help = require('../panel/help');
@@ -61528,7 +62954,7 @@ module.exports = function(context, pane) {
   };
 };
 
-},{"../panel/help":194,"../panel/json":195,"../panel/table":196}],215:[function(require,module,exports){
+},{"../panel/help":195,"../panel/json":196,"../panel/table":197}],218:[function(require,module,exports){
 const { DEFAULT_PROJECTION } = require('../constants');
 
 module.exports = function(context) {
@@ -61578,7 +63004,7 @@ module.exports = function(context) {
   };
 };
   
-},{"../constants":180}],216:[function(require,module,exports){
+},{"../constants":181}],219:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -61646,7 +63072,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":205}],217:[function(require,module,exports){
+},{"./flash":208}],220:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -61695,7 +63121,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":197,"./modal":213}],218:[function(require,module,exports){
+},{"../source/gist":198,"./modal":216}],221:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};
@@ -61746,7 +63172,7 @@ module.exports = function(context) {
     };
 };
 
-},{"../config.js":179}],"topojson":[function(require,module,exports){
+},{"../config.js":180}],"topojson":[function(require,module,exports){
 var topojson = module.exports = require("./topojson");
 topojson.topology = require("./lib/topojson/topology");
 topojson.simplify = require("./lib/topojson/simplify");
@@ -61757,4 +63183,4 @@ topojson.bind = require("./lib/topojson/bind");
 topojson.stitch = require("./lib/topojson/stitch");
 topojson.scale = require("./lib/topojson/scale");
 
-},{"./lib/topojson/bind":126,"./lib/topojson/clockwise":129,"./lib/topojson/filter":133,"./lib/topojson/prune":137,"./lib/topojson/scale":139,"./lib/topojson/simplify":140,"./lib/topojson/stitch":142,"./lib/topojson/topology":143,"./topojson":155}]},{},[187]);
+},{"./lib/topojson/bind":127,"./lib/topojson/clockwise":130,"./lib/topojson/filter":134,"./lib/topojson/prune":138,"./lib/topojson/scale":140,"./lib/topojson/simplify":141,"./lib/topojson/stitch":143,"./lib/topojson/topology":144,"./topojson":156}]},{},[188]);

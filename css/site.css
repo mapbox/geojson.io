@@ -102,7 +102,11 @@ p.intro-hint:hover {
 }
 
 .top .buttons {
+<<<<<<< HEAD
   margin-left: 40px;
+=======
+  margin-left: 28px;
+>>>>>>> cdb58de2 (add circle drawing mode, add title tooltips for draw buttons)
   height: 40px;
 }
 
@@ -580,7 +584,11 @@ div.children a {
 }
 
 .mapbox-gl-draw_rectangle {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><path d='m15 12.3v-4.6c.6-.3 1-1 1-1.7 0-1.1-.9-2-2-2-.7 0-1.4.4-1.7 1h-4.6c-.3-.6-1-1-1.7-1-1.1 0-2 .9-2 2 0 .7.4 1.4 1 1.7v4.6c-.6.3-1 1-1 1.7 0 1.1.9 2 2 2 .7 0 1.4-.4 1.7-1h4.6c.3.6 1 1 1.7 1 1.1 0 2-.9 2-2 0-.7-.4-1.4-1-1.7zm-8-.3v-4l1-1h4l1 1v4l-1 1h-4z'/></svg>");
+  background-image: url("../img/rectangle.svg");
+}
+
+.mapbox-gl-draw_circle {
+  background-image: url("../img/circle.svg");
 }
 
 .fullscreen .mapboxgl-ctrl-top-right {
