@@ -43,7 +43,7 @@ module.exports = function (context, readonly) {
       style: 'mapbox://styles/mapbox/streets-v11',
       center: [20, 0],
       zoom: 2,
-      projection: 'globe',
+      projection: context.storage.get('projection') || 'globe',
       hash: 'map',
     });
 

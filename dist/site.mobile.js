@@ -60735,7 +60735,7 @@ module.exports = function (context, readonly) {
       style: 'mapbox://styles/mapbox/streets-v11',
       center: [20, 0],
       zoom: 2,
-      projection: 'globe',
+      projection: context.storage.get('projection') || 'globe',
       hash: 'map',
     });
 
@@ -61472,6 +61472,7 @@ module.exports = function(context) {
       if (context.map._loaded) {
         const { value } = d3.select(clicked).datum();
         context.map.setProjection(value);
+        context.storage.set('projection', value);
       }
     };
   
@@ -61485,7 +61486,10 @@ module.exports = function(context) {
       .on('click', setProjection)
       .text(function(d) { return d.label; });
   
-    projectionButtons.filter(function(d, i) { return i === 0; }).call(setProjection);
+    const activeProjection = context.storage.get('projection') || 'globe';
+    projectionButtons.filter(function({ value }) {
+      return value === activeProjection;
+    }).call(setProjection);
   };
 };
   
