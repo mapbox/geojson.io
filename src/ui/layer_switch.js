@@ -1,55 +1,11 @@
-module.exports = function (context) {
-  return function (selection) {
-    var layers = [
-      {
-        title: 'Streets',
-        style: 'mapbox://styles/mapbox/streets-v11',
-      },
-      {
-        title: 'Satellite Streets',
-        style: 'mapbox://styles/mapbox/satellite-streets-v11',
-      },
-      {
-        title: 'Outdoors',
-        style: 'mapbox://styles/mapbox/outdoors-v11',
-      },
-      {
-        title: 'Light',
-        style: 'mapbox://styles/mapbox/light-v10',
-      },
-      {
-        title: 'Dark',
-        style: 'mapbox://styles/mapbox/dark-v10',
-      },
-      {
-        title: 'OSM',
-        style: {
-          name: 'osm',
-          version: 8,
-          sources: {
-            'osm-raster-tiles': {
-              type: 'raster',
-              tiles: [
-                'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
-              ],
-              tileSize: 256,
-              attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
-            }
-          }, 
-          layers: [
-            {
-              id: 'osm-raster-layer',
-              type: 'raster',
-              source: 'osm-raster-tiles',
-              minzoom: 0,
-              maxzoom: 22
-            }
-          ]
-        },
-      },
-    ];
+const styles = require('./map/styles');
+const { DEFAULT_STYLE } = require('../constants');
 
-    var layerSwap = function (d) {
+module.exports = function (context) {
+  
+  return function (selection) {
+
+    var layerSwap = function () {
       var clicked = this instanceof d3.selection ? this.node() : this;
       layerButtons.classed('active', function () {
         return clicked === this;
@@ -64,6 +20,7 @@ module.exports = function (context) {
         const { title, style } = d3.select(clicked).datum();
 
         context.map.setStyle(style);
+        context.storage.set('style', title);
       }
     };
 
@@ -71,7 +28,7 @@ module.exports = function (context) {
       .append('div')
       .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs')
       .selectAll('button')
-      .data(layers)
+      .data(styles)
       .enter()
       .append('button')
       .attr('class', 'pad0x')
@@ -80,9 +37,11 @@ module.exports = function (context) {
         return d.title;
       });
 
+    const activeStyle = context.storage.get('style') || DEFAULT_STYLE;
+
     layerButtons
-      .filter(function (d, i) {
-        return i === 0;
+      .filter(function ({ title }, i) {
+        return title === activeStyle;
       })
       .call(layerSwap);
   };

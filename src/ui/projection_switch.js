@@ -1,3 +1,5 @@
+const { DEFAULT_PROJECTION } = require('../constants');
+
 module.exports = function(context) {
 
   return function(selection) {
@@ -38,7 +40,7 @@ module.exports = function(context) {
       .on('click', setProjection)
       .text(function(d) { return d.label; });
   
-    const activeProjection = context.storage.get('projection') || 'globe';
+    const activeProjection = context.storage.get('projection') || DEFAULT_PROJECTION;
     projectionButtons.filter(function({ value }) {
       return value === activeProjection;
     }).call(setProjection);

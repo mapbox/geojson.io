@@ -57930,6 +57930,11 @@ module.exports = function(hostname) {
 };
 
 },{}],180:[function(require,module,exports){
+module.exports = {
+  DEFAULT_PROJECTION: 'globe',
+  DEFAULT_STYLE: 'Streets'
+};
+},{}],181:[function(require,module,exports){
 var clone = require('clone'),
   xtend = require('xtend'),
   config = require('../config.js')(location.hostname),
@@ -58220,7 +58225,7 @@ module.exports = function(context) {
   return data;
 };
 
-},{"../config.js":179,"../source/gist":196,"../source/github":197,"../source/local":198,"clone":16,"xtend":178}],181:[function(require,module,exports){
+},{"../config.js":179,"../source/gist":197,"../source/github":198,"../source/local":199,"clone":16,"xtend":178}],182:[function(require,module,exports){
 var qs = require('qs-hash'),
   zoomextent = require('../lib/zoomextent'),
   flash = require('../ui/flash');
@@ -58308,7 +58313,7 @@ module.exports = function(context) {
   };
 };
 
-},{"../lib/zoomextent":192,"../ui/flash":204,"qs-hash":108}],182:[function(require,module,exports){
+},{"../lib/zoomextent":193,"../ui/flash":205,"qs-hash":108}],183:[function(require,module,exports){
 var zoomextent = require('../lib/zoomextent'),
     qs = require('qs-hash');
 
@@ -58350,7 +58355,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/zoomextent":192,"qs-hash":108}],183:[function(require,module,exports){
+},{"../lib/zoomextent":193,"qs-hash":108}],184:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -58394,7 +58399,7 @@ module.exports = function(context) {
     return repo;
 };
 
-},{"../config.js":179}],184:[function(require,module,exports){
+},{"../config.js":179}],185:[function(require,module,exports){
 var qs = require('qs-hash'),
     xtend = require('xtend');
 
@@ -58461,7 +58466,7 @@ module.exports = function(context) {
     return router;
 };
 
-},{"qs-hash":108,"xtend":178}],185:[function(require,module,exports){
+},{"qs-hash":108,"xtend":178}],186:[function(require,module,exports){
 var config = require('../config.js')(location.hostname);
 
 module.exports = function(context) {
@@ -58549,7 +58554,7 @@ module.exports = function(context) {
     return user;
 };
 
-},{"../config.js":179}],186:[function(require,module,exports){
+},{"../config.js":179}],187:[function(require,module,exports){
 var ui = require('./ui'),
   map = require('./ui/map'),
   data = require('./core/data'),
@@ -58582,7 +58587,7 @@ function geojsonIO() {
 }
 
 
-},{"./core/data":180,"./core/loader":181,"./core/recovery":182,"./core/repo":183,"./core/router":184,"./core/user":185,"./ui":199,"./ui/map":208,"store":122}],187:[function(require,module,exports){
+},{"./core/data":181,"./core/loader":182,"./core/recovery":183,"./core/repo":184,"./core/router":185,"./core/user":186,"./ui":200,"./ui/map":209,"store":122}],188:[function(require,module,exports){
 (function (Buffer){(function (){
 const { map } = require('d3');
 var escape = require('escape-html'),
@@ -58706,7 +58711,7 @@ module.exports.wkxString = function(context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../lib/zoomextent":192,"buffer":13,"d3":19,"escape-html":27,"geojson-extent":36,"geojson-flatten":37,"geojson-random":39,"polyline":105,"wkx":176}],188:[function(require,module,exports){
+},{"../lib/zoomextent":193,"buffer":13,"d3":19,"escape-html":27,"geojson-extent":36,"geojson-flatten":37,"geojson-random":39,"polyline":105,"wkx":176}],189:[function(require,module,exports){
 module.exports = function (context) {
   return function (e, id) {
     var sel = d3.select(e.target._content);
@@ -58769,7 +58774,7 @@ module.exports = function (context) {
   };
 };
 
-},{}],189:[function(require,module,exports){
+},{}],190:[function(require,module,exports){
 var topojson = require('topojson'),
     toGeoJSON = require('togeojson'),
     gtfs2geojson = require('gtfs2geojson'),
@@ -58961,7 +58966,7 @@ function readFile(f, text, callback) {
     }
 }
 
-},{"csv2geojson":17,"geojson-normalize":38,"gtfs2geojson":44,"osmtogeojson":100,"polytogeojson":106,"togeojson":124,"topojson":"topojson"}],190:[function(require,module,exports){
+},{"csv2geojson":17,"geojson-normalize":38,"gtfs2geojson":44,"osmtogeojson":100,"polytogeojson":106,"togeojson":124,"topojson":"topojson"}],191:[function(require,module,exports){
 module.exports = function (map, feature) {
   var zoomLevel;
 
@@ -58975,7 +58980,7 @@ module.exports = function (map, feature) {
   }
 };
 
-},{}],191:[function(require,module,exports){
+},{}],192:[function(require,module,exports){
 var geojsonhint = require('geojsonhint');
 
 module.exports = function(callback) {
@@ -59036,7 +59041,7 @@ module.exports = function(callback) {
     };
 };
 
-},{"geojsonhint":42}],192:[function(require,module,exports){
+},{"geojsonhint":42}],193:[function(require,module,exports){
 module.exports = function(context) {
   var bounds = turf.bbox(context.data.get('map'));
   context.map.fitBounds(bounds, {
@@ -59044,7 +59049,7 @@ module.exports = function(context) {
   });
 };
 
-},{}],193:[function(require,module,exports){
+},{}],194:[function(require,module,exports){
 (function (Buffer){(function (){
 
 var marked = require('marked');
@@ -59068,7 +59073,7 @@ module.exports = function(context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":13,"marked":98}],194:[function(require,module,exports){
+},{"buffer":13,"marked":98}],195:[function(require,module,exports){
 var _ = require('lodash');
 var { createPopper } = require('@popperjs/core');
 
@@ -59214,7 +59219,7 @@ module.exports = function(context) {
   return render;
 };
 
-},{"../lib/validate":191,"../lib/zoomextent":192,"../ui/saver.js":214,"@popperjs/core":3,"lodash":97}],195:[function(require,module,exports){
+},{"../lib/validate":192,"../lib/zoomextent":193,"../ui/saver.js":216,"@popperjs/core":3,"lodash":97}],196:[function(require,module,exports){
 var metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -59288,7 +59293,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/smartzoom.js":190,"d3-metatable":18}],196:[function(require,module,exports){
+},{"../lib/smartzoom.js":191,"d3-metatable":18}],197:[function(require,module,exports){
 
 var tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';\nvar map = L.mapbox.map('map');\n\nL.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties;\n    var table = document.createElement('table');\n    table.setAttribute('class', 'marker-properties display')\n    for (var key in properties) {\n        var tr = createTableRows(key, properties[key]);\n        table.appendChild(tr);\n    }\n    if (table) l.bindPopup(table);\n}\n\nfunction createTableRows(key, value) {\n    var tr = document.createElement('tr');\n    var th = document.createElement('th');\n    var td = document.createElement('td');\n    key = document.createTextNode(key);\n    value = document.createTextNode(value);\n    th.appendChild(key);\n    td.appendChild(value);\n    tr.appendChild(th);\n    tr.appendChild(td);\n    return tr\n}\n\n</script>\n</body>\n</html>\n";
 
@@ -59402,7 +59407,7 @@ function loadRaw(url, context, callback) {
     function onError(err) { callback(err, null); }
 }
 
-},{"../config.js":179}],197:[function(require,module,exports){
+},{"../config.js":179}],198:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -59534,7 +59539,7 @@ function shaUrl(parts, sha) {
         '/git/blobs/' + sha;
 }
 
-},{"../config.js":179}],198:[function(require,module,exports){
+},{"../config.js":179}],199:[function(require,module,exports){
 try {
     var fs = require('fs');
 } catch(e) {
@@ -59559,7 +59564,7 @@ function save(context, callback) {
     });
 }
 
-},{"fs":12}],199:[function(require,module,exports){
+},{"fs":12}],200:[function(require,module,exports){
 var buttons = require('./ui/mode_buttons'),
   file_bar = require('./ui/file_bar'),
   dnd = require('./ui/dnd'),
@@ -59647,7 +59652,7 @@ function ui(context) {
   };
 }
 
-},{"./ui/dnd":200,"./ui/file_bar":203,"./ui/layer_switch":205,"./ui/mode_buttons":212,"./ui/projection_switch":213,"./ui/user":216}],200:[function(require,module,exports){
+},{"./ui/dnd":201,"./ui/file_bar":204,"./ui/layer_switch":206,"./ui/mode_buttons":214,"./ui/projection_switch":215,"./ui/user":218}],201:[function(require,module,exports){
 var readDrop = require('../lib/readfile.js').readDrop,
     flash = require('./flash.js'),
     zoomextent = require('../lib/zoomextent');
@@ -59691,7 +59696,7 @@ module.exports = function(context) {
     }
 };
 
-},{"../lib/readfile.js":189,"../lib/zoomextent":192,"./flash.js":204}],201:[function(require,module,exports){
+},{"../lib/readfile.js":190,"../lib/zoomextent":193,"./flash.js":205}],202:[function(require,module,exports){
 // from https://jsfiddle.net/fxi/xf51zet4/
 class extendDrawBar {
   constructor(opt) {
@@ -59736,7 +59741,7 @@ class extendDrawBar {
 }
 
 module.exports = extendDrawBar;
-},{}],202:[function(require,module,exports){
+},{}],203:[function(require,module,exports){
 // from https://github.com/thegisdev/mapbox-gl-draw-rectangle-mode
 const doubleClickZoom = {
   enable: ctx => {
@@ -59877,7 +59882,7 @@ const DrawRectangle = {
 };
   
 module.exports =  DrawRectangle;
-},{}],203:[function(require,module,exports){
+},{}],204:[function(require,module,exports){
 var shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
@@ -60534,7 +60539,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":179,"../lib/meta.js":187,"../lib/readfile":189,"../lib/zoomextent":192,"../ui/saver.js":214,"./flash":204,"./modal.js":211,"./share":215,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":16,"filesaver.js":29,"geojson-normalize":38,"geojson2dsv":41,"shp-write":111,"tokml":125,"topojson":"topojson","wellknown":161}],204:[function(require,module,exports){
+},{"../config.js":179,"../lib/meta.js":188,"../lib/readfile":190,"../lib/zoomextent":193,"../ui/saver.js":216,"./flash":205,"./modal.js":213,"./share":217,"@mapbox/gist-map-browser":1,"@mapbox/github-file-browser":2,"clone":16,"filesaver.js":29,"geojson-normalize":38,"geojson2dsv":41,"shp-write":111,"tokml":125,"topojson":"topojson","wellknown":161}],205:[function(require,module,exports){
 var message = require('./message');
 
 module.exports = flash;
@@ -60556,59 +60561,15 @@ function flash(selection, txt) {
     return msg;
 }
 
-},{"./message":210}],205:[function(require,module,exports){
-module.exports = function (context) {
-  return function (selection) {
-    var layers = [
-      {
-        title: 'Streets',
-        style: 'mapbox://styles/mapbox/streets-v11',
-      },
-      {
-        title: 'Satellite Streets',
-        style: 'mapbox://styles/mapbox/satellite-streets-v11',
-      },
-      {
-        title: 'Outdoors',
-        style: 'mapbox://styles/mapbox/outdoors-v11',
-      },
-      {
-        title: 'Light',
-        style: 'mapbox://styles/mapbox/light-v10',
-      },
-      {
-        title: 'Dark',
-        style: 'mapbox://styles/mapbox/dark-v10',
-      },
-      {
-        title: 'OSM',
-        style: {
-          name: 'osm',
-          version: 8,
-          sources: {
-            'osm-raster-tiles': {
-              type: 'raster',
-              tiles: [
-                'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
-              ],
-              tileSize: 256,
-              attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
-            }
-          }, 
-          layers: [
-            {
-              id: 'osm-raster-layer',
-              type: 'raster',
-              source: 'osm-raster-tiles',
-              minzoom: 0,
-              maxzoom: 22
-            }
-          ]
-        },
-      },
-    ];
+},{"./message":212}],206:[function(require,module,exports){
+const styles = require('./map/styles');
+const { DEFAULT_STYLE } = require('../constants');
 
-    var layerSwap = function (d) {
+module.exports = function (context) {
+  
+  return function (selection) {
+
+    var layerSwap = function () {
       var clicked = this instanceof d3.selection ? this.node() : this;
       layerButtons.classed('active', function () {
         return clicked === this;
@@ -60623,6 +60584,7 @@ module.exports = function (context) {
         const { title, style } = d3.select(clicked).datum();
 
         context.map.setStyle(style);
+        context.storage.set('style', title);
       }
     };
 
@@ -60630,7 +60592,7 @@ module.exports = function (context) {
       .append('div')
       .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs')
       .selectAll('button')
-      .data(layers)
+      .data(styles)
       .enter()
       .append('button')
       .attr('class', 'pad0x')
@@ -60639,15 +60601,17 @@ module.exports = function (context) {
         return d.title;
       });
 
+    const activeStyle = context.storage.get('style') || DEFAULT_STYLE;
+
     layerButtons
-      .filter(function (d, i) {
-        return i === 0;
+      .filter(function ({ title }, i) {
+        return title === activeStyle;
       })
       .call(layerSwap);
   };
 };
 
-},{}],206:[function(require,module,exports){
+},{"../constants":180,"./map/styles":210}],207:[function(require,module,exports){
 // extend mapboxGL Marker so we can pass in an onClick handler
 class ClickableMarker extends mapboxgl.Marker {
   // new method onClick, sets _handleClick to a function you pass in
@@ -60673,7 +60637,7 @@ class ClickableMarker extends mapboxgl.Marker {
 }
 
 module.exports = ClickableMarker;
-},{}],207:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
   
 class EditControl {
   onAdd(map) {
@@ -60734,7 +60698,7 @@ module.exports = {
   SaveCancelControl,
   TrashControl
 };
-},{}],208:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 require('qs-hash');
 const geojsonRewind = require('geojson-rewind');
 
@@ -60742,6 +60706,8 @@ const DrawRectangle = require('../draw/rectangle');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
 const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
 const { addIds, addMarkers, geojsonToLayer, bindPopup } = require('./util');
+const styles = require('./styles');
+const { DEFAULT_STYLE, DEFAULT_PROJECTION } = require('../../constants');
 
 let writable = false;
 let drawing = false;
@@ -60775,12 +60741,17 @@ module.exports = function (context, readonly) {
   function map(selection) {
     mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
 
+    // 
+    const projection = context.storage.get('projection') || DEFAULT_PROJECTION;
+    const activeStyle = context.storage.get('style') || DEFAULT_STYLE;
+    const { style } = styles.find(d => d.title === activeStyle);
+
     context.map = new mapboxgl.Map({
       container: selection.node(),
-      style: 'mapbox://styles/mapbox/streets-v11',
+      style,
       center: [20, 0],
       zoom: 2,
-      projection: context.storage.get('projection') || 'globe',
+      projection,
       hash: 'map',
     });
 
@@ -61078,7 +61049,56 @@ module.exports = function (context, readonly) {
   return map;
 };
 
-},{"../draw/extend_draw_bar":201,"../draw/rectangle":202,"./controls":207,"./util":209,"geojson-rewind":40,"qs-hash":108}],209:[function(require,module,exports){
+},{"../../constants":180,"../draw/extend_draw_bar":202,"../draw/rectangle":203,"./controls":208,"./styles":210,"./util":211,"geojson-rewind":40,"qs-hash":108}],210:[function(require,module,exports){
+module.exports = [
+  {
+    title: 'Streets',
+    style: 'mapbox://styles/mapbox/streets-v11',
+  },
+  {
+    title: 'Satellite Streets',
+    style: 'mapbox://styles/mapbox/satellite-streets-v11',
+  },
+  {
+    title: 'Outdoors',
+    style: 'mapbox://styles/mapbox/outdoors-v11',
+  },
+  {
+    title: 'Light',
+    style: 'mapbox://styles/mapbox/light-v10',
+  },
+  {
+    title: 'Dark',
+    style: 'mapbox://styles/mapbox/dark-v10',
+  },
+  {
+    title: 'OSM',
+    style: {
+      name: 'osm',
+      version: 8,
+      sources: {
+        'osm-raster-tiles': {
+          type: 'raster',
+          tiles: [
+            'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          ],
+          tileSize: 256,
+          attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
+        }
+      }, 
+      layers: [
+        {
+          id: 'osm-raster-layer',
+          type: 'raster',
+          source: 'osm-raster-tiles',
+          minzoom: 0,
+          maxzoom: 22
+        }
+      ]
+    },
+  },
+];
+},{}],211:[function(require,module,exports){
 const escape = require('escape-html');
 
 const popup = require('../../lib/popup');
@@ -61329,7 +61349,7 @@ module.exports = {
   bindPopup
 };
   
-},{"../../lib/popup":188,"./clickable_marker":206,"escape-html":27}],210:[function(require,module,exports){
+},{"../../lib/popup":189,"./clickable_marker":207,"escape-html":27}],212:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -61370,7 +61390,7 @@ function message(selection) {
   return sel;
 }
 
-},{}],211:[function(require,module,exports){
+},{}],213:[function(require,module,exports){
 module.exports = function(selection, blocking) {
 
     var previous = selection.select('div.modal');
@@ -61438,7 +61458,7 @@ module.exports = function(selection, blocking) {
     return shaded;
 };
 
-},{}],212:[function(require,module,exports){
+},{}],214:[function(require,module,exports){
 var table = require('../panel/table'),
   json = require('../panel/json'),
   help = require('../panel/help');
@@ -61490,7 +61510,9 @@ module.exports = function(context, pane) {
   };
 };
 
-},{"../panel/help":193,"../panel/json":194,"../panel/table":195}],213:[function(require,module,exports){
+},{"../panel/help":194,"../panel/json":195,"../panel/table":196}],215:[function(require,module,exports){
+const { DEFAULT_PROJECTION } = require('../constants');
+
 module.exports = function(context) {
 
   return function(selection) {
@@ -61531,14 +61553,14 @@ module.exports = function(context) {
       .on('click', setProjection)
       .text(function(d) { return d.label; });
   
-    const activeProjection = context.storage.get('projection') || 'globe';
+    const activeProjection = context.storage.get('projection') || DEFAULT_PROJECTION;
     projectionButtons.filter(function({ value }) {
       return value === activeProjection;
     }).call(setProjection);
   };
 };
   
-},{}],214:[function(require,module,exports){
+},{"../constants":180}],216:[function(require,module,exports){
 var flash = require('./flash');
 
 module.exports = function(context) {
@@ -61606,7 +61628,7 @@ module.exports = function(context) {
     }
 };
 
-},{"./flash":204}],215:[function(require,module,exports){
+},{"./flash":205}],217:[function(require,module,exports){
 var gist = require('../source/gist'),
     modal = require('./modal');
 
@@ -61655,7 +61677,7 @@ function share(context) {
     };
 }
 
-},{"../source/gist":196,"./modal":211}],216:[function(require,module,exports){
+},{"../source/gist":197,"./modal":213}],218:[function(require,module,exports){
 module.exports = function(context) {
     if (!(/a\.tiles\.mapbox\.com/).test(L.mapbox.config.HTTP_URL) && !require('../config.js')(location.hostname).GithubAPI) {
         return function() {};
@@ -61717,4 +61739,4 @@ topojson.bind = require("./lib/topojson/bind");
 topojson.stitch = require("./lib/topojson/stitch");
 topojson.scale = require("./lib/topojson/scale");
 
-},{"./lib/topojson/bind":126,"./lib/topojson/clockwise":129,"./lib/topojson/filter":133,"./lib/topojson/prune":137,"./lib/topojson/scale":139,"./lib/topojson/simplify":140,"./lib/topojson/stitch":142,"./lib/topojson/topology":143,"./topojson":155}]},{},[186]);
+},{"./lib/topojson/bind":126,"./lib/topojson/clockwise":129,"./lib/topojson/filter":133,"./lib/topojson/prune":137,"./lib/topojson/scale":139,"./lib/topojson/simplify":140,"./lib/topojson/stitch":142,"./lib/topojson/topology":143,"./topojson":155}]},{},[187]);
