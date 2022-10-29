@@ -57953,7 +57953,8 @@ function _getData() {
     dirty: false,
     source: null,
     meta: null,
-    type: 'local'
+    type: 'local',
+    mapStyleLoaded: false
   };
 }
 
@@ -58632,6 +58633,10 @@ module.exports.adduserlayer = function(context, _url, _name) {
     // make this layer's button active
     d3.select('.layer-switch .active').classed('active', false);
     d3.select('.user-layer-button').classed('active', true);
+
+    context.data.set({
+      mapStyleLoaded: true
+    });
   }
 
   // append a button to the existing style selection UI
@@ -59970,7 +59975,7 @@ module.exports = function fileBar(context) {
             alt: 'Add a custom tile layer',
             action: function () {
               var layerURL = prompt(
-                'Layer URL\ne.g. http://stamen-tiles-b.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg'
+                'Layer URL\ne.g. https://stamen-tiles-b.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg'
               );
               if (layerURL === null) return;
               var layerName = prompt('Layer name');
@@ -60584,7 +60589,12 @@ module.exports = function (context) {
         const { title, style } = d3.select(clicked).datum();
 
         context.map.setStyle(style);
+
         context.storage.set('style', title);
+
+        context.data.set({
+          mapStyleLoaded: true
+        });
       }
     };
 
@@ -60915,55 +60925,61 @@ module.exports = function (context, readonly) {
       });
     }
 
-    context.map.on('style.load', () => {
-      const { name } = context.map.getStyle();
-      let color = DARK_FEATURE_COLOR;
-      if (['Mapbox Satellite Streets', 'Mapbox Dark'].includes(name)) {
-        color = LIGHT_FEATURE_COLOR;
+    context.map.on('idle', () => {
+      if (context.data.get('mapStyleLoaded') && !context.map.getSource('map-data')) {
+        const { name } = context.map.getStyle();
+        let color = DARK_FEATURE_COLOR;
+        if (['Mapbox Satellite Streets', 'Mapbox Dark'].includes(name)) {
+          color = LIGHT_FEATURE_COLOR;
+        }
+        context.map.setFog({});
+  
+        context.map.addSource('map-data', {
+          type: 'geojson',
+          data: addIds(context.data.get('map')) || dummyGeojson,
+        });
+  
+        context.map.addLayer({
+          id: 'map-data-fill',
+          type: 'fill',
+          source: 'map-data',
+          paint: {
+            'fill-color': ['coalesce', ['get', 'fill'], color],
+            'fill-opacity': ['coalesce', ['get', 'fill-opacity'], 0.3],
+          },
+          filter: ['==', ['geometry-type'], 'Polygon'],
+        });
+  
+        context.map.addLayer({
+          id: 'map-data-fill-outline',
+          type: 'line',
+          source: 'map-data',
+          paint: {
+            'line-color': ['coalesce', ['get', 'stroke'], color],
+            'line-width': ['coalesce', ['get', 'stroke-width'], 2],
+            'line-opacity': ['coalesce', ['get', 'stroke-opacity'], 1]
+          },
+          filter: ['==', ['geometry-type'], 'Polygon'],
+        });
+  
+        context.map.addLayer({
+          id: 'map-data-line',
+          type: 'line',
+          source: 'map-data',
+          paint: {
+            'line-color': ['coalesce', ['get', 'stroke'], color],
+            'line-width': ['coalesce', ['get', 'stroke-width'], 2],
+            'line-opacity': ['coalesce', ['get', 'stroke-opacity'], 1]
+          },
+          filter: ['==', ['geometry-type'], 'LineString'],
+        });
+  
+        addMarkers(context.data.get('map'), context, writable);
+
+        context.data.set({
+          mapStyleLoaded: false
+        });
       }
-      context.map.setFog({});
-
-      context.map.addSource('map-data', {
-        type: 'geojson',
-        data: addIds(context.data.get('map')) || dummyGeojson,
-      });
-
-      context.map.addLayer({
-        id: 'map-data-fill',
-        type: 'fill',
-        source: 'map-data',
-        paint: {
-          'fill-color': ['coalesce', ['get', 'fill'], color],
-          'fill-opacity': ['coalesce', ['get', 'fill-opacity'], 0.3],
-        },
-        filter: ['==', ['geometry-type'], 'Polygon'],
-      });
-
-      context.map.addLayer({
-        id: 'map-data-fill-outline',
-        type: 'line',
-        source: 'map-data',
-        paint: {
-          'line-color': ['coalesce', ['get', 'stroke'], color],
-          'line-width': ['coalesce', ['get', 'stroke-width'], 2],
-          'line-opacity': ['coalesce', ['get', 'stroke-opacity'], 1]
-        },
-        filter: ['==', ['geometry-type'], 'Polygon'],
-      });
-
-      context.map.addLayer({
-        id: 'map-data-line',
-        type: 'line',
-        source: 'map-data',
-        paint: {
-          'line-color': ['coalesce', ['get', 'stroke'], color],
-          'line-width': ['coalesce', ['get', 'stroke-width'], 2],
-          'line-opacity': ['coalesce', ['get', 'stroke-opacity'], 1]
-        },
-        filter: ['==', ['geometry-type'], 'LineString'],
-      });
-
-      addMarkers(context.data.get('map'), context, writable);
     });
 
     // only show projection toggle on zoom < 6
@@ -60999,6 +61015,9 @@ module.exports = function (context, readonly) {
     };
 
     context.map.on('load', () => {
+      context.data.set({
+        mapStyleLoaded: true
+      });     
       context.map.on('mouseenter', 'map-data-fill', maybeSetCursorToPointer);
       context.map.on('mouseleave', 'map-data-fill', maybeResetCursor);
       context.map.on('mouseenter', 'map-data-line', maybeSetCursorToPointer);
