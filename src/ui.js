@@ -48,16 +48,16 @@ function ui(context) {
         var full = d3.select('body').classed('fullscreen');
         d3.select(this)
           .select('.icon')
-          .classed('icon-caret-up', !full)
-          .classed('icon-caret-down', full);
+          .classed('fa-caret-up', !full)
+          .classed('fa-caret-down', full);
         context.map.resize();
       })
-      .append('class', 'span')
-      .attr('class', 'icon icon-caret-up');
+      .append('i')
+      .attr('class', 'icon fa-solid fa-caret-up');
 
     var pane = right
       .append('div')
-      .attr('class', 'pane');
+      .attr('class', 'pane group');
 
     // user ui, disabled for now
     // top
