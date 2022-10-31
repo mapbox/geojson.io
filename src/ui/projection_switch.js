@@ -1,3 +1,5 @@
+const { DEFAULT_PROJECTION } = require('../constants');
+
 module.exports = function(context) {
 
   return function(selection) {
@@ -24,6 +26,7 @@ module.exports = function(context) {
       if (context.map._loaded) {
         const { value } = d3.select(clicked).datum();
         context.map.setProjection(value);
+        context.storage.set('projection', value);
       }
     };
   
@@ -37,7 +40,10 @@ module.exports = function(context) {
       .on('click', setProjection)
       .text(function(d) { return d.label; });
   
-    projectionButtons.filter(function(d, i) { return i === 0; }).call(setProjection);
+    const activeProjection = context.storage.get('projection') || DEFAULT_PROJECTION;
+    projectionButtons.filter(function({ value }) {
+      return value === activeProjection;
+    }).call(setProjection);
   };
 };
   

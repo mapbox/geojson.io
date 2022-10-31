@@ -5,6 +5,8 @@ const DrawRectangle = require('../draw/rectangle');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
 const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
 const { addIds, addMarkers, geojsonToLayer, bindPopup } = require('./util');
+const styles = require('./styles');
+const { DEFAULT_STYLE, DEFAULT_PROJECTION } = require('../../constants');
 
 let writable = false;
 let drawing = false;
@@ -38,12 +40,17 @@ module.exports = function (context, readonly) {
   function map(selection) {
     mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
 
+    // 
+    const projection = context.storage.get('projection') || DEFAULT_PROJECTION;
+    const activeStyle = context.storage.get('style') || DEFAULT_STYLE;
+    const { style } = styles.find(d => d.title === activeStyle);
+
     context.map = new mapboxgl.Map({
       container: selection.node(),
-      style: 'mapbox://styles/mapbox/streets-v11',
+      style,
       center: [20, 0],
       zoom: 2,
-      projection: 'globe',
+      projection,
       hash: 'map',
     });
 
