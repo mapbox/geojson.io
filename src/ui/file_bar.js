@@ -85,7 +85,7 @@ module.exports = function fileBar(context) {
             alt: 'Add a custom tile layer',
             action: function () {
               var layerURL = prompt(
-                'Layer URL\ne.g. http://stamen-tiles-b.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg'
+                'Layer URL\ne.g. https://stamen-tiles-b.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg'
               );
               if (layerURL === null) return;
               var layerName = prompt('Layer name');

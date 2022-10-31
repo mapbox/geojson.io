@@ -41,6 +41,10 @@ module.exports.adduserlayer = function(context, _url, _name) {
     // make this layer's button active
     d3.select('.layer-switch .active').classed('active', false);
     d3.select('.user-layer-button').classed('active', true);
+
+    context.data.set({
+      mapStyleLoaded: true
+    });
   }
 
   // append a button to the existing style selection UI

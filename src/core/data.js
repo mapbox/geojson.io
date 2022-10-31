@@ -16,7 +16,8 @@ function _getData() {
     dirty: false,
     source: null,
     meta: null,
-    type: 'local'
+    type: 'local',
+    mapStyleLoaded: false
   };
 }
 

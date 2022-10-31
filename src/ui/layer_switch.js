@@ -20,7 +20,12 @@ module.exports = function (context) {
         const { title, style } = d3.select(clicked).datum();
 
         context.map.setStyle(style);
+
         context.storage.set('style', title);
+
+        context.data.set({
+          mapStyleLoaded: true
+        });
       }
     };
 
