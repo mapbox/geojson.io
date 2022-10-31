@@ -2,6 +2,7 @@
 
 ## 2022-10-31
 
+* remove cmd-s keybinding (#750)
 * upgrade fontawesome, add copy button to json editor (#753)
 * Persist projection and style (#752)
 * fix style load check (#751)
