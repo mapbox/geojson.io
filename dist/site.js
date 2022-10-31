@@ -60454,7 +60454,6 @@ module.exports = function fileBar(context) {
           blindImport();
           d3.event.preventDefault();
         })
-        .on('⌘+s', saveAction)
     );
   }
 
