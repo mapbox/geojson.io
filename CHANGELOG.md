@@ -1,9 +1,14 @@
 # CHANGELOG
 
+## 2022-10-31
+
+* upgrade fontawesome, add copy button to json editor (#753)
+* Persist projection and style (#752)
+* fix style load check (#751)
+
 ## 2022-10-27
 
 * prevent editor data update when data is unchanged (#734)
-
 * move codemirror to package.json dependencies (#731)
 
 ## 2022-10-25
