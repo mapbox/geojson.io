@@ -201,7 +201,7 @@ function bindPopup(e, context, writable) {
       table +
       '</table>' +
       (writable
-        ? '<div class="add-row-button add fl col3"><span class="icon-plus"> Add row</div>'
+        ? '<div class="add-row-button add fl col6"><span class="fa-solid fa-plus"></span> Add row</div>'
         : '') +
       '</div>' +
       '</div>' +
@@ -224,7 +224,7 @@ function bindPopup(e, context, writable) {
           '<button class="save col6 major">Save</button> ' +
           '<button class="minor col6 cancel">Cancel</button>' +
           '</div>' +
-          '<button class="col6 text-right pad0 delete-invert"><span class="icon-remove-sign"></span> Delete feature</button></div>'
+          '<button class="col6 text-right pad0 delete-invert"><span class="fa-solid fa-trash"></span> Delete feature</button></div>'
         : '');
   
   new mapboxgl.Popup({

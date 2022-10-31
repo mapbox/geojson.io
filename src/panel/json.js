@@ -1,4 +1,6 @@
 var _ = require('lodash');
+var { createPopper } = require('@popperjs/core');
+
 var validate = require('../lib/validate'),
   zoomextent = require('../lib/zoomextent'),
   saver = require('../ui/saver.js');
@@ -24,6 +26,66 @@ module.exports = function(context) {
     var textarea = selection
       .html('')
       .append('textarea');
+
+    // copy button tooltip
+    const tooltip = selection
+      .append('div')
+      .attr('id', 'tooltip')
+      .attr('class', 'opacity-0 text-white font-medium text-xs rounded text-left py-1 px-2 bg-mb-gray-dark transition-opacity duration-100')
+      .attr('role', 'tooltip')
+      .text('Copied!');
+
+    // tooltip arrow
+    const arrow = tooltip
+      .append('div')
+      .attr('id', 'arrow')
+      .attr('class', '-right-1 top-0 translate-y-2 absolute w-2 h-2 bg-transparent before:opacity-0 before:transition-opacity before:duration-100 group-hover:before:opacity-100 before:absolute before:w-2 before:h-2 before:rotate-45 before:bg-mb-gray-dark')
+      .attr('data-popper-arrow', '');
+
+    // adds a copy button
+    var buttonContainer = selection
+      .append('div')
+      .attr('class', 'mapboxgl-ctrl mapboxgl-ctrl-group absolute right-5 top-5 opacity-0 group-hover:opacity-100 transition-opacity duration-100');
+      
+    var button = 
+      buttonContainer.append('button')
+        .attr('id', 'copy-button')
+        .attr('title', 'Copy')
+        .on('click', () => {
+          // copy to clipboard
+          navigator.clipboard.writeText(editor.getValue());
+
+          // set the button to a green checkmark
+          buttonIcon.classed('fa-copy', false).attr('class', 'fa-solid fa-check text-green-600');
+          // show tooltip
+          tooltip.classed('group-hover:opacity-100', true);
+          setTimeout(() => {
+            buttonIcon.attr('class', 'fa-solid fa-copy text-gray-500');
+            // hide tooltip
+            tooltip.classed('group-hover:opacity-100', false);
+          }, 3000);
+        });
+
+
+      
+    const copyButtonEl = document.querySelector('#copy-button');
+    const tooltipEl = document.querySelector('#tooltip');
+    
+    createPopper(copyButtonEl, tooltipEl, {
+      placement: 'left',
+      modifiers: [
+        {
+          name: 'offset',
+          options: {
+            offset: [0, 8],
+          },
+        },
+      ],
+    });
+
+    var buttonIcon =  button
+      .append('span')
+      .attr('class', 'fa-solid fa-copy text-gray-500');
 
     var editor = CodeMirror.fromTextArea(textarea.node(), {
       mode: {name: 'javascript', json: true},

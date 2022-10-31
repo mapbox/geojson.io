@@ -4,7 +4,8 @@ CLEANCSS = node_modules/.bin/cleancss
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
 
-all: dist/site.js dist/site.mobile.js dist/delegate.js css/tailwind_dist.css css/codemirror.css
+all: dist/site.js dist/site.mobile.js dist/delegate.js \
+css/tailwind_dist.css
 
 node_modules: package.json
 	npm install
@@ -70,6 +71,11 @@ css/tailwind_dist.css:
 css/codemirror.css:
 	cat node_modules/codemirror/lib/codemirror.css \
 	node_modules/codemirror/addon/fold/foldgutter.css > ./css/codemirror.css
+
+css/fontawesome.css:
+	cat node_modules/@fortawesome/fontawesome-free/css/fontawesome.min.css > ./css/fontawesome/css/fontawesome.min.css
+	cat node_modules/@fortawesome/fontawesome-free/css/solid.min.css > ./css/fontawesome/css/solid.min.css
+	cp -R node_modules/@fortawesome/fontawesome-free/webfonts ./css/fontawesome
 
 clean:
 	rm -f dist/*
