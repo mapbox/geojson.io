@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2022-11-03
+
+* add keybindings for draw mode changes and trash (#755)
+
 ## 2022-11-02
 
 * add circle drawing mode, add title tooltips for draw buttons (#748)
