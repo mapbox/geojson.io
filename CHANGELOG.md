@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2022-11-02
+
+* add circle drawing mode, add title tooltips for draw buttons (#748)
+
 ## 2022-10-31
 
 * remove cmd-s keybinding (#750)
