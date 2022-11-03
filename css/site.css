@@ -102,11 +102,7 @@ p.intro-hint:hover {
 }
 
 .top .buttons {
-<<<<<<< HEAD
   margin-left: 40px;
-=======
-  margin-left: 28px;
->>>>>>> cdb58de2 (add circle drawing mode, add title tooltips for draw buttons)
   height: 40px;
 }
 

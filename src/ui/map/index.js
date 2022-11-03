@@ -13,6 +13,7 @@ const drawStyles = require('../draw/styles');
 
 let writable = false;
 let drawing = false;
+let editing = false;
 
 const dummyGeojson = {
   type: 'FeatureCollection',
@@ -32,6 +33,39 @@ const LIGHT_FEATURE_COLOR = '#e8e8e8';
 
 module.exports = function (context, readonly) {
   writable = !readonly;
+
+  // keyboard shortcuts
+  const keybinding = d3.keybinding('map')
+  // delete key triggers draw.trash()
+    .on('⌫', () => {
+      if (editing) {
+        context.Draw.trash();
+      }
+    })
+    .on('m', () => {
+      if (!editing) {
+        context.Draw.changeMode('draw_point');
+      }
+    })
+    .on('l', () => {
+      if (!editing) {
+        context.Draw.changeMode('draw_line_string');
+      }
+    }).on('p', () => {
+      if (!editing) {
+        context.Draw.changeMode('draw_polygon');
+      }
+    }).on('r', () => {
+      if (!editing) {
+        context.Draw.changeMode('draw_rectangle');
+      }
+    }).on('c', () => {
+      if (!editing) {
+        context.Draw.changeMode('draw_circle');
+      }
+    });
+
+  d3.select(document).call(keybinding);
 
   function maybeShowEditControl() {
     // if there are features, show the edit button
@@ -69,6 +103,7 @@ module.exports = function (context, readonly) {
       );
 
       context.Draw = new MapboxDraw({
+
         displayControlsDefault: false,
         modes: {
           ...MapboxDraw.modes,
@@ -90,7 +125,7 @@ module.exports = function (context, readonly) {
               context.Draw.changeMode('draw_point');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_point'],
-            title: 'Draw Point'
+            title: 'Draw Point (m)'
           },
           {
             on: 'click',
@@ -99,7 +134,7 @@ module.exports = function (context, readonly) {
               context.Draw.changeMode('draw_line_string');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_line'],
-            title: 'Draw LineString'
+            title: 'Draw LineString (l)'
           },
           {
             on: 'click',
@@ -108,7 +143,7 @@ module.exports = function (context, readonly) {
               context.Draw.changeMode('draw_polygon');
             },
             classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_polygon'],
-            title: 'Draw Polygon'
+            title: 'Draw Polygon (p)'
           },
           {
             on: 'click',
@@ -120,7 +155,7 @@ module.exports = function (context, readonly) {
               'mapbox-gl-draw_ctrl-draw-btn',
               'mapbox-gl-draw_rectangle',
             ],
-            title: 'Draw Rectangular Polygon'
+            title: 'Draw Rectangular Polygon (r)'
           },
           {
             on: 'click',
@@ -132,7 +167,7 @@ module.exports = function (context, readonly) {
               'mapbox-gl-draw_ctrl-draw-btn',
               'mapbox-gl-draw_circle',
             ],
-            title: 'Draw Circular Polygon'
+            title: 'Draw Circular Polygon (c)'
           },
         ],
       });
@@ -153,6 +188,7 @@ module.exports = function (context, readonly) {
       context.map.addControl(trashControl, 'top-right');
 
       const exitEditMode = () => {
+        editing = false;
         // show the data layers
         context.map.setLayoutProperty('map-data-fill', 'visibility', 'visible');
         context.map.setLayoutProperty(
@@ -208,6 +244,7 @@ module.exports = function (context, readonly) {
 
       // enter edit mode
       d3.selectAll('.mapbox-gl-draw_edit').on('click', function () {
+        editing = true;
         // hide the edit button and draw tools
         d3.select('.edit-control').style('display', 'none');
         d3.select('.mapboxgl-ctrl-group:nth-child(3)').style('display', 'none');

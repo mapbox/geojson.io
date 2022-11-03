@@ -99,6 +99,9 @@ module.exports = function(context) {
       foldGutter: true
     });
 
+    // blur the editor so map keybindings will work on initial load
+    editor.display.input.blur();
+
     editor.foldCode(CodeMirror.Pos(0, 0));
     editor.matchBrackets();
 
