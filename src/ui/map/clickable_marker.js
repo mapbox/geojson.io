@@ -1,4 +1,6 @@
 // extend mapboxGL Marker so we can pass in an onClick handler
+const mapboxgl = require('mapbox-gl');
+
 class ClickableMarker extends mapboxgl.Marker {
   // new method onClick, sets _handleClick to a function you pass in
   onClick(handleClick) {

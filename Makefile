@@ -71,6 +71,11 @@ css/fontawesome.css:
 	cat node_modules/@fortawesome/fontawesome-free/css/solid.min.css > ./css/fontawesome/css/solid.min.css
 	cp -R node_modules/@fortawesome/fontawesome-free/webfonts ./css/fontawesome
 
+css/mapboxgl-bundle.css:
+	cat node_modules/mapbox-gl/dist/mapbox-gl.css \
+	node_modules/@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css \
+	node_modules/@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css > ./css/mapbox-gl-bundle.css
+	
 clean:
 	rm -f dist/*
 

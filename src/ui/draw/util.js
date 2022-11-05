@@ -1,10 +1,11 @@
+const turfLength = require('@turf/length').default;
 const numeral = require('numeral');
 
 function getDisplayMeasurements(feature) {
   // should log both metric and standard display strings for the current drawn feature
     
   // metric calculation
-  const drawnLength = (turf.length(feature) * 1000); // meters
+  const drawnLength = (turfLength(feature) * 1000); // meters
   
   let metricUnits = 'm';
   let metricFormat = '0,0';

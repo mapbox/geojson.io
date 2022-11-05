@@ -1,3 +1,4 @@
+const mapboxgl = require('mapbox-gl');
 const Bowser = require('bowser');
 
 const { platform: { type } } = Bowser.parse(window.navigator.userAgent);
