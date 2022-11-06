@@ -15,6 +15,7 @@ function ui(context) {
 
     container
       .append('div')
+      .attr('id', 'map')
       .attr('class', 'map')
       .call(context.map)
       .call(layer_switch(context))

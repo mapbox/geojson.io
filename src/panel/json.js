@@ -72,6 +72,9 @@ module.exports = function (context) {
       foldGutter: true
     });
 
+    // make the editor globally available so we can access it from the e2e tests
+    window.editor = editor;
+
     const button = buttonContainer
       .append('button')
       .attr('id', 'copy-button')

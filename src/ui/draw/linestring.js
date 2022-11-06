@@ -46,8 +46,8 @@ const ExtendedLineStringMode = {
       type: 'Feature',
       properties: {
         meta: 'currentPosition',
-        radius: `${displayMeasurements.metric}\n${displayMeasurements.standard}`,
-        parent: state.line.id
+        distance: `${displayMeasurements.metric}\n${displayMeasurements.standard}`,
+        parent: state.line.id,
       },
       geometry: {
         type: 'Point',

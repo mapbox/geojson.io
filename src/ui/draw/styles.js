@@ -239,7 +239,7 @@ module.exports = [
       'text-anchor': 'left',
       'text-justify': 'left',
       'text-offset': [0.8, 0.8],
-      'text-field': ['get', 'radius'],
+      'text-field': ['get', 'distance'],
       'text-max-width': 7
     },
     paint: {

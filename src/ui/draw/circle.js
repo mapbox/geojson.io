@@ -85,8 +85,8 @@ const CircleMode = {
       type: 'Feature',
       properties: {
         meta: 'currentPosition',
-        radius: `${displayMeasurements.metric} ${displayMeasurements.standard}`,
-        parent: state.line.id
+        distance: `${displayMeasurements.metric} ${displayMeasurements.standard}`,
+        parent: state.line.id,
       },
       geometry: {
         type: 'Point',

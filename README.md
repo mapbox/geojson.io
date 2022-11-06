@@ -35,13 +35,23 @@ Browserify libraries, concat other libraries, build minimal d3, build tailwind c
 
 Run a local server to preview your changes.
 
-### Development with VSCode (hot reloading)
+### Development with VSCode extensions (hot reloading)
 
 An optimized development workflow is possible with the `Live Server` and `Run on Save` VS Code extensions.  Both have workspace-specific settings in `settings.json`:
 
 - Start a live server using `Live Server's` "Go Live" button
 - `Run on Save` will watch `/lib`,`/src`, and `css/tailwind_src.css` and run `make` when any of them change.
 - `Live Server` will ignore `/lib`,`/src`, and `css/tailwind_src.css`, but will hot reload whenever any other file changes (including the files created by `make`)
+
+### Tests    
+
+The foundations of an end-to-end test suite are in place using playwright, but need additional coverage.  Contributions from the community are welcomed to help increase our test coverage.
+
+`npm run test-e2e`
+
+To run the tests non-headless and see what's happening in the browser:
+
+`npx playwright test --headed`
 
 ## License
 

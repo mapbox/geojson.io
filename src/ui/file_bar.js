@@ -7,7 +7,8 @@ const shpwrite = require('shp-write'),
   githubBrowser = require('@mapbox/github-file-browser'),
   gistBrowser = require('@mapbox/gist-map-browser'),
   geojsonNormalize = require('geojson-normalize'),
-  wellknown = require('wellknown');
+  wellknown = require('wellknown'),
+  { slugify } = require('./util');
 
 const share = require('./share'),
   modal = require('./modal.js'),
@@ -235,6 +236,9 @@ module.exports = function fileBar(context) {
     const buttons = items
       .append('a')
       .attr('class', 'parent')
+      .attr('data-test', function (d) {
+        return `file-bar-parent-${slugify(d.title)}`;
+      })
       .on('click', function (d) {
         if (d.action) d.action.apply(this, d);
       })
@@ -308,6 +312,7 @@ module.exports = function fileBar(context) {
             )
               return d.alt;
           })
+          .attr('data-test', d => `file-bar-child-${slugify(d.title)}`)
           .text((d) => {
             return d.title;
           })
