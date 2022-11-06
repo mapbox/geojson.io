@@ -1,17 +1,16 @@
-  
 class EditControl {
   onAdd(map) {
     this.map = map;
     this._container = document.createElement('div');
     this._container.className =
-            'mapboxgl-ctrl-group mapboxgl-ctrl edit-control hidden';
-  
+      'mapboxgl-ctrl-group mapboxgl-ctrl edit-control hidden';
+
     this._container.innerHTML = `
             <button class="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_edit" title="Edit geometries" style="background-image: url(img/edit.svg); background-size: 13px 13px;">
               
             </button>
           `;
-  
+
     return this._container;
   }
 }
@@ -20,7 +19,7 @@ class SaveCancelControl {
     this.map = map;
     this._container = document.createElement('div');
     this._container.className =
-            'save-cancel-control bg-white rounded pt-1 pb-2 px-2 mt-2 mr-2 float-right clear-both pointer-events-auto';
+      'save-cancel-control bg-white rounded pt-1 pb-2 px-2 mt-2 mr-2 float-right clear-both pointer-events-auto';
     this._container.style = 'display: none;';
     this._container.innerHTML = `
             <div class='font-bold mb-0.5'>Editing Geometries</div>
@@ -33,7 +32,7 @@ class SaveCancelControl {
                 </button>
               </div>
           `;
-  
+
     return this._container;
   }
 }
@@ -42,7 +41,7 @@ class TrashControl {
     this.map = map;
     this._container = document.createElement('div');
     this._container.className =
-        'mapboxgl-ctrl-group mapboxgl-ctrl trash-control';
+      'mapboxgl-ctrl-group mapboxgl-ctrl trash-control';
     this._container.style = 'display: none;';
     this._container.innerHTML = `
         <button class="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_trash" title="Delete">

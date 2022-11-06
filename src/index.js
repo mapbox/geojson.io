@@ -1,4 +1,4 @@
-var ui = require('./ui'),
+const ui = require('./ui'),
   map = require('./ui/map'),
   data = require('./core/data'),
   loader = require('./core/loader'),
@@ -8,7 +8,7 @@ var ui = require('./ui'),
   user = require('./core/user'),
   store = require('store');
 
-var gjIO = geojsonIO(),
+const gjIO = geojsonIO(),
   gjUI = ui(gjIO).write;
 
 d3.select('.geojsonio').call(gjUI);
@@ -17,7 +17,7 @@ gjIO.recovery = recovery(gjIO);
 gjIO.router.on();
 
 function geojsonIO() {
-  var context = {};
+  const context = {};
   context.dispatch = d3.dispatch('change', 'route');
   context.storage = store;
   context.map = map(context);
@@ -28,4 +28,3 @@ function geojsonIO() {
   context.user = user(context);
   return context;
 }
-

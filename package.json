@@ -68,8 +68,8 @@
     "tape": "~2.12.3"
   },
   "scripts": {
-    "lint": "eslint src/**/*",
-    "format": "prettier src/**/*",
+    "lint": "eslint src/**",
+    "format": "prettier --write src/**",
     "git-pre-commit": "lint-staged",
     "test": "eslint src",
     "test-browser": "browserify test/index.js | testling"

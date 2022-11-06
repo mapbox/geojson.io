@@ -1,20 +1,16 @@
-var fs = require('fs');
-var marked = require('marked');
+const fs = require('fs');
+const marked = require('marked');
 
-module.exports = function(context) {
-    var html = fs.readFileSync('data/help.html') +
-        '<br><hr><br>' +
-        marked(fs.readFileSync('API.md', 'utf8'));
-    function render(selection) {
-        var area = selection
-            .html('')
-            .append('div')
-            .attr('class', 'pad2 prose')
-            .html(html);
-    }
+module.exports = function () {
+  const html =
+    fs.readFileSync('data/help.html') +
+    '<br><hr><br>' +
+    marked(fs.readFileSync('API.md', 'utf8'));
+  function render(selection) {
+    selection.html('').append('div').attr('class', 'pad2 prose').html(html);
+  }
 
-    render.off = function() {
-    };
+  render.off = function () {};
 
-    return render;
+  return render;
 };
