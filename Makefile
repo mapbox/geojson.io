@@ -48,13 +48,7 @@ dist/lib.js: dist dist/d3.js $(LIBS)
 		lib/queue.js \
 		lib/d3.keybinding.js \
 		lib/d3.trigger.js \
-		lib/d3-compat.js \
-		node_modules/codemirror/lib/codemirror.js \
-		node_modules/codemirror/addon/fold/foldcode.js \
-		node_modules/codemirror/addon/fold/foldgutter.js \
-		node_modules/codemirror/addon/fold/brace-fold.js \
-		node_modules/codemirror/addon/edit/matchbrackets.js \
-		node_modules/codemirror/mode/javascript/javascript.js > dist/lib.js
+		lib/d3-compat.js > dist/lib.js
 
 dist/delegate.js: src/delegate.js
 	$(BROWSERIFY)  src/delegate.js > dist/delegate.js

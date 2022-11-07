@@ -1,6 +1,13 @@
 var _ = require('lodash');
 var { createPopper } = require('@popperjs/core');
 
+const CodeMirror = require('codemirror/lib/codemirror');
+require('codemirror/addon/fold/foldcode');
+require('codemirror/addon/fold/foldgutter');
+require('codemirror/addon/fold/brace-fold');
+require('codemirror/addon/edit/matchbrackets');
+require('codemirror/mode/javascript/javascript');
+
 var validate = require('../lib/validate'),
   zoomextent = require('../lib/zoomextent'),
   saver = require('../ui/saver.js');
