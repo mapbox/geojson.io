@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2022-11-07
+
+* install mapboxgl, mapbox-gl-draw, mapbox-gl-geocoder, and turf from node_modules (#761)
+* require codemirror from json.js (#762)
+
 ## 2022-11-03
 
 * add keybindings for draw mode changes and trash (#755)
