@@ -1,4 +1,7 @@
+const mapboxgl = require('mapbox-gl');
 const escape = require('escape-html');
+const length = require('@turf/length').default;
+const area = require('@turf/area').default;
 
 const popup = require('../../lib/popup');
 const ClickableMarker = require('./clickable_marker');
@@ -145,7 +148,7 @@ function bindPopup(e, context, writable) {
   if (feature && feature.geometry) {
     info += '<table class="metadata">';
     if (feature.geometry.type === 'LineString') {
-      var total = turf.length(feature) * 1000;
+      var total = length(feature) * 1000;
       info +=
           '<tr><td>Meters</td><td>' +
           total.toFixed(2) +
@@ -173,19 +176,19 @@ function bindPopup(e, context, writable) {
     } else if (feature.geometry.type === 'Polygon') {
       info +=
           '<tr><td>Sq. Meters</td><td>' +
-          turf.area(feature.geometry).toFixed(2) +
+          area(feature.geometry).toFixed(2) +
           '</td></tr>' +
           '<tr><td>Sq. Kilometers</td><td>' +
-          (turf.area(feature.geometry) / 1000000).toFixed(2) +
+          (area(feature.geometry) / 1000000).toFixed(2) +
           '</td></tr>' +
           '<tr><td>Sq. Feet</td><td>' +
-          (turf.area(feature.geometry) / 0.092903).toFixed(2) +
+          (area(feature.geometry) / 0.092903).toFixed(2) +
           '</td></tr>' +
           '<tr><td>Acres</td><td>' +
-          (turf.area(feature.geometry) / 4046.86).toFixed(2) +
+          (area(feature.geometry) / 4046.86).toFixed(2) +
           '</td></tr>' +
           '<tr><td>Sq. Miles</td><td>' +
-          (turf.area(feature.geometry) / 2589990).toFixed(2) +
+          (area(feature.geometry) / 2589990).toFixed(2) +
           '</td></tr>';
     }
     info += '</table>';
