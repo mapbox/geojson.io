@@ -4,9 +4,11 @@ module.exports = function (context) {
 
     sel.selectAll('.cancel').on('click', clickClose);
 
-    sel.selectAll('.save').on('click', saveFeature);
+    sel.selectAll('form').on('submit', saveFeature);
 
     sel.selectAll('.add').on('click', addRow);
+
+    sel.selectAll('.add-simplestyle-properties-button').on('click', addSimplestyleProperties);
 
     sel.selectAll('.delete-invert').on('click', removeFeature);
 
@@ -56,6 +58,65 @@ module.exports = function (context) {
       tr.append('th').append('input').attr('type', 'text');
 
       tr.append('td').append('input').attr('type', 'text');
+    }
+
+    function addSimplestyleProperties() {
+      // hide the button
+      sel.selectAll('.add-simplestyle-properties-button').style('display', 'none');
+
+      const data = context.data.get('map');
+      const feature = data.features[id];
+      const { properties, geometry } = feature;
+
+      if (geometry.type === 'Point' || geometry.type === 'MultiPoint') {
+
+        if (!('marker-color' in properties)) {
+          let tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th').append('input').attr('type', 'text').attr('value', 'marker-color');
+          tr.append('td').append('input').attr('type', 'color').attr('value', '#7E7E7E');
+        }
+
+        if (!('marker-size' in properties)) {
+          let tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th').append('input').attr('type', 'text').attr('value', 'marker-size');
+          let td = tr.append('td');
+          td.append('input').attr('type', 'text').attr('value', 'medium').attr('list', 'marker-size');
+          let datalist = td.append('datalist').attr('id', 'marker-size');
+          datalist.append('option').attr('value', 'small');
+          datalist.append('option').attr('value', 'medium');
+          datalist.append('option').attr('value', 'large');
+        }
+     
+      }
+      if (geometry.type === 'LineString' || geometry.type === 'MultiLineString' || geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
+        if (!('stroke' in properties)) {
+          let tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th').append('input').attr('type', 'text').attr('value', 'stroke');
+          tr.append('td').append('input').attr('type', 'color').attr('value', '#555555');
+        }
+        if (!('stroke-width' in properties)) {
+          let tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th').append('input').attr('type', 'text').attr('value', 'stroke-width');
+          tr.append('td').append('input').attr('type', 'number').attr('min', '0').attr('step', '0.1').attr('value', '2');
+        }
+        if (!('stroke-opacity' in properties)) {
+          let tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th').append('input').attr('type', 'text').attr('value', 'stroke-opacity');
+          tr.append('td').append('input').attr('type', 'number').attr('min', '0').attr('max', '1').attr('step', '0.1').attr('value', '1');
+        }
+      }
+      if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
+        if (!('fill' in properties)) {
+          let tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th').append('input').attr('type', 'text').attr('value', 'fill');
+          tr.append('td').append('input').attr('type', 'color').attr('value', '#555555');
+        }
+        if (!('fill-opacity' in properties)) {
+          let tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th').append('input').attr('type', 'text').attr('value', 'fill-opacity');
+          tr.append('td').append('input').attr('type', 'number').attr('min', '0').attr('max', '1').attr('step', '0.1').attr('value', '0.5');
+        }
+      }
     }
   };
 };

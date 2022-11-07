@@ -78,8 +78,22 @@ const addMarkers = (geojson, context, writable) => {
 
   
   pointFeatures.map((d, i) => {
+    const color = d.properties['marker-color'] || '#7e7e7e';
+    let scale = 1;
+
+    if (d.properties['marker-size']) {
+      if (d.properties['marker-size'] === 'small') {
+        scale = 0.6;
+      } 
+
+      if (d.properties['marker-size'] === 'large') {
+        scale = 1.2;
+      }
+    }
+
     const marker = new ClickableMarker({
-      color: d.properties['marker-color'] || '#7e7e7e',
+      color,
+      scale 
     })
       .setLngLat(d.geometry.coordinates)
       .onClick(() => {
@@ -127,9 +141,26 @@ function bindPopup(e, context, writable) {
   if (!properties) return;
   
   if (!Object.keys(properties).length) properties = { '': '' };
-  
+
   for (var key in properties) {
-    table +=
+    if ((key == 'marker-color' || key == 'stroke' || key == 'fill') && writable) {
+      table += '<tr class="style-row"><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
+          '<td><input type="color" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
+    }
+    else if (key == 'marker-size' && writable) {
+      table += '<tr class="style-row"><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
+          '<td><input type="text" list="marker-size" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /><datalist id="marker-size"><option value="small"><option value="medium"><option value="large"></datalist></td></tr>';
+    }
+    else if (key == 'stroke-width' && writable) {
+      table += '<tr class="style-row"><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
+          '<td><input type="number" min="0" step="0.1" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
+    }
+    else if ((key == 'stroke-opacity' || key == 'fill-opacity') && writable) {
+      table += '<tr class="style-row"><th><input type="text" value="' + key + '"' + (!writable ? ' readonly' : '') + ' /></th>' +
+          '<td><input type="number" min="0" max="1" step="0.1" value="' + properties[key] + '"' + (!writable ? ' readonly' : '') + ' /></td></tr>';
+    }
+    else {
+      table +=
         '<tr><th><input type="text" value="' +
         key +
         '"' +
@@ -140,6 +171,7 @@ function bindPopup(e, context, writable) {
         '"' +
         (!writable ? ' readonly' : '') +
         ' /></td></tr>';
+    }
   }
   
   if (feature && feature.geometry) {
@@ -190,6 +222,34 @@ function bindPopup(e, context, writable) {
     }
     info += '</table>';
   }
+
+  // don't show the add simplestyle properties button if the feature already contains simplestyle properties
+  let showAddStyleButton = true;
+  
+  if (feature.geometry.type === 'Point' || feature.geometry.type === 'MultiPoint') {
+    if (('marker-color' in properties) && ('marker-size' in properties)) {
+      showAddStyleButton = false;
+    }
+  }
+
+  if (feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString') {
+    if (('stroke' in properties) && ('stroke-width' in properties) && ('stroke-opacity' in properties)) {
+      showAddStyleButton = false;
+    }
+  }
+
+  if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
+    showAddStyleButton = true;
+    if (
+      ('stroke' in properties) &&
+      ('stroke-width' in properties) &&
+      ('stroke-opacity' in properties) &&
+      ('fill' in properties) &&
+      ('fill-opacity' in properties)
+    ) {
+      showAddStyleButton = false;
+    }
+  }
   
   var tabs =
       '<div class="pad1 tabs-ui clearfix col12">' +
@@ -201,8 +261,9 @@ function bindPopup(e, context, writable) {
       table +
       '</table>' +
       (writable
-        ? '<div class="add-row-button add fl col6"><span class="fa-solid fa-plus"></span> Add row</div>'
-        : '') +
+        ? '<div class="add-row-button add fl col4"><span class="fa-solid fa-plus"></span> Add row</div>' : '') +
+        (writable && showAddStyleButton
+          ? '<div class="add-simplestyle-properties-button fl text-right col8">Add simplestyle properties</div>' : '') +
       '</div>' +
       '</div>' +
       '<div class="space-bottom2 tab col12">' +
@@ -217,15 +278,17 @@ function bindPopup(e, context, writable) {
       '</div>';
   
   var content =
+      '<form action="javascript:void(0);">' +
       tabs +
       (writable
         ? '<div class="clearfix col12 pad1 keyline-top">' +
           '<div class="pill col6">' +
-          '<button class="save col6 major">Save</button> ' +
+          '<button class="save col6 major" type="submit">Save</button>' +
           '<button class="minor col6 cancel">Cancel</button>' +
           '</div>' +
           '<button class="col6 text-right pad0 delete-invert"><span class="fa-solid fa-trash"></span> Delete feature</button></div>'
-        : '');
+        : '') + 
+      '</form>';
   
   new mapboxgl.Popup({
     closeButton: false,
