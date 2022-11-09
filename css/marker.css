@@ -101,11 +101,11 @@ datalist {
     display: block;
 }
 
-.add-row-button {
+.add-row-button, .add-simplestyle-properties-button {
     color: #2980b9;
 }
 
-.add-row-button:hover {
+.add-row-button:hover, .add-simplestyle-properties-button:hover {
     cursor: pointer;
     color: #199CF4;
 }
