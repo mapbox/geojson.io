@@ -1,4 +1,4 @@
-const geojsonhint = require('geojsonhint');
+const geojsonhint = require('@mapbox/geojsonhint');
 
 module.exports = function (callback) {
   return function (editor, changeObj) {

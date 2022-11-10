@@ -1,10 +1,11 @@
-const topojson = require('topojson'),
-  toGeoJSON = require('togeojson'),
+const topojson = require('topojson-client'),
+  toGeoJSON = require('@tmcw/togeojson'),
   gtfs2geojson = require('gtfs2geojson'),
   csv2geojson = require('csv2geojson'),
   osmtogeojson = require('osmtogeojson'),
   polytogeojson = require('polytogeojson'),
-  geojsonNormalize = require('geojson-normalize');
+  geojsonNormalize = require('@mapbox/geojson-normalize');
+
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
@@ -165,11 +166,17 @@ function readFile(f, text, callback) {
         }
       }
     );
-  } else if (fileType === 'gtfs') {
+  } else if (fileType === 'gtfs-shapes') {
     try {
-      return callback(null, gtfs2geojson(text));
+      return callback(null, gtfs2geojson.lines(text));
     } catch (e) {
-      return callback({ message: 'Invalid GTFS file' });
+      return callback({ message: 'Invalid GTFS shapes.txt file' });
+    }
+  } else if (fileType === 'gtfs-stops') {
+    try {
+      return callback(null, gtfs2geojson.stops(text));
+    } catch (e) {
+      return callback({ message: 'Invalid GTFS stops.txt file' });
     }
   } else if (fileType === 'poly') {
     callback(null, polytogeojson(text));
@@ -195,7 +202,15 @@ function readFile(f, text, callback) {
     if (ext('.xml') || ext('.osm')) return 'xml';
     if (ext('.poly')) return 'poly';
     if (text && text.indexOf('shape_id,shape_pt_lat,shape_pt_lon') !== -1) {
-      return 'gtfs';
+      return 'gtfs-shapes';
+    }
+    if (
+      text &&
+      text.indexOf(
+        'stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon'
+      ) !== -1
+    ) {
+      return 'gtfs-stops';
     }
   }
 }

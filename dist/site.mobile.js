@@ -1,4 +1,111 @@
-require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+module.exports = Extent;
+
+function Extent(bbox) {
+    if (!(this instanceof Extent)) {
+        return new Extent(bbox);
+    }
+    this._bbox = bbox || [Infinity, Infinity, -Infinity, -Infinity];
+    this._valid = !!bbox;
+}
+
+Extent.prototype.include = function(ll) {
+    this._valid = true;
+    this._bbox[0] = Math.min(this._bbox[0], ll[0]);
+    this._bbox[1] = Math.min(this._bbox[1], ll[1]);
+    this._bbox[2] = Math.max(this._bbox[2], ll[0]);
+    this._bbox[3] = Math.max(this._bbox[3], ll[1]);
+    return this;
+};
+
+Extent.prototype.equals = function(_) {
+    var other;
+    if (_ instanceof Extent) { other = _.bbox(); } else { other = _; }
+    return this._bbox[0] == other[0] &&
+        this._bbox[1] == other[1] &&
+        this._bbox[2] == other[2] &&
+        this._bbox[3] == other[3];
+};
+
+Extent.prototype.center = function(_) {
+    if (!this._valid) return null;
+    return [
+        (this._bbox[0] + this._bbox[2]) / 2,
+        (this._bbox[1] + this._bbox[3]) / 2]
+};
+
+Extent.prototype.union = function(_) {
+    this._valid = true;
+    var other;
+    if (_ instanceof Extent) { other = _.bbox(); } else { other = _; }
+    this._bbox[0] = Math.min(this._bbox[0], other[0]);
+    this._bbox[1] = Math.min(this._bbox[1], other[1]);
+    this._bbox[2] = Math.max(this._bbox[2], other[2]);
+    this._bbox[3] = Math.max(this._bbox[3], other[3]);
+    return this;
+};
+
+Extent.prototype.bbox = function() {
+    if (!this._valid) return null;
+    return this._bbox;
+};
+
+Extent.prototype.contains = function(ll) {
+    if (!ll) return this._fastContains();
+    if (!this._valid) return null;
+    var lon = ll[0], lat = ll[1];
+    return this._bbox[0] <= lon &&
+        this._bbox[1] <= lat &&
+        this._bbox[2] >= lon &&
+        this._bbox[3] >= lat;
+};
+
+Extent.prototype.intersect = function(_) {
+    if (!this._valid) return null;
+
+    var other;
+    if (_ instanceof Extent) { other = _.bbox(); } else { other = _; }
+
+    return !(
+      this._bbox[0] > other[2] ||
+      this._bbox[2] < other[0] ||
+      this._bbox[3] < other[1] ||
+      this._bbox[1] > other[3]
+    );
+};
+
+Extent.prototype._fastContains = function() {
+    if (!this._valid) return new Function('return null;');
+    var body = 'return ' +
+        this._bbox[0] + '<= ll[0] &&' +
+        this._bbox[1] + '<= ll[1] &&' +
+        this._bbox[2] + '>= ll[0] &&' +
+        this._bbox[3] + '>= ll[1]';
+    return new Function('ll', body);
+};
+
+Extent.prototype.polygon = function() {
+    if (!this._valid) return null;
+    return {
+        type: 'Polygon',
+        coordinates: [
+            [
+                // W, S
+                [this._bbox[0], this._bbox[1]],
+                // E, S
+                [this._bbox[2], this._bbox[1]],
+                // E, N
+                [this._bbox[2], this._bbox[3]],
+                // W, N
+                [this._bbox[0], this._bbox[3]],
+                // W, S
+                [this._bbox[0], this._bbox[1]]
+            ]
+        ]
+    };
+};
+
+},{}],2:[function(require,module,exports){
 'use strict';
 /**
  * Validators are functions which assert certain type.
@@ -380,7 +487,7 @@ v.processMessage = processMessage;
 
 module.exports = v;
 
-},{"is-plain-obj":103,"xtend":2}],2:[function(require,module,exports){
+},{"is-plain-obj":110,"xtend":3}],3:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -401,7 +508,1443 @@ function extend() {
     return target
 }
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
+module.exports = function flatten(list) {
+    return _flatten(list);
+
+    function _flatten(list) {
+        if (Array.isArray(list) && list.length &&
+            typeof list[0] === 'number') {
+            return [list];
+        }
+        return list.reduce(function (acc, item) {
+            if (Array.isArray(item) && Array.isArray(item[0])) {
+                return acc.concat(_flatten(item));
+            } else {
+                acc.push(item);
+                return acc;
+            }
+        }, []);
+    }
+};
+
+},{}],5:[function(require,module,exports){
+var geojsonNormalize = require('@mapbox/geojson-normalize'),
+    geojsonFlatten = require('geojson-flatten'),
+    flatten = require('./flatten');
+
+if (!(geojsonFlatten instanceof Function)) geojsonFlatten = geojsonFlatten.default;
+
+module.exports = function(_) {
+    if (!_) return [];
+    var normalized = geojsonFlatten(geojsonNormalize(_)),
+        coordinates = [];
+    normalized.features.forEach(function(feature) {
+        if (!feature.geometry) return;
+        coordinates = coordinates.concat(flatten(feature.geometry.coordinates));
+    });
+    return coordinates;
+};
+
+},{"./flatten":4,"@mapbox/geojson-normalize":8,"geojson-flatten":6}],6:[function(require,module,exports){
+module.exports=function e(t){switch(t&&t.type||null){case"FeatureCollection":return t.features=t.features.reduce(function(t,r){return t.concat(e(r))},[]),t;case"Feature":return t.geometry?e(t.geometry).map(function(e){var r={type:"Feature",properties:JSON.parse(JSON.stringify(t.properties)),geometry:e};return void 0!==t.id&&(r.id=t.id),r}):[t];case"MultiPoint":return t.coordinates.map(function(e){return{type:"Point",coordinates:e}});case"MultiPolygon":return t.coordinates.map(function(e){return{type:"Polygon",coordinates:e}});case"MultiLineString":return t.coordinates.map(function(e){return{type:"LineString",coordinates:e}});case"GeometryCollection":return t.geometries.map(e).reduce(function(e,t){return e.concat(t)},[]);case"Point":case"Polygon":case"LineString":return[t]}};
+
+
+},{}],7:[function(require,module,exports){
+var geojsonCoords = require('@mapbox/geojson-coords'),
+    traverse = require('traverse'),
+    extent = require('@mapbox/extent');
+
+var geojsonTypesByDataAttributes = {
+    features: ['FeatureCollection'],
+    coordinates: ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'],
+    geometry: ['Feature'],
+    geometries: ['GeometryCollection']
+}
+
+var dataAttributes = Object.keys(geojsonTypesByDataAttributes);
+
+module.exports = function(_) {
+    return getExtent(_).bbox();
+};
+
+module.exports.polygon = function(_) {
+    return getExtent(_).polygon();
+};
+
+module.exports.bboxify = function(_) {
+    return traverse(_).map(function(value) {
+        if (!value) return ;
+
+        var isValid = dataAttributes.some(function(attribute){
+            if(value[attribute]) {
+                return geojsonTypesByDataAttributes[attribute].indexOf(value.type) !== -1;
+            }
+            return false;
+        });
+
+        if(isValid){
+            value.bbox = getExtent(value).bbox();
+            this.update(value);
+        }
+
+    });
+};
+
+function getExtent(_) {
+    var ext = extent(),
+        coords = geojsonCoords(_);
+    for (var i = 0; i < coords.length; i++) ext.include(coords[i]);
+    return ext;
+}
+
+},{"@mapbox/extent":1,"@mapbox/geojson-coords":5,"traverse":187}],8:[function(require,module,exports){
+module.exports = normalize;
+
+var types = {
+    Point: 'geometry',
+    MultiPoint: 'geometry',
+    LineString: 'geometry',
+    MultiLineString: 'geometry',
+    Polygon: 'geometry',
+    MultiPolygon: 'geometry',
+    GeometryCollection: 'geometry',
+    Feature: 'feature',
+    FeatureCollection: 'featurecollection'
+};
+
+/**
+ * Normalize a GeoJSON feature into a FeatureCollection.
+ *
+ * @param {object} gj geojson data
+ * @returns {object} normalized geojson data
+ */
+function normalize(gj) {
+    if (!gj || !gj.type) return null;
+    var type = types[gj.type];
+    if (!type) return null;
+
+    if (type === 'geometry') {
+        return {
+            type: 'FeatureCollection',
+            features: [{
+                type: 'Feature',
+                properties: {},
+                geometry: gj
+            }]
+        };
+    } else if (type === 'feature') {
+        return {
+            type: 'FeatureCollection',
+            features: [gj]
+        };
+    } else if (type === 'featurecollection') {
+        return gj;
+    }
+}
+
+},{}],9:[function(require,module,exports){
+
+module.exports = rewind;
+
+function rewind(gj, outer) {
+    var type = gj && gj.type, i;
+
+    if (type === 'FeatureCollection') {
+        for (i = 0; i < gj.features.length; i++) rewind(gj.features[i], outer);
+
+    } else if (type === 'GeometryCollection') {
+        for (i = 0; i < gj.geometries.length; i++) rewind(gj.geometries[i], outer);
+
+    } else if (type === 'Feature') {
+        rewind(gj.geometry, outer);
+
+    } else if (type === 'Polygon') {
+        rewindRings(gj.coordinates, outer);
+
+    } else if (type === 'MultiPolygon') {
+        for (i = 0; i < gj.coordinates.length; i++) rewindRings(gj.coordinates[i], outer);
+    }
+
+    return gj;
+}
+
+function rewindRings(rings, outer) {
+    if (rings.length === 0) return;
+
+    rewindRing(rings[0], outer);
+    for (var i = 1; i < rings.length; i++) {
+        rewindRing(rings[i], !outer);
+    }
+}
+
+function rewindRing(ring, dir) {
+    var area = 0, err = 0;
+    for (var i = 0, len = ring.length, j = len - 1; i < len; j = i++) {
+        var k = (ring[i][0] - ring[j][0]) * (ring[j][1] + ring[i][1]);
+        var m = area + k;
+        err += Math.abs(area) >= Math.abs(k) ? area - m + k : k - m + area;
+        area = m;
+    }
+    if (area + err >= 0 !== !!dir) ring.reverse();
+}
+
+},{}],10:[function(require,module,exports){
+var jsonlint = require('jsonlint-lines'),
+  geojsonHintObject = require('./object');
+
+/**
+ * @alias geojsonhint
+ * @param {(string|object)} GeoJSON given as a string or as an object
+ * @param {Object} options
+ * @param {boolean} [options.noDuplicateMembers=true] forbid repeated
+ * properties. This is only available for string input, becaused parsed
+ * Objects cannot have duplicate properties.
+ * @param {boolean} [options.precisionWarning=true] warn if GeoJSON contains
+ * unnecessary coordinate precision.
+ * @param {boolean} [options.ignoreRightHandRule=false] ignore errors if the
+ * winding order of a polygon is not correct.
+ * @returns {Array<Object>} an array of errors
+ */
+function hint(str, options) {
+
+    var gj, errors = [];
+
+    if (typeof str === 'object') {
+        gj = str;
+    } else if (typeof str === 'string') {
+        try {
+            gj = jsonlint.parse(str);
+        } catch(e) {
+            var match = e.message.match(/line (\d+)/);
+            var lineNumber = parseInt(match[1], 10);
+            return [{
+                line: lineNumber - 1,
+                message: e.message,
+                error: e
+            }];
+        }
+    } else {
+        return [{
+            message: 'Expected string or object as input',
+            line: 0
+        }];
+    }
+
+    errors = errors.concat(geojsonHintObject.hint(gj, options));
+
+    return errors;
+}
+
+module.exports.hint = hint;
+
+},{"./object":11,"jsonlint-lines":13}],11:[function(require,module,exports){
+var rightHandRule = require('./rhr');
+
+/**
+ * @alias geojsonhint
+ * @param {(string|object)} GeoJSON given as a string or as an object
+ * @param {Object} options
+ * @param {boolean} [options.noDuplicateMembers=true] forbid repeated
+ * properties. This is only available for string input, becaused parsed
+ * Objects cannot have duplicate properties.
+ * @param {boolean} [options.precisionWarning=true] warn if GeoJSON contains
+ * unnecessary coordinate precision.
+ * @param {boolean} [options.ignoreRightHandRule=false] ignore errors if the
+ * winding order of a polygon is not correct.
+ * @returns {Array<Object>} an array of errors
+ */
+function hint(gj, options) {
+
+    var errors = [];
+    var precisionWarningCount = 0;
+    var maxPrecisionWarnings = 10;
+    var maxPrecision = 6;
+
+    function root(_) {
+
+        if ((!options || options.noDuplicateMembers !== false) &&
+           _.__duplicateProperties__) {
+            errors.push({
+                message: 'An object contained duplicate members, making parsing ambigous: ' + _.__duplicateProperties__.join(', '),
+                line: _.__line__
+            });
+        }
+
+        if (requiredProperty(_, 'type', 'string')) {
+            return;
+        }
+
+        if (!types[_.type]) {
+            var expectedType = typesLower[_.type.toLowerCase()];
+            if (expectedType !== undefined) {
+                errors.push({
+                    message: 'Expected ' + expectedType + ' but got ' + _.type + ' (case sensitive)',
+                    line: _.__line__
+                });
+            } else {
+                errors.push({
+                    message: 'The type ' + _.type + ' is unknown',
+                    line: _.__line__
+                });
+            }
+        } else if (_) {
+            types[_.type](_);
+        }
+    }
+
+    function everyIs(_, type) {
+        // make a single exception because typeof null === 'object'
+        return _.every(function(x) {
+            return x !== null && typeof x === type;
+        });
+    }
+
+    function requiredProperty(_, name, type) {
+        if (typeof _[name] === 'undefined') {
+            return errors.push({
+                message: '"' + name + '" member required',
+                line: _.__line__
+            });
+        } else if (type === 'array') {
+            if (!Array.isArray(_[name])) {
+                return errors.push({
+                    message: '"' + name +
+                        '" member should be an array, but is an ' +
+                        (typeof _[name]) + ' instead',
+                    line: _.__line__
+                });
+            }
+        } else if (type === 'object' && _[name] && _[name].constructor !== Object) {
+            return errors.push({
+                message: '"' + name +
+                    '" member should be ' + (type) +
+                    ', but is an ' + (_[name].constructor.name) + ' instead',
+                line: _.__line__
+            });
+        } else if (type && typeof _[name] !== type) {
+            return errors.push({
+                message: '"' + name +
+                    '" member should be ' + (type) +
+                    ', but is an ' + (typeof _[name]) + ' instead',
+                line: _.__line__
+            });
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.3
+    function FeatureCollection(featureCollection) {
+        crs(featureCollection);
+        bbox(featureCollection);
+        if (featureCollection.properties !== undefined) {
+            errors.push({
+                message: 'FeatureCollection object cannot contain a "properties" member',
+                line: featureCollection.__line__
+            });
+        }
+        if (featureCollection.coordinates !== undefined) {
+            errors.push({
+                message: 'FeatureCollection object cannot contain a "coordinates" member',
+                line: featureCollection.__line__
+            });
+        }
+        if (!requiredProperty(featureCollection, 'features', 'array')) {
+            if (!everyIs(featureCollection.features, 'object')) {
+                return errors.push({
+                    message: 'Every feature must be an object',
+                    line: featureCollection.__line__
+                });
+            }
+            featureCollection.features.forEach(Feature);
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.1
+    function position(_, line) {
+        if (!Array.isArray(_)) {
+            return errors.push({
+                message: 'position should be an array, is a ' + (typeof _) +
+                    ' instead',
+                line: _.__line__ || line
+            });
+        }
+        if (_.length < 2) {
+            return errors.push({
+                message: 'position must have 2 or more elements',
+                line: _.__line__ || line
+            });
+        }
+        if (_.length > 3) {
+            return errors.push({
+                message: 'position should not have more than 3 elements',
+                level: 'message',
+                line: _.__line__ || line
+            });
+        }
+        if (!everyIs(_, 'number')) {
+            return errors.push({
+                message: 'each element in a position must be a number',
+                line: _.__line__ || line
+            });
+        }
+
+        if (options && options.precisionWarning) {
+            if (precisionWarningCount === maxPrecisionWarnings) {
+                precisionWarningCount += 1;
+                return errors.push({
+                    message: 'truncated warnings: we\'ve encountered coordinate precision warning ' + maxPrecisionWarnings + ' times, no more warnings will be reported',
+                    level: 'message',
+                    line: _.__line__ || line
+                });
+            } else if (precisionWarningCount < maxPrecisionWarnings) {
+                _.forEach(function(num) {
+                    var precision = 0;
+                    var decimalStr = String(num).split('.')[1];
+                    if (decimalStr !== undefined)
+                        precision = decimalStr.length;
+                    if (precision > maxPrecision) {
+                        precisionWarningCount += 1;
+                        return errors.push({
+                            message: 'precision of coordinates should be reduced',
+                            level: 'message',
+                            line: _.__line__ || line
+                        });
+                    }
+                });
+            }
+        }
+    }
+
+    function positionArray(coords, type, depth, line) {
+        if (line === undefined && coords.__line__ !== undefined) {
+            line = coords.__line__;
+        }
+        if (depth === 0) {
+            return position(coords, line);
+        }
+        if (depth === 1 && type) {
+            if (type === 'LinearRing') {
+                if (!Array.isArray(coords[coords.length - 1])) {
+                    errors.push({
+                        message: 'a number was found where a coordinate array should have been found: this needs to be nested more deeply',
+                        line: line
+                    });
+                    return true;
+                }
+                if (coords.length < 4) {
+                    errors.push({
+                        message: 'a LinearRing of coordinates needs to have four or more positions',
+                        line: line
+                    });
+                }
+                if (coords.length &&
+                    (coords[coords.length - 1].length !== coords[0].length ||
+                    !coords[coords.length - 1].every(function(pos, index) {
+                        return coords[0][index] === pos;
+                }))) {
+                    errors.push({
+                        message: 'the first and last positions in a LinearRing of coordinates must be the same',
+                        line: line
+                    });
+                    return true;
+                }
+            } else if (type === 'Line' && coords.length < 2) {
+                return errors.push({
+                    message: 'a line needs to have two or more coordinates to be valid',
+                    line: line
+                });
+            }
+        }
+        if (!Array.isArray(coords)) {
+            errors.push({
+                message: 'a number was found where a coordinate array should have been found: this needs to be nested more deeply',
+                line: line
+            });
+        } else {
+            var results = coords.map(function(c) {
+                return positionArray(c, type, depth - 1, c.__line__ || line);
+            });
+            return results.some(function(r) {
+                return r;
+            });
+        }
+    }
+
+    function crs(_) {
+        if (!_.crs) return;
+        var defaultCRSName = 'urn:ogc:def:crs:OGC:1.3:CRS84';
+        if (typeof _.crs === 'object' && _.crs.properties && _.crs.properties.name === defaultCRSName) {
+            errors.push({
+                message: 'old-style crs member is not recommended, this object is equivalent to the default and should be removed',
+                line: _.__line__
+            });
+        } else {
+            errors.push({
+                message: 'old-style crs member is not recommended',
+                line: _.__line__
+            });
+        }
+    }
+
+    function bbox(_) {
+        if (!_.bbox) {
+            return;
+        }
+        if (Array.isArray(_.bbox)) {
+            if (!everyIs(_.bbox, 'number')) {
+                errors.push({
+                    message: 'each element in a bbox member must be a number',
+                    line: _.bbox.__line__
+                });
+            }
+            if (!(_.bbox.length === 4 || _.bbox.length === 6)) {
+                errors.push({
+                    message: 'bbox must contain 4 elements (for 2D) or 6 elements (for 3D)',
+                    line: _.bbox.__line__
+                });
+            }
+            return errors.length;
+        }
+        errors.push({
+            message: 'bbox member must be an array of numbers, but is a ' + (typeof _.bbox),
+            line: _.__line__
+        });
+    }
+
+    function geometrySemantics(geom) {
+        if (geom.properties !== undefined) {
+            errors.push({
+                message: 'geometry object cannot contain a "properties" member',
+                line: geom.__line__
+            });
+        }
+        if (geom.geometry !== undefined) {
+            errors.push({
+                message: 'geometry object cannot contain a "geometry" member',
+                line: geom.__line__
+            });
+        }
+        if (geom.features !== undefined) {
+            errors.push({
+                message: 'geometry object cannot contain a "features" member',
+                line: geom.__line__
+            });
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.2
+    function Point(point) {
+        crs(point);
+        bbox(point);
+        geometrySemantics(point);
+        if (!requiredProperty(point, 'coordinates', 'array')) {
+            position(point.coordinates);
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.6
+    function Polygon(polygon) {
+        crs(polygon);
+        bbox(polygon);
+        if (requiredProperty(polygon, 'coordinates', 'array')) return;
+        if (positionArray(polygon.coordinates, 'LinearRing', 2)) return;
+        if (options && options.ignoreRightHandRule === true) return;
+        rightHandRule(polygon, errors);
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.7
+    function MultiPolygon(multiPolygon) {
+        crs(multiPolygon);
+        bbox(multiPolygon);
+        if (requiredProperty(multiPolygon, 'coordinates', 'array')) return;
+        if (positionArray(multiPolygon.coordinates, 'LinearRing', 3)) return;
+        if (options && options.ignoreRightHandRule === true) return;
+        rightHandRule(multiPolygon, errors);
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.4
+    function LineString(lineString) {
+        crs(lineString);
+        bbox(lineString);
+        if (!requiredProperty(lineString, 'coordinates', 'array')) {
+            positionArray(lineString.coordinates, 'Line', 1);
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.5
+    function MultiLineString(multiLineString) {
+        crs(multiLineString);
+        bbox(multiLineString);
+        if (!requiredProperty(multiLineString, 'coordinates', 'array')) {
+            positionArray(multiLineString.coordinates, 'Line', 2);
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.3
+    function MultiPoint(multiPoint) {
+        crs(multiPoint);
+        bbox(multiPoint);
+        if (!requiredProperty(multiPoint, 'coordinates', 'array')) {
+            positionArray(multiPoint.coordinates, '', 1);
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.1.8
+    function GeometryCollection(geometryCollection) {
+        crs(geometryCollection);
+        bbox(geometryCollection);
+        if (!requiredProperty(geometryCollection, 'geometries', 'array')) {
+            if (!everyIs(geometryCollection.geometries, 'object')) {
+                errors.push({
+                    message: 'The geometries array in a GeometryCollection must contain only geometry objects',
+                    line: geometryCollection.__line__
+                });
+            }
+            if (geometryCollection.geometries.length === 1) {
+                errors.push({
+                    message: 'GeometryCollection with a single geometry should be avoided in favor of single part or a single object of multi-part type',
+                    line: geometryCollection.geometries.__line__
+                });
+            }
+            geometryCollection.geometries.forEach(function(geometry) {
+                if (geometry) {
+                    if (geometry.type === 'GeometryCollection') {
+                        errors.push({
+                            message: 'GeometryCollection should avoid nested geometry collections',
+                            line: geometryCollection.geometries.__line__
+                        });
+                    }
+                    root(geometry);
+                }
+            });
+        }
+    }
+
+    // https://tools.ietf.org/html/rfc7946#section-3.2
+    function Feature(feature) {
+        crs(feature);
+        bbox(feature);
+        // https://github.com/geojson/draft-geojson/blob/master/middle.mkd#feature-object
+        if (feature.id !== undefined &&
+            typeof feature.id !== 'string' &&
+            typeof feature.id !== 'number') {
+            errors.push({
+                message: 'Feature "id" member must have a string or number value',
+                line: feature.__line__
+            });
+        }
+        if (feature.features !== undefined) {
+            errors.push({
+                message: 'Feature object cannot contain a "features" member',
+                line: feature.__line__
+            });
+        }
+        if (feature.coordinates !== undefined) {
+            errors.push({
+                message: 'Feature object cannot contain a "coordinates" member',
+                line: feature.__line__
+            });
+        }
+        if (feature.type !== 'Feature') {
+            errors.push({
+                message: 'GeoJSON features must have a type=feature member',
+                line: feature.__line__
+            });
+        }
+        requiredProperty(feature, 'properties', 'object');
+        if (!requiredProperty(feature, 'geometry', 'object')) {
+            // https://tools.ietf.org/html/rfc7946#section-3.2
+            // tolerate null geometry
+            if (feature.geometry) root(feature.geometry);
+        }
+    }
+
+    var types = {
+        Point: Point,
+        Feature: Feature,
+        MultiPoint: MultiPoint,
+        LineString: LineString,
+        MultiLineString: MultiLineString,
+        FeatureCollection: FeatureCollection,
+        GeometryCollection: GeometryCollection,
+        Polygon: Polygon,
+        MultiPolygon: MultiPolygon
+    };
+
+    var typesLower = Object.keys(types).reduce(function(prev, curr) {
+        prev[curr.toLowerCase()] = curr;
+        return prev;
+    }, {});
+
+    if (typeof gj !== 'object' ||
+        gj === null ||
+        gj === undefined) {
+        errors.push({
+            message: 'The root of a GeoJSON object must be an object.',
+            line: 0
+        });
+        return errors;
+    }
+
+    root(gj);
+
+    errors.forEach(function(err) {
+        if ({}.hasOwnProperty.call(err, 'line') && err.line === undefined) {
+            delete err.line;
+        }
+    });
+
+    return errors;
+}
+
+module.exports.hint = hint;
+
+},{"./rhr":12}],12:[function(require,module,exports){
+function isRingClockwise (coords) {
+    var sum = 0;
+    if (coords.length > 2) {
+        var p1, p2;
+        for (var i = 0; i < coords.length - 1; i++) {
+            p1 = coords[i];
+            p2 = coords[i + 1];
+            sum += (p2[0] - p1[0]) * (p2[1] + p1[1]);
+        }
+    }
+
+    return sum >= 0;
+}
+
+function isPolyRHR (coords) {
+    if (coords && coords.length > 0) {
+        if (isRingClockwise(coords[0]))
+            return false;
+        var interiorCoords = coords.slice(1, coords.length);
+        if (!interiorCoords.every(isRingClockwise))
+            return false;
+    }
+    return true;
+}
+
+function rightHandRule (geometry) {
+    if (geometry.type === 'Polygon') {
+        return isPolyRHR(geometry.coordinates);
+    } else if (geometry.type === 'MultiPolygon') {
+        return geometry.coordinates.every(isPolyRHR);
+    }
+}
+
+module.exports = function validateRightHandRule(geometry, errors) {
+    if (!rightHandRule(geometry)) {
+        errors.push({
+            message: 'Polygons and MultiPolygons should follow the right-hand rule',
+            level: 'message',
+            line: geometry.__line__
+        });
+    }
+};
+
+},{}],13:[function(require,module,exports){
+(function (process){(function (){
+/* parser generated by jison 0.4.17 */
+/*
+  Returns a Parser object of the following structure:
+
+  Parser: {
+    yy: {}
+  }
+
+  Parser.prototype: {
+    yy: {},
+    trace: function(),
+    symbols_: {associative list: name ==> number},
+    terminals_: {associative list: number ==> name},
+    productions_: [...],
+    performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate, $$, _$),
+    table: [...],
+    defaultActions: {...},
+    parseError: function(str, hash),
+    parse: function(input),
+
+    lexer: {
+        EOF: 1,
+        parseError: function(str, hash),
+        setInput: function(input),
+        input: function(),
+        unput: function(str),
+        more: function(),
+        less: function(n),
+        pastInput: function(),
+        upcomingInput: function(),
+        showPosition: function(),
+        test_match: function(regex_match_array, rule_index),
+        next: function(),
+        lex: function(),
+        begin: function(condition),
+        popState: function(),
+        _currentRules: function(),
+        topState: function(),
+        pushState: function(condition),
+
+        options: {
+            ranges: boolean           (optional: true ==> token location info will include a .range[] member)
+            flex: boolean             (optional: true ==> flex-like lexing behaviour where the rules are tested exhaustively to find the longest match)
+            backtrack_lexer: boolean  (optional: true ==> lexer regexes are tested in order and for each matching regex the action code is invoked; the lexer terminates the scan when a token is returned by the action code)
+        },
+
+        performAction: function(yy, yy_, $avoiding_name_collisions, YY_START),
+        rules: [...],
+        conditions: {associative list: name ==> set},
+    }
+  }
+
+
+  token location info (@$, _$, etc.): {
+    first_line: n,
+    last_line: n,
+    first_column: n,
+    last_column: n,
+    range: [start_number, end_number]       (where the numbers are indexes into the input string, regular zero-based)
+  }
+
+
+  the parseError function receives a 'hash' object with these members for lexer and parser errors: {
+    text:        (matched text)
+    token:       (the produced terminal token, if any)
+    line:        (yylineno)
+  }
+  while parser (grammar) errors will also provide these members, i.e. parser errors deliver a superset of attributes: {
+    loc:         (yylloc)
+    expected:    (string describing the set of expected tokens)
+    recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
+  }
+*/
+var jsonlint = (function(){
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,12],$V1=[1,13],$V2=[1,9],$V3=[1,10],$V4=[1,11],$V5=[1,14],$V6=[1,15],$V7=[14,18,22,24],$V8=[18,22],$V9=[22,24];
+var parser = {trace: function trace() { },
+yy: {},
+symbols_: {"error":2,"JSONString":3,"STRING":4,"JSONNumber":5,"NUMBER":6,"JSONNullLiteral":7,"NULL":8,"JSONBooleanLiteral":9,"TRUE":10,"FALSE":11,"JSONText":12,"JSONValue":13,"EOF":14,"JSONObject":15,"JSONArray":16,"{":17,"}":18,"JSONMemberList":19,"JSONMember":20,":":21,",":22,"[":23,"]":24,"JSONElementList":25,"$accept":0,"$end":1},
+terminals_: {2:"error",4:"STRING",6:"NUMBER",8:"NULL",10:"TRUE",11:"FALSE",14:"EOF",17:"{",18:"}",21:":",22:",",23:"[",24:"]"},
+productions_: [0,[3,1],[5,1],[7,1],[9,1],[9,1],[12,2],[13,1],[13,1],[13,1],[13,1],[13,1],[13,1],[15,2],[15,3],[20,3],[19,1],[19,3],[16,2],[16,3],[25,1],[25,3]],
+performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
+/* this == yyval */
+
+var $0 = $$.length - 1;
+switch (yystate) {
+case 1:
+ // replace escaped characters with actual character
+          this.$ = yytext.replace(/\\(\\|")/g, "$"+"1")
+                     .replace(/\\n/g,'\n')
+                     .replace(/\\r/g,'\r')
+                     .replace(/\\t/g,'\t')
+                     .replace(/\\v/g,'\v')
+                     .replace(/\\f/g,'\f')
+                     .replace(/\\b/g,'\b');
+        
+break;
+case 2:
+this.$ = Number(yytext);
+break;
+case 3:
+this.$ = null;
+break;
+case 4:
+this.$ = true;
+break;
+case 5:
+this.$ = false;
+break;
+case 6:
+return this.$ = $$[$0-1];
+break;
+case 13:
+this.$ = {}; Object.defineProperty(this.$, '__line__', {
+            value: this._$.first_line,
+            enumerable: false
+        })
+break;
+case 14: case 19:
+this.$ = $$[$0-1]; Object.defineProperty(this.$, '__line__', {
+            value: this._$.first_line,
+            enumerable: false
+        })
+break;
+case 15:
+this.$ = [$$[$0-2], $$[$0]];
+break;
+case 16:
+this.$ = {}; this.$[$$[$0][0]] = $$[$0][1];
+break;
+case 17:
+
+            this.$ = $$[$0-2];
+            if ($$[$0-2][$$[$0][0]] !== undefined) {
+                if (!this.$.__duplicateProperties__) {
+                    Object.defineProperty(this.$, '__duplicateProperties__', {
+                        value: [],
+                        enumerable: false
+                    });
+                }
+                this.$.__duplicateProperties__.push($$[$0][0]);
+            }
+            $$[$0-2][$$[$0][0]] = $$[$0][1];
+        
+break;
+case 18:
+this.$ = []; Object.defineProperty(this.$, '__line__', {
+            value: this._$.first_line,
+            enumerable: false
+        })
+break;
+case 20:
+this.$ = [$$[$0]];
+break;
+case 21:
+this.$ = $$[$0-2]; $$[$0-2].push($$[$0]);
+break;
+}
+},
+table: [{3:5,4:$V0,5:6,6:$V1,7:3,8:$V2,9:4,10:$V3,11:$V4,12:1,13:2,15:7,16:8,17:$V5,23:$V6},{1:[3]},{14:[1,16]},o($V7,[2,7]),o($V7,[2,8]),o($V7,[2,9]),o($V7,[2,10]),o($V7,[2,11]),o($V7,[2,12]),o($V7,[2,3]),o($V7,[2,4]),o($V7,[2,5]),o([14,18,21,22,24],[2,1]),o($V7,[2,2]),{3:20,4:$V0,18:[1,17],19:18,20:19},{3:5,4:$V0,5:6,6:$V1,7:3,8:$V2,9:4,10:$V3,11:$V4,13:23,15:7,16:8,17:$V5,23:$V6,24:[1,21],25:22},{1:[2,6]},o($V7,[2,13]),{18:[1,24],22:[1,25]},o($V8,[2,16]),{21:[1,26]},o($V7,[2,18]),{22:[1,28],24:[1,27]},o($V9,[2,20]),o($V7,[2,14]),{3:20,4:$V0,20:29},{3:5,4:$V0,5:6,6:$V1,7:3,8:$V2,9:4,10:$V3,11:$V4,13:30,15:7,16:8,17:$V5,23:$V6},o($V7,[2,19]),{3:5,4:$V0,5:6,6:$V1,7:3,8:$V2,9:4,10:$V3,11:$V4,13:31,15:7,16:8,17:$V5,23:$V6},o($V8,[2,17]),o($V8,[2,15]),o($V9,[2,21])],
+defaultActions: {16:[2,6]},
+parseError: function parseError(str, hash) {
+    if (hash.recoverable) {
+        this.trace(str);
+    } else {
+        function _parseError (msg, hash) {
+            this.message = msg;
+            this.hash = hash;
+        }
+        _parseError.prototype = Error;
+
+        throw new _parseError(str, hash);
+    }
+},
+parse: function parse(input) {
+    var self = this, stack = [0], tstack = [], vstack = [null], lstack = [], table = this.table, yytext = '', yylineno = 0, yyleng = 0, recovering = 0, TERROR = 2, EOF = 1;
+    var args = lstack.slice.call(arguments, 1);
+    var lexer = Object.create(this.lexer);
+    var sharedState = { yy: {} };
+    for (var k in this.yy) {
+        if (Object.prototype.hasOwnProperty.call(this.yy, k)) {
+            sharedState.yy[k] = this.yy[k];
+        }
+    }
+    lexer.setInput(input, sharedState.yy);
+    sharedState.yy.lexer = lexer;
+    sharedState.yy.parser = this;
+    if (typeof lexer.yylloc == 'undefined') {
+        lexer.yylloc = {};
+    }
+    var yyloc = lexer.yylloc;
+    lstack.push(yyloc);
+    var ranges = lexer.options && lexer.options.ranges;
+    if (typeof sharedState.yy.parseError === 'function') {
+        this.parseError = sharedState.yy.parseError;
+    } else {
+        this.parseError = Object.getPrototypeOf(this).parseError;
+    }
+    function popStack(n) {
+        stack.length = stack.length - 2 * n;
+        vstack.length = vstack.length - n;
+        lstack.length = lstack.length - n;
+    }
+    _token_stack:
+        var lex = function () {
+            var token;
+            token = lexer.lex() || EOF;
+            if (typeof token !== 'number') {
+                token = self.symbols_[token] || token;
+            }
+            return token;
+        };
+    var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
+    while (true) {
+        state = stack[stack.length - 1];
+        if (this.defaultActions[state]) {
+            action = this.defaultActions[state];
+        } else {
+            if (symbol === null || typeof symbol == 'undefined') {
+                symbol = lex();
+            }
+            action = table[state] && table[state][symbol];
+        }
+                    if (typeof action === 'undefined' || !action.length || !action[0]) {
+                var errStr = '';
+                expected = [];
+                for (p in table[state]) {
+                    if (this.terminals_[p] && p > TERROR) {
+                        expected.push('\'' + this.terminals_[p] + '\'');
+                    }
+                }
+                if (lexer.showPosition) {
+                    errStr = 'Parse error on line ' + (yylineno + 1) + ':\n' + lexer.showPosition() + '\nExpecting ' + expected.join(', ') + ', got \'' + (this.terminals_[symbol] || symbol) + '\'';
+                } else {
+                    errStr = 'Parse error on line ' + (yylineno + 1) + ': Unexpected ' + (symbol == EOF ? 'end of input' : '\'' + (this.terminals_[symbol] || symbol) + '\'');
+                }
+                this.parseError(errStr, {
+                    text: lexer.match,
+                    token: this.terminals_[symbol] || symbol,
+                    line: lexer.yylineno,
+                    loc: yyloc,
+                    expected: expected
+                });
+            }
+        if (action[0] instanceof Array && action.length > 1) {
+            throw new Error('Parse Error: multiple actions possible at state: ' + state + ', token: ' + symbol);
+        }
+        switch (action[0]) {
+        case 1:
+            stack.push(symbol);
+            vstack.push(lexer.yytext);
+            lstack.push(lexer.yylloc);
+            stack.push(action[1]);
+            symbol = null;
+            if (!preErrorSymbol) {
+                yyleng = lexer.yyleng;
+                yytext = lexer.yytext;
+                yylineno = lexer.yylineno;
+                yyloc = lexer.yylloc;
+                if (recovering > 0) {
+                    recovering--;
+                }
+            } else {
+                symbol = preErrorSymbol;
+                preErrorSymbol = null;
+            }
+            break;
+        case 2:
+            len = this.productions_[action[1]][1];
+            yyval.$ = vstack[vstack.length - len];
+            yyval._$ = {
+                first_line: lstack[lstack.length - (len || 1)].first_line,
+                last_line: lstack[lstack.length - 1].last_line,
+                first_column: lstack[lstack.length - (len || 1)].first_column,
+                last_column: lstack[lstack.length - 1].last_column
+            };
+            if (ranges) {
+                yyval._$.range = [
+                    lstack[lstack.length - (len || 1)].range[0],
+                    lstack[lstack.length - 1].range[1]
+                ];
+            }
+            r = this.performAction.apply(yyval, [
+                yytext,
+                yyleng,
+                yylineno,
+                sharedState.yy,
+                action[1],
+                vstack,
+                lstack
+            ].concat(args));
+            if (typeof r !== 'undefined') {
+                return r;
+            }
+            if (len) {
+                stack = stack.slice(0, -1 * len * 2);
+                vstack = vstack.slice(0, -1 * len);
+                lstack = lstack.slice(0, -1 * len);
+            }
+            stack.push(this.productions_[action[1]][0]);
+            vstack.push(yyval.$);
+            lstack.push(yyval._$);
+            newState = table[stack[stack.length - 2]][stack[stack.length - 1]];
+            stack.push(newState);
+            break;
+        case 3:
+            return true;
+        }
+    }
+    return true;
+}};
+/* generated by jison-lex 0.3.4 */
+var lexer = (function(){
+var lexer = ({
+
+EOF:1,
+
+parseError:function parseError(str, hash) {
+        if (this.yy.parser) {
+            this.yy.parser.parseError(str, hash);
+        } else {
+            throw new Error(str);
+        }
+    },
+
+// resets the lexer, sets new input
+setInput:function (input, yy) {
+        this.yy = yy || this.yy || {};
+        this._input = input;
+        this._more = this._backtrack = this.done = false;
+        this.yylineno = this.yyleng = 0;
+        this.yytext = this.matched = this.match = '';
+        this.conditionStack = ['INITIAL'];
+        this.yylloc = {
+            first_line: 1,
+            first_column: 0,
+            last_line: 1,
+            last_column: 0
+        };
+        if (this.options.ranges) {
+            this.yylloc.range = [0,0];
+        }
+        this.offset = 0;
+        return this;
+    },
+
+// consumes and returns one char from the input
+input:function () {
+        var ch = this._input[0];
+        this.yytext += ch;
+        this.yyleng++;
+        this.offset++;
+        this.match += ch;
+        this.matched += ch;
+        var lines = ch.match(/(?:\r\n?|\n).*/g);
+        if (lines) {
+            this.yylineno++;
+            this.yylloc.last_line++;
+        } else {
+            this.yylloc.last_column++;
+        }
+        if (this.options.ranges) {
+            this.yylloc.range[1]++;
+        }
+
+        this._input = this._input.slice(1);
+        return ch;
+    },
+
+// unshifts one char (or a string) into the input
+unput:function (ch) {
+        var len = ch.length;
+        var lines = ch.split(/(?:\r\n?|\n)/g);
+
+        this._input = ch + this._input;
+        this.yytext = this.yytext.substr(0, this.yytext.length - len);
+        //this.yyleng -= len;
+        this.offset -= len;
+        var oldLines = this.match.split(/(?:\r\n?|\n)/g);
+        this.match = this.match.substr(0, this.match.length - 1);
+        this.matched = this.matched.substr(0, this.matched.length - 1);
+
+        if (lines.length - 1) {
+            this.yylineno -= lines.length - 1;
+        }
+        var r = this.yylloc.range;
+
+        this.yylloc = {
+            first_line: this.yylloc.first_line,
+            last_line: this.yylineno + 1,
+            first_column: this.yylloc.first_column,
+            last_column: lines ?
+                (lines.length === oldLines.length ? this.yylloc.first_column : 0)
+                 + oldLines[oldLines.length - lines.length].length - lines[0].length :
+              this.yylloc.first_column - len
+        };
+
+        if (this.options.ranges) {
+            this.yylloc.range = [r[0], r[0] + this.yyleng - len];
+        }
+        this.yyleng = this.yytext.length;
+        return this;
+    },
+
+// When called from action, caches matched text and appends it on next action
+more:function () {
+        this._more = true;
+        return this;
+    },
+
+// When called from action, signals the lexer that this rule fails to match the input, so the next matching rule (regex) should be tested instead.
+reject:function () {
+        if (this.options.backtrack_lexer) {
+            this._backtrack = true;
+        } else {
+            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. You can only invoke reject() in the lexer when the lexer is of the backtracking persuasion (options.backtrack_lexer = true).\n' + this.showPosition(), {
+                text: "",
+                token: null,
+                line: this.yylineno
+            });
+
+        }
+        return this;
+    },
+
+// retain first n characters of the match
+less:function (n) {
+        this.unput(this.match.slice(n));
+    },
+
+// displays already matched input, i.e. for error messages
+pastInput:function () {
+        var past = this.matched.substr(0, this.matched.length - this.match.length);
+        return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
+    },
+
+// displays upcoming input, i.e. for error messages
+upcomingInput:function () {
+        var next = this.match;
+        if (next.length < 20) {
+            next += this._input.substr(0, 20-next.length);
+        }
+        return (next.substr(0,20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
+    },
+
+// displays the character position where the lexing error occurred, i.e. for error messages
+showPosition:function () {
+        var pre = this.pastInput();
+        var c = new Array(pre.length + 1).join("-");
+        return pre + this.upcomingInput() + "\n" + c + "^";
+    },
+
+// test the lexed token: return FALSE when not a match, otherwise return token
+test_match:function (match, indexed_rule) {
+        var token,
+            lines,
+            backup;
+
+        if (this.options.backtrack_lexer) {
+            // save context
+            backup = {
+                yylineno: this.yylineno,
+                yylloc: {
+                    first_line: this.yylloc.first_line,
+                    last_line: this.last_line,
+                    first_column: this.yylloc.first_column,
+                    last_column: this.yylloc.last_column
+                },
+                yytext: this.yytext,
+                match: this.match,
+                matches: this.matches,
+                matched: this.matched,
+                yyleng: this.yyleng,
+                offset: this.offset,
+                _more: this._more,
+                _input: this._input,
+                yy: this.yy,
+                conditionStack: this.conditionStack.slice(0),
+                done: this.done
+            };
+            if (this.options.ranges) {
+                backup.yylloc.range = this.yylloc.range.slice(0);
+            }
+        }
+
+        lines = match[0].match(/(?:\r\n?|\n).*/g);
+        if (lines) {
+            this.yylineno += lines.length;
+        }
+        this.yylloc = {
+            first_line: this.yylloc.last_line,
+            last_line: this.yylineno + 1,
+            first_column: this.yylloc.last_column,
+            last_column: lines ?
+                         lines[lines.length - 1].length - lines[lines.length - 1].match(/\r?\n?/)[0].length :
+                         this.yylloc.last_column + match[0].length
+        };
+        this.yytext += match[0];
+        this.match += match[0];
+        this.matches = match;
+        this.yyleng = this.yytext.length;
+        if (this.options.ranges) {
+            this.yylloc.range = [this.offset, this.offset += this.yyleng];
+        }
+        this._more = false;
+        this._backtrack = false;
+        this._input = this._input.slice(match[0].length);
+        this.matched += match[0];
+        token = this.performAction.call(this, this.yy, this, indexed_rule, this.conditionStack[this.conditionStack.length - 1]);
+        if (this.done && this._input) {
+            this.done = false;
+        }
+        if (token) {
+            return token;
+        } else if (this._backtrack) {
+            // recover context
+            for (var k in backup) {
+                this[k] = backup[k];
+            }
+            return false; // rule action called reject() implying the next rule should be tested instead.
+        }
+        return false;
+    },
+
+// return next match in input
+next:function () {
+        if (this.done) {
+            return this.EOF;
+        }
+        if (!this._input) {
+            this.done = true;
+        }
+
+        var token,
+            match,
+            tempMatch,
+            index;
+        if (!this._more) {
+            this.yytext = '';
+            this.match = '';
+        }
+        var rules = this._currentRules();
+        for (var i = 0; i < rules.length; i++) {
+            tempMatch = this._input.match(this.rules[rules[i]]);
+            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
+                match = tempMatch;
+                index = i;
+                if (this.options.backtrack_lexer) {
+                    token = this.test_match(tempMatch, rules[i]);
+                    if (token !== false) {
+                        return token;
+                    } else if (this._backtrack) {
+                        match = false;
+                        continue; // rule action called reject() implying a rule MISmatch.
+                    } else {
+                        // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
+                        return false;
+                    }
+                } else if (!this.options.flex) {
+                    break;
+                }
+            }
+        }
+        if (match) {
+            token = this.test_match(match, rules[index]);
+            if (token !== false) {
+                return token;
+            }
+            // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
+            return false;
+        }
+        if (this._input === "") {
+            return this.EOF;
+        } else {
+            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. Unrecognized text.\n' + this.showPosition(), {
+                text: "",
+                token: null,
+                line: this.yylineno
+            });
+        }
+    },
+
+// return next match that has a token
+lex:function lex() {
+        var r = this.next();
+        if (r) {
+            return r;
+        } else {
+            return this.lex();
+        }
+    },
+
+// activates a new lexer condition state (pushes the new lexer condition state onto the condition stack)
+begin:function begin(condition) {
+        this.conditionStack.push(condition);
+    },
+
+// pop the previously active lexer condition state off the condition stack
+popState:function popState() {
+        var n = this.conditionStack.length - 1;
+        if (n > 0) {
+            return this.conditionStack.pop();
+        } else {
+            return this.conditionStack[0];
+        }
+    },
+
+// produce the lexer rule set which is active for the currently active lexer condition state
+_currentRules:function _currentRules() {
+        if (this.conditionStack.length && this.conditionStack[this.conditionStack.length - 1]) {
+            return this.conditions[this.conditionStack[this.conditionStack.length - 1]].rules;
+        } else {
+            return this.conditions["INITIAL"].rules;
+        }
+    },
+
+// return the currently active lexer condition state; when an index argument is provided it produces the N-th previous condition state, if available
+topState:function topState(n) {
+        n = this.conditionStack.length - 1 - Math.abs(n || 0);
+        if (n >= 0) {
+            return this.conditionStack[n];
+        } else {
+            return "INITIAL";
+        }
+    },
+
+// alias for begin(condition)
+pushState:function pushState(condition) {
+        this.begin(condition);
+    },
+
+// return the number of states currently on the stack
+stateStackSize:function stateStackSize() {
+        return this.conditionStack.length;
+    },
+options: {},
+performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
+var YYSTATE=YY_START;
+switch($avoiding_name_collisions) {
+case 0:/* skip whitespace */
+break;
+case 1:return 6
+break;
+case 2:yy_.yytext = yy_.yytext.substr(1,yy_.yyleng-2); return 4
+break;
+case 3:return 17
+break;
+case 4:return 18
+break;
+case 5:return 23
+break;
+case 6:return 24
+break;
+case 7:return 22
+break;
+case 8:return 21
+break;
+case 9:return 10
+break;
+case 10:return 11
+break;
+case 11:return 8
+break;
+case 12:return 14
+break;
+case 13:return 'INVALID'
+break;
+}
+},
+rules: [/^(?:\s+)/,/^(?:(-?([0-9]|[1-9][0-9]+))(\.[0-9]+)?([eE][-+]?[0-9]+)?\b)/,/^(?:"(?:\\[\\"bfnrt\/]|\\u[a-fA-F0-9]{4}|[^\\\0-\x09\x0a-\x1f"])*")/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?::)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:null\b)/,/^(?:$)/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13],"inclusive":true}}
+});
+return lexer;
+})();
+parser.lexer = lexer;
+function Parser () {
+  this.yy = {};
+}
+Parser.prototype = parser;parser.Parser = Parser;
+return new Parser;
+})();
+
+
+if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
+exports.parser = jsonlint;
+exports.Parser = jsonlint.Parser;
+exports.parse = function () { return jsonlint.parse.apply(jsonlint, arguments); };
+exports.main = function commonjsMain(args) {
+    if (!args[1]) {
+        console.log('Usage: '+args[0]+' FILE');
+        process.exit(1);
+    }
+    var source = require('fs').readFileSync(require('path').normalize(args[1]), "utf8");
+    return exports.parser.parse(source);
+};
+if (typeof module !== 'undefined' && require.main === module) {
+  exports.main(process.argv.slice(1));
+}
+}
+}).call(this)}).call(this,require('_process'))
+},{"_process":165,"fs":65,"path":163}],14:[function(require,module,exports){
 var request = require('browser-request'),
     token;
 
@@ -497,7 +2040,7 @@ function page(postfix, callback) {
     });
 }
 
-},{"browser-request":49}],4:[function(require,module,exports){
+},{"browser-request":64}],15:[function(require,module,exports){
 var queue = require('queue-async'),
     request = require('browser-request'),
     treeui = require('treeui'),
@@ -632,7 +2175,7 @@ function req(postfix, callback) {
     }
 }
 
-},{"browser-request":49,"queue-async":162,"treeui":215}],5:[function(require,module,exports){
+},{"browser-request":64,"queue-async":167,"treeui":188}],16:[function(require,module,exports){
 (function (global){(function (){
 !function (t, e) {
   "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = t || self).MapboxDraw = e();
@@ -3728,7 +5271,7 @@ function req(postfix, callback) {
 });
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],6:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 var nanoid = require('nanoid').nanoid;
 
@@ -4051,7 +5594,7 @@ MapboxEventManager.prototype = {
 
 module.exports = MapboxEventManager;
 
-},{"nanoid":149}],7:[function(require,module,exports){
+},{"nanoid":155}],18:[function(require,module,exports){
 module.exports = {
   'fr': {
     'name': 'France',
@@ -4071,7 +5614,7 @@ module.exports = {
   }
 };
 
-},{}],8:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 function Geolocation() {}
 
 Geolocation.prototype = {
@@ -4093,7 +5636,7 @@ Geolocation.prototype = {
 
 module.exports = Geolocation;
 
-},{}],9:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var Typeahead = require('suggestions');
@@ -5450,7 +6993,7 @@ MapboxGeocoder.prototype = {
 
 module.exports = MapboxGeocoder;
 
-},{"./events":6,"./exceptions":7,"./geolocation":8,"./localization":10,"./utils":11,"@mapbox/mapbox-sdk":13,"@mapbox/mapbox-sdk/services/geocoding":25,"events":73,"lodash.debounce":145,"subtag":177,"suggestions":178,"xtend":12}],10:[function(require,module,exports){
+},{"./events":17,"./exceptions":18,"./geolocation":19,"./localization":21,"./utils":22,"@mapbox/mapbox-sdk":24,"@mapbox/mapbox-sdk/services/geocoding":36,"events":88,"lodash.debounce":151,"subtag":180,"suggestions":181,"xtend":23}],21:[function(require,module,exports){
 'use strict';
 
 /**
@@ -5489,7 +7032,7 @@ var placeholder = {
 
 module.exports = {placeholder: placeholder};
 
-},{}],11:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * This function transforms the feature from reverse geocoding to plain text with specified accuracy
  * @param {object} feature 
@@ -5559,16 +7102,16 @@ module.exports = {
   getAddressInfo: getAddressInfo,
   REVERSE_GEOCODE_COORD_RGX: REVERSE_GEOCODE_COORD_RGX,
 }
-},{}],12:[function(require,module,exports){
-arguments[4][2][0].apply(exports,arguments)
-},{"dup":2}],13:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"dup":3}],24:[function(require,module,exports){
 'use strict';
 
 var client = require('./lib/client');
 
 module.exports = client;
 
-},{"./lib/client":14}],14:[function(require,module,exports){
+},{"./lib/client":25}],25:[function(require,module,exports){
 'use strict';
 
 var browser = require('./browser-layer');
@@ -5597,7 +7140,7 @@ function createBrowserClient(options) {
 
 module.exports = createBrowserClient;
 
-},{"../classes/mapi-client":16,"./browser-layer":15}],15:[function(require,module,exports){
+},{"../classes/mapi-client":27,"./browser-layer":26}],26:[function(require,module,exports){
 'use strict';
 
 var MapiResponse = require('../classes/mapi-response');
@@ -5724,7 +7267,7 @@ module.exports = {
   createRequestXhr: createRequestXhr
 };
 
-},{"../classes/mapi-error":17,"../classes/mapi-response":19,"../constants":20,"../helpers/parse-headers":21}],16:[function(require,module,exports){
+},{"../classes/mapi-error":28,"../classes/mapi-response":30,"../constants":31,"../helpers/parse-headers":32}],27:[function(require,module,exports){
 'use strict';
 
 var parseToken = require('@mapbox/parse-mapbox-token');
@@ -5764,7 +7307,7 @@ MapiClient.prototype.createRequest = function createRequest(requestOptions) {
 
 module.exports = MapiClient;
 
-},{"../constants":20,"./mapi-request":18,"@mapbox/parse-mapbox-token":31}],17:[function(require,module,exports){
+},{"../constants":31,"./mapi-request":29,"@mapbox/parse-mapbox-token":42}],28:[function(require,module,exports){
 'use strict';
 
 var constants = require('../constants');
@@ -5830,7 +7373,7 @@ function MapiError(options) {
 
 module.exports = MapiError;
 
-},{"../constants":20}],18:[function(require,module,exports){
+},{"../constants":31}],29:[function(require,module,exports){
 'use strict';
 
 var parseToken = require('@mapbox/parse-mapbox-token');
@@ -6094,7 +7637,7 @@ MapiRequest.prototype._extend = function _extend(options) {
 
 module.exports = MapiRequest;
 
-},{"../constants":20,"../helpers/url-utils":23,"@mapbox/parse-mapbox-token":31,"eventemitter3":72,"xtend":24}],19:[function(require,module,exports){
+},{"../constants":31,"../helpers/url-utils":34,"@mapbox/parse-mapbox-token":42,"eventemitter3":87,"xtend":35}],30:[function(require,module,exports){
 'use strict';
 
 var parseLinkHeader = require('../helpers/parse-link-header');
@@ -6156,7 +7699,7 @@ MapiResponse.prototype.nextPage = function nextPage() {
 
 module.exports = MapiResponse;
 
-},{"../helpers/parse-link-header":22}],20:[function(require,module,exports){
+},{"../helpers/parse-link-header":33}],31:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -6169,7 +7712,7 @@ module.exports = {
   ERROR_REQUEST_ABORTED: 'RequestAbortedError'
 };
 
-},{}],21:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 function parseSingleHeader(raw) {
@@ -6214,7 +7757,7 @@ function parseHeaders(raw) {
 
 module.exports = parseHeaders;
 
-},{}],22:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 // Like https://github.com/thlorenz/lib/parse-link-header but without any
@@ -6291,7 +7834,7 @@ function parseLinkHeader(linkHeader) {
 
 module.exports = parseLinkHeader;
 
-},{}],23:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 // Encode each item of an array individually. The comma
@@ -6413,9 +7956,9 @@ module.exports = {
   interpolateRouteParams: interpolateRouteParams
 };
 
-},{}],24:[function(require,module,exports){
-arguments[4][2][0].apply(exports,arguments)
-},{"dup":2}],25:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"dup":3}],36:[function(require,module,exports){
 'use strict';
 
 var xtend = require('xtend');
@@ -6625,7 +8168,7 @@ Geocoding.reverseGeocode = function(config) {
 
 module.exports = createServiceFactory(Geocoding);
 
-},{"./service-helpers/create-service-factory":26,"./service-helpers/pick":28,"./service-helpers/stringify-booleans":29,"./service-helpers/validator":30,"xtend":24}],26:[function(require,module,exports){
+},{"./service-helpers/create-service-factory":37,"./service-helpers/pick":39,"./service-helpers/stringify-booleans":40,"./service-helpers/validator":41,"xtend":35}],37:[function(require,module,exports){
 'use strict';
 
 var MapiClient = require('../../lib/classes/mapi-client');
@@ -6648,7 +8191,7 @@ function createServiceFactory(ServicePrototype) {
 
 module.exports = createServiceFactory;
 
-},{"../../lib/classes/mapi-client":16,"../../lib/client":14}],27:[function(require,module,exports){
+},{"../../lib/classes/mapi-client":27,"../../lib/client":25}],38:[function(require,module,exports){
 'use strict';
 
 function objectMap(obj, cb) {
@@ -6660,7 +8203,7 @@ function objectMap(obj, cb) {
 
 module.exports = objectMap;
 
-},{}],28:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 /**
@@ -6692,7 +8235,7 @@ function pick(source, keys) {
 
 module.exports = pick;
 
-},{}],29:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 
 var objectMap = require('./object-map');
@@ -6711,7 +8254,7 @@ function stringifyBoolean(obj) {
 
 module.exports = stringifyBoolean;
 
-},{"./object-map":27}],30:[function(require,module,exports){
+},{"./object-map":38}],41:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -6764,7 +8307,7 @@ module.exports = xtend(v, {
 });
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"@mapbox/fusspot":1,"xtend":24}],31:[function(require,module,exports){
+},{"@mapbox/fusspot":2,"xtend":35}],42:[function(require,module,exports){
 'use strict';
 
 var base64 = require('base-64');
@@ -6815,7 +8358,1181 @@ function has(obj, key) {
 
 module.exports = parseToken;
 
-},{"base-64":47}],32:[function(require,module,exports){
+},{"base-64":62}],43:[function(require,module,exports){
+'use strict';
+
+/**
+ * Based off of [the offical Google document](https://developers.google.com/maps/documentation/utilities/polylinealgorithm)
+ *
+ * Some parts from [this implementation](http://facstaff.unca.edu/mcmcclur/GoogleMaps/EncodePolyline/PolylineEncoder.js)
+ * by [Mark McClure](http://facstaff.unca.edu/mcmcclur/)
+ *
+ * @module polyline
+ */
+
+var polyline = {};
+
+function py2_round(value) {
+    // Google's polyline algorithm uses the same rounding strategy as Python 2, which is different from JS for negative values
+    return Math.floor(Math.abs(value) + 0.5) * (value >= 0 ? 1 : -1);
+}
+
+function encode(current, previous, factor) {
+    current = py2_round(current * factor);
+    previous = py2_round(previous * factor);
+    var coordinate = current - previous;
+    coordinate <<= 1;
+    if (current - previous < 0) {
+        coordinate = ~coordinate;
+    }
+    var output = '';
+    while (coordinate >= 0x20) {
+        output += String.fromCharCode((0x20 | (coordinate & 0x1f)) + 63);
+        coordinate >>= 5;
+    }
+    output += String.fromCharCode(coordinate + 63);
+    return output;
+}
+
+/**
+ * Decodes to a [latitude, longitude] coordinates array.
+ *
+ * This is adapted from the implementation in Project-OSRM.
+ *
+ * @param {String} str
+ * @param {Number} precision
+ * @returns {Array}
+ *
+ * @see https://github.com/Project-OSRM/osrm-frontend/blob/master/WebContent/routing/OSRM.RoutingGeometry.js
+ */
+polyline.decode = function(str, precision) {
+    var index = 0,
+        lat = 0,
+        lng = 0,
+        coordinates = [],
+        shift = 0,
+        result = 0,
+        byte = null,
+        latitude_change,
+        longitude_change,
+        factor = Math.pow(10, Number.isInteger(precision) ? precision : 5);
+
+    // Coordinates have variable length when encoded, so just keep
+    // track of whether we've hit the end of the string. In each
+    // loop iteration, a single coordinate is decoded.
+    while (index < str.length) {
+
+        // Reset shift, result, and byte
+        byte = null;
+        shift = 0;
+        result = 0;
+
+        do {
+            byte = str.charCodeAt(index++) - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+
+        latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+        shift = result = 0;
+
+        do {
+            byte = str.charCodeAt(index++) - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+
+        longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+        lat += latitude_change;
+        lng += longitude_change;
+
+        coordinates.push([lat / factor, lng / factor]);
+    }
+
+    return coordinates;
+};
+
+/**
+ * Encodes the given [latitude, longitude] coordinates array.
+ *
+ * @param {Array.<Array.<Number>>} coordinates
+ * @param {Number} precision
+ * @returns {String}
+ */
+polyline.encode = function(coordinates, precision) {
+    if (!coordinates.length) { return ''; }
+
+    var factor = Math.pow(10, Number.isInteger(precision) ? precision : 5),
+        output = encode(coordinates[0][0], 0, factor) + encode(coordinates[0][1], 0, factor);
+
+    for (var i = 1; i < coordinates.length; i++) {
+        var a = coordinates[i], b = coordinates[i - 1];
+        output += encode(a[0], b[0], factor);
+        output += encode(a[1], b[1], factor);
+    }
+
+    return output;
+};
+
+function flipped(coords) {
+    var flipped = [];
+    for (var i = 0; i < coords.length; i++) {
+        var coord = coords[i].slice();
+        flipped.push([coord[1], coord[0]]);
+    }
+    return flipped;
+}
+
+/**
+ * Encodes a GeoJSON LineString feature/geometry.
+ *
+ * @param {Object} geojson
+ * @param {Number} precision
+ * @returns {String}
+ */
+polyline.fromGeoJSON = function(geojson, precision) {
+    if (geojson && geojson.type === 'Feature') {
+        geojson = geojson.geometry;
+    }
+    if (!geojson || geojson.type !== 'LineString') {
+        throw new Error('Input must be a GeoJSON LineString');
+    }
+    return polyline.encode(flipped(geojson.coordinates), precision);
+};
+
+/**
+ * Decodes to a GeoJSON LineString geometry.
+ *
+ * @param {String} str
+ * @param {Number} precision
+ * @returns {Object}
+ */
+polyline.toGeoJSON = function(str, precision) {
+    var coords = polyline.decode(str, precision);
+    return {
+        type: 'LineString',
+        coordinates: flipped(coords)
+    };
+};
+
+if (typeof module === 'object' && module.exports) {
+    module.exports = polyline;
+}
+
+},{}],44:[function(require,module,exports){
+module.exports = element;
+module.exports.pair = pair;
+module.exports.format = format;
+module.exports.formatPair = formatPair;
+module.exports.coordToDMS = coordToDMS;
+
+
+function element(input, dims) {
+  var result = search(input, dims);
+  return (result === null) ? null : result.val;
+}
+
+
+function formatPair(input) {
+  return format(input.lat, 'lat') + ' ' + format(input.lon, 'lon');
+}
+
+
+// Is 0 North or South?
+function format(input, dim) {
+  var dms = coordToDMS(input, dim);
+  return dms.whole + '° ' +
+    (dms.minutes ? dms.minutes + '\' ' : '') +
+    (dms.seconds ? dms.seconds + '" ' : '') + dms.dir;
+}
+
+
+function coordToDMS(input, dim) {
+  var dirs = { lat: ['N', 'S'], lon: ['E', 'W'] }[dim] || '';
+  var dir = dirs[input >= 0 ? 0 : 1];
+  var abs = Math.abs(input);
+  var whole = Math.floor(abs);
+  var fraction = abs - whole;
+  var fractionMinutes = fraction * 60;
+  var minutes = Math.floor(fractionMinutes);
+  var seconds = Math.floor((fractionMinutes - minutes) * 60);
+
+  return {
+    whole: whole,
+    minutes: minutes,
+    seconds: seconds,
+    dir: dir
+  };
+}
+
+
+function search(input, dims) {
+  if (!dims) dims = 'NSEW';
+  if (typeof input !== 'string') return null;
+
+  input = input.toUpperCase();
+  var regex = /^[\s\,]*([NSEW])?\s*([\-|\—|\―]?[0-9.]+)[°º˚]?\s*(?:([0-9.]+)['’′‘]\s*)?(?:([0-9.]+)(?:''|"|”|″)\s*)?([NSEW])?/;
+
+  var m = input.match(regex);
+  if (!m) return null;  // no match
+
+  var matched = m[0];
+
+  // extract dimension.. m[1] = leading, m[5] = trailing
+  var dim;
+  if (m[1] && m[5]) {                 // if matched both..
+    dim = m[1];                       // keep leading
+    matched = matched.slice(0, -1);   // remove trailing dimension from match
+  } else {
+    dim = m[1] || m[5];
+  }
+
+  // if unrecognized dimension
+  if (dim && dims.indexOf(dim) === -1) return null;
+
+  // extract DMS
+  var deg = m[2] ? parseFloat(m[2]) : 0;
+  var min = m[3] ? parseFloat(m[3]) / 60 : 0;
+  var sec = m[4] ? parseFloat(m[4]) / 3600 : 0;
+  var sign = (deg < 0) ? -1 : 1;
+  if (dim === 'S' || dim === 'W') sign *= -1;
+
+  return {
+    val: (Math.abs(deg) + min + sec) * sign,
+    dim: dim,
+    matched: matched,
+    remain: input.slice(matched.length)
+  };
+}
+
+
+function pair(input, dims) {
+  input = input.trim();
+  var one = search(input, dims);
+  if (!one) return null;
+
+  input = one.remain.trim();
+  var two = search(input, dims);
+  if (!two || two.remain) return null;
+
+  if (one.dim) {
+    return swapdim(one.val, two.val, one.dim);
+  } else {
+    return [one.val, two.val];
+  }
+}
+
+
+function swapdim(a, b, dim) {
+  if (dim === 'N' || dim === 'S') return [a, b];
+  if (dim === 'W' || dim === 'E') return [b, a];
+}
+
+},{}],45:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+/**
+ * @typedef {import('unist').Node} Node
+ * @typedef {import('unist').Parent} Parent
+ * @typedef {import('unist').Literal} Literal
+ * @typedef {Object.<string, unknown>} Props
+ * @typedef {Array.<Node>|string} ChildrenOrValue
+ *
+ * @typedef {(<T extends string, P extends Record<string, unknown>, C extends Node[]>(type: T, props: P, children: C) => {type: T, children: C} & P)} BuildParentWithProps
+ * @typedef {(<T extends string, P extends Record<string, unknown>>(type: T, props: P, value: string) => {type: T, value: string} & P)} BuildLiteralWithProps
+ * @typedef {(<T extends string, P extends Record<string, unknown>>(type: T, props: P) => {type: T} & P)} BuildVoidWithProps
+ * @typedef {(<T extends string, C extends Node[]>(type: T, children: C) => {type: T, children: C})} BuildParent
+ * @typedef {(<T extends string>(type: T, value: string) => {type: T, value: string})} BuildLiteral
+ * @typedef {(<T extends string>(type: T) => {type: T})} BuildVoid
+ */
+
+var u = /**
+ * @type {BuildVoid & BuildVoidWithProps & BuildLiteral & BuildLiteralWithProps & BuildParent & BuildParentWithProps}
+ */ (
+  /**
+   * @param {string} type Type of node
+   * @param {Props|ChildrenOrValue} [props] Additional properties for node (or `children` or `value`)
+   * @param {ChildrenOrValue} [value] `children` or `value` of node
+   * @returns {Node}
+   */
+  function (type, props, value) {
+    /** @type {Node} */
+    var node = {type: String(type)};
+
+    if (
+      (value === undefined || value === null) &&
+      (typeof props === 'string' || Array.isArray(props))
+    ) {
+      value = props;
+    } else {
+      Object.assign(node, props);
+    }
+
+    if (Array.isArray(value)) {
+      node.children = value;
+    } else if (value !== undefined && value !== null) {
+      node.value = String(value);
+    }
+
+    return node
+  }
+);
+
+/**
+ * @typedef {import('xast').Root} Root
+ * @typedef {import('xast').Element} Element
+ * @typedef {Root['children'][number]} Child
+ * @typedef {Child|Root} Node
+ * @typedef {Root|Element} XResult
+ * @typedef {string|number|boolean|null|undefined} XValue
+ * @typedef {{[attribute: string]: XValue}} XAttributes Attributes to support JS primitive types
+ *
+ * @typedef {string|number|null|undefined} XPrimitiveChild
+ * @typedef {Array.<Node|XPrimitiveChild>} XArrayChild
+ * @typedef {Node|XPrimitiveChild|XArrayChild} XChild
+ * @typedef {import('./jsx-classic').Element} x.JSX.Element
+ * @typedef {import('./jsx-classic').IntrinsicAttributes} x.JSX.IntrinsicAttributes
+ * @typedef {import('./jsx-classic').IntrinsicElements} x.JSX.IntrinsicElements
+ * @typedef {import('./jsx-classic').ElementChildrenAttribute} x.JSX.ElementChildrenAttribute
+ */
+
+/**
+ * Create XML trees in xast.
+ *
+ * @param name Qualified name. Case sensitive and can contain a namespace prefix (such as `rdf:RDF`). Pass `null|undefined` to build a root.
+ * @param attributes Map of attributes. Nullish (null or undefined) or NaN values are ignored, other values (strings, booleans) are cast to strings.
+ * @param children (Lists of) child nodes. When strings are encountered, they are mapped to Text nodes.
+ */
+const x =
+  /**
+   * @type {{
+   *   (): Root
+   *   (name: null|undefined, ...children: XChild[]): Root
+   *   (name: string, attributes: XAttributes, ...children: XChild[]): Element
+   *   (name: string, ...children: XChild[]): Element
+   * }}
+   */
+  (
+    /**
+     * Hyperscript compatible DSL for creating virtual xast trees.
+     *
+     * @param {string|null} [name]
+     * @param {XAttributes|XChild} [attributes]
+     * @param {XChild[]} children
+     * @returns {XResult}
+     */
+    function (name, attributes, ...children) {
+      var index = -1;
+      /** @type {XResult} */
+      var node;
+      /** @type {string} */
+      var key;
+
+      if (name === undefined || name === null) {
+        node = {type: 'root', children: []};
+        // @ts-ignore Root builder doesn’t accept attributes.
+        children.unshift(attributes);
+      } else if (typeof name === 'string') {
+        node = {type: 'element', name, attributes: {}, children: []};
+
+        if (isAttributes(attributes)) {
+          for (key in attributes) {
+            // Ignore nullish and NaN values.
+            if (
+              attributes[key] !== undefined &&
+              attributes[key] !== null &&
+              (typeof attributes[key] !== 'number' ||
+                !Number.isNaN(attributes[key]))
+            ) {
+              // @ts-ignore Pretty sure we just set it.
+              node.attributes[key] = String(attributes[key]);
+            }
+          }
+        } else {
+          children.unshift(attributes);
+        }
+      } else {
+        throw new TypeError('Expected element name, got `' + name + '`')
+      }
+
+      // Handle children.
+      while (++index < children.length) {
+        addChild(node.children, children[index]);
+      }
+
+      return node
+    }
+  );
+
+/**
+ * @param {Array.<Child>} nodes
+ * @param {XChild} value
+ */
+function addChild(nodes, value) {
+  var index = -1;
+
+  if (value === undefined || value === null) ; else if (typeof value === 'string' || typeof value === 'number') {
+    nodes.push({type: 'text', value: String(value)});
+  } else if (Array.isArray(value)) {
+    while (++index < value.length) {
+      addChild(nodes, value[index]);
+    }
+  } else if (typeof value === 'object' && 'type' in value) {
+    if (value.type === 'root') {
+      addChild(nodes, value.children);
+    } else {
+      nodes.push(value);
+    }
+  } else {
+    throw new TypeError('Expected node, nodes, string, got `' + value + '`')
+  }
+}
+
+/**
+ * @param {XAttributes|XChild} value
+ * @returns {value is XAttributes}
+ */
+function isAttributes(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    typeof value !== 'object' ||
+    Array.isArray(value)
+  ) {
+    return false
+  }
+
+  return true
+}
+
+/**
+ * @typedef {import('./index.js').Parent} Parent
+ * @typedef {import('./index.js').Context} Context
+ * @typedef {import('./index.js').Child} Child
+ */
+
+/**
+ * Serialize all children of `parent`.
+ *
+ * @param {Parent} parent
+ * @param {Context} ctx
+ * @returns {string}
+ *
+ */
+function all(parent, ctx) {
+  /** @type {Array.<Child>} */
+  var children = (parent && parent.children) || [];
+  var index = -1;
+  /** @type {Array.<string>} */
+  var results = [];
+
+  while (++index < children.length) {
+    results[index] = one(children[index], ctx);
+  }
+
+  return results.join('')
+}
+
+/**
+ * @typedef {Object} CoreOptions
+ * @property {string[]} [subset=[]]
+ *   Whether to only escape the given subset of characters.
+ * @property {boolean} [escapeOnly=false]
+ *   Whether to only escape possibly dangerous characters.
+ *   Those characters are `"`, `&`, `'`, `<`, `>`, and `` ` ``.
+ *
+ * @typedef {Object} FormatOptions
+ * @property {(code: number, next: number, options: CoreWithFormatOptions) => string} format
+ *   Format strategy.
+ *
+ * @typedef {CoreOptions & FormatOptions & import('./util/format-smart.js').FormatSmartOptions} CoreWithFormatOptions
+ */
+
+/**
+ * Encode certain characters in `value`.
+ *
+ * @param {string} value
+ * @param {CoreWithFormatOptions} options
+ * @returns {string}
+ */
+function core(value, options) {
+  value = value.replace(
+    options.subset ? charactersToExpression(options.subset) : /["&'<>`]/g,
+    basic
+  );
+
+  if (options.subset || options.escapeOnly) {
+    return value
+  }
+
+  return (
+    value
+      // Surrogate pairs.
+      .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, surrogate)
+      // BMP control characters (C0 except for LF, CR, SP; DEL; and some more
+      // non-ASCII ones).
+      .replace(
+        // eslint-disable-next-line no-control-regex, unicorn/no-hex-escape
+        /[\x01-\t\v\f\x0E-\x1F\x7F\x81\x8D\x8F\x90\x9D\xA0-\uFFFF]/g,
+        basic
+      )
+  )
+
+  /**
+   * @param {string} pair
+   * @param {number} index
+   * @param {string} all
+   */
+  function surrogate(pair, index, all) {
+    return options.format(
+      (pair.charCodeAt(0) - 0xd800) * 0x400 +
+        pair.charCodeAt(1) -
+        0xdc00 +
+        0x10000,
+      all.charCodeAt(index + 2),
+      options
+    )
+  }
+
+  /**
+   * @param {string} character
+   * @param {number} index
+   * @param {string} all
+   */
+  function basic(character, index, all) {
+    return options.format(
+      character.charCodeAt(0),
+      all.charCodeAt(index + 1),
+      options
+    )
+  }
+}
+
+/**
+ * @param {string[]} subset
+ * @returns {RegExp}
+ */
+function charactersToExpression(subset) {
+  /** @type {string[]} */
+  const groups = [];
+  let index = -1;
+
+  while (++index < subset.length) {
+    groups.push(subset[index].replace(/[|\\{}()[\]^$+*?.]/g, '\\$&'));
+  }
+
+  return new RegExp('(?:' + groups.join('|') + ')', 'g')
+}
+
+/**
+ * The smallest way to encode a character.
+ *
+ * @param {number} code
+ * @returns {string}
+ */
+function formatBasic(code) {
+  return '&#x' + code.toString(16).toUpperCase() + ';'
+}
+
+/**
+ * @typedef {import('./core.js').CoreOptions & import('./util/format-smart.js').FormatSmartOptions} Options
+ * @typedef {import('./core.js').CoreOptions} LightOptions
+ */
+
+/**
+ * Encode special characters in `value` as hexadecimals.
+ *
+ * @param {string} value
+ *   Value to encode.
+ * @param {LightOptions} [options]
+ *   Configuration.
+ * @returns {string}
+ *   Encoded value.
+ */
+function stringifyEntitiesLight(value, options) {
+  return core(value, Object.assign({format: formatBasic}, options))
+}
+
+var noncharacter = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g;
+
+/**
+ * Escape a string.
+ *
+ * @param {string} value
+ * @param {Array.<string>} subset
+ * @param {RegExp} [unsafe]
+ * @returns {string}
+ */
+function escape(value, subset, unsafe) {
+  var result = clean(value);
+
+  return unsafe ? result.replace(unsafe, encode) : encode(result)
+
+  /**
+   * @param {string} $0
+   * @returns {string}
+   */
+  function encode($0) {
+    return stringifyEntitiesLight($0, {subset})
+  }
+}
+
+/**
+ * @param {string} value
+ * @returns {string}
+ */
+function clean(value) {
+  return String(value || '').replace(noncharacter, '')
+}
+
+var subset$3 = ['\t', '\n', ' ', '"', '&', "'", '/', '<', '=', '>'];
+
+/**
+ * Serialize a node name.
+ *
+ * @param {string} value
+ * @returns {string}
+ */
+function name(value) {
+  return escape(value, subset$3)
+}
+
+/**
+ * Count how often a character (or substring) is used in a string.
+ *
+ * @param {string} value
+ *   Value to search in.
+ * @param {string} character
+ *   Character (or substring) to look for.
+ * @return {number}
+ *   Number of times `character` occurred in `value`.
+ */
+function ccount(value, character) {
+  const source = String(value);
+
+  if (typeof character !== 'string') {
+    throw new TypeError('Expected character')
+  }
+
+  let count = 0;
+  let index = source.indexOf(character);
+
+  while (index !== -1) {
+    count++;
+    index = source.indexOf(character, index + character.length);
+  }
+
+  return count
+}
+
+/**
+ * @typedef {import('./index.js').Context} Context
+ */
+
+/**
+ * Serialize an attribute value.
+ *
+ * @param {string} value
+ * @param {Context} ctx
+ * @returns {string}
+ */
+function value(value, ctx) {
+  var primary = ctx.quote;
+  var secondary = ctx.alternative;
+  var result = String(value);
+  var quote =
+    secondary && ccount(result, primary) > ccount(result, secondary)
+      ? secondary
+      : primary;
+
+  return quote + escape(result, ['<', '&', quote]) + quote
+}
+
+/**
+ * @typedef {import('./index.js').Handle} Handle
+ * @typedef {import('./index.js').Element} Element
+ * @typedef {import('./index.js').Attributes} Attributes
+ */
+
+var own$1 = {}.hasOwnProperty;
+
+/**
+ * Serialize an element.
+ *
+ * @type {Handle}
+ * @param {Element} node
+ */
+function element(node, ctx) {
+  var nodeName = name(node.name);
+  var content = all(node, ctx);
+  /** @type {Attributes} */
+  var attributes = node.attributes || {};
+  var close = content ? false : ctx.close;
+  /** @type {Array.<string>} */
+  var attrs = [];
+  /** @type {string} */
+  var key;
+  /** @type {Attributes[keyof Attributes]} */
+  var result;
+
+  for (key in attributes) {
+    if (own$1.call(attributes, key)) {
+      result = attributes[key];
+
+      if (result !== null && result !== undefined) {
+        attrs.push(name(key) + '=' + value(result, ctx));
+      }
+    }
+  }
+
+  return (
+    '<' +
+    nodeName +
+    (attrs.length === 0 ? '' : ' ' + attrs.join(' ')) +
+    (close ? (ctx.tight ? '' : ' ') + '/' : '') +
+    '>' +
+    content +
+    (close ? '' : '</' + nodeName + '>')
+  )
+}
+
+/**
+ * @typedef {import('./index.js').Handle} Handle
+ * @typedef {import('./index.js').Text} Text
+ */
+
+var subset$2 = ['&', '<'];
+
+/**
+ * Serialize a text.
+ *
+ * @type {Handle}
+ * @param {Text} node
+ */
+function text(node) {
+  return escape(node.value, subset$2)
+}
+
+/**
+ * @typedef {import('./index.js').Handle} Handle
+ * @typedef {import('./index.js').Comment} Comment
+ */
+
+/**
+ * Serialize a comment.
+ *
+ * @type {Handle}
+ * @param {Comment} node
+ */
+function comment(node) {
+  return '<!--' + escape(node.value, ['-']) + '-->'
+}
+
+/**
+ * @typedef {import('./index.js').Handle} Handle
+ * @typedef {import('./index.js').Doctype} Doctype
+ */
+
+/**
+ * Serialize a doctype.
+ *
+ * @type {Handle}
+ * @param {Doctype} node
+ */
+function doctype(node, ctx) {
+  var nodeName = name(node.name);
+  var pub = node.public;
+  var sys = node.system;
+  var result = '<!DOCTYPE';
+
+  if (nodeName !== '') {
+    result += ' ' + nodeName;
+  }
+
+  if (pub !== null && pub !== undefined && pub !== '') {
+    result += ' PUBLIC ' + value(pub, ctx);
+  } else if (sys !== null && sys !== undefined && sys !== '') {
+    result += ' SYSTEM';
+  }
+
+  if (sys !== null && sys !== undefined && sys !== '') {
+    result += ' ' + value(sys, ctx);
+  }
+
+  return result + '>'
+}
+
+/**
+ * @typedef {import('./index.js').Handle} Handle
+ * @typedef {import('./index.js').Instruction} Instruction
+ */
+
+var unsafe$1 = /\?>/g;
+var subset$1 = ['>'];
+
+/**
+ * Serialize an instruction.
+ *
+ * @type {Handle}
+ * @param {Instruction} node
+ */
+function instruction(node) {
+  var nodeName = name(node.name) || 'x';
+  var result = escape(node.value, subset$1, unsafe$1);
+  return '<?' + nodeName + (result ? ' ' + result : '') + '?>'
+}
+
+/**
+ * @typedef {import('./index.js').Handle} Handle
+ * @typedef {import('./index.js').Cdata} Cdata
+ */
+
+var unsafe = /]]>/g;
+var subset = ['>'];
+
+/**
+ * Serialize a CDATA section.
+ *
+ * @type {Handle}
+ * @param {Cdata} node
+ */
+function cdata(node) {
+  return '<![CDATA[' + escape(node.value, subset, unsafe) + ']]>'
+}
+
+/**
+ * @typedef {import('./index.js').Handle} Handle
+ * @typedef {import('./index.js').Raw} Raw
+ */
+
+/**
+ * Serialize a (non-standard) raw.
+ *
+ * @type {Handle}
+ * @param {Raw} node
+ */
+function raw(node, ctx) {
+  // @ts-ignore Looks like a text.
+  return ctx.dangerous ? node.value : text(node)
+}
+
+/**
+ * @typedef {import('./index.js').Handle} Handle
+ */
+
+var own = {}.hasOwnProperty;
+
+var handlers = {
+  root: all,
+  element,
+  text,
+  comment,
+  doctype,
+  instruction,
+  cdata,
+  raw
+};
+
+/**
+ * Serialize a node.
+ *
+ * @type {Handle}
+ */
+function one(node, ctx) {
+  var type = node && node.type;
+
+  if (!type) {
+    throw new Error('Expected node, not `' + node + '`')
+  }
+
+  if (!own.call(handlers, type)) {
+    throw new Error('Cannot compile unknown node `' + type + '`')
+  }
+
+  // @ts-ignore Hush, it works.
+  return handlers[type](node, ctx)
+}
+
+/**
+ * @typedef {import('xast').Root} Root
+ * @typedef {import('xast').Element} Element
+ * @typedef {import('xast').Cdata} Cdata
+ * @typedef {import('xast').Comment} Comment
+ * @typedef {import('xast').Doctype} Doctype
+ * @typedef {import('xast').Instruction} Instruction
+ * @typedef {import('xast').Text} Text
+ * @typedef {import('xast').Literal & {type: 'raw'}} Raw
+ * @typedef {Root|Element} Parent
+ * @typedef {import('xast').Attributes} Attributes
+ * @typedef {Root['children'][number]} Child
+ * @typedef {Child|Root} Node
+ *
+ * @typedef {'"'|"'"} Quote
+ *
+ * @typedef Options
+ * @property {Quote} [quote='"'] Preferred quote to use
+ * @property {boolean} [quoteSmart=false] Use the other quote if that results in
+ *   less bytes
+ * @property {boolean} [closeEmptyElements=false] Close elements without any
+ *   content with slash (/) on the opening tag instead of an end tag:
+ *   `<circle />` instead of `<circle></circle>`.
+ *   See `tightClose` to control whether a space is used before the slash.
+ * @property {boolean} [tightClose=false] Do not use an extra space when closing
+ *    self-closing elements: `<circle/>` instead of `<circle />`.
+ * @property {boolean} [allowDangerousXml=false] Allow `raw` nodes and insert
+ *   them as raw XML. When falsey, encodes `raw` nodes.
+ *   Only set this if you completely trust the content!
+ *
+ * @typedef Context
+ * @property {Quote} quote
+ * @property {Quote} alternative
+ * @property {boolean} close
+ * @property {boolean} tight
+ * @property {boolean} dangerous
+ *
+ * @callback Handle
+ * @param {Node} node
+ * @param {Context} context
+ * @returns {string}
+ */
+
+/**
+ * Serialize the given xast tree (or list of nodes).
+ *
+ * @param {Node|Array.<Node>} node
+ * @param {Options} [options]
+ * @returns {string}
+ */
+function toXml(node, options = {}) {
+  var quote = options.quote || '"';
+  /** @type {Quote} */
+  var alternative = quote === '"' ? "'" : '"';
+  var smart = options.quoteSmart;
+  /** @type {Node} */
+  // @ts-ignore Assume no `root` in `node`.
+  var value = Array.isArray(node) ? {type: 'root', children: node} : node;
+
+  if (quote !== '"' && quote !== "'") {
+    throw new Error('Invalid quote `' + quote + '`, expected `\'` or `"`')
+  }
+
+  return one(value, {
+    dangerous: options.allowDangerousXml,
+    close: options.closeEmptyElements,
+    tight: options.tightClose,
+    quote,
+    alternative: smart ? alternative : null
+  })
+}
+
+const BR = u('text', '\n');
+const TAB = u('text', '  ');
+/**
+ * Convert nested folder structure to KML. This expects
+ * input that follows the same patterns as [toGeoJSON](https://github.com/placemark/togeojson)'s
+ * kmlWithFolders method: a tree of folders and features,
+ * starting with a root element.
+ */
+function foldersToKML(root) {
+    return toXml(u('root', [
+        x('kml', { xmlns: 'http://www.opengis.net/kml/2.2' }, x('Document', root.children.flatMap((child) => convertChild(child)))),
+    ]));
+}
+/**
+ * Convert a GeoJSON FeatureCollection to a string of
+ * KML data.
+ */
+function toKML(featureCollection) {
+    return toXml(u('root', [
+        x('kml', { xmlns: 'http://www.opengis.net/kml/2.2' }, x('Document', featureCollection.features.flatMap((feature) => convertFeature(feature)))),
+    ]));
+}
+function convertChild(child) {
+    switch (child.type) {
+        case 'Feature':
+            return convertFeature(child);
+        case 'folder':
+            return convertFolder(child);
+    }
+}
+function convertFolder(folder) {
+    const id = ['string', 'number'].includes(typeof folder.meta.id)
+        ? {
+            id: String(folder.meta.id),
+        }
+        : {};
+    return [
+        BR,
+        x('Folder', id, [
+            BR,
+            ...folderMeta(folder.meta),
+            BR,
+            TAB,
+            ...folder.children.flatMap((child) => convertChild(child)),
+        ]),
+    ];
+}
+const META_PROPERTIES = [
+    'address',
+    'description',
+    'name',
+    'open',
+    'visibility',
+    'phoneNumber',
+];
+function folderMeta(meta) {
+    return META_PROPERTIES.filter((p) => meta[p] !== undefined).map((p) => {
+        return x(p, [u('text', String(meta[p]))]);
+    });
+}
+function convertFeature(feature) {
+    const { id } = feature;
+    const idMember = ['string', 'number'].includes(typeof id)
+        ? {
+            id: id,
+        }
+        : {};
+    return [
+        BR,
+        x('Placemark', idMember, [
+            BR,
+            ...propertiesToTags(feature.properties),
+            BR,
+            TAB,
+            ...(feature.geometry ? [convertGeometry(feature.geometry)] : []),
+        ]),
+    ];
+}
+function join(position) {
+    return `${position[0]},${position[1]}`;
+}
+function coord1(coordinates) {
+    return x('coordinates', [u('text', join(coordinates))]);
+}
+function coord2(coordinates) {
+    return x('coordinates', [u('text', coordinates.map(join).join('\n'))]);
+}
+function toString(value) {
+    switch (typeof value) {
+        case 'string': {
+            return value;
+        }
+        case 'boolean':
+        case 'number': {
+            return String(value);
+        }
+        case 'object': {
+            try {
+                return JSON.stringify(value);
+            }
+            catch (e) {
+                return '';
+            }
+        }
+    }
+    return '';
+}
+function maybeCData(value) {
+    if (value &&
+        typeof value === 'object' &&
+        '@type' in value &&
+        value['@type'] === 'html' &&
+        'value' in value &&
+        typeof value.value === 'string') {
+        return u('cdata', value.value);
+    }
+    return toString(value);
+}
+function propertiesToTags(properties) {
+    if (!properties)
+        return [];
+    const { name, description, visibility, ...otherProperties } = properties;
+    return [
+        name && x('name', [u('text', toString(name))]),
+        description && x('description', [u('text', maybeCData(description))]),
+        visibility !== undefined &&
+            x('visibility', [u('text', visibility ? '1' : '0')]),
+        x('ExtendedData', Object.entries(otherProperties).flatMap(([name, value]) => [
+            BR,
+            TAB,
+            x('Data', { name: name }, [
+                x('value', [
+                    u('text', typeof value === 'string' ? value : JSON.stringify(value)),
+                ]),
+            ]),
+        ])),
+    ].filter(Boolean);
+}
+const linearRing = (ring) => x('LinearRing', [coord2(ring)]);
+function convertMultiPoint(geometry) {
+    return x('MultiGeometry', geometry.coordinates.flatMap((coordinates) => [
+        BR,
+        convertGeometry({
+            type: 'Point',
+            coordinates,
+        }),
+    ]));
+}
+function convertMultiLineString(geometry) {
+    return x('MultiGeometry', geometry.coordinates.flatMap((coordinates) => [
+        BR,
+        convertGeometry({
+            type: 'LineString',
+            coordinates,
+        }),
+    ]));
+}
+function convertMultiPolygon(geometry) {
+    return x('MultiGeometry', geometry.coordinates.flatMap((coordinates) => [
+        BR,
+        convertGeometry({
+            type: 'Polygon',
+            coordinates,
+        }),
+    ]));
+}
+function convertPolygon(geometry) {
+    const [outerBoundary, ...innerRings] = geometry.coordinates;
+    return x('Polygon', [
+        BR,
+        x('outerBoundaryIs', [BR, TAB, linearRing(outerBoundary)]),
+        ...innerRings.flatMap((innerRing) => [
+            BR,
+            x('innerBoundaryIs', [BR, TAB, linearRing(innerRing)]),
+        ]),
+    ]);
+}
+function convertGeometry(geometry) {
+    switch (geometry.type) {
+        case 'Point':
+            return x('Point', [coord1(geometry.coordinates)]);
+        case 'MultiPoint':
+            return convertMultiPoint(geometry);
+        case 'LineString':
+            return x('LineString', [coord2(geometry.coordinates)]);
+        case 'MultiLineString':
+            return convertMultiLineString(geometry);
+        case 'Polygon':
+            return convertPolygon(geometry);
+        case 'MultiPolygon':
+            return convertMultiPolygon(geometry);
+        case 'GeometryCollection':
+            return x('MultiGeometry', geometry.geometries.flatMap((geometry) => [
+                BR,
+                convertGeometry(geometry),
+            ]));
+    }
+}
+
+exports.foldersToKML = foldersToKML;
+exports.toKML = toKML;
+
+
+},{}],46:[function(require,module,exports){
 (function (process){(function (){
 /**
  * @popperjs/core v2.11.6 - MIT License
@@ -8821,7 +11538,11 @@ exports.preventOverflow = preventOverflow$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":160}],33:[function(require,module,exports){
+},{"_process":165}],47:[function(require,module,exports){
+!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t="undefined"!=typeof globalThis?globalThis:t||self).toGeoJSON={})}(this,(function(t){"use strict";function e(t,e){return Array.from(t.getElementsByTagName(e))}function n(t){return"#"===t[0]?t:`#${t}`}function o(t){return t?.normalize(),t&&t.textContent||""}function r(t,e,n){const o=t.getElementsByTagName(e),r=o.length?o[0]:null;return r&&n&&n(r),r}function i(t,e,n){const o={};if(!t)return o;const r=t.getElementsByTagName(e),i=r.length?r[0]:null;return i&&n?n(i,o):o}function s(t,e,n){const i=o(r(t,e));return i&&n&&n(i)||{}}function c(t,e,n){const i=parseFloat(o(r(t,e)));if(!isNaN(i))return i&&n&&n(i)||{}}function a(t,e,n){const i=parseFloat(o(r(t,e)));if(!isNaN(i))return i&&n&&n(i),i}function l(t,e){const n={};for(const o of e)s(t,o,(t=>{n[o]=t}));return n}function u(t){return 1===t?.nodeType}function f(t){return i(t,"line",(t=>Object.assign({},s(t,"color",(t=>({stroke:`#${t}`}))),c(t,"opacity",(t=>({"stroke-opacity":t}))),c(t,"width",(t=>({"stroke-width":96*t/25.4}))))))}function p(t){let e=[];if(null===t)return e;for(const n of Array.from(t.childNodes)){if(!u(n))continue;const t=g(n.nodeName);if("gpxtpx:TrackPointExtension"===t)e=e.concat(p(n));else{const r=o(n);e.push([t,d(r)])}}return e}function g(t){return["heart","gpxtpx:hr","hr"].includes(t)?"heart":t}function d(t){const e=parseFloat(t);return isNaN(e)?t:e}function h(t){const e=[parseFloat(t.getAttribute("lon")||""),parseFloat(t.getAttribute("lat")||"")];if(isNaN(e[0])||isNaN(e[1]))return null;a(t,"ele",(t=>{e.push(t)}));const n=r(t,"time");return{coordinates:e,time:n?o(n):null,extendedValues:p(r(t,"extensions"))}}function m(t){const n=l(t,["name","cmt","desc","type","time","keywords"]),r=Array.from(t.getElementsByTagNameNS("http://www.garmin.com/xmlschemas/GpxExtensions/v3","*"));for(const e of r)e.parentNode?.parentNode===t&&(n[e.tagName.replace(":","_")]=o(e));const i=e(t,"link");return i.length&&(n.links=i.map((t=>Object.assign({href:t.getAttribute("href")},l(t,["text","type"]))))),n}function y(t,n){const o=e(t,n),r=[],i=[],s={};for(let t=0;t<o.length;t++){const e=h(o[t]);if(e){r.push(e.coordinates),e.time&&i.push(e.time);for(const[n,r]of e.extendedValues){const e="heart"===n?n:n.replace("gpxtpx:","")+"s";s[e]||(s[e]=Array(o.length).fill(null)),s[e][t]=r}}}if(!(r.length<2))return{line:r,times:i,extendedValues:s}}function b(t){const e=y(t,"rtept");if(e)return{type:"Feature",properties:Object.assign({_gpxType:"rte"},m(t),f(r(t,"extensions"))),geometry:{type:"LineString",coordinates:e.line}}}function N(t){const n=e(t,"trkseg"),o=[],i=[],s=[];for(const t of n){const e=y(t,"trkpt");e&&(s.push(e),e.times&&e.times.length&&i.push(e.times))}if(0===s.length)return null;const c=s.length>1,a=Object.assign({_gpxType:"trk"},m(t),f(r(t,"extensions")),i.length?{coordinateProperties:{times:c?i:i[0]}}:{});for(const t of s){o.push(t.line),a.coordinateProperties||(a.coordinateProperties={});const e=a.coordinateProperties,n=Object.entries(t.extendedValues);for(let t=0;t<n.length;t++){const[o,r]=n[t];c?(e[o]||(e[o]=s.map((t=>new Array(t.line.length).fill(null)))),e[o][t]=r):e[o]=r}}return{type:"Feature",properties:a,geometry:c?{type:"MultiLineString",coordinates:o}:{type:"LineString",coordinates:o[0]}}}function x(t){const e=Object.assign(m(t),l(t,["sym"])),n=h(t);return n?{type:"Feature",properties:e,geometry:{type:"Point",coordinates:n.coordinates}}:null}function*k(t){for(const n of e(t,"trk")){const t=N(n);t&&(yield t)}for(const n of e(t,"rte")){const t=b(n);t&&(yield t)}for(const n of e(t,"wpt")){const t=x(n);t&&(yield t)}}const A=[["heartRate","heartRates"],["Cadence","cadences"],["Speed","speeds"],["Watts","watts"]],S=[["TotalTimeSeconds","totalTimeSeconds"],["DistanceMeters","distanceMeters"],["MaximumSpeed","maxSpeed"],["AverageHeartRateBpm","avgHeartRate"],["MaximumHeartRateBpm","maxHeartRate"],["AvgSpeed","avgSpeed"],["AvgWatts","avgWatts"],["MaxWatts","maxWatts"]];function T(t,e){const n=[];for(const[i,s]of e){let e=r(t,i);if(!e){const n=t.getElementsByTagNameNS("http://www.garmin.com/xmlschemas/ActivityExtension/v2",i);n.length&&(e=n[0])}const c=parseFloat(o(e));isNaN(c)||n.push([s,c])}return n}function v(t){const e=[a(t,"LongitudeDegrees"),a(t,"LatitudeDegrees")];if(void 0===e[0]||isNaN(e[0])||void 0===e[1]||isNaN(e[1]))return null;const n=r(t,"HeartRateBpm"),i=o(r(t,"Time"));return r(t,"AltitudeMeters",(t=>{const n=parseFloat(o(t));isNaN(n)||e.push(n)})),{coordinates:e,time:i||null,heartRate:n?parseFloat(o(n)):null,extensions:T(t,A)}}function F(t){const n=e(t,"Trackpoint"),o=[],r=[],i=[];if(n.length<2)return null;const s={},c={extendedProperties:s};for(let t=0;t<n.length;t++){const e=v(n[t]);if(null===e)continue;o.push(e.coordinates);const{time:c,heartRate:a,extensions:l}=e;c&&r.push(c),a&&i.push(a);for(const[e,o]of l)s[e]||(s[e]=Array(n.length).fill(null)),s[e][t]=o}return o.length<2?null:Object.assign(c,{line:o,times:r,heartRates:i})}function P(t){const n=e(t,"Track"),r=[],s=[],c=[],a=[];let l;const u=Object.assign(Object.fromEntries(T(t,S)),i(t,"Name",(t=>({name:o(t)}))));for(const t of n)l=F(t),l&&(r.push(l.line),l.times.length&&s.push(l.times),l.heartRates.length&&c.push(l.heartRates),a.push(l.extendedProperties));for(let t=0;t<a.length;t++){const e=a[t];for(const o in e)1===n.length?l&&(u[o]=l.extendedProperties[o]):(u[o]||(u[o]=r.map((t=>Array(t.length).fill(null)))),u[o][t]=e[o])}return 0===r.length?null:((s.length||c.length)&&(u.coordinateProperties=Object.assign(s.length?{times:1===r.length?s[0]:s}:{},c.length?{heart:1===r.length?c[0]:c}:{})),{type:"Feature",properties:u,geometry:1===r.length?{type:"LineString",coordinates:r[0]}:{type:"MultiLineString",coordinates:r}})}function*j(t){for(const n of e(t,"Lap")){const t=P(n);t&&(yield t)}for(const n of e(t,"Courses")){const t=P(n);t&&(yield t)}}function O(t,e){const n={},o="stroke"==e||"fill"===e?e:e+"-color";return"#"===t[0]&&(t=t.substring(1)),6===t.length||3===t.length?n[o]="#"+t:8===t.length&&(n[e+"-opacity"]=parseInt(t.substring(0,2),16)/255,n[o]="#"+t.substring(6,8)+t.substring(4,6)+t.substring(2,4)),n}function w(t,e,n){const o={};return a(t,e,(t=>{o[n]=t})),o}function L(t,e){return i(t,"color",(t=>O(o(t),e)))}function M(t){return Object.assign({},function(t){return i(t,"PolyStyle",((t,e)=>Object.assign(e,i(t,"color",(t=>O(o(t),"fill"))),s(t,"fill",(t=>{if("0"===t)return{"fill-opacity":0}})),s(t,"outline",(t=>{if("0"===t)return{"stroke-opacity":0}})))))}(t),function(t){return i(t,"LineStyle",(t=>Object.assign(L(t,"stroke"),w(t,"width","stroke-width"))))}(t),function(t){return i(t,"LabelStyle",(t=>Object.assign(L(t,"label"),w(t,"scale","label-scale"))))}(t),function(t){return i(t,"IconStyle",(t=>Object.assign(L(t,"icon"),w(t,"scale","icon-scale"),w(t,"heading","icon-heading"),i(t,"hotSpot",(t=>{const e=parseFloat(t.getAttribute("x")||""),n=parseFloat(t.getAttribute("y")||""),o=t.getAttribute("xunits")||"",r=t.getAttribute("yunits")||"";return isNaN(e)||isNaN(n)?{}:{"icon-offset":[e,n],"icon-offset-units":[o,r]}})),i(t,"Icon",((t,e)=>(s(t,"href",(t=>{e.icon=t})),e))))))}(t))}const R=/\s*/g,E=/^\s*|\s*$/g,B=/\s+/;function C(t){return t.replace(R,"").split(",").map(parseFloat).filter((t=>!isNaN(t))).slice(0,3)}function G(t){return t.replace(E,"").split(B).map(C).filter((t=>t.length>=2))}function D(t){let n=e(t,"coord");var r,i,s;0===n.length&&(r=t,i="coord",s="*",n=Array.from(r.getElementsByTagNameNS(s,i)));const c=n.map((t=>o(t).split(" ").map(parseFloat)));return 0===c.length?null:{geometry:c.length>2?{type:"LineString",coordinates:c}:{type:"Point",coordinates:c[0]},times:e(t,"when").map((t=>o(t)))}}function W(t){if(0===t.length)return t;const e=t[0],n=t[t.length-1];let o=!0;for(let t=0;t<Math.max(e.length,n.length);t++)if(e[t]!==n[t]){o=!1;break}return o?t:t.concat([t[0]])}const H=["Polygon","LineString","Point","Track","gx:Track"];function _(t){return o(r(t,"coordinates"))}function U(t){const n=[],o=[];for(const e of["MultiGeometry","MultiTrack","gx:MultiTrack"]){const n=r(t,e);if(n)return U(n)}for(const r of H)for(const i of e(t,r))switch(r){case"Point":{const t=C(_(i));t.length>=2&&n.push({type:"Point",coordinates:t});break}case"LineString":{const t=G(_(i));t.length>=2&&n.push({type:"LineString",coordinates:t});break}case"Polygon":{const t=[];for(const n of e(i,"LinearRing")){const e=W(G(_(n)));e.length>=4&&t.push(e)}t.length&&n.push({type:"Polygon",coordinates:t});break}case"Track":case"gx:Track":{const t=D(i);if(!t)break;const{times:e,geometry:r}=t;n.push(r),e.length&&o.push(e);break}}return{geometries:n,coordTimes:o}}function V(t){return i(t,"ExtendedData",((t,n)=>{for(const i of e(t,"Data"))n[i.getAttribute("name")||""]=o(r(i,"value"));for(const r of e(t,"SimpleData"))n[r.getAttribute("name")||""]=o(r);return n}))}function I(t){return 0===t.length?null:1===t.length?t[0]:{type:"GeometryCollection",geometries:t}}function $(t){return i(t,"TimeSpan",(t=>({timespan:{begin:o(r(t,"begin")),end:o(r(t,"end"))}})))}function z(t){return i(t,"TimeStamp",(t=>({timestamp:o(r(t,"when"))})))}function J(t,e){return s(t,"styleUrl",(t=>(t=n(t),e[t]?Object.assign({styleUrl:t},e[t]):{styleUrl:t})))}function q(t){const e=r(t,"description");for(const t of Array.from(e?.childNodes||[]))if(4===t.nodeType)return{description:{"@type":"html",value:o(t)}};return{}}function K(t,e){const{coordTimes:n,geometries:o}=U(t),r={type:"Feature",geometry:I(o),properties:Object.assign(l(t,["name","address","visibility","open","phoneNumber","description"]),q(t),J(t,e),M(t),V(t),$(t),z(t),n.length?{coordinateProperties:{times:1===n.length?n[0]:n}}:{})};void 0!==r.properties?.visibility&&(r.properties.visibility="0"!==r.properties.visibility);const i=t.getAttribute("id");return null!==i&&""!==i&&(r.id=i),r}function Q(t){let e=t.getAttribute("id");const o=t.parentNode;return!e&&u(o)&&"CascadingStyle"===o.localName&&(e=o.getAttribute("kml:id")||o.getAttribute("id")),n(e||"")}function X(t){const o={};for(const n of e(t,"Style"))o[Q(n)]=M(n);for(const r of e(t,"StyleMap")){const t=n(r.getAttribute("id")||"");s(r,"styleUrl",(e=>{e=n(e),o[e]&&(o[t]=o[e])}))}return o}const Y=["name","visibility","open","address","description","phoneNumber","visibility"];function*Z(t){const n=X(t);for(const o of e(t,"Placemark")){const t=K(o,n);t&&(yield t)}}t.gpx=function(t){return{type:"FeatureCollection",features:Array.from(k(t))}},t.gpxGen=k,t.kml=function(t){return{type:"FeatureCollection",features:Array.from(Z(t))}},t.kmlGen=Z,t.kmlWithFolders=function(t){const e=X(t),n={type:"root",children:[]};return function t(n,r){if(u(n))switch(n.tagName){case"Placemark":{const t=K(n,e);t&&r.children.push(t);break}case"Folder":{const t=function(t){const e={};for(const n of Array.from(t.childNodes))u(n)&&Y.includes(n.tagName)&&(e[n.tagName]=o(n));return{type:"folder",meta:e,children:[]}}(n);r.children.push(t),r=t;break}}if(n.childNodes)for(let e=0;e<n.childNodes.length;e++)t(n.childNodes[e],r)}(t,n),n},t.tcx=function(t){return{type:"FeatureCollection",features:Array.from(j(t))}},t.tcxGen=j,Object.defineProperty(t,"__esModule",{value:!0})}));
+
+
+},{}],48:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var meta_1 = require("@turf/meta");
@@ -8940,7 +11661,7 @@ function rad(num) {
     return (num * Math.PI) / 180;
 }
 
-},{"@turf/meta":41}],34:[function(require,module,exports){
+},{"@turf/meta":56}],49:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var meta_1 = require("@turf/meta");
@@ -8979,7 +11700,7 @@ function bbox(geojson) {
 bbox["default"] = bbox;
 exports.default = bbox;
 
-},{"@turf/meta":41}],35:[function(require,module,exports){
+},{"@turf/meta":56}],50:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -9027,7 +11748,7 @@ function circle(center, radius, options) {
 }
 exports.default = circle;
 
-},{"@turf/destination":36,"@turf/helpers":38}],36:[function(require,module,exports){
+},{"@turf/destination":51,"@turf/helpers":53}],51:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 // http://en.wikipedia.org/wiki/Haversine_formula
@@ -9079,7 +11800,7 @@ function destination(origin, distance, bearing, options) {
 }
 exports.default = destination;
 
-},{"@turf/helpers":38,"@turf/invariant":39}],37:[function(require,module,exports){
+},{"@turf/helpers":53,"@turf/invariant":54}],52:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var invariant_1 = require("@turf/invariant");
@@ -9122,7 +11843,7 @@ function distance(from, to, options) {
 }
 exports.default = distance;
 
-},{"@turf/helpers":38,"@turf/invariant":39}],38:[function(require,module,exports){
+},{"@turf/helpers":53,"@turf/invariant":54}],53:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -9848,7 +12569,7 @@ function validateId(id) {
 }
 exports.validateId = validateId;
 
-},{}],39:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var helpers_1 = require("@turf/helpers");
@@ -10083,7 +12804,7 @@ function getType(geojson, _name) {
 }
 exports.getType = getType;
 
-},{"@turf/helpers":38}],40:[function(require,module,exports){
+},{"@turf/helpers":53}],55:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -10117,7 +12838,7 @@ function length(geojson, options) {
 }
 exports.default = length;
 
-},{"@turf/distance":37,"@turf/meta":41}],41:[function(require,module,exports){
+},{"@turf/distance":52,"@turf/meta":56}],56:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -11540,7 +14261,7 @@ exports.propReduce = propReduce;
 exports.segmentEach = segmentEach;
 exports.segmentReduce = segmentReduce;
 
-},{"@turf/helpers":38}],42:[function(require,module,exports){
+},{"@turf/helpers":53}],57:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -12050,7 +14771,7 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"object-assign":152,"util/":45}],43:[function(require,module,exports){
+},{"object-assign":158,"util/":60}],58:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -12075,14 +14796,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],44:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],45:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 (function (process,global){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -12672,7 +15393,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":44,"_process":160,"inherits":43}],46:[function(require,module,exports){
+},{"./support/isBuffer":59,"_process":165,"inherits":58}],61:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -12703,7 +15424,7 @@ module.exports = function availableTypedArrays() {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],47:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 (function (global){(function (){
 /*! http://mths.be/base64 v0.1.0 by @mathias | MIT license */
 ;(function(root) {
@@ -12872,7 +15593,7 @@ module.exports = function availableTypedArrays() {
 }(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],48:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -13024,7 +15745,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],49:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 // Browser Request
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13520,11 +16241,9 @@ function b64_enc (data) {
 }));
 //UMD FOOTER END
 
-},{}],50:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 
-},{}],51:[function(require,module,exports){
-arguments[4][50][0].apply(exports,arguments)
-},{"dup":50}],52:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -15305,7 +18024,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":48,"buffer":52,"ieee754":97}],53:[function(require,module,exports){
+},{"base64-js":63,"buffer":66,"ieee754":104}],67:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -15322,7 +18041,7 @@ module.exports = function callBoundIntrinsic(name, allowMissing) {
 	return intrinsic;
 };
 
-},{"./":54,"get-intrinsic":90}],54:[function(require,module,exports){
+},{"./":68,"get-intrinsic":97}],68:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
@@ -15371,7 +18090,7 @@ if ($defineProperty) {
 	module.exports.apply = applyBind;
 }
 
-},{"function-bind":78,"get-intrinsic":90}],55:[function(require,module,exports){
+},{"function-bind":92,"get-intrinsic":97}],69:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 
@@ -15503,7 +18222,7 @@ clone.clonePrototype = function(parent) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":52}],56:[function(require,module,exports){
+},{"buffer":66}],70:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -15665,7 +18384,7 @@ clone.clonePrototype = function(parent) {
   });
 });
 
-},{"../../lib/codemirror":60}],57:[function(require,module,exports){
+},{"../../lib/codemirror":74}],71:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -15786,7 +18505,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
 });
 
-},{"../../lib/codemirror":60}],58:[function(require,module,exports){
+},{"../../lib/codemirror":74}],72:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -15947,7 +18666,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   });
 });
 
-},{"../../lib/codemirror":60}],59:[function(require,module,exports){
+},{"../../lib/codemirror":74}],73:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -16118,7 +18837,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 });
 
-},{"../../lib/codemirror":60,"./foldcode":58}],60:[function(require,module,exports){
+},{"../../lib/codemirror":74,"./foldcode":72}],74:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -25992,7 +28711,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
 })));
 
-},{}],61:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
@@ -26954,12 +29673,32 @@ CodeMirror.defineMIME("application/typescript", { name: "javascript", typescript
 
 });
 
-},{"../../lib/codemirror":60}],62:[function(require,module,exports){
-var dsv = require('dsv'),
-    sexagesimal = require('sexagesimal');
+},{"../../lib/codemirror":74}],76:[function(require,module,exports){
+'use strict';
 
-function isLat(f) { return !!f.match(/(Lat)(itude)?/gi); }
-function isLon(f) { return !!f.match(/(L)(on|ng)(gitude)?/i); }
+var dsv = require('d3-dsv'),
+    sexagesimal = require('@mapbox/sexagesimal');
+
+var latRegex = /(Lat)(itude)?/gi,
+    lonRegex = /(L)(on|ng)(gitude)?/i;
+
+function guessHeader(row, regexp) {
+    var name, match, score;
+    for (var f in row) {
+        match = f.match(regexp);
+        if (match && (!name || match[0].length / f.length > score)) {
+            score = match[0].length / f.length;
+            name = f;
+        }
+    }
+    return name;
+}
+
+function guessLatHeader(row) { return guessHeader(row, latRegex); }
+function guessLonHeader(row) { return guessHeader(row, lonRegex); }
+
+function isLat(f) { return !!f.match(latRegex); }
+function isLon(f) { return !!f.match(lonRegex); }
 
 function keyCount(o) {
     return (typeof o == 'object') ? Object.keys(o).length : 0;
@@ -26969,8 +29708,8 @@ function autoDelimiter(x) {
     var delimiters = [',', ';', '\t', '|'];
     var results = [];
 
-    delimiters.forEach(function(delimiter) {
-        var res = dsv(delimiter).parse(x);
+    delimiters.forEach(function (delimiter) {
+        var res = dsv.dsvFormat(delimiter).parse(x);
         if (res.length >= 1) {
             var count = keyCount(res[0]);
             for (var i = 0; i < res.length; i++) {
@@ -26984,7 +29723,7 @@ function autoDelimiter(x) {
     });
 
     if (results.length) {
-        return results.sort(function(a, b) {
+        return results.sort(function (a, b) {
             return b.arity - a.arity;
         })[0].delimiter;
     } else {
@@ -26992,10 +29731,21 @@ function autoDelimiter(x) {
     }
 }
 
+/**
+ * Silly stopgap for dsv to d3-dsv upgrade
+ *
+ * @param {Array} x dsv output
+ * @returns {Array} array without columns member
+ */
+function deleteColumns(x) {
+    delete x.columns;
+    return x;
+}
+
 function auto(x) {
     var delimiter = autoDelimiter(x);
     if (!delimiter) return null;
-    return dsv(delimiter).parse(x);
+    return deleteColumns(dsv.dsvFormat(delimiter).parse(x));
 }
 
 function csv2geojson(x, options, callback) {
@@ -27008,45 +29758,69 @@ function csv2geojson(x, options, callback) {
     options.delimiter = options.delimiter || ',';
 
     var latfield = options.latfield || '',
-        lonfield = options.lonfield || '';
+        lonfield = options.lonfield || '',
+        crs = options.crs || '';
 
     var features = [],
-        featurecollection = { type: 'FeatureCollection', features: features };
+        featurecollection = {type: 'FeatureCollection', features: features};
+
+    if (crs !== '') {
+        featurecollection.crs = {type: 'name', properties: {name: crs}};
+    }
 
     if (options.delimiter === 'auto' && typeof x == 'string') {
         options.delimiter = autoDelimiter(x);
-        if (!options.delimiter) return callback({
-            type: 'Error',
-            message: 'Could not autodetect delimiter'
-        });
+        if (!options.delimiter) {
+            callback({
+                type: 'Error',
+                message: 'Could not autodetect delimiter'
+            });
+            return;
+        }
     }
 
-    var parsed = (typeof x == 'string') ? dsv(options.delimiter).parse(x) : x;
+    var numericFields = options.numericFields ? options.numericFields.split(',') : null;
 
-    if (!parsed.length) return callback(null, featurecollection);
+    var parsed = (typeof x == 'string') ?
+        dsv.dsvFormat(options.delimiter).parse(x, function (d) {
+            if (numericFields) {
+                for (var key in d) {
+                    if (numericFields.includes(key)) {
+                        d[key] = +d[key];
+                    }
+                }
+            }
+            return d;
+        }) : x;
 
-    if (!latfield || !lonfield) {
-        for (var f in parsed[0]) {
-            if (!latfield && isLat(f)) latfield = f;
-            if (!lonfield && isLon(f)) lonfield = f;
-        }
-        if (!latfield || !lonfield) {
-            var fields = [];
-            for (var k in parsed[0]) fields.push(k);
-            return callback({
-                type: 'Error',
-                message: 'Latitude and longitude fields not present',
-                data: parsed,
-                fields: fields
-            });
-        }
+    if (!parsed.length) {
+        callback(null, featurecollection);
+        return;
     }
 
     var errors = [];
+    var i;
 
-    for (var i = 0; i < parsed.length; i++) {
+
+    if (!latfield) latfield = guessLatHeader(parsed[0]);
+    if (!lonfield) lonfield = guessLonHeader(parsed[0]);
+    var noGeometry = (!latfield || !lonfield);
+
+    if (noGeometry) {
+        for (i = 0; i < parsed.length; i++) {
+            features.push({
+                type: 'Feature',
+                properties: parsed[i],
+                geometry: null
+            });
+        }
+        callback(errors.length ? errors : null, featurecollection);
+        return;
+    }
+
+    for (i = 0; i < parsed.length; i++) {
         if (parsed[i][lonfield] !== undefined &&
-            parsed[i][lonfield] !== undefined) {
+            parsed[i][latfield] !== undefined) {
 
             var lonk = parsed[i][lonfield],
                 latk = parsed[i][latfield],
@@ -27065,7 +29839,8 @@ function csv2geojson(x, options, callback) {
                 isNaN(latf)) {
                 errors.push({
                     message: 'A row contained an invalid value for latitude or longitude',
-                    row: parsed[i]
+                    row: parsed[i],
+                    index: i
                 });
             } else {
                 if (!options.includeLatLon) {
@@ -27088,7 +29863,7 @@ function csv2geojson(x, options, callback) {
         }
     }
 
-    callback(errors.length ? errors: null, featurecollection);
+    callback(errors.length ? errors : null, featurecollection);
 }
 
 function toLine(gj) {
@@ -27103,7 +29878,15 @@ function toLine(gj) {
     for (var i = 0; i < features.length; i++) {
         line.geometry.coordinates.push(features[i].geometry.coordinates);
     }
-    line.properties = features[0].properties;
+    line.properties = features.reduce(function (aggregatedProperties, newFeature) {
+        for (var key in newFeature.properties) {
+            if (!aggregatedProperties[key]) {
+                aggregatedProperties[key] = [];
+            }
+            aggregatedProperties[key].push(newFeature.properties[key]);
+        }
+        return aggregatedProperties;
+    }, {});
     return {
         type: 'FeatureCollection',
         features: [line]
@@ -27122,7 +29905,15 @@ function toPolygon(gj) {
     for (var i = 0; i < features.length; i++) {
         poly.geometry.coordinates[0].push(features[i].geometry.coordinates);
     }
-    poly.properties = features[0].properties;
+    poly.properties = features.reduce(function (aggregatedProperties, newFeature) {
+        for (var key in newFeature.properties) {
+            if (!aggregatedProperties[key]) {
+                aggregatedProperties[key] = [];
+            }
+            aggregatedProperties[key].push(newFeature.properties[key]);
+        }
+        return aggregatedProperties;
+    }, {});
     return {
         type: 'FeatureCollection',
         features: [poly]
@@ -27132,8 +29923,10 @@ function toPolygon(gj) {
 module.exports = {
     isLon: isLon,
     isLat: isLat,
-    csv: dsv.csv.parse,
-    tsv: dsv.tsv.parse,
+    guessLatHeader: guessLatHeader,
+    guessLonHeader: guessLonHeader,
+    csv: dsv.csvParse,
+    tsv: dsv.tsvParse,
     dsv: dsv,
     auto: auto,
     csv2geojson: csv2geojson,
@@ -27141,7 +29934,177 @@ module.exports = {
     toPolygon: toPolygon
 };
 
-},{"dsv":69,"sexagesimal":163}],63:[function(require,module,exports){
+},{"@mapbox/sexagesimal":44,"d3-dsv":77}],77:[function(require,module,exports){
+// https://d3js.org/d3-dsv/ Version 1.0.1. Copyright 2016 Mike Bostock.
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+  typeof define === 'function' && define.amd ? define(['exports'], factory) :
+  (factory((global.d3 = global.d3 || {})));
+}(this, function (exports) { 'use strict';
+
+  function objectConverter(columns) {
+    return new Function("d", "return {" + columns.map(function(name, i) {
+      return JSON.stringify(name) + ": d[" + i + "]";
+    }).join(",") + "}");
+  }
+
+  function customConverter(columns, f) {
+    var object = objectConverter(columns);
+    return function(row, i) {
+      return f(object(row), i, columns);
+    };
+  }
+
+  // Compute unique columns in order of discovery.
+  function inferColumns(rows) {
+    var columnSet = Object.create(null),
+        columns = [];
+
+    rows.forEach(function(row) {
+      for (var column in row) {
+        if (!(column in columnSet)) {
+          columns.push(columnSet[column] = column);
+        }
+      }
+    });
+
+    return columns;
+  }
+
+  function dsv(delimiter) {
+    var reFormat = new RegExp("[\"" + delimiter + "\n]"),
+        delimiterCode = delimiter.charCodeAt(0);
+
+    function parse(text, f) {
+      var convert, columns, rows = parseRows(text, function(row, i) {
+        if (convert) return convert(row, i - 1);
+        columns = row, convert = f ? customConverter(row, f) : objectConverter(row);
+      });
+      rows.columns = columns;
+      return rows;
+    }
+
+    function parseRows(text, f) {
+      var EOL = {}, // sentinel value for end-of-line
+          EOF = {}, // sentinel value for end-of-file
+          rows = [], // output rows
+          N = text.length,
+          I = 0, // current character index
+          n = 0, // the current line number
+          t, // the current token
+          eol; // is the current token followed by EOL?
+
+      function token() {
+        if (I >= N) return EOF; // special case: end of file
+        if (eol) return eol = false, EOL; // special case: end of line
+
+        // special case: quotes
+        var j = I, c;
+        if (text.charCodeAt(j) === 34) {
+          var i = j;
+          while (i++ < N) {
+            if (text.charCodeAt(i) === 34) {
+              if (text.charCodeAt(i + 1) !== 34) break;
+              ++i;
+            }
+          }
+          I = i + 2;
+          c = text.charCodeAt(i + 1);
+          if (c === 13) {
+            eol = true;
+            if (text.charCodeAt(i + 2) === 10) ++I;
+          } else if (c === 10) {
+            eol = true;
+          }
+          return text.slice(j + 1, i).replace(/""/g, "\"");
+        }
+
+        // common case: find next delimiter or newline
+        while (I < N) {
+          var k = 1;
+          c = text.charCodeAt(I++);
+          if (c === 10) eol = true; // \n
+          else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \r|\r\n
+          else if (c !== delimiterCode) continue;
+          return text.slice(j, I - k);
+        }
+
+        // special case: last token before EOF
+        return text.slice(j);
+      }
+
+      while ((t = token()) !== EOF) {
+        var a = [];
+        while (t !== EOL && t !== EOF) {
+          a.push(t);
+          t = token();
+        }
+        if (f && (a = f(a, n++)) == null) continue;
+        rows.push(a);
+      }
+
+      return rows;
+    }
+
+    function format(rows, columns) {
+      if (columns == null) columns = inferColumns(rows);
+      return [columns.map(formatValue).join(delimiter)].concat(rows.map(function(row) {
+        return columns.map(function(column) {
+          return formatValue(row[column]);
+        }).join(delimiter);
+      })).join("\n");
+    }
+
+    function formatRows(rows) {
+      return rows.map(formatRow).join("\n");
+    }
+
+    function formatRow(row) {
+      return row.map(formatValue).join(delimiter);
+    }
+
+    function formatValue(text) {
+      return text == null ? ""
+          : reFormat.test(text += "") ? "\"" + text.replace(/\"/g, "\"\"") + "\""
+          : text;
+    }
+
+    return {
+      parse: parse,
+      parseRows: parseRows,
+      format: format,
+      formatRows: formatRows
+    };
+  }
+
+  var csv = dsv(",");
+
+  var csvParse = csv.parse;
+  var csvParseRows = csv.parseRows;
+  var csvFormat = csv.format;
+  var csvFormatRows = csv.formatRows;
+
+  var tsv = dsv("\t");
+
+  var tsvParse = tsv.parse;
+  var tsvParseRows = tsv.parseRows;
+  var tsvFormat = tsv.format;
+  var tsvFormatRows = tsv.formatRows;
+
+  exports.dsvFormat = dsv;
+  exports.csvParse = csvParse;
+  exports.csvParseRows = csvParseRows;
+  exports.csvFormat = csvFormat;
+  exports.csvFormatRows = csvFormatRows;
+  exports.tsvParse = tsvParse;
+  exports.tsvParseRows = tsvParseRows;
+  exports.tsvFormat = tsvFormat;
+  exports.tsvFormatRows = tsvFormatRows;
+
+  Object.defineProperty(exports, '__esModule', { value: true });
+
+}));
+},{}],78:[function(require,module,exports){
 if (typeof module !== 'undefined') {
     module.exports = function(d3) {
         return metatable;
@@ -27332,16 +30295,18 @@ function metatable() {
     return d3.rebind(table, event, 'on');
 }
 
-},{}],64:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 module.exports.structure = require('./src/structure');
 
-},{"./src/structure":68}],65:[function(require,module,exports){
+},{"./src/structure":83}],80:[function(require,module,exports){
 var fieldSize = require('./fieldsize');
 
 var types = {
     string: 'C',
     number: 'N',
-    boolean: 'L'
+    boolean: 'L',
+    // type to use if all values of a field are null
+    null: 'C'
 };
 
 module.exports.multi = multi;
@@ -27355,31 +30320,47 @@ function multi(features) {
     return obj(fields);
 }
 
+/**
+ * @param {Object} a
+ * @param {Object} b
+ * @returns {Object}
+ */
 function inherit(a, b) {
-    for (var i in b) { a[i] = b[i]; }
+    for (var i in b) {
+        var isDef = typeof b[i] !== 'undefined' && b[i] !== null;
+        if (typeof a[i] === 'undefined' || isDef) {
+          a[i] = b[i];
+        }
+    }
     return a;
 }
 
 function obj(_) {
     var fields = {}, o = [];
-    for (var p in _) fields[p] = typeof _[p];
+    for (var p in _) fields[p] = _[p] === null ? 'null' : typeof _[p];
     for (var n in fields) {
         var t = types[fields[n]];
-        o.push({
-            name: n,
-            type: t,
-            size: fieldSize[t]
-        });
+        if(t){
+             o.push({
+                name: n,
+                type: t,
+                size: fieldSize[t]
+            });
+        }
     }
     return o;
 }
 
+/**
+ * @param {Array} fields
+ * @returns {Array}
+ */
 function bytesPer(fields) {
     // deleted flag
     return fields.reduce(function(memo, f) { return memo + f.size; }, 1);
 }
 
-},{"./fieldsize":66}],66:[function(require,module,exports){
+},{"./fieldsize":81}],81:[function(require,module,exports){
 module.exports = {
     // string
     C: 254,
@@ -27397,15 +30378,34 @@ module.exports = {
     B: 8,
 };
 
-},{}],67:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
+/**
+ * @param {string} str
+ * @param {number} len
+ * @param {string} char
+ * @returns {string}
+ */
 module.exports.lpad = function lpad(str, len, char) {
     while (str.length < len) { str = char + str; } return str;
 };
 
+/**
+ * @param {string} str
+ * @param {number} len
+ * @param {string} char
+ * @returns {string}
+ */
 module.exports.rpad = function rpad(str, len, char) {
     while (str.length < len) { str = str + char; } return str;
 };
 
+/**
+ * @param {object} view
+ * @param {number} fieldLength
+ * @param {string} str
+ * @param {number} offset
+ * @returns {number}
+ */
 module.exports.writeField = function writeField(view, fieldLength, str, offset) {
     for (var i = 0; i < fieldLength; i++) {
         view.setUint8(offset, str.charCodeAt(i)); offset++;
@@ -27413,14 +30413,19 @@ module.exports.writeField = function writeField(view, fieldLength, str, offset) 
     return offset;
 };
 
-},{}],68:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 var fieldSize = require('./fieldsize'),
     lib = require('./lib'),
     fields = require('./fields');
 
-module.exports = function structure(data) {
+/**
+ * @param {Array} data
+ * @param {Array} meta
+ * @returns {Object} view
+ */
+module.exports = function structure(data, meta) {
 
-    var field_meta = fields.multi(data),
+    var field_meta = meta || fields.multi(data),
         fieldDescLength = (32 * field_meta.length) + 1,
         bytesPerRecord = fields.bytesPer(field_meta), // deleted flag
         buffer = new ArrayBuffer(
@@ -27429,13 +30434,15 @@ module.exports = function structure(data) {
             // header
             32 +
             // contents
-            (bytesPerRecord * data.length)
-        ),
+            (bytesPerRecord * data.length) +
+            // EOF marker
+            1
+    ),
         now = new Date(),
         view = new DataView(buffer);
 
-    // version number
-    view.setUint8(0, 3);
+    // version number - dBase III
+    view.setUint8(0, 0x03);
     // date of last update
     view.setUint8(1, now.getFullYear() - 1900);
     view.setUint8(2, now.getMonth());
@@ -27449,7 +30456,8 @@ module.exports = function structure(data) {
     // length of each record
     view.setUint16(10, bytesPerRecord, true);
 
-    view.setInt8(fieldDescLength - 1, 13);
+    // Terminator
+    view.setInt8(32 + fieldDescLength - 1, 0x0D);
 
     field_meta.forEach(function(f, i) {
         // field name
@@ -27460,7 +30468,7 @@ module.exports = function structure(data) {
         view.setInt8(32 + i * 32 + 11, f.type.charCodeAt(0));
         // field length
         view.setInt8(32 + i * 32 + 16, f.size);
-        if (f.type == 'N') view.setInt8(32 + i * 32 + 17, 0);
+        if (f.type == 'N') view.setInt8(32 + i * 32 + 17, 3);
     });
 
     offset = fieldDescLength + 32;
@@ -27470,7 +30478,8 @@ module.exports = function structure(data) {
         view.setUint8(offset, 32);
         offset++;
         field_meta.forEach(function(f) {
-            var val = row[f.name] || 0;
+            var val = row[f.name];
+            if (val === null || typeof val === 'undefined') val = '';
 
             switch (f.type) {
                 // boolean
@@ -27479,7 +30488,7 @@ module.exports = function structure(data) {
                     offset++;
                     break;
 
-                // decimal
+                // date
                 case 'D':
                     offset = lib.writeField(view, 8,
                         lib.lpad(val.toString(), 8, ' '), offset);
@@ -27505,17 +30514,17 @@ module.exports = function structure(data) {
     });
 
     // EOF flag
-    view.setUint8(offset - 1, 26);
+    view.setUint8(offset, 0x1A);
 
     return view;
 };
 
-},{"./fields":65,"./fieldsize":66,"./lib":67}],69:[function(require,module,exports){
+},{"./fields":80,"./fieldsize":81,"./lib":82}],84:[function(require,module,exports){
 
 
 module.exports = new Function("dsv.version = \"0.0.3\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.substring(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.substring(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.substring(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && !(a = f(a, n++))) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{}],70:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -27532,7 +30541,7 @@ if ($gOPD) {
 
 module.exports = $gOPD;
 
-},{"get-intrinsic":90}],71:[function(require,module,exports){
+},{"get-intrinsic":97}],86:[function(require,module,exports){
 /*!
  * escape-html
  * Copyright(c) 2012-2013 TJ Holowaychuk
@@ -27612,7 +30621,7 @@ function escapeHtml(string) {
     : html;
 }
 
-},{}],72:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty
@@ -27950,7 +30959,7 @@ if ('undefined' !== typeof module) {
   module.exports = EventEmitter;
 }
 
-},{}],73:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -28449,313 +31458,13 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
   }
 }
 
-},{}],74:[function(require,module,exports){
-module.exports = Extent;
+},{}],89:[function(require,module,exports){
+(function (global){(function (){
+(function(a,b){if("function"==typeof define&&define.amd)define([],b);else if("undefined"!=typeof exports)b();else{b(),a.FileSaver={exports:{}}.exports}})(this,function(){"use strict";function b(a,b){return"undefined"==typeof b?b={autoBom:!1}:"object"!=typeof b&&(console.warn("Deprecated: Expected third argument to be a object"),b={autoBom:!b}),b.autoBom&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\uFEFF",a],{type:a.type}):a}function c(a,b,c){var d=new XMLHttpRequest;d.open("GET",a),d.responseType="blob",d.onload=function(){g(d.response,b,c)},d.onerror=function(){console.error("could not download file")},d.send()}function d(a){var b=new XMLHttpRequest;b.open("HEAD",a,!1);try{b.send()}catch(a){}return 200<=b.status&&299>=b.status}function e(a){try{a.dispatchEvent(new MouseEvent("click"))}catch(c){var b=document.createEvent("MouseEvents");b.initMouseEvent("click",!0,!0,window,0,0,0,80,20,!1,!1,!1,!1,0,null),a.dispatchEvent(b)}}var f="object"==typeof window&&window.window===window?window:"object"==typeof self&&self.self===self?self:"object"==typeof global&&global.global===global?global:void 0,a=f.navigator&&/Macintosh/.test(navigator.userAgent)&&/AppleWebKit/.test(navigator.userAgent)&&!/Safari/.test(navigator.userAgent),g=f.saveAs||("object"!=typeof window||window!==f?function(){}:"download"in HTMLAnchorElement.prototype&&!a?function(b,g,h){var i=f.URL||f.webkitURL,j=document.createElement("a");g=g||b.name||"download",j.download=g,j.rel="noopener","string"==typeof b?(j.href=b,j.origin===location.origin?e(j):d(j.href)?c(b,g,h):e(j,j.target="_blank")):(j.href=i.createObjectURL(b),setTimeout(function(){i.revokeObjectURL(j.href)},4E4),setTimeout(function(){e(j)},0))}:"msSaveOrOpenBlob"in navigator?function(f,g,h){if(g=g||f.name||"download","string"!=typeof f)navigator.msSaveOrOpenBlob(b(f,h),g);else if(d(f))c(f,g,h);else{var i=document.createElement("a");i.href=f,i.target="_blank",setTimeout(function(){e(i)})}}:function(b,d,e,g){if(g=g||open("","_blank"),g&&(g.document.title=g.document.body.innerText="downloading..."),"string"==typeof b)return c(b,d,e);var h="application/octet-stream"===b.type,i=/constructor/i.test(f.HTMLElement)||f.safari,j=/CriOS\/[\d]+/.test(navigator.userAgent);if((j||h&&i||a)&&"undefined"!=typeof FileReader){var k=new FileReader;k.onloadend=function(){var a=k.result;a=j?a:a.replace(/^data:[^;]*;/,"data:attachment/file;"),g?g.location.href=a:location=a,g=null},k.readAsDataURL(b)}else{var l=f.URL||f.webkitURL,m=l.createObjectURL(b);g?g.location=m:location.href=m,g=null,setTimeout(function(){l.revokeObjectURL(m)},4E4)}});f.saveAs=g.saveAs=g,"undefined"!=typeof module&&(module.exports=g)});
 
-function Extent() {
-    if (!(this instanceof Extent)) {
-        return new Extent();
-    }
-    this._bbox = [Infinity, Infinity, -Infinity, -Infinity];
-    this._valid = false;
-}
 
-Extent.prototype.include = function(ll) {
-    this._valid = true;
-    this._bbox[0] = Math.min(this._bbox[0], ll[0]);
-    this._bbox[1] = Math.min(this._bbox[1], ll[1]);
-    this._bbox[2] = Math.max(this._bbox[2], ll[0]);
-    this._bbox[3] = Math.max(this._bbox[3], ll[1]);
-    return this;
-};
-
-Extent.prototype.union = function(other) {
-    this._valid = true;
-    this._bbox[0] = Math.min(this._bbox[0], other[0]);
-    this._bbox[1] = Math.min(this._bbox[1], other[1]);
-    this._bbox[2] = Math.max(this._bbox[2], other[2]);
-    this._bbox[3] = Math.max(this._bbox[3], other[3]);
-    return this;
-};
-
-Extent.prototype.bbox = function() {
-    if (!this._valid) return null;
-    return this._bbox;
-};
-
-Extent.prototype.contains = function(ll) {
-    if (!this._valid) return null;
-    return this._bbox[0] <= ll[0] &&
-        this._bbox[1] <= ll[1] &&
-        this._bbox[2] >= ll[0] &&
-        this._bbox[3] >= ll[1];
-};
-
-Extent.prototype.polygon = function() {
-    if (!this._valid) return null;
-    return {
-        type: 'Polygon',
-        coordinates: [
-            [
-                // W, S
-                [this._bbox[0], this._bbox[1]],
-                // E, S
-                [this._bbox[2], this._bbox[1]],
-                // E, N
-                [this._bbox[2], this._bbox[3]],
-                // W, N
-                [this._bbox[0], this._bbox[3]],
-                // W, S
-                [this._bbox[0], this._bbox[1]]
-            ]
-        ]
-    };
-};
-
-},{}],75:[function(require,module,exports){
-/* FileSaver.js
- *  A saveAs() FileSaver implementation.
- *  2014-05-27
- *
- *  By Eli Grey, http://eligrey.com
- *  License: X11/MIT
- *    See https://github.com/eligrey/FileSaver.js/blob/master/LICENSE.md
- */
-
-/*global self */
-/*jslint bitwise: true, indent: 4, laxbreak: true, laxcomma: true, smarttabs: true, plusplus: true */
-
-/*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
-
-var saveAs = saveAs
-  // IE 10+ (native saveAs)
-  || (typeof navigator !== "undefined" &&
-      navigator.msSaveOrOpenBlob && navigator.msSaveOrOpenBlob.bind(navigator))
-  // Everyone else
-  || (function(view) {
-	"use strict";
-	// IE <10 is explicitly unsupported
-	if (typeof navigator !== "undefined" &&
-	    /MSIE [1-9]\./.test(navigator.userAgent)) {
-		return;
-	}
-	var
-		  doc = view.document
-		  // only get URL when necessary in case Blob.js hasn't overridden it yet
-		, get_URL = function() {
-			return view.URL || view.webkitURL || view;
-		}
-		, save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
-		, can_use_save_link = !view.externalHost && "download" in save_link
-		, click = function(node) {
-			var event = doc.createEvent("MouseEvents");
-			event.initMouseEvent(
-				"click", true, false, view, 0, 0, 0, 0, 0
-				, false, false, false, false, 0, null
-			);
-			node.dispatchEvent(event);
-		}
-		, webkit_req_fs = view.webkitRequestFileSystem
-		, req_fs = view.requestFileSystem || webkit_req_fs || view.mozRequestFileSystem
-		, throw_outside = function(ex) {
-			(view.setImmediate || view.setTimeout)(function() {
-				throw ex;
-			}, 0);
-		}
-		, force_saveable_type = "application/octet-stream"
-		, fs_min_size = 0
-		, deletion_queue = []
-		, process_deletion_queue = function() {
-			var i = deletion_queue.length;
-			while (i--) {
-				var file = deletion_queue[i];
-				if (typeof file === "string") { // file is an object URL
-					get_URL().revokeObjectURL(file);
-				} else { // file is a File
-					file.remove();
-				}
-			}
-			deletion_queue.length = 0; // clear queue
-		}
-		, dispatch = function(filesaver, event_types, event) {
-			event_types = [].concat(event_types);
-			var i = event_types.length;
-			while (i--) {
-				var listener = filesaver["on" + event_types[i]];
-				if (typeof listener === "function") {
-					try {
-						listener.call(filesaver, event || filesaver);
-					} catch (ex) {
-						throw_outside(ex);
-					}
-				}
-			}
-		}
-		, FileSaver = function(blob, name) {
-			// First try a.download, then web filesystem, then object URLs
-			var
-				  filesaver = this
-				, type = blob.type
-				, blob_changed = false
-				, object_url
-				, target_view
-				, get_object_url = function() {
-					var object_url = get_URL().createObjectURL(blob);
-					deletion_queue.push(object_url);
-					return object_url;
-				}
-				, dispatch_all = function() {
-					dispatch(filesaver, "writestart progress write writeend".split(" "));
-				}
-				// on any filesys errors revert to saving with object URLs
-				, fs_error = function() {
-					// don't create more object URLs than needed
-					if (blob_changed || !object_url) {
-						object_url = get_object_url(blob);
-					}
-					if (target_view) {
-						target_view.location.href = object_url;
-					} else {
-						window.open(object_url, "_blank");
-					}
-					filesaver.readyState = filesaver.DONE;
-					dispatch_all();
-				}
-				, abortable = function(func) {
-					return function() {
-						if (filesaver.readyState !== filesaver.DONE) {
-							return func.apply(this, arguments);
-						}
-					};
-				}
-				, create_if_not_found = {create: true, exclusive: false}
-				, slice
-			;
-			filesaver.readyState = filesaver.INIT;
-			if (!name) {
-				name = "download";
-			}
-			if (can_use_save_link) {
-				object_url = get_object_url(blob);
-				save_link.href = object_url;
-				save_link.download = name;
-				click(save_link);
-				filesaver.readyState = filesaver.DONE;
-				dispatch_all();
-				return;
-			}
-			// Object and web filesystem URLs have a problem saving in Google Chrome when
-			// viewed in a tab, so I force save with application/octet-stream
-			// http://code.google.com/p/chromium/issues/detail?id=91158
-			if (view.chrome && type && type !== force_saveable_type) {
-				slice = blob.slice || blob.webkitSlice;
-				blob = slice.call(blob, 0, blob.size, force_saveable_type);
-				blob_changed = true;
-			}
-			// Since I can't be sure that the guessed media type will trigger a download
-			// in WebKit, I append .download to the filename.
-			// https://bugs.webkit.org/show_bug.cgi?id=65440
-			if (webkit_req_fs && name !== "download") {
-				name += ".download";
-			}
-			if (type === force_saveable_type || webkit_req_fs) {
-				target_view = view;
-			}
-			if (!req_fs) {
-				fs_error();
-				return;
-			}
-			fs_min_size += blob.size;
-			req_fs(view.TEMPORARY, fs_min_size, abortable(function(fs) {
-				fs.root.getDirectory("saved", create_if_not_found, abortable(function(dir) {
-					var save = function() {
-						dir.getFile(name, create_if_not_found, abortable(function(file) {
-							file.createWriter(abortable(function(writer) {
-								writer.onwriteend = function(event) {
-									target_view.location.href = file.toURL();
-									deletion_queue.push(file);
-									filesaver.readyState = filesaver.DONE;
-									dispatch(filesaver, "writeend", event);
-								};
-								writer.onerror = function() {
-									var error = writer.error;
-									if (error.code !== error.ABORT_ERR) {
-										fs_error();
-									}
-								};
-								"writestart progress write abort".split(" ").forEach(function(event) {
-									writer["on" + event] = filesaver["on" + event];
-								});
-								writer.write(blob);
-								filesaver.abort = function() {
-									writer.abort();
-									filesaver.readyState = filesaver.DONE;
-								};
-								filesaver.readyState = filesaver.WRITING;
-							}), fs_error);
-						}), fs_error);
-					};
-					dir.getFile(name, {create: false}, abortable(function(file) {
-						// delete file if it already exists
-						file.remove();
-						save();
-					}), abortable(function(ex) {
-						if (ex.code === ex.NOT_FOUND_ERR) {
-							save();
-						} else {
-							fs_error();
-						}
-					}));
-				}), fs_error);
-			}), fs_error);
-		}
-		, FS_proto = FileSaver.prototype
-		, saveAs = function(blob, name) {
-			return new FileSaver(blob, name);
-		}
-	;
-	FS_proto.abort = function() {
-		var filesaver = this;
-		filesaver.readyState = filesaver.DONE;
-		dispatch(filesaver, "abort");
-	};
-	FS_proto.readyState = FS_proto.INIT = 0;
-	FS_proto.WRITING = 1;
-	FS_proto.DONE = 2;
-
-	FS_proto.error =
-	FS_proto.onwritestart =
-	FS_proto.onprogress =
-	FS_proto.onwrite =
-	FS_proto.onabort =
-	FS_proto.onerror =
-	FS_proto.onwriteend =
-		null;
-
-	view.addEventListener("unload", process_deletion_queue, false);
-	saveAs.unload = function() {
-		process_deletion_queue();
-		view.removeEventListener("unload", process_deletion_queue, false);
-	};
-	return saveAs;
-}(
-	   typeof self !== "undefined" && self
-	|| typeof window !== "undefined" && window
-	|| this.content
-));
-// `self` is undefined in Firefox for Android content script context
-// while `this` is nsIContentFrameMessageManager
-// with an attribute `content` that corresponds to the window
-
-if (typeof module !== "undefined" && module !== null) {
-  module.exports = saveAs;
-} else if ((typeof define !== "undefined" && define !== null) && (define.amd != null)) {
-  define([], function() {
-    return saveAs;
-  });
-}
-
-},{}],76:[function(require,module,exports){
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],90:[function(require,module,exports){
 'use strict';
 
 var isCallable = require('is-callable');
@@ -28819,7 +31528,7 @@ var forEach = function forEach(list, iterator, thisArg) {
 
 module.exports = forEach;
 
-},{"is-callable":101}],77:[function(require,module,exports){
+},{"is-callable":108}],91:[function(require,module,exports){
 'use strict';
 
 /* eslint no-invalid-this: 1 */
@@ -28873,14 +31582,14 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],78:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":77}],79:[function(require,module,exports){
+},{"./implementation":91}],93:[function(require,module,exports){
 /*
  * Fuzzy
  * https://github.com/myork/fuzzy
@@ -29026,225 +31735,9 @@ fuzzy.filter = function(pattern, arr, opts) {
 }());
 
 
-},{}],80:[function(require,module,exports){
-var wgs84 = require('wgs84');
-
-module.exports.geometry = geometry;
-module.exports.ring = ringArea;
-
-function geometry(_) {
-    if (_.type === 'Polygon') return polygonArea(_.coordinates);
-    else if (_.type === 'MultiPolygon') {
-        var area = 0;
-        for (var i = 0; i < _.coordinates.length; i++) {
-            area += polygonArea(_.coordinates[i]);
-        }
-        return area;
-    } else {
-        return null;
-    }
-}
-
-function polygonArea(coords) {
-    var area = 0;
-    if (coords && coords.length > 0) {
-        area += Math.abs(ringArea(coords[0]));
-        for (var i = 1; i < coords.length; i++) {
-            area -= Math.abs(ringArea(coords[i]));
-        }
-    }
-    return area;
-}
-
-/**
- * Calculate the approximate area of the polygon were it projected onto
- *     the earth.  Note that this area will be positive if ring is oriented
- *     clockwise, otherwise it will be negative.
- *
- * Reference:
- * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for
- *     Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
- *     Laboratory, Pasadena, CA, June 2007 http://trs-new.jpl.nasa.gov/dspace/handle/2014/40409
- *
- * Returns:
- * {float} The approximate signed geodesic area of the polygon in square
- *     meters.
- */
-
-function ringArea(coords) {
-    var area = 0;
-
-    if (coords.length > 2) {
-        var p1, p2;
-        for (var i = 0; i < coords.length - 1; i++) {
-            p1 = coords[i];
-            p2 = coords[i + 1];
-            area += rad(p2[0] - p1[0]) * (2 + Math.sin(rad(p1[1])) + Math.sin(rad(p2[1])));
-        }
-
-        area = area * wgs84.RADIUS * wgs84.RADIUS / 2;
-    }
-
-    return area;
-}
-
-function rad(_) {
-    return _ * Math.PI / 180;
-}
-
-},{"wgs84":220}],81:[function(require,module,exports){
-module.exports = function flatten(list, depth) {
-    return _flatten(list);
-
-    function _flatten(list) {
-        if (Array.isArray(list) && list.length &&
-            typeof list[0] === 'number') {
-            return [list];
-        }
-        return list.reduce(function (acc, item) {
-            if (Array.isArray(item) && Array.isArray(item[0])) {
-                return acc.concat(_flatten(item));
-            } else {
-                acc.push(item);
-                return acc;
-            }
-        }, []);
-    }
-};
-
-},{}],82:[function(require,module,exports){
-var geojsonNormalize = require('geojson-normalize'),
-    geojsonFlatten = require('geojson-flatten'),
-    flatten = require('./flatten');
-
-module.exports = function(_) {
-    if (!_) return [];
-    var normalized = geojsonFlatten(geojsonNormalize(_)),
-        coordinates = [];
-    normalized.features.forEach(function(feature) {
-        if (!feature.geometry) return;
-        coordinates = coordinates.concat(flatten(feature.geometry.coordinates));
-    });
-    return coordinates;
-};
-
-},{"./flatten":81,"geojson-flatten":84,"geojson-normalize":85}],83:[function(require,module,exports){
-var geojsonCoords = require('geojson-coords'),
-    traverse = require('traverse'),
-    extent = require('extent');
-
-module.exports = function(_) {
-    return getExtent(_).bbox();
-};
-
-module.exports.polygon = function(_) {
-    return getExtent(_).polygon();
-};
-
-module.exports.bboxify = function(_) {
-    return traverse(_).map(function(value) {
-        if (value && typeof value.type === 'string') {
-            value.bbox = getExtent(value).bbox();
-            this.update(value);
-        }
-    });
-};
-
-function getExtent(_) {
-    var bbox = [Infinity, Infinity, -Infinity, -Infinity],
-        ext = extent(),
-        coords = geojsonCoords(_);
-    for (var i = 0; i < coords.length; i++) ext.include(coords[i]);
-    return ext;
-}
-
-},{"extent":74,"geojson-coords":82,"traverse":214}],84:[function(require,module,exports){
-module.exports = flatten;
-
-function flatten(gj, up) {
-    switch ((gj && gj.type) || null) {
-        case 'FeatureCollection':
-            gj.features = gj.features.reduce(function(mem, feature) {
-                return mem.concat(flatten(feature));
-            }, []);
-            return gj;
-        case 'Feature':
-            return flatten(gj.geometry).map(function(geom) {
-                return {
-                    type: 'Feature',
-                    properties: JSON.parse(JSON.stringify(gj.properties)),
-                    geometry: geom
-                };
-            });
-        case 'MultiPoint':
-            return gj.coordinates.map(function(_) {
-                return { type: 'Point', coordinates: _ };
-            });
-        case 'MultiPolygon':
-            return gj.coordinates.map(function(_) {
-                return { type: 'Polygon', coordinates: _ };
-            });
-        case 'MultiLineString':
-            return gj.coordinates.map(function(_) {
-                return { type: 'LineString', coordinates: _ };
-            });
-        case 'GeometryCollection':
-            return gj.geometries;
-        case 'Point':
-        case 'Polygon':
-        case 'LineString':
-            return [gj];
-        default:
-            return gj;
-    }
-}
-
-},{}],85:[function(require,module,exports){
-module.exports = normalize;
-
-var types = {
-    Point: 'geometry',
-    MultiPoint: 'geometry',
-    LineString: 'geometry',
-    MultiLineString: 'geometry',
-    Polygon: 'geometry',
-    MultiPolygon: 'geometry',
-    GeometryCollection: 'geometry',
-    Feature: 'feature',
-    FeatureCollection: 'featurecollection'
-};
-
-/**
- * Normalize a GeoJSON feature into a FeatureCollection.
- *
- * @param {object} gj geojson data
- * @returns {object} normalized geojson data
- */
-function normalize(gj) {
-    if (!gj || !gj.type) return null;
-    var type = types[gj.type];
-    if (!type) return null;
-
-    if (type === 'geometry') {
-        return {
-            type: 'FeatureCollection',
-            features: [{
-                type: 'Feature',
-                properties: {},
-                geometry: gj
-            }]
-        };
-    } else if (type === 'feature') {
-        return {
-            type: 'FeatureCollection',
-            features: [gj]
-        };
-    } else if (type === 'featurecollection') {
-        return gj;
-    }
-}
-
-},{}],86:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"dup":6}],95:[function(require,module,exports){
 module.exports = function(count, type) {
     switch (type) {
         case 'point':
@@ -29263,58 +31756,7 @@ function feature(geom) {
 }
 function collection(f) { return { type: 'FeatureCollection', features: f }; }
 
-},{}],87:[function(require,module,exports){
-var geojsonArea = require('geojson-area');
-
-module.exports = rewind;
-
-function rewind(gj, outer) {
-    switch ((gj && gj.type) || null) {
-        case 'FeatureCollection':
-            gj.features = gj.features.map(curryOuter(rewind, outer));
-            return gj;
-        case 'Feature':
-            gj.geometry = rewind(gj.geometry, outer);
-            return gj;
-        case 'Polygon':
-        case 'MultiPolygon':
-            return correct(gj, outer);
-        default:
-            return gj;
-    }
-}
-
-function curryOuter(a, b) {
-    return function(_) { return a(_, b); };
-}
-
-function correct(_, outer) {
-    if (_.type === 'Polygon') {
-        _.coordinates = correctRings(_.coordinates, outer);
-    } else if (_.type === 'MultiPolygon') {
-        _.coordinates = _.coordinates.map(curryOuter(correctRings, outer));
-    }
-    return _;
-}
-
-function correctRings(_, outer) {
-    outer = !!outer;
-    _[0] = wind(_[0], outer);
-    for (var i = 1; i < _.length; i++) {
-        _[i] = wind(_[i], !outer);
-    }
-    return _;
-}
-
-function wind(_, dir) {
-    return cw(_) === dir ? _ : _.reverse();
-}
-
-function cw(_) {
-    return geojsonArea.ring(_) >= 0;
-}
-
-},{"geojson-area":80}],88:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 var dsv = require('dsv');
 
 module.exports = function(_, delim) {
@@ -29341,326 +31783,7 @@ module.exports = function(_, delim) {
     }));
 };
 
-},{"dsv":69}],89:[function(require,module,exports){
-var jsonlint = require('jsonlint-lines');
-
-function hint(str) {
-
-    var errors = [], gj;
-
-    function root(_) {
-        if (!_.type) {
-            errors.push({
-                message: 'The type property is required and was not found',
-                line: _.__line__
-            });
-        } else if (!types[_.type]) {
-            errors.push({
-                message: 'The type ' + _.type + ' is unknown',
-                line: _.__line__
-            });
-        } else if (_) {
-            types[_.type](_);
-        }
-    }
-
-    function everyIs(_, type) {
-        // make a single exception because typeof null === 'object'
-        return _.every(function(x) { return (x !== null) && (typeof x === type); });
-    }
-
-    function requiredProperty(_, name, type) {
-        if (typeof _[name] == 'undefined') {
-            return errors.push({
-                message: '"' + name + '" property required',
-                line: _.__line__
-            });
-        } else if (type === 'array') {
-            if (!Array.isArray(_[name])) {
-                return errors.push({
-                    message: '"' + name +
-                        '" property should be an array, but is an ' +
-                        (typeof _[name]) + ' instead',
-                    line: _.__line__
-                });
-            }
-        } else if (type && typeof _[name] !== type) {
-            return errors.push({
-                message: '"' + name +
-                    '" property should be ' + (type) +
-                    ', but is an ' + (typeof _[name]) + ' instead',
-                line: _.__line__
-            });
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#feature-collection-objects
-    function FeatureCollection(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'features', 'array')) {
-            if (!everyIs(_.features, 'object')) {
-                return errors.push({
-                    message: 'Every feature must be an object',
-                    line: _.__line__
-                });
-            }
-            _.features.forEach(Feature);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#positions
-    function position(_, line) {
-        if (!Array.isArray(_)) {
-            return errors.push({
-                message: 'position should be an array, is a ' + (typeof _) +
-                    ' instead',
-                line: _.__line__ || line
-            });
-        } else {
-            if (_.length < 2) {
-                return errors.push({
-                    message: 'position must have 2 or more elements',
-                    line: _.__line__ || line
-                });
-            }
-            if (!everyIs(_, 'number')) {
-                return errors.push({
-                    message: 'each element in a position must be a number',
-                    line: _.__line__ || line
-                });
-            }
-        }
-    }
-
-    function positionArray(coords, type, depth, line) {
-        if (line === undefined && coords.__line__ !== undefined) {
-            line = coords.__line__;
-        }
-        if (depth === 0) {
-            return position(coords, line);
-        } else {
-            if (depth === 1 && type) {
-                if (type === 'LinearRing') {
-                    if (!Array.isArray(coords[coords.length - 1])) {
-                        return errors.push({
-                            message: 'a number was found where a coordinate array should have been found: this needs to be nested more deeply',
-                            line: line
-                        });
-                    }
-                    if (coords.length < 4) {
-                        errors.push({
-                            message: 'a LinearRing of coordinates needs to have four or more positions',
-                            line: line
-                        });
-                    }
-                    if (coords.length &&
-                        (coords[coords.length - 1].length !== coords[0].length ||
-                        !coords[coords.length - 1].every(function(position, index) {
-                        return coords[0][index] === position;
-                    }))) {
-                        errors.push({
-                            message: 'the first and last positions in a LinearRing of coordinates must be the same',
-                            line: line
-                        });
-                    }
-                } else if (type === 'Line' && coords.length < 2) {
-                    errors.push({
-                        message: 'a line needs to have two or more coordinates to be valid',
-                        line: line
-                    });
-                }
-            }
-            if (!Array.isArray(coords)) {
-                return errors.push({
-                    message: 'coordinates must be list of positions',
-                    line: line
-                });
-            }
-            coords.forEach(function(c) {
-                positionArray(c, type, depth - 1, c.__line__ || line);
-            });
-        }
-    }
-
-    function crs(_) {
-        if (!_.crs) return;
-        if (typeof _.crs === 'object') {
-            var strErr = requiredProperty(_.crs, 'type', 'string'),
-                propErr = requiredProperty(_.crs, 'properties', 'object');
-            if (!strErr && !propErr) {
-                // http://geojson.org/geojson-spec.html#named-crs
-                if (_.crs.type == 'name') {
-                    requiredProperty(_.crs.properties, 'name', 'string');
-                } else if (_.crs.type == 'link') {
-                    requiredProperty(_.crs.properties, 'href', 'string');
-                }
-            }
-        } else {
-            errors.push({
-                message: 'the value of the crs property must be an object, not a ' + (typeof _.crs),
-                line: _.__line__
-            });
-        }
-    }
-
-    function bbox(_) {
-        if (!_.bbox) return;
-        if (Array.isArray(_.bbox)) {
-            if (!everyIs(_.bbox, 'number')) {
-                return errors.push({
-                    message: 'each element in a bbox property must be a number',
-                    line: _.bbox.__line__
-                });
-            }
-        } else {
-            errors.push({
-                message: 'bbox property must be an array of numbers, but is a ' + (typeof _.bbox),
-                line: _.__line__
-            });
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#point
-    function Point(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            position(_.coordinates);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#polygon
-    function Polygon(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            positionArray(_.coordinates, 'LinearRing', 2);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#multipolygon
-    function MultiPolygon(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            positionArray(_.coordinates, 'LinearRing', 3);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#linestring
-    function LineString(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            positionArray(_.coordinates, 'Line', 1);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#multilinestring
-    function MultiLineString(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            positionArray(_.coordinates, 'Line', 2);
-        }
-    }
-
-    // http://geojson.org/geojson-spec.html#multipoint
-    function MultiPoint(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'coordinates', 'array')) {
-            positionArray(_.coordinates, '', 1);
-        }
-    }
-
-    function GeometryCollection(_) {
-        crs(_);
-        bbox(_);
-        if (!requiredProperty(_, 'geometries', 'array')) {
-            _.geometries.forEach(function(geometry) {
-                if (geometry) root(geometry);
-            });
-        }
-    }
-
-    function Feature(_) {
-        crs(_);
-        bbox(_);
-        // https://github.com/geojson/draft-geojson/blob/master/middle.mkd#feature-object
-        if (_.id !== undefined &&
-            typeof _.id !== 'string' &&
-            typeof _.id !== 'number') {
-            errors.push({
-                message: 'Feature "id" property must have a string or number value',
-                line: _.__line__
-            });
-        }
-        if (_.type !== 'Feature') {
-            errors.push({
-                message: 'GeoJSON features must have a type=feature property',
-                line: _.__line__
-            });
-        }
-        requiredProperty(_, 'properties', 'object');
-        if (!requiredProperty(_, 'geometry', 'object')) {
-            // http://geojson.org/geojson-spec.html#feature-objects
-            // tolerate null geometry
-            if (_.geometry) root(_.geometry);
-        }
-    }
-
-    var types = {
-        Point: Point,
-        Feature: Feature,
-        MultiPoint: MultiPoint,
-        LineString: LineString,
-        MultiLineString: MultiLineString,
-        FeatureCollection: FeatureCollection,
-        GeometryCollection: GeometryCollection,
-        Polygon: Polygon,
-        MultiPolygon: MultiPolygon
-    };
-
-    if (typeof str !== 'string') {
-        return [{
-            message: 'Expected string input',
-            line: 0
-        }];
-    }
-
-    try {
-        gj = jsonlint.parse(str);
-    } catch(e) {
-        var match = e.message.match(/line (\d+)/),
-            lineNumber = 0;
-        if (match) lineNumber = parseInt(match[1], 10);
-        return [{
-            line: lineNumber - 1,
-            message: e.message,
-            error: e
-        }];
-    }
-
-    if (typeof gj !== 'object' ||
-        gj === null ||
-        gj === undefined) {
-        errors.push({
-            message: 'The root of a GeoJSON object must be an object.',
-            line: 0
-        });
-        return errors;
-    }
-
-    root(gj);
-
-    return errors;
-}
-
-module.exports.hint = hint;
-
-},{"jsonlint-lines":105}],90:[function(require,module,exports){
+},{"dsv":84}],97:[function(require,module,exports){
 'use strict';
 
 var undefined;
@@ -29996,54 +32119,90 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 	return value;
 };
 
-},{"function-bind":78,"has":96,"has-symbols":93}],91:[function(require,module,exports){
+},{"function-bind":92,"has":103,"has-symbols":100}],98:[function(require,module,exports){
 var parseCSV = require('dsv').csv.parse;
 
-/**
- * Parse GTFS data given as a string and return a GeoJSON FeatureCollection
+
+var gtfs2geojson = {
+  /**
+ * Parse GTFS shapes.txt data given as a string and return a GeoJSON FeatureCollection
  * of features with LineString geometries.
  *
  * @param {string} gtfs csv content of shapes.txt
  * @returns {Object} geojson featurecollection
  */
-function gtfs2geojson(gtfs) {
-  var shapes = parseCSV(gtfs).reduce(function(memo, row) {
-    memo[row.shape_id] = (memo[row.shape_id] || []).concat(row);
-    return memo;
-  }, {});
-  return {
-    type: 'FeatureCollection',
-    features: Object.keys(shapes).map(function(id) {
-      return {
-        type: 'Feature',
-        id: id,
-        properties: {
-          shape_id: id
-        },
-        geometry: {
-          type: 'LineString',
-          coordinates: shapes[id].sort(function(a, b) {
-            return +a.shape_pt_sequence - b.shape_pt_sequence;
-          }).map(function(coord) {
-            return [
-              parseFloat(coord.shape_pt_lon),
-              parseFloat(coord.shape_pt_lat)
-            ];
-          })
-        }
-      };
-    })
-  };
+  lines: function(gtfs) {
+    var shapes = parseCSV(gtfs).reduce(function(memo, row) {
+      memo[row.shape_id] = (memo[row.shape_id] || []).concat(row);
+      return memo;
+    }, {});
+    return {
+      type: 'FeatureCollection',
+      features: Object.keys(shapes).map(function(id) {
+        return {
+          type: 'Feature',
+          id: id,
+          properties: {
+            shape_id: id
+          },
+          geometry: {
+            type: 'LineString',
+            coordinates: shapes[id].sort(function(a, b) {
+              return +a.shape_pt_sequence - b.shape_pt_sequence;
+            }).map(function(coord) {
+              return [
+                parseFloat(coord.shape_pt_lon),
+                parseFloat(coord.shape_pt_lat)
+              ];
+            })
+          }
+        };
+      })
+    };
+  },
+
+  /**
+ * Parse GTFS stops.txt data given as a string and return a GeoJSON FeatureCollection
+ * of features with Point geometries.
+ *
+ * @param {string} gtfs csv content of stops.txt
+ * @returns {Object} geojson featurecollection
+ *
+ */
+
+  stops: function(gtfs) {
+    var stops = parseCSV(gtfs)
+    return {
+      type: 'FeatureCollection',
+      features: Object.keys(stops).map(function(id) {
+        return {
+          type: 'Feature',
+          id: stops[id].stop_id,
+          properties: {
+            stop_id: stops[id].stop_id,
+            stop_name: stops[id].stop_name
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: [
+              parseFloat(stops[id].stop_lon),
+              parseFloat(stops[id].stop_lat)
+            ]
+          }
+        };
+      })
+    };
+  }
 }
 
 module.exports = gtfs2geojson;
 
-},{"dsv":92}],92:[function(require,module,exports){
+},{"dsv":99}],99:[function(require,module,exports){
 
 
 module.exports = new Function("dsv.version = \"0.0.4\";\n\ndsv.tsv = dsv(\"\\t\");\ndsv.csv = dsv(\",\");\n\nfunction dsv(delimiter) {\n  var dsv = {},\n      reFormat = new RegExp(\"[\\\"\" + delimiter + \"\\n]\"),\n      delimiterCode = delimiter.charCodeAt(0);\n\n  dsv.parse = function(text, f) {\n    var o;\n    return dsv.parseRows(text, function(row, i) {\n      if (o) return o(row, i - 1);\n      var a = new Function(\"d\", \"return {\" + row.map(function(name, i) {\n        return JSON.stringify(name) + \": d[\" + i + \"]\";\n      }).join(\",\") + \"}\");\n      o = f ? function(row, i) { return f(a(row), i); } : a;\n    });\n  };\n\n  dsv.parseRows = function(text, f) {\n    var EOL = {}, // sentinel value for end-of-line\n        EOF = {}, // sentinel value for end-of-file\n        rows = [], // output rows\n        N = text.length,\n        I = 0, // current character index\n        n = 0, // the current line number\n        t, // the current token\n        eol; // is the current token followed by EOL?\n\n    function token() {\n      if (I >= N) return EOF; // special case: end of file\n      if (eol) return eol = false, EOL; // special case: end of line\n\n      // special case: quotes\n      var j = I;\n      if (text.charCodeAt(j) === 34) {\n        var i = j;\n        while (i++ < N) {\n          if (text.charCodeAt(i) === 34) {\n            if (text.charCodeAt(i + 1) !== 34) break;\n            ++i;\n          }\n        }\n        I = i + 2;\n        var c = text.charCodeAt(i + 1);\n        if (c === 13) {\n          eol = true;\n          if (text.charCodeAt(i + 2) === 10) ++I;\n        } else if (c === 10) {\n          eol = true;\n        }\n        return text.slice(j + 1, i).replace(/\"\"/g, \"\\\"\");\n      }\n\n      // common case: find next delimiter or newline\n      while (I < N) {\n        var c = text.charCodeAt(I++), k = 1;\n        if (c === 10) eol = true; // \\n\n        else if (c === 13) { eol = true; if (text.charCodeAt(I) === 10) ++I, ++k; } // \\r|\\r\\n\n        else if (c !== delimiterCode) continue;\n        return text.slice(j, I - k);\n      }\n\n      // special case: last token before EOF\n      return text.slice(j);\n    }\n\n    while ((t = token()) !== EOF) {\n      var a = [];\n      while (t !== EOL && t !== EOF) {\n        a.push(t);\n        t = token();\n      }\n      if (f && (a = f(a, n++)) == null) continue;\n      rows.push(a);\n    }\n\n    return rows;\n  };\n\n  dsv.format = function(rows) {\n    if (Array.isArray(rows[0])) return dsv.formatRows(rows); // deprecated; use formatRows\n    var fieldSet = {}, fields = [];\n\n    // Compute unique fields in order of discovery.\n    rows.forEach(function(row) {\n      for (var field in row) {\n        if (!(field in fieldSet)) {\n          fields.push(fieldSet[field] = field);\n        }\n      }\n    });\n\n    return [fields.map(formatValue).join(delimiter)].concat(rows.map(function(row) {\n      return fields.map(function(field) {\n        return formatValue(row[field]);\n      }).join(delimiter);\n    })).join(\"\\n\");\n  };\n\n  dsv.formatRows = function(rows) {\n    return rows.map(formatRow).join(\"\\n\");\n  };\n\n  function formatRow(row) {\n    return row.map(formatValue).join(delimiter);\n  }\n\n  function formatValue(text) {\n    return reFormat.test(text) ? \"\\\"\" + text.replace(/\\\"/g, \"\\\"\\\"\") + \"\\\"\" : text;\n  }\n\n  return dsv;\n}\n" + ";return dsv")();
 
-},{}],93:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 'use strict';
 
 var origSymbol = typeof Symbol !== 'undefined' && Symbol;
@@ -30058,7 +32217,7 @@ module.exports = function hasNativeSymbols() {
 	return hasSymbolSham();
 };
 
-},{"./shams":94}],94:[function(require,module,exports){
+},{"./shams":101}],101:[function(require,module,exports){
 'use strict';
 
 /* eslint complexity: [2, 18], max-statements: [2, 33] */
@@ -30102,7 +32261,7 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{}],95:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 'use strict';
 
 var hasSymbols = require('has-symbols/shams');
@@ -30111,14 +32270,14 @@ module.exports = function hasToStringTagShams() {
 	return hasSymbols() && !!Symbol.toStringTag;
 };
 
-},{"has-symbols/shams":94}],96:[function(require,module,exports){
+},{"has-symbols/shams":101}],103:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":78}],97:[function(require,module,exports){
+},{"function-bind":92}],104:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -30205,7 +32364,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],98:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -30234,7 +32393,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],99:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 'use strict';
 
 var hasToStringTag = require('has-tostringtag/shams')();
@@ -30269,7 +32428,7 @@ isStandardArguments.isLegacyArguments = isLegacyArguments; // for tests
 
 module.exports = supportsStandardArguments ? isStandardArguments : isLegacyArguments;
 
-},{"call-bind/callBound":53,"has-tostringtag/shams":95}],100:[function(require,module,exports){
+},{"call-bind/callBound":67,"has-tostringtag/shams":102}],107:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -30292,7 +32451,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],101:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 'use strict';
 
 var fnToStr = Function.prototype.toString;
@@ -30395,7 +32554,7 @@ module.exports = reflectApply
 		return tryFunctionObject(value);
 	};
 
-},{}],102:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -30435,7 +32594,7 @@ module.exports = function isGeneratorFunction(fn) {
 	return getProto(fn) === GeneratorFunction;
 };
 
-},{"has-tostringtag/shams":95}],103:[function(require,module,exports){
+},{"has-tostringtag/shams":102}],110:[function(require,module,exports){
 'use strict';
 var toString = Object.prototype.toString;
 
@@ -30444,7 +32603,7 @@ module.exports = function (x) {
 	return toString.call(x) === '[object Object]' && (prototype = Object.getPrototypeOf(x), prototype === null || prototype === Object.getPrototypeOf({}));
 };
 
-},{}],104:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -30508,664 +32667,7 @@ module.exports = function isTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":46,"call-bind/callBound":53,"es-abstract/helpers/getOwnPropertyDescriptor":70,"for-each":76,"has-tostringtag/shams":95}],105:[function(require,module,exports){
-(function (process){(function (){
-/* parser generated by jison 0.4.6 */
-/*
-  Returns a Parser object of the following structure:
-
-  Parser: {
-    yy: {}
-  }
-
-  Parser.prototype: {
-    yy: {},
-    trace: function(),
-    symbols_: {associative list: name ==> number},
-    terminals_: {associative list: number ==> name},
-    productions_: [...],
-    performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate, $$, _$),
-    table: [...],
-    defaultActions: {...},
-    parseError: function(str, hash),
-    parse: function(input),
-
-    lexer: {
-        EOF: 1,
-        parseError: function(str, hash),
-        setInput: function(input),
-        input: function(),
-        unput: function(str),
-        more: function(),
-        less: function(n),
-        pastInput: function(),
-        upcomingInput: function(),
-        showPosition: function(),
-        test_match: function(regex_match_array, rule_index),
-        next: function(),
-        lex: function(),
-        begin: function(condition),
-        popState: function(),
-        _currentRules: function(),
-        topState: function(),
-        pushState: function(condition),
-
-        options: {
-            ranges: boolean           (optional: true ==> token location info will include a .range[] member)
-            flex: boolean             (optional: true ==> flex-like lexing behaviour where the rules are tested exhaustively to find the longest match)
-            backtrack_lexer: boolean  (optional: true ==> lexer regexes are tested in order and for each matching regex the action code is invoked; the lexer terminates the scan when a token is returned by the action code)
-        },
-
-        performAction: function(yy, yy_, $avoiding_name_collisions, YY_START),
-        rules: [...],
-        conditions: {associative list: name ==> set},
-    }
-  }
-
-
-  token location info (@$, _$, etc.): {
-    first_line: n,
-    last_line: n,
-    first_column: n,
-    last_column: n,
-    range: [start_number, end_number]       (where the numbers are indexes into the input string, regular zero-based)
-  }
-
-
-  the parseError function receives a 'hash' object with these members for lexer and parser errors: {
-    text:        (matched text)
-    token:       (the produced terminal token, if any)
-    line:        (yylineno)
-  }
-  while parser (grammar) errors will also provide these members, i.e. parser errors deliver a superset of attributes: {
-    loc:         (yylloc)
-    expected:    (string describing the set of expected tokens)
-    recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
-  }
-*/
-var jsonlint = (function(){
-var parser = {trace: function trace() { },
-yy: {},
-symbols_: {"error":2,"JSONString":3,"STRING":4,"JSONNumber":5,"NUMBER":6,"JSONNullLiteral":7,"NULL":8,"JSONBooleanLiteral":9,"TRUE":10,"FALSE":11,"JSONText":12,"JSONValue":13,"EOF":14,"JSONObject":15,"JSONArray":16,"{":17,"}":18,"JSONMemberList":19,"JSONMember":20,":":21,",":22,"[":23,"]":24,"JSONElementList":25,"$accept":0,"$end":1},
-terminals_: {2:"error",4:"STRING",6:"NUMBER",8:"NULL",10:"TRUE",11:"FALSE",14:"EOF",17:"{",18:"}",21:":",22:",",23:"[",24:"]"},
-productions_: [0,[3,1],[5,1],[7,1],[9,1],[9,1],[12,2],[13,1],[13,1],[13,1],[13,1],[13,1],[13,1],[15,2],[15,3],[20,3],[19,1],[19,3],[16,2],[16,3],[25,1],[25,3]],
-performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
-/* this == yyval */
-
-var $0 = $$.length - 1;
-switch (yystate) {
-case 1: // replace escaped characters with actual character
-          this.$ = yytext.replace(/\\(\\|")/g, "$"+"1")
-                     .replace(/\\n/g,'\n')
-                     .replace(/\\r/g,'\r')
-                     .replace(/\\t/g,'\t')
-                     .replace(/\\v/g,'\v')
-                     .replace(/\\f/g,'\f')
-                     .replace(/\\b/g,'\b');
-        
-break;
-case 2:this.$ = Number(yytext);
-break;
-case 3:this.$ = null;
-break;
-case 4:this.$ = true;
-break;
-case 5:this.$ = false;
-break;
-case 6:return this.$ = $$[$0-1];
-break;
-case 13:this.$ = {}; Object.defineProperty(this.$, '__line__', {
-            value: this._$.first_line,
-            enumerable: false
-        })
-break;
-case 14:this.$ = $$[$0-1]; Object.defineProperty(this.$, '__line__', {
-            value: this._$.first_line,
-            enumerable: false
-        })
-break;
-case 15:this.$ = [$$[$0-2], $$[$0]];
-break;
-case 16:this.$ = {}; this.$[$$[$0][0]] = $$[$0][1];
-break;
-case 17:this.$ = $$[$0-2]; $$[$0-2][$$[$0][0]] = $$[$0][1];
-break;
-case 18:this.$ = []; Object.defineProperty(this.$, '__line__', {
-            value: this._$.first_line,
-            enumerable: false
-        })
-break;
-case 19:this.$ = $$[$0-1]; Object.defineProperty(this.$, '__line__', {
-            value: this._$.first_line,
-            enumerable: false
-        })
-break;
-case 20:this.$ = [$$[$0]];
-break;
-case 21:this.$ = $$[$0-2]; $$[$0-2].push($$[$0]);
-break;
-}
-},
-table: [{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],12:1,13:2,15:7,16:8,17:[1,14],23:[1,15]},{1:[3]},{14:[1,16]},{14:[2,7],18:[2,7],22:[2,7],24:[2,7]},{14:[2,8],18:[2,8],22:[2,8],24:[2,8]},{14:[2,9],18:[2,9],22:[2,9],24:[2,9]},{14:[2,10],18:[2,10],22:[2,10],24:[2,10]},{14:[2,11],18:[2,11],22:[2,11],24:[2,11]},{14:[2,12],18:[2,12],22:[2,12],24:[2,12]},{14:[2,3],18:[2,3],22:[2,3],24:[2,3]},{14:[2,4],18:[2,4],22:[2,4],24:[2,4]},{14:[2,5],18:[2,5],22:[2,5],24:[2,5]},{14:[2,1],18:[2,1],21:[2,1],22:[2,1],24:[2,1]},{14:[2,2],18:[2,2],22:[2,2],24:[2,2]},{3:20,4:[1,12],18:[1,17],19:18,20:19},{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],13:23,15:7,16:8,17:[1,14],23:[1,15],24:[1,21],25:22},{1:[2,6]},{14:[2,13],18:[2,13],22:[2,13],24:[2,13]},{18:[1,24],22:[1,25]},{18:[2,16],22:[2,16]},{21:[1,26]},{14:[2,18],18:[2,18],22:[2,18],24:[2,18]},{22:[1,28],24:[1,27]},{22:[2,20],24:[2,20]},{14:[2,14],18:[2,14],22:[2,14],24:[2,14]},{3:20,4:[1,12],20:29},{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],13:30,15:7,16:8,17:[1,14],23:[1,15]},{14:[2,19],18:[2,19],22:[2,19],24:[2,19]},{3:5,4:[1,12],5:6,6:[1,13],7:3,8:[1,9],9:4,10:[1,10],11:[1,11],13:31,15:7,16:8,17:[1,14],23:[1,15]},{18:[2,17],22:[2,17]},{18:[2,15],22:[2,15]},{22:[2,21],24:[2,21]}],
-defaultActions: {16:[2,6]},
-parseError: function parseError(str, hash) {
-    if (hash.recoverable) {
-        this.trace(str);
-    } else {
-        throw new Error(str);
-    }
-},
-parse: function parse(input) {
-    var self = this, stack = [0], vstack = [null], lstack = [], table = this.table, yytext = '', yylineno = 0, yyleng = 0, recovering = 0, TERROR = 2, EOF = 1;
-    this.lexer.setInput(input);
-    this.lexer.yy = this.yy;
-    this.yy.lexer = this.lexer;
-    this.yy.parser = this;
-    if (typeof this.lexer.yylloc == 'undefined') {
-        this.lexer.yylloc = {};
-    }
-    var yyloc = this.lexer.yylloc;
-    lstack.push(yyloc);
-    var ranges = this.lexer.options && this.lexer.options.ranges;
-    if (typeof this.yy.parseError === 'function') {
-        this.parseError = this.yy.parseError;
-    } else {
-        this.parseError = Object.getPrototypeOf(this).parseError;
-    }
-    function popStack(n) {
-        stack.length = stack.length - 2 * n;
-        vstack.length = vstack.length - n;
-        lstack.length = lstack.length - n;
-    }
-    function lex() {
-        var token;
-        token = self.lexer.lex() || EOF;
-        if (typeof token !== 'number') {
-            token = self.symbols_[token] || token;
-        }
-        return token;
-    }
-    var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
-    while (true) {
-        state = stack[stack.length - 1];
-        if (this.defaultActions[state]) {
-            action = this.defaultActions[state];
-        } else {
-            if (symbol === null || typeof symbol == 'undefined') {
-                symbol = lex();
-            }
-            action = table[state] && table[state][symbol];
-        }
-                    if (typeof action === 'undefined' || !action.length || !action[0]) {
-                var errStr = '';
-                expected = [];
-                for (p in table[state]) {
-                    if (this.terminals_[p] && p > TERROR) {
-                        expected.push('\'' + this.terminals_[p] + '\'');
-                    }
-                }
-                if (this.lexer.showPosition) {
-                    errStr = 'Parse error on line ' + (yylineno + 1) + ':\n' + this.lexer.showPosition() + '\nExpecting ' + expected.join(', ') + ', got \'' + (this.terminals_[symbol] || symbol) + '\'';
-                } else {
-                    errStr = 'Parse error on line ' + (yylineno + 1) + ': Unexpected ' + (symbol == EOF ? 'end of input' : '\'' + (this.terminals_[symbol] || symbol) + '\'');
-                }
-                this.parseError(errStr, {
-                    text: this.lexer.match,
-                    token: this.terminals_[symbol] || symbol,
-                    line: this.lexer.yylineno,
-                    loc: yyloc,
-                    expected: expected
-                });
-            }
-        if (action[0] instanceof Array && action.length > 1) {
-            throw new Error('Parse Error: multiple actions possible at state: ' + state + ', token: ' + symbol);
-        }
-        switch (action[0]) {
-        case 1:
-            stack.push(symbol);
-            vstack.push(this.lexer.yytext);
-            lstack.push(this.lexer.yylloc);
-            stack.push(action[1]);
-            symbol = null;
-            if (!preErrorSymbol) {
-                yyleng = this.lexer.yyleng;
-                yytext = this.lexer.yytext;
-                yylineno = this.lexer.yylineno;
-                yyloc = this.lexer.yylloc;
-                if (recovering > 0) {
-                    recovering--;
-                }
-            } else {
-                symbol = preErrorSymbol;
-                preErrorSymbol = null;
-            }
-            break;
-        case 2:
-            len = this.productions_[action[1]][1];
-            yyval.$ = vstack[vstack.length - len];
-            yyval._$ = {
-                first_line: lstack[lstack.length - (len || 1)].first_line,
-                last_line: lstack[lstack.length - 1].last_line,
-                first_column: lstack[lstack.length - (len || 1)].first_column,
-                last_column: lstack[lstack.length - 1].last_column
-            };
-            if (ranges) {
-                yyval._$.range = [
-                    lstack[lstack.length - (len || 1)].range[0],
-                    lstack[lstack.length - 1].range[1]
-                ];
-            }
-            r = this.performAction.call(yyval, yytext, yyleng, yylineno, this.yy, action[1], vstack, lstack);
-            if (typeof r !== 'undefined') {
-                return r;
-            }
-            if (len) {
-                stack = stack.slice(0, -1 * len * 2);
-                vstack = vstack.slice(0, -1 * len);
-                lstack = lstack.slice(0, -1 * len);
-            }
-            stack.push(this.productions_[action[1]][0]);
-            vstack.push(yyval.$);
-            lstack.push(yyval._$);
-            newState = table[stack[stack.length - 2]][stack[stack.length - 1]];
-            stack.push(newState);
-            break;
-        case 3:
-            return true;
-        }
-    }
-    return true;
-}};
-/* generated by jison-lex 0.2.1 */
-var lexer = (function(){
-var lexer = {
-
-EOF:1,
-
-parseError:function parseError(str, hash) {
-        if (this.yy.parser) {
-            this.yy.parser.parseError(str, hash);
-        } else {
-            throw new Error(str);
-        }
-    },
-
-// resets the lexer, sets new input
-setInput:function (input) {
-        this._input = input;
-        this._more = this._backtrack = this.done = false;
-        this.yylineno = this.yyleng = 0;
-        this.yytext = this.matched = this.match = '';
-        this.conditionStack = ['INITIAL'];
-        this.yylloc = {
-            first_line: 1,
-            first_column: 0,
-            last_line: 1,
-            last_column: 0
-        };
-        if (this.options.ranges) {
-            this.yylloc.range = [0,0];
-        }
-        this.offset = 0;
-        return this;
-    },
-
-// consumes and returns one char from the input
-input:function () {
-        var ch = this._input[0];
-        this.yytext += ch;
-        this.yyleng++;
-        this.offset++;
-        this.match += ch;
-        this.matched += ch;
-        var lines = ch.match(/(?:\r\n?|\n).*/g);
-        if (lines) {
-            this.yylineno++;
-            this.yylloc.last_line++;
-        } else {
-            this.yylloc.last_column++;
-        }
-        if (this.options.ranges) {
-            this.yylloc.range[1]++;
-        }
-
-        this._input = this._input.slice(1);
-        return ch;
-    },
-
-// unshifts one char (or a string) into the input
-unput:function (ch) {
-        var len = ch.length;
-        var lines = ch.split(/(?:\r\n?|\n)/g);
-
-        this._input = ch + this._input;
-        this.yytext = this.yytext.substr(0, this.yytext.length - len - 1);
-        //this.yyleng -= len;
-        this.offset -= len;
-        var oldLines = this.match.split(/(?:\r\n?|\n)/g);
-        this.match = this.match.substr(0, this.match.length - 1);
-        this.matched = this.matched.substr(0, this.matched.length - 1);
-
-        if (lines.length - 1) {
-            this.yylineno -= lines.length - 1;
-        }
-        var r = this.yylloc.range;
-
-        this.yylloc = {
-            first_line: this.yylloc.first_line,
-            last_line: this.yylineno + 1,
-            first_column: this.yylloc.first_column,
-            last_column: lines ?
-                (lines.length === oldLines.length ? this.yylloc.first_column : 0)
-                 + oldLines[oldLines.length - lines.length].length - lines[0].length :
-              this.yylloc.first_column - len
-        };
-
-        if (this.options.ranges) {
-            this.yylloc.range = [r[0], r[0] + this.yyleng - len];
-        }
-        this.yyleng = this.yytext.length;
-        return this;
-    },
-
-// When called from action, caches matched text and appends it on next action
-more:function () {
-        this._more = true;
-        return this;
-    },
-
-// When called from action, signals the lexer that this rule fails to match the input, so the next matching rule (regex) should be tested instead.
-reject:function () {
-        if (this.options.backtrack_lexer) {
-            this._backtrack = true;
-        } else {
-            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. You can only invoke reject() in the lexer when the lexer is of the backtracking persuasion (options.backtrack_lexer = true).\n' + this.showPosition(), {
-                text: "",
-                token: null,
-                line: this.yylineno
-            });
-
-        }
-        return this;
-    },
-
-// retain first n characters of the match
-less:function (n) {
-        this.unput(this.match.slice(n));
-    },
-
-// displays already matched input, i.e. for error messages
-pastInput:function () {
-        var past = this.matched.substr(0, this.matched.length - this.match.length);
-        return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
-    },
-
-// displays upcoming input, i.e. for error messages
-upcomingInput:function () {
-        var next = this.match;
-        if (next.length < 20) {
-            next += this._input.substr(0, 20-next.length);
-        }
-        return (next.substr(0,20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
-    },
-
-// displays the character position where the lexing error occurred, i.e. for error messages
-showPosition:function () {
-        var pre = this.pastInput();
-        var c = new Array(pre.length + 1).join("-");
-        return pre + this.upcomingInput() + "\n" + c + "^";
-    },
-
-// test the lexed token: return FALSE when not a match, otherwise return token
-test_match:function (match, indexed_rule) {
-        var token,
-            lines,
-            backup;
-
-        if (this.options.backtrack_lexer) {
-            // save context
-            backup = {
-                yylineno: this.yylineno,
-                yylloc: {
-                    first_line: this.yylloc.first_line,
-                    last_line: this.last_line,
-                    first_column: this.yylloc.first_column,
-                    last_column: this.yylloc.last_column
-                },
-                yytext: this.yytext,
-                match: this.match,
-                matches: this.matches,
-                matched: this.matched,
-                yyleng: this.yyleng,
-                offset: this.offset,
-                _more: this._more,
-                _input: this._input,
-                yy: this.yy,
-                conditionStack: this.conditionStack.slice(0),
-                done: this.done
-            };
-            if (this.options.ranges) {
-                backup.yylloc.range = this.yylloc.range.slice(0);
-            }
-        }
-
-        lines = match[0].match(/(?:\r\n?|\n).*/g);
-        if (lines) {
-            this.yylineno += lines.length;
-        }
-        this.yylloc = {
-            first_line: this.yylloc.last_line,
-            last_line: this.yylineno + 1,
-            first_column: this.yylloc.last_column,
-            last_column: lines ?
-                         lines[lines.length - 1].length - lines[lines.length - 1].match(/\r?\n?/)[0].length :
-                         this.yylloc.last_column + match[0].length
-        };
-        this.yytext += match[0];
-        this.match += match[0];
-        this.matches = match;
-        this.yyleng = this.yytext.length;
-        if (this.options.ranges) {
-            this.yylloc.range = [this.offset, this.offset += this.yyleng];
-        }
-        this._more = false;
-        this._backtrack = false;
-        this._input = this._input.slice(match[0].length);
-        this.matched += match[0];
-        token = this.performAction.call(this, this.yy, this, indexed_rule, this.conditionStack[this.conditionStack.length - 1]);
-        if (this.done && this._input) {
-            this.done = false;
-        }
-        if (token) {
-            return token;
-        } else if (this._backtrack) {
-            // recover context
-            for (var k in backup) {
-                this[k] = backup[k];
-            }
-            return false; // rule action called reject() implying the next rule should be tested instead.
-        }
-        return false;
-    },
-
-// return next match in input
-next:function () {
-        if (this.done) {
-            return this.EOF;
-        }
-        if (!this._input) {
-            this.done = true;
-        }
-
-        var token,
-            match,
-            tempMatch,
-            index;
-        if (!this._more) {
-            this.yytext = '';
-            this.match = '';
-        }
-        var rules = this._currentRules();
-        for (var i = 0; i < rules.length; i++) {
-            tempMatch = this._input.match(this.rules[rules[i]]);
-            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
-                match = tempMatch;
-                index = i;
-                if (this.options.backtrack_lexer) {
-                    token = this.test_match(tempMatch, rules[i]);
-                    if (token !== false) {
-                        return token;
-                    } else if (this._backtrack) {
-                        match = false;
-                        continue; // rule action called reject() implying a rule MISmatch.
-                    } else {
-                        // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
-                        return false;
-                    }
-                } else if (!this.options.flex) {
-                    break;
-                }
-            }
-        }
-        if (match) {
-            token = this.test_match(match, rules[index]);
-            if (token !== false) {
-                return token;
-            }
-            // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
-            return false;
-        }
-        if (this._input === "") {
-            return this.EOF;
-        } else {
-            return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. Unrecognized text.\n' + this.showPosition(), {
-                text: "",
-                token: null,
-                line: this.yylineno
-            });
-        }
-    },
-
-// return next match that has a token
-lex:function lex() {
-        var r = this.next();
-        if (r) {
-            return r;
-        } else {
-            return this.lex();
-        }
-    },
-
-// activates a new lexer condition state (pushes the new lexer condition state onto the condition stack)
-begin:function begin(condition) {
-        this.conditionStack.push(condition);
-    },
-
-// pop the previously active lexer condition state off the condition stack
-popState:function popState() {
-        var n = this.conditionStack.length - 1;
-        if (n > 0) {
-            return this.conditionStack.pop();
-        } else {
-            return this.conditionStack[0];
-        }
-    },
-
-// produce the lexer rule set which is active for the currently active lexer condition state
-_currentRules:function _currentRules() {
-        if (this.conditionStack.length && this.conditionStack[this.conditionStack.length - 1]) {
-            return this.conditions[this.conditionStack[this.conditionStack.length - 1]].rules;
-        } else {
-            return this.conditions["INITIAL"].rules;
-        }
-    },
-
-// return the currently active lexer condition state; when an index argument is provided it produces the N-th previous condition state, if available
-topState:function topState(n) {
-        n = this.conditionStack.length - 1 - Math.abs(n || 0);
-        if (n >= 0) {
-            return this.conditionStack[n];
-        } else {
-            return "INITIAL";
-        }
-    },
-
-// alias for begin(condition)
-pushState:function pushState(condition) {
-        this.begin(condition);
-    },
-
-// return the number of states currently on the stack
-stateStackSize:function stateStackSize() {
-        return this.conditionStack.length;
-    },
-options: {},
-performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
-
-var YYSTATE=YY_START;
-switch($avoiding_name_collisions) {
-case 0:/* skip whitespace */
-break;
-case 1:return 6
-break;
-case 2:yy_.yytext = yy_.yytext.substr(1,yy_.yyleng-2); return 4
-break;
-case 3:return 17
-break;
-case 4:return 18
-break;
-case 5:return 23
-break;
-case 6:return 24
-break;
-case 7:return 22
-break;
-case 8:return 21
-break;
-case 9:return 10
-break;
-case 10:return 11
-break;
-case 11:return 8
-break;
-case 12:return 14
-break;
-case 13:return 'INVALID'
-break;
-}
-},
-rules: [/^(?:\s+)/,/^(?:(-?([0-9]|[1-9][0-9]+))(\.[0-9]+)?([eE][-+]?[0-9]+)?\b)/,/^(?:"(?:\\[\\"bfnrt/]|\\u[a-fA-F0-9]{4}|[^\\\0-\x09\x0a-\x1f"])*")/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?::)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:null\b)/,/^(?:$)/,/^(?:.)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13],"inclusive":true}}
-};
-return lexer;
-})();
-parser.lexer = lexer;
-function Parser () {
-  this.yy = {};
-}
-Parser.prototype = parser;parser.Parser = Parser;
-return new Parser;
-})();
-
-
-if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
-exports.parser = jsonlint;
-exports.Parser = jsonlint.Parser;
-exports.parse = function () { return jsonlint.parse.apply(jsonlint, arguments); };
-exports.main = function commonjsMain(args) {
-    if (!args[1]) {
-        console.log('Usage: '+args[0]+' FILE');
-        process.exit(1);
-    }
-    var source = require('fs').readFileSync(require('path').normalize(args[1]), "utf8");
-    return exports.parser.parse(source);
-};
-if (typeof module !== 'undefined' && require.main === module) {
-  exports.main(process.argv.slice(1));
-}
-}
-}).call(this)}).call(this,require('_process'))
-},{"_process":160,"fs":51,"path":157}],106:[function(require,module,exports){
+},{"available-typed-arrays":61,"call-bind/callBound":67,"es-abstract/helpers/getOwnPropertyDescriptor":85,"for-each":90,"has-tostringtag/shams":102}],112:[function(require,module,exports){
 'use strict';
 // private property
 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -31237,7 +32739,7 @@ exports.decode = function(input, utf8) {
 
 };
 
-},{}],107:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 'use strict';
 function CompressedObject() {
     this.compressedSize = 0;
@@ -31267,7 +32769,7 @@ CompressedObject.prototype = {
 };
 module.exports = CompressedObject;
 
-},{}],108:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 'use strict';
 exports.STORE = {
     magic: "\x00\x00",
@@ -31282,7 +32784,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":113}],109:[function(require,module,exports){
+},{"./flate":119}],115:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -31386,7 +32888,7 @@ module.exports = function crc32(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":126}],110:[function(require,module,exports){
+},{"./utils":132}],116:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -31495,7 +32997,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"./utils":126}],111:[function(require,module,exports){
+},{"./utils":132}],117:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -31508,7 +33010,7 @@ exports.comment = null;
 exports.unixPermissions = null;
 exports.dosPermissions = null;
 
-},{}],112:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 
@@ -31615,7 +33117,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./utils":126}],113:[function(require,module,exports){
+},{"./utils":132}],119:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -31633,7 +33135,7 @@ exports.uncompress =  function(input) {
     return pako.inflateRaw(input);
 };
 
-},{"pako":129}],114:[function(require,module,exports){
+},{"pako":135}],120:[function(require,module,exports){
 'use strict';
 
 var base64 = require('./base64');
@@ -31714,7 +33216,7 @@ JSZip.base64 = {
 JSZip.compressions = require('./compressions');
 module.exports = JSZip;
 
-},{"./base64":106,"./compressions":108,"./defaults":111,"./deprecatedPublicUtils":112,"./load":115,"./object":118,"./support":122}],115:[function(require,module,exports){
+},{"./base64":112,"./compressions":114,"./defaults":117,"./deprecatedPublicUtils":118,"./load":121,"./object":124,"./support":128}],121:[function(require,module,exports){
 'use strict';
 var base64 = require('./base64');
 var ZipEntries = require('./zipEntries');
@@ -31747,7 +33249,7 @@ module.exports = function(data, options) {
     return this;
 };
 
-},{"./base64":106,"./zipEntries":127}],116:[function(require,module,exports){
+},{"./base64":112,"./zipEntries":133}],122:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 module.exports = function(data, encoding){
@@ -31758,7 +33260,7 @@ module.exports.test = function(b){
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":52}],117:[function(require,module,exports){
+},{"buffer":66}],123:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./uint8ArrayReader');
 
@@ -31780,7 +33282,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"./uint8ArrayReader":123}],118:[function(require,module,exports){
+},{"./uint8ArrayReader":129}],124:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var utils = require('./utils');
@@ -32665,7 +34167,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./base64":106,"./compressedObject":107,"./compressions":108,"./crc32":109,"./defaults":111,"./nodeBuffer":116,"./signature":119,"./stringWriter":121,"./support":122,"./uint8ArrayWriter":124,"./utf8":125,"./utils":126}],119:[function(require,module,exports){
+},{"./base64":112,"./compressedObject":113,"./compressions":114,"./crc32":115,"./defaults":117,"./nodeBuffer":122,"./signature":125,"./stringWriter":127,"./support":128,"./uint8ArrayWriter":130,"./utf8":131,"./utils":132}],125:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -32674,7 +34176,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],120:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 var utils = require('./utils');
@@ -32712,7 +34214,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"./dataReader":110,"./utils":126}],121:[function(require,module,exports){
+},{"./dataReader":116,"./utils":132}],127:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -32744,7 +34246,7 @@ StringWriter.prototype = {
 
 module.exports = StringWriter;
 
-},{"./utils":126}],122:[function(require,module,exports){
+},{"./utils":132}],128:[function(require,module,exports){
 (function (Buffer){(function (){
 'use strict';
 exports.base64 = true;
@@ -32782,7 +34284,7 @@ else {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":52}],123:[function(require,module,exports){
+},{"buffer":66}],129:[function(require,module,exports){
 'use strict';
 var DataReader = require('./dataReader');
 
@@ -32831,7 +34333,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"./dataReader":110}],124:[function(require,module,exports){
+},{"./dataReader":116}],130:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -32869,7 +34371,7 @@ Uint8ArrayWriter.prototype = {
 
 module.exports = Uint8ArrayWriter;
 
-},{"./utils":126}],125:[function(require,module,exports){
+},{"./utils":132}],131:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -33078,7 +34580,7 @@ exports.utf8decode = function utf8decode(buf) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./nodeBuffer":116,"./support":122,"./utils":126}],126:[function(require,module,exports){
+},{"./nodeBuffer":122,"./support":128,"./utils":132}],132:[function(require,module,exports){
 'use strict';
 var support = require('./support');
 var compressions = require('./compressions');
@@ -33406,7 +34908,7 @@ exports.isRegExp = function (object) {
 };
 
 
-},{"./compressions":108,"./nodeBuffer":116,"./support":122}],127:[function(require,module,exports){
+},{"./compressions":114,"./nodeBuffer":122,"./support":128}],133:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var NodeBufferReader = require('./nodeBufferReader');
@@ -33629,7 +35131,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./nodeBufferReader":117,"./object":118,"./signature":119,"./stringReader":120,"./support":122,"./uint8ArrayReader":123,"./utils":126,"./zipEntry":128}],128:[function(require,module,exports){
+},{"./nodeBufferReader":123,"./object":124,"./signature":125,"./stringReader":126,"./support":128,"./uint8ArrayReader":129,"./utils":132,"./zipEntry":134}],134:[function(require,module,exports){
 'use strict';
 var StringReader = require('./stringReader');
 var utils = require('./utils');
@@ -33941,7 +35443,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":107,"./object":118,"./stringReader":120,"./utils":126}],129:[function(require,module,exports){
+},{"./compressedObject":113,"./object":124,"./stringReader":126,"./utils":132}],135:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -33957,7 +35459,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":130,"./lib/inflate":131,"./lib/utils/common":132,"./lib/zlib/constants":135}],130:[function(require,module,exports){
+},{"./lib/deflate":136,"./lib/inflate":137,"./lib/utils/common":138,"./lib/zlib/constants":141}],136:[function(require,module,exports){
 'use strict';
 
 
@@ -34359,7 +35861,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":132,"./utils/strings":133,"./zlib/deflate":137,"./zlib/messages":142,"./zlib/zstream":144}],131:[function(require,module,exports){
+},{"./utils/common":138,"./utils/strings":139,"./zlib/deflate":143,"./zlib/messages":148,"./zlib/zstream":150}],137:[function(require,module,exports){
 'use strict';
 
 
@@ -34779,7 +36281,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":132,"./utils/strings":133,"./zlib/constants":135,"./zlib/gzheader":138,"./zlib/inflate":140,"./zlib/messages":142,"./zlib/zstream":144}],132:[function(require,module,exports){
+},{"./utils/common":138,"./utils/strings":139,"./zlib/constants":141,"./zlib/gzheader":144,"./zlib/inflate":146,"./zlib/messages":148,"./zlib/zstream":150}],138:[function(require,module,exports){
 'use strict';
 
 
@@ -34883,7 +36385,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],133:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -35070,7 +36572,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":132}],134:[function(require,module,exports){
+},{"./common":138}],140:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -35104,7 +36606,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],135:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 'use strict';
 
 
@@ -35156,7 +36658,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],136:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -35199,7 +36701,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],137:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -37056,7 +38558,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":132,"./adler32":134,"./crc32":136,"./messages":142,"./trees":143}],138:[function(require,module,exports){
+},{"../utils/common":138,"./adler32":140,"./crc32":142,"./messages":148,"./trees":149}],144:[function(require,module,exports){
 'use strict';
 
 
@@ -37098,7 +38600,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],139:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -37426,7 +38928,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],140:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 'use strict';
 
 
@@ -38966,7 +40468,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":132,"./adler32":134,"./crc32":136,"./inffast":139,"./inftrees":141}],141:[function(require,module,exports){
+},{"../utils/common":138,"./adler32":140,"./crc32":142,"./inffast":145,"./inftrees":147}],147:[function(require,module,exports){
 'use strict';
 
 
@@ -39295,7 +40797,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":132}],142:[function(require,module,exports){
+},{"../utils/common":138}],148:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -39310,7 +40812,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],143:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 'use strict';
 
 
@@ -40514,7 +42016,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":132}],144:[function(require,module,exports){
+},{"../utils/common":138}],150:[function(require,module,exports){
 'use strict';
 
 
@@ -40545,7 +42047,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],145:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 (function (global){(function (){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -40926,7 +42428,7 @@ function toNumber(value) {
 module.exports = debounce;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],146:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
@@ -58139,7 +59641,7 @@ module.exports = debounce;
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],147:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 (function (process){(function (){
 /* Mapbox GL JS is Copyright © 2020 Mapbox and subject to the Mapbox Terms of Service ((https://www.mapbox.com/legal/tos/). */
 (function (global, factory) {
@@ -58187,1277 +59689,3079 @@ return mapboxgl$1;
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":160}],148:[function(require,module,exports){
-(function (global){(function (){
+},{"_process":165}],154:[function(require,module,exports){
 /**
  * marked - a markdown parser
- * Copyright (c) 2011-2014, Christopher Jeffrey. (MIT Licensed)
- * https://github.com/chjj/marked
+ * Copyright (c) 2011-2022, Christopher Jeffrey. (MIT Licensed)
+ * https://github.com/markedjs/marked
  */
-
-;(function() {
 
 /**
- * Block-Level Grammar
+ * DO NOT EDIT THIS FILE
+ * The code in this file is generated from files in ./src/
  */
 
-var block = {
-  newline: /^\n+/,
-  code: /^( {4}[^\n]+\n*)+/,
-  fences: noop,
-  hr: /^( *[-*_]){3,} *(?:\n+|$)/,
-  heading: /^ *(#{1,6}) *([^\n]+?) *#* *(?:\n+|$)/,
-  nptable: noop,
-  lheading: /^([^\n]+)\n *(=|-){2,} *(?:\n+|$)/,
-  blockquote: /^( *>[^\n]+(\n(?!def)[^\n]+)*\n*)+/,
-  list: /^( *)(bull) [\s\S]+?(?:hr|def|\n{2,}(?! )(?!\1bull )\n*|\s*$)/,
-  html: /^ *(?:comment|closed|closing) *(?:\n{2,}|\s*$)/,
-  def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +["(]([^\n]+)[")])? *(?:\n+|$)/,
-  table: noop,
-  paragraph: /^((?:[^\n]+\n?(?!hr|heading|lheading|blockquote|tag|def))+)\n*/,
-  text: /^[^\n]+/
-};
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+  typeof define === 'function' && define.amd ? define(['exports'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.marked = {}));
+})(this, (function (exports) { 'use strict';
 
-block.bullet = /(?:[*+-]|\d+\.)/;
-block.item = /^( *)(bull) [^\n]*(?:\n(?!\1bull )[^\n]*)*/;
-block.item = replace(block.item, 'gm')
-  (/bull/g, block.bullet)
-  ();
-
-block.list = replace(block.list)
-  (/bull/g, block.bullet)
-  ('hr', '\\n+(?=\\1?(?:[-*_] *){3,}(?:\\n+|$))')
-  ('def', '\\n+(?=' + block.def.source + ')')
-  ();
-
-block.blockquote = replace(block.blockquote)
-  ('def', block.def)
-  ();
-
-block._tag = '(?!(?:'
-  + 'a|em|strong|small|s|cite|q|dfn|abbr|data|time|code'
-  + '|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo'
-  + '|span|br|wbr|ins|del|img)\\b)\\w+(?!:/|[^\\w\\s@]*@)\\b';
-
-block.html = replace(block.html)
-  ('comment', /<!--[\s\S]*?-->/)
-  ('closed', /<(tag)[\s\S]+?<\/\1>/)
-  ('closing', /<tag(?:"[^"]*"|'[^']*'|[^'">])*?>/)
-  (/tag/g, block._tag)
-  ();
-
-block.paragraph = replace(block.paragraph)
-  ('hr', block.hr)
-  ('heading', block.heading)
-  ('lheading', block.lheading)
-  ('blockquote', block.blockquote)
-  ('tag', '<' + block._tag)
-  ('def', block.def)
-  ();
-
-/**
- * Normal Block Grammar
- */
-
-block.normal = merge({}, block);
-
-/**
- * GFM Block Grammar
- */
-
-block.gfm = merge({}, block.normal, {
-  fences: /^ *(`{3,}|~{3,}) *(\S+)? *\n([\s\S]+?)\s*\1 *(?:\n+|$)/,
-  paragraph: /^/
-});
-
-block.gfm.paragraph = replace(block.paragraph)
-  ('(?!', '(?!'
-    + block.gfm.fences.source.replace('\\1', '\\2') + '|'
-    + block.list.source.replace('\\1', '\\3') + '|')
-  ();
-
-/**
- * GFM + Tables Block Grammar
- */
-
-block.tables = merge({}, block.gfm, {
-  nptable: /^ *(\S.*\|.*)\n *([-:]+ *\|[-| :]*)\n((?:.*\|.*(?:\n|$))*)\n*/,
-  table: /^ *\|(.+)\n *\|( *[-:]+[-| :]*)\n((?: *\|.*(?:\n|$))*)\n*/
-});
-
-/**
- * Block Lexer
- */
-
-function Lexer(options) {
-  this.tokens = [];
-  this.tokens.links = {};
-  this.options = options || marked.defaults;
-  this.rules = block.normal;
-
-  if (this.options.gfm) {
-    if (this.options.tables) {
-      this.rules = block.tables;
-    } else {
-      this.rules = block.gfm;
+  function _defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
     }
   }
-}
 
-/**
- * Expose Block Rules
- */
+  function _createClass(Constructor, protoProps, staticProps) {
+    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) _defineProperties(Constructor, staticProps);
+    Object.defineProperty(Constructor, "prototype", {
+      writable: false
+    });
+    return Constructor;
+  }
 
-Lexer.rules = block;
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(o);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
 
-/**
- * Static Lex Method
- */
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
 
-Lexer.lex = function(src, options) {
-  var lexer = new Lexer(options);
-  return lexer.lex(src);
-};
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
 
-/**
- * Preprocessing
- */
+    return arr2;
+  }
 
-Lexer.prototype.lex = function(src) {
-  src = src
-    .replace(/\r\n|\r/g, '\n')
-    .replace(/\t/g, '    ')
-    .replace(/\u00a0/g, ' ')
-    .replace(/\u2424/g, '\n');
+  function _createForOfIteratorHelperLoose(o, allowArrayLike) {
+    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
+    if (it) return (it = it.call(o)).next.bind(it);
 
-  return this.token(src, true);
-};
-
-/**
- * Lexing
- */
-
-Lexer.prototype.token = function(src, top, bq) {
-  var src = src.replace(/^ +$/gm, '')
-    , next
-    , loose
-    , cap
-    , bull
-    , b
-    , item
-    , space
-    , i
-    , l;
-
-  while (src) {
-    // newline
-    if (cap = this.rules.newline.exec(src)) {
-      src = src.substring(cap[0].length);
-      if (cap[0].length > 1) {
-        this.tokens.push({
-          type: 'space'
-        });
-      }
-    }
-
-    // code
-    if (cap = this.rules.code.exec(src)) {
-      src = src.substring(cap[0].length);
-      cap = cap[0].replace(/^ {4}/gm, '');
-      this.tokens.push({
-        type: 'code',
-        text: !this.options.pedantic
-          ? cap.replace(/\n+$/, '')
-          : cap
-      });
-      continue;
-    }
-
-    // fences (gfm)
-    if (cap = this.rules.fences.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'code',
-        lang: cap[2],
-        text: cap[3]
-      });
-      continue;
-    }
-
-    // heading
-    if (cap = this.rules.heading.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'heading',
-        depth: cap[1].length,
-        text: cap[2]
-      });
-      continue;
-    }
-
-    // table no leading pipe (gfm)
-    if (top && (cap = this.rules.nptable.exec(src))) {
-      src = src.substring(cap[0].length);
-
-      item = {
-        type: 'table',
-        header: cap[1].replace(/^ *| *\| *$/g, '').split(/ *\| */),
-        align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
-        cells: cap[3].replace(/\n$/, '').split('\n')
+    if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+      if (it) o = it;
+      var i = 0;
+      return function () {
+        if (i >= o.length) return {
+          done: true
+        };
+        return {
+          done: false,
+          value: o[i++]
+        };
       };
+    }
 
-      for (i = 0; i < item.align.length; i++) {
-        if (/^ *-+: *$/.test(item.align[i])) {
-          item.align[i] = 'right';
-        } else if (/^ *:-+: *$/.test(item.align[i])) {
-          item.align[i] = 'center';
-        } else if (/^ *:-+ *$/.test(item.align[i])) {
-          item.align[i] = 'left';
-        } else {
-          item.align[i] = null;
-        }
+    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+
+  function getDefaults() {
+    return {
+      async: false,
+      baseUrl: null,
+      breaks: false,
+      extensions: null,
+      gfm: true,
+      headerIds: true,
+      headerPrefix: '',
+      highlight: null,
+      langPrefix: 'language-',
+      mangle: true,
+      pedantic: false,
+      renderer: null,
+      sanitize: false,
+      sanitizer: null,
+      silent: false,
+      smartypants: false,
+      tokenizer: null,
+      walkTokens: null,
+      xhtml: false
+    };
+  }
+  exports.defaults = getDefaults();
+  function changeDefaults(newDefaults) {
+    exports.defaults = newDefaults;
+  }
+
+  /**
+   * Helpers
+   */
+  var escapeTest = /[&<>"']/;
+  var escapeReplace = /[&<>"']/g;
+  var escapeTestNoEncode = /[<>"']|&(?!#?\w+;)/;
+  var escapeReplaceNoEncode = /[<>"']|&(?!#?\w+;)/g;
+  var escapeReplacements = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+
+  var getEscapeReplacement = function getEscapeReplacement(ch) {
+    return escapeReplacements[ch];
+  };
+
+  function escape(html, encode) {
+    if (encode) {
+      if (escapeTest.test(html)) {
+        return html.replace(escapeReplace, getEscapeReplacement);
+      }
+    } else {
+      if (escapeTestNoEncode.test(html)) {
+        return html.replace(escapeReplaceNoEncode, getEscapeReplacement);
+      }
+    }
+
+    return html;
+  }
+  var unescapeTest = /&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig;
+  /**
+   * @param {string} html
+   */
+
+  function unescape(html) {
+    // explicitly match decimal, hex, and named HTML entities
+    return html.replace(unescapeTest, function (_, n) {
+      n = n.toLowerCase();
+      if (n === 'colon') return ':';
+
+      if (n.charAt(0) === '#') {
+        return n.charAt(1) === 'x' ? String.fromCharCode(parseInt(n.substring(2), 16)) : String.fromCharCode(+n.substring(1));
       }
 
-      for (i = 0; i < item.cells.length; i++) {
-        item.cells[i] = item.cells[i].split(/ *\| */);
+      return '';
+    });
+  }
+  var caret = /(^|[^\[])\^/g;
+  /**
+   * @param {string | RegExp} regex
+   * @param {string} opt
+   */
+
+  function edit(regex, opt) {
+    regex = typeof regex === 'string' ? regex : regex.source;
+    opt = opt || '';
+    var obj = {
+      replace: function replace(name, val) {
+        val = val.source || val;
+        val = val.replace(caret, '$1');
+        regex = regex.replace(name, val);
+        return obj;
+      },
+      getRegex: function getRegex() {
+        return new RegExp(regex, opt);
+      }
+    };
+    return obj;
+  }
+  var nonWordAndColonTest = /[^\w:]/g;
+  var originIndependentUrl = /^$|^[a-z][a-z0-9+.-]*:|^[?#]/i;
+  /**
+   * @param {boolean} sanitize
+   * @param {string} base
+   * @param {string} href
+   */
+
+  function cleanUrl(sanitize, base, href) {
+    if (sanitize) {
+      var prot;
+
+      try {
+        prot = decodeURIComponent(unescape(href)).replace(nonWordAndColonTest, '').toLowerCase();
+      } catch (e) {
+        return null;
       }
 
-      this.tokens.push(item);
-
-      continue;
+      if (prot.indexOf('javascript:') === 0 || prot.indexOf('vbscript:') === 0 || prot.indexOf('data:') === 0) {
+        return null;
+      }
     }
 
-    // lheading
-    if (cap = this.rules.lheading.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'heading',
-        depth: cap[2] === '=' ? 1 : 2,
-        text: cap[1]
-      });
-      continue;
+    if (base && !originIndependentUrl.test(href)) {
+      href = resolveUrl(base, href);
     }
 
-    // hr
-    if (cap = this.rules.hr.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'hr'
-      });
-      continue;
+    try {
+      href = encodeURI(href).replace(/%25/g, '%');
+    } catch (e) {
+      return null;
     }
 
-    // blockquote
-    if (cap = this.rules.blockquote.exec(src)) {
-      src = src.substring(cap[0].length);
+    return href;
+  }
+  var baseUrls = {};
+  var justDomain = /^[^:]+:\/*[^/]*$/;
+  var protocol = /^([^:]+:)[\s\S]*$/;
+  var domain = /^([^:]+:\/*[^/]*)[\s\S]*$/;
+  /**
+   * @param {string} base
+   * @param {string} href
+   */
 
-      this.tokens.push({
-        type: 'blockquote_start'
-      });
-
-      cap = cap[0].replace(/^ *> ?/gm, '');
-
-      // Pass `top` to keep the current
-      // "toplevel" state. This is exactly
-      // how markdown.pl works.
-      this.token(cap, top, true);
-
-      this.tokens.push({
-        type: 'blockquote_end'
-      });
-
-      continue;
+  function resolveUrl(base, href) {
+    if (!baseUrls[' ' + base]) {
+      // we can ignore everything in base after the last slash of its path component,
+      // but we might need to add _that_
+      // https://tools.ietf.org/html/rfc3986#section-3
+      if (justDomain.test(base)) {
+        baseUrls[' ' + base] = base + '/';
+      } else {
+        baseUrls[' ' + base] = rtrim(base, '/', true);
+      }
     }
 
-    // list
-    if (cap = this.rules.list.exec(src)) {
-      src = src.substring(cap[0].length);
-      bull = cap[2];
+    base = baseUrls[' ' + base];
+    var relativeBase = base.indexOf(':') === -1;
 
-      this.tokens.push({
-        type: 'list_start',
-        ordered: bull.length > 1
-      });
+    if (href.substring(0, 2) === '//') {
+      if (relativeBase) {
+        return href;
+      }
 
-      // Get each top-level item.
-      cap = cap[0].match(this.rules.item);
+      return base.replace(protocol, '$1') + href;
+    } else if (href.charAt(0) === '/') {
+      if (relativeBase) {
+        return href;
+      }
 
-      next = false;
-      l = cap.length;
-      i = 0;
+      return base.replace(domain, '$1') + href;
+    } else {
+      return base + href;
+    }
+  }
+  var noopTest = {
+    exec: function noopTest() {}
+  };
+  function merge(obj) {
+    var i = 1,
+        target,
+        key;
 
-      for (; i < l; i++) {
-        item = cap[i];
+    for (; i < arguments.length; i++) {
+      target = arguments[i];
 
-        // Remove the list item's bullet
-        // so it is seen as the next token.
-        space = item.length;
-        item = item.replace(/^ *([*+-]|\d+\.) +/, '');
-
-        // Outdent whatever the
-        // list item contains. Hacky.
-        if (~item.indexOf('\n ')) {
-          space -= item.length;
-          item = !this.options.pedantic
-            ? item.replace(new RegExp('^ {1,' + space + '}', 'gm'), '')
-            : item.replace(/^ {1,4}/gm, '');
+      for (key in target) {
+        if (Object.prototype.hasOwnProperty.call(target, key)) {
+          obj[key] = target[key];
         }
+      }
+    }
 
-        // Determine whether the next list item belongs here.
-        // Backpedal if it does not belong in this list.
-        if (this.options.smartLists && i !== l - 1) {
-          b = block.bullet.exec(cap[i + 1])[0];
-          if (bull !== b && !(bull.length > 1 && b.length > 1)) {
-            src = cap.slice(i + 1).join('\n') + src;
-            i = l - 1;
+    return obj;
+  }
+  function splitCells(tableRow, count) {
+    // ensure that every cell-delimiting pipe has a space
+    // before it to distinguish it from an escaped pipe
+    var row = tableRow.replace(/\|/g, function (match, offset, str) {
+      var escaped = false,
+          curr = offset;
+
+      while (--curr >= 0 && str[curr] === '\\') {
+        escaped = !escaped;
+      }
+
+      if (escaped) {
+        // odd number of slashes means | is escaped
+        // so we leave it alone
+        return '|';
+      } else {
+        // add space before unescaped |
+        return ' |';
+      }
+    }),
+        cells = row.split(/ \|/);
+    var i = 0; // First/last cell in a row cannot be empty if it has no leading/trailing pipe
+
+    if (!cells[0].trim()) {
+      cells.shift();
+    }
+
+    if (cells.length > 0 && !cells[cells.length - 1].trim()) {
+      cells.pop();
+    }
+
+    if (cells.length > count) {
+      cells.splice(count);
+    } else {
+      while (cells.length < count) {
+        cells.push('');
+      }
+    }
+
+    for (; i < cells.length; i++) {
+      // leading or trailing whitespace is ignored per the gfm spec
+      cells[i] = cells[i].trim().replace(/\\\|/g, '|');
+    }
+
+    return cells;
+  }
+  /**
+   * Remove trailing 'c's. Equivalent to str.replace(/c*$/, '').
+   * /c*$/ is vulnerable to REDOS.
+   *
+   * @param {string} str
+   * @param {string} c
+   * @param {boolean} invert Remove suffix of non-c chars instead. Default falsey.
+   */
+
+  function rtrim(str, c, invert) {
+    var l = str.length;
+
+    if (l === 0) {
+      return '';
+    } // Length of suffix matching the invert condition.
+
+
+    var suffLen = 0; // Step left until we fail to match the invert condition.
+
+    while (suffLen < l) {
+      var currChar = str.charAt(l - suffLen - 1);
+
+      if (currChar === c && !invert) {
+        suffLen++;
+      } else if (currChar !== c && invert) {
+        suffLen++;
+      } else {
+        break;
+      }
+    }
+
+    return str.slice(0, l - suffLen);
+  }
+  function findClosingBracket(str, b) {
+    if (str.indexOf(b[1]) === -1) {
+      return -1;
+    }
+
+    var l = str.length;
+    var level = 0,
+        i = 0;
+
+    for (; i < l; i++) {
+      if (str[i] === '\\') {
+        i++;
+      } else if (str[i] === b[0]) {
+        level++;
+      } else if (str[i] === b[1]) {
+        level--;
+
+        if (level < 0) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  }
+  function checkSanitizeDeprecation(opt) {
+    if (opt && opt.sanitize && !opt.silent) {
+      console.warn('marked(): sanitize and sanitizer parameters are deprecated since version 0.7.0, should not be used and will be removed in the future. Read more here: https://marked.js.org/#/USING_ADVANCED.md#options');
+    }
+  } // copied from https://stackoverflow.com/a/5450113/806777
+
+  /**
+   * @param {string} pattern
+   * @param {number} count
+   */
+
+  function repeatString(pattern, count) {
+    if (count < 1) {
+      return '';
+    }
+
+    var result = '';
+
+    while (count > 1) {
+      if (count & 1) {
+        result += pattern;
+      }
+
+      count >>= 1;
+      pattern += pattern;
+    }
+
+    return result + pattern;
+  }
+
+  function outputLink(cap, link, raw, lexer) {
+    var href = link.href;
+    var title = link.title ? escape(link.title) : null;
+    var text = cap[1].replace(/\\([\[\]])/g, '$1');
+
+    if (cap[0].charAt(0) !== '!') {
+      lexer.state.inLink = true;
+      var token = {
+        type: 'link',
+        raw: raw,
+        href: href,
+        title: title,
+        text: text,
+        tokens: lexer.inlineTokens(text)
+      };
+      lexer.state.inLink = false;
+      return token;
+    }
+
+    return {
+      type: 'image',
+      raw: raw,
+      href: href,
+      title: title,
+      text: escape(text)
+    };
+  }
+
+  function indentCodeCompensation(raw, text) {
+    var matchIndentToCode = raw.match(/^(\s+)(?:```)/);
+
+    if (matchIndentToCode === null) {
+      return text;
+    }
+
+    var indentToCode = matchIndentToCode[1];
+    return text.split('\n').map(function (node) {
+      var matchIndentInNode = node.match(/^\s+/);
+
+      if (matchIndentInNode === null) {
+        return node;
+      }
+
+      var indentInNode = matchIndentInNode[0];
+
+      if (indentInNode.length >= indentToCode.length) {
+        return node.slice(indentToCode.length);
+      }
+
+      return node;
+    }).join('\n');
+  }
+  /**
+   * Tokenizer
+   */
+
+
+  var Tokenizer = /*#__PURE__*/function () {
+    function Tokenizer(options) {
+      this.options = options || exports.defaults;
+    }
+
+    var _proto = Tokenizer.prototype;
+
+    _proto.space = function space(src) {
+      var cap = this.rules.block.newline.exec(src);
+
+      if (cap && cap[0].length > 0) {
+        return {
+          type: 'space',
+          raw: cap[0]
+        };
+      }
+    };
+
+    _proto.code = function code(src) {
+      var cap = this.rules.block.code.exec(src);
+
+      if (cap) {
+        var text = cap[0].replace(/^ {1,4}/gm, '');
+        return {
+          type: 'code',
+          raw: cap[0],
+          codeBlockStyle: 'indented',
+          text: !this.options.pedantic ? rtrim(text, '\n') : text
+        };
+      }
+    };
+
+    _proto.fences = function fences(src) {
+      var cap = this.rules.block.fences.exec(src);
+
+      if (cap) {
+        var raw = cap[0];
+        var text = indentCodeCompensation(raw, cap[3] || '');
+        return {
+          type: 'code',
+          raw: raw,
+          lang: cap[2] ? cap[2].trim() : cap[2],
+          text: text
+        };
+      }
+    };
+
+    _proto.heading = function heading(src) {
+      var cap = this.rules.block.heading.exec(src);
+
+      if (cap) {
+        var text = cap[2].trim(); // remove trailing #s
+
+        if (/#$/.test(text)) {
+          var trimmed = rtrim(text, '#');
+
+          if (this.options.pedantic) {
+            text = trimmed.trim();
+          } else if (!trimmed || / $/.test(trimmed)) {
+            // CommonMark requires space before trailing #s
+            text = trimmed.trim();
           }
         }
 
-        // Determine whether item is loose or not.
-        // Use: /(^|\n)(?! )[^\n]+\n\n(?!\s*$)/
-        // for discount behavior.
-        loose = next || /\n\n(?!\s*$)/.test(item);
-        if (i !== l - 1) {
-          next = item.charAt(item.length - 1) === '\n';
-          if (!loose) loose = next;
+        return {
+          type: 'heading',
+          raw: cap[0],
+          depth: cap[1].length,
+          text: text,
+          tokens: this.lexer.inline(text)
+        };
+      }
+    };
+
+    _proto.hr = function hr(src) {
+      var cap = this.rules.block.hr.exec(src);
+
+      if (cap) {
+        return {
+          type: 'hr',
+          raw: cap[0]
+        };
+      }
+    };
+
+    _proto.blockquote = function blockquote(src) {
+      var cap = this.rules.block.blockquote.exec(src);
+
+      if (cap) {
+        var text = cap[0].replace(/^ *>[ \t]?/gm, '');
+        return {
+          type: 'blockquote',
+          raw: cap[0],
+          tokens: this.lexer.blockTokens(text, []),
+          text: text
+        };
+      }
+    };
+
+    _proto.list = function list(src) {
+      var cap = this.rules.block.list.exec(src);
+
+      if (cap) {
+        var raw, istask, ischecked, indent, i, blankLine, endsWithBlankLine, line, nextLine, rawLine, itemContents, endEarly;
+        var bull = cap[1].trim();
+        var isordered = bull.length > 1;
+        var list = {
+          type: 'list',
+          raw: '',
+          ordered: isordered,
+          start: isordered ? +bull.slice(0, -1) : '',
+          loose: false,
+          items: []
+        };
+        bull = isordered ? "\\d{1,9}\\" + bull.slice(-1) : "\\" + bull;
+
+        if (this.options.pedantic) {
+          bull = isordered ? bull : '[*+-]';
+        } // Get next list item
+
+
+        var itemRegex = new RegExp("^( {0,3}" + bull + ")((?:[\t ][^\\n]*)?(?:\\n|$))"); // Check if current bullet point can start a new List Item
+
+        while (src) {
+          endEarly = false;
+
+          if (!(cap = itemRegex.exec(src))) {
+            break;
+          }
+
+          if (this.rules.block.hr.test(src)) {
+            // End list if bullet was actually HR (possibly move into itemRegex?)
+            break;
+          }
+
+          raw = cap[0];
+          src = src.substring(raw.length);
+          line = cap[2].split('\n', 1)[0];
+          nextLine = src.split('\n', 1)[0];
+
+          if (this.options.pedantic) {
+            indent = 2;
+            itemContents = line.trimLeft();
+          } else {
+            indent = cap[2].search(/[^ ]/); // Find first non-space char
+
+            indent = indent > 4 ? 1 : indent; // Treat indented code blocks (> 4 spaces) as having only 1 indent
+
+            itemContents = line.slice(indent);
+            indent += cap[1].length;
+          }
+
+          blankLine = false;
+
+          if (!line && /^ *$/.test(nextLine)) {
+            // Items begin with at most one blank line
+            raw += nextLine + '\n';
+            src = src.substring(nextLine.length + 1);
+            endEarly = true;
+          }
+
+          if (!endEarly) {
+            var nextBulletRegex = new RegExp("^ {0," + Math.min(3, indent - 1) + "}(?:[*+-]|\\d{1,9}[.)])((?: [^\\n]*)?(?:\\n|$))");
+            var hrRegex = new RegExp("^ {0," + Math.min(3, indent - 1) + "}((?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$)");
+            var fencesBeginRegex = new RegExp("^ {0," + Math.min(3, indent - 1) + "}(?:```|~~~)");
+            var headingBeginRegex = new RegExp("^ {0," + Math.min(3, indent - 1) + "}#"); // Check if following lines should be included in List Item
+
+            while (src) {
+              rawLine = src.split('\n', 1)[0];
+              line = rawLine; // Re-align to follow commonmark nesting rules
+
+              if (this.options.pedantic) {
+                line = line.replace(/^ {1,4}(?=( {4})*[^ ])/g, '  ');
+              } // End list item if found code fences
+
+
+              if (fencesBeginRegex.test(line)) {
+                break;
+              } // End list item if found start of new heading
+
+
+              if (headingBeginRegex.test(line)) {
+                break;
+              } // End list item if found start of new bullet
+
+
+              if (nextBulletRegex.test(line)) {
+                break;
+              } // Horizontal rule found
+
+
+              if (hrRegex.test(src)) {
+                break;
+              }
+
+              if (line.search(/[^ ]/) >= indent || !line.trim()) {
+                // Dedent if possible
+                itemContents += '\n' + line.slice(indent);
+              } else if (!blankLine) {
+                // Until blank line, item doesn't need indentation
+                itemContents += '\n' + line;
+              } else {
+                // Otherwise, improper indentation ends this item
+                break;
+              }
+
+              if (!blankLine && !line.trim()) {
+                // Check if current line is blank
+                blankLine = true;
+              }
+
+              raw += rawLine + '\n';
+              src = src.substring(rawLine.length + 1);
+            }
+          }
+
+          if (!list.loose) {
+            // If the previous item ended with a blank line, the list is loose
+            if (endsWithBlankLine) {
+              list.loose = true;
+            } else if (/\n *\n *$/.test(raw)) {
+              endsWithBlankLine = true;
+            }
+          } // Check for task list items
+
+
+          if (this.options.gfm) {
+            istask = /^\[[ xX]\] /.exec(itemContents);
+
+            if (istask) {
+              ischecked = istask[0] !== '[ ] ';
+              itemContents = itemContents.replace(/^\[[ xX]\] +/, '');
+            }
+          }
+
+          list.items.push({
+            type: 'list_item',
+            raw: raw,
+            task: !!istask,
+            checked: ischecked,
+            loose: false,
+            text: itemContents
+          });
+          list.raw += raw;
+        } // Do not consume newlines at end of final item. Alternatively, make itemRegex *start* with any newlines to simplify/speed up endsWithBlankLine logic
+
+
+        list.items[list.items.length - 1].raw = raw.trimRight();
+        list.items[list.items.length - 1].text = itemContents.trimRight();
+        list.raw = list.raw.trimRight();
+        var l = list.items.length; // Item child tokens handled here at end because we needed to have the final item to trim it first
+
+        for (i = 0; i < l; i++) {
+          this.lexer.state.top = false;
+          list.items[i].tokens = this.lexer.blockTokens(list.items[i].text, []);
+          var spacers = list.items[i].tokens.filter(function (t) {
+            return t.type === 'space';
+          });
+          var hasMultipleLineBreaks = spacers.every(function (t) {
+            var chars = t.raw.split('');
+            var lineBreaks = 0;
+
+            for (var _iterator = _createForOfIteratorHelperLoose(chars), _step; !(_step = _iterator()).done;) {
+              var _char = _step.value;
+
+              if (_char === '\n') {
+                lineBreaks += 1;
+              }
+
+              if (lineBreaks > 1) {
+                return true;
+              }
+            }
+
+            return false;
+          });
+
+          if (!list.loose && spacers.length && hasMultipleLineBreaks) {
+            // Having a single line break doesn't mean a list is loose. A single line break is terminating the last list item
+            list.loose = true;
+            list.items[i].loose = true;
+          }
         }
 
-        this.tokens.push({
-          type: loose
-            ? 'loose_item_start'
-            : 'list_item_start'
-        });
-
-        // Recurse.
-        this.token(item, false, bq);
-
-        this.tokens.push({
-          type: 'list_item_end'
-        });
+        return list;
       }
+    };
 
-      this.tokens.push({
-        type: 'list_end'
-      });
+    _proto.html = function html(src) {
+      var cap = this.rules.block.html.exec(src);
 
-      continue;
-    }
+      if (cap) {
+        var token = {
+          type: 'html',
+          raw: cap[0],
+          pre: !this.options.sanitizer && (cap[1] === 'pre' || cap[1] === 'script' || cap[1] === 'style'),
+          text: cap[0]
+        };
 
-    // html
-    if (cap = this.rules.html.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: this.options.sanitize
-          ? 'paragraph'
-          : 'html',
-        pre: cap[1] === 'pre' || cap[1] === 'script' || cap[1] === 'style',
-        text: cap[0]
-      });
-      continue;
-    }
+        if (this.options.sanitize) {
+          var text = this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape(cap[0]);
+          token.type = 'paragraph';
+          token.text = text;
+          token.tokens = this.lexer.inline(text);
+        }
 
-    // def
-    if ((!bq && top) && (cap = this.rules.def.exec(src))) {
-      src = src.substring(cap[0].length);
-      this.tokens.links[cap[1].toLowerCase()] = {
-        href: cap[2],
-        title: cap[3]
-      };
-      continue;
-    }
+        return token;
+      }
+    };
 
-    // table (gfm)
-    if (top && (cap = this.rules.table.exec(src))) {
-      src = src.substring(cap[0].length);
+    _proto.def = function def(src) {
+      var cap = this.rules.block.def.exec(src);
 
-      item = {
-        type: 'table',
-        header: cap[1].replace(/^ *| *\| *$/g, '').split(/ *\| */),
-        align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
-        cells: cap[3].replace(/(?: *\| *)?\n$/, '').split('\n')
-      };
+      if (cap) {
+        if (cap[3]) cap[3] = cap[3].substring(1, cap[3].length - 1);
+        var tag = cap[1].toLowerCase().replace(/\s+/g, ' ');
+        return {
+          type: 'def',
+          tag: tag,
+          raw: cap[0],
+          href: cap[2],
+          title: cap[3]
+        };
+      }
+    };
 
-      for (i = 0; i < item.align.length; i++) {
-        if (/^ *-+: *$/.test(item.align[i])) {
-          item.align[i] = 'right';
-        } else if (/^ *:-+: *$/.test(item.align[i])) {
-          item.align[i] = 'center';
-        } else if (/^ *:-+ *$/.test(item.align[i])) {
-          item.align[i] = 'left';
+    _proto.table = function table(src) {
+      var cap = this.rules.block.table.exec(src);
+
+      if (cap) {
+        var item = {
+          type: 'table',
+          header: splitCells(cap[1]).map(function (c) {
+            return {
+              text: c
+            };
+          }),
+          align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
+          rows: cap[3] && cap[3].trim() ? cap[3].replace(/\n[ \t]*$/, '').split('\n') : []
+        };
+
+        if (item.header.length === item.align.length) {
+          item.raw = cap[0];
+          var l = item.align.length;
+          var i, j, k, row;
+
+          for (i = 0; i < l; i++) {
+            if (/^ *-+: *$/.test(item.align[i])) {
+              item.align[i] = 'right';
+            } else if (/^ *:-+: *$/.test(item.align[i])) {
+              item.align[i] = 'center';
+            } else if (/^ *:-+ *$/.test(item.align[i])) {
+              item.align[i] = 'left';
+            } else {
+              item.align[i] = null;
+            }
+          }
+
+          l = item.rows.length;
+
+          for (i = 0; i < l; i++) {
+            item.rows[i] = splitCells(item.rows[i], item.header.length).map(function (c) {
+              return {
+                text: c
+              };
+            });
+          } // parse child tokens inside headers and cells
+          // header child tokens
+
+
+          l = item.header.length;
+
+          for (j = 0; j < l; j++) {
+            item.header[j].tokens = this.lexer.inline(item.header[j].text);
+          } // cell child tokens
+
+
+          l = item.rows.length;
+
+          for (j = 0; j < l; j++) {
+            row = item.rows[j];
+
+            for (k = 0; k < row.length; k++) {
+              row[k].tokens = this.lexer.inline(row[k].text);
+            }
+          }
+
+          return item;
+        }
+      }
+    };
+
+    _proto.lheading = function lheading(src) {
+      var cap = this.rules.block.lheading.exec(src);
+
+      if (cap) {
+        return {
+          type: 'heading',
+          raw: cap[0],
+          depth: cap[2].charAt(0) === '=' ? 1 : 2,
+          text: cap[1],
+          tokens: this.lexer.inline(cap[1])
+        };
+      }
+    };
+
+    _proto.paragraph = function paragraph(src) {
+      var cap = this.rules.block.paragraph.exec(src);
+
+      if (cap) {
+        var text = cap[1].charAt(cap[1].length - 1) === '\n' ? cap[1].slice(0, -1) : cap[1];
+        return {
+          type: 'paragraph',
+          raw: cap[0],
+          text: text,
+          tokens: this.lexer.inline(text)
+        };
+      }
+    };
+
+    _proto.text = function text(src) {
+      var cap = this.rules.block.text.exec(src);
+
+      if (cap) {
+        return {
+          type: 'text',
+          raw: cap[0],
+          text: cap[0],
+          tokens: this.lexer.inline(cap[0])
+        };
+      }
+    };
+
+    _proto.escape = function escape$1(src) {
+      var cap = this.rules.inline.escape.exec(src);
+
+      if (cap) {
+        return {
+          type: 'escape',
+          raw: cap[0],
+          text: escape(cap[1])
+        };
+      }
+    };
+
+    _proto.tag = function tag(src) {
+      var cap = this.rules.inline.tag.exec(src);
+
+      if (cap) {
+        if (!this.lexer.state.inLink && /^<a /i.test(cap[0])) {
+          this.lexer.state.inLink = true;
+        } else if (this.lexer.state.inLink && /^<\/a>/i.test(cap[0])) {
+          this.lexer.state.inLink = false;
+        }
+
+        if (!this.lexer.state.inRawBlock && /^<(pre|code|kbd|script)(\s|>)/i.test(cap[0])) {
+          this.lexer.state.inRawBlock = true;
+        } else if (this.lexer.state.inRawBlock && /^<\/(pre|code|kbd|script)(\s|>)/i.test(cap[0])) {
+          this.lexer.state.inRawBlock = false;
+        }
+
+        return {
+          type: this.options.sanitize ? 'text' : 'html',
+          raw: cap[0],
+          inLink: this.lexer.state.inLink,
+          inRawBlock: this.lexer.state.inRawBlock,
+          text: this.options.sanitize ? this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape(cap[0]) : cap[0]
+        };
+      }
+    };
+
+    _proto.link = function link(src) {
+      var cap = this.rules.inline.link.exec(src);
+
+      if (cap) {
+        var trimmedUrl = cap[2].trim();
+
+        if (!this.options.pedantic && /^</.test(trimmedUrl)) {
+          // commonmark requires matching angle brackets
+          if (!/>$/.test(trimmedUrl)) {
+            return;
+          } // ending angle bracket cannot be escaped
+
+
+          var rtrimSlash = rtrim(trimmedUrl.slice(0, -1), '\\');
+
+          if ((trimmedUrl.length - rtrimSlash.length) % 2 === 0) {
+            return;
+          }
         } else {
-          item.align[i] = null;
-        }
-      }
-
-      for (i = 0; i < item.cells.length; i++) {
-        item.cells[i] = item.cells[i]
-          .replace(/^ *\| *| *\| *$/g, '')
-          .split(/ *\| */);
-      }
-
-      this.tokens.push(item);
-
-      continue;
-    }
-
-    // top-level paragraph
-    if (top && (cap = this.rules.paragraph.exec(src))) {
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'paragraph',
-        text: cap[1].charAt(cap[1].length - 1) === '\n'
-          ? cap[1].slice(0, -1)
-          : cap[1]
-      });
-      continue;
-    }
-
-    // text
-    if (cap = this.rules.text.exec(src)) {
-      // Top-level should never reach here.
-      src = src.substring(cap[0].length);
-      this.tokens.push({
-        type: 'text',
-        text: cap[0]
-      });
-      continue;
-    }
-
-    if (src) {
-      throw new
-        Error('Infinite loop on byte: ' + src.charCodeAt(0));
-    }
-  }
-
-  return this.tokens;
-};
-
-/**
- * Inline-Level Grammar
- */
-
-var inline = {
-  escape: /^\\([\\`*{}\[\]()#+\-.!_>])/,
-  autolink: /^<([^ >]+(@|:\/)[^ >]+)>/,
-  url: noop,
-  tag: /^<!--[\s\S]*?-->|^<\/?\w+(?:"[^"]*"|'[^']*'|[^'">])*?>/,
-  link: /^!?\[(inside)\]\(href\)/,
-  reflink: /^!?\[(inside)\]\s*\[([^\]]*)\]/,
-  nolink: /^!?\[((?:\[[^\]]*\]|[^\[\]])*)\]/,
-  strong: /^__([\s\S]+?)__(?!_)|^\*\*([\s\S]+?)\*\*(?!\*)/,
-  em: /^\b_((?:__|[\s\S])+?)_\b|^\*((?:\*\*|[\s\S])+?)\*(?!\*)/,
-  code: /^(`+)\s*([\s\S]*?[^`])\s*\1(?!`)/,
-  br: /^ {2,}\n(?!\s*$)/,
-  del: noop,
-  text: /^[\s\S]+?(?=[\\<!\[_*`]| {2,}\n|$)/
-};
-
-inline._inside = /(?:\[[^\]]*\]|[^\[\]]|\](?=[^\[]*\]))*/;
-inline._href = /\s*<?([\s\S]*?)>?(?:\s+['"]([\s\S]*?)['"])?\s*/;
-
-inline.link = replace(inline.link)
-  ('inside', inline._inside)
-  ('href', inline._href)
-  ();
-
-inline.reflink = replace(inline.reflink)
-  ('inside', inline._inside)
-  ();
-
-/**
- * Normal Inline Grammar
- */
-
-inline.normal = merge({}, inline);
-
-/**
- * Pedantic Inline Grammar
- */
-
-inline.pedantic = merge({}, inline.normal, {
-  strong: /^__(?=\S)([\s\S]*?\S)__(?!_)|^\*\*(?=\S)([\s\S]*?\S)\*\*(?!\*)/,
-  em: /^_(?=\S)([\s\S]*?\S)_(?!_)|^\*(?=\S)([\s\S]*?\S)\*(?!\*)/
-});
-
-/**
- * GFM Inline Grammar
- */
-
-inline.gfm = merge({}, inline.normal, {
-  escape: replace(inline.escape)('])', '~|])')(),
-  url: /^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/,
-  del: /^~~(?=\S)([\s\S]*?\S)~~/,
-  text: replace(inline.text)
-    (']|', '~]|')
-    ('|', '|https?://|')
-    ()
-});
-
-/**
- * GFM + Line Breaks Inline Grammar
- */
-
-inline.breaks = merge({}, inline.gfm, {
-  br: replace(inline.br)('{2,}', '*')(),
-  text: replace(inline.gfm.text)('{2,}', '*')()
-});
-
-/**
- * Inline Lexer & Compiler
- */
-
-function InlineLexer(links, options) {
-  this.options = options || marked.defaults;
-  this.links = links;
-  this.rules = inline.normal;
-  this.renderer = this.options.renderer || new Renderer;
-  this.renderer.options = this.options;
-
-  if (!this.links) {
-    throw new
-      Error('Tokens array requires a `links` property.');
-  }
-
-  if (this.options.gfm) {
-    if (this.options.breaks) {
-      this.rules = inline.breaks;
-    } else {
-      this.rules = inline.gfm;
-    }
-  } else if (this.options.pedantic) {
-    this.rules = inline.pedantic;
-  }
-}
-
-/**
- * Expose Inline Rules
- */
-
-InlineLexer.rules = inline;
-
-/**
- * Static Lexing/Compiling Method
- */
-
-InlineLexer.output = function(src, links, options) {
-  var inline = new InlineLexer(links, options);
-  return inline.output(src);
-};
-
-/**
- * Lexing/Compiling
- */
-
-InlineLexer.prototype.output = function(src) {
-  var out = ''
-    , link
-    , text
-    , href
-    , cap;
-
-  while (src) {
-    // escape
-    if (cap = this.rules.escape.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += cap[1];
-      continue;
-    }
-
-    // autolink
-    if (cap = this.rules.autolink.exec(src)) {
-      src = src.substring(cap[0].length);
-      if (cap[2] === '@') {
-        text = cap[1].charAt(6) === ':'
-          ? this.mangle(cap[1].substring(7))
-          : this.mangle(cap[1]);
-        href = this.mangle('mailto:') + text;
-      } else {
-        text = escape(cap[1]);
-        href = text;
-      }
-      out += this.renderer.link(href, null, text);
-      continue;
-    }
-
-    // url (gfm)
-    if (!this.inLink && (cap = this.rules.url.exec(src))) {
-      src = src.substring(cap[0].length);
-      text = escape(cap[1]);
-      href = text;
-      out += this.renderer.link(href, null, text);
-      continue;
-    }
-
-    // tag
-    if (cap = this.rules.tag.exec(src)) {
-      if (!this.inLink && /^<a /i.test(cap[0])) {
-        this.inLink = true;
-      } else if (this.inLink && /^<\/a>/i.test(cap[0])) {
-        this.inLink = false;
-      }
-      src = src.substring(cap[0].length);
-      out += this.options.sanitize
-        ? escape(cap[0])
-        : cap[0];
-      continue;
-    }
-
-    // link
-    if (cap = this.rules.link.exec(src)) {
-      src = src.substring(cap[0].length);
-      this.inLink = true;
-      out += this.outputLink(cap, {
-        href: cap[2],
-        title: cap[3]
-      });
-      this.inLink = false;
-      continue;
-    }
-
-    // reflink, nolink
-    if ((cap = this.rules.reflink.exec(src))
-        || (cap = this.rules.nolink.exec(src))) {
-      src = src.substring(cap[0].length);
-      link = (cap[2] || cap[1]).replace(/\s+/g, ' ');
-      link = this.links[link.toLowerCase()];
-      if (!link || !link.href) {
-        out += cap[0].charAt(0);
-        src = cap[0].substring(1) + src;
-        continue;
-      }
-      this.inLink = true;
-      out += this.outputLink(cap, link);
-      this.inLink = false;
-      continue;
-    }
-
-    // strong
-    if (cap = this.rules.strong.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += this.renderer.strong(this.output(cap[2] || cap[1]));
-      continue;
-    }
-
-    // em
-    if (cap = this.rules.em.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += this.renderer.em(this.output(cap[2] || cap[1]));
-      continue;
-    }
-
-    // code
-    if (cap = this.rules.code.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += this.renderer.codespan(escape(cap[2], true));
-      continue;
-    }
-
-    // br
-    if (cap = this.rules.br.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += this.renderer.br();
-      continue;
-    }
-
-    // del (gfm)
-    if (cap = this.rules.del.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += this.renderer.del(this.output(cap[1]));
-      continue;
-    }
-
-    // text
-    if (cap = this.rules.text.exec(src)) {
-      src = src.substring(cap[0].length);
-      out += escape(this.smartypants(cap[0]));
-      continue;
-    }
-
-    if (src) {
-      throw new
-        Error('Infinite loop on byte: ' + src.charCodeAt(0));
-    }
-  }
-
-  return out;
-};
-
-/**
- * Compile Link
- */
-
-InlineLexer.prototype.outputLink = function(cap, link) {
-  var href = escape(link.href)
-    , title = link.title ? escape(link.title) : null;
-
-  return cap[0].charAt(0) !== '!'
-    ? this.renderer.link(href, title, this.output(cap[1]))
-    : this.renderer.image(href, title, escape(cap[1]));
-};
-
-/**
- * Smartypants Transformations
- */
-
-InlineLexer.prototype.smartypants = function(text) {
-  if (!this.options.smartypants) return text;
-  return text
-    // em-dashes
-    .replace(/--/g, '\u2014')
-    // opening singles
-    .replace(/(^|[-\u2014/(\[{"\s])'/g, '$1\u2018')
-    // closing singles & apostrophes
-    .replace(/'/g, '\u2019')
-    // opening doubles
-    .replace(/(^|[-\u2014/(\[{\u2018\s])"/g, '$1\u201c')
-    // closing doubles
-    .replace(/"/g, '\u201d')
-    // ellipses
-    .replace(/\.{3}/g, '\u2026');
-};
-
-/**
- * Mangle Links
- */
-
-InlineLexer.prototype.mangle = function(text) {
-  var out = ''
-    , l = text.length
-    , i = 0
-    , ch;
-
-  for (; i < l; i++) {
-    ch = text.charCodeAt(i);
-    if (Math.random() > 0.5) {
-      ch = 'x' + ch.toString(16);
-    }
-    out += '&#' + ch + ';';
-  }
-
-  return out;
-};
-
-/**
- * Renderer
- */
-
-function Renderer(options) {
-  this.options = options || {};
-}
-
-Renderer.prototype.code = function(code, lang, escaped) {
-  if (this.options.highlight) {
-    var out = this.options.highlight(code, lang);
-    if (out != null && out !== code) {
-      escaped = true;
-      code = out;
-    }
-  }
-
-  if (!lang) {
-    return '<pre><code>'
-      + (escaped ? code : escape(code, true))
-      + '\n</code></pre>';
-  }
-
-  return '<pre><code class="'
-    + this.options.langPrefix
-    + escape(lang, true)
-    + '">'
-    + (escaped ? code : escape(code, true))
-    + '\n</code></pre>\n';
-};
-
-Renderer.prototype.blockquote = function(quote) {
-  return '<blockquote>\n' + quote + '</blockquote>\n';
-};
-
-Renderer.prototype.html = function(html) {
-  return html;
-};
-
-Renderer.prototype.heading = function(text, level, raw) {
-  return '<h'
-    + level
-    + ' id="'
-    + this.options.headerPrefix
-    + raw.toLowerCase().replace(/[^\w]+/g, '-')
-    + '">'
-    + text
-    + '</h'
-    + level
-    + '>\n';
-};
-
-Renderer.prototype.hr = function() {
-  return this.options.xhtml ? '<hr/>\n' : '<hr>\n';
-};
-
-Renderer.prototype.list = function(body, ordered) {
-  var type = ordered ? 'ol' : 'ul';
-  return '<' + type + '>\n' + body + '</' + type + '>\n';
-};
-
-Renderer.prototype.listitem = function(text) {
-  return '<li>' + text + '</li>\n';
-};
-
-Renderer.prototype.paragraph = function(text) {
-  return '<p>' + text + '</p>\n';
-};
-
-Renderer.prototype.table = function(header, body) {
-  return '<table>\n'
-    + '<thead>\n'
-    + header
-    + '</thead>\n'
-    + '<tbody>\n'
-    + body
-    + '</tbody>\n'
-    + '</table>\n';
-};
-
-Renderer.prototype.tablerow = function(content) {
-  return '<tr>\n' + content + '</tr>\n';
-};
-
-Renderer.prototype.tablecell = function(content, flags) {
-  var type = flags.header ? 'th' : 'td';
-  var tag = flags.align
-    ? '<' + type + ' style="text-align:' + flags.align + '">'
-    : '<' + type + '>';
-  return tag + content + '</' + type + '>\n';
-};
-
-// span level renderer
-Renderer.prototype.strong = function(text) {
-  return '<strong>' + text + '</strong>';
-};
-
-Renderer.prototype.em = function(text) {
-  return '<em>' + text + '</em>';
-};
-
-Renderer.prototype.codespan = function(text) {
-  return '<code>' + text + '</code>';
-};
-
-Renderer.prototype.br = function() {
-  return this.options.xhtml ? '<br/>' : '<br>';
-};
-
-Renderer.prototype.del = function(text) {
-  return '<del>' + text + '</del>';
-};
-
-Renderer.prototype.link = function(href, title, text) {
-  if (this.options.sanitize) {
-    try {
-      var prot = decodeURIComponent(unescape(href))
-        .replace(/[^\w:]/g, '')
-        .toLowerCase();
-    } catch (e) {
-      return '';
-    }
-    if (prot.indexOf('javascript:') === 0) {
-      return '';
-    }
-  }
-  var out = '<a href="' + href + '"';
-  if (title) {
-    out += ' title="' + title + '"';
-  }
-  out += '>' + text + '</a>';
-  return out;
-};
-
-Renderer.prototype.image = function(href, title, text) {
-  var out = '<img src="' + href + '" alt="' + text + '"';
-  if (title) {
-    out += ' title="' + title + '"';
-  }
-  out += this.options.xhtml ? '/>' : '>';
-  return out;
-};
-
-/**
- * Parsing & Compiling
- */
-
-function Parser(options) {
-  this.tokens = [];
-  this.token = null;
-  this.options = options || marked.defaults;
-  this.options.renderer = this.options.renderer || new Renderer;
-  this.renderer = this.options.renderer;
-  this.renderer.options = this.options;
-}
-
-/**
- * Static Parse Method
- */
-
-Parser.parse = function(src, options, renderer) {
-  var parser = new Parser(options, renderer);
-  return parser.parse(src);
-};
-
-/**
- * Parse Loop
- */
-
-Parser.prototype.parse = function(src) {
-  this.inline = new InlineLexer(src.links, this.options, this.renderer);
-  this.tokens = src.reverse();
-
-  var out = '';
-  while (this.next()) {
-    out += this.tok();
-  }
-
-  return out;
-};
-
-/**
- * Next Token
- */
-
-Parser.prototype.next = function() {
-  return this.token = this.tokens.pop();
-};
-
-/**
- * Preview Next Token
- */
-
-Parser.prototype.peek = function() {
-  return this.tokens[this.tokens.length - 1] || 0;
-};
-
-/**
- * Parse Text Tokens
- */
-
-Parser.prototype.parseText = function() {
-  var body = this.token.text;
-
-  while (this.peek().type === 'text') {
-    body += '\n' + this.next().text;
-  }
-
-  return this.inline.output(body);
-};
-
-/**
- * Parse Current Token
- */
-
-Parser.prototype.tok = function() {
-  switch (this.token.type) {
-    case 'space': {
-      return '';
-    }
-    case 'hr': {
-      return this.renderer.hr();
-    }
-    case 'heading': {
-      return this.renderer.heading(
-        this.inline.output(this.token.text),
-        this.token.depth,
-        this.token.text);
-    }
-    case 'code': {
-      return this.renderer.code(this.token.text,
-        this.token.lang,
-        this.token.escaped);
-    }
-    case 'table': {
-      var header = ''
-        , body = ''
-        , i
-        , row
-        , cell
-        , flags
-        , j;
-
-      // header
-      cell = '';
-      for (i = 0; i < this.token.header.length; i++) {
-        flags = { header: true, align: this.token.align[i] };
-        cell += this.renderer.tablecell(
-          this.inline.output(this.token.header[i]),
-          { header: true, align: this.token.align[i] }
-        );
-      }
-      header += this.renderer.tablerow(cell);
-
-      for (i = 0; i < this.token.cells.length; i++) {
-        row = this.token.cells[i];
-
-        cell = '';
-        for (j = 0; j < row.length; j++) {
-          cell += this.renderer.tablecell(
-            this.inline.output(row[j]),
-            { header: false, align: this.token.align[j] }
-          );
+          // find closing parenthesis
+          var lastParenIndex = findClosingBracket(cap[2], '()');
+
+          if (lastParenIndex > -1) {
+            var start = cap[0].indexOf('!') === 0 ? 5 : 4;
+            var linkLen = start + cap[1].length + lastParenIndex;
+            cap[2] = cap[2].substring(0, lastParenIndex);
+            cap[0] = cap[0].substring(0, linkLen).trim();
+            cap[3] = '';
+          }
         }
 
-        body += this.renderer.tablerow(cell);
+        var href = cap[2];
+        var title = '';
+
+        if (this.options.pedantic) {
+          // split pedantic href and title
+          var link = /^([^'"]*[^\s])\s+(['"])(.*)\2/.exec(href);
+
+          if (link) {
+            href = link[1];
+            title = link[3];
+          }
+        } else {
+          title = cap[3] ? cap[3].slice(1, -1) : '';
+        }
+
+        href = href.trim();
+
+        if (/^</.test(href)) {
+          if (this.options.pedantic && !/>$/.test(trimmedUrl)) {
+            // pedantic allows starting angle bracket without ending angle bracket
+            href = href.slice(1);
+          } else {
+            href = href.slice(1, -1);
+          }
+        }
+
+        return outputLink(cap, {
+          href: href ? href.replace(this.rules.inline._escapes, '$1') : href,
+          title: title ? title.replace(this.rules.inline._escapes, '$1') : title
+        }, cap[0], this.lexer);
       }
-      return this.renderer.table(header, body);
-    }
-    case 'blockquote_start': {
-      var body = '';
+    };
 
-      while (this.next().type !== 'blockquote_end') {
-        body += this.tok();
+    _proto.reflink = function reflink(src, links) {
+      var cap;
+
+      if ((cap = this.rules.inline.reflink.exec(src)) || (cap = this.rules.inline.nolink.exec(src))) {
+        var link = (cap[2] || cap[1]).replace(/\s+/g, ' ');
+        link = links[link.toLowerCase()];
+
+        if (!link || !link.href) {
+          var text = cap[0].charAt(0);
+          return {
+            type: 'text',
+            raw: text,
+            text: text
+          };
+        }
+
+        return outputLink(cap, link, cap[0], this.lexer);
+      }
+    };
+
+    _proto.emStrong = function emStrong(src, maskedSrc, prevChar) {
+      if (prevChar === void 0) {
+        prevChar = '';
       }
 
-      return this.renderer.blockquote(body);
-    }
-    case 'list_start': {
-      var body = ''
-        , ordered = this.token.ordered;
+      var match = this.rules.inline.emStrong.lDelim.exec(src);
+      if (!match) return; // _ can't be between two alphanumerics. \p{L}\p{N} includes non-english alphabet/numbers as well
 
-      while (this.next().type !== 'list_end') {
-        body += this.tok();
+      if (match[3] && prevChar.match(/(?:[0-9A-Za-z\xAA\xB2\xB3\xB5\xB9\xBA\xBC-\xBE\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u037F\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u052F\u0531-\u0556\u0559\u0560-\u0588\u05D0-\u05EA\u05EF-\u05F2\u0620-\u064A\u0660-\u0669\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07C0-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u0860-\u086A\u0870-\u0887\u0889-\u088E\u08A0-\u08C9\u0904-\u0939\u093D\u0950\u0958-\u0961\u0966-\u096F\u0971-\u0980\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09E6-\u09F1\u09F4-\u09F9\u09FC\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A66-\u0A6F\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0AE6-\u0AEF\u0AF9\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B66-\u0B6F\u0B71-\u0B77\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0BE6-\u0BF2\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C39\u0C3D\u0C58-\u0C5A\u0C5D\u0C60\u0C61\u0C66-\u0C6F\u0C78-\u0C7E\u0C80\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDD\u0CDE\u0CE0\u0CE1\u0CE6-\u0CEF\u0CF1\u0CF2\u0D04-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D54-\u0D56\u0D58-\u0D61\u0D66-\u0D78\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DE6-\u0DEF\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E86-\u0E8A\u0E8C-\u0EA3\u0EA5\u0EA7-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F20-\u0F33\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F-\u1049\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u1090-\u1099\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1369-\u137C\u1380-\u138F\u13A0-\u13F5\u13F8-\u13FD\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F8\u1700-\u1711\u171F-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u17E0-\u17E9\u17F0-\u17F9\u1810-\u1819\u1820-\u1878\u1880-\u1884\u1887-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191E\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19DA\u1A00-\u1A16\u1A20-\u1A54\u1A80-\u1A89\u1A90-\u1A99\u1AA7\u1B05-\u1B33\u1B45-\u1B4C\u1B50-\u1B59\u1B83-\u1BA0\u1BAE-\u1BE5\u1C00-\u1C23\u1C40-\u1C49\u1C4D-\u1C7D\u1C80-\u1C88\u1C90-\u1CBA\u1CBD-\u1CBF\u1CE9-\u1CEC\u1CEE-\u1CF3\u1CF5\u1CF6\u1CFA\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2070\u2071\u2074-\u2079\u207F-\u2089\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2150-\u2189\u2460-\u249B\u24EA-\u24FF\u2776-\u2793\u2C00-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2CFD\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312F\u3131-\u318E\u3192-\u3195\u31A0-\u31BF\u31F0-\u31FF\u3220-\u3229\u3248-\u324F\u3251-\u325F\u3280-\u3289\u32B1-\u32BF\u3400-\u4DBF\u4E00-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66E\uA67F-\uA69D\uA6A0-\uA6EF\uA717-\uA71F\uA722-\uA788\uA78B-\uA7CA\uA7D0\uA7D1\uA7D3\uA7D5-\uA7D9\uA7F2-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA830-\uA835\uA840-\uA873\uA882-\uA8B3\uA8D0-\uA8D9\uA8F2-\uA8F7\uA8FB\uA8FD\uA8FE\uA900-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF-\uA9D9\uA9E0-\uA9E4\uA9E6-\uA9FE\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA50-\uAA59\uAA60-\uAA76\uAA7A\uAA7E-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uAB30-\uAB5A\uAB5C-\uAB69\uAB70-\uABE2\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]|\uD800[\uDC00-\uDC0B\uDC0D-\uDC26\uDC28-\uDC3A\uDC3C\uDC3D\uDC3F-\uDC4D\uDC50-\uDC5D\uDC80-\uDCFA\uDD07-\uDD33\uDD40-\uDD78\uDD8A\uDD8B\uDE80-\uDE9C\uDEA0-\uDED0\uDEE1-\uDEFB\uDF00-\uDF23\uDF2D-\uDF4A\uDF50-\uDF75\uDF80-\uDF9D\uDFA0-\uDFC3\uDFC8-\uDFCF\uDFD1-\uDFD5]|\uD801[\uDC00-\uDC9D\uDCA0-\uDCA9\uDCB0-\uDCD3\uDCD8-\uDCFB\uDD00-\uDD27\uDD30-\uDD63\uDD70-\uDD7A\uDD7C-\uDD8A\uDD8C-\uDD92\uDD94\uDD95\uDD97-\uDDA1\uDDA3-\uDDB1\uDDB3-\uDDB9\uDDBB\uDDBC\uDE00-\uDF36\uDF40-\uDF55\uDF60-\uDF67\uDF80-\uDF85\uDF87-\uDFB0\uDFB2-\uDFBA]|\uD802[\uDC00-\uDC05\uDC08\uDC0A-\uDC35\uDC37\uDC38\uDC3C\uDC3F-\uDC55\uDC58-\uDC76\uDC79-\uDC9E\uDCA7-\uDCAF\uDCE0-\uDCF2\uDCF4\uDCF5\uDCFB-\uDD1B\uDD20-\uDD39\uDD80-\uDDB7\uDDBC-\uDDCF\uDDD2-\uDE00\uDE10-\uDE13\uDE15-\uDE17\uDE19-\uDE35\uDE40-\uDE48\uDE60-\uDE7E\uDE80-\uDE9F\uDEC0-\uDEC7\uDEC9-\uDEE4\uDEEB-\uDEEF\uDF00-\uDF35\uDF40-\uDF55\uDF58-\uDF72\uDF78-\uDF91\uDFA9-\uDFAF]|\uD803[\uDC00-\uDC48\uDC80-\uDCB2\uDCC0-\uDCF2\uDCFA-\uDD23\uDD30-\uDD39\uDE60-\uDE7E\uDE80-\uDEA9\uDEB0\uDEB1\uDF00-\uDF27\uDF30-\uDF45\uDF51-\uDF54\uDF70-\uDF81\uDFB0-\uDFCB\uDFE0-\uDFF6]|\uD804[\uDC03-\uDC37\uDC52-\uDC6F\uDC71\uDC72\uDC75\uDC83-\uDCAF\uDCD0-\uDCE8\uDCF0-\uDCF9\uDD03-\uDD26\uDD36-\uDD3F\uDD44\uDD47\uDD50-\uDD72\uDD76\uDD83-\uDDB2\uDDC1-\uDDC4\uDDD0-\uDDDA\uDDDC\uDDE1-\uDDF4\uDE00-\uDE11\uDE13-\uDE2B\uDE80-\uDE86\uDE88\uDE8A-\uDE8D\uDE8F-\uDE9D\uDE9F-\uDEA8\uDEB0-\uDEDE\uDEF0-\uDEF9\uDF05-\uDF0C\uDF0F\uDF10\uDF13-\uDF28\uDF2A-\uDF30\uDF32\uDF33\uDF35-\uDF39\uDF3D\uDF50\uDF5D-\uDF61]|\uD805[\uDC00-\uDC34\uDC47-\uDC4A\uDC50-\uDC59\uDC5F-\uDC61\uDC80-\uDCAF\uDCC4\uDCC5\uDCC7\uDCD0-\uDCD9\uDD80-\uDDAE\uDDD8-\uDDDB\uDE00-\uDE2F\uDE44\uDE50-\uDE59\uDE80-\uDEAA\uDEB8\uDEC0-\uDEC9\uDF00-\uDF1A\uDF30-\uDF3B\uDF40-\uDF46]|\uD806[\uDC00-\uDC2B\uDCA0-\uDCF2\uDCFF-\uDD06\uDD09\uDD0C-\uDD13\uDD15\uDD16\uDD18-\uDD2F\uDD3F\uDD41\uDD50-\uDD59\uDDA0-\uDDA7\uDDAA-\uDDD0\uDDE1\uDDE3\uDE00\uDE0B-\uDE32\uDE3A\uDE50\uDE5C-\uDE89\uDE9D\uDEB0-\uDEF8]|\uD807[\uDC00-\uDC08\uDC0A-\uDC2E\uDC40\uDC50-\uDC6C\uDC72-\uDC8F\uDD00-\uDD06\uDD08\uDD09\uDD0B-\uDD30\uDD46\uDD50-\uDD59\uDD60-\uDD65\uDD67\uDD68\uDD6A-\uDD89\uDD98\uDDA0-\uDDA9\uDEE0-\uDEF2\uDFB0\uDFC0-\uDFD4]|\uD808[\uDC00-\uDF99]|\uD809[\uDC00-\uDC6E\uDC80-\uDD43]|\uD80B[\uDF90-\uDFF0]|[\uD80C\uD81C-\uD820\uD822\uD840-\uD868\uD86A-\uD86C\uD86F-\uD872\uD874-\uD879\uD880-\uD883][\uDC00-\uDFFF]|\uD80D[\uDC00-\uDC2E]|\uD811[\uDC00-\uDE46]|\uD81A[\uDC00-\uDE38\uDE40-\uDE5E\uDE60-\uDE69\uDE70-\uDEBE\uDEC0-\uDEC9\uDED0-\uDEED\uDF00-\uDF2F\uDF40-\uDF43\uDF50-\uDF59\uDF5B-\uDF61\uDF63-\uDF77\uDF7D-\uDF8F]|\uD81B[\uDE40-\uDE96\uDF00-\uDF4A\uDF50\uDF93-\uDF9F\uDFE0\uDFE1\uDFE3]|\uD821[\uDC00-\uDFF7]|\uD823[\uDC00-\uDCD5\uDD00-\uDD08]|\uD82B[\uDFF0-\uDFF3\uDFF5-\uDFFB\uDFFD\uDFFE]|\uD82C[\uDC00-\uDD22\uDD50-\uDD52\uDD64-\uDD67\uDD70-\uDEFB]|\uD82F[\uDC00-\uDC6A\uDC70-\uDC7C\uDC80-\uDC88\uDC90-\uDC99]|\uD834[\uDEE0-\uDEF3\uDF60-\uDF78]|\uD835[\uDC00-\uDC54\uDC56-\uDC9C\uDC9E\uDC9F\uDCA2\uDCA5\uDCA6\uDCA9-\uDCAC\uDCAE-\uDCB9\uDCBB\uDCBD-\uDCC3\uDCC5-\uDD05\uDD07-\uDD0A\uDD0D-\uDD14\uDD16-\uDD1C\uDD1E-\uDD39\uDD3B-\uDD3E\uDD40-\uDD44\uDD46\uDD4A-\uDD50\uDD52-\uDEA5\uDEA8-\uDEC0\uDEC2-\uDEDA\uDEDC-\uDEFA\uDEFC-\uDF14\uDF16-\uDF34\uDF36-\uDF4E\uDF50-\uDF6E\uDF70-\uDF88\uDF8A-\uDFA8\uDFAA-\uDFC2\uDFC4-\uDFCB\uDFCE-\uDFFF]|\uD837[\uDF00-\uDF1E]|\uD838[\uDD00-\uDD2C\uDD37-\uDD3D\uDD40-\uDD49\uDD4E\uDE90-\uDEAD\uDEC0-\uDEEB\uDEF0-\uDEF9]|\uD839[\uDFE0-\uDFE6\uDFE8-\uDFEB\uDFED\uDFEE\uDFF0-\uDFFE]|\uD83A[\uDC00-\uDCC4\uDCC7-\uDCCF\uDD00-\uDD43\uDD4B\uDD50-\uDD59]|\uD83B[\uDC71-\uDCAB\uDCAD-\uDCAF\uDCB1-\uDCB4\uDD01-\uDD2D\uDD2F-\uDD3D\uDE00-\uDE03\uDE05-\uDE1F\uDE21\uDE22\uDE24\uDE27\uDE29-\uDE32\uDE34-\uDE37\uDE39\uDE3B\uDE42\uDE47\uDE49\uDE4B\uDE4D-\uDE4F\uDE51\uDE52\uDE54\uDE57\uDE59\uDE5B\uDE5D\uDE5F\uDE61\uDE62\uDE64\uDE67-\uDE6A\uDE6C-\uDE72\uDE74-\uDE77\uDE79-\uDE7C\uDE7E\uDE80-\uDE89\uDE8B-\uDE9B\uDEA1-\uDEA3\uDEA5-\uDEA9\uDEAB-\uDEBB]|\uD83C[\uDD00-\uDD0C]|\uD83E[\uDFF0-\uDFF9]|\uD869[\uDC00-\uDEDF\uDF00-\uDFFF]|\uD86D[\uDC00-\uDF38\uDF40-\uDFFF]|\uD86E[\uDC00-\uDC1D\uDC20-\uDFFF]|\uD873[\uDC00-\uDEA1\uDEB0-\uDFFF]|\uD87A[\uDC00-\uDFE0]|\uD87E[\uDC00-\uDE1D]|\uD884[\uDC00-\uDF4A])/)) return;
+      var nextChar = match[1] || match[2] || '';
+
+      if (!nextChar || nextChar && (prevChar === '' || this.rules.inline.punctuation.exec(prevChar))) {
+        var lLength = match[0].length - 1;
+        var rDelim,
+            rLength,
+            delimTotal = lLength,
+            midDelimTotal = 0;
+        var endReg = match[0][0] === '*' ? this.rules.inline.emStrong.rDelimAst : this.rules.inline.emStrong.rDelimUnd;
+        endReg.lastIndex = 0; // Clip maskedSrc to same section of string as src (move to lexer?)
+
+        maskedSrc = maskedSrc.slice(-1 * src.length + lLength);
+
+        while ((match = endReg.exec(maskedSrc)) != null) {
+          rDelim = match[1] || match[2] || match[3] || match[4] || match[5] || match[6];
+          if (!rDelim) continue; // skip single * in __abc*abc__
+
+          rLength = rDelim.length;
+
+          if (match[3] || match[4]) {
+            // found another Left Delim
+            delimTotal += rLength;
+            continue;
+          } else if (match[5] || match[6]) {
+            // either Left or Right Delim
+            if (lLength % 3 && !((lLength + rLength) % 3)) {
+              midDelimTotal += rLength;
+              continue; // CommonMark Emphasis Rules 9-10
+            }
+          }
+
+          delimTotal -= rLength;
+          if (delimTotal > 0) continue; // Haven't found enough closing delimiters
+          // Remove extra characters. *a*** -> *a*
+
+          rLength = Math.min(rLength, rLength + delimTotal + midDelimTotal); // Create `em` if smallest delimiter has odd char count. *a***
+
+          if (Math.min(lLength, rLength) % 2) {
+            var _text = src.slice(1, lLength + match.index + rLength);
+
+            return {
+              type: 'em',
+              raw: src.slice(0, lLength + match.index + rLength + 1),
+              text: _text,
+              tokens: this.lexer.inlineTokens(_text)
+            };
+          } // Create 'strong' if smallest delimiter has even char count. **a***
+
+
+          var text = src.slice(2, lLength + match.index + rLength - 1);
+          return {
+            type: 'strong',
+            raw: src.slice(0, lLength + match.index + rLength + 1),
+            text: text,
+            tokens: this.lexer.inlineTokens(text)
+          };
+        }
       }
+    };
 
-      return this.renderer.list(body, ordered);
-    }
-    case 'list_item_start': {
-      var body = '';
+    _proto.codespan = function codespan(src) {
+      var cap = this.rules.inline.code.exec(src);
 
-      while (this.next().type !== 'list_item_end') {
-        body += this.token.type === 'text'
-          ? this.parseText()
-          : this.tok();
+      if (cap) {
+        var text = cap[2].replace(/\n/g, ' ');
+        var hasNonSpaceChars = /[^ ]/.test(text);
+        var hasSpaceCharsOnBothEnds = /^ /.test(text) && / $/.test(text);
+
+        if (hasNonSpaceChars && hasSpaceCharsOnBothEnds) {
+          text = text.substring(1, text.length - 1);
+        }
+
+        text = escape(text, true);
+        return {
+          type: 'codespan',
+          raw: cap[0],
+          text: text
+        };
       }
+    };
 
-      return this.renderer.listitem(body);
-    }
-    case 'loose_item_start': {
-      var body = '';
+    _proto.br = function br(src) {
+      var cap = this.rules.inline.br.exec(src);
 
-      while (this.next().type !== 'list_item_end') {
-        body += this.tok();
+      if (cap) {
+        return {
+          type: 'br',
+          raw: cap[0]
+        };
       }
+    };
 
-      return this.renderer.listitem(body);
-    }
-    case 'html': {
-      var html = !this.token.pre && !this.options.pedantic
-        ? this.inline.output(this.token.text)
-        : this.token.text;
-      return this.renderer.html(html);
-    }
-    case 'paragraph': {
-      return this.renderer.paragraph(this.inline.output(this.token.text));
-    }
-    case 'text': {
-      return this.renderer.paragraph(this.parseText());
-    }
-  }
-};
+    _proto.del = function del(src) {
+      var cap = this.rules.inline.del.exec(src);
 
-/**
- * Helpers
- */
+      if (cap) {
+        return {
+          type: 'del',
+          raw: cap[0],
+          text: cap[2],
+          tokens: this.lexer.inlineTokens(cap[2])
+        };
+      }
+    };
 
-function escape(html, encode) {
-  return html
-    .replace(!encode ? /&(?!#?\w+;)/g : /&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+    _proto.autolink = function autolink(src, mangle) {
+      var cap = this.rules.inline.autolink.exec(src);
 
-function unescape(html) {
-  return html.replace(/&([#\w]+);/g, function(_, n) {
-    n = n.toLowerCase();
-    if (n === 'colon') return ':';
-    if (n.charAt(0) === '#') {
-      return n.charAt(1) === 'x'
-        ? String.fromCharCode(parseInt(n.substring(2), 16))
-        : String.fromCharCode(+n.substring(1));
-    }
-    return '';
-  });
-}
+      if (cap) {
+        var text, href;
 
-function replace(regex, opt) {
-  regex = regex.source;
-  opt = opt || '';
-  return function self(name, val) {
-    if (!name) return new RegExp(regex, opt);
-    val = val.source || val;
-    val = val.replace(/(^|[^\[])\^/g, '$1');
-    regex = regex.replace(name, val);
-    return self;
+        if (cap[2] === '@') {
+          text = escape(this.options.mangle ? mangle(cap[1]) : cap[1]);
+          href = 'mailto:' + text;
+        } else {
+          text = escape(cap[1]);
+          href = text;
+        }
+
+        return {
+          type: 'link',
+          raw: cap[0],
+          text: text,
+          href: href,
+          tokens: [{
+            type: 'text',
+            raw: text,
+            text: text
+          }]
+        };
+      }
+    };
+
+    _proto.url = function url(src, mangle) {
+      var cap;
+
+      if (cap = this.rules.inline.url.exec(src)) {
+        var text, href;
+
+        if (cap[2] === '@') {
+          text = escape(this.options.mangle ? mangle(cap[0]) : cap[0]);
+          href = 'mailto:' + text;
+        } else {
+          // do extended autolink path validation
+          var prevCapZero;
+
+          do {
+            prevCapZero = cap[0];
+            cap[0] = this.rules.inline._backpedal.exec(cap[0])[0];
+          } while (prevCapZero !== cap[0]);
+
+          text = escape(cap[0]);
+
+          if (cap[1] === 'www.') {
+            href = 'http://' + text;
+          } else {
+            href = text;
+          }
+        }
+
+        return {
+          type: 'link',
+          raw: cap[0],
+          text: text,
+          href: href,
+          tokens: [{
+            type: 'text',
+            raw: text,
+            text: text
+          }]
+        };
+      }
+    };
+
+    _proto.inlineText = function inlineText(src, smartypants) {
+      var cap = this.rules.inline.text.exec(src);
+
+      if (cap) {
+        var text;
+
+        if (this.lexer.state.inRawBlock) {
+          text = this.options.sanitize ? this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape(cap[0]) : cap[0];
+        } else {
+          text = escape(this.options.smartypants ? smartypants(cap[0]) : cap[0]);
+        }
+
+        return {
+          type: 'text',
+          raw: cap[0],
+          text: text
+        };
+      }
+    };
+
+    return Tokenizer;
+  }();
+
+  /**
+   * Block-Level Grammar
+   */
+
+  var block = {
+    newline: /^(?: *(?:\n|$))+/,
+    code: /^( {4}[^\n]+(?:\n(?: *(?:\n|$))*)?)+/,
+    fences: /^ {0,3}(`{3,}(?=[^`\n]*\n)|~{3,})([^\n]*)\n(?:|([\s\S]*?)\n)(?: {0,3}\1[~`]* *(?=\n|$)|$)/,
+    hr: /^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/,
+    heading: /^ {0,3}(#{1,6})(?=\s|$)(.*)(?:\n+|$)/,
+    blockquote: /^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/,
+    list: /^( {0,3}bull)([ \t][^\n]+?)?(?:\n|$)/,
+    html: '^ {0,3}(?:' // optional indentation
+    + '<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)' // (1)
+    + '|comment[^\\n]*(\\n+|$)' // (2)
+    + '|<\\?[\\s\\S]*?(?:\\?>\\n*|$)' // (3)
+    + '|<![A-Z][\\s\\S]*?(?:>\\n*|$)' // (4)
+    + '|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)' // (5)
+    + '|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n *)+\\n|$)' // (6)
+    + '|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n *)+\\n|$)' // (7) open tag
+    + '|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n *)+\\n|$)' // (7) closing tag
+    + ')',
+    def: /^ {0,3}\[(label)\]: *(?:\n *)?<?([^\s>]+)>?(?:(?: +(?:\n *)?| *\n *)(title))? *(?:\n+|$)/,
+    table: noopTest,
+    lheading: /^([^\n]+)\n {0,3}(=+|-+) *(?:\n+|$)/,
+    // regex template, placeholders will be replaced according to different paragraph
+    // interruption rules of commonmark and the original markdown spec:
+    _paragraph: /^([^\n]+(?:\n(?!hr|heading|lheading|blockquote|fences|list|html|table| +\n)[^\n]+)*)/,
+    text: /^[^\n]+/
   };
-}
+  block._label = /(?!\s*\])(?:\\.|[^\[\]\\])+/;
+  block._title = /(?:"(?:\\"?|[^"\\])*"|'[^'\n]*(?:\n[^'\n]+)*\n?'|\([^()]*\))/;
+  block.def = edit(block.def).replace('label', block._label).replace('title', block._title).getRegex();
+  block.bullet = /(?:[*+-]|\d{1,9}[.)])/;
+  block.listItemStart = edit(/^( *)(bull) */).replace('bull', block.bullet).getRegex();
+  block.list = edit(block.list).replace(/bull/g, block.bullet).replace('hr', '\\n+(?=\\1?(?:(?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$))').replace('def', '\\n+(?=' + block.def.source + ')').getRegex();
+  block._tag = 'address|article|aside|base|basefont|blockquote|body|caption' + '|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption' + '|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe' + '|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option' + '|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr' + '|track|ul';
+  block._comment = /<!--(?!-?>)[\s\S]*?(?:-->|$)/;
+  block.html = edit(block.html, 'i').replace('comment', block._comment).replace('tag', block._tag).replace('attribute', / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
+  block.paragraph = edit(block._paragraph).replace('hr', block.hr).replace('heading', ' {0,3}#{1,6} ').replace('|lheading', '') // setex headings don't interrupt commonmark paragraphs
+  .replace('|table', '').replace('blockquote', ' {0,3}>').replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n').replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
+  .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)').replace('tag', block._tag) // pars can be interrupted by type (6) html blocks
+  .getRegex();
+  block.blockquote = edit(block.blockquote).replace('paragraph', block.paragraph).getRegex();
+  /**
+   * Normal Block Grammar
+   */
 
-function noop() {}
-noop.exec = noop;
+  block.normal = merge({}, block);
+  /**
+   * GFM Block Grammar
+   */
 
-function merge(obj) {
-  var i = 1
-    , target
-    , key;
+  block.gfm = merge({}, block.normal, {
+    table: '^ *([^\\n ].*\\|.*)\\n' // Header
+    + ' {0,3}(?:\\| *)?(:?-+:? *(?:\\| *:?-+:? *)*)(?:\\| *)?' // Align
+    + '(?:\\n((?:(?! *\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)' // Cells
 
-  for (; i < arguments.length; i++) {
-    target = arguments[i];
-    for (key in target) {
-      if (Object.prototype.hasOwnProperty.call(target, key)) {
-        obj[key] = target[key];
-      }
-    }
+  });
+  block.gfm.table = edit(block.gfm.table).replace('hr', block.hr).replace('heading', ' {0,3}#{1,6} ').replace('blockquote', ' {0,3}>').replace('code', ' {4}[^\\n]').replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n').replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
+  .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)').replace('tag', block._tag) // tables can be interrupted by type (6) html blocks
+  .getRegex();
+  block.gfm.paragraph = edit(block._paragraph).replace('hr', block.hr).replace('heading', ' {0,3}#{1,6} ').replace('|lheading', '') // setex headings don't interrupt commonmark paragraphs
+  .replace('table', block.gfm.table) // interrupt paragraphs with table
+  .replace('blockquote', ' {0,3}>').replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n').replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
+  .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)').replace('tag', block._tag) // pars can be interrupted by type (6) html blocks
+  .getRegex();
+  /**
+   * Pedantic grammar (original John Gruber's loose markdown specification)
+   */
+
+  block.pedantic = merge({}, block.normal, {
+    html: edit('^ *(?:comment *(?:\\n|\\s*$)' + '|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)' // closed tag
+    + '|<tag(?:"[^"]*"|\'[^\']*\'|\\s[^\'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))').replace('comment', block._comment).replace(/tag/g, '(?!(?:' + 'a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub' + '|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)' + '\\b)\\w+(?!:|[^\\w\\s@]*@)\\b').getRegex(),
+    def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/,
+    heading: /^(#{1,6})(.*)(?:\n+|$)/,
+    fences: noopTest,
+    // fences not supported
+    paragraph: edit(block.normal._paragraph).replace('hr', block.hr).replace('heading', ' *#{1,6} *[^\n]').replace('lheading', block.lheading).replace('blockquote', ' {0,3}>').replace('|fences', '').replace('|list', '').replace('|html', '').getRegex()
+  });
+  /**
+   * Inline-Level Grammar
+   */
+
+  var inline = {
+    escape: /^\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/,
+    autolink: /^<(scheme:[^\s\x00-\x1f<>]*|email)>/,
+    url: noopTest,
+    tag: '^comment' + '|^</[a-zA-Z][\\w:-]*\\s*>' // self-closing tag
+    + '|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>' // open tag
+    + '|^<\\?[\\s\\S]*?\\?>' // processing instruction, e.g. <?php ?>
+    + '|^<![a-zA-Z]+\\s[\\s\\S]*?>' // declaration, e.g. <!DOCTYPE html>
+    + '|^<!\\[CDATA\\[[\\s\\S]*?\\]\\]>',
+    // CDATA section
+    link: /^!?\[(label)\]\(\s*(href)(?:\s+(title))?\s*\)/,
+    reflink: /^!?\[(label)\]\[(ref)\]/,
+    nolink: /^!?\[(ref)\](?:\[\])?/,
+    reflinkSearch: 'reflink|nolink(?!\\()',
+    emStrong: {
+      lDelim: /^(?:\*+(?:([punct_])|[^\s*]))|^_+(?:([punct*])|([^\s_]))/,
+      //        (1) and (2) can only be a Right Delimiter. (3) and (4) can only be Left.  (5) and (6) can be either Left or Right.
+      //          () Skip orphan inside strong  () Consume to delim (1) #***                (2) a***#, a***                   (3) #***a, ***a                 (4) ***#              (5) #***#                 (6) a***a
+      rDelimAst: /^[^_*]*?\_\_[^_*]*?\*[^_*]*?(?=\_\_)|[^*]+(?=[^*])|[punct_](\*+)(?=[\s]|$)|[^punct*_\s](\*+)(?=[punct_\s]|$)|[punct_\s](\*+)(?=[^punct*_\s])|[\s](\*+)(?=[punct_])|[punct_](\*+)(?=[punct_])|[^punct*_\s](\*+)(?=[^punct*_\s])/,
+      rDelimUnd: /^[^_*]*?\*\*[^_*]*?\_[^_*]*?(?=\*\*)|[^_]+(?=[^_])|[punct*](\_+)(?=[\s]|$)|[^punct*_\s](\_+)(?=[punct*\s]|$)|[punct*\s](\_+)(?=[^punct*_\s])|[\s](\_+)(?=[punct*])|[punct*](\_+)(?=[punct*])/ // ^- Not allowed for _
+
+    },
+    code: /^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/,
+    br: /^( {2,}|\\)\n(?!\s*$)/,
+    del: noopTest,
+    text: /^(`+|[^`])(?:(?= {2,}\n)|[\s\S]*?(?:(?=[\\<!\[`*_]|\b_|$)|[^ ](?= {2,}\n)))/,
+    punctuation: /^([\spunctuation])/
+  }; // list of punctuation marks from CommonMark spec
+  // without * and _ to handle the different emphasis markers * and _
+
+  inline._punctuation = '!"#$%&\'()+\\-.,/:;<=>?@\\[\\]`^{|}~';
+  inline.punctuation = edit(inline.punctuation).replace(/punctuation/g, inline._punctuation).getRegex(); // sequences em should skip over [title](link), `code`, <html>
+
+  inline.blockSkip = /\[[^\]]*?\]\([^\)]*?\)|`[^`]*?`|<[^>]*?>/g;
+  inline.escapedEmSt = /\\\*|\\_/g;
+  inline._comment = edit(block._comment).replace('(?:-->|$)', '-->').getRegex();
+  inline.emStrong.lDelim = edit(inline.emStrong.lDelim).replace(/punct/g, inline._punctuation).getRegex();
+  inline.emStrong.rDelimAst = edit(inline.emStrong.rDelimAst, 'g').replace(/punct/g, inline._punctuation).getRegex();
+  inline.emStrong.rDelimUnd = edit(inline.emStrong.rDelimUnd, 'g').replace(/punct/g, inline._punctuation).getRegex();
+  inline._escapes = /\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/g;
+  inline._scheme = /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/;
+  inline._email = /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/;
+  inline.autolink = edit(inline.autolink).replace('scheme', inline._scheme).replace('email', inline._email).getRegex();
+  inline._attribute = /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/;
+  inline.tag = edit(inline.tag).replace('comment', inline._comment).replace('attribute', inline._attribute).getRegex();
+  inline._label = /(?:\[(?:\\.|[^\[\]\\])*\]|\\.|`[^`]*`|[^\[\]\\`])*?/;
+  inline._href = /<(?:\\.|[^\n<>\\])+>|[^\s\x00-\x1f]*/;
+  inline._title = /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/;
+  inline.link = edit(inline.link).replace('label', inline._label).replace('href', inline._href).replace('title', inline._title).getRegex();
+  inline.reflink = edit(inline.reflink).replace('label', inline._label).replace('ref', block._label).getRegex();
+  inline.nolink = edit(inline.nolink).replace('ref', block._label).getRegex();
+  inline.reflinkSearch = edit(inline.reflinkSearch, 'g').replace('reflink', inline.reflink).replace('nolink', inline.nolink).getRegex();
+  /**
+   * Normal Inline Grammar
+   */
+
+  inline.normal = merge({}, inline);
+  /**
+   * Pedantic Inline Grammar
+   */
+
+  inline.pedantic = merge({}, inline.normal, {
+    strong: {
+      start: /^__|\*\*/,
+      middle: /^__(?=\S)([\s\S]*?\S)__(?!_)|^\*\*(?=\S)([\s\S]*?\S)\*\*(?!\*)/,
+      endAst: /\*\*(?!\*)/g,
+      endUnd: /__(?!_)/g
+    },
+    em: {
+      start: /^_|\*/,
+      middle: /^()\*(?=\S)([\s\S]*?\S)\*(?!\*)|^_(?=\S)([\s\S]*?\S)_(?!_)/,
+      endAst: /\*(?!\*)/g,
+      endUnd: /_(?!_)/g
+    },
+    link: edit(/^!?\[(label)\]\((.*?)\)/).replace('label', inline._label).getRegex(),
+    reflink: edit(/^!?\[(label)\]\s*\[([^\]]*)\]/).replace('label', inline._label).getRegex()
+  });
+  /**
+   * GFM Inline Grammar
+   */
+
+  inline.gfm = merge({}, inline.normal, {
+    escape: edit(inline.escape).replace('])', '~|])').getRegex(),
+    _extended_email: /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/,
+    url: /^((?:ftp|https?):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/,
+    _backpedal: /(?:[^?!.,:;*_~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_~)]+(?!$))+/,
+    del: /^(~~?)(?=[^\s~])([\s\S]*?[^\s~])\1(?=[^~]|$)/,
+    text: /^([`~]+|[^`~])(?:(?= {2,}\n)|(?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)|[\s\S]*?(?:(?=[\\<!\[`*~_]|\b_|https?:\/\/|ftp:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)))/
+  });
+  inline.gfm.url = edit(inline.gfm.url, 'i').replace('email', inline.gfm._extended_email).getRegex();
+  /**
+   * GFM + Line Breaks Inline Grammar
+   */
+
+  inline.breaks = merge({}, inline.gfm, {
+    br: edit(inline.br).replace('{2,}', '*').getRegex(),
+    text: edit(inline.gfm.text).replace('\\b_', '\\b_| {2,}\\n').replace(/\{2,\}/g, '*').getRegex()
+  });
+
+  /**
+   * smartypants text replacement
+   * @param {string} text
+   */
+
+  function smartypants(text) {
+    return text // em-dashes
+    .replace(/---/g, "\u2014") // en-dashes
+    .replace(/--/g, "\u2013") // opening singles
+    .replace(/(^|[-\u2014/(\[{"\s])'/g, "$1\u2018") // closing singles & apostrophes
+    .replace(/'/g, "\u2019") // opening doubles
+    .replace(/(^|[-\u2014/(\[{\u2018\s])"/g, "$1\u201C") // closing doubles
+    .replace(/"/g, "\u201D") // ellipses
+    .replace(/\.{3}/g, "\u2026");
   }
+  /**
+   * mangle email addresses
+   * @param {string} text
+   */
 
-  return obj;
-}
+
+  function mangle(text) {
+    var out = '',
+        i,
+        ch;
+    var l = text.length;
+
+    for (i = 0; i < l; i++) {
+      ch = text.charCodeAt(i);
+
+      if (Math.random() > 0.5) {
+        ch = 'x' + ch.toString(16);
+      }
+
+      out += '&#' + ch + ';';
+    }
+
+    return out;
+  }
+  /**
+   * Block Lexer
+   */
 
 
-/**
- * Marked
- */
+  var Lexer = /*#__PURE__*/function () {
+    function Lexer(options) {
+      this.tokens = [];
+      this.tokens.links = Object.create(null);
+      this.options = options || exports.defaults;
+      this.options.tokenizer = this.options.tokenizer || new Tokenizer();
+      this.tokenizer = this.options.tokenizer;
+      this.tokenizer.options = this.options;
+      this.tokenizer.lexer = this;
+      this.inlineQueue = [];
+      this.state = {
+        inLink: false,
+        inRawBlock: false,
+        top: true
+      };
+      var rules = {
+        block: block.normal,
+        inline: inline.normal
+      };
 
-function marked(src, opt, callback) {
-  if (callback || typeof opt === 'function') {
-    if (!callback) {
+      if (this.options.pedantic) {
+        rules.block = block.pedantic;
+        rules.inline = inline.pedantic;
+      } else if (this.options.gfm) {
+        rules.block = block.gfm;
+
+        if (this.options.breaks) {
+          rules.inline = inline.breaks;
+        } else {
+          rules.inline = inline.gfm;
+        }
+      }
+
+      this.tokenizer.rules = rules;
+    }
+    /**
+     * Expose Rules
+     */
+
+
+    /**
+     * Static Lex Method
+     */
+    Lexer.lex = function lex(src, options) {
+      var lexer = new Lexer(options);
+      return lexer.lex(src);
+    }
+    /**
+     * Static Lex Inline Method
+     */
+    ;
+
+    Lexer.lexInline = function lexInline(src, options) {
+      var lexer = new Lexer(options);
+      return lexer.inlineTokens(src);
+    }
+    /**
+     * Preprocessing
+     */
+    ;
+
+    var _proto = Lexer.prototype;
+
+    _proto.lex = function lex(src) {
+      src = src.replace(/\r\n|\r/g, '\n');
+      this.blockTokens(src, this.tokens);
+      var next;
+
+      while (next = this.inlineQueue.shift()) {
+        this.inlineTokens(next.src, next.tokens);
+      }
+
+      return this.tokens;
+    }
+    /**
+     * Lexing
+     */
+    ;
+
+    _proto.blockTokens = function blockTokens(src, tokens) {
+      var _this = this;
+
+      if (tokens === void 0) {
+        tokens = [];
+      }
+
+      if (this.options.pedantic) {
+        src = src.replace(/\t/g, '    ').replace(/^ +$/gm, '');
+      } else {
+        src = src.replace(/^( *)(\t+)/gm, function (_, leading, tabs) {
+          return leading + '    '.repeat(tabs.length);
+        });
+      }
+
+      var token, lastToken, cutSrc, lastParagraphClipped;
+
+      while (src) {
+        if (this.options.extensions && this.options.extensions.block && this.options.extensions.block.some(function (extTokenizer) {
+          if (token = extTokenizer.call({
+            lexer: _this
+          }, src, tokens)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            return true;
+          }
+
+          return false;
+        })) {
+          continue;
+        } // newline
+
+
+        if (token = this.tokenizer.space(src)) {
+          src = src.substring(token.raw.length);
+
+          if (token.raw.length === 1 && tokens.length > 0) {
+            // if there's a single \n as a spacer, it's terminating the last line,
+            // so move it there so that we don't get unecessary paragraph tags
+            tokens[tokens.length - 1].raw += '\n';
+          } else {
+            tokens.push(token);
+          }
+
+          continue;
+        } // code
+
+
+        if (token = this.tokenizer.code(src)) {
+          src = src.substring(token.raw.length);
+          lastToken = tokens[tokens.length - 1]; // An indented code block cannot interrupt a paragraph.
+
+          if (lastToken && (lastToken.type === 'paragraph' || lastToken.type === 'text')) {
+            lastToken.raw += '\n' + token.raw;
+            lastToken.text += '\n' + token.text;
+            this.inlineQueue[this.inlineQueue.length - 1].src = lastToken.text;
+          } else {
+            tokens.push(token);
+          }
+
+          continue;
+        } // fences
+
+
+        if (token = this.tokenizer.fences(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // heading
+
+
+        if (token = this.tokenizer.heading(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // hr
+
+
+        if (token = this.tokenizer.hr(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // blockquote
+
+
+        if (token = this.tokenizer.blockquote(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // list
+
+
+        if (token = this.tokenizer.list(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // html
+
+
+        if (token = this.tokenizer.html(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // def
+
+
+        if (token = this.tokenizer.def(src)) {
+          src = src.substring(token.raw.length);
+          lastToken = tokens[tokens.length - 1];
+
+          if (lastToken && (lastToken.type === 'paragraph' || lastToken.type === 'text')) {
+            lastToken.raw += '\n' + token.raw;
+            lastToken.text += '\n' + token.raw;
+            this.inlineQueue[this.inlineQueue.length - 1].src = lastToken.text;
+          } else if (!this.tokens.links[token.tag]) {
+            this.tokens.links[token.tag] = {
+              href: token.href,
+              title: token.title
+            };
+          }
+
+          continue;
+        } // table (gfm)
+
+
+        if (token = this.tokenizer.table(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // lheading
+
+
+        if (token = this.tokenizer.lheading(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // top-level paragraph
+        // prevent paragraph consuming extensions by clipping 'src' to extension start
+
+
+        cutSrc = src;
+
+        if (this.options.extensions && this.options.extensions.startBlock) {
+          (function () {
+            var startIndex = Infinity;
+            var tempSrc = src.slice(1);
+            var tempStart = void 0;
+
+            _this.options.extensions.startBlock.forEach(function (getStartIndex) {
+              tempStart = getStartIndex.call({
+                lexer: this
+              }, tempSrc);
+
+              if (typeof tempStart === 'number' && tempStart >= 0) {
+                startIndex = Math.min(startIndex, tempStart);
+              }
+            });
+
+            if (startIndex < Infinity && startIndex >= 0) {
+              cutSrc = src.substring(0, startIndex + 1);
+            }
+          })();
+        }
+
+        if (this.state.top && (token = this.tokenizer.paragraph(cutSrc))) {
+          lastToken = tokens[tokens.length - 1];
+
+          if (lastParagraphClipped && lastToken.type === 'paragraph') {
+            lastToken.raw += '\n' + token.raw;
+            lastToken.text += '\n' + token.text;
+            this.inlineQueue.pop();
+            this.inlineQueue[this.inlineQueue.length - 1].src = lastToken.text;
+          } else {
+            tokens.push(token);
+          }
+
+          lastParagraphClipped = cutSrc.length !== src.length;
+          src = src.substring(token.raw.length);
+          continue;
+        } // text
+
+
+        if (token = this.tokenizer.text(src)) {
+          src = src.substring(token.raw.length);
+          lastToken = tokens[tokens.length - 1];
+
+          if (lastToken && lastToken.type === 'text') {
+            lastToken.raw += '\n' + token.raw;
+            lastToken.text += '\n' + token.text;
+            this.inlineQueue.pop();
+            this.inlineQueue[this.inlineQueue.length - 1].src = lastToken.text;
+          } else {
+            tokens.push(token);
+          }
+
+          continue;
+        }
+
+        if (src) {
+          var errMsg = 'Infinite loop on byte: ' + src.charCodeAt(0);
+
+          if (this.options.silent) {
+            console.error(errMsg);
+            break;
+          } else {
+            throw new Error(errMsg);
+          }
+        }
+      }
+
+      this.state.top = true;
+      return tokens;
+    };
+
+    _proto.inline = function inline(src, tokens) {
+      if (tokens === void 0) {
+        tokens = [];
+      }
+
+      this.inlineQueue.push({
+        src: src,
+        tokens: tokens
+      });
+      return tokens;
+    }
+    /**
+     * Lexing/Compiling
+     */
+    ;
+
+    _proto.inlineTokens = function inlineTokens(src, tokens) {
+      var _this2 = this;
+
+      if (tokens === void 0) {
+        tokens = [];
+      }
+
+      var token, lastToken, cutSrc; // String with links masked to avoid interference with em and strong
+
+      var maskedSrc = src;
+      var match;
+      var keepPrevChar, prevChar; // Mask out reflinks
+
+      if (this.tokens.links) {
+        var links = Object.keys(this.tokens.links);
+
+        if (links.length > 0) {
+          while ((match = this.tokenizer.rules.inline.reflinkSearch.exec(maskedSrc)) != null) {
+            if (links.includes(match[0].slice(match[0].lastIndexOf('[') + 1, -1))) {
+              maskedSrc = maskedSrc.slice(0, match.index) + '[' + repeatString('a', match[0].length - 2) + ']' + maskedSrc.slice(this.tokenizer.rules.inline.reflinkSearch.lastIndex);
+            }
+          }
+        }
+      } // Mask out other blocks
+
+
+      while ((match = this.tokenizer.rules.inline.blockSkip.exec(maskedSrc)) != null) {
+        maskedSrc = maskedSrc.slice(0, match.index) + '[' + repeatString('a', match[0].length - 2) + ']' + maskedSrc.slice(this.tokenizer.rules.inline.blockSkip.lastIndex);
+      } // Mask out escaped em & strong delimiters
+
+
+      while ((match = this.tokenizer.rules.inline.escapedEmSt.exec(maskedSrc)) != null) {
+        maskedSrc = maskedSrc.slice(0, match.index) + '++' + maskedSrc.slice(this.tokenizer.rules.inline.escapedEmSt.lastIndex);
+      }
+
+      while (src) {
+        if (!keepPrevChar) {
+          prevChar = '';
+        }
+
+        keepPrevChar = false; // extensions
+
+        if (this.options.extensions && this.options.extensions.inline && this.options.extensions.inline.some(function (extTokenizer) {
+          if (token = extTokenizer.call({
+            lexer: _this2
+          }, src, tokens)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            return true;
+          }
+
+          return false;
+        })) {
+          continue;
+        } // escape
+
+
+        if (token = this.tokenizer.escape(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // tag
+
+
+        if (token = this.tokenizer.tag(src)) {
+          src = src.substring(token.raw.length);
+          lastToken = tokens[tokens.length - 1];
+
+          if (lastToken && token.type === 'text' && lastToken.type === 'text') {
+            lastToken.raw += token.raw;
+            lastToken.text += token.text;
+          } else {
+            tokens.push(token);
+          }
+
+          continue;
+        } // link
+
+
+        if (token = this.tokenizer.link(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // reflink, nolink
+
+
+        if (token = this.tokenizer.reflink(src, this.tokens.links)) {
+          src = src.substring(token.raw.length);
+          lastToken = tokens[tokens.length - 1];
+
+          if (lastToken && token.type === 'text' && lastToken.type === 'text') {
+            lastToken.raw += token.raw;
+            lastToken.text += token.text;
+          } else {
+            tokens.push(token);
+          }
+
+          continue;
+        } // em & strong
+
+
+        if (token = this.tokenizer.emStrong(src, maskedSrc, prevChar)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // code
+
+
+        if (token = this.tokenizer.codespan(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // br
+
+
+        if (token = this.tokenizer.br(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // del (gfm)
+
+
+        if (token = this.tokenizer.del(src)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // autolink
+
+
+        if (token = this.tokenizer.autolink(src, mangle)) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // url (gfm)
+
+
+        if (!this.state.inLink && (token = this.tokenizer.url(src, mangle))) {
+          src = src.substring(token.raw.length);
+          tokens.push(token);
+          continue;
+        } // text
+        // prevent inlineText consuming extensions by clipping 'src' to extension start
+
+
+        cutSrc = src;
+
+        if (this.options.extensions && this.options.extensions.startInline) {
+          (function () {
+            var startIndex = Infinity;
+            var tempSrc = src.slice(1);
+            var tempStart = void 0;
+
+            _this2.options.extensions.startInline.forEach(function (getStartIndex) {
+              tempStart = getStartIndex.call({
+                lexer: this
+              }, tempSrc);
+
+              if (typeof tempStart === 'number' && tempStart >= 0) {
+                startIndex = Math.min(startIndex, tempStart);
+              }
+            });
+
+            if (startIndex < Infinity && startIndex >= 0) {
+              cutSrc = src.substring(0, startIndex + 1);
+            }
+          })();
+        }
+
+        if (token = this.tokenizer.inlineText(cutSrc, smartypants)) {
+          src = src.substring(token.raw.length);
+
+          if (token.raw.slice(-1) !== '_') {
+            // Track prevChar before string of ____ started
+            prevChar = token.raw.slice(-1);
+          }
+
+          keepPrevChar = true;
+          lastToken = tokens[tokens.length - 1];
+
+          if (lastToken && lastToken.type === 'text') {
+            lastToken.raw += token.raw;
+            lastToken.text += token.text;
+          } else {
+            tokens.push(token);
+          }
+
+          continue;
+        }
+
+        if (src) {
+          var errMsg = 'Infinite loop on byte: ' + src.charCodeAt(0);
+
+          if (this.options.silent) {
+            console.error(errMsg);
+            break;
+          } else {
+            throw new Error(errMsg);
+          }
+        }
+      }
+
+      return tokens;
+    };
+
+    _createClass(Lexer, null, [{
+      key: "rules",
+      get: function get() {
+        return {
+          block: block,
+          inline: inline
+        };
+      }
+    }]);
+
+    return Lexer;
+  }();
+
+  /**
+   * Renderer
+   */
+
+  var Renderer = /*#__PURE__*/function () {
+    function Renderer(options) {
+      this.options = options || exports.defaults;
+    }
+
+    var _proto = Renderer.prototype;
+
+    _proto.code = function code(_code, infostring, escaped) {
+      var lang = (infostring || '').match(/\S*/)[0];
+
+      if (this.options.highlight) {
+        var out = this.options.highlight(_code, lang);
+
+        if (out != null && out !== _code) {
+          escaped = true;
+          _code = out;
+        }
+      }
+
+      _code = _code.replace(/\n$/, '') + '\n';
+
+      if (!lang) {
+        return '<pre><code>' + (escaped ? _code : escape(_code, true)) + '</code></pre>\n';
+      }
+
+      return '<pre><code class="' + this.options.langPrefix + escape(lang, true) + '">' + (escaped ? _code : escape(_code, true)) + '</code></pre>\n';
+    }
+    /**
+     * @param {string} quote
+     */
+    ;
+
+    _proto.blockquote = function blockquote(quote) {
+      return "<blockquote>\n" + quote + "</blockquote>\n";
+    };
+
+    _proto.html = function html(_html) {
+      return _html;
+    }
+    /**
+     * @param {string} text
+     * @param {string} level
+     * @param {string} raw
+     * @param {any} slugger
+     */
+    ;
+
+    _proto.heading = function heading(text, level, raw, slugger) {
+      if (this.options.headerIds) {
+        var id = this.options.headerPrefix + slugger.slug(raw);
+        return "<h" + level + " id=\"" + id + "\">" + text + "</h" + level + ">\n";
+      } // ignore IDs
+
+
+      return "<h" + level + ">" + text + "</h" + level + ">\n";
+    };
+
+    _proto.hr = function hr() {
+      return this.options.xhtml ? '<hr/>\n' : '<hr>\n';
+    };
+
+    _proto.list = function list(body, ordered, start) {
+      var type = ordered ? 'ol' : 'ul',
+          startatt = ordered && start !== 1 ? ' start="' + start + '"' : '';
+      return '<' + type + startatt + '>\n' + body + '</' + type + '>\n';
+    }
+    /**
+     * @param {string} text
+     */
+    ;
+
+    _proto.listitem = function listitem(text) {
+      return "<li>" + text + "</li>\n";
+    };
+
+    _proto.checkbox = function checkbox(checked) {
+      return '<input ' + (checked ? 'checked="" ' : '') + 'disabled="" type="checkbox"' + (this.options.xhtml ? ' /' : '') + '> ';
+    }
+    /**
+     * @param {string} text
+     */
+    ;
+
+    _proto.paragraph = function paragraph(text) {
+      return "<p>" + text + "</p>\n";
+    }
+    /**
+     * @param {string} header
+     * @param {string} body
+     */
+    ;
+
+    _proto.table = function table(header, body) {
+      if (body) body = "<tbody>" + body + "</tbody>";
+      return '<table>\n' + '<thead>\n' + header + '</thead>\n' + body + '</table>\n';
+    }
+    /**
+     * @param {string} content
+     */
+    ;
+
+    _proto.tablerow = function tablerow(content) {
+      return "<tr>\n" + content + "</tr>\n";
+    };
+
+    _proto.tablecell = function tablecell(content, flags) {
+      var type = flags.header ? 'th' : 'td';
+      var tag = flags.align ? "<" + type + " align=\"" + flags.align + "\">" : "<" + type + ">";
+      return tag + content + ("</" + type + ">\n");
+    }
+    /**
+     * span level renderer
+     * @param {string} text
+     */
+    ;
+
+    _proto.strong = function strong(text) {
+      return "<strong>" + text + "</strong>";
+    }
+    /**
+     * @param {string} text
+     */
+    ;
+
+    _proto.em = function em(text) {
+      return "<em>" + text + "</em>";
+    }
+    /**
+     * @param {string} text
+     */
+    ;
+
+    _proto.codespan = function codespan(text) {
+      return "<code>" + text + "</code>";
+    };
+
+    _proto.br = function br() {
+      return this.options.xhtml ? '<br/>' : '<br>';
+    }
+    /**
+     * @param {string} text
+     */
+    ;
+
+    _proto.del = function del(text) {
+      return "<del>" + text + "</del>";
+    }
+    /**
+     * @param {string} href
+     * @param {string} title
+     * @param {string} text
+     */
+    ;
+
+    _proto.link = function link(href, title, text) {
+      href = cleanUrl(this.options.sanitize, this.options.baseUrl, href);
+
+      if (href === null) {
+        return text;
+      }
+
+      var out = '<a href="' + escape(href) + '"';
+
+      if (title) {
+        out += ' title="' + title + '"';
+      }
+
+      out += '>' + text + '</a>';
+      return out;
+    }
+    /**
+     * @param {string} href
+     * @param {string} title
+     * @param {string} text
+     */
+    ;
+
+    _proto.image = function image(href, title, text) {
+      href = cleanUrl(this.options.sanitize, this.options.baseUrl, href);
+
+      if (href === null) {
+        return text;
+      }
+
+      var out = "<img src=\"" + href + "\" alt=\"" + text + "\"";
+
+      if (title) {
+        out += " title=\"" + title + "\"";
+      }
+
+      out += this.options.xhtml ? '/>' : '>';
+      return out;
+    };
+
+    _proto.text = function text(_text) {
+      return _text;
+    };
+
+    return Renderer;
+  }();
+
+  /**
+   * TextRenderer
+   * returns only the textual part of the token
+   */
+  var TextRenderer = /*#__PURE__*/function () {
+    function TextRenderer() {}
+
+    var _proto = TextRenderer.prototype;
+
+    // no need for block level renderers
+    _proto.strong = function strong(text) {
+      return text;
+    };
+
+    _proto.em = function em(text) {
+      return text;
+    };
+
+    _proto.codespan = function codespan(text) {
+      return text;
+    };
+
+    _proto.del = function del(text) {
+      return text;
+    };
+
+    _proto.html = function html(text) {
+      return text;
+    };
+
+    _proto.text = function text(_text) {
+      return _text;
+    };
+
+    _proto.link = function link(href, title, text) {
+      return '' + text;
+    };
+
+    _proto.image = function image(href, title, text) {
+      return '' + text;
+    };
+
+    _proto.br = function br() {
+      return '';
+    };
+
+    return TextRenderer;
+  }();
+
+  /**
+   * Slugger generates header id
+   */
+  var Slugger = /*#__PURE__*/function () {
+    function Slugger() {
+      this.seen = {};
+    }
+    /**
+     * @param {string} value
+     */
+
+
+    var _proto = Slugger.prototype;
+
+    _proto.serialize = function serialize(value) {
+      return value.toLowerCase().trim() // remove html tags
+      .replace(/<[!\/a-z].*?>/ig, '') // remove unwanted chars
+      .replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g, '').replace(/\s/g, '-');
+    }
+    /**
+     * Finds the next safe (unique) slug to use
+     * @param {string} originalSlug
+     * @param {boolean} isDryRun
+     */
+    ;
+
+    _proto.getNextSafeSlug = function getNextSafeSlug(originalSlug, isDryRun) {
+      var slug = originalSlug;
+      var occurenceAccumulator = 0;
+
+      if (this.seen.hasOwnProperty(slug)) {
+        occurenceAccumulator = this.seen[originalSlug];
+
+        do {
+          occurenceAccumulator++;
+          slug = originalSlug + '-' + occurenceAccumulator;
+        } while (this.seen.hasOwnProperty(slug));
+      }
+
+      if (!isDryRun) {
+        this.seen[originalSlug] = occurenceAccumulator;
+        this.seen[slug] = 0;
+      }
+
+      return slug;
+    }
+    /**
+     * Convert string to unique id
+     * @param {object} [options]
+     * @param {boolean} [options.dryrun] Generates the next unique slug without
+     * updating the internal accumulator.
+     */
+    ;
+
+    _proto.slug = function slug(value, options) {
+      if (options === void 0) {
+        options = {};
+      }
+
+      var slug = this.serialize(value);
+      return this.getNextSafeSlug(slug, options.dryrun);
+    };
+
+    return Slugger;
+  }();
+
+  /**
+   * Parsing & Compiling
+   */
+
+  var Parser = /*#__PURE__*/function () {
+    function Parser(options) {
+      this.options = options || exports.defaults;
+      this.options.renderer = this.options.renderer || new Renderer();
+      this.renderer = this.options.renderer;
+      this.renderer.options = this.options;
+      this.textRenderer = new TextRenderer();
+      this.slugger = new Slugger();
+    }
+    /**
+     * Static Parse Method
+     */
+
+
+    Parser.parse = function parse(tokens, options) {
+      var parser = new Parser(options);
+      return parser.parse(tokens);
+    }
+    /**
+     * Static Parse Inline Method
+     */
+    ;
+
+    Parser.parseInline = function parseInline(tokens, options) {
+      var parser = new Parser(options);
+      return parser.parseInline(tokens);
+    }
+    /**
+     * Parse Loop
+     */
+    ;
+
+    var _proto = Parser.prototype;
+
+    _proto.parse = function parse(tokens, top) {
+      if (top === void 0) {
+        top = true;
+      }
+
+      var out = '',
+          i,
+          j,
+          k,
+          l2,
+          l3,
+          row,
+          cell,
+          header,
+          body,
+          token,
+          ordered,
+          start,
+          loose,
+          itemBody,
+          item,
+          checked,
+          task,
+          checkbox,
+          ret;
+      var l = tokens.length;
+
+      for (i = 0; i < l; i++) {
+        token = tokens[i]; // Run any renderer extensions
+
+        if (this.options.extensions && this.options.extensions.renderers && this.options.extensions.renderers[token.type]) {
+          ret = this.options.extensions.renderers[token.type].call({
+            parser: this
+          }, token);
+
+          if (ret !== false || !['space', 'hr', 'heading', 'code', 'table', 'blockquote', 'list', 'html', 'paragraph', 'text'].includes(token.type)) {
+            out += ret || '';
+            continue;
+          }
+        }
+
+        switch (token.type) {
+          case 'space':
+            {
+              continue;
+            }
+
+          case 'hr':
+            {
+              out += this.renderer.hr();
+              continue;
+            }
+
+          case 'heading':
+            {
+              out += this.renderer.heading(this.parseInline(token.tokens), token.depth, unescape(this.parseInline(token.tokens, this.textRenderer)), this.slugger);
+              continue;
+            }
+
+          case 'code':
+            {
+              out += this.renderer.code(token.text, token.lang, token.escaped);
+              continue;
+            }
+
+          case 'table':
+            {
+              header = ''; // header
+
+              cell = '';
+              l2 = token.header.length;
+
+              for (j = 0; j < l2; j++) {
+                cell += this.renderer.tablecell(this.parseInline(token.header[j].tokens), {
+                  header: true,
+                  align: token.align[j]
+                });
+              }
+
+              header += this.renderer.tablerow(cell);
+              body = '';
+              l2 = token.rows.length;
+
+              for (j = 0; j < l2; j++) {
+                row = token.rows[j];
+                cell = '';
+                l3 = row.length;
+
+                for (k = 0; k < l3; k++) {
+                  cell += this.renderer.tablecell(this.parseInline(row[k].tokens), {
+                    header: false,
+                    align: token.align[k]
+                  });
+                }
+
+                body += this.renderer.tablerow(cell);
+              }
+
+              out += this.renderer.table(header, body);
+              continue;
+            }
+
+          case 'blockquote':
+            {
+              body = this.parse(token.tokens);
+              out += this.renderer.blockquote(body);
+              continue;
+            }
+
+          case 'list':
+            {
+              ordered = token.ordered;
+              start = token.start;
+              loose = token.loose;
+              l2 = token.items.length;
+              body = '';
+
+              for (j = 0; j < l2; j++) {
+                item = token.items[j];
+                checked = item.checked;
+                task = item.task;
+                itemBody = '';
+
+                if (item.task) {
+                  checkbox = this.renderer.checkbox(checked);
+
+                  if (loose) {
+                    if (item.tokens.length > 0 && item.tokens[0].type === 'paragraph') {
+                      item.tokens[0].text = checkbox + ' ' + item.tokens[0].text;
+
+                      if (item.tokens[0].tokens && item.tokens[0].tokens.length > 0 && item.tokens[0].tokens[0].type === 'text') {
+                        item.tokens[0].tokens[0].text = checkbox + ' ' + item.tokens[0].tokens[0].text;
+                      }
+                    } else {
+                      item.tokens.unshift({
+                        type: 'text',
+                        text: checkbox
+                      });
+                    }
+                  } else {
+                    itemBody += checkbox;
+                  }
+                }
+
+                itemBody += this.parse(item.tokens, loose);
+                body += this.renderer.listitem(itemBody, task, checked);
+              }
+
+              out += this.renderer.list(body, ordered, start);
+              continue;
+            }
+
+          case 'html':
+            {
+              // TODO parse inline content if parameter markdown=1
+              out += this.renderer.html(token.text);
+              continue;
+            }
+
+          case 'paragraph':
+            {
+              out += this.renderer.paragraph(this.parseInline(token.tokens));
+              continue;
+            }
+
+          case 'text':
+            {
+              body = token.tokens ? this.parseInline(token.tokens) : token.text;
+
+              while (i + 1 < l && tokens[i + 1].type === 'text') {
+                token = tokens[++i];
+                body += '\n' + (token.tokens ? this.parseInline(token.tokens) : token.text);
+              }
+
+              out += top ? this.renderer.paragraph(body) : body;
+              continue;
+            }
+
+          default:
+            {
+              var errMsg = 'Token with "' + token.type + '" type was not found.';
+
+              if (this.options.silent) {
+                console.error(errMsg);
+                return;
+              } else {
+                throw new Error(errMsg);
+              }
+            }
+        }
+      }
+
+      return out;
+    }
+    /**
+     * Parse Inline Tokens
+     */
+    ;
+
+    _proto.parseInline = function parseInline(tokens, renderer) {
+      renderer = renderer || this.renderer;
+      var out = '',
+          i,
+          token,
+          ret;
+      var l = tokens.length;
+
+      for (i = 0; i < l; i++) {
+        token = tokens[i]; // Run any renderer extensions
+
+        if (this.options.extensions && this.options.extensions.renderers && this.options.extensions.renderers[token.type]) {
+          ret = this.options.extensions.renderers[token.type].call({
+            parser: this
+          }, token);
+
+          if (ret !== false || !['escape', 'html', 'link', 'image', 'strong', 'em', 'codespan', 'br', 'del', 'text'].includes(token.type)) {
+            out += ret || '';
+            continue;
+          }
+        }
+
+        switch (token.type) {
+          case 'escape':
+            {
+              out += renderer.text(token.text);
+              break;
+            }
+
+          case 'html':
+            {
+              out += renderer.html(token.text);
+              break;
+            }
+
+          case 'link':
+            {
+              out += renderer.link(token.href, token.title, this.parseInline(token.tokens, renderer));
+              break;
+            }
+
+          case 'image':
+            {
+              out += renderer.image(token.href, token.title, token.text);
+              break;
+            }
+
+          case 'strong':
+            {
+              out += renderer.strong(this.parseInline(token.tokens, renderer));
+              break;
+            }
+
+          case 'em':
+            {
+              out += renderer.em(this.parseInline(token.tokens, renderer));
+              break;
+            }
+
+          case 'codespan':
+            {
+              out += renderer.codespan(token.text);
+              break;
+            }
+
+          case 'br':
+            {
+              out += renderer.br();
+              break;
+            }
+
+          case 'del':
+            {
+              out += renderer.del(this.parseInline(token.tokens, renderer));
+              break;
+            }
+
+          case 'text':
+            {
+              out += renderer.text(token.text);
+              break;
+            }
+
+          default:
+            {
+              var errMsg = 'Token with "' + token.type + '" type was not found.';
+
+              if (this.options.silent) {
+                console.error(errMsg);
+                return;
+              } else {
+                throw new Error(errMsg);
+              }
+            }
+        }
+      }
+
+      return out;
+    };
+
+    return Parser;
+  }();
+
+  /**
+   * Marked
+   */
+
+  function marked(src, opt, callback) {
+    // throw error in case of non string input
+    if (typeof src === 'undefined' || src === null) {
+      throw new Error('marked(): input parameter is undefined or null');
+    }
+
+    if (typeof src !== 'string') {
+      throw new Error('marked(): input parameter is of type ' + Object.prototype.toString.call(src) + ', string expected');
+    }
+
+    if (typeof opt === 'function') {
       callback = opt;
       opt = null;
     }
 
     opt = merge({}, marked.defaults, opt || {});
+    checkSanitizeDeprecation(opt);
 
-    var highlight = opt.highlight
-      , tokens
-      , pending
-      , i = 0;
-
-    try {
-      tokens = Lexer.lex(src, opt)
-    } catch (e) {
-      return callback(e);
-    }
-
-    pending = tokens.length;
-
-    var done = function() {
-      var out, err;
+    if (callback) {
+      var highlight = opt.highlight;
+      var tokens;
 
       try {
-        out = Parser.parse(tokens, opt);
+        tokens = Lexer.lex(src, opt);
       } catch (e) {
-        err = e;
+        return callback(e);
       }
 
-      opt.highlight = highlight;
+      var done = function done(err) {
+        var out;
 
-      return err
-        ? callback(err)
-        : callback(null, out);
+        if (!err) {
+          try {
+            if (opt.walkTokens) {
+              marked.walkTokens(tokens, opt.walkTokens);
+            }
+
+            out = Parser.parse(tokens, opt);
+          } catch (e) {
+            err = e;
+          }
+        }
+
+        opt.highlight = highlight;
+        return err ? callback(err) : callback(null, out);
+      };
+
+      if (!highlight || highlight.length < 3) {
+        return done();
+      }
+
+      delete opt.highlight;
+      if (!tokens.length) return done();
+      var pending = 0;
+      marked.walkTokens(tokens, function (token) {
+        if (token.type === 'code') {
+          pending++;
+          setTimeout(function () {
+            highlight(token.text, token.lang, function (err, code) {
+              if (err) {
+                return done(err);
+              }
+
+              if (code != null && code !== token.text) {
+                token.text = code;
+                token.escaped = true;
+              }
+
+              pending--;
+
+              if (pending === 0) {
+                done();
+              }
+            });
+          }, 0);
+        }
+      });
+
+      if (pending === 0) {
+        done();
+      }
+
+      return;
+    }
+
+    function onError(e) {
+      e.message += '\nPlease report this to https://github.com/markedjs/marked.';
+
+      if (opt.silent) {
+        return '<p>An error occurred:</p><pre>' + escape(e.message + '', true) + '</pre>';
+      }
+
+      throw e;
+    }
+
+    try {
+      var _tokens = Lexer.lex(src, opt);
+
+      if (opt.walkTokens) {
+        if (opt.async) {
+          return Promise.all(marked.walkTokens(_tokens, opt.walkTokens)).then(function () {
+            return Parser.parse(_tokens, opt);
+          })["catch"](onError);
+        }
+
+        marked.walkTokens(_tokens, opt.walkTokens);
+      }
+
+      return Parser.parse(_tokens, opt);
+    } catch (e) {
+      onError(e);
+    }
+  }
+  /**
+   * Options
+   */
+
+  marked.options = marked.setOptions = function (opt) {
+    merge(marked.defaults, opt);
+    changeDefaults(marked.defaults);
+    return marked;
+  };
+
+  marked.getDefaults = getDefaults;
+  marked.defaults = exports.defaults;
+  /**
+   * Use Extension
+   */
+
+  marked.use = function () {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    var opts = merge.apply(void 0, [{}].concat(args));
+    var extensions = marked.defaults.extensions || {
+      renderers: {},
+      childTokens: {}
+    };
+    var hasExtensions;
+    args.forEach(function (pack) {
+      // ==-- Parse "addon" extensions --== //
+      if (pack.extensions) {
+        hasExtensions = true;
+        pack.extensions.forEach(function (ext) {
+          if (!ext.name) {
+            throw new Error('extension name required');
+          }
+
+          if (ext.renderer) {
+            // Renderer extensions
+            var prevRenderer = extensions.renderers ? extensions.renderers[ext.name] : null;
+
+            if (prevRenderer) {
+              // Replace extension with func to run new extension but fall back if false
+              extensions.renderers[ext.name] = function () {
+                for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+                  args[_key2] = arguments[_key2];
+                }
+
+                var ret = ext.renderer.apply(this, args);
+
+                if (ret === false) {
+                  ret = prevRenderer.apply(this, args);
+                }
+
+                return ret;
+              };
+            } else {
+              extensions.renderers[ext.name] = ext.renderer;
+            }
+          }
+
+          if (ext.tokenizer) {
+            // Tokenizer Extensions
+            if (!ext.level || ext.level !== 'block' && ext.level !== 'inline') {
+              throw new Error("extension level must be 'block' or 'inline'");
+            }
+
+            if (extensions[ext.level]) {
+              extensions[ext.level].unshift(ext.tokenizer);
+            } else {
+              extensions[ext.level] = [ext.tokenizer];
+            }
+
+            if (ext.start) {
+              // Function to check for start of token
+              if (ext.level === 'block') {
+                if (extensions.startBlock) {
+                  extensions.startBlock.push(ext.start);
+                } else {
+                  extensions.startBlock = [ext.start];
+                }
+              } else if (ext.level === 'inline') {
+                if (extensions.startInline) {
+                  extensions.startInline.push(ext.start);
+                } else {
+                  extensions.startInline = [ext.start];
+                }
+              }
+            }
+          }
+
+          if (ext.childTokens) {
+            // Child tokens to be visited by walkTokens
+            extensions.childTokens[ext.name] = ext.childTokens;
+          }
+        });
+      } // ==-- Parse "overwrite" extensions --== //
+
+
+      if (pack.renderer) {
+        (function () {
+          var renderer = marked.defaults.renderer || new Renderer();
+
+          var _loop = function _loop(prop) {
+            var prevRenderer = renderer[prop]; // Replace renderer with func to run extension, but fall back if false
+
+            renderer[prop] = function () {
+              for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+                args[_key3] = arguments[_key3];
+              }
+
+              var ret = pack.renderer[prop].apply(renderer, args);
+
+              if (ret === false) {
+                ret = prevRenderer.apply(renderer, args);
+              }
+
+              return ret;
+            };
+          };
+
+          for (var prop in pack.renderer) {
+            _loop(prop);
+          }
+
+          opts.renderer = renderer;
+        })();
+      }
+
+      if (pack.tokenizer) {
+        (function () {
+          var tokenizer = marked.defaults.tokenizer || new Tokenizer();
+
+          var _loop2 = function _loop2(prop) {
+            var prevTokenizer = tokenizer[prop]; // Replace tokenizer with func to run extension, but fall back if false
+
+            tokenizer[prop] = function () {
+              for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+                args[_key4] = arguments[_key4];
+              }
+
+              var ret = pack.tokenizer[prop].apply(tokenizer, args);
+
+              if (ret === false) {
+                ret = prevTokenizer.apply(tokenizer, args);
+              }
+
+              return ret;
+            };
+          };
+
+          for (var prop in pack.tokenizer) {
+            _loop2(prop);
+          }
+
+          opts.tokenizer = tokenizer;
+        })();
+      } // ==-- Parse WalkTokens extensions --== //
+
+
+      if (pack.walkTokens) {
+        var _walkTokens = marked.defaults.walkTokens;
+
+        opts.walkTokens = function (token) {
+          var values = [];
+          values.push(pack.walkTokens.call(this, token));
+
+          if (_walkTokens) {
+            values = values.concat(_walkTokens.call(this, token));
+          }
+
+          return values;
+        };
+      }
+
+      if (hasExtensions) {
+        opts.extensions = extensions;
+      }
+
+      marked.setOptions(opts);
+    });
+  };
+  /**
+   * Run callback for every token
+   */
+
+
+  marked.walkTokens = function (tokens, callback) {
+    var values = [];
+
+    var _loop3 = function _loop3() {
+      var token = _step.value;
+      values = values.concat(callback.call(marked, token));
+
+      switch (token.type) {
+        case 'table':
+          {
+            for (var _iterator2 = _createForOfIteratorHelperLoose(token.header), _step2; !(_step2 = _iterator2()).done;) {
+              var cell = _step2.value;
+              values = values.concat(marked.walkTokens(cell.tokens, callback));
+            }
+
+            for (var _iterator3 = _createForOfIteratorHelperLoose(token.rows), _step3; !(_step3 = _iterator3()).done;) {
+              var row = _step3.value;
+
+              for (var _iterator4 = _createForOfIteratorHelperLoose(row), _step4; !(_step4 = _iterator4()).done;) {
+                var _cell = _step4.value;
+                values = values.concat(marked.walkTokens(_cell.tokens, callback));
+              }
+            }
+
+            break;
+          }
+
+        case 'list':
+          {
+            values = values.concat(marked.walkTokens(token.items, callback));
+            break;
+          }
+
+        default:
+          {
+            if (marked.defaults.extensions && marked.defaults.extensions.childTokens && marked.defaults.extensions.childTokens[token.type]) {
+              // Walk any extensions
+              marked.defaults.extensions.childTokens[token.type].forEach(function (childTokens) {
+                values = values.concat(marked.walkTokens(token[childTokens], callback));
+              });
+            } else if (token.tokens) {
+              values = values.concat(marked.walkTokens(token.tokens, callback));
+            }
+          }
+      }
     };
 
-    if (!highlight || highlight.length < 3) {
-      return done();
+    for (var _iterator = _createForOfIteratorHelperLoose(tokens), _step; !(_step = _iterator()).done;) {
+      _loop3();
     }
 
-    delete opt.highlight;
+    return values;
+  };
+  /**
+   * Parse Inline
+   * @param {string} src
+   */
 
-    if (!pending) return done();
 
-    for (; i < tokens.length; i++) {
-      (function(token) {
-        if (token.type !== 'code') {
-          return --pending || done();
-        }
-        return highlight(token.text, token.lang, function(err, code) {
-          if (code == null || code === token.text) {
-            return --pending || done();
-          }
-          token.text = code;
-          token.escaped = true;
-          --pending || done();
-        });
-      })(tokens[i]);
+  marked.parseInline = function (src, opt) {
+    // throw error in case of non string input
+    if (typeof src === 'undefined' || src === null) {
+      throw new Error('marked.parseInline(): input parameter is undefined or null');
     }
 
-    return;
-  }
-  try {
-    if (opt) opt = merge({}, marked.defaults, opt);
-    return Parser.parse(Lexer.lex(src, opt), opt);
-  } catch (e) {
-    e.message += '\nPlease report this to https://github.com/chjj/marked.';
-    if ((opt || marked.defaults).silent) {
-      return '<p>An error occured:</p><pre>'
-        + escape(e.message + '', true)
-        + '</pre>';
+    if (typeof src !== 'string') {
+      throw new Error('marked.parseInline(): input parameter is of type ' + Object.prototype.toString.call(src) + ', string expected');
     }
-    throw e;
-  }
-}
 
-/**
- * Options
- */
+    opt = merge({}, marked.defaults, opt || {});
+    checkSanitizeDeprecation(opt);
 
-marked.options =
-marked.setOptions = function(opt) {
-  merge(marked.defaults, opt);
-  return marked;
-};
+    try {
+      var tokens = Lexer.lexInline(src, opt);
 
-marked.defaults = {
-  gfm: true,
-  tables: true,
-  breaks: false,
-  pedantic: false,
-  sanitize: false,
-  smartLists: false,
-  silent: false,
-  highlight: null,
-  langPrefix: 'lang-',
-  smartypants: false,
-  headerPrefix: '',
-  renderer: new Renderer,
-  xhtml: false
-};
+      if (opt.walkTokens) {
+        marked.walkTokens(tokens, opt.walkTokens);
+      }
 
-/**
- * Expose
- */
+      return Parser.parseInline(tokens, opt);
+    } catch (e) {
+      e.message += '\nPlease report this to https://github.com/markedjs/marked.';
 
-marked.Parser = Parser;
-marked.parser = Parser.parse;
+      if (opt.silent) {
+        return '<p>An error occurred:</p><pre>' + escape(e.message + '', true) + '</pre>';
+      }
 
-marked.Renderer = Renderer;
+      throw e;
+    }
+  };
+  /**
+   * Expose
+   */
 
-marked.Lexer = Lexer;
-marked.lexer = Lexer.lex;
 
-marked.InlineLexer = InlineLexer;
-marked.inlineLexer = InlineLexer.output;
+  marked.Parser = Parser;
+  marked.parser = Parser.parse;
+  marked.Renderer = Renderer;
+  marked.TextRenderer = TextRenderer;
+  marked.Lexer = Lexer;
+  marked.lexer = Lexer.lex;
+  marked.Tokenizer = Tokenizer;
+  marked.Slugger = Slugger;
+  marked.parse = marked;
+  var options = marked.options;
+  var setOptions = marked.setOptions;
+  var use = marked.use;
+  var walkTokens = marked.walkTokens;
+  var parseInline = marked.parseInline;
+  var parse = marked;
+  var parser = Parser.parse;
+  var lexer = Lexer.lex;
 
-marked.parse = marked;
+  exports.Lexer = Lexer;
+  exports.Parser = Parser;
+  exports.Renderer = Renderer;
+  exports.Slugger = Slugger;
+  exports.TextRenderer = TextRenderer;
+  exports.Tokenizer = Tokenizer;
+  exports.getDefaults = getDefaults;
+  exports.lexer = lexer;
+  exports.marked = marked;
+  exports.options = options;
+  exports.parse = parse;
+  exports.parseInline = parseInline;
+  exports.parser = parser;
+  exports.setOptions = setOptions;
+  exports.use = use;
+  exports.walkTokens = walkTokens;
 
-if (typeof exports === 'object') {
-  module.exports = marked;
-} else if (typeof define === 'function' && define.amd) {
-  define(function() { return marked; });
-} else {
-  this.marked = marked;
-}
+  Object.defineProperty(exports, '__esModule', { value: true });
 
-}).call(function() {
-  return this || (typeof window !== 'undefined' ? window : global);
-}());
+}));
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],149:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 let { urlAlphabet } = require('./url-alphabet/index.cjs')
 let random = bytes => crypto.getRandomValues(new Uint8Array(bytes))
 let customRandom = (alphabet, defaultSize, getRandom) => {
@@ -59493,12 +62797,12 @@ let nanoid = (size = 21) =>
   }, '')
 module.exports = { nanoid, customAlphabet, customRandom, urlAlphabet, random }
 
-},{"./url-alphabet/index.cjs":150}],150:[function(require,module,exports){
+},{"./url-alphabet/index.cjs":156}],156:[function(require,module,exports){
 let urlAlphabet =
   'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict'
 module.exports = { urlAlphabet }
 
-},{}],151:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 /*! @preserve
  * numeral.js
  * version : 2.0.6
@@ -60513,7 +63817,7 @@ module.exports = { urlAlphabet }
 return numeral;
 }));
 
-},{}],152:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -60605,20 +63909,208 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],153:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
+module.exports = require('./polygon-features.json')
+
+},{"./polygon-features.json":160}],160:[function(require,module,exports){
+module.exports=[
+    {
+        "key": "building",
+        "polygon": "all"
+    },
+    {
+        "key": "highway",
+        "polygon": "whitelist",
+        "values": [
+            "services",
+            "rest_area",
+            "escape",
+            "elevator"
+        ]
+    },
+    {
+        "key": "natural",
+        "polygon": "blacklist",
+        "values": [
+            "coastline",
+            "cliff",
+            "ridge",
+            "arete",
+            "tree_row"
+        ]
+    },
+    {
+        "key": "landuse",
+        "polygon": "all"
+    },
+    {
+        "key": "waterway",
+        "polygon": "whitelist",
+        "values": [
+            "riverbank",
+            "dock",
+            "boatyard",
+            "dam"
+        ]
+    },
+    {
+        "key": "amenity",
+        "polygon": "all"
+    },
+    {
+        "key": "leisure",
+        "polygon": "all"
+    },
+    {
+        "key": "barrier",
+        "polygon": "whitelist",
+        "values": [
+            "city_wall",
+            "ditch",
+            "hedge",
+            "retaining_wall",
+            "wall",
+            "spikes"
+        ]
+    },
+    {
+        "key": "railway",
+        "polygon": "whitelist",
+        "values": [
+            "station",
+            "turntable",
+            "roundhouse",
+            "platform"
+        ]
+    },
+    {
+        "key": "area",
+        "polygon": "all"
+    },
+    {
+        "key": "boundary",
+        "polygon": "all"
+    },
+    {
+        "key": "man_made",
+        "polygon": "blacklist",
+        "values": [
+            "cutline",
+            "embankment",
+            "pipeline"
+        ]
+    },
+    {
+        "key": "power",
+        "polygon": "whitelist",
+        "values": [
+            "plant",
+            "substation",
+            "generator",
+            "transformer"
+        ]
+    },
+    {
+        "key": "place",
+        "polygon": "all"
+    },
+    {
+        "key": "shop",
+        "polygon": "all"
+    },
+    {
+        "key": "aeroway",
+        "polygon": "blacklist",
+        "values": [
+            "taxiway"
+        ]
+    },
+    {
+        "key": "tourism",
+        "polygon": "all"
+    },
+    {
+        "key": "historic",
+        "polygon": "all"
+    },
+    {
+        "key": "public_transport",
+        "polygon": "all"
+    },
+    {
+        "key": "office",
+        "polygon": "all"
+    },
+    {
+        "key": "building:part",
+        "polygon": "all"
+    },
+    {
+        "key": "military",
+        "polygon": "all"
+    },
+    {
+        "key": "ruins",
+        "polygon": "all"
+    },
+    {
+        "key": "area:highway",
+        "polygon": "all"
+    },
+    {
+        "key": "craft",
+        "polygon": "all"
+    },
+    {
+        "key": "golf",
+        "polygon": "all"
+    },
+    {
+        "key": "indoor",
+        "polygon": "all"
+    }
+]
+
+},{}],161:[function(require,module,exports){
 var _ = require("./lodash.custom.js");
-var rewind = require("geojson-rewind");
+var rewind = require("@mapbox/geojson-rewind");
 
 // see https://wiki.openstreetmap.org/wiki/Overpass_turbo/Polygon_Features
-var polygonFeatures = require("./polygon_features.json");
+var polygonFeatures = {};
+require("osm-polygon-features").forEach(function(tags) {
+  if (tags.polygon === "all")
+    polygonFeatures[tags.key] = true;
+  else {
+    var list = (tags.polygon === "whitelist") ? "included_values" : "excluded_values",
+        tagValuesObj = {};
+    tags.values.forEach(function(value) { tagValuesObj[value] = true; });
+    polygonFeatures[tags.key] = {};
+    polygonFeatures[tags.key][list] = tagValuesObj;
+  }
+});
+
+// default deduplication helper function
+function default_deduplicator(objectA, objectB) {
+  // default deduplication handler:
+  // if object versions differ, use highest available version
+  if ((objectA.version || objectB.version) &&
+      (objectA.version !== objectB.version)) {
+    return (+objectA.version || 0) > (+objectB.version || 0)
+      ? objectA
+      : objectB;
+  }
+  // otherwise: return merged obj properties
+  return _.merge(objectA, objectB);
+}
 
 var osmtogeojson = {};
 
-osmtogeojson = function( data, options ) {
+osmtogeojson = function( data, options, featureCallback ) {
 
   options = _.merge(
     {
-      flatProperties: false,
+      verbose: false,
+      flatProperties: true,
       uninterestingTags: {
         "source": true,
         "source_ref": true,
@@ -60631,6 +64123,7 @@ osmtogeojson = function( data, options ) {
         "tiger:upload_uuid": true
       },
       polygonFeatures: polygonFeatures,
+      deduplicator: default_deduplicator
     },
     options
   );
@@ -60648,6 +64141,126 @@ osmtogeojson = function( data, options ) {
     var nodes = new Array();
     var ways  = new Array();
     var rels  = new Array();
+    // helper functions
+    function centerGeometry(object) {
+      var pseudoNode = _.clone(object);
+      pseudoNode.lat = object.center.lat;
+      pseudoNode.lon = object.center.lon;
+      pseudoNode.__is_center_placeholder = true;
+      nodes.push(pseudoNode);
+    }
+    function boundsGeometry(object) {
+      var pseudoWay = _.clone(object);
+      pseudoWay.nodes = [];
+      function addPseudoNode(lat,lon,i) {
+        var pseudoNode = {
+          type:"node",
+          id:  "_"+pseudoWay.type+"/"+pseudoWay.id+"bounds"+i,
+          lat: lat,
+          lon: lon
+        }
+        pseudoWay.nodes.push(pseudoNode.id);
+        nodes.push(pseudoNode);
+      }
+      addPseudoNode(pseudoWay.bounds.minlat,pseudoWay.bounds.minlon,1);
+      addPseudoNode(pseudoWay.bounds.maxlat,pseudoWay.bounds.minlon,2);
+      addPseudoNode(pseudoWay.bounds.maxlat,pseudoWay.bounds.maxlon,3);
+      addPseudoNode(pseudoWay.bounds.minlat,pseudoWay.bounds.maxlon,4);
+      pseudoWay.nodes.push(pseudoWay.nodes[0]);
+      pseudoWay.__is_bounds_placeholder = true;
+      ways.push(pseudoWay);
+    }
+    function fullGeometryWay(way) {
+      function addFullGeometryNode(lat,lon,id) {
+        var geometryNode = {
+          type:"node",
+          id:  id,
+          lat: lat,
+          lon: lon
+        }
+        nodes.push(geometryNode);
+      }
+      if (!_.isArray(way.nodes)) {
+        way.nodes = way.geometry.map(function(nd) {
+          if (nd !== null) // have to skip ref-less nodes
+            return "_anonymous@"+nd.lat+"/"+nd.lon;
+          else
+            return "_anonymous@unknown_location";
+        });
+      }
+      way.geometry.forEach(function(nd, i) {
+        if (nd) {
+          addFullGeometryNode(
+            nd.lat,
+            nd.lon,
+            way.nodes[i]
+          );
+        }
+      });
+    }
+    function fullGeometryRelation(rel) {
+      function addFullGeometryNode(lat,lon,id) {
+        var geometryNode = {
+          type:"node",
+          id:  id,
+          lat: lat,
+          lon: lon
+        }
+        nodes.push(geometryNode);
+      }
+      function addFullGeometryWay(geometry,id) {
+        // shared multipolygon ways cannot be defined multiple times with the same id.
+        if (ways.some(function (way) { // todo: this is slow :(
+          return way.type == "way" && way.id == id;
+        })) return;
+        var geometryWay = {
+          type: "way",
+          id:   id,
+          nodes:[]
+        }
+        function addFullGeometryWayPseudoNode(lat,lon) {
+          // todo? do not save the same pseudo node multiple times
+          var geometryPseudoNode = {
+            type:"node",
+            id:  "_anonymous@"+lat+"/"+lon,
+            lat: lat,
+            lon: lon
+          }
+          geometryWay.nodes.push(geometryPseudoNode.id);
+          nodes.push(geometryPseudoNode);
+        }
+        geometry.forEach(function(nd) {
+          if (nd) {
+            addFullGeometryWayPseudoNode(
+              nd.lat,
+              nd.lon
+            );
+          } else {
+            geometryWay.nodes.push(undefined);
+          }
+        });
+        ways.push(geometryWay);
+      }
+      rel.members.forEach(function(member, i) {
+        if (member.type == "node") {
+          if (member.lat) {
+            addFullGeometryNode(
+              member.lat,
+              member.lon,
+              member.ref
+            );
+          }
+        } else if (member.type == "way") {
+          if (member.geometry) {
+            member.ref = "_fullGeom"+member.ref;
+            addFullGeometryWay(
+              member.geometry,
+              member.ref
+            );
+          }
+        }
+      });
+    }
     // create copies of individual json objects to make sure the original data doesn't get altered
     // todo: cloning is slow: see if this can be done differently!
     for (var i=0;i<json.elements.length;i++) {
@@ -60660,11 +64273,27 @@ osmtogeojson = function( data, options ) {
         var way = _.clone(json.elements[i]);
         way.nodes = _.clone(way.nodes);
         ways.push(way);
+        if (way.center)
+          centerGeometry(way);
+        if (way.geometry)
+          fullGeometryWay(way);
+        else if (way.bounds)
+          boundsGeometry(way);
       break;
       case "relation":
         var rel = _.clone(json.elements[i]);
         rel.members = _.clone(rel.members);
         rels.push(rel);
+        var has_full_geometry = rel.members && rel.members.some(function (member) {
+          return member.type == "node" && member.lat ||
+                 member.type == "way"  && member.geometry && member.geometry.length > 0
+        });
+        if (rel.center)
+          centerGeometry(rel);
+        if (has_full_geometry)
+          fullGeometryRelation(rel);
+        else if (rel.bounds)
+          boundsGeometry(rel);
       break;
       default:
       // type=area (from coord-query) is an example for this case.
@@ -60673,58 +64302,190 @@ osmtogeojson = function( data, options ) {
     return _convert2geoJSON(nodes,ways,rels);
   }
   function _osmXML2geoJSON(xml) {
+    // sort elements
+    var nodes = new Array();
+    var ways  = new Array();
+    var rels  = new Array();
     // helper function
     function copy_attribute( x, o, attr ) {
       if (x.hasAttribute(attr))
         o[attr] = x.getAttribute(attr);
     }
-    // sort elements
-    var nodes = new Array();
-    var ways  = new Array();
-    var rels  = new Array();
+    function centerGeometry(object, centroid) {
+      var pseudoNode = _.clone(object);
+      copy_attribute(centroid, pseudoNode, 'lat');
+      copy_attribute(centroid, pseudoNode, 'lon');
+      pseudoNode.__is_center_placeholder = true;
+      nodes.push(pseudoNode);
+    }
+    function boundsGeometry(object, bounds) {
+      var pseudoWay = _.clone(object);
+      pseudoWay.nodes = [];
+      function addPseudoNode(lat,lon,i) {
+        var pseudoNode = {
+          type:"node",
+          id:  "_"+pseudoWay.type+"/"+pseudoWay.id+"bounds"+i,
+          lat: lat,
+          lon: lon
+        }
+        pseudoWay.nodes.push(pseudoNode.id);
+        nodes.push(pseudoNode);
+      }
+      addPseudoNode(bounds.getAttribute('minlat'),bounds.getAttribute('minlon'),1);
+      addPseudoNode(bounds.getAttribute('maxlat'),bounds.getAttribute('minlon'),2);
+      addPseudoNode(bounds.getAttribute('maxlat'),bounds.getAttribute('maxlon'),3);
+      addPseudoNode(bounds.getAttribute('minlat'),bounds.getAttribute('maxlon'),4);
+      pseudoWay.nodes.push(pseudoWay.nodes[0]);
+      pseudoWay.__is_bounds_placeholder = true;
+      ways.push(pseudoWay);
+    }
+    function fullGeometryWay(way, nds) {
+      function addFullGeometryNode(lat,lon,id) {
+        var geometryNode = {
+          type:"node",
+          id:  id,
+          lat: lat,
+          lon: lon
+        }
+        nodes.push(geometryNode);
+        return geometryNode.id;
+      }
+      if (!_.isArray(way.nodes)) {
+        way.nodes = [];
+        _.each( nds, function( nd, i ) {
+          way.nodes.push("_anonymous@"+nd.getAttribute('lat')+"/"+nd.getAttribute('lon'));
+        });
+      }
+      _.each( nds, function( nd, i ) {
+        if (nd.getAttribute('lat')) {
+          addFullGeometryNode(
+            nd.getAttribute('lat'),
+            nd.getAttribute('lon'),
+            way.nodes[i]
+          );
+        }
+      });
+    }
+    function fullGeometryRelation(rel, members) {
+      function addFullGeometryNode(lat,lon,id) {
+        var geometryNode = {
+          type:"node",
+          id:  id,
+          lat: lat,
+          lon: lon
+        }
+        nodes.push(geometryNode);
+      }
+      function addFullGeometryWay(nds,id) {
+        // shared multipolygon ways cannot be defined multiple times with the same id.
+        if (ways.some(function (way) { // todo: this is slow :(
+          return way.type == "way" && way.id == id;
+        })) return;
+        var geometryWay = {
+          type: "way",
+          id:   id,
+          nodes:[]
+        }
+        function addFullGeometryWayPseudoNode(lat,lon) {
+          // todo? do not save the same pseudo node multiple times
+          var geometryPseudoNode = {
+            type:"node",
+            id:  "_anonymous@"+lat+"/"+lon,
+            lat: lat,
+            lon: lon
+          }
+          geometryWay.nodes.push(geometryPseudoNode.id);
+          nodes.push(geometryPseudoNode);
+        }
+        _.each(nds, function(nd) {
+          if (nd.getAttribute('lat')) {
+            addFullGeometryWayPseudoNode(
+              nd.getAttribute('lat'),
+              nd.getAttribute('lon')
+            );
+          } else {
+            geometryWay.nodes.push(undefined);
+          }
+        });
+        ways.push(geometryWay);
+      }
+      _.each( members, function( member, i ) {
+        if (rel.members[i].type == "node") {
+          if (member.getAttribute('lat')) {
+            addFullGeometryNode(
+              member.getAttribute('lat'),
+              member.getAttribute('lon'),
+              rel.members[i].ref
+            );
+          }
+        } else if (rel.members[i].type == "way") {
+          if (member.getElementsByTagName('nd').length > 0) {
+            rel.members[i].ref = "_fullGeom"+rel.members[i].ref;
+            addFullGeometryWay(
+              member.getElementsByTagName('nd'),
+              rel.members[i].ref
+            );
+          }
+        }
+      });
+    }
     // nodes
     _.each( xml.getElementsByTagName('node'), function( node, i ) {
       var tags = {};
       _.each( node.getElementsByTagName('tag'), function( tag ) {
         tags[tag.getAttribute('k')] = tag.getAttribute('v');
       });
-      nodes[i] = {
+      var nodeObject = {
         'type': 'node'
       };
-      copy_attribute( node, nodes[i], 'id' );
-      copy_attribute( node, nodes[i], 'lat' );
-      copy_attribute( node, nodes[i], 'lon' );
-      copy_attribute( node, nodes[i], 'version' );
-      copy_attribute( node, nodes[i], 'timestamp' );
-      copy_attribute( node, nodes[i], 'changeset' );
-      copy_attribute( node, nodes[i], 'uid' );
-      copy_attribute( node, nodes[i], 'user' );
+      copy_attribute( node, nodeObject, 'id' );
+      copy_attribute( node, nodeObject, 'lat' );
+      copy_attribute( node, nodeObject, 'lon' );
+      copy_attribute( node, nodeObject, 'version' );
+      copy_attribute( node, nodeObject, 'timestamp' );
+      copy_attribute( node, nodeObject, 'changeset' );
+      copy_attribute( node, nodeObject, 'uid' );
+      copy_attribute( node, nodeObject, 'user' );
       if (!_.isEmpty(tags))
-        nodes[i].tags = tags;
+        nodeObject.tags = tags;
+      nodes.push(nodeObject);
     });
     // ways
+    var centroid,bounds;
     _.each( xml.getElementsByTagName('way'), function( way, i ) {
       var tags = {};
       var wnodes = [];
       _.each( way.getElementsByTagName('tag'), function( tag ) {
         tags[tag.getAttribute('k')] = tag.getAttribute('v');
       });
+      var has_full_geometry = false;
       _.each( way.getElementsByTagName('nd'), function( nd, i ) {
-        wnodes[i] = nd.getAttribute('ref');
+        var id;
+        if (id = nd.getAttribute('ref'))
+          wnodes[i] = id;
+        if (!has_full_geometry && nd.getAttribute('lat'))
+          has_full_geometry = true;
       });
-      ways[i] = {
+      var wayObject = {
         "type": "way"
       };
-      copy_attribute( way, ways[i], 'id' );
-      copy_attribute( way, ways[i], 'version' );
-      copy_attribute( way, ways[i], 'timestamp' );
-      copy_attribute( way, ways[i], 'changeset' );
-      copy_attribute( way, ways[i], 'uid' );
-      copy_attribute( way, ways[i], 'user' );
+      copy_attribute( way, wayObject, 'id' );
+      copy_attribute( way, wayObject, 'version' );
+      copy_attribute( way, wayObject, 'timestamp' );
+      copy_attribute( way, wayObject, 'changeset' );
+      copy_attribute( way, wayObject, 'uid' );
+      copy_attribute( way, wayObject, 'user' );
       if (wnodes.length > 0)
-        ways[i].nodes = wnodes;
+        wayObject.nodes = wnodes;
       if (!_.isEmpty(tags))
-        ways[i].tags = tags;
+        wayObject.tags = tags;
+      if (centroid = way.getElementsByTagName('center')[0])
+        centerGeometry(wayObject,centroid);
+      if (has_full_geometry)
+        fullGeometryWay(wayObject, way.getElementsByTagName('nd'));
+      else if (bounds = way.getElementsByTagName('bounds')[0])
+        boundsGeometry(wayObject,bounds);
+      ways.push(wayObject);
     });
     // relations
     _.each( xml.getElementsByTagName('relation'), function( relation, i ) {
@@ -60733,25 +64494,37 @@ osmtogeojson = function( data, options ) {
       _.each( relation.getElementsByTagName('tag'), function( tag ) {
         tags[tag.getAttribute('k')] = tag.getAttribute('v');
       });
+      var has_full_geometry = false;
       _.each( relation.getElementsByTagName('member'), function( member, i ) {
         members[i] = {};
         copy_attribute( member, members[i], 'ref' );
         copy_attribute( member, members[i], 'role' );
         copy_attribute( member, members[i], 'type' );
+        if (!has_full_geometry &&
+             (members[i].type == 'node' && member.getAttribute('lat')) ||
+             (members[i].type == 'way'  && member.getElementsByTagName('nd').length>0) )
+          has_full_geometry = true;
       });
-      rels[i] = {
+      var relObject = {
         "type": "relation"
       }
-      copy_attribute( relation, rels[i], 'id' );
-      copy_attribute( relation, rels[i], 'version' );
-      copy_attribute( relation, rels[i], 'timestamp' );
-      copy_attribute( relation, rels[i], 'changeset' );
-      copy_attribute( relation, rels[i], 'uid' );
-      copy_attribute( relation, rels[i], 'user' );
+      copy_attribute( relation, relObject, 'id' );
+      copy_attribute( relation, relObject, 'version' );
+      copy_attribute( relation, relObject, 'timestamp' );
+      copy_attribute( relation, relObject, 'changeset' );
+      copy_attribute( relation, relObject, 'uid' );
+      copy_attribute( relation, relObject, 'user' );
       if (members.length > 0)
-        rels[i].members = members;
+        relObject.members = members;
       if (!_.isEmpty(tags))
-        rels[i].tags = tags;
+        relObject.tags = tags;
+      if (centroid = relation.getElementsByTagName('center')[0])
+        centerGeometry(relObject,centroid);
+      if (has_full_geometry)
+        fullGeometryRelation(relObject, relation.getElementsByTagName('member'));
+      else if (bounds = relation.getElementsByTagName('bounds')[0])
+        boundsGeometry(relObject,bounds);
+      rels.push(relObject);
     });
     return _convert2geoJSON(nodes,ways,rels);
   }
@@ -60778,7 +64551,7 @@ osmtogeojson = function( data, options ) {
         "user": object.user,
         "uid": object.uid
       };
-      for (k in res)
+      for (var k in res)
         if (res[k] === undefined)
           delete res[k];
       return res;
@@ -60786,90 +64559,99 @@ osmtogeojson = function( data, options ) {
 
     // some data processing (e.g. filter nodes only used for ways)
     var nodeids = new Object();
-    for (var i=0;i<nodes.length;i++) {
-      if (nodes[i].lat === undefined)
-        continue; // ignore nodes without coordinates (e.g. returned by an ids_only query)
-      nodeids[nodes[i].id] = nodes[i];
-    }
     var poinids = new Object();
     for (var i=0;i<nodes.length;i++) {
-      if (typeof nodes[i].tags != 'undefined' &&
-          has_interesting_tags(nodes[i].tags)) // this checks if the node has any tags other than "created_by"
-        poinids[nodes[i].id] = true;
+      var node = nodes[i];
+      if (nodeids[node.id] !== undefined) {
+        // handle input data duplication
+        node = options.deduplicator(node, nodeids[node.id]);
+      }
+      nodeids[node.id] = node;
+      if (typeof node.tags != 'undefined' &&
+          has_interesting_tags(node.tags)) // this checks if the node has any tags other than "created_by"
+        poinids[node.id] = true;
     }
+    // todo -> after deduplication of relations??
     for (var i=0;i<rels.length;i++) {
-      if (!_.isArray(rels[i].members))
-        continue; // ignore relations without members (e.g. returned by an ids_only query)
-      for (var j=0;j<rels[i].members.length;j++) {
-        if (rels[i].members[j].type == "node")
-          poinids[rels[i].members[j].ref] = true;
+      if (_.isArray(rels[i].members)) {
+        for (var j=0;j<rels[i].members.length;j++) {
+          if (rels[i].members[j].type == "node")
+            poinids[rels[i].members[j].ref] = true;
+        }
       }
     }
     var wayids = new Object();
     var waynids = new Object();
     for (var i=0;i<ways.length;i++) {
-      if (!_.isArray(ways[i].nodes))
-        continue; // ignore ways without nodes (e.g. returned by an ids_only query)
-      wayids[ways[i].id] = ways[i];
-      for (var j=0;j<ways[i].nodes.length;j++) {
-        waynids[ways[i].nodes[j]] = true;
-        ways[i].nodes[j] = nodeids[ways[i].nodes[j]];
+      var way = ways[i];
+      if (wayids[way.id]) {
+        // handle input data duplication
+        way = options.deduplicator(way, wayids[way.id]);
+      }
+      wayids[way.id] = way;
+      if (_.isArray(way.nodes)) {
+        for (var j=0;j<way.nodes.length;j++) {
+          if (typeof way.nodes[j] === "object") continue; // ignore already replaced way node objects
+          waynids[way.nodes[j]] = true;
+          way.nodes[j] = nodeids[way.nodes[j]];
+        }
       }
     }
     var pois = new Array();
-    for (var i=0;i<nodes.length;i++) {
-      if ((!waynids[nodes[i].id]) ||
-          (poinids[nodes[i].id]))
-        pois.push(nodes[i]);
+    for (var id in nodeids) {
+      var node = nodeids[id];
+      if (!waynids[id] || poinids[id])
+        pois.push(node);
     }
     var relids = new Array();
     for (var i=0;i<rels.length;i++) {
-      if (!_.isArray(rels[i].members))
-        continue; // ignore relations without members (e.g. returned by an ids_only query)
-      relids[rels[i].id] = rels[i];
+      var rel = rels[i];
+      if (relids[rel.id]) {
+        // handle input data duplication
+        rel = options.deduplicator(rel, relids[rel.id]);
+      }
+      relids[rel.id] = rel;
     }
     var relsmap = {node: {}, way: {}, relation: {}};
-    for (var i=0;i<rels.length;i++) {
-      if (!_.isArray(rels[i].members))
+    for (var id in relids) {
+      var rel = relids[id];
+      if (!_.isArray(rel.members)) {
+        if (options.verbose) console.warn('Relation',rel.type+'/'+rel.id,'ignored because it has no members');
         continue; // ignore relations without members (e.g. returned by an ids_only query)
-      for (var j=0;j<rels[i].members.length;j++) {
-        var m;
-        switch (rels[i].members[j].type) {
-          case "node":
-            m = nodeids[rels[i].members[j].ref];
-          break;
-          case "way":
-            m = wayids[rels[i].members[j].ref];
-          break;
-          case "relation":
-            m = relids[rels[i].members[j].ref];
-          break;
+      }
+      for (var j=0;j<rel.members.length;j++) {
+        var m_type = rel.members[j].type;
+        var m_ref = rel.members[j].ref;
+        if (typeof m_ref !== "number") {
+          // de-namespace full geometry content
+          m_ref = m_ref.replace("_fullGeom", "");
         }
-        if (!m) continue;
-        var m_type = rels[i].members[j].type;
-        var m_ref = rels[i].members[j].ref;
+        if (!relsmap[m_type]) {
+          if (options.verbose) console.warn('Relation',rel.type+'/'+rel.id,'member',m_type+'/'+m_ref,'ignored because it has an invalid type');
+          continue;
+        }
         if (typeof relsmap[m_type][m_ref] === "undefined")
           relsmap[m_type][m_ref] = [];
         relsmap[m_type][m_ref].push({
-          "role" : rels[i].members[j].role,
-          "rel" : rels[i].id,
-          "reltags" : rels[i].tags,
+          "role" : rel.members[j].role,
+          "rel" : rel.id,
+          "reltags" : rel.tags,
         });
       }
     }
     // construct geojson
     var geojson;
-    var geojsonnodes = {
-      "type"     : "FeatureCollection",
-      "features" : new Array()};
+    var geojsonnodes = [];
     for (i=0;i<pois.length;i++) {
-      if (typeof pois[i].lon == "undefined" || typeof pois[i].lat == "undefined")
+      if (typeof pois[i].lon == "undefined" || typeof pois[i].lat == "undefined") {
+        if (options.verbose) console.warn('POI',pois[i].type+'/'+pois[i].id,'ignored because it lacks coordinates');
         continue; // lon and lat are required for showing a point
-      geojsonnodes.features.push({
+      }
+      var feature = {
         "type"       : "Feature",
-        "id"         : "node/"+pois[i].id,
+        "id"         : pois[i].type+"/"+pois[i].id,
         "properties" : {
-          "type" : "node",
+          "type" : pois[i].type,
           "id"   : pois[i].id,
           "tags" : pois[i].tags || {},
           "relations" : relsmap["node"][pois[i].id] || [],
@@ -60879,37 +64661,136 @@ osmtogeojson = function( data, options ) {
           "type" : "Point",
           "coordinates" : [+pois[i].lon, +pois[i].lat],
         }
-      });
+      };
+      if (pois[i].__is_center_placeholder)
+        feature.properties["geometry"] = "center";
+      if (!featureCallback)
+        geojsonnodes.push(feature);
+      else
+        featureCallback(feature);
     }
-    var geojsonlines = {
-      "type"     : "FeatureCollection",
-      "features" : new Array()};
-    var geojsonpolygons = {
-      "type"     : "FeatureCollection",
-      "features" : new Array()};
+    var geojsonlines = [];
+    var geojsonpolygons = [];
     // process multipolygons
     for (var i=0;i<rels.length;i++) {
+      // todo: refactor such that this loops over relids instead of rels?
+      if (relids[rels[i].id] !== rels[i]) {
+        // skip relation because it's a deduplication artifact
+        continue;
+      }
+      if ((typeof rels[i].tags != "undefined") &&
+          (rels[i].tags["type"] == "route" || rels[i].tags["type"] == "waterway")) {
+        if (!_.isArray(rels[i].members)) {
+          if (options.verbose) console.warn('Route',rels[i].type+'/'+rels[i].id,'ignored because it has no members');
+          continue; // ignore relations without members (e.g. returned by an ids_only query)
+        }
+        rels[i].members.forEach(function(m) {
+          if (wayids[m.ref] && !has_interesting_tags(wayids[m.ref].tags))
+              wayids[m.ref].is_skippablerelationmember = true;
+        });
+        feature = construct_multilinestring(rels[i]);
+        if (feature === false) {
+          if (options.verbose) console.warn('Route relation',rels[i].type+'/'+rels[i].id,'ignored because it has invalid geometry');
+          continue; // abort if feature could not be constructed
+        }
+        if (!featureCallback)
+          geojsonpolygons.push(feature);
+        else
+          featureCallback(rewind(feature));
+
+        function construct_multilinestring(rel) {
+          var is_tainted = false;
+          // prepare route members
+          var members;
+          members = rel.members.filter(function(m) {return m.type === "way";});
+          members = members.map(function(m) {
+            var way = wayids[m.ref];
+            if (way === undefined || way.nodes === undefined) { // check for missing ways
+              if (options.verbose) console.warn('Route '+rel.type+'/'+rel.id, 'tainted by a missing or incomplete  way', m.type+'/'+m.ref);
+              is_tainted = true;
+              return;
+            }
+            return { // TODO: this is slow! :(
+              id: m.ref,
+              role: m.role,
+              way: way,
+              nodes: way.nodes.filter(function(n) {
+                if (n !== undefined)
+                  return true;
+                is_tainted = true;
+                if (options.verbose) console.warn('Route', rel.type+'/'+rel.id,  'tainted by a way', m.type+'/'+m.ref, 'with a missing node');
+                return false;
+              })
+            };
+          });
+          members = _.compact(members);
+          // construct connected linestrings
+          var linestrings;
+          linestrings = join(members);
+
+          // sanitize mp-coordinates (remove empty clusters or rings, {lat,lon,...} to [lon,lat]
+          var coords = [];
+          coords = _.compact(linestrings.map(function(linestring) {
+            return _.compact(linestring.map(function(node) {
+              return [+node.lon,+node.lat];
+            }));
+          }));
+
+          if (coords.length == 0) {
+            if (options.verbose) console.warn('Route', rel.type+'/'+rel.id, 'contains no coordinates');
+            return false; // ignore routes without coordinates
+          }
+
+          // mp parsed, now construct the geoJSON
+          var feature = {
+            "type"       : "Feature",
+            "id"         : rel.type+"/"+rel.id,
+            "properties" : {
+              "type" : rel.type,
+              "id"   : rel.id,
+              "tags" : rel.tags || {},
+              "relations" :  relsmap[rel.type][rel.id] || [],
+              "meta": build_meta_information(rel)
+            },
+            "geometry"   : {
+              "type" : coords.length === 1 ? "LineString" : "MultiLineString",
+              "coordinates" : coords.length === 1 ? coords[0] : coords,
+            }
+          }
+          if (is_tainted) {
+            if (options.verbose) console.warn('Route', rel.type+'/'+rel.id, 'is tainted');
+            feature.properties["tainted"] = true;
+          }
+          return feature;
+        }
+      } // end construct multilinestring for route relations
       if ((typeof rels[i].tags != "undefined") &&
           (rels[i].tags["type"] == "multipolygon" || rels[i].tags["type"] == "boundary")) {
-        if (!_.isArray(rels[i].members))
+        if (!_.isArray(rels[i].members)) {
+          if (options.verbose) console.warn('Multipolygon',rels[i].type+'/'+rels[i].id,'ignored because it has no members');
           continue; // ignore relations without members (e.g. returned by an ids_only query)
+        }
         var outer_count = 0;
         for (var j=0;j<rels[i].members.length;j++)
           if (rels[i].members[j].role == "outer")
             outer_count++;
+          else if (options.verbose && rels[i].members[j].role != "inner")
+            console.warn('Multipolygon',rels[i].type+'/'+rels[i].id,'member',rels[i].members[j].type+'/'+rels[i].members[j].ref,'ignored because it has an invalid role: "' + rels[i].members[j].role + '"');
         rels[i].members.forEach(function(m) {
           if (wayids[m.ref]) {
             // this even works in the following corner case:
             // a multipolygon amenity=xxx with outer line tagged amenity=yyy
             // see https://github.com/tyrasd/osmtogeojson/issues/7
             if (m.role==="outer" && !has_interesting_tags(wayids[m.ref].tags,rels[i].tags))
-              wayids[m.ref].is_multipolygon_outline = true;
+              wayids[m.ref].is_skippablerelationmember = true;
             if (m.role==="inner" && !has_interesting_tags(wayids[m.ref].tags))
-              wayids[m.ref].is_multipolygon_outline = true;
+              wayids[m.ref].is_skippablerelationmember = true;
           }
         });
-        if (outer_count == 0)
+        if (outer_count == 0) {
+          if (options.verbose) console.warn('Multipolygon relation',rels[i].type+'/'+rels[i].id,'ignored because it has no outer ways');
           continue; // ignore multipolygons without outer ways
+        }
         var simple_mp = false;
         if (outer_count == 1 && !has_interesting_tags(rels[i].tags, {"type":true}))
           simple_mp = true;
@@ -60920,22 +64801,33 @@ osmtogeojson = function( data, options ) {
           // simple multipolygon
           var outer_way = rels[i].members.filter(function(m) {return m.role === "outer";})[0];
           outer_way = wayids[outer_way.ref];
-          if (outer_way === undefined)
+          if (outer_way === undefined) {
+            if (options.verbose) console.warn('Multipolygon relation',rels[i].type+'/'+rels[i].id,'ignored because outer way', outer_way.type+'/'+outer_way.ref,'is missing');
             continue; // abort if outer way object is not present
-          outer_way.is_multipolygon_outline = true;
+          }
+          outer_way.is_skippablerelationmember = true;
           feature = construct_multipolygon(outer_way, rels[i]);
         }
-        if (feature === false)
+        if (feature === false) {
+          if (options.verbose) console.warn('Multipolygon relation',rels[i].type+'/'+rels[i].id,'ignored because it has invalid geometry');
           continue; // abort if feature could not be constructed
-        geojsonpolygons.features.push(feature);
+        }
+        if (!featureCallback)
+          geojsonpolygons.push(feature);
+        else
+          featureCallback(rewind(feature));
+
         function construct_multipolygon(tag_object, rel) {
           var is_tainted = false;
+          var mp_geometry = simple_mp ? 'way' : 'relation',
+              mp_id = typeof tag_object.id === "number" ? tag_object.id : +(tag_object.id.replace("_fullGeom", ""));
           // prepare mp members
           var members;
           members = rel.members.filter(function(m) {return m.type === "way";});
           members = members.map(function(m) {
             var way = wayids[m.ref];
-            if (way === undefined) { // check for missing ways
+            if (way === undefined || way.nodes === undefined) { // check for missing ways
+              if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'tainted by a missing or incomplete way', m.type+'/'+m.ref);
               is_tainted = true;
               return;
             }
@@ -60947,6 +64839,7 @@ osmtogeojson = function( data, options ) {
                 if (n !== undefined)
                   return true;
                 is_tainted = true;
+                if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id,  'tainted by a way', m.type+'/'+m.ref, 'with a missing node');
                 return false;
               })
             };
@@ -60954,47 +64847,6 @@ osmtogeojson = function( data, options ) {
           members = _.compact(members);
           // construct outer and inner rings
           var outers, inners;
-          function join(ways) {
-            var _first = function(arr) {return arr[0]};
-            var _last  = function(arr) {return arr[arr.length-1]};
-            // stolen from iD/relation.js
-            var joined = [], current, first, last, i, how, what;
-            while (ways.length) {
-              current = ways.pop().nodes.slice();
-              joined.push(current);
-              while (ways.length && _first(current) !== _last(current)) {
-                first = _first(current);
-                last  = _last(current);
-                for (i = 0; i < ways.length; i++) {
-                  what = ways[i].nodes;
-                  if (last === _first(what)) {
-                    how  = current.push;
-                    what = what.slice(1);
-                    break;
-                  } else if (last === _last(what)) {
-                    how  = current.push;
-                    what = what.slice(0, -1).reverse();
-                    break;
-                  } else if (first == _last(what)) {
-                    how  = current.unshift;
-                    what = what.slice(0, -1);
-                    break;
-                  } else if (first == _first(what)) {
-                    how  = current.unshift;
-                    what = what.slice(1).reverse();
-                    break;
-                  } else {
-                    what = how = null;
-                  }
-                }
-                if (!what)
-                  break; // Invalid geometry (dangling way, unclosed ring)
-                ways.splice(i, 1);
-                how.apply(current, what);
-              }
-            }
-            return joined;
-          }
           outers = join(members.filter(function(m) {return m.role==="outer";}));
           inners = join(members.filter(function(m) {return m.role==="inner";}));
           // sort rings
@@ -61011,8 +64863,8 @@ osmtogeojson = function( data, options ) {
                 return [+n.lat,+n.lon];
               });
             }
-            // stolen from iD/geo.js, 
-            // based on https://github.com/substack/point-in-polygon, 
+            // stolen from iD/geo.js,
+            // based on https://github.com/substack/point-in-polygon,
             // ray-casting algorithm based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
             var pointInPolygon = function(point, polygon) {
               var x = point[0], y = point[1], inside = false;
@@ -61047,27 +64899,34 @@ osmtogeojson = function( data, options ) {
             if (o !== undefined)
               mp[o].push(inners[j]);
             else
+              if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'contains an inner ring with no containing outer');
               // so, no outer ring for this inner ring is found.
               // We're going to ignore holes in empty space.
               ;
           }
           // sanitize mp-coordinates (remove empty clusters or rings, {lat,lon,...} to [lon,lat]
           var mp_coords = [];
-          mp_coords = _.compact(mp.map(function(cluster) { 
+          mp_coords = _.compact(mp.map(function(cluster) {
             var cl = _.compact(cluster.map(function(ring) {
-              if (ring.length < 4) // todo: is this correct: ring.length < 4 ?
+              if (ring.length < 4) { // todo: is this correct: ring.length < 4 ?
+                if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'contains a ring with less than four nodes');
                 return;
+              }
               return _.compact(ring.map(function(node) {
                 return [+node.lon,+node.lat];
               }));
             }));
-            if (cl.length == 0)
+            if (cl.length == 0) {
+              if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'contains an empty ring cluster');
               return;
+            }
             return cl;
           }));
 
-          if (mp_coords.length == 0)
+          if (mp_coords.length == 0) {
+            if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'contains no coordinates');
             return false; // ignore multipolygons without coordinates
+          }
           var mp_type = "MultiPolygon";
           if (mp_coords.length === 1) {
             mp_type = "Polygon";
@@ -61076,10 +64935,10 @@ osmtogeojson = function( data, options ) {
           // mp parsed, now construct the geoJSON
           var feature = {
             "type"       : "Feature",
-            "id"         : tag_object.type+"/"+tag_object.id,
+            "id"         : tag_object.type+"/"+mp_id,
             "properties" : {
               "type" : tag_object.type,
-              "id"   : tag_object.id,
+              "id"   : mp_id,
               "tags" : tag_object.tags || {},
               "relations" :  relsmap[tag_object.type][tag_object.id] || [],
               "meta": build_meta_information(tag_object)
@@ -61089,43 +64948,64 @@ osmtogeojson = function( data, options ) {
               "coordinates" : mp_coords,
             }
           }
-          if (is_tainted)
+          if (is_tainted) {
+            if (options.verbose) console.warn('Multipolygon', mp_geometry+'/'+mp_id, 'is tainted');
             feature.properties["tainted"] = true;
+          }
           return feature;
         }
       }
     }
     // process lines and polygons
     for (var i=0;i<ways.length;i++) {
-      if (!_.isArray(ways[i].nodes))
+      // todo: refactor such that this loops over wayids instead of ways?
+      if (wayids[ways[i].id] !== ways[i]) {
+        // skip way because it's a deduplication artifact
+        continue;
+      }
+      if (!_.isArray(ways[i].nodes)) {
+        if (options.verbose) console.warn('Way',ways[i].type+'/'+ways[i].id,'ignored because it has no nodes');
         continue; // ignore ways without nodes (e.g. returned by an ids_only query)
-      if (ways[i].is_multipolygon_outline)
+      }
+      if (ways[i].is_skippablerelationmember)
         continue; // ignore ways which are already rendered as (part of) a multipolygon
+      if (typeof ways[i].id !== "number") {
+        // remove full geometry namespace for output
+        ways[i].id = +ways[i].id.replace("_fullGeom", "");
+      }
       ways[i].tainted = false;
       ways[i].hidden = false;
-      coords = new Array();
+      var coords = new Array();
       for (j=0;j<ways[i].nodes.length;j++) {
         if (typeof ways[i].nodes[j] == "object")
           coords.push([+ways[i].nodes[j].lon, +ways[i].nodes[j].lat]);
-        else
+        else {
+          if (options.verbose) console.warn('Way',ways[i].type+'/'+ways[i].id,'is tainted by an invalid node');
           ways[i].tainted = true;
+        }
       }
-      if (coords.length <= 1) // invalid way geometry
+      if (coords.length <= 1) { // invalid way geometry
+        if (options.verbose) console.warn('Way',ways[i].type+'/'+ways[i].id,'ignored because it contains too few nodes');
         continue;
+      }
       var way_type = "LineString"; // default
-      if (typeof ways[i].nodes[0] != "undefined" && // way has its nodes loaded
-        ways[i].nodes[0] === ways[i].nodes[ways[i].nodes.length-1] && // ... and forms a closed ring
-        typeof ways[i].tags != "undefined" && // ... and has tags
-        _isPolygonFeature(ways[i].tags) // ... and tags say it is a polygon
+      if (typeof ways[i].nodes[0] != "undefined" && typeof ways[i].nodes[ways[i].nodes.length-1] != "undefined" && // way has its start/end nodes loaded
+        ways[i].nodes[0].id === ways[i].nodes[ways[i].nodes.length-1].id && // ... and forms a closed ring
+        (
+          typeof ways[i].tags != "undefined" && // ... and has tags
+          _isPolygonFeature(ways[i].tags) // ... and tags say it is a polygon
+          || // or is a placeholder for a bounds geometry
+          ways[i].__is_bounds_placeholder
+        )
       ) {
         way_type = "Polygon";
         coords = [coords];
       }
       var feature = {
         "type"       : "Feature",
-        "id"         : "way/"+ways[i].id,
+        "id"         : ways[i].type+"/"+ways[i].id,
         "properties" : {
-          "type" : "way",
+          "type" : ways[i].type,
           "id"   : ways[i].id,
           "tags" : ways[i].tags || {},
           "relations" : relsmap["way"][ways[i].id] || [],
@@ -61136,21 +65016,32 @@ osmtogeojson = function( data, options ) {
           "coordinates" : coords,
         }
       }
-      if (ways[i].tainted)
+      if (ways[i].tainted) {
+        if (options.verbose) console.warn('Way',ways[i].type+'/'+ways[i].id,'is tainted');
         feature.properties["tainted"] = true;
-      if (way_type == "LineString")
-        geojsonlines.features.push(feature);
-      else
-        geojsonpolygons.features.push(feature);
+      }
+      if (ways[i].__is_bounds_placeholder)
+        feature.properties["geometry"] = "bounds";
+      if (!featureCallback) {
+        if (way_type == "LineString")
+          geojsonlines.push(feature);
+        else
+          geojsonpolygons.push(feature);
+      } else {
+        featureCallback(rewind(feature));
+      }
     }
+
+    if (featureCallback)
+      return true;
 
     geojson = {
       "type": "FeatureCollection",
       "features": []
     };
-    geojson.features = geojson.features.concat(geojsonpolygons.features);
-    geojson.features = geojson.features.concat(geojsonlines.features);
-    geojson.features = geojson.features.concat(geojsonnodes.features);
+    geojson.features = geojson.features.concat(geojsonpolygons);
+    geojson.features = geojson.features.concat(geojsonlines);
+    geojson.features = geojson.features.concat(geojsonnodes);
     // optionally, flatten properties
     if (options.flatProperties) {
       geojson.features.forEach(function(f) {
@@ -61162,7 +65053,7 @@ osmtogeojson = function( data, options ) {
       });
     }
     // fix polygon winding
-    geojson = rewind(geojson, true /*remove for geojson-rewind >0.1.0*/);
+    geojson = rewind(geojson);
     return geojson;
   }
   function _isPolygonFeature( tags ) {
@@ -61191,329 +65082,667 @@ osmtogeojson = function( data, options ) {
       if ( pfk.excluded_values && pfk.excluded_values[val] !== true )
         return true;
     }
-    // if no tags matched, this ain't no area. 
+    // if no tags matched, this ain't no area.
     return false;
   }
 };
+
+// helper that joins adjacent osm ways into linestrings or linear rings
+function join(ways) {
+  var _first = function(arr) {return arr[0]};
+  var _last  = function(arr) {return arr[arr.length-1]};
+  var _fitTogether = function(n1, n2) {
+    return n1 !== undefined && n2 !== undefined && n1.id === n2.id;
+  }
+  // stolen from iD/relation.js
+  var joined = [], current, first, last, i, how, what;
+  while (ways.length) {
+    current = ways.pop().nodes.slice();
+    joined.push(current);
+    while (ways.length && !_fitTogether(_first(current), _last(current))) {
+      first = _first(current);
+      last  = _last(current);
+      for (i = 0; i < ways.length; i++) {
+        what = ways[i].nodes;
+        if (_fitTogether(last, _first(what))) {
+          how  = current.push;
+          what = what.slice(1);
+          break;
+        } else if (_fitTogether(last, _last(what))) {
+          how  = current.push;
+          what = what.slice(0, -1).reverse();
+          break;
+        } else if (_fitTogether(first, _last(what))) {
+          how  = current.unshift;
+          what = what.slice(0, -1);
+          break;
+        } else if (_fitTogether(first, _first(what))) {
+          how  = current.unshift;
+          what = what.slice(1).reverse();
+          break;
+        } else {
+          what = how = null;
+        }
+      }
+      if (!what)
+        break; // Invalid geometry (dangling way, unclosed ring)
+      ways.splice(i, 1);
+      how.apply(current, what);
+    }
+  }
+  return joined;
+}
 
 // for backwards compatibility
 osmtogeojson.toGeojson = osmtogeojson;
 
 module.exports = osmtogeojson;
 
-},{"./lodash.custom.js":154,"./polygon_features.json":156,"geojson-rewind":155}],154:[function(require,module,exports){
+},{"./lodash.custom.js":162,"@mapbox/geojson-rewind":9,"osm-polygon-features":159}],162:[function(require,module,exports){
 (function (global){(function (){
 /**
  * @license
- * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * lodash (Custom Build) <https://lodash.com/>
  * Build: `lodash exports="node" include="clone,merge,isEmpty,isArray,compact,each" -d`
- * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
- * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
- * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- * Available under MIT license <http://lodash.com/license>
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
  */
 ;(function() {
 
-  /** Used to pool arrays and objects used internally */
-  var arrayPool = [];
+  /** Used as a safe reference for `undefined` in pre-ES5 environments. */
+  var undefined;
 
-  /** Used internally to indicate various things */
-  var indicatorObject = {};
+  /** Used as the semantic version number. */
+  var VERSION = '4.15.0';
 
-  /** Used as the max size of the `arrayPool` and `objectPool` */
-  var maxPoolSize = 40;
+  /** Used as the size to enable large array optimizations. */
+  var LARGE_ARRAY_SIZE = 200;
 
-  /** Used to match regexp flags from their coerced string values */
+  /** Used as the `TypeError` message for "Functions" methods. */
+  var FUNC_ERROR_TEXT = 'Expected a function';
+
+  /** Used to stand-in for `undefined` hash values. */
+  var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+  /** Used to compose bitmasks for comparison styles. */
+  var UNORDERED_COMPARE_FLAG = 1,
+      PARTIAL_COMPARE_FLAG = 2;
+
+  /** Used as references for various `Number` constants. */
+  var INFINITY = 1 / 0,
+      MAX_SAFE_INTEGER = 9007199254740991;
+
+  /** `Object#toString` result references. */
+  var argsTag = '[object Arguments]',
+      arrayTag = '[object Array]',
+      boolTag = '[object Boolean]',
+      dateTag = '[object Date]',
+      errorTag = '[object Error]',
+      funcTag = '[object Function]',
+      genTag = '[object GeneratorFunction]',
+      mapTag = '[object Map]',
+      numberTag = '[object Number]',
+      objectTag = '[object Object]',
+      promiseTag = '[object Promise]',
+      regexpTag = '[object RegExp]',
+      setTag = '[object Set]',
+      stringTag = '[object String]',
+      symbolTag = '[object Symbol]',
+      weakMapTag = '[object WeakMap]';
+
+  var arrayBufferTag = '[object ArrayBuffer]',
+      dataViewTag = '[object DataView]',
+      float32Tag = '[object Float32Array]',
+      float64Tag = '[object Float64Array]',
+      int8Tag = '[object Int8Array]',
+      int16Tag = '[object Int16Array]',
+      int32Tag = '[object Int32Array]',
+      uint8Tag = '[object Uint8Array]',
+      uint8ClampedTag = '[object Uint8ClampedArray]',
+      uint16Tag = '[object Uint16Array]',
+      uint32Tag = '[object Uint32Array]';
+
+  /** Used to match property names within property paths. */
+  var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+      reIsPlainProp = /^\w*$/,
+      reLeadingDot = /^\./,
+      rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+  /**
+   * Used to match `RegExp`
+   * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+   */
+  var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+  /** Used to match backslashes in property paths. */
+  var reEscapeChar = /\\(\\)?/g;
+
+  /** Used to match `RegExp` flags from their coerced string values. */
   var reFlags = /\w*$/;
 
-  /** Used to detected named functions */
-  var reFuncName = /^\s*function[ \n\r\t]+\w/;
+  /** Used to detect host constructors (Safari). */
+  var reIsHostCtor = /^\[object .+?Constructor\]$/;
 
-  /** Used to detect functions containing a `this` reference */
-  var reThis = /\bthis\b/;
+  /** Used to detect unsigned integer values. */
+  var reIsUint = /^(?:0|[1-9]\d*)$/;
 
-  /** Used to fix the JScript [[DontEnum]] bug */
-  var shadowedProps = [
-    'constructor', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable',
-    'toLocaleString', 'toString', 'valueOf'
-  ];
+  /** Used to identify `toStringTag` values of typed arrays. */
+  var typedArrayTags = {};
+  typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
+  typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
+  typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
+  typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
+  typedArrayTags[uint32Tag] = true;
+  typedArrayTags[argsTag] = typedArrayTags[arrayTag] =
+  typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
+  typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
+  typedArrayTags[errorTag] = typedArrayTags[funcTag] =
+  typedArrayTags[mapTag] = typedArrayTags[numberTag] =
+  typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
+  typedArrayTags[setTag] = typedArrayTags[stringTag] =
+  typedArrayTags[weakMapTag] = false;
 
-  /** `Object#toString` result shortcuts */
-  var argsClass = '[object Arguments]',
-      arrayClass = '[object Array]',
-      boolClass = '[object Boolean]',
-      dateClass = '[object Date]',
-      errorClass = '[object Error]',
-      funcClass = '[object Function]',
-      numberClass = '[object Number]',
-      objectClass = '[object Object]',
-      regexpClass = '[object RegExp]',
-      stringClass = '[object String]';
+  /** Used to identify `toStringTag` values supported by `_.clone`. */
+  var cloneableTags = {};
+  cloneableTags[argsTag] = cloneableTags[arrayTag] =
+  cloneableTags[arrayBufferTag] = cloneableTags[dataViewTag] =
+  cloneableTags[boolTag] = cloneableTags[dateTag] =
+  cloneableTags[float32Tag] = cloneableTags[float64Tag] =
+  cloneableTags[int8Tag] = cloneableTags[int16Tag] =
+  cloneableTags[int32Tag] = cloneableTags[mapTag] =
+  cloneableTags[numberTag] = cloneableTags[objectTag] =
+  cloneableTags[regexpTag] = cloneableTags[setTag] =
+  cloneableTags[stringTag] = cloneableTags[symbolTag] =
+  cloneableTags[uint8Tag] = cloneableTags[uint8ClampedTag] =
+  cloneableTags[uint16Tag] = cloneableTags[uint32Tag] = true;
+  cloneableTags[errorTag] = cloneableTags[funcTag] =
+  cloneableTags[weakMapTag] = false;
 
-  /** Used to identify object classifications that `_.clone` supports */
-  var cloneableClasses = {};
-  cloneableClasses[funcClass] = false;
-  cloneableClasses[argsClass] = cloneableClasses[arrayClass] =
-  cloneableClasses[boolClass] = cloneableClasses[dateClass] =
-  cloneableClasses[numberClass] = cloneableClasses[objectClass] =
-  cloneableClasses[regexpClass] = cloneableClasses[stringClass] = true;
+  /** Detect free variable `global` from Node.js. */
+  var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
 
-  /** Used as the property descriptor for `__bindData__` */
-  var descriptor = {
-    'configurable': false,
-    'enumerable': false,
-    'value': null,
-    'writable': false
-  };
+  /** Detect free variable `self`. */
+  var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
 
-  /** Used as the data object for `iteratorTemplate` */
-  var iteratorData = {
-    'args': '',
-    'array': null,
-    'bottom': '',
-    'firstArg': '',
-    'init': '',
-    'keys': null,
-    'loop': '',
-    'shadowedProps': null,
-    'support': null,
-    'top': '',
-    'useHas': false
-  };
+  /** Used as a reference to the global object. */
+  var root = freeGlobal || freeSelf || Function('return this')();
 
-  /** Used to determine if values are of the language type Object */
-  var objectTypes = {
-    'boolean': false,
-    'function': true,
-    'object': true,
-    'number': false,
-    'string': false,
-    'undefined': false
-  };
+  /** Detect free variable `exports`. */
+  var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
 
-  /** Used as a reference to the global object */
-  var root = (objectTypes[typeof window] && window) || this;
+  /** Detect free variable `module`. */
+  var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
 
-  /** Detect free variable `exports` */
-  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;
+  /** Detect the popular CommonJS extension `module.exports`. */
+  var moduleExports = freeModule && freeModule.exports === freeExports;
 
-  /** Detect free variable `module` */
-  var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;
+  /** Detect free variable `process` from Node.js. */
+  var freeProcess = moduleExports && freeGlobal.process;
 
-  /** Detect the popular CommonJS extension `module.exports` */
-  var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;
+  /** Used to access faster Node.js helpers. */
+  var nodeUtil = (function() {
+    try {
+      return freeProcess && freeProcess.binding('util');
+    } catch (e) {}
+  }());
 
-  /** Detect free variable `global` from Node.js or Browserified code and use it as `root` */
-  var freeGlobal = objectTypes[typeof global] && global;
-  if (freeGlobal && (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal)) {
-    root = freeGlobal;
-  }
+  /* Node.js helper references. */
+  var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
 
   /*--------------------------------------------------------------------------*/
 
   /**
-   * Gets an array from the array pool or creates a new one if the pool is empty.
+   * Adds the key-value `pair` to `map`.
    *
    * @private
-   * @returns {Array} The array from the pool.
+   * @param {Object} map The map to modify.
+   * @param {Array} pair The key-value pair to add.
+   * @returns {Object} Returns `map`.
    */
-  function getArray() {
-    return arrayPool.pop() || [];
+  function addMapEntry(map, pair) {
+    // Don't return `map.set` because it's not chainable in IE 11.
+    map.set(pair[0], pair[1]);
+    return map;
   }
 
   /**
-   * Checks if `value` is a DOM node in IE < 9.
+   * Adds `value` to `set`.
+   *
+   * @private
+   * @param {Object} set The set to modify.
+   * @param {*} value The value to add.
+   * @returns {Object} Returns `set`.
+   */
+  function addSetEntry(set, value) {
+    // Don't return `set.add` because it's not chainable in IE 11.
+    set.add(value);
+    return set;
+  }
+
+  /**
+   * A faster alternative to `Function#apply`, this function invokes `func`
+   * with the `this` binding of `thisArg` and the arguments of `args`.
+   *
+   * @private
+   * @param {Function} func The function to invoke.
+   * @param {*} thisArg The `this` binding of `func`.
+   * @param {Array} args The arguments to invoke `func` with.
+   * @returns {*} Returns the result of `func`.
+   */
+  function apply(func, thisArg, args) {
+    switch (args.length) {
+      case 0: return func.call(thisArg);
+      case 1: return func.call(thisArg, args[0]);
+      case 2: return func.call(thisArg, args[0], args[1]);
+      case 3: return func.call(thisArg, args[0], args[1], args[2]);
+    }
+    return func.apply(thisArg, args);
+  }
+
+  /**
+   * A specialized version of `_.forEach` for arrays without support for
+   * iteratee shorthands.
+   *
+   * @private
+   * @param {Array} [array] The array to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @returns {Array} Returns `array`.
+   */
+  function arrayEach(array, iteratee) {
+    var index = -1,
+        length = array ? array.length : 0;
+
+    while (++index < length) {
+      if (iteratee(array[index], index, array) === false) {
+        break;
+      }
+    }
+    return array;
+  }
+
+  /**
+   * Appends the elements of `values` to `array`.
+   *
+   * @private
+   * @param {Array} array The array to modify.
+   * @param {Array} values The values to append.
+   * @returns {Array} Returns `array`.
+   */
+  function arrayPush(array, values) {
+    var index = -1,
+        length = values.length,
+        offset = array.length;
+
+    while (++index < length) {
+      array[offset + index] = values[index];
+    }
+    return array;
+  }
+
+  /**
+   * A specialized version of `_.reduce` for arrays without support for
+   * iteratee shorthands.
+   *
+   * @private
+   * @param {Array} [array] The array to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @param {*} [accumulator] The initial value.
+   * @param {boolean} [initAccum] Specify using the first element of `array` as
+   *  the initial value.
+   * @returns {*} Returns the accumulated value.
+   */
+  function arrayReduce(array, iteratee, accumulator, initAccum) {
+    var index = -1,
+        length = array ? array.length : 0;
+
+    if (initAccum && length) {
+      accumulator = array[++index];
+    }
+    while (++index < length) {
+      accumulator = iteratee(accumulator, array[index], index, array);
+    }
+    return accumulator;
+  }
+
+  /**
+   * A specialized version of `_.some` for arrays without support for iteratee
+   * shorthands.
+   *
+   * @private
+   * @param {Array} [array] The array to iterate over.
+   * @param {Function} predicate The function invoked per iteration.
+   * @returns {boolean} Returns `true` if any element passes the predicate check,
+   *  else `false`.
+   */
+  function arraySome(array, predicate) {
+    var index = -1,
+        length = array ? array.length : 0;
+
+    while (++index < length) {
+      if (predicate(array[index], index, array)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * The base implementation of `_.property` without support for deep paths.
+   *
+   * @private
+   * @param {string} key The key of the property to get.
+   * @returns {Function} Returns the new accessor function.
+   */
+  function baseProperty(key) {
+    return function(object) {
+      return object == null ? undefined : object[key];
+    };
+  }
+
+  /**
+   * The base implementation of `_.times` without support for iteratee shorthands
+   * or max array length checks.
+   *
+   * @private
+   * @param {number} n The number of times to invoke `iteratee`.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @returns {Array} Returns the array of results.
+   */
+  function baseTimes(n, iteratee) {
+    var index = -1,
+        result = Array(n);
+
+    while (++index < n) {
+      result[index] = iteratee(index);
+    }
+    return result;
+  }
+
+  /**
+   * The base implementation of `_.unary` without support for storing metadata.
+   *
+   * @private
+   * @param {Function} func The function to cap arguments for.
+   * @returns {Function} Returns the new capped function.
+   */
+  function baseUnary(func) {
+    return function(value) {
+      return func(value);
+    };
+  }
+
+  /**
+   * Gets the value at `key` of `object`.
+   *
+   * @private
+   * @param {Object} [object] The object to query.
+   * @param {string} key The key of the property to get.
+   * @returns {*} Returns the property value.
+   */
+  function getValue(object, key) {
+    return object == null ? undefined : object[key];
+  }
+
+  /**
+   * Checks if `value` is a host object in IE < 9.
    *
    * @private
    * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a DOM node, else `false`.
+   * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
    */
-  function isNode(value) {
-    // IE < 9 presents DOM nodes as `Object` objects except they have `toString`
-    // methods that are `typeof` "string" and still can coerce nodes to strings
-    return typeof value.toString != 'function' && typeof (value + '') == 'string';
+  function isHostObject(value) {
+    // Many host objects are `Object` objects that can coerce to strings
+    // despite having improperly defined `toString` methods.
+    var result = false;
+    if (value != null && typeof value.toString != 'function') {
+      try {
+        result = !!(value + '');
+      } catch (e) {}
+    }
+    return result;
   }
 
   /**
-   * Releases the given array back to the array pool.
+   * Converts `map` to its key-value pairs.
    *
    * @private
-   * @param {Array} [array] The array to release.
+   * @param {Object} map The map to convert.
+   * @returns {Array} Returns the key-value pairs.
    */
-  function releaseArray(array) {
-    array.length = 0;
-    if (arrayPool.length < maxPoolSize) {
-      arrayPool.push(array);
-    }
-  }
-
-  /**
-   * Slices the `collection` from the `start` index up to, but not including,
-   * the `end` index.
-   *
-   * Note: This function is used instead of `Array#slice` to support node lists
-   * in IE < 9 and to ensure dense arrays are returned.
-   *
-   * @private
-   * @param {Array|Object|string} collection The collection to slice.
-   * @param {number} start The start index.
-   * @param {number} end The end index.
-   * @returns {Array} Returns the new array.
-   */
-  function slice(array, start, end) {
-    start || (start = 0);
-    if (typeof end == 'undefined') {
-      end = array ? array.length : 0;
-    }
+  function mapToArray(map) {
     var index = -1,
-        length = end - start || 0,
-        result = Array(length < 0 ? 0 : length);
+        result = Array(map.size);
 
-    while (++index < length) {
-      result[index] = array[start + index];
-    }
+    map.forEach(function(value, key) {
+      result[++index] = [key, value];
+    });
+    return result;
+  }
+
+  /**
+   * Creates a unary function that invokes `func` with its argument transformed.
+   *
+   * @private
+   * @param {Function} func The function to wrap.
+   * @param {Function} transform The argument transform.
+   * @returns {Function} Returns the new function.
+   */
+  function overArg(func, transform) {
+    return function(arg) {
+      return func(transform(arg));
+    };
+  }
+
+  /**
+   * Converts `set` to an array of its values.
+   *
+   * @private
+   * @param {Object} set The set to convert.
+   * @returns {Array} Returns the values.
+   */
+  function setToArray(set) {
+    var index = -1,
+        result = Array(set.size);
+
+    set.forEach(function(value) {
+      result[++index] = value;
+    });
     return result;
   }
 
   /*--------------------------------------------------------------------------*/
 
+  /** Used for built-in method references. */
+  var arrayProto = Array.prototype,
+      funcProto = Function.prototype,
+      objectProto = Object.prototype;
+
+  /** Used to detect overreaching core-js shims. */
+  var coreJsData = root['__core-js_shared__'];
+
+  /** Used to detect methods masquerading as native. */
+  var maskSrcKey = (function() {
+    var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+    return uid ? ('Symbol(src)_1.' + uid) : '';
+  }());
+
+  /** Used to resolve the decompiled source of functions. */
+  var funcToString = funcProto.toString;
+
+  /** Used to check objects for own properties. */
+  var hasOwnProperty = objectProto.hasOwnProperty;
+
+  /** Used to infer the `Object` constructor. */
+  var objectCtorString = funcToString.call(Object);
+
   /**
-   * Used for `Array` method references.
-   *
-   * Normally `Array.prototype` would suffice, however, using an array literal
-   * avoids issues in Narwhal.
+   * Used to resolve the
+   * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+   * of values.
    */
-  var arrayRef = [];
+  var objectToString = objectProto.toString;
 
-  /** Used for native method references */
-  var errorProto = Error.prototype,
-      objectProto = Object.prototype,
-      stringProto = String.prototype;
-
-  /** Used to resolve the internal [[Class]] of values */
-  var toString = objectProto.toString;
-
-  /** Used to detect if a method is native */
-  var reNative = RegExp('^' +
-    String(toString)
-      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      .replace(/toString| for [^\]]+/g, '.*?') + '$'
+  /** Used to detect if a method is native. */
+  var reIsNative = RegExp('^' +
+    funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+    .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
   );
 
-  /** Native method shortcuts */
-  var fnToString = Function.prototype.toString,
-      getPrototypeOf = isNative(getPrototypeOf = Object.getPrototypeOf) && getPrototypeOf,
-      hasOwnProperty = objectProto.hasOwnProperty,
-      push = arrayRef.push,
+  /** Built-in value references. */
+  var Buffer = moduleExports ? root.Buffer : undefined,
+      Symbol = root.Symbol,
+      Uint8Array = root.Uint8Array,
+      getPrototype = overArg(Object.getPrototypeOf, Object),
+      objectCreate = Object.create,
       propertyIsEnumerable = objectProto.propertyIsEnumerable,
-      unshift = arrayRef.unshift;
+      splice = arrayProto.splice;
 
-  /** Used to set meta data on functions */
-  var defineProperty = (function() {
-    // IE 8 only accepts DOM elements
-    try {
-      var o = {},
-          func = isNative(func = Object.defineProperty) && func,
-          result = func(o, o, o) && func;
-    } catch(e) { }
-    return result;
-  }());
+  /* Built-in method references for those with the same name as other `lodash` methods. */
+  var nativeGetSymbols = Object.getOwnPropertySymbols,
+      nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined,
+      nativeKeys = overArg(Object.keys, Object),
+      nativeMax = Math.max;
 
-  /* Native method shortcuts for methods with the same name as other `lodash` methods */
-  var nativeCreate = isNative(nativeCreate = Object.create) && nativeCreate,
-      nativeIsArray = isNative(nativeIsArray = Array.isArray) && nativeIsArray,
-      nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys;
+  /* Built-in method references that are verified to be native. */
+  var DataView = getNative(root, 'DataView'),
+      Map = getNative(root, 'Map'),
+      Promise = getNative(root, 'Promise'),
+      Set = getNative(root, 'Set'),
+      WeakMap = getNative(root, 'WeakMap'),
+      nativeCreate = getNative(Object, 'create');
 
-  /** Used to lookup a built-in constructor by [[Class]] */
-  var ctorByClass = {};
-  ctorByClass[arrayClass] = Array;
-  ctorByClass[boolClass] = Boolean;
-  ctorByClass[dateClass] = Date;
-  ctorByClass[funcClass] = Function;
-  ctorByClass[objectClass] = Object;
-  ctorByClass[numberClass] = Number;
-  ctorByClass[regexpClass] = RegExp;
-  ctorByClass[stringClass] = String;
+  /** Detect if properties shadowing those on `Object.prototype` are non-enumerable. */
+  var nonEnumShadows = !propertyIsEnumerable.call({ 'valueOf': 1 }, 'valueOf');
 
-  /** Used to avoid iterating non-enumerable properties in IE < 9 */
-  var nonEnumProps = {};
-  nonEnumProps[arrayClass] = nonEnumProps[dateClass] = nonEnumProps[numberClass] = { 'constructor': true, 'toLocaleString': true, 'toString': true, 'valueOf': true };
-  nonEnumProps[boolClass] = nonEnumProps[stringClass] = { 'constructor': true, 'toString': true, 'valueOf': true };
-  nonEnumProps[errorClass] = nonEnumProps[funcClass] = nonEnumProps[regexpClass] = { 'constructor': true, 'toString': true };
-  nonEnumProps[objectClass] = { 'constructor': true };
+  /** Used to lookup unminified function names. */
+  var realNames = {};
 
-  (function() {
-    var length = shadowedProps.length;
-    while (length--) {
-      var key = shadowedProps[length];
-      for (var className in nonEnumProps) {
-        if (hasOwnProperty.call(nonEnumProps, className) && !hasOwnProperty.call(nonEnumProps[className], key)) {
-          nonEnumProps[className][key] = false;
-        }
-      }
-    }
-  }());
+  /** Used to detect maps, sets, and weakmaps. */
+  var dataViewCtorString = toSource(DataView),
+      mapCtorString = toSource(Map),
+      promiseCtorString = toSource(Promise),
+      setCtorString = toSource(Set),
+      weakMapCtorString = toSource(WeakMap);
 
-  /*--------------------------------------------------------------------------*/
+  /** Used to convert symbols to primitives and strings. */
+  var symbolProto = Symbol ? Symbol.prototype : undefined,
+      symbolValueOf = symbolProto ? symbolProto.valueOf : undefined,
+      symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+  /*------------------------------------------------------------------------*/
 
   /**
-   * Creates a `lodash` object which wraps the given value to enable intuitive
-   * method chaining.
+   * Creates a `lodash` object which wraps `value` to enable implicit method
+   * chain sequences. Methods that operate on and return arrays, collections,
+   * and functions can be chained together. Methods that retrieve a single value
+   * or may return a primitive value will automatically end the chain sequence
+   * and return the unwrapped value. Otherwise, the value must be unwrapped
+   * with `_#value`.
    *
-   * In addition to Lo-Dash methods, wrappers also have the following `Array` methods:
-   * `concat`, `join`, `pop`, `push`, `reverse`, `shift`, `slice`, `sort`, `splice`,
-   * and `unshift`
+   * Explicit chain sequences, which must be unwrapped with `_#value`, may be
+   * enabled using `_.chain`.
    *
-   * Chaining is supported in custom builds as long as the `value` method is
-   * implicitly or explicitly included in the build.
+   * The execution of chained methods is lazy, that is, it's deferred until
+   * `_#value` is implicitly or explicitly called.
    *
-   * The chainable wrapper functions are:
-   * `after`, `assign`, `bind`, `bindAll`, `bindKey`, `chain`, `compact`,
-   * `compose`, `concat`, `countBy`, `create`, `createCallback`, `curry`,
-   * `debounce`, `defaults`, `defer`, `delay`, `difference`, `filter`, `flatten`,
-   * `forEach`, `forEachRight`, `forIn`, `forInRight`, `forOwn`, `forOwnRight`,
-   * `functions`, `groupBy`, `indexBy`, `initial`, `intersection`, `invert`,
-   * `invoke`, `keys`, `map`, `max`, `memoize`, `merge`, `min`, `object`, `omit`,
-   * `once`, `pairs`, `partial`, `partialRight`, `pick`, `pluck`, `pull`, `push`,
-   * `range`, `reject`, `remove`, `rest`, `reverse`, `shuffle`, `slice`, `sort`,
-   * `sortBy`, `splice`, `tap`, `throttle`, `times`, `toArray`, `transform`,
-   * `union`, `uniq`, `unshift`, `unzip`, `values`, `where`, `without`, `wrap`,
-   * and `zip`
+   * Lazy evaluation allows several methods to support shortcut fusion.
+   * Shortcut fusion is an optimization to merge iteratee calls; this avoids
+   * the creation of intermediate arrays and can greatly reduce the number of
+   * iteratee executions. Sections of a chain sequence qualify for shortcut
+   * fusion if the section is applied to an array of at least `200` elements
+   * and any iteratees accept only one argument. The heuristic for whether a
+   * section qualifies for shortcut fusion is subject to change.
    *
-   * The non-chainable wrapper functions are:
-   * `clone`, `cloneDeep`, `contains`, `escape`, `every`, `find`, `findIndex`,
-   * `findKey`, `findLast`, `findLastIndex`, `findLastKey`, `has`, `identity`,
-   * `indexOf`, `isArguments`, `isArray`, `isBoolean`, `isDate`, `isElement`,
-   * `isEmpty`, `isEqual`, `isFinite`, `isFunction`, `isNaN`, `isNull`, `isNumber`,
-   * `isObject`, `isPlainObject`, `isRegExp`, `isString`, `isUndefined`, `join`,
-   * `lastIndexOf`, `mixin`, `noConflict`, `parseInt`, `pop`, `random`, `reduce`,
-   * `reduceRight`, `result`, `shift`, `size`, `some`, `sortedIndex`, `runInContext`,
-   * `template`, `unescape`, `uniqueId`, and `value`
+   * Chaining is supported in custom builds as long as the `_#value` method is
+   * directly or indirectly included in the build.
    *
-   * The wrapper functions `first` and `last` return wrapped values when `n` is
-   * provided, otherwise they return unwrapped values.
+   * In addition to lodash methods, wrappers have `Array` and `String` methods.
    *
-   * Explicit chaining can be enabled by using the `_.chain` method.
+   * The wrapper `Array` methods are:
+   * `concat`, `join`, `pop`, `push`, `shift`, `sort`, `splice`, and `unshift`
+   *
+   * The wrapper `String` methods are:
+   * `replace` and `split`
+   *
+   * The wrapper methods that support shortcut fusion are:
+   * `at`, `compact`, `drop`, `dropRight`, `dropWhile`, `filter`, `find`,
+   * `findLast`, `head`, `initial`, `last`, `map`, `reject`, `reverse`, `slice`,
+   * `tail`, `take`, `takeRight`, `takeRightWhile`, `takeWhile`, and `toArray`
+   *
+   * The chainable wrapper methods are:
+   * `after`, `ary`, `assign`, `assignIn`, `assignInWith`, `assignWith`, `at`,
+   * `before`, `bind`, `bindAll`, `bindKey`, `castArray`, `chain`, `chunk`,
+   * `commit`, `compact`, `concat`, `conforms`, `constant`, `countBy`, `create`,
+   * `curry`, `debounce`, `defaults`, `defaultsDeep`, `defer`, `delay`,
+   * `difference`, `differenceBy`, `differenceWith`, `drop`, `dropRight`,
+   * `dropRightWhile`, `dropWhile`, `extend`, `extendWith`, `fill`, `filter`,
+   * `flatMap`, `flatMapDeep`, `flatMapDepth`, `flatten`, `flattenDeep`,
+   * `flattenDepth`, `flip`, `flow`, `flowRight`, `fromPairs`, `functions`,
+   * `functionsIn`, `groupBy`, `initial`, `intersection`, `intersectionBy`,
+   * `intersectionWith`, `invert`, `invertBy`, `invokeMap`, `iteratee`, `keyBy`,
+   * `keys`, `keysIn`, `map`, `mapKeys`, `mapValues`, `matches`, `matchesProperty`,
+   * `memoize`, `merge`, `mergeWith`, `method`, `methodOf`, `mixin`, `negate`,
+   * `nthArg`, `omit`, `omitBy`, `once`, `orderBy`, `over`, `overArgs`,
+   * `overEvery`, `overSome`, `partial`, `partialRight`, `partition`, `pick`,
+   * `pickBy`, `plant`, `property`, `propertyOf`, `pull`, `pullAll`, `pullAllBy`,
+   * `pullAllWith`, `pullAt`, `push`, `range`, `rangeRight`, `rearg`, `reject`,
+   * `remove`, `rest`, `reverse`, `sampleSize`, `set`, `setWith`, `shuffle`,
+   * `slice`, `sort`, `sortBy`, `splice`, `spread`, `tail`, `take`, `takeRight`,
+   * `takeRightWhile`, `takeWhile`, `tap`, `throttle`, `thru`, `toArray`,
+   * `toPairs`, `toPairsIn`, `toPath`, `toPlainObject`, `transform`, `unary`,
+   * `union`, `unionBy`, `unionWith`, `uniq`, `uniqBy`, `uniqWith`, `unset`,
+   * `unshift`, `unzip`, `unzipWith`, `update`, `updateWith`, `values`,
+   * `valuesIn`, `without`, `wrap`, `xor`, `xorBy`, `xorWith`, `zip`,
+   * `zipObject`, `zipObjectDeep`, and `zipWith`
+   *
+   * The wrapper methods that are **not** chainable by default are:
+   * `add`, `attempt`, `camelCase`, `capitalize`, `ceil`, `clamp`, `clone`,
+   * `cloneDeep`, `cloneDeepWith`, `cloneWith`, `conformsTo`, `deburr`,
+   * `defaultTo`, `divide`, `each`, `eachRight`, `endsWith`, `eq`, `escape`,
+   * `escapeRegExp`, `every`, `find`, `findIndex`, `findKey`, `findLast`,
+   * `findLastIndex`, `findLastKey`, `first`, `floor`, `forEach`, `forEachRight`,
+   * `forIn`, `forInRight`, `forOwn`, `forOwnRight`, `get`, `gt`, `gte`, `has`,
+   * `hasIn`, `head`, `identity`, `includes`, `indexOf`, `inRange`, `invoke`,
+   * `isArguments`, `isArray`, `isArrayBuffer`, `isArrayLike`, `isArrayLikeObject`,
+   * `isBoolean`, `isBuffer`, `isDate`, `isElement`, `isEmpty`, `isEqual`,
+   * `isEqualWith`, `isError`, `isFinite`, `isFunction`, `isInteger`, `isLength`,
+   * `isMap`, `isMatch`, `isMatchWith`, `isNaN`, `isNative`, `isNil`, `isNull`,
+   * `isNumber`, `isObject`, `isObjectLike`, `isPlainObject`, `isRegExp`,
+   * `isSafeInteger`, `isSet`, `isString`, `isUndefined`, `isTypedArray`,
+   * `isWeakMap`, `isWeakSet`, `join`, `kebabCase`, `last`, `lastIndexOf`,
+   * `lowerCase`, `lowerFirst`, `lt`, `lte`, `max`, `maxBy`, `mean`, `meanBy`,
+   * `min`, `minBy`, `multiply`, `noConflict`, `noop`, `now`, `nth`, `pad`,
+   * `padEnd`, `padStart`, `parseInt`, `pop`, `random`, `reduce`, `reduceRight`,
+   * `repeat`, `result`, `round`, `runInContext`, `sample`, `shift`, `size`,
+   * `snakeCase`, `some`, `sortedIndex`, `sortedIndexBy`, `sortedLastIndex`,
+   * `sortedLastIndexBy`, `startCase`, `startsWith`, `stubArray`, `stubFalse`,
+   * `stubObject`, `stubString`, `stubTrue`, `subtract`, `sum`, `sumBy`,
+   * `template`, `times`, `toFinite`, `toInteger`, `toJSON`, `toLength`,
+   * `toLower`, `toNumber`, `toSafeInteger`, `toString`, `toUpper`, `trim`,
+   * `trimEnd`, `trimStart`, `truncate`, `unescape`, `uniqueId`, `upperCase`,
+   * `upperFirst`, `value`, and `words`
    *
    * @name _
    * @constructor
-   * @category Chaining
+   * @category Seq
    * @param {*} value The value to wrap in a `lodash` instance.
-   * @returns {Object} Returns a `lodash` instance.
+   * @returns {Object} Returns the new `lodash` wrapper instance.
    * @example
+   *
+   * function square(n) {
+   *   return n * n;
+   * }
    *
    * var wrapped = _([1, 2, 3]);
    *
-   * // returns an unwrapped value
-   * wrapped.reduce(function(sum, num) {
-   *   return sum + num;
-   * });
+   * // Returns an unwrapped value.
+   * wrapped.reduce(_.add);
    * // => 6
    *
-   * // returns a wrapped value
-   * var squares = wrapped.map(function(num) {
-   *   return num * num;
-   * });
+   * // Returns a wrapped value.
+   * var squares = wrapped.map(square);
    *
    * _.isArray(squares);
    * // => false
@@ -61522,378 +65751,631 @@ module.exports = osmtogeojson;
    * // => true
    */
   function lodash() {
-    // no operation performed
+    // No operation performed.
+  }
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates a hash object.
+   *
+   * @private
+   * @constructor
+   * @param {Array} [entries] The key-value pairs to cache.
+   */
+  function Hash(entries) {
+    var index = -1,
+        length = entries ? entries.length : 0;
+
+    this.clear();
+    while (++index < length) {
+      var entry = entries[index];
+      this.set(entry[0], entry[1]);
+    }
   }
 
   /**
-   * An object used to flag environments features.
-   *
-   * @static
-   * @memberOf _
-   * @type Object
-   */
-  var support = lodash.support = {};
-
-  (function() {
-    var ctor = function() { this.x = 1; },
-        object = { '0': 1, 'length': 1 },
-        props = [];
-
-    ctor.prototype = { 'valueOf': 1, 'y': 1 };
-    for (var key in new ctor) { props.push(key); }
-    for (key in arguments) { }
-
-    /**
-     * Detect if an `arguments` object's [[Class]] is resolvable (all but Firefox < 4, IE < 9).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.argsClass = toString.call(arguments) == argsClass;
-
-    /**
-     * Detect if `arguments` objects are `Object` objects (all but Narwhal and Opera < 10.5).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.argsObject = arguments.constructor == Object && !(arguments instanceof Array);
-
-    /**
-     * Detect if `name` or `message` properties of `Error.prototype` are
-     * enumerable by default. (IE < 9, Safari < 5.1)
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.enumErrorProps = propertyIsEnumerable.call(errorProto, 'message') || propertyIsEnumerable.call(errorProto, 'name');
-
-    /**
-     * Detect if `prototype` properties are enumerable by default.
-     *
-     * Firefox < 3.6, Opera > 9.50 - Opera < 11.60, and Safari < 5.1
-     * (if the prototype or a property on the prototype has been set)
-     * incorrectly sets a function's `prototype` property [[Enumerable]]
-     * value to `true`.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.enumPrototypes = propertyIsEnumerable.call(ctor, 'prototype');
-
-    /**
-     * Detect if functions can be decompiled by `Function#toString`
-     * (all but PS3 and older Opera mobile browsers & avoided in Windows 8 apps).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.funcDecomp = !isNative(root.WinRTError) && reThis.test(function() { return this; });
-
-    /**
-     * Detect if `Function#name` is supported (all but IE).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.funcNames = typeof Function.name == 'string';
-
-    /**
-     * Detect if `arguments` object indexes are non-enumerable
-     * (Firefox < 4, IE < 9, PhantomJS, Safari < 5.1).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.nonEnumArgs = key != 0;
-
-    /**
-     * Detect if properties shadowing those on `Object.prototype` are non-enumerable.
-     *
-     * In IE < 9 an objects own properties, shadowing non-enumerable ones, are
-     * made non-enumerable as well (a.k.a the JScript [[DontEnum]] bug).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.nonEnumShadows = !/valueOf/.test(props);
-
-    /**
-     * Detect if own properties are iterated after inherited properties (all but IE < 9).
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.ownLast = props[0] != 'x';
-
-    /**
-     * Detect if `Array#shift` and `Array#splice` augment array-like objects correctly.
-     *
-     * Firefox < 10, IE compatibility mode, and IE < 9 have buggy Array `shift()`
-     * and `splice()` functions that fail to remove the last element, `value[0]`,
-     * of array-like objects even though the `length` property is set to `0`.
-     * The `shift()` method is buggy in IE 8 compatibility mode, while `splice()`
-     * is buggy regardless of mode in IE < 9 and buggy in compatibility mode in IE 9.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.spliceObjects = (arrayRef.splice.call(object, 0, 1), !object[0]);
-
-    /**
-     * Detect lack of support for accessing string characters by index.
-     *
-     * IE < 8 can't access characters by index and IE 8 can only access
-     * characters by index on string literals.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    support.unindexedChars = ('x'[0] + Object('x')[0]) != 'xx';
-
-    /**
-     * Detect if a DOM node's [[Class]] is resolvable (all but IE < 9)
-     * and that the JS engine errors when attempting to coerce an object to
-     * a string without a `toString` function.
-     *
-     * @memberOf _.support
-     * @type boolean
-     */
-    try {
-      support.nodeClass = !(toString.call(document) == objectClass && !({ 'toString': 0 } + ''));
-    } catch(e) {
-      support.nodeClass = true;
-    }
-  }(1));
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * The template used to create iterator functions.
+   * Removes all key-value entries from the hash.
    *
    * @private
-   * @param {Object} data The data object used to populate the text.
-   * @returns {string} Returns the interpolated text.
+   * @name clear
+   * @memberOf Hash
    */
-  var iteratorTemplate = function(obj) {
-
-    var __p = 'var index, iterable = ' +
-    (obj.firstArg) +
-    ', result = ' +
-    (obj.init) +
-    ';\nif (!iterable) return result;\n' +
-    (obj.top) +
-    ';';
-     if (obj.array) {
-    __p += '\nvar length = iterable.length; index = -1;\nif (' +
-    (obj.array) +
-    ') {  ';
-     if (support.unindexedChars) {
-    __p += '\n  if (isString(iterable)) {\n    iterable = iterable.split(\'\')\n  }  ';
-     }
-    __p += '\n  while (++index < length) {\n    ' +
-    (obj.loop) +
-    ';\n  }\n}\nelse {  ';
-     } else if (support.nonEnumArgs) {
-    __p += '\n  var length = iterable.length; index = -1;\n  if (length && isArguments(iterable)) {\n    while (++index < length) {\n      index += \'\';\n      ' +
-    (obj.loop) +
-    ';\n    }\n  } else {  ';
-     }
-
-     if (support.enumPrototypes) {
-    __p += '\n  var skipProto = typeof iterable == \'function\';\n  ';
-     }
-
-     if (support.enumErrorProps) {
-    __p += '\n  var skipErrorProps = iterable === errorProto || iterable instanceof Error;\n  ';
-     }
-
-        var conditions = [];    if (support.enumPrototypes) { conditions.push('!(skipProto && index == "prototype")'); }    if (support.enumErrorProps)  { conditions.push('!(skipErrorProps && (index == "message" || index == "name"))'); }
-
-     if (obj.useHas && obj.keys) {
-    __p += '\n  var ownIndex = -1,\n      ownProps = objectTypes[typeof iterable] && keys(iterable),\n      length = ownProps ? ownProps.length : 0;\n\n  while (++ownIndex < length) {\n    index = ownProps[ownIndex];\n';
-        if (conditions.length) {
-    __p += '    if (' +
-    (conditions.join(' && ')) +
-    ') {\n  ';
-     }
-    __p +=
-    (obj.loop) +
-    ';    ';
-     if (conditions.length) {
-    __p += '\n    }';
-     }
-    __p += '\n  }  ';
-     } else {
-    __p += '\n  for (index in iterable) {\n';
-        if (obj.useHas) { conditions.push("hasOwnProperty.call(iterable, index)"); }    if (conditions.length) {
-    __p += '    if (' +
-    (conditions.join(' && ')) +
-    ') {\n  ';
-     }
-    __p +=
-    (obj.loop) +
-    ';    ';
-     if (conditions.length) {
-    __p += '\n    }';
-     }
-    __p += '\n  }    ';
-     if (support.nonEnumShadows) {
-    __p += '\n\n  if (iterable !== objectProto) {\n    var ctor = iterable.constructor,\n        isProto = iterable === (ctor && ctor.prototype),\n        className = iterable === stringProto ? stringClass : iterable === errorProto ? errorClass : toString.call(iterable),\n        nonEnum = nonEnumProps[className];\n      ';
-     for (k = 0; k < 7; k++) {
-    __p += '\n    index = \'' +
-    (obj.shadowedProps[k]) +
-    '\';\n    if ((!(isProto && nonEnum[index]) && hasOwnProperty.call(iterable, index))';
-            if (!obj.useHas) {
-    __p += ' || (!nonEnum[index] && iterable[index] !== objectProto[index])';
-     }
-    __p += ') {\n      ' +
-    (obj.loop) +
-    ';\n    }      ';
-     }
-    __p += '\n  }    ';
-     }
-
-     }
-
-     if (obj.array || support.nonEnumArgs) {
-    __p += '\n}';
-     }
-    __p +=
-    (obj.bottom) +
-    ';\nreturn result';
-
-    return __p
-  };
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * The base implementation of `_.bind` that creates the bound function and
-   * sets its meta data.
-   *
-   * @private
-   * @param {Array} bindData The bind data array.
-   * @returns {Function} Returns the new bound function.
-   */
-  function baseBind(bindData) {
-    var func = bindData[0],
-        partialArgs = bindData[2],
-        thisArg = bindData[4];
-
-    function bound() {
-      // `Function#bind` spec
-      // http://es5.github.io/#x15.3.4.5
-      if (partialArgs) {
-        // avoid `arguments` object deoptimizations by using `slice` instead
-        // of `Array.prototype.slice.call` and not assigning `arguments` to a
-        // variable as a ternary expression
-        var args = slice(partialArgs);
-        push.apply(args, arguments);
-      }
-      // mimic the constructor's `return` behavior
-      // http://es5.github.io/#x13.2.2
-      if (this instanceof bound) {
-        // ensure `new bound` is an instance of `func`
-        var thisBinding = baseCreate(func.prototype),
-            result = func.apply(thisBinding, args || arguments);
-        return isObject(result) ? result : thisBinding;
-      }
-      return func.apply(thisArg, args || arguments);
-    }
-    setBindData(bound, bindData);
-    return bound;
+  function hashClear() {
+    this.__data__ = nativeCreate ? nativeCreate(null) : {};
   }
 
   /**
-   * The base implementation of `_.clone` without argument juggling or support
-   * for `thisArg` binding.
+   * Removes `key` and its value from the hash.
+   *
+   * @private
+   * @name delete
+   * @memberOf Hash
+   * @param {Object} hash The hash to modify.
+   * @param {string} key The key of the value to remove.
+   * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+   */
+  function hashDelete(key) {
+    return this.has(key) && delete this.__data__[key];
+  }
+
+  /**
+   * Gets the hash value for `key`.
+   *
+   * @private
+   * @name get
+   * @memberOf Hash
+   * @param {string} key The key of the value to get.
+   * @returns {*} Returns the entry value.
+   */
+  function hashGet(key) {
+    var data = this.__data__;
+    if (nativeCreate) {
+      var result = data[key];
+      return result === HASH_UNDEFINED ? undefined : result;
+    }
+    return hasOwnProperty.call(data, key) ? data[key] : undefined;
+  }
+
+  /**
+   * Checks if a hash value for `key` exists.
+   *
+   * @private
+   * @name has
+   * @memberOf Hash
+   * @param {string} key The key of the entry to check.
+   * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+   */
+  function hashHas(key) {
+    var data = this.__data__;
+    return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+  }
+
+  /**
+   * Sets the hash `key` to `value`.
+   *
+   * @private
+   * @name set
+   * @memberOf Hash
+   * @param {string} key The key of the value to set.
+   * @param {*} value The value to set.
+   * @returns {Object} Returns the hash instance.
+   */
+  function hashSet(key, value) {
+    var data = this.__data__;
+    data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+    return this;
+  }
+
+  // Add methods to `Hash`.
+  Hash.prototype.clear = hashClear;
+  Hash.prototype['delete'] = hashDelete;
+  Hash.prototype.get = hashGet;
+  Hash.prototype.has = hashHas;
+  Hash.prototype.set = hashSet;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates an list cache object.
+   *
+   * @private
+   * @constructor
+   * @param {Array} [entries] The key-value pairs to cache.
+   */
+  function ListCache(entries) {
+    var index = -1,
+        length = entries ? entries.length : 0;
+
+    this.clear();
+    while (++index < length) {
+      var entry = entries[index];
+      this.set(entry[0], entry[1]);
+    }
+  }
+
+  /**
+   * Removes all key-value entries from the list cache.
+   *
+   * @private
+   * @name clear
+   * @memberOf ListCache
+   */
+  function listCacheClear() {
+    this.__data__ = [];
+  }
+
+  /**
+   * Removes `key` and its value from the list cache.
+   *
+   * @private
+   * @name delete
+   * @memberOf ListCache
+   * @param {string} key The key of the value to remove.
+   * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+   */
+  function listCacheDelete(key) {
+    var data = this.__data__,
+        index = assocIndexOf(data, key);
+
+    if (index < 0) {
+      return false;
+    }
+    var lastIndex = data.length - 1;
+    if (index == lastIndex) {
+      data.pop();
+    } else {
+      splice.call(data, index, 1);
+    }
+    return true;
+  }
+
+  /**
+   * Gets the list cache value for `key`.
+   *
+   * @private
+   * @name get
+   * @memberOf ListCache
+   * @param {string} key The key of the value to get.
+   * @returns {*} Returns the entry value.
+   */
+  function listCacheGet(key) {
+    var data = this.__data__,
+        index = assocIndexOf(data, key);
+
+    return index < 0 ? undefined : data[index][1];
+  }
+
+  /**
+   * Checks if a list cache value for `key` exists.
+   *
+   * @private
+   * @name has
+   * @memberOf ListCache
+   * @param {string} key The key of the entry to check.
+   * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+   */
+  function listCacheHas(key) {
+    return assocIndexOf(this.__data__, key) > -1;
+  }
+
+  /**
+   * Sets the list cache `key` to `value`.
+   *
+   * @private
+   * @name set
+   * @memberOf ListCache
+   * @param {string} key The key of the value to set.
+   * @param {*} value The value to set.
+   * @returns {Object} Returns the list cache instance.
+   */
+  function listCacheSet(key, value) {
+    var data = this.__data__,
+        index = assocIndexOf(data, key);
+
+    if (index < 0) {
+      data.push([key, value]);
+    } else {
+      data[index][1] = value;
+    }
+    return this;
+  }
+
+  // Add methods to `ListCache`.
+  ListCache.prototype.clear = listCacheClear;
+  ListCache.prototype['delete'] = listCacheDelete;
+  ListCache.prototype.get = listCacheGet;
+  ListCache.prototype.has = listCacheHas;
+  ListCache.prototype.set = listCacheSet;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates a map cache object to store key-value pairs.
+   *
+   * @private
+   * @constructor
+   * @param {Array} [entries] The key-value pairs to cache.
+   */
+  function MapCache(entries) {
+    var index = -1,
+        length = entries ? entries.length : 0;
+
+    this.clear();
+    while (++index < length) {
+      var entry = entries[index];
+      this.set(entry[0], entry[1]);
+    }
+  }
+
+  /**
+   * Removes all key-value entries from the map.
+   *
+   * @private
+   * @name clear
+   * @memberOf MapCache
+   */
+  function mapCacheClear() {
+    this.__data__ = {
+      'hash': new Hash,
+      'map': new (Map || ListCache),
+      'string': new Hash
+    };
+  }
+
+  /**
+   * Removes `key` and its value from the map.
+   *
+   * @private
+   * @name delete
+   * @memberOf MapCache
+   * @param {string} key The key of the value to remove.
+   * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+   */
+  function mapCacheDelete(key) {
+    return getMapData(this, key)['delete'](key);
+  }
+
+  /**
+   * Gets the map value for `key`.
+   *
+   * @private
+   * @name get
+   * @memberOf MapCache
+   * @param {string} key The key of the value to get.
+   * @returns {*} Returns the entry value.
+   */
+  function mapCacheGet(key) {
+    return getMapData(this, key).get(key);
+  }
+
+  /**
+   * Checks if a map value for `key` exists.
+   *
+   * @private
+   * @name has
+   * @memberOf MapCache
+   * @param {string} key The key of the entry to check.
+   * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+   */
+  function mapCacheHas(key) {
+    return getMapData(this, key).has(key);
+  }
+
+  /**
+   * Sets the map `key` to `value`.
+   *
+   * @private
+   * @name set
+   * @memberOf MapCache
+   * @param {string} key The key of the value to set.
+   * @param {*} value The value to set.
+   * @returns {Object} Returns the map cache instance.
+   */
+  function mapCacheSet(key, value) {
+    getMapData(this, key).set(key, value);
+    return this;
+  }
+
+  // Add methods to `MapCache`.
+  MapCache.prototype.clear = mapCacheClear;
+  MapCache.prototype['delete'] = mapCacheDelete;
+  MapCache.prototype.get = mapCacheGet;
+  MapCache.prototype.has = mapCacheHas;
+  MapCache.prototype.set = mapCacheSet;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   *
+   * Creates an array cache object to store unique values.
+   *
+   * @private
+   * @constructor
+   * @param {Array} [values] The values to cache.
+   */
+  function SetCache(values) {
+    var index = -1,
+        length = values ? values.length : 0;
+
+    this.__data__ = new MapCache;
+    while (++index < length) {
+      this.add(values[index]);
+    }
+  }
+
+  /**
+   * Adds `value` to the array cache.
+   *
+   * @private
+   * @name add
+   * @memberOf SetCache
+   * @alias push
+   * @param {*} value The value to cache.
+   * @returns {Object} Returns the cache instance.
+   */
+  function setCacheAdd(value) {
+    this.__data__.set(value, HASH_UNDEFINED);
+    return this;
+  }
+
+  /**
+   * Checks if `value` is in the array cache.
+   *
+   * @private
+   * @name has
+   * @memberOf SetCache
+   * @param {*} value The value to search for.
+   * @returns {number} Returns `true` if `value` is found, else `false`.
+   */
+  function setCacheHas(value) {
+    return this.__data__.has(value);
+  }
+
+  // Add methods to `SetCache`.
+  SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;
+  SetCache.prototype.has = setCacheHas;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates a stack cache object to store key-value pairs.
+   *
+   * @private
+   * @constructor
+   * @param {Array} [entries] The key-value pairs to cache.
+   */
+  function Stack(entries) {
+    this.__data__ = new ListCache(entries);
+  }
+
+  /**
+   * Removes all key-value entries from the stack.
+   *
+   * @private
+   * @name clear
+   * @memberOf Stack
+   */
+  function stackClear() {
+    this.__data__ = new ListCache;
+  }
+
+  /**
+   * Removes `key` and its value from the stack.
+   *
+   * @private
+   * @name delete
+   * @memberOf Stack
+   * @param {string} key The key of the value to remove.
+   * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+   */
+  function stackDelete(key) {
+    return this.__data__['delete'](key);
+  }
+
+  /**
+   * Gets the stack value for `key`.
+   *
+   * @private
+   * @name get
+   * @memberOf Stack
+   * @param {string} key The key of the value to get.
+   * @returns {*} Returns the entry value.
+   */
+  function stackGet(key) {
+    return this.__data__.get(key);
+  }
+
+  /**
+   * Checks if a stack value for `key` exists.
+   *
+   * @private
+   * @name has
+   * @memberOf Stack
+   * @param {string} key The key of the entry to check.
+   * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+   */
+  function stackHas(key) {
+    return this.__data__.has(key);
+  }
+
+  /**
+   * Sets the stack `key` to `value`.
+   *
+   * @private
+   * @name set
+   * @memberOf Stack
+   * @param {string} key The key of the value to set.
+   * @param {*} value The value to set.
+   * @returns {Object} Returns the stack cache instance.
+   */
+  function stackSet(key, value) {
+    var cache = this.__data__;
+    if (cache instanceof ListCache) {
+      var pairs = cache.__data__;
+      if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
+        pairs.push([key, value]);
+        return this;
+      }
+      cache = this.__data__ = new MapCache(pairs);
+    }
+    cache.set(key, value);
+    return this;
+  }
+
+  // Add methods to `Stack`.
+  Stack.prototype.clear = stackClear;
+  Stack.prototype['delete'] = stackDelete;
+  Stack.prototype.get = stackGet;
+  Stack.prototype.has = stackHas;
+  Stack.prototype.set = stackSet;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates an array of the enumerable property names of the array-like `value`.
+   *
+   * @private
+   * @param {*} value The value to query.
+   * @param {boolean} inherited Specify returning inherited property names.
+   * @returns {Array} Returns the array of property names.
+   */
+  function arrayLikeKeys(value, inherited) {
+    // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+    // Safari 9 makes `arguments.length` enumerable in strict mode.
+    var result = (isArray(value) || isArguments(value))
+      ? baseTimes(value.length, String)
+      : [];
+
+    var length = result.length,
+        skipIndexes = !!length;
+
+    for (var key in value) {
+      if ((inherited || hasOwnProperty.call(value, key)) &&
+          !(skipIndexes && (key == 'length' || isIndex(key, length)))) {
+        result.push(key);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * This function is like `assignValue` except that it doesn't assign
+   * `undefined` values.
+   *
+   * @private
+   * @param {Object} object The object to modify.
+   * @param {string} key The key of the property to assign.
+   * @param {*} value The value to assign.
+   */
+  function assignMergeValue(object, key, value) {
+    if ((value !== undefined && !eq(object[key], value)) ||
+        (typeof key == 'number' && value === undefined && !(key in object))) {
+      object[key] = value;
+    }
+  }
+
+  /**
+   * Assigns `value` to `key` of `object` if the existing value is not equivalent
+   * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+   * for equality comparisons.
+   *
+   * @private
+   * @param {Object} object The object to modify.
+   * @param {string} key The key of the property to assign.
+   * @param {*} value The value to assign.
+   */
+  function assignValue(object, key, value) {
+    var objValue = object[key];
+    if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
+        (value === undefined && !(key in object))) {
+      object[key] = value;
+    }
+  }
+
+  /**
+   * Gets the index at which the `key` is found in `array` of key-value pairs.
+   *
+   * @private
+   * @param {Array} array The array to inspect.
+   * @param {*} key The key to search for.
+   * @returns {number} Returns the index of the matched value, else `-1`.
+   */
+  function assocIndexOf(array, key) {
+    var length = array.length;
+    while (length--) {
+      if (eq(array[length][0], key)) {
+        return length;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * The base implementation of `_.assign` without support for multiple sources
+   * or `customizer` functions.
+   *
+   * @private
+   * @param {Object} object The destination object.
+   * @param {Object} source The source object.
+   * @returns {Object} Returns `object`.
+   */
+  function baseAssign(object, source) {
+    return object && copyObject(source, keys(source), object);
+  }
+
+  /**
+   * The base implementation of `_.clone` and `_.cloneDeep` which tracks
+   * traversed objects.
    *
    * @private
    * @param {*} value The value to clone.
-   * @param {boolean} [isDeep=false] Specify a deep clone.
-   * @param {Function} [callback] The function to customize cloning values.
-   * @param {Array} [stackA=[]] Tracks traversed source objects.
-   * @param {Array} [stackB=[]] Associates clones with source counterparts.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @param {boolean} [isFull] Specify a clone including symbols.
+   * @param {Function} [customizer] The function to customize cloning.
+   * @param {string} [key] The key of `value`.
+   * @param {Object} [object] The parent object of `value`.
+   * @param {Object} [stack] Tracks traversed objects and their clone counterparts.
    * @returns {*} Returns the cloned value.
    */
-  function baseClone(value, isDeep, callback, stackA, stackB) {
-    if (callback) {
-      var result = callback(value);
-      if (typeof result != 'undefined') {
-        return result;
-      }
+  function baseClone(value, isDeep, isFull, customizer, key, object, stack) {
+    var result;
+    if (customizer) {
+      result = object ? customizer(value, key, object, stack) : customizer(value);
     }
-    // inspect [[Class]]
-    var isObj = isObject(value);
-    if (isObj) {
-      var className = toString.call(value);
-      if (!cloneableClasses[className] || (!support.nodeClass && isNode(value))) {
-        return value;
-      }
-      var ctor = ctorByClass[className];
-      switch (className) {
-        case boolClass:
-        case dateClass:
-          return new ctor(+value);
-
-        case numberClass:
-        case stringClass:
-          return new ctor(value);
-
-        case regexpClass:
-          result = ctor(value.source, reFlags.exec(value));
-          result.lastIndex = value.lastIndex;
-          return result;
-      }
-    } else {
+    if (result !== undefined) {
+      return result;
+    }
+    if (!isObject(value)) {
       return value;
     }
     var isArr = isArray(value);
-    if (isDeep) {
-      // check for circular references and return corresponding clone
-      var initedStack = !stackA;
-      stackA || (stackA = getArray());
-      stackB || (stackB = getArray());
-
-      var length = stackA.length;
-      while (length--) {
-        if (stackA[length] == value) {
-          return stackB[length];
-        }
-      }
-      result = isArr ? ctor(value.length) : {};
-    }
-    else {
-      result = isArr ? slice(value) : assign({}, value);
-    }
-    // add array properties assigned by `RegExp#exec`
     if (isArr) {
-      if (hasOwnProperty.call(value, 'index')) {
-        result.index = value.index;
+      result = initCloneArray(value);
+      if (!isDeep) {
+        return copyArray(value, result);
       }
-      if (hasOwnProperty.call(value, 'input')) {
-        result.input = value.input;
-      }
-    }
-    // exit for shallow clone
-    if (!isDeep) {
-      return result;
-    }
-    // add the source value to the stack of traversed objects
-    // and associate it with its clone
-    stackA.push(value);
-    stackB.push(result);
+    } else {
+      var tag = getTag(value),
+          isFunc = tag == funcTag || tag == genTag;
 
-    // recursively populate clone (susceptible to call stack limits)
-    (isArr ? baseEach : forOwn)(value, function(objValue, key) {
-      result[key] = baseClone(objValue, isDeep, callback, stackA, stackB);
+      if (isBuffer(value)) {
+        return cloneBuffer(value, isDeep);
+      }
+      if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
+        if (isHostObject(value)) {
+          return object ? value : {};
+        }
+        result = initCloneObject(isFunc ? {} : value);
+        if (!isDeep) {
+          return copySymbols(value, baseAssign(result, value));
+        }
+      } else {
+        if (!cloneableTags[tag]) {
+          return object ? value : {};
+        }
+        result = initCloneByTag(value, tag, baseClone, isDeep);
+      }
+    }
+    // Check for circular references and return its corresponding clone.
+    stack || (stack = new Stack);
+    var stacked = stack.get(value);
+    if (stacked) {
+      return stacked;
+    }
+    stack.set(value, result);
+
+    if (!isArr) {
+      var props = isFull ? getAllKeys(value) : keys(value);
+    }
+    arrayEach(props || value, function(subValue, key) {
+      if (props) {
+        key = subValue;
+        subValue = value[key];
+      }
+      // Recursively populate clone (susceptible to call stack limits).
+      assignValue(result, key, baseClone(subValue, isDeep, isFull, customizer, key, value, stack));
     });
-
-    if (initedStack) {
-      releaseArray(stackA);
-      releaseArray(stackB);
-    }
     return result;
   }
 
@@ -61905,963 +66387,1489 @@ module.exports = osmtogeojson;
    * @param {Object} prototype The object to inherit from.
    * @returns {Object} Returns the new object.
    */
-  function baseCreate(prototype, properties) {
-    return isObject(prototype) ? nativeCreate(prototype) : {};
-  }
-  // fallback for browsers without `Object.create`
-  if (!nativeCreate) {
-    baseCreate = (function() {
-      function Object() {}
-      return function(prototype) {
-        if (isObject(prototype)) {
-          Object.prototype = prototype;
-          var result = new Object;
-          Object.prototype = null;
-        }
-        return result || root.Object();
-      };
-    }());
+  function baseCreate(proto) {
+    return isObject(proto) ? objectCreate(proto) : {};
   }
 
   /**
-   * The base implementation of `_.createCallback` without support for creating
-   * "_.pluck" or "_.where" style callbacks.
+   * The base implementation of `_.forEach` without support for iteratee shorthands.
    *
    * @private
-   * @param {*} [func=identity] The value to convert to a callback.
-   * @param {*} [thisArg] The `this` binding of the created callback.
-   * @param {number} [argCount] The number of arguments the callback accepts.
-   * @returns {Function} Returns a callback function.
+   * @param {Array|Object} collection The collection to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @returns {Array|Object} Returns `collection`.
    */
-  function baseCreateCallback(func, thisArg, argCount) {
-    if (typeof func != 'function') {
-      return identity;
-    }
-    // exit early for no `thisArg` or already bound by `Function#bind`
-    if (typeof thisArg == 'undefined' || !('prototype' in func)) {
-      return func;
-    }
-    var bindData = func.__bindData__;
-    if (typeof bindData == 'undefined') {
-      if (support.funcNames) {
-        bindData = !func.name;
-      }
-      bindData = bindData || !support.funcDecomp;
-      if (!bindData) {
-        var source = fnToString.call(func);
-        if (!support.funcNames) {
-          bindData = !reFuncName.test(source);
-        }
-        if (!bindData) {
-          // checks if `func` references the `this` keyword and stores the result
-          bindData = reThis.test(source);
-          setBindData(func, bindData);
-        }
-      }
-    }
-    // exit early if there are no `this` references or `func` is bound
-    if (bindData === false || (bindData !== true && bindData[1] & 1)) {
-      return func;
-    }
-    switch (argCount) {
-      case 1: return function(value) {
-        return func.call(thisArg, value);
-      };
-      case 2: return function(a, b) {
-        return func.call(thisArg, a, b);
-      };
-      case 3: return function(value, index, collection) {
-        return func.call(thisArg, value, index, collection);
-      };
-      case 4: return function(accumulator, value, index, collection) {
-        return func.call(thisArg, accumulator, value, index, collection);
-      };
-    }
-    return bind(func, thisArg);
-  }
+  var baseEach = createBaseEach(baseForOwn);
 
   /**
-   * The base implementation of `createWrapper` that creates the wrapper and
-   * sets its meta data.
+   * The base implementation of `baseForOwn` which iterates over `object`
+   * properties returned by `keysFunc` and invokes `iteratee` for each property.
+   * Iteratee functions may exit iteration early by explicitly returning `false`.
    *
    * @private
-   * @param {Array} bindData The bind data array.
-   * @returns {Function} Returns the new function.
+   * @param {Object} object The object to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @param {Function} keysFunc The function to get the keys of `object`.
+   * @returns {Object} Returns `object`.
    */
-  function baseCreateWrapper(bindData) {
-    var func = bindData[0],
-        bitmask = bindData[1],
-        partialArgs = bindData[2],
-        partialRightArgs = bindData[3],
-        thisArg = bindData[4],
-        arity = bindData[5];
-
-    var isBind = bitmask & 1,
-        isBindKey = bitmask & 2,
-        isCurry = bitmask & 4,
-        isCurryBound = bitmask & 8,
-        key = func;
-
-    function bound() {
-      var thisBinding = isBind ? thisArg : this;
-      if (partialArgs) {
-        var args = slice(partialArgs);
-        push.apply(args, arguments);
-      }
-      if (partialRightArgs || isCurry) {
-        args || (args = slice(arguments));
-        if (partialRightArgs) {
-          push.apply(args, partialRightArgs);
-        }
-        if (isCurry && args.length < arity) {
-          bitmask |= 16 & ~32;
-          return baseCreateWrapper([func, (isCurryBound ? bitmask : bitmask & ~3), args, null, thisArg, arity]);
-        }
-      }
-      args || (args = arguments);
-      if (isBindKey) {
-        func = thisBinding[key];
-      }
-      if (this instanceof bound) {
-        thisBinding = baseCreate(func.prototype);
-        var result = func.apply(thisBinding, args);
-        return isObject(result) ? result : thisBinding;
-      }
-      return func.apply(thisBinding, args);
-    }
-    setBindData(bound, bindData);
-    return bound;
-  }
+  var baseFor = createBaseFor();
 
   /**
-   * The base implementation of `_.merge` without argument juggling or support
-   * for `thisArg` binding.
+   * The base implementation of `_.forOwn` without support for iteratee shorthands.
    *
    * @private
-   * @param {Object} object The destination object.
-   * @param {Object} source The source object.
-   * @param {Function} [callback] The function to customize merging properties.
-   * @param {Array} [stackA=[]] Tracks traversed source objects.
-   * @param {Array} [stackB=[]] Associates values with source counterparts.
+   * @param {Object} object The object to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @returns {Object} Returns `object`.
    */
-  function baseMerge(object, source, callback, stackA, stackB) {
-    (isArray(source) ? forEach : forOwn)(source, function(source, key) {
-      var found,
-          isArr,
-          result = source,
-          value = object[key];
-
-      if (source && ((isArr = isArray(source)) || isPlainObject(source))) {
-        // avoid merging previously merged cyclic sources
-        var stackLength = stackA.length;
-        while (stackLength--) {
-          if ((found = stackA[stackLength] == source)) {
-            value = stackB[stackLength];
-            break;
-          }
-        }
-        if (!found) {
-          var isShallow;
-          if (callback) {
-            result = callback(value, source);
-            if ((isShallow = typeof result != 'undefined')) {
-              value = result;
-            }
-          }
-          if (!isShallow) {
-            value = isArr
-              ? (isArray(value) ? value : [])
-              : (isPlainObject(value) ? value : {});
-          }
-          // add `source` and associated `value` to the stack of traversed objects
-          stackA.push(source);
-          stackB.push(value);
-
-          // recursively merge objects and arrays (susceptible to call stack limits)
-          if (!isShallow) {
-            baseMerge(value, source, callback, stackA, stackB);
-          }
-        }
-      }
-      else {
-        if (callback) {
-          result = callback(value, source);
-          if (typeof result == 'undefined') {
-            result = source;
-          }
-        }
-        if (typeof result != 'undefined') {
-          value = result;
-        }
-      }
-      object[key] = value;
-    });
+  function baseForOwn(object, iteratee) {
+    return object && baseFor(object, iteratee, keys);
   }
 
   /**
-   * Creates a function that, when called, either curries or invokes `func`
-   * with an optional `this` binding and partially applied arguments.
+   * The base implementation of `_.get` without support for default values.
    *
    * @private
-   * @param {Function|string} func The function or method name to reference.
-   * @param {number} bitmask The bitmask of method flags to compose.
+   * @param {Object} object The object to query.
+   * @param {Array|string} path The path of the property to get.
+   * @returns {*} Returns the resolved value.
+   */
+  function baseGet(object, path) {
+    path = isKey(path, object) ? [path] : castPath(path);
+
+    var index = 0,
+        length = path.length;
+
+    while (object != null && index < length) {
+      object = object[toKey(path[index++])];
+    }
+    return (index && index == length) ? object : undefined;
+  }
+
+  /**
+   * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
+   * `keysFunc` and `symbolsFunc` to get the enumerable property names and
+   * symbols of `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @param {Function} keysFunc The function to get the keys of `object`.
+   * @param {Function} symbolsFunc The function to get the symbols of `object`.
+   * @returns {Array} Returns the array of property names and symbols.
+   */
+  function baseGetAllKeys(object, keysFunc, symbolsFunc) {
+    var result = keysFunc(object);
+    return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
+  }
+
+  /**
+   * The base implementation of `getTag`.
+   *
+   * @private
+   * @param {*} value The value to query.
+   * @returns {string} Returns the `toStringTag`.
+   */
+  function baseGetTag(value) {
+    return objectToString.call(value);
+  }
+
+  /**
+   * The base implementation of `_.hasIn` without support for deep paths.
+   *
+   * @private
+   * @param {Object} [object] The object to query.
+   * @param {Array|string} key The key to check.
+   * @returns {boolean} Returns `true` if `key` exists, else `false`.
+   */
+  function baseHasIn(object, key) {
+    return object != null && key in Object(object);
+  }
+
+  /**
+   * The base implementation of `_.isEqual` which supports partial comparisons
+   * and tracks traversed objects.
+   *
+   * @private
+   * @param {*} value The value to compare.
+   * @param {*} other The other value to compare.
+   * @param {Function} [customizer] The function to customize comparisons.
+   * @param {boolean} [bitmask] The bitmask of comparison flags.
    *  The bitmask may be composed of the following flags:
-   *  1 - `_.bind`
-   *  2 - `_.bindKey`
-   *  4 - `_.curry`
-   *  8 - `_.curry` (bound)
-   *  16 - `_.partial`
-   *  32 - `_.partialRight`
-   * @param {Array} [partialArgs] An array of arguments to prepend to those
-   *  provided to the new function.
-   * @param {Array} [partialRightArgs] An array of arguments to append to those
-   *  provided to the new function.
-   * @param {*} [thisArg] The `this` binding of `func`.
-   * @param {number} [arity] The arity of `func`.
-   * @returns {Function} Returns the new function.
+   *     1 - Unordered comparison
+   *     2 - Partial comparison
+   * @param {Object} [stack] Tracks traversed `value` and `other` objects.
+   * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
    */
-  function createWrapper(func, bitmask, partialArgs, partialRightArgs, thisArg, arity) {
-    var isBind = bitmask & 1,
-        isBindKey = bitmask & 2,
-        isCurry = bitmask & 4,
-        isCurryBound = bitmask & 8,
-        isPartial = bitmask & 16,
-        isPartialRight = bitmask & 32;
-
-    if (!isBindKey && !isFunction(func)) {
-      throw new TypeError;
+  function baseIsEqual(value, other, customizer, bitmask, stack) {
+    if (value === other) {
+      return true;
     }
-    if (isPartial && !partialArgs.length) {
-      bitmask &= ~16;
-      isPartial = partialArgs = false;
+    if (value == null || other == null || (!isObject(value) && !isObjectLike(other))) {
+      return value !== value && other !== other;
     }
-    if (isPartialRight && !partialRightArgs.length) {
-      bitmask &= ~32;
-      isPartialRight = partialRightArgs = false;
-    }
-    var bindData = func && func.__bindData__;
-    if (bindData && bindData !== true) {
-      // clone `bindData`
-      bindData = slice(bindData);
-      if (bindData[2]) {
-        bindData[2] = slice(bindData[2]);
-      }
-      if (bindData[3]) {
-        bindData[3] = slice(bindData[3]);
-      }
-      // set `thisBinding` is not previously bound
-      if (isBind && !(bindData[1] & 1)) {
-        bindData[4] = thisArg;
-      }
-      // set if previously bound but not currently (subsequent curried functions)
-      if (!isBind && bindData[1] & 1) {
-        bitmask |= 8;
-      }
-      // set curried arity if not yet set
-      if (isCurry && !(bindData[1] & 4)) {
-        bindData[5] = arity;
-      }
-      // append partial left arguments
-      if (isPartial) {
-        push.apply(bindData[2] || (bindData[2] = []), partialArgs);
-      }
-      // append partial right arguments
-      if (isPartialRight) {
-        unshift.apply(bindData[3] || (bindData[3] = []), partialRightArgs);
-      }
-      // merge flags
-      bindData[1] |= bitmask;
-      return createWrapper.apply(null, bindData);
-    }
-    // fast path for `_.bind`
-    var creater = (bitmask == 1 || bitmask === 17) ? baseBind : baseCreateWrapper;
-    return creater([func, bitmask, partialArgs, partialRightArgs, thisArg, arity]);
+    return baseIsEqualDeep(value, other, baseIsEqual, customizer, bitmask, stack);
   }
 
   /**
-   * Creates compiled iteration functions.
+   * A specialized version of `baseIsEqual` for arrays and objects which performs
+   * deep comparisons and tracks traversed objects enabling objects with circular
+   * references to be compared.
    *
    * @private
-   * @param {...Object} [options] The compile options object(s).
-   * @param {string} [options.array] Code to determine if the iterable is an array or array-like.
-   * @param {boolean} [options.useHas] Specify using `hasOwnProperty` checks in the object loop.
-   * @param {Function} [options.keys] A reference to `_.keys` for use in own property iteration.
-   * @param {string} [options.args] A comma separated string of iteration function arguments.
-   * @param {string} [options.top] Code to execute before the iteration branches.
-   * @param {string} [options.loop] Code to execute in the object loop.
-   * @param {string} [options.bottom] Code to execute after the iteration branches.
-   * @returns {Function} Returns the compiled function.
+   * @param {Object} object The object to compare.
+   * @param {Object} other The other object to compare.
+   * @param {Function} equalFunc The function to determine equivalents of values.
+   * @param {Function} [customizer] The function to customize comparisons.
+   * @param {number} [bitmask] The bitmask of comparison flags. See `baseIsEqual`
+   *  for more details.
+   * @param {Object} [stack] Tracks traversed `object` and `other` objects.
+   * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
    */
-  function createIterator() {
-    // data properties
-    iteratorData.shadowedProps = shadowedProps;
+  function baseIsEqualDeep(object, other, equalFunc, customizer, bitmask, stack) {
+    var objIsArr = isArray(object),
+        othIsArr = isArray(other),
+        objTag = arrayTag,
+        othTag = arrayTag;
 
-    // iterator options
-    iteratorData.array = iteratorData.bottom = iteratorData.loop = iteratorData.top = '';
-    iteratorData.init = 'iterable';
-    iteratorData.useHas = true;
+    if (!objIsArr) {
+      objTag = getTag(object);
+      objTag = objTag == argsTag ? objectTag : objTag;
+    }
+    if (!othIsArr) {
+      othTag = getTag(other);
+      othTag = othTag == argsTag ? objectTag : othTag;
+    }
+    var objIsObj = objTag == objectTag && !isHostObject(object),
+        othIsObj = othTag == objectTag && !isHostObject(other),
+        isSameTag = objTag == othTag;
 
-    // merge options into a template data object
-    for (var object, index = 0; object = arguments[index]; index++) {
-      for (var key in object) {
-        iteratorData[key] = object[key];
+    if (isSameTag && !objIsObj) {
+      stack || (stack = new Stack);
+      return (objIsArr || isTypedArray(object))
+        ? equalArrays(object, other, equalFunc, customizer, bitmask, stack)
+        : equalByTag(object, other, objTag, equalFunc, customizer, bitmask, stack);
+    }
+    if (!(bitmask & PARTIAL_COMPARE_FLAG)) {
+      var objIsWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__'),
+          othIsWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__');
+
+      if (objIsWrapped || othIsWrapped) {
+        var objUnwrapped = objIsWrapped ? object.value() : object,
+            othUnwrapped = othIsWrapped ? other.value() : other;
+
+        stack || (stack = new Stack);
+        return equalFunc(objUnwrapped, othUnwrapped, customizer, bitmask, stack);
       }
     }
-    var args = iteratorData.args;
-    iteratorData.firstArg = /^[^,]+/.exec(args)[0];
-
-    // create the function factory
-    var factory = Function(
-        'baseCreateCallback, errorClass, errorProto, hasOwnProperty, ' +
-        'indicatorObject, isArguments, isArray, isString, keys, objectProto, ' +
-        'objectTypes, nonEnumProps, stringClass, stringProto, toString',
-      'return function(' + args + ') {\n' + iteratorTemplate(iteratorData) + '\n}'
-    );
-
-    // return the compiled function
-    return factory(
-      baseCreateCallback, errorClass, errorProto, hasOwnProperty,
-      indicatorObject, isArguments, isArray, isString, iteratorData.keys, objectProto,
-      objectTypes, nonEnumProps, stringClass, stringProto, toString
-    );
-  }
-
-  /**
-   * Checks if `value` is a native function.
-   *
-   * @private
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a native function, else `false`.
-   */
-  function isNative(value) {
-    return typeof value == 'function' && reNative.test(value);
-  }
-
-  /**
-   * Sets `this` binding data on a given function.
-   *
-   * @private
-   * @param {Function} func The function to set data on.
-   * @param {Array} value The data array to set.
-   */
-  var setBindData = !defineProperty ? noop : function(func, value) {
-    descriptor.value = value;
-    defineProperty(func, '__bindData__', descriptor);
-  };
-
-  /**
-   * A fallback implementation of `isPlainObject` which checks if a given value
-   * is an object created by the `Object` constructor, assuming objects created
-   * by the `Object` constructor have no inherited enumerable properties and that
-   * there are no `Object.prototype` extensions.
-   *
-   * @private
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
-   */
-  function shimIsPlainObject(value) {
-    var ctor,
-        result;
-
-    // avoid non Object objects, `arguments` objects, and DOM elements
-    if (!(value && toString.call(value) == objectClass) ||
-        (ctor = value.constructor, isFunction(ctor) && !(ctor instanceof ctor)) ||
-        (!support.argsClass && isArguments(value)) ||
-        (!support.nodeClass && isNode(value))) {
+    if (!isSameTag) {
       return false;
     }
-    // IE < 9 iterates inherited properties before own properties. If the first
-    // iterated property is an object's own property then there are no inherited
-    // enumerable properties.
-    if (support.ownLast) {
-      forIn(value, function(value, key, object) {
-        result = hasOwnProperty.call(object, key);
-        return false;
-      });
-      return result !== false;
-    }
-    // In most environments an object's own properties are iterated before
-    // its inherited properties. If the last iterated property is an object's
-    // own property then there are no inherited enumerable properties.
-    forIn(value, function(value, key) {
-      result = key;
-    });
-    return typeof result == 'undefined' || hasOwnProperty.call(value, result);
-  }
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Checks if `value` is an `arguments` object.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is an `arguments` object, else `false`.
-   * @example
-   *
-   * (function() { return _.isArguments(arguments); })(1, 2, 3);
-   * // => true
-   *
-   * _.isArguments([1, 2, 3]);
-   * // => false
-   */
-  function isArguments(value) {
-    return value && typeof value == 'object' && typeof value.length == 'number' &&
-      toString.call(value) == argsClass || false;
-  }
-  // fallback for browsers that can't detect `arguments` objects by [[Class]]
-  if (!support.argsClass) {
-    isArguments = function(value) {
-      return value && typeof value == 'object' && typeof value.length == 'number' &&
-        hasOwnProperty.call(value, 'callee') && !propertyIsEnumerable.call(value, 'callee') || false;
-    };
+    stack || (stack = new Stack);
+    return equalObjects(object, other, equalFunc, customizer, bitmask, stack);
   }
 
   /**
-   * Checks if `value` is an array.
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is an array, else `false`.
-   * @example
-   *
-   * (function() { return _.isArray(arguments); })();
-   * // => false
-   *
-   * _.isArray([1, 2, 3]);
-   * // => true
-   */
-  var isArray = nativeIsArray || function(value) {
-    return value && typeof value == 'object' && typeof value.length == 'number' &&
-      toString.call(value) == arrayClass || false;
-  };
-
-  /**
-   * A fallback implementation of `Object.keys` which produces an array of the
-   * given object's own enumerable property names.
+   * The base implementation of `_.isMatch` without support for iteratee shorthands.
    *
    * @private
-   * @type Function
    * @param {Object} object The object to inspect.
-   * @returns {Array} Returns an array of property names.
+   * @param {Object} source The object of property values to match.
+   * @param {Array} matchData The property names, values, and compare flags to match.
+   * @param {Function} [customizer] The function to customize comparisons.
+   * @returns {boolean} Returns `true` if `object` is a match, else `false`.
    */
-  var shimKeys = createIterator({
-    'args': 'object',
-    'init': '[]',
-    'top': 'if (!(objectTypes[typeof object])) return result',
-    'loop': 'result.push(index)'
-  });
+  function baseIsMatch(object, source, matchData, customizer) {
+    var index = matchData.length,
+        length = index,
+        noCustomizer = !customizer;
 
-  /**
-   * Creates an array composed of the own enumerable property names of an object.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {Object} object The object to inspect.
-   * @returns {Array} Returns an array of property names.
-   * @example
-   *
-   * _.keys({ 'one': 1, 'two': 2, 'three': 3 });
-   * // => ['one', 'two', 'three'] (property order is not guaranteed across environments)
-   */
-  var keys = !nativeKeys ? shimKeys : function(object) {
-    if (!isObject(object)) {
-      return [];
-    }
-    if ((support.enumPrototypes && typeof object == 'function') ||
-        (support.nonEnumArgs && object.length && isArguments(object))) {
-      return shimKeys(object);
-    }
-    return nativeKeys(object);
-  };
-
-  /** Reusable iterator options shared by `each`, `forIn`, and `forOwn` */
-  var eachIteratorOptions = {
-    'args': 'collection, callback, thisArg',
-    'top': "callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3)",
-    'array': "typeof length == 'number'",
-    'keys': keys,
-    'loop': 'if (callback(iterable[index], index, collection) === false) return result'
-  };
-
-  /** Reusable iterator options for `assign` and `defaults` */
-  var defaultsIteratorOptions = {
-    'args': 'object, source, guard',
-    'top':
-      'var args = arguments,\n' +
-      '    argsIndex = 0,\n' +
-      "    argsLength = typeof guard == 'number' ? 2 : args.length;\n" +
-      'while (++argsIndex < argsLength) {\n' +
-      '  iterable = args[argsIndex];\n' +
-      '  if (iterable && objectTypes[typeof iterable]) {',
-    'keys': keys,
-    'loop': "if (typeof result[index] == 'undefined') result[index] = iterable[index]",
-    'bottom': '  }\n}'
-  };
-
-  /** Reusable iterator options for `forIn` and `forOwn` */
-  var forOwnIteratorOptions = {
-    'top': 'if (!objectTypes[typeof iterable]) return result;\n' + eachIteratorOptions.top,
-    'array': false
-  };
-
-  /**
-   * A function compiled to iterate `arguments` objects, arrays, objects, and
-   * strings consistenly across environments, executing the callback for each
-   * element in the collection. The callback is bound to `thisArg` and invoked
-   * with three arguments; (value, index|key, collection). Callbacks may exit
-   * iteration early by explicitly returning `false`.
-   *
-   * @private
-   * @type Function
-   * @param {Array|Object|string} collection The collection to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Array|Object|string} Returns `collection`.
-   */
-  var baseEach = createIterator(eachIteratorOptions);
-
-  /*--------------------------------------------------------------------------*/
-
-  /**
-   * Assigns own enumerable properties of source object(s) to the destination
-   * object. Subsequent sources will overwrite property assignments of previous
-   * sources. If a callback is provided it will be executed to produce the
-   * assigned values. The callback is bound to `thisArg` and invoked with two
-   * arguments; (objectValue, sourceValue).
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @alias extend
-   * @category Objects
-   * @param {Object} object The destination object.
-   * @param {...Object} [source] The source objects.
-   * @param {Function} [callback] The function to customize assigning values.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns the destination object.
-   * @example
-   *
-   * _.assign({ 'name': 'fred' }, { 'employer': 'slate' });
-   * // => { 'name': 'fred', 'employer': 'slate' }
-   *
-   * var defaults = _.partialRight(_.assign, function(a, b) {
-   *   return typeof a == 'undefined' ? b : a;
-   * });
-   *
-   * var object = { 'name': 'barney' };
-   * defaults(object, { 'name': 'fred', 'employer': 'slate' });
-   * // => { 'name': 'barney', 'employer': 'slate' }
-   */
-  var assign = createIterator(defaultsIteratorOptions, {
-    'top':
-      defaultsIteratorOptions.top.replace(';',
-        ';\n' +
-        "if (argsLength > 3 && typeof args[argsLength - 2] == 'function') {\n" +
-        '  var callback = baseCreateCallback(args[--argsLength - 1], args[argsLength--], 2);\n' +
-        "} else if (argsLength > 2 && typeof args[argsLength - 1] == 'function') {\n" +
-        '  callback = args[--argsLength];\n' +
-        '}'
-      ),
-    'loop': 'result[index] = callback ? callback(result[index], iterable[index]) : iterable[index]'
-  });
-
-  /**
-   * Creates a clone of `value`. If `isDeep` is `true` nested objects will also
-   * be cloned, otherwise they will be assigned by reference. If a callback
-   * is provided it will be executed to produce the cloned values. If the
-   * callback returns `undefined` cloning will be handled by the method instead.
-   * The callback is bound to `thisArg` and invoked with one argument; (value).
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to clone.
-   * @param {boolean} [isDeep=false] Specify a deep clone.
-   * @param {Function} [callback] The function to customize cloning values.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {*} Returns the cloned value.
-   * @example
-   *
-   * var characters = [
-   *   { 'name': 'barney', 'age': 36 },
-   *   { 'name': 'fred',   'age': 40 }
-   * ];
-   *
-   * var shallow = _.clone(characters);
-   * shallow[0] === characters[0];
-   * // => true
-   *
-   * var deep = _.clone(characters, true);
-   * deep[0] === characters[0];
-   * // => false
-   *
-   * _.mixin({
-   *   'clone': _.partialRight(_.clone, function(value) {
-   *     return _.isElement(value) ? value.cloneNode(false) : undefined;
-   *   })
-   * });
-   *
-   * var clone = _.clone(document.body);
-   * clone.childNodes.length;
-   * // => 0
-   */
-  function clone(value, isDeep, callback, thisArg) {
-    // allows working with "Collections" methods without using their `index`
-    // and `collection` arguments for `isDeep` and `callback`
-    if (typeof isDeep != 'boolean' && isDeep != null) {
-      thisArg = callback;
-      callback = isDeep;
-      isDeep = false;
-    }
-    return baseClone(value, isDeep, typeof callback == 'function' && baseCreateCallback(callback, thisArg, 1));
-  }
-
-  /**
-   * Iterates over own and inherited enumerable properties of an object,
-   * executing the callback for each property. The callback is bound to `thisArg`
-   * and invoked with three arguments; (value, key, object). Callbacks may exit
-   * iteration early by explicitly returning `false`.
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @category Objects
-   * @param {Object} object The object to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns `object`.
-   * @example
-   *
-   * function Shape() {
-   *   this.x = 0;
-   *   this.y = 0;
-   * }
-   *
-   * Shape.prototype.move = function(x, y) {
-   *   this.x += x;
-   *   this.y += y;
-   * };
-   *
-   * _.forIn(new Shape, function(value, key) {
-   *   console.log(key);
-   * });
-   * // => logs 'x', 'y', and 'move' (property order is not guaranteed across environments)
-   */
-  var forIn = createIterator(eachIteratorOptions, forOwnIteratorOptions, {
-    'useHas': false
-  });
-
-  /**
-   * Iterates over own enumerable properties of an object, executing the callback
-   * for each property. The callback is bound to `thisArg` and invoked with three
-   * arguments; (value, key, object). Callbacks may exit iteration early by
-   * explicitly returning `false`.
-   *
-   * @static
-   * @memberOf _
-   * @type Function
-   * @category Objects
-   * @param {Object} object The object to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns `object`.
-   * @example
-   *
-   * _.forOwn({ '0': 'zero', '1': 'one', 'length': 2 }, function(num, key) {
-   *   console.log(key);
-   * });
-   * // => logs '0', '1', and 'length' (property order is not guaranteed across environments)
-   */
-  var forOwn = createIterator(eachIteratorOptions, forOwnIteratorOptions);
-
-  /**
-   * Checks if `value` is empty. Arrays, strings, or `arguments` objects with a
-   * length of `0` and objects with no own enumerable properties are considered
-   * "empty".
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {Array|Object|string} value The value to inspect.
-   * @returns {boolean} Returns `true` if the `value` is empty, else `false`.
-   * @example
-   *
-   * _.isEmpty([1, 2, 3]);
-   * // => false
-   *
-   * _.isEmpty({});
-   * // => true
-   *
-   * _.isEmpty('');
-   * // => true
-   */
-  function isEmpty(value) {
-    var result = true;
-    if (!value) {
-      return result;
-    }
-    var className = toString.call(value),
-        length = value.length;
-
-    if ((className == arrayClass || className == stringClass ||
-        (support.argsClass ? className == argsClass : isArguments(value))) ||
-        (className == objectClass && typeof length == 'number' && isFunction(value.splice))) {
+    if (object == null) {
       return !length;
     }
-    forOwn(value, function() {
-      return (result = false);
-    });
+    object = Object(object);
+    while (index--) {
+      var data = matchData[index];
+      if ((noCustomizer && data[2])
+            ? data[1] !== object[data[0]]
+            : !(data[0] in object)
+          ) {
+        return false;
+      }
+    }
+    while (++index < length) {
+      data = matchData[index];
+      var key = data[0],
+          objValue = object[key],
+          srcValue = data[1];
+
+      if (noCustomizer && data[2]) {
+        if (objValue === undefined && !(key in object)) {
+          return false;
+        }
+      } else {
+        var stack = new Stack;
+        if (customizer) {
+          var result = customizer(objValue, srcValue, key, object, source, stack);
+        }
+        if (!(result === undefined
+              ? baseIsEqual(srcValue, objValue, customizer, UNORDERED_COMPARE_FLAG | PARTIAL_COMPARE_FLAG, stack)
+              : result
+            )) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * The base implementation of `_.isNative` without bad shim checks.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a native function,
+   *  else `false`.
+   */
+  function baseIsNative(value) {
+    if (!isObject(value) || isMasked(value)) {
+      return false;
+    }
+    var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+    return pattern.test(toSource(value));
+  }
+
+  /**
+   * The base implementation of `_.isTypedArray` without Node.js optimizations.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+   */
+  function baseIsTypedArray(value) {
+    return isObjectLike(value) &&
+      isLength(value.length) && !!typedArrayTags[objectToString.call(value)];
+  }
+
+  /**
+   * The base implementation of `_.iteratee`.
+   *
+   * @private
+   * @param {*} [value=_.identity] The value to convert to an iteratee.
+   * @returns {Function} Returns the iteratee.
+   */
+  function baseIteratee(value) {
+    // Don't store the `typeof` result in a variable to avoid a JIT bug in Safari 9.
+    // See https://bugs.webkit.org/show_bug.cgi?id=156034 for more details.
+    if (typeof value == 'function') {
+      return value;
+    }
+    if (value == null) {
+      return identity;
+    }
+    if (typeof value == 'object') {
+      return isArray(value)
+        ? baseMatchesProperty(value[0], value[1])
+        : baseMatches(value);
+    }
+    return property(value);
+  }
+
+  /**
+   * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names.
+   */
+  function baseKeys(object) {
+    if (!isPrototype(object)) {
+      return nativeKeys(object);
+    }
+    var result = [];
+    for (var key in Object(object)) {
+      if (hasOwnProperty.call(object, key) && key != 'constructor') {
+        result.push(key);
+      }
+    }
     return result;
   }
 
   /**
-   * Checks if `value` is a function.
+   * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
    *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a function, else `false`.
-   * @example
-   *
-   * _.isFunction(_);
-   * // => true
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names.
    */
-  function isFunction(value) {
-    return typeof value == 'function';
+  function baseKeysIn(object) {
+    if (!isObject(object)) {
+      return nativeKeysIn(object);
+    }
+    var isProto = isPrototype(object),
+        result = [];
+
+    for (var key in object) {
+      if (!(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {
+        result.push(key);
+      }
+    }
+    return result;
   }
-  // fallback for older versions of Chrome and Safari
-  if (isFunction(/x/)) {
-    isFunction = function(value) {
-      return typeof value == 'function' && toString.call(value) == funcClass;
+
+  /**
+   * The base implementation of `_.matches` which doesn't clone `source`.
+   *
+   * @private
+   * @param {Object} source The object of property values to match.
+   * @returns {Function} Returns the new spec function.
+   */
+  function baseMatches(source) {
+    var matchData = getMatchData(source);
+    if (matchData.length == 1 && matchData[0][2]) {
+      return matchesStrictComparable(matchData[0][0], matchData[0][1]);
+    }
+    return function(object) {
+      return object === source || baseIsMatch(object, source, matchData);
     };
   }
 
   /**
-   * Checks if `value` is the language type of Object.
-   * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+   * The base implementation of `_.matchesProperty` which doesn't clone `srcValue`.
    *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is an object, else `false`.
-   * @example
-   *
-   * _.isObject({});
-   * // => true
-   *
-   * _.isObject([1, 2, 3]);
-   * // => true
-   *
-   * _.isObject(1);
-   * // => false
+   * @private
+   * @param {string} path The path of the property to get.
+   * @param {*} srcValue The value to match.
+   * @returns {Function} Returns the new spec function.
    */
-  function isObject(value) {
-    // check if the value is the ECMAScript language type of Object
-    // http://es5.github.io/#x8
-    // and avoid a V8 bug
-    // http://code.google.com/p/v8/issues/detail?id=2291
-    return !!(value && objectTypes[typeof value]);
-  }
-
-  /**
-   * Checks if `value` is an object created by the `Object` constructor.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
-   * @example
-   *
-   * function Shape() {
-   *   this.x = 0;
-   *   this.y = 0;
-   * }
-   *
-   * _.isPlainObject(new Shape);
-   * // => false
-   *
-   * _.isPlainObject([1, 2, 3]);
-   * // => false
-   *
-   * _.isPlainObject({ 'x': 0, 'y': 0 });
-   * // => true
-   */
-  var isPlainObject = !getPrototypeOf ? shimIsPlainObject : function(value) {
-    if (!(value && toString.call(value) == objectClass) || (!support.argsClass && isArguments(value))) {
-      return false;
+  function baseMatchesProperty(path, srcValue) {
+    if (isKey(path) && isStrictComparable(srcValue)) {
+      return matchesStrictComparable(toKey(path), srcValue);
     }
-    var valueOf = value.valueOf,
-        objProto = isNative(valueOf) && (objProto = getPrototypeOf(valueOf)) && getPrototypeOf(objProto);
-
-    return objProto
-      ? (value == objProto || getPrototypeOf(value) == objProto)
-      : shimIsPlainObject(value);
-  };
-
-  /**
-   * Checks if `value` is a string.
-   *
-   * @static
-   * @memberOf _
-   * @category Objects
-   * @param {*} value The value to check.
-   * @returns {boolean} Returns `true` if the `value` is a string, else `false`.
-   * @example
-   *
-   * _.isString('fred');
-   * // => true
-   */
-  function isString(value) {
-    return typeof value == 'string' ||
-      value && typeof value == 'object' && toString.call(value) == stringClass || false;
+    return function(object) {
+      var objValue = get(object, path);
+      return (objValue === undefined && objValue === srcValue)
+        ? hasIn(object, path)
+        : baseIsEqual(srcValue, objValue, undefined, UNORDERED_COMPARE_FLAG | PARTIAL_COMPARE_FLAG);
+    };
   }
 
   /**
-   * Recursively merges own enumerable properties of the source object(s), that
-   * don't resolve to `undefined` into the destination object. Subsequent sources
-   * will overwrite property assignments of previous sources. If a callback is
-   * provided it will be executed to produce the merged values of the destination
-   * and source properties. If the callback returns `undefined` merging will
-   * be handled by the method instead. The callback is bound to `thisArg` and
-   * invoked with two arguments; (objectValue, sourceValue).
+   * The base implementation of `_.merge` without support for multiple sources.
    *
-   * @static
-   * @memberOf _
-   * @category Objects
+   * @private
    * @param {Object} object The destination object.
-   * @param {...Object} [source] The source objects.
-   * @param {Function} [callback] The function to customize merging properties.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Object} Returns the destination object.
-   * @example
-   *
-   * var names = {
-   *   'characters': [
-   *     { 'name': 'barney' },
-   *     { 'name': 'fred' }
-   *   ]
-   * };
-   *
-   * var ages = {
-   *   'characters': [
-   *     { 'age': 36 },
-   *     { 'age': 40 }
-   *   ]
-   * };
-   *
-   * _.merge(names, ages);
-   * // => { 'characters': [{ 'name': 'barney', 'age': 36 }, { 'name': 'fred', 'age': 40 }] }
-   *
-   * var food = {
-   *   'fruits': ['apple'],
-   *   'vegetables': ['beet']
-   * };
-   *
-   * var otherFood = {
-   *   'fruits': ['banana'],
-   *   'vegetables': ['carrot']
-   * };
-   *
-   * _.merge(food, otherFood, function(a, b) {
-   *   return _.isArray(a) ? a.concat(b) : undefined;
-   * });
-   * // => { 'fruits': ['apple', 'banana'], 'vegetables': ['beet', 'carrot] }
+   * @param {Object} source The source object.
+   * @param {number} srcIndex The index of `source`.
+   * @param {Function} [customizer] The function to customize merged values.
+   * @param {Object} [stack] Tracks traversed source values and their merged
+   *  counterparts.
    */
-  function merge(object) {
-    var args = arguments,
-        length = 2;
+  function baseMerge(object, source, srcIndex, customizer, stack) {
+    if (object === source) {
+      return;
+    }
+    if (!(isArray(source) || isTypedArray(source))) {
+      var props = baseKeysIn(source);
+    }
+    arrayEach(props || source, function(srcValue, key) {
+      if (props) {
+        key = srcValue;
+        srcValue = source[key];
+      }
+      if (isObject(srcValue)) {
+        stack || (stack = new Stack);
+        baseMergeDeep(object, source, key, srcIndex, baseMerge, customizer, stack);
+      }
+      else {
+        var newValue = customizer
+          ? customizer(object[key], srcValue, (key + ''), object, source, stack)
+          : undefined;
 
-    if (!isObject(object)) {
-      return object;
+        if (newValue === undefined) {
+          newValue = srcValue;
+        }
+        assignMergeValue(object, key, newValue);
+      }
+    });
+  }
+
+  /**
+   * A specialized version of `baseMerge` for arrays and objects which performs
+   * deep merges and tracks traversed objects enabling objects with circular
+   * references to be merged.
+   *
+   * @private
+   * @param {Object} object The destination object.
+   * @param {Object} source The source object.
+   * @param {string} key The key of the value to merge.
+   * @param {number} srcIndex The index of `source`.
+   * @param {Function} mergeFunc The function to merge values.
+   * @param {Function} [customizer] The function to customize assigned values.
+   * @param {Object} [stack] Tracks traversed source values and their merged
+   *  counterparts.
+   */
+  function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, stack) {
+    var objValue = object[key],
+        srcValue = source[key],
+        stacked = stack.get(srcValue);
+
+    if (stacked) {
+      assignMergeValue(object, key, stacked);
+      return;
     }
-    // allows working with `_.reduce` and `_.reduceRight` without using
-    // their `index` and `collection` arguments
-    if (typeof args[2] != 'number') {
-      length = args.length;
+    var newValue = customizer
+      ? customizer(objValue, srcValue, (key + ''), object, source, stack)
+      : undefined;
+
+    var isCommon = newValue === undefined;
+
+    if (isCommon) {
+      newValue = srcValue;
+      if (isArray(srcValue) || isTypedArray(srcValue)) {
+        if (isArray(objValue)) {
+          newValue = objValue;
+        }
+        else if (isArrayLikeObject(objValue)) {
+          newValue = copyArray(objValue);
+        }
+        else {
+          isCommon = false;
+          newValue = baseClone(srcValue, true);
+        }
+      }
+      else if (isPlainObject(srcValue) || isArguments(srcValue)) {
+        if (isArguments(objValue)) {
+          newValue = toPlainObject(objValue);
+        }
+        else if (!isObject(objValue) || (srcIndex && isFunction(objValue))) {
+          isCommon = false;
+          newValue = baseClone(srcValue, true);
+        }
+        else {
+          newValue = objValue;
+        }
+      }
+      else {
+        isCommon = false;
+      }
     }
-    if (length > 3 && typeof args[length - 2] == 'function') {
-      var callback = baseCreateCallback(args[--length - 1], args[length--], 2);
-    } else if (length > 2 && typeof args[length - 1] == 'function') {
-      callback = args[--length];
+    if (isCommon) {
+      // Recursively merge objects and arrays (susceptible to call stack limits).
+      stack.set(srcValue, newValue);
+      mergeFunc(newValue, srcValue, srcIndex, customizer, stack);
+      stack['delete'](srcValue);
     }
-    var sources = slice(arguments, 1, length),
-        index = -1,
-        stackA = getArray(),
-        stackB = getArray();
+    assignMergeValue(object, key, newValue);
+  }
+
+  /**
+   * A specialized version of `baseProperty` which supports deep paths.
+   *
+   * @private
+   * @param {Array|string} path The path of the property to get.
+   * @returns {Function} Returns the new accessor function.
+   */
+  function basePropertyDeep(path) {
+    return function(object) {
+      return baseGet(object, path);
+    };
+  }
+
+  /**
+   * The base implementation of `_.rest` which doesn't validate or coerce arguments.
+   *
+   * @private
+   * @param {Function} func The function to apply a rest parameter to.
+   * @param {number} [start=func.length-1] The start position of the rest parameter.
+   * @returns {Function} Returns the new function.
+   */
+  function baseRest(func, start) {
+    start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+    return function() {
+      var args = arguments,
+          index = -1,
+          length = nativeMax(args.length - start, 0),
+          array = Array(length);
+
+      while (++index < length) {
+        array[index] = args[start + index];
+      }
+      index = -1;
+      var otherArgs = Array(start + 1);
+      while (++index < start) {
+        otherArgs[index] = args[index];
+      }
+      otherArgs[start] = array;
+      return apply(func, this, otherArgs);
+    };
+  }
+
+  /**
+   * The base implementation of `_.toString` which doesn't convert nullish
+   * values to empty strings.
+   *
+   * @private
+   * @param {*} value The value to process.
+   * @returns {string} Returns the string.
+   */
+  function baseToString(value) {
+    // Exit early for strings to avoid a performance hit in some environments.
+    if (typeof value == 'string') {
+      return value;
+    }
+    if (isSymbol(value)) {
+      return symbolToString ? symbolToString.call(value) : '';
+    }
+    var result = (value + '');
+    return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+  }
+
+  /**
+   * Casts `value` to a path array if it's not one.
+   *
+   * @private
+   * @param {*} value The value to inspect.
+   * @returns {Array} Returns the cast property path array.
+   */
+  function castPath(value) {
+    return isArray(value) ? value : stringToPath(value);
+  }
+
+  /**
+   * Creates a clone of  `buffer`.
+   *
+   * @private
+   * @param {Buffer} buffer The buffer to clone.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Buffer} Returns the cloned buffer.
+   */
+  function cloneBuffer(buffer, isDeep) {
+    if (isDeep) {
+      return buffer.slice();
+    }
+    var result = new buffer.constructor(buffer.length);
+    buffer.copy(result);
+    return result;
+  }
+
+  /**
+   * Creates a clone of `arrayBuffer`.
+   *
+   * @private
+   * @param {ArrayBuffer} arrayBuffer The array buffer to clone.
+   * @returns {ArrayBuffer} Returns the cloned array buffer.
+   */
+  function cloneArrayBuffer(arrayBuffer) {
+    var result = new arrayBuffer.constructor(arrayBuffer.byteLength);
+    new Uint8Array(result).set(new Uint8Array(arrayBuffer));
+    return result;
+  }
+
+  /**
+   * Creates a clone of `dataView`.
+   *
+   * @private
+   * @param {Object} dataView The data view to clone.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Object} Returns the cloned data view.
+   */
+  function cloneDataView(dataView, isDeep) {
+    var buffer = isDeep ? cloneArrayBuffer(dataView.buffer) : dataView.buffer;
+    return new dataView.constructor(buffer, dataView.byteOffset, dataView.byteLength);
+  }
+
+  /**
+   * Creates a clone of `map`.
+   *
+   * @private
+   * @param {Object} map The map to clone.
+   * @param {Function} cloneFunc The function to clone values.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Object} Returns the cloned map.
+   */
+  function cloneMap(map, isDeep, cloneFunc) {
+    var array = isDeep ? cloneFunc(mapToArray(map), true) : mapToArray(map);
+    return arrayReduce(array, addMapEntry, new map.constructor);
+  }
+
+  /**
+   * Creates a clone of `regexp`.
+   *
+   * @private
+   * @param {Object} regexp The regexp to clone.
+   * @returns {Object} Returns the cloned regexp.
+   */
+  function cloneRegExp(regexp) {
+    var result = new regexp.constructor(regexp.source, reFlags.exec(regexp));
+    result.lastIndex = regexp.lastIndex;
+    return result;
+  }
+
+  /**
+   * Creates a clone of `set`.
+   *
+   * @private
+   * @param {Object} set The set to clone.
+   * @param {Function} cloneFunc The function to clone values.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Object} Returns the cloned set.
+   */
+  function cloneSet(set, isDeep, cloneFunc) {
+    var array = isDeep ? cloneFunc(setToArray(set), true) : setToArray(set);
+    return arrayReduce(array, addSetEntry, new set.constructor);
+  }
+
+  /**
+   * Creates a clone of the `symbol` object.
+   *
+   * @private
+   * @param {Object} symbol The symbol object to clone.
+   * @returns {Object} Returns the cloned symbol object.
+   */
+  function cloneSymbol(symbol) {
+    return symbolValueOf ? Object(symbolValueOf.call(symbol)) : {};
+  }
+
+  /**
+   * Creates a clone of `typedArray`.
+   *
+   * @private
+   * @param {Object} typedArray The typed array to clone.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Object} Returns the cloned typed array.
+   */
+  function cloneTypedArray(typedArray, isDeep) {
+    var buffer = isDeep ? cloneArrayBuffer(typedArray.buffer) : typedArray.buffer;
+    return new typedArray.constructor(buffer, typedArray.byteOffset, typedArray.length);
+  }
+
+  /**
+   * Copies the values of `source` to `array`.
+   *
+   * @private
+   * @param {Array} source The array to copy values from.
+   * @param {Array} [array=[]] The array to copy values to.
+   * @returns {Array} Returns `array`.
+   */
+  function copyArray(source, array) {
+    var index = -1,
+        length = source.length;
+
+    array || (array = Array(length));
+    while (++index < length) {
+      array[index] = source[index];
+    }
+    return array;
+  }
+
+  /**
+   * Copies properties of `source` to `object`.
+   *
+   * @private
+   * @param {Object} source The object to copy properties from.
+   * @param {Array} props The property identifiers to copy.
+   * @param {Object} [object={}] The object to copy properties to.
+   * @param {Function} [customizer] The function to customize copied values.
+   * @returns {Object} Returns `object`.
+   */
+  function copyObject(source, props, object, customizer) {
+    object || (object = {});
+
+    var index = -1,
+        length = props.length;
 
     while (++index < length) {
-      baseMerge(object, sources[index], callback, stackA, stackB);
+      var key = props[index];
+
+      var newValue = customizer
+        ? customizer(object[key], source[key], key, object, source)
+        : undefined;
+
+      assignValue(object, key, newValue === undefined ? source[key] : newValue);
     }
-    releaseArray(stackA);
-    releaseArray(stackB);
     return object;
   }
 
-  /*--------------------------------------------------------------------------*/
+  /**
+   * Copies own symbol properties of `source` to `object`.
+   *
+   * @private
+   * @param {Object} source The object to copy symbols from.
+   * @param {Object} [object={}] The object to copy symbols to.
+   * @returns {Object} Returns `object`.
+   */
+  function copySymbols(source, object) {
+    return copyObject(source, getSymbols(source), object);
+  }
 
   /**
-   * Iterates over elements of a collection, executing the callback for each
-   * element. The callback is bound to `thisArg` and invoked with three arguments;
-   * (value, index|key, collection). Callbacks may exit iteration early by
-   * explicitly returning `false`.
+   * Creates a function like `_.assign`.
    *
-   * Note: As with other "Collections" methods, objects with a `length` property
-   * are iterated like arrays. To avoid this behavior `_.forIn` or `_.forOwn`
-   * may be used for object iteration.
-   *
-   * @static
-   * @memberOf _
-   * @alias each
-   * @category Collections
-   * @param {Array|Object|string} collection The collection to iterate over.
-   * @param {Function} [callback=identity] The function called per iteration.
-   * @param {*} [thisArg] The `this` binding of `callback`.
-   * @returns {Array|Object|string} Returns `collection`.
-   * @example
-   *
-   * _([1, 2, 3]).forEach(function(num) { console.log(num); }).join(',');
-   * // => logs each number and returns '1,2,3'
-   *
-   * _.forEach({ 'one': 1, 'two': 2, 'three': 3 }, function(num) { console.log(num); });
-   * // => logs each number and returns the object (property order is not guaranteed across environments)
+   * @private
+   * @param {Function} assigner The function to assign values.
+   * @returns {Function} Returns the new assigner function.
    */
-  function forEach(collection, callback, thisArg) {
-    if (callback && typeof thisArg == 'undefined' && isArray(collection)) {
+  function createAssigner(assigner) {
+    return baseRest(function(object, sources) {
       var index = -1,
-          length = collection.length;
+          length = sources.length,
+          customizer = length > 1 ? sources[length - 1] : undefined,
+          guard = length > 2 ? sources[2] : undefined;
 
+      customizer = (assigner.length > 3 && typeof customizer == 'function')
+        ? (length--, customizer)
+        : undefined;
+
+      if (guard && isIterateeCall(sources[0], sources[1], guard)) {
+        customizer = length < 3 ? undefined : customizer;
+        length = 1;
+      }
+      object = Object(object);
       while (++index < length) {
-        if (callback(collection[index], index, collection) === false) {
+        var source = sources[index];
+        if (source) {
+          assigner(object, source, index, customizer);
+        }
+      }
+      return object;
+    });
+  }
+
+  /**
+   * Creates a `baseEach` or `baseEachRight` function.
+   *
+   * @private
+   * @param {Function} eachFunc The function to iterate over a collection.
+   * @param {boolean} [fromRight] Specify iterating from right to left.
+   * @returns {Function} Returns the new base function.
+   */
+  function createBaseEach(eachFunc, fromRight) {
+    return function(collection, iteratee) {
+      if (collection == null) {
+        return collection;
+      }
+      if (!isArrayLike(collection)) {
+        return eachFunc(collection, iteratee);
+      }
+      var length = collection.length,
+          index = fromRight ? length : -1,
+          iterable = Object(collection);
+
+      while ((fromRight ? index-- : ++index < length)) {
+        if (iteratee(iterable[index], index, iterable) === false) {
           break;
         }
       }
-    } else {
-      baseEach(collection, callback, thisArg);
-    }
-    return collection;
+      return collection;
+    };
   }
 
-  /*--------------------------------------------------------------------------*/
+  /**
+   * Creates a base function for methods like `_.forIn` and `_.forOwn`.
+   *
+   * @private
+   * @param {boolean} [fromRight] Specify iterating from right to left.
+   * @returns {Function} Returns the new base function.
+   */
+  function createBaseFor(fromRight) {
+    return function(object, iteratee, keysFunc) {
+      var index = -1,
+          iterable = Object(object),
+          props = keysFunc(object),
+          length = props.length;
+
+      while (length--) {
+        var key = props[fromRight ? length : ++index];
+        if (iteratee(iterable[key], key, iterable) === false) {
+          break;
+        }
+      }
+      return object;
+    };
+  }
+
+  /**
+   * A specialized version of `baseIsEqualDeep` for arrays with support for
+   * partial deep comparisons.
+   *
+   * @private
+   * @param {Array} array The array to compare.
+   * @param {Array} other The other array to compare.
+   * @param {Function} equalFunc The function to determine equivalents of values.
+   * @param {Function} customizer The function to customize comparisons.
+   * @param {number} bitmask The bitmask of comparison flags. See `baseIsEqual`
+   *  for more details.
+   * @param {Object} stack Tracks traversed `array` and `other` objects.
+   * @returns {boolean} Returns `true` if the arrays are equivalent, else `false`.
+   */
+  function equalArrays(array, other, equalFunc, customizer, bitmask, stack) {
+    var isPartial = bitmask & PARTIAL_COMPARE_FLAG,
+        arrLength = array.length,
+        othLength = other.length;
+
+    if (arrLength != othLength && !(isPartial && othLength > arrLength)) {
+      return false;
+    }
+    // Assume cyclic values are equal.
+    var stacked = stack.get(array);
+    if (stacked && stack.get(other)) {
+      return stacked == other;
+    }
+    var index = -1,
+        result = true,
+        seen = (bitmask & UNORDERED_COMPARE_FLAG) ? new SetCache : undefined;
+
+    stack.set(array, other);
+    stack.set(other, array);
+
+    // Ignore non-index properties.
+    while (++index < arrLength) {
+      var arrValue = array[index],
+          othValue = other[index];
+
+      if (customizer) {
+        var compared = isPartial
+          ? customizer(othValue, arrValue, index, other, array, stack)
+          : customizer(arrValue, othValue, index, array, other, stack);
+      }
+      if (compared !== undefined) {
+        if (compared) {
+          continue;
+        }
+        result = false;
+        break;
+      }
+      // Recursively compare arrays (susceptible to call stack limits).
+      if (seen) {
+        if (!arraySome(other, function(othValue, othIndex) {
+              if (!seen.has(othIndex) &&
+                  (arrValue === othValue || equalFunc(arrValue, othValue, customizer, bitmask, stack))) {
+                return seen.add(othIndex);
+              }
+            })) {
+          result = false;
+          break;
+        }
+      } else if (!(
+            arrValue === othValue ||
+              equalFunc(arrValue, othValue, customizer, bitmask, stack)
+          )) {
+        result = false;
+        break;
+      }
+    }
+    stack['delete'](array);
+    stack['delete'](other);
+    return result;
+  }
+
+  /**
+   * A specialized version of `baseIsEqualDeep` for comparing objects of
+   * the same `toStringTag`.
+   *
+   * **Note:** This function only supports comparing values with tags of
+   * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
+   *
+   * @private
+   * @param {Object} object The object to compare.
+   * @param {Object} other The other object to compare.
+   * @param {string} tag The `toStringTag` of the objects to compare.
+   * @param {Function} equalFunc The function to determine equivalents of values.
+   * @param {Function} customizer The function to customize comparisons.
+   * @param {number} bitmask The bitmask of comparison flags. See `baseIsEqual`
+   *  for more details.
+   * @param {Object} stack Tracks traversed `object` and `other` objects.
+   * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+   */
+  function equalByTag(object, other, tag, equalFunc, customizer, bitmask, stack) {
+    switch (tag) {
+      case dataViewTag:
+        if ((object.byteLength != other.byteLength) ||
+            (object.byteOffset != other.byteOffset)) {
+          return false;
+        }
+        object = object.buffer;
+        other = other.buffer;
+
+      case arrayBufferTag:
+        if ((object.byteLength != other.byteLength) ||
+            !equalFunc(new Uint8Array(object), new Uint8Array(other))) {
+          return false;
+        }
+        return true;
+
+      case boolTag:
+      case dateTag:
+      case numberTag:
+        // Coerce booleans to `1` or `0` and dates to milliseconds.
+        // Invalid dates are coerced to `NaN`.
+        return eq(+object, +other);
+
+      case errorTag:
+        return object.name == other.name && object.message == other.message;
+
+      case regexpTag:
+      case stringTag:
+        // Coerce regexes to strings and treat strings, primitives and objects,
+        // as equal. See http://www.ecma-international.org/ecma-262/7.0/#sec-regexp.prototype.tostring
+        // for more details.
+        return object == (other + '');
+
+      case mapTag:
+        var convert = mapToArray;
+
+      case setTag:
+        var isPartial = bitmask & PARTIAL_COMPARE_FLAG;
+        convert || (convert = setToArray);
+
+        if (object.size != other.size && !isPartial) {
+          return false;
+        }
+        // Assume cyclic values are equal.
+        var stacked = stack.get(object);
+        if (stacked) {
+          return stacked == other;
+        }
+        bitmask |= UNORDERED_COMPARE_FLAG;
+
+        // Recursively compare objects (susceptible to call stack limits).
+        stack.set(object, other);
+        var result = equalArrays(convert(object), convert(other), equalFunc, customizer, bitmask, stack);
+        stack['delete'](object);
+        return result;
+
+      case symbolTag:
+        if (symbolValueOf) {
+          return symbolValueOf.call(object) == symbolValueOf.call(other);
+        }
+    }
+    return false;
+  }
+
+  /**
+   * A specialized version of `baseIsEqualDeep` for objects with support for
+   * partial deep comparisons.
+   *
+   * @private
+   * @param {Object} object The object to compare.
+   * @param {Object} other The other object to compare.
+   * @param {Function} equalFunc The function to determine equivalents of values.
+   * @param {Function} customizer The function to customize comparisons.
+   * @param {number} bitmask The bitmask of comparison flags. See `baseIsEqual`
+   *  for more details.
+   * @param {Object} stack Tracks traversed `object` and `other` objects.
+   * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+   */
+  function equalObjects(object, other, equalFunc, customizer, bitmask, stack) {
+    var isPartial = bitmask & PARTIAL_COMPARE_FLAG,
+        objProps = keys(object),
+        objLength = objProps.length,
+        othProps = keys(other),
+        othLength = othProps.length;
+
+    if (objLength != othLength && !isPartial) {
+      return false;
+    }
+    var index = objLength;
+    while (index--) {
+      var key = objProps[index];
+      if (!(isPartial ? key in other : hasOwnProperty.call(other, key))) {
+        return false;
+      }
+    }
+    // Assume cyclic values are equal.
+    var stacked = stack.get(object);
+    if (stacked && stack.get(other)) {
+      return stacked == other;
+    }
+    var result = true;
+    stack.set(object, other);
+    stack.set(other, object);
+
+    var skipCtor = isPartial;
+    while (++index < objLength) {
+      key = objProps[index];
+      var objValue = object[key],
+          othValue = other[key];
+
+      if (customizer) {
+        var compared = isPartial
+          ? customizer(othValue, objValue, key, other, object, stack)
+          : customizer(objValue, othValue, key, object, other, stack);
+      }
+      // Recursively compare objects (susceptible to call stack limits).
+      if (!(compared === undefined
+            ? (objValue === othValue || equalFunc(objValue, othValue, customizer, bitmask, stack))
+            : compared
+          )) {
+        result = false;
+        break;
+      }
+      skipCtor || (skipCtor = key == 'constructor');
+    }
+    if (result && !skipCtor) {
+      var objCtor = object.constructor,
+          othCtor = other.constructor;
+
+      // Non `Object` object instances with different constructors are not equal.
+      if (objCtor != othCtor &&
+          ('constructor' in object && 'constructor' in other) &&
+          !(typeof objCtor == 'function' && objCtor instanceof objCtor &&
+            typeof othCtor == 'function' && othCtor instanceof othCtor)) {
+        result = false;
+      }
+    }
+    stack['delete'](object);
+    stack['delete'](other);
+    return result;
+  }
+
+  /**
+   * Creates an array of own enumerable property names and symbols of `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names and symbols.
+   */
+  function getAllKeys(object) {
+    return baseGetAllKeys(object, keys, getSymbols);
+  }
+
+  /**
+   * Gets the appropriate "iteratee" function. If `_.iteratee` is customized,
+   * this function returns the custom method, otherwise it returns `baseIteratee`.
+   * If arguments are provided, the chosen function is invoked with them and
+   * its result is returned.
+   *
+   * @private
+   * @param {*} [value] The value to convert to an iteratee.
+   * @param {number} [arity] The arity of the created iteratee.
+   * @returns {Function} Returns the chosen function or its result.
+   */
+  function getIteratee() {
+    var result = lodash.iteratee || iteratee;
+    result = result === iteratee ? baseIteratee : result;
+    return arguments.length ? result(arguments[0], arguments[1]) : result;
+  }
+
+  /**
+   * Gets the data for `map`.
+   *
+   * @private
+   * @param {Object} map The map to query.
+   * @param {string} key The reference key.
+   * @returns {*} Returns the map data.
+   */
+  function getMapData(map, key) {
+    var data = map.__data__;
+    return isKeyable(key)
+      ? data[typeof key == 'string' ? 'string' : 'hash']
+      : data.map;
+  }
+
+  /**
+   * Gets the property names, values, and compare flags of `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the match data of `object`.
+   */
+  function getMatchData(object) {
+    var result = keys(object),
+        length = result.length;
+
+    while (length--) {
+      var key = result[length],
+          value = object[key];
+
+      result[length] = [key, value, isStrictComparable(value)];
+    }
+    return result;
+  }
+
+  /**
+   * Gets the native function at `key` of `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @param {string} key The key of the method to get.
+   * @returns {*} Returns the function if it's native, else `undefined`.
+   */
+  function getNative(object, key) {
+    var value = getValue(object, key);
+    return baseIsNative(value) ? value : undefined;
+  }
+
+  /**
+   * Creates an array of the own enumerable symbol properties of `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of symbols.
+   */
+  var getSymbols = nativeGetSymbols ? overArg(nativeGetSymbols, Object) : stubArray;
+
+  /**
+   * Gets the `toStringTag` of `value`.
+   *
+   * @private
+   * @param {*} value The value to query.
+   * @returns {string} Returns the `toStringTag`.
+   */
+  var getTag = baseGetTag;
+
+  // Fallback for data views, maps, sets, and weak maps in IE 11,
+  // for data views in Edge < 14, and promises in Node.js.
+  if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
+      (Map && getTag(new Map) != mapTag) ||
+      (Promise && getTag(Promise.resolve()) != promiseTag) ||
+      (Set && getTag(new Set) != setTag) ||
+      (WeakMap && getTag(new WeakMap) != weakMapTag)) {
+    getTag = function(value) {
+      var result = objectToString.call(value),
+          Ctor = result == objectTag ? value.constructor : undefined,
+          ctorString = Ctor ? toSource(Ctor) : undefined;
+
+      if (ctorString) {
+        switch (ctorString) {
+          case dataViewCtorString: return dataViewTag;
+          case mapCtorString: return mapTag;
+          case promiseCtorString: return promiseTag;
+          case setCtorString: return setTag;
+          case weakMapCtorString: return weakMapTag;
+        }
+      }
+      return result;
+    };
+  }
+
+  /**
+   * Checks if `path` exists on `object`.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @param {Array|string} path The path to check.
+   * @param {Function} hasFunc The function to check properties.
+   * @returns {boolean} Returns `true` if `path` exists, else `false`.
+   */
+  function hasPath(object, path, hasFunc) {
+    path = isKey(path, object) ? [path] : castPath(path);
+
+    var result,
+        index = -1,
+        length = path.length;
+
+    while (++index < length) {
+      var key = toKey(path[index]);
+      if (!(result = object != null && hasFunc(object, key))) {
+        break;
+      }
+      object = object[key];
+    }
+    if (result) {
+      return result;
+    }
+    var length = object ? object.length : 0;
+    return !!length && isLength(length) && isIndex(key, length) &&
+      (isArray(object) || isArguments(object));
+  }
+
+  /**
+   * Initializes an array clone.
+   *
+   * @private
+   * @param {Array} array The array to clone.
+   * @returns {Array} Returns the initialized clone.
+   */
+  function initCloneArray(array) {
+    var length = array.length,
+        result = array.constructor(length);
+
+    // Add properties assigned by `RegExp#exec`.
+    if (length && typeof array[0] == 'string' && hasOwnProperty.call(array, 'index')) {
+      result.index = array.index;
+      result.input = array.input;
+    }
+    return result;
+  }
+
+  /**
+   * Initializes an object clone.
+   *
+   * @private
+   * @param {Object} object The object to clone.
+   * @returns {Object} Returns the initialized clone.
+   */
+  function initCloneObject(object) {
+    return (typeof object.constructor == 'function' && !isPrototype(object))
+      ? baseCreate(getPrototype(object))
+      : {};
+  }
+
+  /**
+   * Initializes an object clone based on its `toStringTag`.
+   *
+   * **Note:** This function only supports cloning values with tags of
+   * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
+   *
+   * @private
+   * @param {Object} object The object to clone.
+   * @param {string} tag The `toStringTag` of the object to clone.
+   * @param {Function} cloneFunc The function to clone values.
+   * @param {boolean} [isDeep] Specify a deep clone.
+   * @returns {Object} Returns the initialized clone.
+   */
+  function initCloneByTag(object, tag, cloneFunc, isDeep) {
+    var Ctor = object.constructor;
+    switch (tag) {
+      case arrayBufferTag:
+        return cloneArrayBuffer(object);
+
+      case boolTag:
+      case dateTag:
+        return new Ctor(+object);
+
+      case dataViewTag:
+        return cloneDataView(object, isDeep);
+
+      case float32Tag: case float64Tag:
+      case int8Tag: case int16Tag: case int32Tag:
+      case uint8Tag: case uint8ClampedTag: case uint16Tag: case uint32Tag:
+        return cloneTypedArray(object, isDeep);
+
+      case mapTag:
+        return cloneMap(object, isDeep, cloneFunc);
+
+      case numberTag:
+      case stringTag:
+        return new Ctor(object);
+
+      case regexpTag:
+        return cloneRegExp(object);
+
+      case setTag:
+        return cloneSet(object, isDeep, cloneFunc);
+
+      case symbolTag:
+        return cloneSymbol(object);
+    }
+  }
+
+  /**
+   * Checks if `value` is a valid array-like index.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+   * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+   */
+  function isIndex(value, length) {
+    length = length == null ? MAX_SAFE_INTEGER : length;
+    return !!length &&
+      (typeof value == 'number' || reIsUint.test(value)) &&
+      (value > -1 && value % 1 == 0 && value < length);
+  }
+
+  /**
+   * Checks if the given arguments are from an iteratee call.
+   *
+   * @private
+   * @param {*} value The potential iteratee value argument.
+   * @param {*} index The potential iteratee index or key argument.
+   * @param {*} object The potential iteratee object argument.
+   * @returns {boolean} Returns `true` if the arguments are from an iteratee call,
+   *  else `false`.
+   */
+  function isIterateeCall(value, index, object) {
+    if (!isObject(object)) {
+      return false;
+    }
+    var type = typeof index;
+    if (type == 'number'
+          ? (isArrayLike(object) && isIndex(index, object.length))
+          : (type == 'string' && index in object)
+        ) {
+      return eq(object[index], value);
+    }
+    return false;
+  }
+
+  /**
+   * Checks if `value` is a property name and not a property path.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @param {Object} [object] The object to query keys on.
+   * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+   */
+  function isKey(value, object) {
+    if (isArray(value)) {
+      return false;
+    }
+    var type = typeof value;
+    if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+        value == null || isSymbol(value)) {
+      return true;
+    }
+    return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+      (object != null && value in Object(object));
+  }
+
+  /**
+   * Checks if `value` is suitable for use as unique object key.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+   */
+  function isKeyable(value) {
+    var type = typeof value;
+    return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+      ? (value !== '__proto__')
+      : (value === null);
+  }
+
+  /**
+   * Checks if `func` has its source masked.
+   *
+   * @private
+   * @param {Function} func The function to check.
+   * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+   */
+  function isMasked(func) {
+    return !!maskSrcKey && (maskSrcKey in func);
+  }
+
+  /**
+   * Checks if `value` is likely a prototype object.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
+   */
+  function isPrototype(value) {
+    var Ctor = value && value.constructor,
+        proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
+
+    return value === proto;
+  }
+
+  /**
+   * Checks if `value` is suitable for strict equality comparisons, i.e. `===`.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` if suitable for strict
+   *  equality comparisons, else `false`.
+   */
+  function isStrictComparable(value) {
+    return value === value && !isObject(value);
+  }
+
+  /**
+   * A specialized version of `matchesProperty` for source values suitable
+   * for strict equality comparisons, i.e. `===`.
+   *
+   * @private
+   * @param {string} key The key of the property to get.
+   * @param {*} srcValue The value to match.
+   * @returns {Function} Returns the new spec function.
+   */
+  function matchesStrictComparable(key, srcValue) {
+    return function(object) {
+      if (object == null) {
+        return false;
+      }
+      return object[key] === srcValue &&
+        (srcValue !== undefined || (key in Object(object)));
+    };
+  }
+
+  /**
+   * This function is like
+   * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+   * except that it includes inherited enumerable properties.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names.
+   */
+  function nativeKeysIn(object) {
+    var result = [];
+    if (object != null) {
+      for (var key in Object(object)) {
+        result.push(key);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Converts `string` to a property path array.
+   *
+   * @private
+   * @param {string} string The string to convert.
+   * @returns {Array} Returns the property path array.
+   */
+  var stringToPath = memoize(function(string) {
+    string = toString(string);
+
+    var result = [];
+    if (reLeadingDot.test(string)) {
+      result.push('');
+    }
+    string.replace(rePropName, function(match, number, quote, string) {
+      result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+    });
+    return result;
+  });
+
+  /**
+   * Converts `value` to a string key if it's not a string or symbol.
+   *
+   * @private
+   * @param {*} value The value to inspect.
+   * @returns {string|symbol} Returns the key.
+   */
+  function toKey(value) {
+    if (typeof value == 'string' || isSymbol(value)) {
+      return value;
+    }
+    var result = (value + '');
+    return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+  }
+
+  /**
+   * Converts `func` to its source code.
+   *
+   * @private
+   * @param {Function} func The function to process.
+   * @returns {string} Returns the source code.
+   */
+  function toSource(func) {
+    if (func != null) {
+      try {
+        return funcToString.call(func);
+      } catch (e) {}
+      try {
+        return (func + '');
+      } catch (e) {}
+    }
+    return '';
+  }
+
+  /*------------------------------------------------------------------------*/
 
   /**
    * Creates an array with all falsey values removed. The values `false`, `null`,
-   * `0`, `""`, `undefined`, and `NaN` are all falsey.
+   * `0`, `""`, `undefined`, and `NaN` are falsey.
    *
    * @static
    * @memberOf _
-   * @category Arrays
+   * @since 0.1.0
+   * @category Array
    * @param {Array} array The array to compact.
-   * @returns {Array} Returns a new array of filtered values.
+   * @returns {Array} Returns the new array of filtered values.
    * @example
    *
    * _.compact([0, 1, false, 2, '', 3]);
@@ -62870,61 +67878,793 @@ module.exports = osmtogeojson;
   function compact(array) {
     var index = -1,
         length = array ? array.length : 0,
+        resIndex = 0,
         result = [];
 
     while (++index < length) {
       var value = array[index];
       if (value) {
-        result.push(value);
+        result[resIndex++] = value;
       }
     }
     return result;
   }
 
-  /*--------------------------------------------------------------------------*/
+  /*------------------------------------------------------------------------*/
 
   /**
-   * Creates a function that, when called, invokes `func` with the `this`
-   * binding of `thisArg` and prepends any additional `bind` arguments to those
-   * provided to the bound function.
+   * Iterates over elements of `collection` and invokes `iteratee` for each element.
+   * The iteratee is invoked with three arguments: (value, index|key, collection).
+   * Iteratee functions may exit iteration early by explicitly returning `false`.
+   *
+   * **Note:** As with other "Collections" methods, objects with a "length"
+   * property are iterated like arrays. To avoid this behavior use `_.forIn`
+   * or `_.forOwn` for object iteration.
    *
    * @static
    * @memberOf _
-   * @category Functions
-   * @param {Function} func The function to bind.
-   * @param {*} [thisArg] The `this` binding of `func`.
-   * @param {...*} [arg] Arguments to be partially applied.
-   * @returns {Function} Returns the new bound function.
+   * @since 0.1.0
+   * @alias each
+   * @category Collection
+   * @param {Array|Object} collection The collection to iterate over.
+   * @param {Function} [iteratee=_.identity] The function invoked per iteration.
+   * @returns {Array|Object} Returns `collection`.
+   * @see _.forEachRight
    * @example
    *
-   * var func = function(greeting) {
-   *   return greeting + ' ' + this.name;
-   * };
+   * _([1, 2]).forEach(function(value) {
+   *   console.log(value);
+   * });
+   * // => Logs `1` then `2`.
    *
-   * func = _.bind(func, { 'name': 'fred' }, 'hi');
-   * func();
-   * // => 'hi fred'
+   * _.forEach({ 'a': 1, 'b': 2 }, function(value, key) {
+   *   console.log(key);
+   * });
+   * // => Logs 'a' then 'b' (iteration order is not guaranteed).
    */
-  function bind(func, thisArg) {
-    return arguments.length > 2
-      ? createWrapper(func, 17, slice(arguments, 2), null, thisArg)
-      : createWrapper(func, 1, null, null, thisArg);
+  function forEach(collection, iteratee) {
+    var func = isArray(collection) ? arrayEach : baseEach;
+    return func(collection, getIteratee(iteratee, 3));
   }
 
-  /*--------------------------------------------------------------------------*/
+  /*------------------------------------------------------------------------*/
 
   /**
-   * This method returns the first argument provided to it.
+   * Creates a function that memoizes the result of `func`. If `resolver` is
+   * provided, it determines the cache key for storing the result based on the
+   * arguments provided to the memoized function. By default, the first argument
+   * provided to the memoized function is used as the map cache key. The `func`
+   * is invoked with the `this` binding of the memoized function.
+   *
+   * **Note:** The cache is exposed as the `cache` property on the memoized
+   * function. Its creation may be customized by replacing the `_.memoize.Cache`
+   * constructor with one whose instances implement the
+   * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+   * method interface of `delete`, `get`, `has`, and `set`.
    *
    * @static
    * @memberOf _
-   * @category Utilities
+   * @since 0.1.0
+   * @category Function
+   * @param {Function} func The function to have its output memoized.
+   * @param {Function} [resolver] The function to resolve the cache key.
+   * @returns {Function} Returns the new memoized function.
+   * @example
+   *
+   * var object = { 'a': 1, 'b': 2 };
+   * var other = { 'c': 3, 'd': 4 };
+   *
+   * var values = _.memoize(_.values);
+   * values(object);
+   * // => [1, 2]
+   *
+   * values(other);
+   * // => [3, 4]
+   *
+   * object.a = 2;
+   * values(object);
+   * // => [1, 2]
+   *
+   * // Modify the result cache.
+   * values.cache.set(object, ['a', 'b']);
+   * values(object);
+   * // => ['a', 'b']
+   *
+   * // Replace `_.memoize.Cache`.
+   * _.memoize.Cache = WeakMap;
+   */
+  function memoize(func, resolver) {
+    if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
+      throw new TypeError(FUNC_ERROR_TEXT);
+    }
+    var memoized = function() {
+      var args = arguments,
+          key = resolver ? resolver.apply(this, args) : args[0],
+          cache = memoized.cache;
+
+      if (cache.has(key)) {
+        return cache.get(key);
+      }
+      var result = func.apply(this, args);
+      memoized.cache = cache.set(key, result);
+      return result;
+    };
+    memoized.cache = new (memoize.Cache || MapCache);
+    return memoized;
+  }
+
+  // Assign cache to `_.memoize`.
+  memoize.Cache = MapCache;
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Creates a shallow clone of `value`.
+   *
+   * **Note:** This method is loosely based on the
+   * [structured clone algorithm](https://mdn.io/Structured_clone_algorithm)
+   * and supports cloning arrays, array buffers, booleans, date objects, maps,
+   * numbers, `Object` objects, regexes, sets, strings, symbols, and typed
+   * arrays. The own enumerable properties of `arguments` objects are cloned
+   * as plain objects. An empty object is returned for uncloneable values such
+   * as error objects, functions, DOM nodes, and WeakMaps.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to clone.
+   * @returns {*} Returns the cloned value.
+   * @see _.cloneDeep
+   * @example
+   *
+   * var objects = [{ 'a': 1 }, { 'b': 2 }];
+   *
+   * var shallow = _.clone(objects);
+   * console.log(shallow[0] === objects[0]);
+   * // => true
+   */
+  function clone(value) {
+    return baseClone(value, false, true);
+  }
+
+  /**
+   * Performs a
+   * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+   * comparison between two values to determine if they are equivalent.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to compare.
+   * @param {*} other The other value to compare.
+   * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+   * @example
+   *
+   * var object = { 'a': 1 };
+   * var other = { 'a': 1 };
+   *
+   * _.eq(object, object);
+   * // => true
+   *
+   * _.eq(object, other);
+   * // => false
+   *
+   * _.eq('a', 'a');
+   * // => true
+   *
+   * _.eq('a', Object('a'));
+   * // => false
+   *
+   * _.eq(NaN, NaN);
+   * // => true
+   */
+  function eq(value, other) {
+    return value === other || (value !== value && other !== other);
+  }
+
+  /**
+   * Checks if `value` is likely an `arguments` object.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+   *  else `false`.
+   * @example
+   *
+   * _.isArguments(function() { return arguments; }());
+   * // => true
+   *
+   * _.isArguments([1, 2, 3]);
+   * // => false
+   */
+  function isArguments(value) {
+    // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+    return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
+      (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
+  }
+
+  /**
+   * Checks if `value` is classified as an `Array` object.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+   * @example
+   *
+   * _.isArray([1, 2, 3]);
+   * // => true
+   *
+   * _.isArray(document.body.children);
+   * // => false
+   *
+   * _.isArray('abc');
+   * // => false
+   *
+   * _.isArray(_.noop);
+   * // => false
+   */
+  var isArray = Array.isArray;
+
+  /**
+   * Checks if `value` is array-like. A value is considered array-like if it's
+   * not a function and has a `value.length` that's an integer greater than or
+   * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+   * @example
+   *
+   * _.isArrayLike([1, 2, 3]);
+   * // => true
+   *
+   * _.isArrayLike(document.body.children);
+   * // => true
+   *
+   * _.isArrayLike('abc');
+   * // => true
+   *
+   * _.isArrayLike(_.noop);
+   * // => false
+   */
+  function isArrayLike(value) {
+    return value != null && isLength(value.length) && !isFunction(value);
+  }
+
+  /**
+   * This method is like `_.isArrayLike` except that it also checks if `value`
+   * is an object.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is an array-like object,
+   *  else `false`.
+   * @example
+   *
+   * _.isArrayLikeObject([1, 2, 3]);
+   * // => true
+   *
+   * _.isArrayLikeObject(document.body.children);
+   * // => true
+   *
+   * _.isArrayLikeObject('abc');
+   * // => false
+   *
+   * _.isArrayLikeObject(_.noop);
+   * // => false
+   */
+  function isArrayLikeObject(value) {
+    return isObjectLike(value) && isArrayLike(value);
+  }
+
+  /**
+   * Checks if `value` is a buffer.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.3.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
+   * @example
+   *
+   * _.isBuffer(new Buffer(2));
+   * // => true
+   *
+   * _.isBuffer(new Uint8Array(2));
+   * // => false
+   */
+  var isBuffer = nativeIsBuffer || stubFalse;
+
+  /**
+   * Checks if `value` is an empty object, collection, map, or set.
+   *
+   * Objects are considered empty if they have no own enumerable string keyed
+   * properties.
+   *
+   * Array-like values such as `arguments` objects, arrays, buffers, strings, or
+   * jQuery-like collections are considered empty if they have a `length` of `0`.
+   * Similarly, maps and sets are considered empty if they have a `size` of `0`.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is empty, else `false`.
+   * @example
+   *
+   * _.isEmpty(null);
+   * // => true
+   *
+   * _.isEmpty(true);
+   * // => true
+   *
+   * _.isEmpty(1);
+   * // => true
+   *
+   * _.isEmpty([1, 2, 3]);
+   * // => false
+   *
+   * _.isEmpty({ 'a': 1 });
+   * // => false
+   */
+  function isEmpty(value) {
+    if (isArrayLike(value) &&
+        (isArray(value) || typeof value == 'string' ||
+          typeof value.splice == 'function' || isBuffer(value) || isArguments(value))) {
+      return !value.length;
+    }
+    var tag = getTag(value);
+    if (tag == mapTag || tag == setTag) {
+      return !value.size;
+    }
+    if (nonEnumShadows || isPrototype(value)) {
+      return !nativeKeys(value).length;
+    }
+    for (var key in value) {
+      if (hasOwnProperty.call(value, key)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Checks if `value` is classified as a `Function` object.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+   * @example
+   *
+   * _.isFunction(_);
+   * // => true
+   *
+   * _.isFunction(/abc/);
+   * // => false
+   */
+  function isFunction(value) {
+    // The use of `Object#toString` avoids issues with the `typeof` operator
+    // in Safari 8-9 which returns 'object' for typed array and other constructors.
+    var tag = isObject(value) ? objectToString.call(value) : '';
+    return tag == funcTag || tag == genTag;
+  }
+
+  /**
+   * Checks if `value` is a valid array-like length.
+   *
+   * **Note:** This method is loosely based on
+   * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+   * @example
+   *
+   * _.isLength(3);
+   * // => true
+   *
+   * _.isLength(Number.MIN_VALUE);
+   * // => false
+   *
+   * _.isLength(Infinity);
+   * // => false
+   *
+   * _.isLength('3');
+   * // => false
+   */
+  function isLength(value) {
+    return typeof value == 'number' &&
+      value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+  }
+
+  /**
+   * Checks if `value` is the
+   * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+   * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+   *
+   * @static
+   * @memberOf _
+   * @since 0.1.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+   * @example
+   *
+   * _.isObject({});
+   * // => true
+   *
+   * _.isObject([1, 2, 3]);
+   * // => true
+   *
+   * _.isObject(_.noop);
+   * // => true
+   *
+   * _.isObject(null);
+   * // => false
+   */
+  function isObject(value) {
+    var type = typeof value;
+    return !!value && (type == 'object' || type == 'function');
+  }
+
+  /**
+   * Checks if `value` is object-like. A value is object-like if it's not `null`
+   * and has a `typeof` result of "object".
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+   * @example
+   *
+   * _.isObjectLike({});
+   * // => true
+   *
+   * _.isObjectLike([1, 2, 3]);
+   * // => true
+   *
+   * _.isObjectLike(_.noop);
+   * // => false
+   *
+   * _.isObjectLike(null);
+   * // => false
+   */
+  function isObjectLike(value) {
+    return !!value && typeof value == 'object';
+  }
+
+  /**
+   * Checks if `value` is a plain object, that is, an object created by the
+   * `Object` constructor or one with a `[[Prototype]]` of `null`.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.8.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+   * @example
+   *
+   * function Foo() {
+   *   this.a = 1;
+   * }
+   *
+   * _.isPlainObject(new Foo);
+   * // => false
+   *
+   * _.isPlainObject([1, 2, 3]);
+   * // => false
+   *
+   * _.isPlainObject({ 'x': 0, 'y': 0 });
+   * // => true
+   *
+   * _.isPlainObject(Object.create(null));
+   * // => true
+   */
+  function isPlainObject(value) {
+    if (!isObjectLike(value) ||
+        objectToString.call(value) != objectTag || isHostObject(value)) {
+      return false;
+    }
+    var proto = getPrototype(value);
+    if (proto === null) {
+      return true;
+    }
+    var Ctor = hasOwnProperty.call(proto, 'constructor') && proto.constructor;
+    return (typeof Ctor == 'function' &&
+      Ctor instanceof Ctor && funcToString.call(Ctor) == objectCtorString);
+  }
+
+  /**
+   * Checks if `value` is classified as a `Symbol` primitive or object.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+   * @example
+   *
+   * _.isSymbol(Symbol.iterator);
+   * // => true
+   *
+   * _.isSymbol('abc');
+   * // => false
+   */
+  function isSymbol(value) {
+    return typeof value == 'symbol' ||
+      (isObjectLike(value) && objectToString.call(value) == symbolTag);
+  }
+
+  /**
+   * Checks if `value` is classified as a typed array.
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+   * @example
+   *
+   * _.isTypedArray(new Uint8Array);
+   * // => true
+   *
+   * _.isTypedArray([]);
+   * // => false
+   */
+  var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
+
+  /**
+   * Converts `value` to a plain object flattening inherited enumerable string
+   * keyed properties of `value` to own properties of the plain object.
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category Lang
+   * @param {*} value The value to convert.
+   * @returns {Object} Returns the converted plain object.
+   * @example
+   *
+   * function Foo() {
+   *   this.b = 2;
+   * }
+   *
+   * Foo.prototype.c = 3;
+   *
+   * _.assign({ 'a': 1 }, new Foo);
+   * // => { 'a': 1, 'b': 2 }
+   *
+   * _.assign({ 'a': 1 }, _.toPlainObject(new Foo));
+   * // => { 'a': 1, 'b': 2, 'c': 3 }
+   */
+  function toPlainObject(value) {
+    return copyObject(value, keysIn(value));
+  }
+
+  /**
+   * Converts `value` to a string. An empty string is returned for `null`
+   * and `undefined` values. The sign of `-0` is preserved.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to process.
+   * @returns {string} Returns the string.
+   * @example
+   *
+   * _.toString(null);
+   * // => ''
+   *
+   * _.toString(-0);
+   * // => '-0'
+   *
+   * _.toString([1, 2, 3]);
+   * // => '1,2,3'
+   */
+  function toString(value) {
+    return value == null ? '' : baseToString(value);
+  }
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * Gets the value at `path` of `object`. If the resolved value is
+   * `undefined`, the `defaultValue` is returned in its place.
+   *
+   * @static
+   * @memberOf _
+   * @since 3.7.0
+   * @category Object
+   * @param {Object} object The object to query.
+   * @param {Array|string} path The path of the property to get.
+   * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+   * @returns {*} Returns the resolved value.
+   * @example
+   *
+   * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+   *
+   * _.get(object, 'a[0].b.c');
+   * // => 3
+   *
+   * _.get(object, ['a', '0', 'b', 'c']);
+   * // => 3
+   *
+   * _.get(object, 'a.b.c', 'default');
+   * // => 'default'
+   */
+  function get(object, path, defaultValue) {
+    var result = object == null ? undefined : baseGet(object, path);
+    return result === undefined ? defaultValue : result;
+  }
+
+  /**
+   * Checks if `path` is a direct or inherited property of `object`.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Object
+   * @param {Object} object The object to query.
+   * @param {Array|string} path The path to check.
+   * @returns {boolean} Returns `true` if `path` exists, else `false`.
+   * @example
+   *
+   * var object = _.create({ 'a': _.create({ 'b': 2 }) });
+   *
+   * _.hasIn(object, 'a');
+   * // => true
+   *
+   * _.hasIn(object, 'a.b');
+   * // => true
+   *
+   * _.hasIn(object, ['a', 'b']);
+   * // => true
+   *
+   * _.hasIn(object, 'b');
+   * // => false
+   */
+  function hasIn(object, path) {
+    return object != null && hasPath(object, path, baseHasIn);
+  }
+
+  /**
+   * Creates an array of the own enumerable property names of `object`.
+   *
+   * **Note:** Non-object values are coerced to objects. See the
+   * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+   * for more details.
+   *
+   * @static
+   * @since 0.1.0
+   * @memberOf _
+   * @category Object
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names.
+   * @example
+   *
+   * function Foo() {
+   *   this.a = 1;
+   *   this.b = 2;
+   * }
+   *
+   * Foo.prototype.c = 3;
+   *
+   * _.keys(new Foo);
+   * // => ['a', 'b'] (iteration order is not guaranteed)
+   *
+   * _.keys('hi');
+   * // => ['0', '1']
+   */
+  function keys(object) {
+    return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
+  }
+
+  /**
+   * Creates an array of the own and inherited enumerable property names of `object`.
+   *
+   * **Note:** Non-object values are coerced to objects.
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category Object
+   * @param {Object} object The object to query.
+   * @returns {Array} Returns the array of property names.
+   * @example
+   *
+   * function Foo() {
+   *   this.a = 1;
+   *   this.b = 2;
+   * }
+   *
+   * Foo.prototype.c = 3;
+   *
+   * _.keysIn(new Foo);
+   * // => ['a', 'b', 'c'] (iteration order is not guaranteed)
+   */
+  function keysIn(object) {
+    return isArrayLike(object) ? arrayLikeKeys(object, true) : baseKeysIn(object);
+  }
+
+  /**
+   * This method is like `_.assign` except that it recursively merges own and
+   * inherited enumerable string keyed properties of source objects into the
+   * destination object. Source properties that resolve to `undefined` are
+   * skipped if a destination value exists. Array and plain object properties
+   * are merged recursively. Other objects and value types are overridden by
+   * assignment. Source objects are applied from left to right. Subsequent
+   * sources overwrite property assignments of previous sources.
+   *
+   * **Note:** This method mutates `object`.
+   *
+   * @static
+   * @memberOf _
+   * @since 0.5.0
+   * @category Object
+   * @param {Object} object The destination object.
+   * @param {...Object} [sources] The source objects.
+   * @returns {Object} Returns `object`.
+   * @example
+   *
+   * var object = {
+   *   'a': [{ 'b': 2 }, { 'd': 4 }]
+   * };
+   *
+   * var other = {
+   *   'a': [{ 'c': 3 }, { 'e': 5 }]
+   * };
+   *
+   * _.merge(object, other);
+   * // => { 'a': [{ 'b': 2, 'c': 3 }, { 'd': 4, 'e': 5 }] }
+   */
+  var merge = createAssigner(function(object, source, srcIndex) {
+    baseMerge(object, source, srcIndex);
+  });
+
+  /*------------------------------------------------------------------------*/
+
+  /**
+   * This method returns the first argument it receives.
+   *
+   * @static
+   * @since 0.1.0
+   * @memberOf _
+   * @category Util
    * @param {*} value Any value.
    * @returns {*} Returns `value`.
    * @example
    *
-   * var object = { 'name': 'fred' };
-   * _.identity(object) === object;
+   * var object = { 'a': 1 };
+   *
+   * console.log(_.identity(object) === object);
    * // => true
    */
   function identity(value) {
@@ -62932,206 +68672,180 @@ module.exports = osmtogeojson;
   }
 
   /**
-   * A no-operation function.
+   * Creates a function that invokes `func` with the arguments of the created
+   * function. If `func` is a property name, the created function returns the
+   * property value for a given element. If `func` is an array or object, the
+   * created function returns `true` for elements that contain the equivalent
+   * source properties, otherwise it returns `false`.
+   *
+   * @static
+   * @since 4.0.0
+   * @memberOf _
+   * @category Util
+   * @param {*} [func=_.identity] The value to convert to a callback.
+   * @returns {Function} Returns the callback.
+   * @example
+   *
+   * var users = [
+   *   { 'user': 'barney', 'age': 36, 'active': true },
+   *   { 'user': 'fred',   'age': 40, 'active': false }
+   * ];
+   *
+   * // The `_.matches` iteratee shorthand.
+   * _.filter(users, _.iteratee({ 'user': 'barney', 'active': true }));
+   * // => [{ 'user': 'barney', 'age': 36, 'active': true }]
+   *
+   * // The `_.matchesProperty` iteratee shorthand.
+   * _.filter(users, _.iteratee(['user', 'fred']));
+   * // => [{ 'user': 'fred', 'age': 40 }]
+   *
+   * // The `_.property` iteratee shorthand.
+   * _.map(users, _.iteratee('user'));
+   * // => ['barney', 'fred']
+   *
+   * // Create custom iteratee shorthands.
+   * _.iteratee = _.wrap(_.iteratee, function(iteratee, func) {
+   *   return !_.isRegExp(func) ? iteratee(func) : function(string) {
+   *     return func.test(string);
+   *   };
+   * });
+   *
+   * _.filter(['abc', 'def'], /ef/);
+   * // => ['def']
+   */
+  function iteratee(func) {
+    return baseIteratee(typeof func == 'function' ? func : baseClone(func, true));
+  }
+
+  /**
+   * Creates a function that returns the value at `path` of a given object.
    *
    * @static
    * @memberOf _
-   * @category Utilities
+   * @since 2.4.0
+   * @category Util
+   * @param {Array|string} path The path of the property to get.
+   * @returns {Function} Returns the new accessor function.
    * @example
    *
-   * var object = { 'name': 'fred' };
-   * _.noop(object) === undefined;
-   * // => true
+   * var objects = [
+   *   { 'a': { 'b': 2 } },
+   *   { 'a': { 'b': 1 } }
+   * ];
+   *
+   * _.map(objects, _.property('a.b'));
+   * // => [2, 1]
+   *
+   * _.map(_.sortBy(objects, _.property(['a', 'b'])), 'a.b');
+   * // => [1, 2]
    */
-  function noop() {
-    // no operation performed
+  function property(path) {
+    return isKey(path) ? baseProperty(toKey(path)) : basePropertyDeep(path);
   }
 
-  /*--------------------------------------------------------------------------*/
+  /**
+   * This method returns a new empty array.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.13.0
+   * @category Util
+   * @returns {Array} Returns the new empty array.
+   * @example
+   *
+   * var arrays = _.times(2, _.stubArray);
+   *
+   * console.log(arrays);
+   * // => [[], []]
+   *
+   * console.log(arrays[0] === arrays[1]);
+   * // => false
+   */
+  function stubArray() {
+    return [];
+  }
 
-  lodash.assign = assign;
-  lodash.bind = bind;
+  /**
+   * This method returns `false`.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.13.0
+   * @category Util
+   * @returns {boolean} Returns `false`.
+   * @example
+   *
+   * _.times(2, _.stubFalse);
+   * // => [false, false]
+   */
+  function stubFalse() {
+    return false;
+  }
+
+  /*------------------------------------------------------------------------*/
+
+  // Add methods that return wrapped values in chain sequences.
   lodash.compact = compact;
-  lodash.forEach = forEach;
-  lodash.forIn = forIn;
-  lodash.forOwn = forOwn;
+  lodash.iteratee = iteratee;
   lodash.keys = keys;
+  lodash.keysIn = keysIn;
+  lodash.memoize = memoize;
   lodash.merge = merge;
+  lodash.property = property;
+  lodash.toPlainObject = toPlainObject;
 
-  lodash.each = forEach;
-  lodash.extend = assign;
+  /*------------------------------------------------------------------------*/
 
-  /*--------------------------------------------------------------------------*/
-
-  // add functions that return unwrapped values when chaining
+  // Add methods that return unwrapped values in chain sequences.
   lodash.clone = clone;
+  lodash.eq = eq;
+  lodash.forEach = forEach;
+  lodash.get = get;
+  lodash.hasIn = hasIn;
   lodash.identity = identity;
   lodash.isArguments = isArguments;
   lodash.isArray = isArray;
+  lodash.isArrayLike = isArrayLike;
+  lodash.isArrayLikeObject = isArrayLikeObject;
+  lodash.isBuffer = isBuffer;
   lodash.isEmpty = isEmpty;
   lodash.isFunction = isFunction;
+  lodash.isLength = isLength;
   lodash.isObject = isObject;
+  lodash.isObjectLike = isObjectLike;
   lodash.isPlainObject = isPlainObject;
-  lodash.isString = isString;
-  lodash.noop = noop;
+  lodash.isSymbol = isSymbol;
+  lodash.isTypedArray = isTypedArray;
+  lodash.stubArray = stubArray;
+  lodash.stubFalse = stubFalse;
+  lodash.toString = toString;
 
-  /*--------------------------------------------------------------------------*/
+  // Add aliases.
+  lodash.each = forEach;
+
+  /*------------------------------------------------------------------------*/
 
   /**
    * The semantic version number.
    *
    * @static
    * @memberOf _
-   * @type string
+   * @type {string}
    */
-  lodash.VERSION = '2.4.1';
+  lodash.VERSION = VERSION;
 
   /*--------------------------------------------------------------------------*/
 
-  if (freeExports && freeModule) {
-    // in Node.js or RingoJS
-    if (moduleExports) {
-      (freeModule.exports = lodash)._ = lodash;
-    }
-
+  if (freeModule) {
+    // Export for Node.js.
+    (freeModule.exports = lodash)._ = lodash;
+    // Export for CommonJS support.
+    freeExports._ = lodash;
   }
-
 }.call(this));
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],155:[function(require,module,exports){
-var geojsonArea = require('geojson-area');
-
-module.exports = rewind;
-
-function rewind(gj, outer) {
-    switch ((gj && gj.type) || null) {
-        case 'FeatureCollection':
-            gj.features = gj.features.map(curryOuter(rewind, outer));
-            return gj;
-        case 'Feature':
-            gj.geometry = rewind(gj.geometry, outer);
-            return gj;
-        case 'Polygon':
-        case 'MultiPolygon':
-            return correct(gj, outer);
-        default:
-            return gj;
-    }
-}
-
-function curryOuter(a, b) {
-    return function(_) { return a(_, b); };
-}
-
-function correct(_, outer) {
-    if (_.type === 'Polygon') {
-        _.coordinates = correctRings(_.coordinates, outer);
-    } else if (_.type === 'MultiPolygon') {
-        _.coordinates = _.coordinates.map(curryOuter(correctRings, outer));
-    }
-    return _;
-}
-
-function correctRings(_, outer) {
-    outer = !!outer;
-    _[0] = wind(_[0], !outer);
-    for (var i = 1; i < _.length; i++) {
-        _[i] = wind(_[i], outer);
-    }
-    return _;
-}
-
-function wind(_, dir) {
-    return cw(_) === dir ? _ : _.reverse();
-}
-
-function cw(_) {
-    return geojsonArea.ring(_) >= 0;
-}
-
-},{"geojson-area":80}],156:[function(require,module,exports){
-module.exports={
-    "building": true,
-    "highway": {
-        "included_values": {
-            "services": true,
-            "rest_area": true,
-            "escape": true
-        }
-    },
-    "natural": {
-        "excluded_values": {
-            "coastline": true,
-            "ridge": true,
-            "arete": true,
-            "tree_row": true
-        }
-    },
-    "landuse": true,
-    "waterway": {
-        "included_values": {
-            "riverbank": true,
-            "dock": true,
-            "boatyard": true,
-            "dam": true
-        }
-    },
-    "amenity": true,
-    "leisure": true,
-    "barrier": {
-        "included_values": {
-            "city_wall": true,
-            "ditch": true,
-            "hedge": true,
-            "retaining_wall": true,
-            "wall": true,
-            "spikes": true
-        }
-    },
-    "railway": {
-        "included_values": {
-            "station": true,
-            "turntable": true,
-            "roundhouse": true,
-            "platform": true
-        }
-    },
-    "area": true,
-    "boundary": true,
-    "man_made": {
-        "excluded_values": {
-            "cutline": true,
-            "embankment": true,
-            "pipeline": true
-        }
-    },
-    "power": {
-        "included_values": {
-            "generator": true,
-            "station": true,
-            "sub_station": true,
-            "transformer": true
-        }
-    },
-    "place": true,
-    "shop": true,
-    "aeroway": {
-        "excluded_values": {
-            "taxiway": true
-        }
-    },
-    "tourism": true,
-    "historic": true,
-    "public_transport": true,
-    "office": true,
-    "building:part": true,
-    "military": true,
-    "ruins": true,
-    "area:highway": true,
-    "craft": true
-}
-},{}],157:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 (function (process){(function (){
 // 'path' module extracted from Node.js v8.11.1 (only the posix part)
 // transplited with Babel
@@ -63664,162 +69378,7 @@ posix.posix = posix;
 module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":160}],158:[function(require,module,exports){
-'use strict';
-
-/**
- * Based off of [the offical Google document](https://developers.google.com/maps/documentation/utilities/polylinealgorithm)
- *
- * Some parts from [this implementation](http://facstaff.unca.edu/mcmcclur/GoogleMaps/EncodePolyline/PolylineEncoder.js)
- * by [Mark McClure](http://facstaff.unca.edu/mcmcclur/)
- *
- * @module polyline
- */
-
-var polyline = {};
-
-function encode(coordinate, factor) {
-    coordinate = Math.round(coordinate * factor);
-    coordinate <<= 1;
-    if (coordinate < 0) {
-        coordinate = ~coordinate;
-    }
-    var output = '';
-    while (coordinate >= 0x20) {
-        output += String.fromCharCode((0x20 | (coordinate & 0x1f)) + 63);
-        coordinate >>= 5;
-    }
-    output += String.fromCharCode(coordinate + 63);
-    return output;
-}
-
-/**
- * Decodes to a [latitude, longitude] coordinates array.
- *
- * This is adapted from the implementation in Project-OSRM.
- *
- * @param {String} str
- * @param {Number} precision
- * @returns {Array}
- *
- * @see https://github.com/Project-OSRM/osrm-frontend/blob/master/WebContent/routing/OSRM.RoutingGeometry.js
- */
-polyline.decode = function(str, precision) {
-    var index = 0,
-        lat = 0,
-        lng = 0,
-        coordinates = [],
-        shift = 0,
-        result = 0,
-        byte = null,
-        latitude_change,
-        longitude_change,
-        factor = Math.pow(10, precision || 5);
-
-    // Coordinates have variable length when encoded, so just keep
-    // track of whether we've hit the end of the string. In each
-    // loop iteration, a single coordinate is decoded.
-    while (index < str.length) {
-
-        // Reset shift, result, and byte
-        byte = null;
-        shift = 0;
-        result = 0;
-
-        do {
-            byte = str.charCodeAt(index++) - 63;
-            result |= (byte & 0x1f) << shift;
-            shift += 5;
-        } while (byte >= 0x20);
-
-        latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
-
-        shift = result = 0;
-
-        do {
-            byte = str.charCodeAt(index++) - 63;
-            result |= (byte & 0x1f) << shift;
-            shift += 5;
-        } while (byte >= 0x20);
-
-        longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
-
-        lat += latitude_change;
-        lng += longitude_change;
-
-        coordinates.push([lat / factor, lng / factor]);
-    }
-
-    return coordinates;
-};
-
-/**
- * Encodes the given [latitude, longitude] coordinates array.
- *
- * @param {Array.<Array.<Number>>} coordinates
- * @param {Number} precision
- * @returns {String}
- */
-polyline.encode = function(coordinates, precision) {
-    if (!coordinates.length) { return ''; }
-
-    var factor = Math.pow(10, precision || 5),
-        output = encode(coordinates[0][0], factor) + encode(coordinates[0][1], factor);
-
-    for (var i = 1; i < coordinates.length; i++) {
-        var a = coordinates[i], b = coordinates[i - 1];
-        output += encode(a[0] - b[0], factor);
-        output += encode(a[1] - b[1], factor);
-    }
-
-    return output;
-};
-
-function flipped(coords) {
-    var flipped = [];
-    for (var i = 0; i < coords.length; i++) {
-        flipped.push(coords[i].slice().reverse());
-    }
-    return flipped;
-}
-
-/**
- * Encodes a GeoJSON LineString feature/geometry.
- *
- * @param {Object} geojson
- * @param {Number} precision
- * @returns {String}
- */
-polyline.fromGeoJSON = function(geojson, precision) {
-    if (geojson && geojson.type === 'Feature') {
-        geojson = geojson.geometry;
-    }
-    if (!geojson || geojson.type !== 'LineString') {
-        throw new Error('Input must be a GeoJSON LineString');
-    }
-    return polyline.encode(flipped(geojson.coordinates), precision);
-};
-
-/**
- * Decodes to a GeoJSON LineString geometry.
- *
- * @param {String} str
- * @param {Number} precision
- * @returns {Object}
- */
-polyline.toGeoJSON = function(str, precision) {
-    var coords = polyline.decode(str, precision);
-    return {
-        type: 'LineString',
-        coordinates: flipped(coords)
-    };
-};
-
-if (typeof module === 'object' && module.exports) {
-    module.exports = polyline;
-}
-
-},{}],159:[function(require,module,exports){
+},{"_process":165}],164:[function(require,module,exports){
 module.exports = function (data) {
     var lines = data.split('\n'),
                 isNameLine = true,
@@ -63885,7 +69444,7 @@ module.exports = function (data) {
     return gj;
 };
 
-},{}],160:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -64071,7 +69630,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],161:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 /*
  * Given a querystring, return an object of that querystring's components.
  *
@@ -64104,7 +69663,7 @@ module.exports.qsString = function(obj, noencode) {
     }).join('&');
 };
 
-},{}],162:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 (function() {
   var slice = [].slice;
 
@@ -64186,25 +69745,12 @@ module.exports.qsString = function(obj, noencode) {
   else this.queue = queue;
 })();
 
-},{}],163:[function(require,module,exports){
-module.exports = function(x, dims) {
-    if (!dims) dims = 'NSEW';
-    if (typeof x !== 'string') return null;
-    var r = /^([0-9.]+)°? *(?:([0-9.]+)['’′‘] *)?(?:([0-9.]+)(?:''|"|”|″) *)?([NSEW])?/,
-        m = x.match(r);
-    if (!m) return null;
-    else if (m[4] && dims.indexOf(m[4]) === -1) return null;
-    else return (((m[1]) ? parseFloat(m[1]) : 0) +
-        ((m[2] ? parseFloat(m[2]) / 60 : 0)) +
-        ((m[3] ? parseFloat(m[3]) / 3600 : 0))) *
-        ((m[4] && m[4] === 'S' || m[4] === 'W') ? -1 : 1);
-};
-
-},{}],164:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 module.exports.download = require('./src/download')
 module.exports.write = require('./src/write')
 module.exports.zip = require('./src/zip')
-},{"./src/download":165,"./src/write":173,"./src/zip":174}],165:[function(require,module,exports){
+
+},{"./src/download":169,"./src/write":177,"./src/zip":178}],169:[function(require,module,exports){
 var zip = require('./zip');
 
 module.exports = function(gj, options) {
@@ -64212,7 +69758,7 @@ module.exports = function(gj, options) {
     location.href = 'data:application/zip;base64,' + content;
 };
 
-},{"./zip":174}],166:[function(require,module,exports){
+},{"./zip":178}],170:[function(require,module,exports){
 module.exports.enlarge = function enlargeExtent(extent, pt) {
     if (pt[0] < extent.xmin) extent.xmin = pt[0];
     if (pt[0] > extent.xmax) extent.xmax = pt[0];
@@ -64238,7 +69784,7 @@ module.exports.blank = function() {
     };
 };
 
-},{}],167:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 var types = require('./types').jstypes;
 
 module.exports.geojson = geojson;
@@ -64268,7 +69814,7 @@ function obj(_) {
     return o;
 }
 
-},{"./types":172}],168:[function(require,module,exports){
+},{"./types":176}],172:[function(require,module,exports){
 module.exports.point = justType('Point', 'POINT');
 module.exports.line = justType('LineString', 'POLYLINE');
 module.exports.polygon = justType('Polygon', 'POLYGON');
@@ -64277,7 +69823,7 @@ function justType(type, TYPE) {
     return function(gj) {
         var oftype = gj.features.filter(isType(type));
         return {
-            geometries: oftype.map(justCoords),
+            geometries: (TYPE === 'POLYGON' || TYPE === 'POLYLINE') ? [oftype.map(justCoords)] : oftype.map(justCoords),
             properties: oftype.map(justProps),
             type: TYPE
         };
@@ -64302,7 +69848,7 @@ function isType(t) {
     return function(f) { return f.geometry.type === t; };
 }
 
-},{}],169:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 var ext = require('./extent');
 
 module.exports.write = function writePoints(coordinates, extent, shpView, shxView) {
@@ -64341,6 +69887,10 @@ module.exports.extent = function(coordinates) {
     }, ext.blank());
 };
 
+module.exports.parts = function parts(geometries, TYPE) {
+    return geometries.length;
+};
+
 module.exports.shxLength = function(coordinates) {
     return coordinates.length * 8;
 };
@@ -64349,8 +69899,9 @@ module.exports.shpLength = function(coordinates) {
     return coordinates.length * 28;
 };
 
-},{"./extent":166}],170:[function(require,module,exports){
-var ext = require('./extent');
+},{"./extent":170}],174:[function(require,module,exports){
+var ext = require('./extent'),
+    types = require('./types');
 
 module.exports.write = function writePoints(geometries, extent, shpView, shxView, TYPE) {
 
@@ -64363,7 +69914,8 @@ module.exports.write = function writePoints(geometries, extent, shpView, shxView
     function writePolyLine(coordinates, i) {
 
         var flattened = justCoords(coordinates),
-            contentLength = (flattened.length * 16) + 48;
+            noParts = parts([coordinates], TYPE),
+            contentLength = (flattened.length * 16) + 48 + (noParts - 1) * 4;
 
         var featureExtent = flattened.reduce(function(extent, c) {
             return ext.enlarge(extent, c);
@@ -64383,13 +69935,31 @@ module.exports.write = function writePoints(geometries, extent, shpView, shxView
         shpView.setFloat64(shpI + 20, featureExtent.ymin, true);
         shpView.setFloat64(shpI + 28, featureExtent.xmax, true);
         shpView.setFloat64(shpI + 36, featureExtent.ymax, true);
-        shpView.setInt32(shpI + 44, 1, true); // PARTS=1
+        shpView.setInt32(shpI + 44, noParts, true);
         shpView.setInt32(shpI + 48, flattened.length, true); // POINTS
-        shpView.setInt32(shpI + 52, 0, true); // The only part - index zero
+        shpView.setInt32(shpI + 52, 0, true); // The first part - index zero
+
+        var onlyParts = coordinates.reduce(function (arr, coords) {
+            if (Array.isArray(coords[0][0])) {
+                arr = arr.concat(coords);
+            } else {
+                arr.push(coords);
+            }
+            return arr;
+        }, []);
+        for (var p = 1; p < noParts; p++) {
+            shpView.setInt32( // set part index
+                shpI + 52 + (p * 4),
+                onlyParts.reduce(function (a, b, idx) {
+                    return idx < p ? a + b.length : a;
+                }, 0),
+                true
+            );
+        }
 
         flattened.forEach(function writeLine(coords, i) {
-            shpView.setFloat64(shpI + 56 + (i * 16), coords[0], true); // X
-            shpView.setFloat64(shpI + 56 + (i * 16) + 8, coords[1], true); // Y
+            shpView.setFloat64(shpI + 56 + (i * 16) + (noParts - 1) * 4, coords[0], true); // X
+            shpView.setFloat64(shpI + 56 + (i * 16) + (noParts - 1) * 4 + 8, coords[1], true); // Y
         });
 
         shpI += contentLength + 8;
@@ -64412,6 +69982,24 @@ module.exports.extent = function(coordinates) {
     }, ext.blank());
 };
 
+function parts(geometries, TYPE) {
+    var no = 1;
+    if (TYPE === types.geometries.POLYGON || TYPE === types.geometries.POLYLINE)  {
+        no = geometries.reduce(function (no, coords) {
+            no += coords.length;
+            if (Array.isArray(coords[0][0][0])) { // multi
+                no += coords.reduce(function (no, rings) {
+                    return no + rings.length - 1; // minus outer
+                }, 0);
+            }
+            return no;
+        }, 0);
+    }
+    return no;
+}
+
+module.exports.parts = parts;
+
 function totalPoints(geometries) {
     var sum = 0;
     geometries.forEach(function(g) { sum += g.length; });
@@ -64429,10 +70017,11 @@ function justCoords(coords, l) {
     }
 }
 
-},{"./extent":166}],171:[function(require,module,exports){
+
+},{"./extent":170,"./types":176}],175:[function(require,module,exports){
 module.exports = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]';
 
-},{}],172:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 module.exports.geometries = {
     NULL: 0,
     POINT: 1,
@@ -64450,7 +70039,7 @@ module.exports.geometries = {
     MULTIPATCH: 31,
 };
 
-},{}],173:[function(require,module,exports){
+},{}],177:[function(require,module,exports){
 var types = require('./types'),
     dbf = require('dbf'),
     prj = require('./prj'),
@@ -64475,7 +70064,8 @@ function write(rows, geometry_type, geometries, callback) {
 
     var TYPE = types.geometries[geometry_type],
         writer = writers[TYPE],
-        shpLength = 100 + writer.shpLength(geometries),
+        parts = writer.parts(geometries, TYPE),
+        shpLength = 100 + (parts - geometries.length) * 4 + writer.shpLength(geometries),
         shxLength = 100 + writer.shxLength(geometries),
         shpBuffer = new ArrayBuffer(shpLength),
         shpView = new DataView(shpBuffer),
@@ -64519,20 +70109,21 @@ function writeExtent(extent, view) {
     view.setFloat64(60, extent.ymax, true);
 }
 
-},{"./extent":166,"./fields":167,"./points":169,"./poly":170,"./prj":171,"./types":172,"assert":42,"dbf":64}],174:[function(require,module,exports){
+},{"./extent":170,"./fields":171,"./points":173,"./poly":174,"./prj":175,"./types":176,"assert":57,"dbf":79}],178:[function(require,module,exports){
+(function (process){(function (){
 var write = require('./write'),
     geojson = require('./geojson'),
     prj = require('./prj'),
     JSZip = require('jszip');
 
 module.exports = function(gj, options) {
-    
+
     var zip = new JSZip(),
         layers = zip.folder(options && options.folder ? options.folder : 'layers');
 
     [geojson.point(gj), geojson.line(gj), geojson.polygon(gj)]
         .forEach(function(l) {
-        if (l.geometries.length) {
+        if (l.geometries.length && l.geometries[0].length) {
             write(
                 // field definitions
                 l.properties,
@@ -64550,10 +70141,17 @@ module.exports = function(gj, options) {
         }
     });
 
-    return zip.generate({compression:'STORE'});
+    var generateOptions = { compression:'STORE' };
+
+    if (!process.browser) {
+      generateOptions.type = 'nodebuffer';
+    }
+
+    return zip.generate(generateOptions);
 };
 
-},{"./geojson":168,"./prj":171,"./write":173,"jszip":114}],175:[function(require,module,exports){
+}).call(this)}).call(this,require('_process'))
+},{"./geojson":172,"./prj":175,"./write":177,"_process":165,"jszip":120}],179:[function(require,module,exports){
 (function (global){(function (){
 ;(function(win){
 	var store = {},
@@ -64721,53 +70319,7 @@ module.exports = function(gj, options) {
 })(this.window || global);
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],176:[function(require,module,exports){
-module.exports.attr = attr;
-module.exports.tagClose = tagClose;
-module.exports.tag = tag;
-module.exports.encode = encode;
-
-/**
- * @param {array} _ an array of attributes
- * @returns {string}
- */
-function attr(_) {
-    return (_ && _.length) ? (' ' + _.map(function(a) {
-        return a[0] + '="' + a[1] + '"';
-    }).join(' ')) : '';
-}
-
-/**
- * @param {string} el element name
- * @param {array} attributes array of pairs
- * @returns {string}
- */
-function tagClose(el, attributes) {
-    return '<' + el + attr(attributes) + '/>';
-}
-
-/**
- * @param {string} el element name
- * @param {string} contents innerXML
- * @param {array} attributes array of pairs
- * @returns {string}
- */
-function tag(el, contents, attributes) {
-    return '<' + el + attr(attributes) + '>' + contents + '</' + el + '>';
-}
-
-/**
- * @param {string} _ a string of attribute
- * @returns {string}
- */
-function encode(_) {
-    return (_ === null ? '' : _.toString()).replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
-},{}],177:[function(require,module,exports){
+},{}],180:[function(require,module,exports){
 !function(root, name, make) {
   if (typeof module != 'undefined' && module.exports) module.exports = make()
   else root[name] = make()
@@ -64819,7 +70371,7 @@ function encode(_) {
   return api
 });
 
-},{}],178:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 'use strict';
 
 /**
@@ -64884,9 +70436,9 @@ if (typeof window !== 'undefined') {
   window.Suggestions = Suggestions;
 }
 
-},{"./src/suggestions":181}],179:[function(require,module,exports){
-arguments[4][2][0].apply(exports,arguments)
-},{"dup":2}],180:[function(require,module,exports){
+},{"./src/suggestions":184}],182:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"dup":3}],183:[function(require,module,exports){
 'use strict';
 
 var List = function(component) {
@@ -64999,7 +70551,7 @@ List.prototype.drawError = function(msg){
 
 module.exports = List;
 
-},{}],181:[function(require,module,exports){
+},{}],184:[function(require,module,exports){
 'use strict';
 
 var extend = require('xtend');
@@ -65257,493 +70809,545 @@ Suggestions.prototype.renderError = function(msg){
 
 module.exports = Suggestions;
 
-},{"./list":180,"fuzzy":79,"xtend":179}],182:[function(require,module,exports){
-(function (process){(function (){
-toGeoJSON = (function() {
-    'use strict';
+},{"./list":183,"fuzzy":93,"xtend":182}],185:[function(require,module,exports){
+// https://github.com/topojson/topojson-client v3.1.0 Copyright 2019 Mike Bostock
+(function (global, factory) {
+typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+typeof define === 'function' && define.amd ? define(['exports'], factory) :
+(global = global || self, factory(global.topojson = global.topojson || {}));
+}(this, function (exports) { 'use strict';
 
-    var removeSpace = (/\s*/g),
-        trimSpace = (/^\s*|\s*$/g),
-        splitSpace = (/\s+/);
-    // generate a short, numeric hash of a string
-    function okhash(x) {
-        if (!x || !x.length) return 0;
-        for (var i = 0, h = 0; i < x.length; i++) {
-            h = ((h << 5) - h) + x.charCodeAt(i) | 0;
-        } return h;
+function identity(x) {
+  return x;
+}
+
+function transform(transform) {
+  if (transform == null) return identity;
+  var x0,
+      y0,
+      kx = transform.scale[0],
+      ky = transform.scale[1],
+      dx = transform.translate[0],
+      dy = transform.translate[1];
+  return function(input, i) {
+    if (!i) x0 = y0 = 0;
+    var j = 2, n = input.length, output = new Array(n);
+    output[0] = (x0 += input[0]) * kx + dx;
+    output[1] = (y0 += input[1]) * ky + dy;
+    while (j < n) output[j] = input[j], ++j;
+    return output;
+  };
+}
+
+function bbox(topology) {
+  var t = transform(topology.transform), key,
+      x0 = Infinity, y0 = x0, x1 = -x0, y1 = -x0;
+
+  function bboxPoint(p) {
+    p = t(p);
+    if (p[0] < x0) x0 = p[0];
+    if (p[0] > x1) x1 = p[0];
+    if (p[1] < y0) y0 = p[1];
+    if (p[1] > y1) y1 = p[1];
+  }
+
+  function bboxGeometry(o) {
+    switch (o.type) {
+      case "GeometryCollection": o.geometries.forEach(bboxGeometry); break;
+      case "Point": bboxPoint(o.coordinates); break;
+      case "MultiPoint": o.coordinates.forEach(bboxPoint); break;
     }
-    // all Y children of X
-    function get(x, y) { return x.getElementsByTagName(y); }
-    function attr(x, y) { return x.getAttribute(y); }
-    function attrf(x, y) { return parseFloat(attr(x, y)); }
-    // one Y child of X, if any, otherwise null
-    function get1(x, y) { var n = get(x, y); return n.length ? n[0] : null; }
-    // https://developer.mozilla.org/en-US/docs/Web/API/Node.normalize
-    function norm(el) { if (el.normalize) { el.normalize(); } return el; }
-    // cast array x into numbers
-    function numarray(x) {
-        for (var j = 0, o = []; j < x.length; j++) o[j] = parseFloat(x[j]);
-        return o;
+  }
+
+  topology.arcs.forEach(function(arc) {
+    var i = -1, n = arc.length, p;
+    while (++i < n) {
+      p = t(arc[i], i);
+      if (p[0] < x0) x0 = p[0];
+      if (p[0] > x1) x1 = p[0];
+      if (p[1] < y0) y0 = p[1];
+      if (p[1] > y1) y1 = p[1];
     }
-    function clean(x) {
-        var o = {};
-        for (var i in x) if (x[i]) o[i] = x[i];
-        return o;
-    }
-    // get the content of a text node, if any
-    function nodeVal(x) { if (x) {norm(x);} return x && x.firstChild && x.firstChild.nodeValue; }
-    // get one coordinate from a coordinate array, if any
-    function coord1(v) { return numarray(v.replace(removeSpace, '').split(',')); }
-    // get all coordinates from a coordinate array as [[],[]]
-    function coord(v) {
-        var coords = v.replace(trimSpace, '').split(splitSpace),
-            o = [];
-        for (var i = 0; i < coords.length; i++) {
-            o.push(coord1(coords[i]));
-        }
-        return o;
-    }
-    function coordPair(x) {
-        var ll = [attrf(x, 'lon'), attrf(x, 'lat')],
-            ele = get1(x, 'ele');
-        if (ele) ll.push(parseFloat(nodeVal(ele)));
-        return ll;
-    }
-
-    // create a new feature collection parent object
-    function fc() {
-        return {
-            type: 'FeatureCollection',
-            features: []
-        };
-    }
-
-    var serializer;
-    if (typeof XMLSerializer !== 'undefined') {
-        serializer = new XMLSerializer();
-    // only require xmldom in a node environment
-    } else if (typeof exports === 'object' && typeof process === 'object' && !process.browser) {
-        serializer = new (require('xmldom').XMLSerializer)();
-    }
-    function xml2str(str) { return serializer.serializeToString(str); }
-
-    var t = {
-        kml: function(doc, o) {
-            o = o || {};
-
-            var gj = fc(),
-                // styleindex keeps track of hashed styles in order to match features
-                styleIndex = {},
-                // atomic geospatial types supported by KML - MultiGeometry is
-                // handled separately
-                geotypes = ['Polygon', 'LineString', 'Point', 'Track'],
-                // all root placemarks in the file
-                placemarks = get(doc, 'Placemark'),
-                styles = get(doc, 'Style');
-
-            for (var k = 0; k < styles.length; k++) {
-                styleIndex['#' + attr(styles[k], 'id')] = okhash(xml2str(styles[k])).toString(16);
-            }
-            for (var j = 0; j < placemarks.length; j++) {
-                gj.features = gj.features.concat(getPlacemark(placemarks[j]));
-            }
-            function gxCoord(v) { return numarray(v.split(' ')); }
-            function gxCoords(root) {
-                var elems = get(root, 'coord', 'gx'), coords = [];
-                for (var i = 0; i < elems.length; i++) coords.push(gxCoord(nodeVal(elems[i])));
-                return coords;
-            }
-            function getGeometry(root) {
-                var geomNode, geomNodes, i, j, k, geoms = [];
-                if (get1(root, 'MultiGeometry')) return getGeometry(get1(root, 'MultiGeometry'));
-                if (get1(root, 'MultiTrack')) return getGeometry(get1(root, 'MultiTrack'));
-                for (i = 0; i < geotypes.length; i++) {
-                    geomNodes = get(root, geotypes[i]);
-                    if (geomNodes) {
-                        for (j = 0; j < geomNodes.length; j++) {
-                            geomNode = geomNodes[j];
-                            if (geotypes[i] == 'Point') {
-                                geoms.push({
-                                    type: 'Point',
-                                    coordinates: coord1(nodeVal(get1(geomNode, 'coordinates')))
-                                });
-                            } else if (geotypes[i] == 'LineString') {
-                                geoms.push({
-                                    type: 'LineString',
-                                    coordinates: coord(nodeVal(get1(geomNode, 'coordinates')))
-                                });
-                            } else if (geotypes[i] == 'Polygon') {
-                                var rings = get(geomNode, 'LinearRing'),
-                                    coords = [];
-                                for (k = 0; k < rings.length; k++) {
-                                    coords.push(coord(nodeVal(get1(rings[k], 'coordinates'))));
-                                }
-                                geoms.push({
-                                    type: 'Polygon',
-                                    coordinates: coords
-                                });
-                            } else if (geotypes[i] == 'Track') {
-                                geoms.push({
-                                    type: 'LineString',
-                                    coordinates: gxCoords(geomNode)
-                                });
-                            }
-                        }
-                    }
-                }
-                return geoms;
-            }
-            function getPlacemark(root) {
-                var geoms = getGeometry(root), i, properties = {},
-                    name = nodeVal(get1(root, 'name')),
-                    styleUrl = nodeVal(get1(root, 'styleUrl')),
-                    description = nodeVal(get1(root, 'description')),
-                    timeSpan = get1(root, 'TimeSpan'),
-                    extendedData = get1(root, 'ExtendedData');
-
-                if (!geoms.length) return [];
-                if (name) properties.name = name;
-                if (styleUrl && styleIndex[styleUrl]) {
-                    properties.styleUrl = styleUrl;
-                    properties.styleHash = styleIndex[styleUrl];
-                }
-                if (description) properties.description = description;
-                if (timeSpan) {
-                    var begin = nodeVal(get1(timeSpan, 'begin'));
-                    var end = nodeVal(get1(timeSpan, 'end'));
-                    properties.timespan = { begin: begin, end: end };
-                }
-                if (extendedData) {
-                    var datas = get(extendedData, 'Data'),
-                        simpleDatas = get(extendedData, 'SimpleData');
-
-                    for (i = 0; i < datas.length; i++) {
-                        properties[datas[i].getAttribute('name')] = nodeVal(get1(datas[i], 'value'));
-                    }
-                    for (i = 0; i < simpleDatas.length; i++) {
-                        properties[simpleDatas[i].getAttribute('name')] = nodeVal(simpleDatas[i]);
-                    }
-                }
-                return [{
-                    type: 'Feature',
-                    geometry: (geoms.length === 1) ? geoms[0] : {
-                        type: 'GeometryCollection',
-                        geometries: geoms
-                    },
-                    properties: properties
-                }];
-            }
-            return gj;
-        },
-        gpx: function(doc, o) {
-            var i,
-                tracks = get(doc, 'trk'),
-                routes = get(doc, 'rte'),
-                waypoints = get(doc, 'wpt'),
-                // a feature collection
-                gj = fc();
-            for (i = 0; i < tracks.length; i++) {
-                gj.features.push(getLinestring(tracks[i], 'trkpt'));
-            }
-            for (i = 0; i < routes.length; i++) {
-                gj.features.push(getLinestring(routes[i], 'rtept'));
-            }
-            for (i = 0; i < waypoints.length; i++) {
-                gj.features.push(getPoint(waypoints[i]));
-            }
-            function getLinestring(node, pointname) {
-                var j, pts = get(node, pointname), line = [];
-                for (j = 0; j < pts.length; j++) {
-                    line.push(coordPair(pts[j]));
-                }
-                return {
-                    type: 'Feature',
-                    properties: getProperties(node),
-                    geometry: {
-                        type: 'LineString',
-                        coordinates: line
-                    }
-                };
-            }
-            function getPoint(node) {
-                var prop = getProperties(node);
-                prop.sym = nodeVal(get1(node, 'sym'));
-                return {
-                    type: 'Feature',
-                    properties: prop,
-                    geometry: {
-                        type: 'Point',
-                        coordinates: coordPair(node)
-                    }
-                };
-            }
-            function getProperties(node) {
-                var meta = ['name', 'desc', 'author', 'copyright', 'link',
-                            'time', 'keywords'],
-                    prop = {},
-                    k;
-                for (k = 0; k < meta.length; k++) {
-                    prop[meta[k]] = nodeVal(get1(node, meta[k]));
-                }
-                return clean(prop);
-            }
-            return gj;
-        }
-    };
-    return t;
-})();
-
-if (typeof module !== 'undefined') module.exports = toGeoJSON;
-
-}).call(this)}).call(this,require('_process'))
-},{"_process":160,"xmldom":50}],183:[function(require,module,exports){
-var strxml = require('strxml'),
-    tag = strxml.tag,
-    encode = strxml.encode;
-
-module.exports = function tokml(geojson, options) {
-
-    options = options || {
-        documentName: undefined,
-        documentDescription: undefined,
-        name: 'name',
-        description: 'description',
-        simplestyle: false,
-        timestamp: 'timestamp'
-    };
-
-    return '<?xml version="1.0" encoding="UTF-8"?>' +
-        tag('kml',
-            tag('Document',
-                documentName(options) +
-                documentDescription(options) +
-                root(geojson, options)
-               ), [['xmlns', 'http://www.opengis.net/kml/2.2']]);
-};
-
-function feature(options) {
-    return function(_) {
-        var styleDefinition = '',
-            styleReference = '';
-        if (options.simplestyle && hasStyle(_.properties)) {
-            styleDefinition = iconstyle(_.properties);
-            styleReference = tag('styleUrl', '#' + iconHash(_.properties));
-        }
-        if (!_.properties || !geometry.valid(_.geometry)) return '';
-        var geometryString = geometry.any(_.geometry);
-        if (!geometryString) return '';
-        return styleDefinition + tag('Placemark',
-            name(_.properties, options) +
-            description(_.properties, options) +
-            extendeddata(_.properties) +
-            timestamp(_.properties, options) +
-            geometryString +
-            styleReference);
-    };
-}
-
-function root(_, options) {
-    if (!_.type) return '';
-    switch (_.type) {
-        case 'FeatureCollection':
-            if (!_.features) return '';
-            return _.features.map(feature(options)).join('');
-        case 'Feature':
-            return feature(options)(_);
-        default:
-            return feature(options)({
-                type: 'Feature',
-                geometry: _,
-                properties: {}
-            });
-    }
-}
-
-function documentName(options) {
-    return (options.documentName !== undefined) ? tag('name', options.documentName) : '';
-}
-
-function documentDescription(options) {
-    return (options.documentDescription !== undefined) ? tag('description', options.documentDescription) : '';
-}
-
-function name(_, options) {
-    return _[options.name] ? tag('name', encode(_[options.name])) : '';
-}
-
-function description(_, options) {
-    return _[options.description] ? tag('description', encode(_[options.description])) : '';
-}
-
-function timestamp(_, options) {
-    return _[options.timestamp] ? tag('TimeStamp', tag('when', encode(_[options.timestamp]))) : '';
-}
-
-// ## Geometry Types
-//
-// https://developers.google.com/kml/documentation/kmlreference#geometry
-var geometry = {
-    Point: function(_) {
-        return tag('Point', tag('coordinates', _.coordinates.join(',')));
-    },
-    LineString: function(_) {
-        return tag('LineString', tag('coordinates', linearring(_.coordinates)));
-    },
-    Polygon: function(_) {
-        if (!_.coordinates.length) return '';
-        var outer = _.coordinates[0],
-            inner = _.coordinates.slice(1),
-            outerRing = tag('outerBoundaryIs',
-                tag('LinearRing', tag('coordinates', linearring(outer)))),
-            innerRings = inner.map(function(i) {
-                return tag('innerBoundaryIs',
-                    tag('LinearRing', tag('coordinates', linearring(i))));
-            }).join('');
-        return tag('Polygon', outerRing + innerRings);
-    },
-    MultiPoint: function(_) {
-        if (!_.coordinates.length) return '';
-        return tag('MultiGeometry', _.coordinates.map(function(c) {
-            return geometry.Point({ coordinates: c });
-        }).join(''));
-    },
-    MultiPolygon: function(_) {
-        if (!_.coordinates.length) return '';
-        return tag('MultiGeometry', _.coordinates.map(function(c) {
-            return geometry.Polygon({ coordinates: c });
-        }).join(''));
-    },
-    MultiLineString: function(_) {
-        if (!_.coordinates.length) return '';
-        return tag('MultiGeometry', _.coordinates.map(function(c) {
-            return geometry.LineString({ coordinates: c });
-        }).join(''));
-    },
-    GeometryCollection: function(_) {
-        return tag('MultiGeometry',
-            _.geometries.map(geometry.any).join(''));
-    },
-    valid: function(_) {
-        return _ && _.type && (_.coordinates ||
-            _.type === 'GeometryCollection' && _.geometries.every(geometry.valid));
-    },
-    any: function(_) {
-        if (geometry[_.type]) {
-            return geometry[_.type](_);
-        } else {
-            return '';
-        }
-    }
-};
-
-function linearring(_) {
-    return _.map(function(cds) { return cds.join(','); }).join(' ');
-}
-
-// ## Data
-function extendeddata(_) {
-    return tag('ExtendedData', pairs(_).map(data).join(''));
-}
-
-function data(_) {
-    return tag('Data', tag('value', encode(_[1])), [['name', encode(_[0])]]);
-}
-
-// ## Icons
-function iconstyle(_) {
-    return tag('Style',
-        tag('IconStyle',
-            tag('Icon',
-                tag('href', iconUrl(_)))) +
-        iconSize(_), [['id', iconHash(_)]]);
-}
-
-function iconUrl(_) {
-    var size = _['marker-size'] || 'medium',
-        symbol = _['marker-symbol'] ? '-' + _['marker-symbol'] : '',
-        color = (_['marker-color'] || '7e7e7e').replace('#', '');
-
-    return 'https://api.tiles.mapbox.com/v3/marker/' + 'pin-' + size.charAt(0) +
-        symbol + '+' + color + '.png';
-}
-
-function iconSize(_) {
-    return tag('hotSpot', '', [
-        ['xunits', 'fraction'],
-        ['yunits', 'fraction'],
-        ['x', 0.5],
-        ['y', 0.5]
-    ]);
-}
-
-function hasStyle(_) {
-    return !!(_['marker-size'] || _['marker-symbol'] || _['marker-color']);
-}
-
-function iconHash(_) {
-    return (_['marker-symbol'] || '') +
-        (_['marker-color'] || '').replace('#', '') +
-        (_['marker-size'] || '');
-}
-
-// ## Helpers
-function pairs(_) {
-    var o = [];
-    for (var i in _) o.push([i, _[i]]);
-    return o;
-}
-
-},{"strxml":176}],184:[function(require,module,exports){
-var type = require("./type"),
-    topojson = require("../../");
-
-module.exports = function(topology, propertiesById) {
-  var bind = type({
-    geometry: function(geometry) {
-      var properties0 = geometry.properties,
-          properties1 = propertiesById[geometry.id];
-      if (properties1) {
-        if (properties0) for (var k in properties1) properties0[k] = properties1[k];
-        else for (var k in properties1) { geometry.properties = properties1; break; }
-      }
-      this.defaults.geometry.call(this, geometry);
-    },
-    LineString: noop,
-    MultiLineString: noop,
-    Point: noop,
-    MultiPoint: noop,
-    Polygon: noop,
-    MultiPolygon: noop
   });
 
-  for (var key in topology.objects) {
-    bind.object(topology.objects[key]);
+  for (key in topology.objects) {
+    bboxGeometry(topology.objects[key]);
   }
-};
 
-function noop() {}
+  return [x0, y0, x1, y1];
+}
 
-},{"../../":"topojson","./type":212}],185:[function(require,module,exports){
+function reverse(array, n) {
+  var t, j = array.length, i = j - n;
+  while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;
+}
+
+function feature(topology, o) {
+  if (typeof o === "string") o = topology.objects[o];
+  return o.type === "GeometryCollection"
+      ? {type: "FeatureCollection", features: o.geometries.map(function(o) { return feature$1(topology, o); })}
+      : feature$1(topology, o);
+}
+
+function feature$1(topology, o) {
+  var id = o.id,
+      bbox = o.bbox,
+      properties = o.properties == null ? {} : o.properties,
+      geometry = object(topology, o);
+  return id == null && bbox == null ? {type: "Feature", properties: properties, geometry: geometry}
+      : bbox == null ? {type: "Feature", id: id, properties: properties, geometry: geometry}
+      : {type: "Feature", id: id, bbox: bbox, properties: properties, geometry: geometry};
+}
+
+function object(topology, o) {
+  var transformPoint = transform(topology.transform),
+      arcs = topology.arcs;
+
+  function arc(i, points) {
+    if (points.length) points.pop();
+    for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length; k < n; ++k) {
+      points.push(transformPoint(a[k], k));
+    }
+    if (i < 0) reverse(points, n);
+  }
+
+  function point(p) {
+    return transformPoint(p);
+  }
+
+  function line(arcs) {
+    var points = [];
+    for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);
+    if (points.length < 2) points.push(points[0]); // This should never happen per the specification.
+    return points;
+  }
+
+  function ring(arcs) {
+    var points = line(arcs);
+    while (points.length < 4) points.push(points[0]); // This may happen if an arc has only two points.
+    return points;
+  }
+
+  function polygon(arcs) {
+    return arcs.map(ring);
+  }
+
+  function geometry(o) {
+    var type = o.type, coordinates;
+    switch (type) {
+      case "GeometryCollection": return {type: type, geometries: o.geometries.map(geometry)};
+      case "Point": coordinates = point(o.coordinates); break;
+      case "MultiPoint": coordinates = o.coordinates.map(point); break;
+      case "LineString": coordinates = line(o.arcs); break;
+      case "MultiLineString": coordinates = o.arcs.map(line); break;
+      case "Polygon": coordinates = polygon(o.arcs); break;
+      case "MultiPolygon": coordinates = o.arcs.map(polygon); break;
+      default: return null;
+    }
+    return {type: type, coordinates: coordinates};
+  }
+
+  return geometry(o);
+}
+
+function stitch(topology, arcs) {
+  var stitchedArcs = {},
+      fragmentByStart = {},
+      fragmentByEnd = {},
+      fragments = [],
+      emptyIndex = -1;
+
+  // Stitch empty arcs first, since they may be subsumed by other arcs.
+  arcs.forEach(function(i, j) {
+    var arc = topology.arcs[i < 0 ? ~i : i], t;
+    if (arc.length < 3 && !arc[1][0] && !arc[1][1]) {
+      t = arcs[++emptyIndex], arcs[emptyIndex] = i, arcs[j] = t;
+    }
+  });
+
+  arcs.forEach(function(i) {
+    var e = ends(i),
+        start = e[0],
+        end = e[1],
+        f, g;
+
+    if (f = fragmentByEnd[start]) {
+      delete fragmentByEnd[f.end];
+      f.push(i);
+      f.end = end;
+      if (g = fragmentByStart[end]) {
+        delete fragmentByStart[g.start];
+        var fg = g === f ? f : f.concat(g);
+        fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;
+      } else {
+        fragmentByStart[f.start] = fragmentByEnd[f.end] = f;
+      }
+    } else if (f = fragmentByStart[end]) {
+      delete fragmentByStart[f.start];
+      f.unshift(i);
+      f.start = start;
+      if (g = fragmentByEnd[start]) {
+        delete fragmentByEnd[g.end];
+        var gf = g === f ? f : g.concat(f);
+        fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;
+      } else {
+        fragmentByStart[f.start] = fragmentByEnd[f.end] = f;
+      }
+    } else {
+      f = [i];
+      fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;
+    }
+  });
+
+  function ends(i) {
+    var arc = topology.arcs[i < 0 ? ~i : i], p0 = arc[0], p1;
+    if (topology.transform) p1 = [0, 0], arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });
+    else p1 = arc[arc.length - 1];
+    return i < 0 ? [p1, p0] : [p0, p1];
+  }
+
+  function flush(fragmentByEnd, fragmentByStart) {
+    for (var k in fragmentByEnd) {
+      var f = fragmentByEnd[k];
+      delete fragmentByStart[f.start];
+      delete f.start;
+      delete f.end;
+      f.forEach(function(i) { stitchedArcs[i < 0 ? ~i : i] = 1; });
+      fragments.push(f);
+    }
+  }
+
+  flush(fragmentByEnd, fragmentByStart);
+  flush(fragmentByStart, fragmentByEnd);
+  arcs.forEach(function(i) { if (!stitchedArcs[i < 0 ? ~i : i]) fragments.push([i]); });
+
+  return fragments;
+}
+
+function mesh(topology) {
+  return object(topology, meshArcs.apply(this, arguments));
+}
+
+function meshArcs(topology, object, filter) {
+  var arcs, i, n;
+  if (arguments.length > 1) arcs = extractArcs(topology, object, filter);
+  else for (i = 0, arcs = new Array(n = topology.arcs.length); i < n; ++i) arcs[i] = i;
+  return {type: "MultiLineString", arcs: stitch(topology, arcs)};
+}
+
+function extractArcs(topology, object, filter) {
+  var arcs = [],
+      geomsByArc = [],
+      geom;
+
+  function extract0(i) {
+    var j = i < 0 ? ~i : i;
+    (geomsByArc[j] || (geomsByArc[j] = [])).push({i: i, g: geom});
+  }
+
+  function extract1(arcs) {
+    arcs.forEach(extract0);
+  }
+
+  function extract2(arcs) {
+    arcs.forEach(extract1);
+  }
+
+  function extract3(arcs) {
+    arcs.forEach(extract2);
+  }
+
+  function geometry(o) {
+    switch (geom = o, o.type) {
+      case "GeometryCollection": o.geometries.forEach(geometry); break;
+      case "LineString": extract1(o.arcs); break;
+      case "MultiLineString": case "Polygon": extract2(o.arcs); break;
+      case "MultiPolygon": extract3(o.arcs); break;
+    }
+  }
+
+  geometry(object);
+
+  geomsByArc.forEach(filter == null
+      ? function(geoms) { arcs.push(geoms[0].i); }
+      : function(geoms) { if (filter(geoms[0].g, geoms[geoms.length - 1].g)) arcs.push(geoms[0].i); });
+
+  return arcs;
+}
+
+function planarRingArea(ring) {
+  var i = -1, n = ring.length, a, b = ring[n - 1], area = 0;
+  while (++i < n) a = b, b = ring[i], area += a[0] * b[1] - a[1] * b[0];
+  return Math.abs(area); // Note: doubled area!
+}
+
+function merge(topology) {
+  return object(topology, mergeArcs.apply(this, arguments));
+}
+
+function mergeArcs(topology, objects) {
+  var polygonsByArc = {},
+      polygons = [],
+      groups = [];
+
+  objects.forEach(geometry);
+
+  function geometry(o) {
+    switch (o.type) {
+      case "GeometryCollection": o.geometries.forEach(geometry); break;
+      case "Polygon": extract(o.arcs); break;
+      case "MultiPolygon": o.arcs.forEach(extract); break;
+    }
+  }
+
+  function extract(polygon) {
+    polygon.forEach(function(ring) {
+      ring.forEach(function(arc) {
+        (polygonsByArc[arc = arc < 0 ? ~arc : arc] || (polygonsByArc[arc] = [])).push(polygon);
+      });
+    });
+    polygons.push(polygon);
+  }
+
+  function area(ring) {
+    return planarRingArea(object(topology, {type: "Polygon", arcs: [ring]}).coordinates[0]);
+  }
+
+  polygons.forEach(function(polygon) {
+    if (!polygon._) {
+      var group = [],
+          neighbors = [polygon];
+      polygon._ = 1;
+      groups.push(group);
+      while (polygon = neighbors.pop()) {
+        group.push(polygon);
+        polygon.forEach(function(ring) {
+          ring.forEach(function(arc) {
+            polygonsByArc[arc < 0 ? ~arc : arc].forEach(function(polygon) {
+              if (!polygon._) {
+                polygon._ = 1;
+                neighbors.push(polygon);
+              }
+            });
+          });
+        });
+      }
+    }
+  });
+
+  polygons.forEach(function(polygon) {
+    delete polygon._;
+  });
+
+  return {
+    type: "MultiPolygon",
+    arcs: groups.map(function(polygons) {
+      var arcs = [], n;
+
+      // Extract the exterior (unique) arcs.
+      polygons.forEach(function(polygon) {
+        polygon.forEach(function(ring) {
+          ring.forEach(function(arc) {
+            if (polygonsByArc[arc < 0 ? ~arc : arc].length < 2) {
+              arcs.push(arc);
+            }
+          });
+        });
+      });
+
+      // Stitch the arcs into one or more rings.
+      arcs = stitch(topology, arcs);
+
+      // If more than one ring is returned,
+      // at most one of these rings can be the exterior;
+      // choose the one with the greatest absolute area.
+      if ((n = arcs.length) > 1) {
+        for (var i = 1, k = area(arcs[0]), ki, t; i < n; ++i) {
+          if ((ki = area(arcs[i])) > k) {
+            t = arcs[0], arcs[0] = arcs[i], arcs[i] = t, k = ki;
+          }
+        }
+      }
+
+      return arcs;
+    }).filter(function(arcs) {
+      return arcs.length > 0;
+    })
+  };
+}
+
+function bisect(a, x) {
+  var lo = 0, hi = a.length;
+  while (lo < hi) {
+    var mid = lo + hi >>> 1;
+    if (a[mid] < x) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+function neighbors(objects) {
+  var indexesByArc = {}, // arc index -> array of object indexes
+      neighbors = objects.map(function() { return []; });
+
+  function line(arcs, i) {
+    arcs.forEach(function(a) {
+      if (a < 0) a = ~a;
+      var o = indexesByArc[a];
+      if (o) o.push(i);
+      else indexesByArc[a] = [i];
+    });
+  }
+
+  function polygon(arcs, i) {
+    arcs.forEach(function(arc) { line(arc, i); });
+  }
+
+  function geometry(o, i) {
+    if (o.type === "GeometryCollection") o.geometries.forEach(function(o) { geometry(o, i); });
+    else if (o.type in geometryType) geometryType[o.type](o.arcs, i);
+  }
+
+  var geometryType = {
+    LineString: line,
+    MultiLineString: polygon,
+    Polygon: polygon,
+    MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }
+  };
+
+  objects.forEach(geometry);
+
+  for (var i in indexesByArc) {
+    for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {
+      for (var k = j + 1; k < m; ++k) {
+        var ij = indexes[j], ik = indexes[k], n;
+        if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);
+        if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);
+      }
+    }
+  }
+
+  return neighbors;
+}
+
+function untransform(transform) {
+  if (transform == null) return identity;
+  var x0,
+      y0,
+      kx = transform.scale[0],
+      ky = transform.scale[1],
+      dx = transform.translate[0],
+      dy = transform.translate[1];
+  return function(input, i) {
+    if (!i) x0 = y0 = 0;
+    var j = 2,
+        n = input.length,
+        output = new Array(n),
+        x1 = Math.round((input[0] - dx) / kx),
+        y1 = Math.round((input[1] - dy) / ky);
+    output[0] = x1 - x0, x0 = x1;
+    output[1] = y1 - y0, y0 = y1;
+    while (j < n) output[j] = input[j], ++j;
+    return output;
+  };
+}
+
+function quantize(topology, transform) {
+  if (topology.transform) throw new Error("already quantized");
+
+  if (!transform || !transform.scale) {
+    if (!((n = Math.floor(transform)) >= 2)) throw new Error("n must be ≥2");
+    box = topology.bbox || bbox(topology);
+    var x0 = box[0], y0 = box[1], x1 = box[2], y1 = box[3], n;
+    transform = {scale: [x1 - x0 ? (x1 - x0) / (n - 1) : 1, y1 - y0 ? (y1 - y0) / (n - 1) : 1], translate: [x0, y0]};
+  } else {
+    box = topology.bbox;
+  }
+
+  var t = untransform(transform), box, key, inputs = topology.objects, outputs = {};
+
+  function quantizePoint(point) {
+    return t(point);
+  }
+
+  function quantizeGeometry(input) {
+    var output;
+    switch (input.type) {
+      case "GeometryCollection": output = {type: "GeometryCollection", geometries: input.geometries.map(quantizeGeometry)}; break;
+      case "Point": output = {type: "Point", coordinates: quantizePoint(input.coordinates)}; break;
+      case "MultiPoint": output = {type: "MultiPoint", coordinates: input.coordinates.map(quantizePoint)}; break;
+      default: return input;
+    }
+    if (input.id != null) output.id = input.id;
+    if (input.bbox != null) output.bbox = input.bbox;
+    if (input.properties != null) output.properties = input.properties;
+    return output;
+  }
+
+  function quantizeArc(input) {
+    var i = 0, j = 1, n = input.length, p, output = new Array(n); // pessimistic
+    output[0] = t(input[0], 0);
+    while (++i < n) if ((p = t(input[i], i))[0] || p[1]) output[j++] = p; // non-coincident points
+    if (j === 1) output[j++] = [0, 0]; // an arc must have at least two points
+    output.length = j;
+    return output;
+  }
+
+  for (key in inputs) outputs[key] = quantizeGeometry(inputs[key]);
+
+  return {
+    type: "Topology",
+    bbox: box,
+    transform: transform,
+    objects: outputs,
+    arcs: topology.arcs.map(quantizeArc)
+  };
+}
+
+exports.bbox = bbox;
+exports.feature = feature;
+exports.merge = merge;
+exports.mergeArcs = mergeArcs;
+exports.mesh = mesh;
+exports.meshArcs = meshArcs;
+exports.neighbors = neighbors;
+exports.quantize = quantize;
+exports.transform = transform;
+exports.untransform = untransform;
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+}));
+
+},{}],186:[function(require,module,exports){
+// https://github.com/topojson/topojson-server v3.0.1 Copyright 2019 Mike Bostock
+(function (global, factory) {
+typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+typeof define === 'function' && define.amd ? define(['exports'], factory) :
+(global = global || self, factory(global.topojson = global.topojson || {}));
+}(this, function (exports) { 'use strict';
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 
 // Computes the bounding box of the specified hash of GeoJSON objects.
-module.exports = function(objects) {
+function bounds(objects) {
   var x0 = Infinity,
       y0 = Infinity,
       x1 = -Infinity,
       y1 = -Infinity;
 
   function boundGeometry(geometry) {
-    if (geometry && boundGeometryType.hasOwnProperty(geometry.type)) boundGeometryType[geometry.type](geometry);
+    if (geometry != null && hasOwnProperty.call(boundGeometryType, geometry.type)) boundGeometryType[geometry.type](geometry);
   }
 
   var boundGeometryType = {
     GeometryCollection: function(o) { o.geometries.forEach(boundGeometry); },
     Point: function(o) { boundPoint(o.coordinates); },
     MultiPoint: function(o) { o.coordinates.forEach(boundPoint); },
-    LineString: function(o) { boundLine(o.coordinates); },
-    MultiLineString: function(o) { o.coordinates.forEach(boundLine); },
-    Polygon: function(o) { o.coordinates.forEach(boundLine); },
-    MultiPolygon: function(o) { o.coordinates.forEach(boundMultiLine); }
+    LineString: function(o) { boundLine(o.arcs); },
+    MultiLineString: function(o) { o.arcs.forEach(boundLine); },
+    Polygon: function(o) { o.arcs.forEach(boundLine); },
+    MultiPolygon: function(o) { o.arcs.forEach(boundMultiLine); }
   };
 
   function boundPoint(coordinates) {
@@ -65767,1255 +71371,289 @@ module.exports = function(objects) {
     boundGeometry(objects[key]);
   }
 
-  return [x0, y0, x1, y1];
-};
-
-},{}],186:[function(require,module,exports){
-exports.name = "cartesian";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = Math.abs;
-exports.triangleArea = triangleArea;
-exports.distance = distance;
-
-function formatDistance(d) {
-  return d.toString();
+  return x1 >= x0 && y1 >= y0 ? [x0, y0, x1, y1] : undefined;
 }
 
-function ringArea(ring) {
-  var i = -1,
-      n = ring.length,
-      a,
-      b = ring[n - 1],
-      area = 0;
-
-  while (++i < n) {
-    a = b;
-    b = ring[i];
-    area += a[0] * b[1] - a[1] * b[0];
+function hashset(size, hash, equal, type, empty) {
+  if (arguments.length === 3) {
+    type = Array;
+    empty = null;
   }
 
-  return area * .5;
-}
+  var store = new type(size = 1 << Math.max(4, Math.ceil(Math.log(size) / Math.LN2))),
+      mask = size - 1;
 
-function triangleArea(triangle) {
-  return Math.abs(
-    (triangle[0][0] - triangle[2][0]) * (triangle[1][1] - triangle[0][1])
-    - (triangle[0][0] - triangle[1][0]) * (triangle[2][1] - triangle[0][1])
-  );
-}
-
-function distance(x0, y0, x1, y1) {
-  var dx = x0 - x1, dy = y0 - y1;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-},{}],187:[function(require,module,exports){
-var type = require("./type"),
-    systems = require("./coordinate-systems"),
-    topojson = require("../../");
-
-module.exports = function(object, options) {
-  if (object.type === "Topology") clockwiseTopology(object, options);
-  else clockwiseGeometry(object, options);
-};
-
-function clockwiseGeometry(object, options) {
-  var system = null;
-
-  if (options)
-    "coordinate-system" in options && (system = systems[options["coordinate-system"]]);
-
-  var clockwisePolygon = clockwisePolygonSystem(system.ringArea, reverse);
-
-  type({
-    LineString: noop,
-    MultiLineString: noop,
-    Point: noop,
-    MultiPoint: noop,
-    Polygon: function(polygon) { clockwisePolygon(polygon.coordinates); },
-    MultiPolygon: function(multiPolygon) { multiPolygon.coordinates.forEach(clockwisePolygon); }
-  }).object(object);
-
-  function reverse(array) { array.reverse(); }
-}
-
-function clockwiseTopology(topology, options) {
-  var system = null;
-
-  if (options)
-    "coordinate-system" in options && (system = systems[options["coordinate-system"]]);
-
-  var clockwisePolygon = clockwisePolygonSystem(ringArea, reverse);
-
-  var clockwise = type({
-    LineString: noop,
-    MultiLineString: noop,
-    Point: noop,
-    MultiPoint: noop,
-    Polygon: function(polygon) { clockwisePolygon(polygon.arcs); },
-    MultiPolygon: function(multiPolygon) { multiPolygon.arcs.forEach(clockwisePolygon); }
-  });
-
-  for (var key in topology.objects) {
-    clockwise.object(topology.objects[key]);
+  for (var i = 0; i < size; ++i) {
+    store[i] = empty;
   }
 
-  function ringArea(ring) {
-    return system.ringArea(topojson.feature(topology, {type: "Polygon", arcs: [ring]}).geometry.coordinates[0]);
-  }
-
-  // TODO It might be slightly more compact to reverse the arc.
-  function reverse(ring) {
-    var i = -1, n = ring.length;
-    ring.reverse();
-    while (++i < n) ring[i] = ~ring[i];
-  }
-};
-
-function clockwisePolygonSystem(ringArea, reverse) {
-  return function(rings) {
-    if (!(n = rings.length)) return;
-    var n,
-        areas = new Array(n),
-        max = -Infinity,
-        best,
-        area,
-        t;
-    // Find the largest absolute ring area; this should be the exterior ring.
-    for (var i = 0; i < n; ++i) {
-      var area = Math.abs(areas[i] = ringArea(rings[i]));
-      if (area > max) max = area, best = i;
+  function add(value) {
+    var index = hash(value) & mask,
+        match = store[index],
+        collisions = 0;
+    while (match != empty) {
+      if (equal(match, value)) return true;
+      if (++collisions >= size) throw new Error("full hashset");
+      match = store[index = (index + 1) & mask];
     }
-    // Ensure the largest ring appears first.
-    if (best) {
-      t = rings[best], rings[best] = rings[0], rings[0] = t;
-      t = areas[best], areas[best] = areas[0], areas[0] = t;
+    store[index] = value;
+    return true;
+  }
+
+  function has(value) {
+    var index = hash(value) & mask,
+        match = store[index],
+        collisions = 0;
+    while (match != empty) {
+      if (equal(match, value)) return true;
+      if (++collisions >= size) break;
+      match = store[index = (index + 1) & mask];
     }
-    if (areas[0] < 0) reverse(rings[0]);
-    for (var i = 1; i < n; ++i) {
-      if (areas[i] > 0) reverse(rings[i]);
+    return false;
+  }
+
+  function values() {
+    var values = [];
+    for (var i = 0, n = store.length; i < n; ++i) {
+      var match = store[i];
+      if (match != empty) values.push(match);
     }
-  };
-}
-
-function noop() {}
-
-},{"../../":"topojson","./coordinate-systems":189,"./type":212}],188:[function(require,module,exports){
-// Given a hash of GeoJSON objects and an id function, invokes the id function
-// to compute a new id for each object that is a feature. The function is passed
-// the feature and is expected to return the new feature id, or null if the
-// feature should not have an id.
-module.exports = function(objects, id) {
-  if (arguments.length < 2) id = function(d) { return d.id; };
-
-  function idObject(object) {
-    if (object && idObjectType.hasOwnProperty(object.type)) idObjectType[object.type](object);
-  }
-
-  function idFeature(feature) {
-    var i = id(feature);
-    if (i == null) delete feature.id;
-    else feature.id = i;
-  }
-
-  var idObjectType = {
-    Feature: idFeature,
-    FeatureCollection: function(collection) { collection.features.forEach(idFeature); }
-  };
-
-  for (var key in objects) {
-    idObject(objects[key]);
-  }
-
-  return objects;
-};
-
-},{}],189:[function(require,module,exports){
-module.exports = {
-  cartesian: require("./cartesian"),
-  spherical: require("./spherical")
-};
-
-},{"./cartesian":186,"./spherical":199}],190:[function(require,module,exports){
-// Given a TopoJSON topology in absolute (quantized) coordinates,
-// converts to fixed-point delta encoding.
-// This is a destructive operation that modifies the given topology!
-module.exports = function(topology) {
-  var arcs = topology.arcs,
-      i = -1,
-      n = arcs.length;
-
-  while (++i < n) {
-    var arc = arcs[i],
-        j = 0,
-        m = arc.length,
-        point = arc[0],
-        x0 = point[0],
-        y0 = point[1],
-        x1,
-        y1;
-    while (++j < m) {
-      point = arc[j];
-      x1 = point[0];
-      y1 = point[1];
-      arc[j] = [x1 - x0, y1 - y0];
-      x0 = x1;
-      y0 = y1;
-    }
-  }
-
-  return topology;
-};
-
-},{}],191:[function(require,module,exports){
-var type = require("./type"),
-    prune = require("./prune"),
-    clockwise = require("./clockwise"),
-    systems = require("./coordinate-systems"),
-    topojson = require("../../");
-
-module.exports = function(topology, options) {
-  var system = null,
-      forceClockwise = true, // force exterior rings to be clockwise?
-      preserveAttached = true, // e.g., remove islands but not small counties
-      preserveRing = preserveNone,
-      minimumArea;
-
-  if (options)
-    "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
-    "minimum-area" in options && (minimumArea = +options["minimum-area"]),
-    "preserve-attached" in options && (preserveAttached = !!options["preserve-attached"]),
-    "force-clockwise" in options && (forceClockwise = !!options["force-clockwise"]);
-
-  if (forceClockwise) clockwise(topology, options); // deprecated; for backwards-compatibility
-
-  if (!(minimumArea > 0)) minimumArea = Number.MIN_VALUE;
-
-  if (preserveAttached) {
-    var uniqueRingByArc = {}, // arc index -> index of unique associated ring, or -1 if used by multiple rings
-        ringIndex = 0;
-
-    var checkAttachment = type({
-      LineString: noop,
-      MultiLineString: noop,
-      Point: noop,
-      MultiPoint: noop,
-      MultiPolygon: function(multiPolygon) {
-        var arcs = multiPolygon.arcs, i = -1, n = arcs.length;
-        while (++i < n) this.polygon(arcs[i]);
-      },
-      Polygon: function(polygon) {
-        this.polygon(polygon.arcs);
-      },
-      polygon: function(arcs) {
-        for (var i = 0, n = arcs.length; i < n; ++i, ++ringIndex) {
-          for (var ring = arcs[i], j = 0, m = ring.length; j < m; ++j) {
-            var arc = ring[j];
-            if (arc < 0) arc = ~arc;
-            var uniqueRing = uniqueRingByArc[arc];
-            if (uniqueRing >= 0 && uniqueRing !== ringIndex) uniqueRingByArc[arc] = -1;
-            else uniqueRingByArc[arc] = ringIndex;
-          }
-        }
-      }
-    });
-
-    preserveRing = function(ring) {
-      for (var j = 0, m = ring.length; j < m; ++j) {
-        var arc = ring[j];
-        if (uniqueRingByArc[arc < 0 ? ~arc : arc] < 0) {
-          return true;
-        }
-      }
-    };
-
-    for (var key in topology.objects) {
-      checkAttachment.object(topology.objects[key]);
-    }
-  }
-
-  var filter = type({
-    LineString: noop, // TODO remove empty lines
-    MultiLineString: noop,
-    Point: noop,
-    MultiPoint: noop,
-    Polygon: function(polygon) {
-      polygon.arcs = filterPolygon(polygon.arcs);
-      if (!polygon.arcs || !polygon.arcs.length) {
-        polygon.type = null;
-        delete polygon.arcs;
-      }
-    },
-    MultiPolygon: function(multiPolygon) {
-      multiPolygon.arcs = multiPolygon.arcs
-          .map(filterPolygon)
-          .filter(function(polygon) { return polygon && polygon.length; });
-      if (!multiPolygon.arcs.length) {
-        multiPolygon.type = null;
-        delete multiPolygon.arcs;
-      }
-    },
-    GeometryCollection: function(collection) {
-      this.defaults.GeometryCollection.call(this, collection);
-      collection.geometries = collection.geometries.filter(function(geometry) { return geometry.type != null; });
-      if (!collection.geometries.length) {
-        collection.type = null;
-        delete collection.geometries;
-      }
-    }
-  });
-
-  for (var key in topology.objects) {
-    filter.object(topology.objects[key]);
-  }
-
-  prune(topology, options);
-
-  function filterPolygon(arcs) {
-    return arcs.length && filterExteriorRing(arcs[0]) // if the exterior is small, ignore any holes
-        ? [arcs.shift()].concat(arcs.filter(filterInteriorRing))
-        : null;
-  }
-
-  function filterExteriorRing(ring) {
-    return preserveRing(ring) || system.absoluteArea(ringArea(ring)) >= minimumArea;
-  }
-
-  function filterInteriorRing(ring) {
-    return preserveRing(ring) || system.absoluteArea(-ringArea(ring)) >= minimumArea;
-  }
-
-  function ringArea(ring) {
-    return system.ringArea(topojson.feature(topology, {type: "Polygon", arcs: [ring]}).geometry.coordinates[0]);
-  }
-};
-
-function noop() {}
-
-function preserveNone() {
-  return false;
-}
-
-},{"../../":"topojson","./clockwise":187,"./coordinate-systems":189,"./prune":195,"./type":212}],192:[function(require,module,exports){
-// Given a hash of GeoJSON objects, replaces Features with geometry objects.
-// This is a destructive operation that modifies the input objects!
-module.exports = function(objects) {
-
-  function geomifyObject(object) {
-    return (object && geomifyObjectType.hasOwnProperty(object.type)
-        ? geomifyObjectType[object.type]
-        : geomifyGeometry)(object);
-  }
-
-  function geomifyFeature(feature) {
-    var geometry = feature.geometry;
-    if (geometry == null) {
-      feature.type = null;
-    } else {
-      geomifyGeometry(geometry);
-      feature.type = geometry.type;
-      if (geometry.geometries) feature.geometries = geometry.geometries;
-      else if (geometry.coordinates) feature.coordinates = geometry.coordinates;
-    }
-    delete feature.geometry;
-    return feature;
-  }
-
-  function geomifyGeometry(geometry) {
-    if (!geometry) return {type: null};
-    if (geomifyGeometryType.hasOwnProperty(geometry.type)) geomifyGeometryType[geometry.type](geometry);
-    return geometry;
-  }
-
-  var geomifyObjectType = {
-    Feature: geomifyFeature,
-    FeatureCollection: function(collection) {
-      collection.type = "GeometryCollection";
-      collection.geometries = collection.features;
-      collection.features.forEach(geomifyFeature);
-      delete collection.features;
-      return collection;
-    }
-  };
-
-  var geomifyGeometryType = {
-    GeometryCollection: function(o) {
-      var geometries = o.geometries, i = -1, n = geometries.length;
-      while (++i < n) geometries[i] = geomifyGeometry(geometries[i]);
-    },
-    MultiPoint: function(o) {
-      if (!o.coordinates.length) {
-        o.type = null;
-        delete o.coordinates;
-      } else if (o.coordinates.length < 2) {
-        o.type = "Point";
-        o.coordinates = o.coordinates[0];
-      }
-    },
-    LineString: function(o) {
-      if (!o.coordinates.length) {
-        o.type = null;
-        delete o.coordinates;
-      }
-    },
-    MultiLineString: function(o) {
-      for (var lines = o.coordinates, i = 0, N = 0, n = lines.length; i < n; ++i) {
-        var line = lines[i];
-        if (line.length) lines[N++] = line;
-      }
-      if (!N) {
-        o.type = null;
-        delete o.coordinates;
-      } else if (N < 2) {
-        o.type = "LineString";
-        o.coordinates = lines[0];
-      } else {
-        o.coordinates.length = N;
-      }
-    },
-    Polygon: function(o) {
-      for (var rings = o.coordinates, i = 0, N = 0, n = rings.length; i < n; ++i) {
-        var ring = rings[i];
-        if (ring.length) rings[N++] = ring;
-      }
-      if (!N) {
-        o.type = null;
-        delete o.coordinates;
-      } else {
-        o.coordinates.length = N;
-      }
-    },
-    MultiPolygon: function(o) {
-      for (var polygons = o.coordinates, j = 0, M = 0, m = polygons.length; j < m; ++j) {
-        for (var rings = polygons[j], i = 0, N = 0, n = rings.length; i < n; ++i) {
-          var ring = rings[i];
-          if (ring.length) rings[N++] = ring;
-        }
-        if (N) {
-          rings.length = N;
-          polygons[M++] = rings;
-        }
-      }
-      if (!M) {
-        o.type = null;
-        delete o.coordinates;
-      } else if (M < 2) {
-        o.type = "Polygon";
-        o.coordinates = polygons[0];
-      } else {
-        polygons.length = M;
-      }
-    }
-  };
-
-  for (var key in objects) {
-    objects[key] = geomifyObject(objects[key]);
-  }
-
-  return objects;
-};
-
-},{}],193:[function(require,module,exports){
-var quantize = require("./quantize");
-
-module.exports = function(topology, Q0, Q1) {
-  if (Q0) {
-    if (Q1 === Q0 || !topology.bbox.every(isFinite)) return topology;
-    var k = Q1 / Q0,
-        q = quantize(0, 0, k, k);
-
-    topology.transform.scale[0] /= k;
-    topology.transform.scale[1] /= k;
-  } else {
-    var bbox = topology.bbox,
-        x0 = isFinite(bbox[0]) ? bbox[0] : 0,
-        y0 = isFinite(bbox[1]) ? bbox[1] : 0,
-        x1 = isFinite(bbox[2]) ? bbox[2] : 0,
-        y1 = isFinite(bbox[3]) ? bbox[3] : 0,
-        kx = x1 - x0 ? (Q1 - 1) / (x1 - x0) : 1,
-        ky = y1 - y0 ? (Q1 - 1) / (y1 - y0) : 1,
-        q = quantize(-x0, -y0, kx, ky);
-
-    topology.transform = q.transform;
-  }
-
-  function quantizeGeometry(geometry) {
-    if (geometry && quantizeGeometryType.hasOwnProperty(geometry.type)) quantizeGeometryType[geometry.type](geometry);
-  }
-
-  var quantizeGeometryType = {
-    GeometryCollection: function(o) { o.geometries.forEach(quantizeGeometry); },
-    Point: function(o) { q.point(o.coordinates); },
-    MultiPoint: function(o) { o.coordinates.forEach(q.point); }
-  };
-
-  for (var key in topology.objects) {
-    quantizeGeometry(topology.objects[key]);
-  }
-
-  // XXX shared points are bad mmkay
-  topology.arcs = topology.arcs.map(function(arc) {
-    q.line(arc = arc.map(function(point) { return point.slice(); }));
-    if (arc.length < 2) arc.push(arc[0]); // arcs must have at least two points
-    return arc;
-  });
-
-  return topology;
-};
-
-},{"./quantize":196}],194:[function(require,module,exports){
-var quantize = require("./quantize");
-
-module.exports = function(objects, bbox, Q0, Q1) {
-  if (arguments.length < 4) Q1 = Q0;
-
-  var x0 = isFinite(bbox[0]) ? bbox[0] : 0,
-      y0 = isFinite(bbox[1]) ? bbox[1] : 0,
-      x1 = isFinite(bbox[2]) ? bbox[2] : 0,
-      y1 = isFinite(bbox[3]) ? bbox[3] : 0,
-      kx = x1 - x0 ? (Q1 - 1) / (x1 - x0) * Q0 / Q1 : 1,
-      ky = y1 - y0 ? (Q1 - 1) / (y1 - y0) * Q0 / Q1 : 1,
-      q = quantize(-x0, -y0, kx, ky);
-
-  function quantizeGeometry(geometry) {
-    if (geometry && quantizeGeometryType.hasOwnProperty(geometry.type)) quantizeGeometryType[geometry.type](geometry);
-  }
-
-  var quantizeGeometryType = {
-    GeometryCollection: function(o) { o.geometries.forEach(quantizeGeometry); },
-    Point: function(o) { q.point(o.coordinates); },
-    MultiPoint: function(o) { o.coordinates.forEach(q.point); },
-    LineString: function(o) {
-      var line = o.coordinates;
-      q.line(line);
-      if (line.length < 2) line[1] = line[0]; // must have 2+
-    },
-    MultiLineString: function(o) {
-      for (var lines = o.coordinates, i = 0, n = lines.length; i < n; ++i) {
-        var line = lines[i];
-        q.line(line);
-        if (line.length < 2) line[1] = line[0]; // must have 2+
-      }
-    },
-    Polygon: function(o) {
-      for (var rings = o.coordinates, i = 0, n = rings.length; i < n; ++i) {
-        var ring = rings[i];
-        q.line(ring);
-        while (ring.length < 4) ring.push(ring[0]); // must have 4+
-      }
-    },
-    MultiPolygon: function(o) {
-      for (var polygons = o.coordinates, i = 0, n = polygons.length; i < n; ++i) {
-        for (var rings = polygons[i], j = 0, m = rings.length; j < m; ++j) {
-          var ring = rings[j];
-          q.line(ring);
-          while (ring.length < 4) ring.push(ring[0]); // must have 4+
-        }
-      }
-    }
-  };
-
-  for (var key in objects) {
-    quantizeGeometry(objects[key]);
-  }
-
-  return q.transform;
-};
-
-},{"./quantize":196}],195:[function(require,module,exports){
-module.exports = function(topology, options) {
-  var verbose = false,
-      objects = topology.objects,
-      oldArcs = topology.arcs,
-      oldArcCount = oldArcs.length,
-      newArcs = topology.arcs = [],
-      newArcCount = 0,
-      newIndexByOldIndex = new Array(oldArcs.length);
-
-  if (options)
-    "verbose" in options && (verbose = !!options["verbose"]);
-
-  function pruneGeometry(geometry) {
-    if (geometry && pruneGeometryType.hasOwnProperty(geometry.type)) pruneGeometryType[geometry.type](geometry);
-  }
-
-  var pruneGeometryType = {
-    GeometryCollection: function(o) { o.geometries.forEach(pruneGeometry); },
-    LineString: function(o) { pruneArcs(o.arcs); },
-    MultiLineString: function(o) { o.arcs.forEach(pruneArcs); },
-    Polygon: function(o) { o.arcs.forEach(pruneArcs); },
-    MultiPolygon: function(o) { o.arcs.forEach(pruneMultiArcs); }
-  };
-
-  function pruneArcs(arcs) {
-    for (var i = 0, n = arcs.length; i < n; ++i) {
-      var oldIndex = arcs[i],
-          oldReverse = oldIndex < 0 && (oldIndex = ~oldIndex, true),
-          newIndex;
-
-      // If this is the first instance of this arc,
-      // record it under its new index.
-      if ((newIndex = newIndexByOldIndex[oldIndex]) == null) {
-        newIndexByOldIndex[oldIndex] = newIndex = newArcCount++;
-        newArcs[newIndex] = oldArcs[oldIndex];
-      }
-
-      arcs[i] = oldReverse ? ~newIndex : newIndex;
-    }
-  }
-
-  function pruneMultiArcs(arcs) {
-    arcs.forEach(pruneArcs);
-  }
-
-  for (var key in objects) {
-    pruneGeometry(objects[key]);
-  }
-
-  if (verbose) console.warn("prune: retained " + newArcCount + " / " + oldArcCount + " arcs (" + Math.round(newArcCount / oldArcCount * 100) + "%)");
-
-  return topology;
-};
-
-function noop() {}
-
-},{}],196:[function(require,module,exports){
-module.exports = function(dx, dy, kx, ky) {
-
-  function quantizePoint(coordinates) {
-    coordinates[0] = Math.round((coordinates[0] + dx) * kx);
-    coordinates[1] = Math.round((coordinates[1] + dy) * ky);
-    return coordinates;
-  }
-
-  function quantizeLine(coordinates) {
-    var i = 0,
-        j = 1,
-        n = coordinates.length,
-        pi = quantizePoint(coordinates[0]),
-        pj,
-        px = pi[0],
-        py = pi[1],
-        x,
-        y;
-
-    while (++i < n) {
-      pi = quantizePoint(coordinates[i]);
-      x = pi[0];
-      y = pi[1];
-      if (x !== px || y !== py) { // skip coincident points
-        pj = coordinates[j++];
-        pj[0] = px = x;
-        pj[1] = py = y;
-      }
-    }
-
-    coordinates.length = j;
+    return values;
   }
 
   return {
-    point: quantizePoint,
-    line: quantizeLine,
-    transform: {
-      scale: [1 / kx, 1 / ky],
-      translate: [-dx, -dy]
-    }
+    add: add,
+    has: has,
+    values: values
   };
-};
+}
 
-},{}],197:[function(require,module,exports){
-var type = require("./type");
-
-module.exports = function(topology, options) {
-  var width,
-      height,
-      margin = 0,
-      invert = true;
-
-  if (options)
-    "width" in options && (width = +options["width"]),
-    "height" in options && (height = +options["height"]),
-    "margin" in options && (margin = +options["margin"]),
-    "invert" in options && (invert = !!options["invert"]);
-
-  var bx = topology.bbox,
-      dx = bx[2] - bx[0],
-      dy = bx[3] - bx[1],
-      cx = (bx[2] + bx[0]) / 2,
-      cy = (bx[3] + bx[1]) / 2,
-      kx;
-
-  width = Math.max(0, width - margin * 2);
-  height = Math.max(0, height - margin * 2);
-
-  if (width && height) {
-    kx = Math.min(width / dx, height / dy);
-  } else if (width) {
-    kx = width / dx;
-    height = kx * dy;
-  } else {
-    kx = height / dy;
-    width = kx * dx;
+function hashmap(size, hash, equal, keyType, keyEmpty, valueType) {
+  if (arguments.length === 3) {
+    keyType = valueType = Array;
+    keyEmpty = null;
   }
 
-  var ky = invert ? -kx : kx,
-      lt = scalePoint([bx[0], bx[1]]),
-      rb = scalePoint([bx[2], bx[3]]),
-      tx;
+  var keystore = new keyType(size = 1 << Math.max(4, Math.ceil(Math.log(size) / Math.LN2))),
+      valstore = new valueType(size),
+      mask = size - 1;
 
-  topology.bbox = invert
-      ? [lt[0], rb[1], rb[0], lt[1]]
-      : [lt[0], lt[1], rb[0], rb[1]];
-
-  function scalePoint(point) {
-    return [
-      point[0] * kx + (width / 2 - cx * kx) + margin,
-      point[1] * ky + (height / 2 - cy * ky) + margin
-    ];
+  for (var i = 0; i < size; ++i) {
+    keystore[i] = keyEmpty;
   }
 
-  if (tx = topology.transform) {
-    tx.scale[0] *= kx;
-    tx.scale[1] *= ky;
-    tx.translate[0] = width / 2 + margin - (cx - tx.translate[0]) * kx;
-    tx.translate[1] = height / 2 + margin - (cy - tx.translate[1]) * ky;
-  } else {
-    var scale = type({
-      LineString: noop,
-      MultiLineString: noop,
-      Point: function(point) { point.coordinates = scalePoint(point.coordinates); },
-      MultiPoint: function(multipoint) { multipoint.coordinates = multipoint.coordinates.map(scalePoint); },
-      Polygon: noop,
-      MultiPolygon: noop
-    });
-
-    for (var key in topology.objects) {
-      scale.object(topology.objects[key]);
+  function set(key, value) {
+    var index = hash(key) & mask,
+        matchKey = keystore[index],
+        collisions = 0;
+    while (matchKey != keyEmpty) {
+      if (equal(matchKey, key)) return valstore[index] = value;
+      if (++collisions >= size) throw new Error("full hashmap");
+      matchKey = keystore[index = (index + 1) & mask];
     }
-
-    topology.arcs = topology.arcs.map(function(arc) {
-      return arc.map(scalePoint);
-    });
+    keystore[index] = key;
+    valstore[index] = value;
+    return value;
   }
 
-  return topology;
-};
-
-function noop() {}
-
-},{"./type":212}],198:[function(require,module,exports){
-var topojson = require("../../"),
-    systems = require("./coordinate-systems");
-
-module.exports = function(topology, options) {
-  var minimumArea = 0,
-      retainProportion,
-      verbose = false,
-      system = null,
-      N = topology.arcs.reduce(function(p, v) { return p + v.length; }, 0),
-      M = 0;
-
-  if (options)
-    "minimum-area" in options && (minimumArea = +options["minimum-area"]),
-    "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
-    "retain-proportion" in options && (retainProportion = +options["retain-proportion"]),
-    "verbose" in options && (verbose = !!options["verbose"]);
-
-  topojson.presimplify(topology, system.triangleArea);
-
-  if (retainProportion) {
-    var areas = [];
-    topology.arcs.forEach(function(arc) {
-      arc.forEach(function(point) {
-        if (isFinite(point[2])) areas.push(point[2]); // ignore endpoints
-      });
-    });
-    options["minimum-area"] = minimumArea = N ? areas.sort(function(a, b) { return b - a; })[Math.ceil((N - 1) * retainProportion)] : 0;
-    if (verbose) console.warn("simplification: effective minimum area " + minimumArea.toPrecision(3));
+  function maybeSet(key, value) {
+    var index = hash(key) & mask,
+        matchKey = keystore[index],
+        collisions = 0;
+    while (matchKey != keyEmpty) {
+      if (equal(matchKey, key)) return valstore[index];
+      if (++collisions >= size) throw new Error("full hashmap");
+      matchKey = keystore[index = (index + 1) & mask];
+    }
+    keystore[index] = key;
+    valstore[index] = value;
+    return value;
   }
 
-  topology.arcs.forEach(topology.transform ? function(arc) {
-    var dx = 0,
-        dy = 0, // accumulate removed points
-        i = -1,
-        j = -1,
-        n = arc.length,
-        source,
-        target;
+  function get(key, missingValue) {
+    var index = hash(key) & mask,
+        matchKey = keystore[index],
+        collisions = 0;
+    while (matchKey != keyEmpty) {
+      if (equal(matchKey, key)) return valstore[index];
+      if (++collisions >= size) break;
+      matchKey = keystore[index = (index + 1) & mask];
+    }
+    return missingValue;
+  }
 
-    while (++i < n) {
-      source = arc[i];
-      if (source[2] >= minimumArea) {
-        target = arc[++j];
-        target[0] = source[0] + dx;
-        target[1] = source[1] + dy;
-        dx = dy = 0;
-      } else {
-        dx += source[0];
-        dy += source[1];
+  function keys() {
+    var keys = [];
+    for (var i = 0, n = keystore.length; i < n; ++i) {
+      var matchKey = keystore[i];
+      if (matchKey != keyEmpty) keys.push(matchKey);
+    }
+    return keys;
+  }
+
+  return {
+    set: set,
+    maybeSet: maybeSet, // set if unset
+    get: get,
+    keys: keys
+  };
+}
+
+function equalPoint(pointA, pointB) {
+  return pointA[0] === pointB[0] && pointA[1] === pointB[1];
+}
+
+// TODO if quantized, use simpler Int32 hashing?
+
+var buffer = new ArrayBuffer(16),
+    floats = new Float64Array(buffer),
+    uints = new Uint32Array(buffer);
+
+function hashPoint(point) {
+  floats[0] = point[0];
+  floats[1] = point[1];
+  var hash = uints[0] ^ uints[1];
+  hash = hash << 5 ^ hash >> 7 ^ uints[2] ^ uints[3];
+  return hash & 0x7fffffff;
+}
+
+// Given an extracted (pre-)topology, identifies all of the junctions. These are
+// the points at which arcs (lines or rings) will need to be cut so that each
+// arc is represented uniquely.
+//
+// A junction is a point where at least one arc deviates from another arc going
+// through the same point. For example, consider the point B. If there is a arc
+// through ABC and another arc through CBA, then B is not a junction because in
+// both cases the adjacent point pairs are {A,C}. However, if there is an
+// additional arc ABD, then {A,D} != {A,C}, and thus B becomes a junction.
+//
+// For a closed ring ABCA, the first point A’s adjacent points are the second
+// and last point {B,C}. For a line, the first and last point are always
+// considered junctions, even if the line is closed; this ensures that a closed
+// line is never rotated.
+function join(topology) {
+  var coordinates = topology.coordinates,
+      lines = topology.lines,
+      rings = topology.rings,
+      indexes = index(),
+      visitedByIndex = new Int32Array(coordinates.length),
+      leftByIndex = new Int32Array(coordinates.length),
+      rightByIndex = new Int32Array(coordinates.length),
+      junctionByIndex = new Int8Array(coordinates.length),
+      junctionCount = 0, // upper bound on number of junctions
+      i, n,
+      previousIndex,
+      currentIndex,
+      nextIndex;
+
+  for (i = 0, n = coordinates.length; i < n; ++i) {
+    visitedByIndex[i] = leftByIndex[i] = rightByIndex[i] = -1;
+  }
+
+  for (i = 0, n = lines.length; i < n; ++i) {
+    var line = lines[i],
+        lineStart = line[0],
+        lineEnd = line[1];
+    currentIndex = indexes[lineStart];
+    nextIndex = indexes[++lineStart];
+    ++junctionCount, junctionByIndex[currentIndex] = 1; // start
+    while (++lineStart <= lineEnd) {
+      sequence(i, previousIndex = currentIndex, currentIndex = nextIndex, nextIndex = indexes[lineStart]);
+    }
+    ++junctionCount, junctionByIndex[nextIndex] = 1; // end
+  }
+
+  for (i = 0, n = coordinates.length; i < n; ++i) {
+    visitedByIndex[i] = -1;
+  }
+
+  for (i = 0, n = rings.length; i < n; ++i) {
+    var ring = rings[i],
+        ringStart = ring[0] + 1,
+        ringEnd = ring[1];
+    previousIndex = indexes[ringEnd - 1];
+    currentIndex = indexes[ringStart - 1];
+    nextIndex = indexes[ringStart];
+    sequence(i, previousIndex, currentIndex, nextIndex);
+    while (++ringStart <= ringEnd) {
+      sequence(i, previousIndex = currentIndex, currentIndex = nextIndex, nextIndex = indexes[ringStart]);
+    }
+  }
+
+  function sequence(i, previousIndex, currentIndex, nextIndex) {
+    if (visitedByIndex[currentIndex] === i) return; // ignore self-intersection
+    visitedByIndex[currentIndex] = i;
+    var leftIndex = leftByIndex[currentIndex];
+    if (leftIndex >= 0) {
+      var rightIndex = rightByIndex[currentIndex];
+      if ((leftIndex !== previousIndex || rightIndex !== nextIndex)
+        && (leftIndex !== nextIndex || rightIndex !== previousIndex)) {
+        ++junctionCount, junctionByIndex[currentIndex] = 1;
       }
+    } else {
+      leftByIndex[currentIndex] = previousIndex;
+      rightByIndex[currentIndex] = nextIndex;
+    }
+  }
+
+  function index() {
+    var indexByPoint = hashmap(coordinates.length * 1.4, hashIndex, equalIndex, Int32Array, -1, Int32Array),
+        indexes = new Int32Array(coordinates.length);
+
+    for (var i = 0, n = coordinates.length; i < n; ++i) {
+      indexes[i] = indexByPoint.maybeSet(i, i);
     }
 
-    arc.length = ++j;
-  } : function(arc) {
-    var i = -1,
-        j = -1,
-        n = arc.length,
-        point;
+    return indexes;
+  }
 
-    while (++i < n) {
-      point = arc[i];
-      if (point[2] >= minimumArea) {
-        arc[++j] = point;
-      }
+  function hashIndex(i) {
+    return hashPoint(coordinates[i]);
+  }
+
+  function equalIndex(i, j) {
+    return equalPoint(coordinates[i], coordinates[j]);
+  }
+
+  visitedByIndex = leftByIndex = rightByIndex = null;
+
+  var junctionByPoint = hashset(junctionCount * 1.4, hashPoint, equalPoint), j;
+
+  // Convert back to a standard hashset by point for caller convenience.
+  for (i = 0, n = coordinates.length; i < n; ++i) {
+    if (junctionByIndex[j = indexes[i]]) {
+      junctionByPoint.add(coordinates[j]);
     }
+  }
 
-    arc.length = ++j;
-  });
-
-  // Remove computed area (z) for each point, and remove coincident points.
-  // This is done as a separate pass because some coordinates may be shared
-  // between arcs (such as the last point and first point of a cut line).
-  // If the entire arc is empty, retain at least two points (per spec).
-  topology.arcs.forEach(topology.transform ? function(arc) {
-    var i = 0,
-        j = 0,
-        n = arc.length,
-        p = arc[0];
-    p.length = 2;
-    while (++i < n) {
-      p = arc[i];
-      p.length = 2;
-      if (p[0] || p[1]) arc[++j] = p;
-    }
-    M += arc.length = (j || 1) + 1;
-  } : function(arc) {
-    var i = 0,
-        j = 0,
-        n = arc.length,
-        p = arc[0],
-        x0 = p[0],
-        y0 = p[1],
-        x1,
-        y1;
-    p.length = 2;
-    while (++i < n) {
-      p = arc[i], x1 = p[0], y1 = p[1];
-      p.length = 2;
-      if (x0 !== x1 || y0 !== y1) arc[++j] = p, x0 = x1, y0 = y1;
-    }
-    M += arc.length = (j || 1) + 1;
-  });
-
-  if (verbose) console.warn("simplification: retained " + M + " / " + N + " points (" + Math.round((M / N) * 100) + "%)");
-
-  return topology;
-};
-
-},{"../../":"topojson","./coordinate-systems":189}],199:[function(require,module,exports){
-var π = Math.PI,
-    π_4 = π / 4,
-    radians = π / 180;
-
-exports.name = "spherical";
-exports.formatDistance = formatDistance;
-exports.ringArea = ringArea;
-exports.absoluteArea = absoluteArea;
-exports.triangleArea = triangleArea;
-exports.distance = haversinDistance; // XXX why two implementations?
-
-function formatDistance(k) {
-  var km = k * radians * 6371;
-  return (km > 1 ? km.toFixed(3) + "km" : (km * 1000).toPrecision(3) + "m") + " (" + k.toPrecision(3) + "°)";
+  return junctionByPoint;
 }
-
-function ringArea(ring) {
-  if (!ring.length) return 0;
-  var area = 0,
-      p = ring[0],
-      λ = p[0] * radians,
-      φ = p[1] * radians / 2 + π_4,
-      λ0 = λ,
-      cosφ0 = Math.cos(φ),
-      sinφ0 = Math.sin(φ);
-
-  for (var i = 1, n = ring.length; i < n; ++i) {
-    p = ring[i], λ = p[0] * radians, φ = p[1] * radians / 2 + π_4;
-
-    // Spherical excess E for a spherical triangle with vertices: south pole,
-    // previous point, current point.  Uses a formula derived from Cagnoli’s
-    // theorem.  See Todhunter, Spherical Trig. (1871), Sec. 103, Eq. (2).
-    var dλ = λ - λ0,
-        cosφ = Math.cos(φ),
-        sinφ = Math.sin(φ),
-        k = sinφ0 * sinφ,
-        u = cosφ0 * cosφ + k * Math.cos(dλ),
-        v = k * Math.sin(dλ);
-    area += Math.atan2(v, u);
-
-    // Advance the previous point.
-    λ0 = λ, cosφ0 = cosφ, sinφ0 = sinφ;
-  }
-
-  return 2 * (area > π ? area - 2 * π : area < -π ? area + 2 * π : area);
-}
-
-function absoluteArea(a) {
-  return a < 0 ? a + 4 * π : a;
-}
-
-function triangleArea(t) {
-  var a = distance(t[0], t[1]),
-      b = distance(t[1], t[2]),
-      c = distance(t[2], t[0]),
-      s = (a + b + c) / 2;
-  return 4 * Math.atan(Math.sqrt(Math.max(0, Math.tan(s / 2) * Math.tan((s - a) / 2) * Math.tan((s - b) / 2) * Math.tan((s - c) / 2))));
-}
-
-function distance(a, b) {
-  var Δλ = (b[0] - a[0]) * radians,
-      sinΔλ = Math.sin(Δλ),
-      cosΔλ = Math.cos(Δλ),
-      sinφ0 = Math.sin(a[1] * radians),
-      cosφ0 = Math.cos(a[1] * radians),
-      sinφ1 = Math.sin(b[1] * radians),
-      cosφ1 = Math.cos(b[1] * radians),
-      _;
-  return Math.atan2(Math.sqrt((_ = cosφ1 * sinΔλ) * _ + (_ = cosφ0 * sinφ1 - sinφ0 * cosφ1 * cosΔλ) * _), sinφ0 * sinφ1 + cosφ0 * cosφ1 * cosΔλ);
-}
-
-function haversinDistance(x0, y0, x1, y1) {
-  x0 *= radians, y0 *= radians, x1 *= radians, y1 *= radians;
-  return 2 * Math.asin(Math.sqrt(haversin(y1 - y0) + Math.cos(y0) * Math.cos(y1) * haversin(x1 - x0)));
-}
-
-function haversin(x) {
-  return (x = Math.sin(x / 2)) * x;
-}
-
-},{}],200:[function(require,module,exports){
-var type = require("./type");
-
-module.exports = function(objects, transform) {
-  var ε = 1e-2,
-      x0 = -180, x0e = x0 + ε,
-      x1 = 180, x1e = x1 - ε,
-      y0 = -90, y0e = y0 + ε,
-      y1 = 90, y1e = y1 - ε;
-
-  if (transform) {
-    var kx = transform.scale[0],
-        ky = transform.scale[1],
-        dx = transform.translate[0],
-        dy = transform.translate[1];
-
-    x0 = Math.round((x0 - dx) / kx);
-    x1 = Math.round((x1 - dx) / kx);
-    y0 = Math.round((y0 - dy) / ky);
-    y1 = Math.round((y1 - dy) / ky);
-    x0e = Math.round((x0e - dx) / kx);
-    x1e = Math.round((x1e - dx) / kx);
-    y0e = Math.round((y0e - dy) / ky);
-    y1e = Math.round((y1e - dy) / ky);
-  }
-
-  function normalizePoint(y) {
-    return y <= y0e ? [0, y0] // south pole
-        : y >= y1e ? [0, y1] // north pole
-        : [x0, y]; // antimeridian
-  }
-
-  function stitchPolygons(polygons) {
-    var fragments = [];
-
-    for (var p = 0, np = polygons.length; p < np; ++p) {
-      var polygon = polygons[p];
-
-      // For each ring, detect where it crosses the antimeridian or pole.
-      for (var j = 0, m = polygon.length; j < m; ++j) {
-        var ring = polygon[j];
-        ring.polygon = polygon;
-
-        // By default, assume that this ring doesn’t need any stitching.
-        fragments.push(ring);
-
-        for (var i = 0, n = ring.length; i < n; ++i) {
-          var point = ring[i],
-              x = point[0],
-              y = point[1];
-
-          // If this is an antimeridian or polar point…
-          if (x <= x0e || x >= x1e || y <= y0e || y >= y1e) {
-
-            // Advance through any antimeridian or polar points…
-            for (var k = i + 1; k < n; ++k) {
-              var pointk = ring[k],
-                  xk = pointk[0],
-                  yk = pointk[1];
-              if (xk > x0e && xk < x1e && yk > y0e && yk < y1e) break;
-            }
-
-            // If this was just a single antimeridian or polar point,
-            // we don’t need to cut this ring into a fragment;
-            // we can just leave it as-is.
-            if (k === i + 1) continue;
-
-            // Otherwise, if this is not the first point in the ring,
-            // cut the current fragment so that it ends at the current point.
-            // The current point is also normalized for later joining.
-            if (i) {
-              var fragmentBefore = ring.slice(0, i + 1);
-              fragmentBefore.polygon = polygon;
-              fragmentBefore[fragmentBefore.length - 1] = normalizePoint(y);
-              fragments[fragments.length - 1] = fragmentBefore;
-            }
-
-            // If the ring started with an antimeridian fragment,
-            // we can ignore that fragment entirely.
-            else {
-              fragments.pop();
-            }
-
-            // If the remainder of the ring is an antimeridian fragment,
-            // move on to the next ring.
-            if (k >= n) break;
-
-            // Otherwise, add the remaining ring fragment and continue.
-            fragments.push(ring = ring.slice(k - 1));
-            ring[0] = normalizePoint(ring[0][1]);
-            ring.polygon = polygon;
-            i = -1;
-            n = ring.length;
-          }
-        }
-      }
-      polygon.length = 0;
-    }
-
-    // Now stitch the fragments back together into rings.
-    // To connect the fragments start-to-end, create a simple index by end.
-    var fragmentByStart = {},
-        fragmentByEnd = {};
-
-    // For each fragment…
-    for (var i = 0, n = fragments.length; i < n; ++i) {
-      var fragment = fragments[i],
-          start = fragment[0],
-          end = fragment[fragment.length - 1];
-
-      // If this fragment is closed, add it as a standalone ring.
-      if (start[0] === end[0] && start[1] === end[1]) {
-        fragment.polygon.push(fragment);
-        fragments[i] = null;
-        continue;
-      }
-
-      fragment.index = i;
-      fragmentByStart[start] = fragmentByEnd[end] = fragment;
-    }
-
-    // For each open fragment…
-    for (var i = 0; i < n; ++i) {
-      var fragment = fragments[i];
-      if (fragment) {
-
-        var start = fragment[0],
-            end = fragment[fragment.length - 1],
-            startFragment = fragmentByEnd[start],
-            endFragment = fragmentByStart[end];
-
-        delete fragmentByStart[start];
-        delete fragmentByEnd[end];
-
-        // If this fragment is closed, add it as a standalone ring.
-        if (start[0] === end[0] && start[1] === end[1]) {
-          fragment.polygon.push(fragment);
-          continue;
-        }
-
-        if (startFragment) {
-          delete fragmentByEnd[start];
-          delete fragmentByStart[startFragment[0]];
-          startFragment.pop(); // drop the shared coordinate
-          fragments[startFragment.index] = null;
-          fragment = startFragment.concat(fragment);
-          fragment.polygon = startFragment.polygon;
-
-          if (startFragment === endFragment) {
-            // Connect both ends to this single fragment to create a ring.
-            fragment.polygon.push(fragment);
-          } else {
-            fragment.index = n++;
-            fragments.push(fragmentByStart[fragment[0]] = fragmentByEnd[fragment[fragment.length - 1]] = fragment);
-          }
-        } else if (endFragment) {
-          delete fragmentByStart[end];
-          delete fragmentByEnd[endFragment[endFragment.length - 1]];
-          fragment.pop(); // drop the shared coordinate
-          fragment = fragment.concat(endFragment);
-          fragment.polygon = endFragment.polygon;
-          fragment.index = n++;
-          fragments[endFragment.index] = null;
-          fragments.push(fragmentByStart[fragment[0]] = fragmentByEnd[fragment[fragment.length - 1]] = fragment);
-        } else {
-          fragment.push(fragment[0]); // close ring
-          fragment.polygon.push(fragment);
-        }
-      }
-    }
-    // TODO remove empty polygons.
-  }
-
-  var stitch = type({
-    Polygon: function(polygon) { stitchPolygons([polygon.coordinates]); },
-    MultiPolygon: function(multiPolygon) { stitchPolygons(multiPolygon.coordinates); }
-  });
-
-  for (var key in objects) {
-    stitch.object(objects[key]);
-  }
-};
-
-},{"./type":212}],201:[function(require,module,exports){
-var type = require("./type"),
-    stitch = require("./stitch"),
-    systems = require("./coordinate-systems"),
-    topologize = require("./topology/index"),
-    delta = require("./delta"),
-    geomify = require("./geomify"),
-    prequantize = require("./pre-quantize"),
-    postquantize = require("./post-quantize"),
-    bounds = require("./bounds"),
-    computeId = require("./compute-id"),
-    transformProperties = require("./transform-properties");
-
-var ε = 1e-6;
-
-module.exports = function(objects, options) {
-  var Q0 = 1e4, // precision of pre-quantization
-      Q1 = 1e4, // precision of post-quantization (must be divisor of Q0)
-      id = function(d) { return d.id; }, // function to compute object id
-      propertyTransform = function() {}, // function to transform properties
-      transform,
-      minimumArea = 0,
-      stitchPoles = true,
-      verbose = false,
-      system = null;
-
-  if (options)
-    "verbose" in options && (verbose = !!options["verbose"]),
-    "stitch-poles" in options && (stitchPoles = !!options["stitch-poles"]),
-    "coordinate-system" in options && (system = systems[options["coordinate-system"]]),
-    "minimum-area" in options && (minimumArea = +options["minimum-area"]),
-    "quantization" in options && (Q0 = Q1 = +options["quantization"]),
-    "pre-quantization" in options && (Q0 = +options["pre-quantization"]),
-    "post-quantization" in options && (Q1 = +options["post-quantization"]),
-    "id" in options && (id = options["id"]),
-    "property-transform" in options && (propertyTransform = options["property-transform"]);
-
-  if (Q0 / Q1 % 1) throw new Error("post-quantization is not a divisor of pre-quantization");
-  if (Q0 && !Q1) throw new Error("post-quantization is required when input is already quantized");
-
-  // Compute the new feature id and transform properties.
-  computeId(objects, id);
-  transformProperties(objects, propertyTransform);
-
-  // Convert to geometry objects.
-  geomify(objects);
-
-  // Compute initial bounding box.
-  var bbox = bounds(objects);
-
-  // For automatic coordinate system determination, consider the bounding box.
-  var oversize = bbox[0] < -180 - ε
-      || bbox[1] < -90 - ε
-      || bbox[2] > 180 + ε
-      || bbox[3] > 90 + ε;
-  if (!system) {
-    system = systems[oversize ? "cartesian" : "spherical"];
-    if (options) options["coordinate-system"] = system.name;
-  }
-
-  if (system === systems.spherical) {
-    if (oversize) throw new Error("spherical coordinates outside of [±180°, ±90°]");
-
-    // When near the spherical coordinate limits, clamp to nice round values.
-    // This avoids quantized coordinates that are slightly outside the limits.
-    if (bbox[0] < -180 + ε) bbox[0] = -180;
-    if (bbox[1] < -90 + ε) bbox[1] = -90;
-    if (bbox[2] > 180 - ε) bbox[2] = 180;
-    if (bbox[3] > 90 - ε) bbox[3] = 90;
-  }
-
-  if (verbose) {
-    console.warn("bounds: " + bbox.join(" ") + " (" + system.name + ")");
-  }
-
-  // Pre-topology quantization.
-  if (Q0) {
-    transform = prequantize(objects, bbox, Q0, Q1);
-    if (verbose) {
-      console.warn("pre-quantization: " + transform.scale.map(function(k) { return system.formatDistance(k); }).join(" "));
-    }
-  }
-
-  // Remove any antimeridian cuts and restitch.
-  if (system === systems.spherical && stitchPoles) {
-    stitch(objects, transform);
-  }
-
-  // Compute the topology.
-  var topology = topologize(objects);
-  if (Q0) topology.transform = transform;
-  topology.bbox = bbox;
-  if (verbose) {
-    console.warn("topology: " + topology.arcs.length + " arcs, " + topology.arcs.reduce(function(p, v) { return p + v.length; }, 0) + " points");
-  }
-
-  // Post-topology quantization.
-  if (Q1 && Q1 !== Q0) {
-    postquantize(topology, Q0, Q1);
-    transform = topology.transform;
-    if (verbose) {
-      console.warn("post-quantization: " + transform.scale.map(function(k) { return system.formatDistance(k); }).join(" "));
-    }
-  }
-
-  // Convert to delta-encoding.
-  if (Q1) {
-    delta(topology);
-  }
-
-  return topology;
-};
-
-},{"./bounds":185,"./compute-id":188,"./coordinate-systems":189,"./delta":190,"./geomify":192,"./post-quantize":193,"./pre-quantize":194,"./stitch":200,"./topology/index":207,"./transform-properties":211,"./type":212}],202:[function(require,module,exports){
-var join = require("./join");
 
 // Given an extracted (pre-)topology, cuts (or rotates) arcs so that all shared
 // point sequences are identified. The topology can then be subsequently deduped
 // to remove exact duplicate arcs.
-module.exports = function(topology) {
+function cut(topology) {
   var junctions = join(topology),
       coordinates = topology.coordinates,
       lines = topology.lines,
-      rings = topology.rings;
+      rings = topology.rings,
+      next,
+      i, n;
 
-  for (var i = 0, n = lines.length; i < n; ++i) {
+  for (i = 0, n = lines.length; i < n; ++i) {
     var line = lines[i],
         lineMid = line[0],
         lineEnd = line[1];
     while (++lineMid < lineEnd) {
       if (junctions.has(coordinates[lineMid])) {
-        var next = {0: lineMid, 1: line[1]};
+        next = {0: lineMid, 1: line[1]};
         line[1] = lineMid;
         line = line.next = next;
       }
     }
   }
 
-  for (var i = 0, n = rings.length; i < n; ++i) {
+  for (i = 0, n = rings.length; i < n; ++i) {
     var ring = rings[i],
         ringStart = ring[0],
         ringMid = ringStart,
@@ -67024,7 +71662,7 @@ module.exports = function(topology) {
     while (++ringMid < ringEnd) {
       if (junctions.has(coordinates[ringMid])) {
         if (ringFixed) {
-          var next = {0: ringMid, 1: ring[1]};
+          next = {0: ringMid, 1: ring[1]};
           ring[1] = ringMid;
           ring = ring.next = next;
         } else { // For the first junction, we can rotate rather than cut.
@@ -67038,7 +71676,7 @@ module.exports = function(topology) {
   }
 
   return topology;
-};
+}
 
 function rotateArray(array, start, end, offset) {
   reverse(array, start, end);
@@ -67052,42 +71690,37 @@ function reverse(array, start, end) {
   }
 }
 
-},{"./join":208}],203:[function(require,module,exports){
-var join = require("./join"),
-    hashmap = require("./hashmap"),
-    hashPoint = require("./point-hash"),
-    equalPoint = require("./point-equal");
-
 // Given a cut topology, combines duplicate arcs.
-module.exports = function(topology) {
+function dedup(topology) {
   var coordinates = topology.coordinates,
-      lines = topology.lines,
-      rings = topology.rings,
-      arcCount = lines.length + rings.length;
+      lines = topology.lines, line,
+      rings = topology.rings, ring,
+      arcCount = lines.length + rings.length,
+      i, n;
 
   delete topology.lines;
   delete topology.rings;
 
   // Count the number of (non-unique) arcs to initialize the hashmap safely.
-  for (var i = 0, n = lines.length; i < n; ++i) {
-    var line = lines[i]; while (line = line.next) ++arcCount;
+  for (i = 0, n = lines.length; i < n; ++i) {
+    line = lines[i]; while (line = line.next) ++arcCount;
   }
-  for (var i = 0, n = rings.length; i < n; ++i) {
-    var ring = rings[i]; while (ring = ring.next) ++arcCount;
+  for (i = 0, n = rings.length; i < n; ++i) {
+    ring = rings[i]; while (ring = ring.next) ++arcCount;
   }
 
   var arcsByEnd = hashmap(arcCount * 2 * 1.4, hashPoint, equalPoint),
       arcs = topology.arcs = [];
 
-  for (var i = 0, n = lines.length; i < n; ++i) {
-    var line = lines[i];
+  for (i = 0, n = lines.length; i < n; ++i) {
+    line = lines[i];
     do {
       dedupLine(line);
     } while (line = line.next);
   }
 
-  for (var i = 0, n = rings.length; i < n; ++i) {
-    var ring = rings[i];
+  for (i = 0, n = rings.length; i < n; ++i) {
+    ring = rings[i];
     if (ring.next) { // arc is no longer closed
       do {
         dedupLine(ring);
@@ -67100,13 +71733,14 @@ module.exports = function(topology) {
   function dedupLine(arc) {
     var startPoint,
         endPoint,
-        startArcs,
-        endArcs;
+        startArcs, startArc,
+        endArcs, endArc,
+        i, n;
 
     // Does this arc match an existing arc in order?
     if (startArcs = arcsByEnd.get(startPoint = coordinates[arc[0]])) {
-      for (var i = 0, n = startArcs.length; i < n; ++i) {
-        var startArc = startArcs[i];
+      for (i = 0, n = startArcs.length; i < n; ++i) {
+        startArc = startArcs[i];
         if (equalLine(startArc, arc)) {
           arc[0] = startArc[0];
           arc[1] = startArc[1];
@@ -67117,8 +71751,8 @@ module.exports = function(topology) {
 
     // Does this arc match an existing arc in reverse order?
     if (endArcs = arcsByEnd.get(endPoint = coordinates[arc[1]])) {
-      for (var i = 0, n = endArcs.length; i < n; ++i) {
-        var endArc = endArcs[i];
+      for (i = 0, n = endArcs.length; i < n; ++i) {
+        endArc = endArcs[i];
         if (reverseEqualLine(endArc, arc)) {
           arc[1] = endArc[0];
           arc[0] = endArc[1];
@@ -67134,13 +71768,15 @@ module.exports = function(topology) {
 
   function dedupRing(arc) {
     var endPoint,
-        endArcs;
+        endArcs,
+        endArc,
+        i, n;
 
     // Does this arc match an existing line in order, or reverse order?
     // Rings are closed, so their start point and end point is the same.
     if (endArcs = arcsByEnd.get(endPoint = coordinates[arc[0]])) {
-      for (var i = 0, n = endArcs.length; i < n; ++i) {
-        var endArc = endArcs[i];
+      for (i = 0, n = endArcs.length; i < n; ++i) {
+        endArc = endArcs[i];
         if (equalRing(endArc, arc)) {
           arc[0] = endArc[0];
           arc[1] = endArc[1];
@@ -67156,8 +71792,8 @@ module.exports = function(topology) {
 
     // Otherwise, does this arc match an existing ring in order, or reverse order?
     if (endArcs = arcsByEnd.get(endPoint = coordinates[arc[0] + findMinimumOffset(arc)])) {
-      for (var i = 0, n = endArcs.length; i < n; ++i) {
-        var endArc = endArcs[i];
+      for (i = 0, n = endArcs.length; i < n; ++i) {
+        endArc = endArcs[i];
         if (equalRing(endArc, arc)) {
           arc[0] = endArc[0];
           arc[1] = endArc[1];
@@ -67236,9 +71872,39 @@ module.exports = function(topology) {
   }
 
   return topology;
-};
+}
 
-},{"./hashmap":205,"./join":208,"./point-equal":209,"./point-hash":210}],204:[function(require,module,exports){
+// Given an array of arcs in absolute (but already quantized!) coordinates,
+// converts to fixed-point delta encoding.
+// This is a destructive operation that modifies the given arcs!
+function delta(arcs) {
+  var i = -1,
+      n = arcs.length;
+
+  while (++i < n) {
+    var arc = arcs[i],
+        j = 0,
+        k = 1,
+        m = arc.length,
+        point = arc[0],
+        x0 = point[0],
+        y0 = point[1],
+        x1,
+        y1;
+
+    while (++j < m) {
+      point = arc[j], x1 = point[0], y1 = point[1];
+      if (x1 !== x0 || y1 !== y0) arc[k++] = [x1 - x0, y1 - y0], x0 = x1, y0 = y1;
+    }
+
+    if (k === 1) arc[k++] = [0, 0]; // Each arc must be an array of two or more positions.
+
+    arc.length = k;
+  }
+
+  return arcs;
+}
+
 // Extracts the lines and rings from the specified hash of geometry objects.
 //
 // Returns an object with three properties:
@@ -67256,22 +71922,22 @@ module.exports = function(topology) {
 // with an equivalent `arcs` array that, for each line (for line string
 // geometries) or ring (for polygon geometries), points to one of the above
 // lines or rings.
-module.exports = function(objects) {
+function extract(objects) {
   var index = -1,
       lines = [],
       rings = [],
       coordinates = [];
 
   function extractGeometry(geometry) {
-    if (geometry && extractGeometryType.hasOwnProperty(geometry.type)) extractGeometryType[geometry.type](geometry);
+    if (geometry && hasOwnProperty.call(extractGeometryType, geometry.type)) extractGeometryType[geometry.type](geometry);
   }
 
   var extractGeometryType = {
     GeometryCollection: function(o) { o.geometries.forEach(extractGeometry); },
-    LineString: function(o) { o.arcs = extractLine(o.coordinates); delete o.coordinates; },
-    MultiLineString: function(o) { o.arcs = o.coordinates.map(extractLine); delete o.coordinates; },
-    Polygon: function(o) { o.arcs = o.coordinates.map(extractRing); delete o.coordinates; },
-    MultiPolygon: function(o) { o.arcs = o.coordinates.map(extractMultiRing); delete o.coordinates; }
+    LineString: function(o) { o.arcs = extractLine(o.arcs); },
+    MultiLineString: function(o) { o.arcs = o.arcs.map(extractLine); },
+    Polygon: function(o) { o.arcs = o.arcs.map(extractRing); },
+    MultiPolygon: function(o) { o.arcs = o.arcs.map(extractMultiRing); }
   };
 
   function extractLine(line) {
@@ -67303,156 +71969,131 @@ module.exports = function(objects) {
     rings: rings,
     objects: objects
   };
-};
+}
 
-},{}],205:[function(require,module,exports){
-module.exports = function(size, hash, equal, keyType, keyEmpty, valueType) {
-  if (arguments.length === 3) {
-    keyType = valueType = Array;
-    keyEmpty = null;
+// Given a hash of GeoJSON objects, returns a hash of GeoJSON geometry objects.
+// Any null input geometry objects are represented as {type: null} in the output.
+// Any feature.{id,properties,bbox} are transferred to the output geometry object.
+// Each output geometry object is a shallow copy of the input (e.g., properties, coordinates)!
+function geometry(inputs) {
+  var outputs = {}, key;
+  for (key in inputs) outputs[key] = geomifyObject(inputs[key]);
+  return outputs;
+}
+
+function geomifyObject(input) {
+  return input == null ? {type: null}
+      : (input.type === "FeatureCollection" ? geomifyFeatureCollection
+      : input.type === "Feature" ? geomifyFeature
+      : geomifyGeometry)(input);
+}
+
+function geomifyFeatureCollection(input) {
+  var output = {type: "GeometryCollection", geometries: input.features.map(geomifyFeature)};
+  if (input.bbox != null) output.bbox = input.bbox;
+  return output;
+}
+
+function geomifyFeature(input) {
+  var output = geomifyGeometry(input.geometry), key; // eslint-disable-line no-unused-vars
+  if (input.id != null) output.id = input.id;
+  if (input.bbox != null) output.bbox = input.bbox;
+  for (key in input.properties) { output.properties = input.properties; break; }
+  return output;
+}
+
+function geomifyGeometry(input) {
+  if (input == null) return {type: null};
+  var output = input.type === "GeometryCollection" ? {type: "GeometryCollection", geometries: input.geometries.map(geomifyGeometry)}
+      : input.type === "Point" || input.type === "MultiPoint" ? {type: input.type, coordinates: input.coordinates}
+      : {type: input.type, arcs: input.coordinates}; // TODO Check for unknown types?
+  if (input.bbox != null) output.bbox = input.bbox;
+  return output;
+}
+
+function prequantize(objects, bbox, n) {
+  var x0 = bbox[0],
+      y0 = bbox[1],
+      x1 = bbox[2],
+      y1 = bbox[3],
+      kx = x1 - x0 ? (n - 1) / (x1 - x0) : 1,
+      ky = y1 - y0 ? (n - 1) / (y1 - y0) : 1;
+
+  function quantizePoint(input) {
+    return [Math.round((input[0] - x0) * kx), Math.round((input[1] - y0) * ky)];
   }
 
-  var keystore = new keyType(size = 1 << Math.max(4, Math.ceil(Math.log(size) / Math.LN2))),
-      valstore = new valueType(size),
-      mask = size - 1,
-      free = size;
+  function quantizePoints(input, m) {
+    var i = -1,
+        j = 0,
+        n = input.length,
+        output = new Array(n), // pessimistic
+        pi,
+        px,
+        py,
+        x,
+        y;
 
-  for (var i = 0; i < size; ++i) {
-    keystore[i] = keyEmpty;
-  }
-
-  function set(key, value) {
-    var index = hash(key) & mask,
-        matchKey = keystore[index],
-        collisions = 0;
-    while (matchKey != keyEmpty) {
-      if (equal(matchKey, key)) return valstore[index] = value;
-      if (++collisions >= size) throw new Error("full hashmap");
-      matchKey = keystore[index = (index + 1) & mask];
+    while (++i < n) {
+      pi = input[i];
+      x = Math.round((pi[0] - x0) * kx);
+      y = Math.round((pi[1] - y0) * ky);
+      if (x !== px || y !== py) output[j++] = [px = x, py = y]; // non-coincident points
     }
-    keystore[index] = key;
-    valstore[index] = value;
-    --free;
-    return value;
+
+    output.length = j;
+    while (j < m) j = output.push([output[0][0], output[0][1]]);
+    return output;
   }
 
-  function maybeSet(key, value) {
-    var index = hash(key) & mask,
-        matchKey = keystore[index],
-        collisions = 0;
-    while (matchKey != keyEmpty) {
-      if (equal(matchKey, key)) return valstore[index];
-      if (++collisions >= size) throw new Error("full hashmap");
-      matchKey = keystore[index = (index + 1) & mask];
-    }
-    keystore[index] = key;
-    valstore[index] = value;
-    --free;
-    return value;
+  function quantizeLine(input) {
+    return quantizePoints(input, 2);
   }
 
-  function get(key, missingValue) {
-    var index = hash(key) & mask,
-        matchKey = keystore[index],
-        collisions = 0;
-    while (matchKey != keyEmpty) {
-      if (equal(matchKey, key)) return valstore[index];
-      if (++collisions >= size) break;
-      matchKey = keystore[index = (index + 1) & mask];
-    }
-    return missingValue;
+  function quantizeRing(input) {
+    return quantizePoints(input, 4);
   }
 
-  function keys() {
-    var keys = [];
-    for (var i = 0, n = keystore.length; i < n; ++i) {
-      var matchKey = keystore[i];
-      if (matchKey != keyEmpty) keys.push(matchKey);
-    }
-    return keys;
+  function quantizePolygon(input) {
+    return input.map(quantizeRing);
+  }
+
+  function quantizeGeometry(o) {
+    if (o != null && hasOwnProperty.call(quantizeGeometryType, o.type)) quantizeGeometryType[o.type](o);
+  }
+
+  var quantizeGeometryType = {
+    GeometryCollection: function(o) { o.geometries.forEach(quantizeGeometry); },
+    Point: function(o) { o.coordinates = quantizePoint(o.coordinates); },
+    MultiPoint: function(o) { o.coordinates = o.coordinates.map(quantizePoint); },
+    LineString: function(o) { o.arcs = quantizeLine(o.arcs); },
+    MultiLineString: function(o) { o.arcs = o.arcs.map(quantizeLine); },
+    Polygon: function(o) { o.arcs = quantizePolygon(o.arcs); },
+    MultiPolygon: function(o) { o.arcs = o.arcs.map(quantizePolygon); }
+  };
+
+  for (var key in objects) {
+    quantizeGeometry(objects[key]);
   }
 
   return {
-    set: set,
-    maybeSet: maybeSet, // set if unset
-    get: get,
-    keys: keys
+    scale: [1 / kx, 1 / ky],
+    translate: [x0, y0]
   };
-};
+}
 
-},{}],206:[function(require,module,exports){
-module.exports = function(size, hash, equal, type, empty) {
-  if (arguments.length === 3) {
-    type = Array;
-    empty = null;
-  }
-
-  var store = new type(size = 1 << Math.max(4, Math.ceil(Math.log(size) / Math.LN2))),
-      mask = size - 1,
-      free = size;
-
-  for (var i = 0; i < size; ++i) {
-    store[i] = empty;
-  }
-
-  function add(value) {
-    var index = hash(value) & mask,
-        match = store[index],
-        collisions = 0;
-    while (match != empty) {
-      if (equal(match, value)) return true;
-      if (++collisions >= size) throw new Error("full hashset");
-      match = store[index = (index + 1) & mask];
-    }
-    store[index] = value;
-    --free;
-    return true;
-  }
-
-  function has(value) {
-    var index = hash(value) & mask,
-        match = store[index],
-        collisions = 0;
-    while (match != empty) {
-      if (equal(match, value)) return true;
-      if (++collisions >= size) break;
-      match = store[index = (index + 1) & mask];
-    }
-    return false;
-  }
-
-  function values() {
-    var values = [];
-    for (var i = 0, n = store.length; i < n; ++i) {
-      var match = store[i];
-      if (match != empty) values.push(match);
-    }
-    return values;
-  }
-
-  return {
-    add: add,
-    has: has,
-    values: values
-  };
-};
-
-},{}],207:[function(require,module,exports){
-var hashmap = require("./hashmap"),
-    extract = require("./extract"),
-    cut = require("./cut"),
-    dedup = require("./dedup");
-
-// Constructs the TopoJSON Topology for the specified hash of geometries.
+// Constructs the TopoJSON Topology for the specified hash of features.
 // Each object in the specified hash must be a GeoJSON object,
 // meaning FeatureCollection, a Feature or a geometry object.
-module.exports = function(objects) {
-  var topology = dedup(cut(extract(objects))),
+function topology(objects, quantization) {
+  var bbox = bounds(objects = geometry(objects)),
+      transform = quantization > 0 && bbox && prequantize(objects, bbox, quantization),
+      topology = dedup(cut(extract(objects))),
       coordinates = topology.coordinates,
       indexByArc = hashmap(topology.arcs.length * 1.4, hashArc, equalArc);
 
   objects = topology.objects; // for garbage collection
-
+  topology.bbox = bbox;
   topology.arcs = topology.arcs.map(function(arc, i) {
     indexByArc.set(arc, i);
     return coordinates.slice(arc[0], arc[1] + 1);
@@ -67462,7 +72103,7 @@ module.exports = function(objects) {
   coordinates = null;
 
   function indexGeometry(geometry) {
-    if (geometry && indexGeometryType.hasOwnProperty(geometry.type)) indexGeometryType[geometry.type](geometry);
+    if (geometry && hasOwnProperty.call(indexGeometryType, geometry.type)) indexGeometryType[geometry.type](geometry);
   }
 
   var indexGeometryType = {
@@ -67490,8 +72131,13 @@ module.exports = function(objects) {
     indexGeometry(objects[key]);
   }
 
+  if (transform) {
+    topology.transform = transform;
+    topology.arcs = delta(topology.arcs);
+  }
+
   return topology;
-};
+}
 
 function hashArc(arc) {
   var i = arc[0], j = arc[1], t;
@@ -67507,815 +72153,13 @@ function equalArc(arcA, arcB) {
   return ia === ib && ja === jb;
 }
 
-},{"./cut":202,"./dedup":203,"./extract":204,"./hashmap":205}],208:[function(require,module,exports){
-var hashset = require("./hashset"),
-    hashmap = require("./hashmap"),
-    hashPoint = require("./point-hash"),
-    equalPoint = require("./point-equal");
+exports.topology = topology;
 
-// Given an extracted (pre-)topology, identifies all of the junctions. These are
-// the points at which arcs (lines or rings) will need to be cut so that each
-// arc is represented uniquely.
-//
-// A junction is a point where at least one arc deviates from another arc going
-// through the same point. For example, consider the point B. If there is a arc
-// through ABC and another arc through CBA, then B is not a junction because in
-// both cases the adjacent point pairs are {A,C}. However, if there is an
-// additional arc ABD, then {A,D} != {A,C}, and thus B becomes a junction.
-//
-// For a closed ring ABCA, the first point A’s adjacent points are the second
-// and last point {B,C}. For a line, the first and last point are always
-// considered junctions, even if the line is closed; this ensures that a closed
-// line is never rotated.
-module.exports = function(topology) {
-  var coordinates = topology.coordinates,
-      lines = topology.lines,
-      rings = topology.rings,
-      indexes = index(),
-      visitedByIndex = new Int32Array(coordinates.length),
-      leftByIndex = new Int32Array(coordinates.length),
-      rightByIndex = new Int32Array(coordinates.length),
-      junctionByIndex = new Int8Array(coordinates.length),
-      junctionCount = 0; // upper bound on number of junctions
+Object.defineProperty(exports, '__esModule', { value: true });
 
-  for (var i = 0, n = coordinates.length; i < n; ++i) {
-    visitedByIndex[i] = leftByIndex[i] = rightByIndex[i] = -1;
-  }
+}));
 
-  for (var i = 0, n = lines.length; i < n; ++i) {
-    var line = lines[i],
-        lineStart = line[0],
-        lineEnd = line[1],
-        previousIndex,
-        currentIndex = indexes[lineStart],
-        nextIndex = indexes[++lineStart];
-    ++junctionCount, junctionByIndex[currentIndex] = 1; // start
-    while (++lineStart <= lineEnd) {
-      sequence(i, previousIndex = currentIndex, currentIndex = nextIndex, nextIndex = indexes[lineStart]);
-    }
-    ++junctionCount, junctionByIndex[nextIndex] = 1; // end
-  }
-
-  for (var i = 0, n = coordinates.length; i < n; ++i) {
-    visitedByIndex[i] = -1;
-  }
-
-  for (var i = 0, n = rings.length; i < n; ++i) {
-    var ring = rings[i],
-        ringStart = ring[0] + 1,
-        ringEnd = ring[1],
-        previousIndex = indexes[ringEnd - 1],
-        currentIndex = indexes[ringStart - 1],
-        nextIndex = indexes[ringStart];
-    sequence(i, previousIndex, currentIndex, nextIndex);
-    while (++ringStart <= ringEnd) {
-      sequence(i, previousIndex = currentIndex, currentIndex = nextIndex, nextIndex = indexes[ringStart]);
-    }
-  }
-
-  function sequence(i, previousIndex, currentIndex, nextIndex) {
-    if (visitedByIndex[currentIndex] === i) return; // ignore self-intersection
-    visitedByIndex[currentIndex] = i;
-    var leftIndex = leftByIndex[currentIndex];
-    if (leftIndex >= 0) {
-      var rightIndex = rightByIndex[currentIndex];
-      if ((leftIndex !== previousIndex || rightIndex !== nextIndex)
-        && (leftIndex !== nextIndex || rightIndex !== previousIndex)) {
-        ++junctionCount, junctionByIndex[currentIndex] = 1;
-      }
-    } else {
-      leftByIndex[currentIndex] = previousIndex;
-      rightByIndex[currentIndex] = nextIndex;
-    }
-  }
-
-  function index() {
-    var indexByPoint = hashmap(coordinates.length * 1.4, hashIndex, equalIndex, Int32Array, -1, Int32Array),
-        indexes = new Int32Array(coordinates.length);
-
-    for (var i = 0, n = coordinates.length; i < n; ++i) {
-      indexes[i] = indexByPoint.maybeSet(i, i);
-    }
-
-    return indexes;
-  }
-
-  function hashIndex(i) {
-    return hashPoint(coordinates[i]);
-  }
-
-  function equalIndex(i, j) {
-    return equalPoint(coordinates[i], coordinates[j]);
-  }
-
-  visitedByIndex = leftByIndex = rightByIndex = null;
-
-  var junctionByPoint = hashset(junctionCount * 1.4, hashPoint, equalPoint);
-
-  // Convert back to a standard hashset by point for caller convenience.
-  for (var i = 0, n = coordinates.length, j; i < n; ++i) {
-    if (junctionByIndex[j = indexes[i]]) {
-      junctionByPoint.add(coordinates[j]);
-    }
-  }
-
-  return junctionByPoint;
-};
-
-},{"./hashmap":205,"./hashset":206,"./point-equal":209,"./point-hash":210}],209:[function(require,module,exports){
-module.exports = function(pointA, pointB) {
-  return pointA[0] === pointB[0] && pointA[1] === pointB[1];
-};
-
-},{}],210:[function(require,module,exports){
-// TODO if quantized, use simpler Int32 hashing?
-
-var buffer = new ArrayBuffer(16),
-    floats = new Float64Array(buffer),
-    uints = new Uint32Array(buffer);
-
-module.exports = function(point) {
-  floats[0] = point[0];
-  floats[1] = point[1];
-  var hash = uints[0] ^ uints[1];
-  hash = hash << 5 ^ hash >> 7 ^ uints[2] ^ uints[3];
-  return hash & 0x7fffffff;
-};
-
-},{}],211:[function(require,module,exports){
-// Given a hash of GeoJSON objects, transforms any properties on features using
-// the specified transform function. The function is invoked for each existing
-// property on the current feature, being passed the new properties hash, the
-// property name, and the property value. The function is then expected to
-// assign a new value to the given property hash if the feature is to be
-// retained and return true. Or, to skip the property, do nothing and return
-// false. If no properties are propagated to the new properties hash, the
-// properties hash will be deleted from the current feature.
-module.exports = function(objects, propertyTransform) {
-  if (arguments.length < 2) propertyTransform = function() {};
-
-  function transformObject(object) {
-    if (object && transformObjectType.hasOwnProperty(object.type)) transformObjectType[object.type](object);
-  }
-
-  function transformFeature(feature) {
-    if (feature.properties) {
-      var properties0 = feature.properties,
-          properties1 = {},
-          empty = true;
-
-      for (var key0 in properties0) {
-        if (propertyTransform(properties1, key0, properties0[key0])) {
-          empty = false;
-        }
-      }
-
-      if (empty) delete feature.properties;
-      else feature.properties = properties1;
-    }
-  }
-
-  var transformObjectType = {
-    Feature: transformFeature,
-    FeatureCollection: function(collection) { collection.features.forEach(transformFeature); }
-  };
-
-  for (var key in objects) {
-    transformObject(objects[key]);
-  }
-
-  return objects;
-};
-
-},{}],212:[function(require,module,exports){
-module.exports = function(types) {
-  for (var type in typeDefaults) {
-    if (!(type in types)) {
-      types[type] = typeDefaults[type];
-    }
-  }
-  types.defaults = typeDefaults;
-  return types;
-};
-
-var typeDefaults = {
-
-  Feature: function(feature) {
-    if (feature.geometry) this.geometry(feature.geometry);
-  },
-
-  FeatureCollection: function(collection) {
-    var features = collection.features, i = -1, n = features.length;
-    while (++i < n) this.Feature(features[i]);
-  },
-
-  GeometryCollection: function(collection) {
-    var geometries = collection.geometries, i = -1, n = geometries.length;
-    while (++i < n) this.geometry(geometries[i]);
-  },
-
-  LineString: function(lineString) {
-    this.line(lineString.coordinates);
-  },
-
-  MultiLineString: function(multiLineString) {
-    var coordinates = multiLineString.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.line(coordinates[i]);
-  },
-
-  MultiPoint: function(multiPoint) {
-    var coordinates = multiPoint.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.point(coordinates[i]);
-  },
-
-  MultiPolygon: function(multiPolygon) {
-    var coordinates = multiPolygon.coordinates, i = -1, n = coordinates.length;
-    while (++i < n) this.polygon(coordinates[i]);
-  },
-
-  Point: function(point) {
-    this.point(point.coordinates);
-  },
-
-  Polygon: function(polygon) {
-    this.polygon(polygon.coordinates);
-  },
-
-  object: function(object) {
-    return object == null ? null
-        : typeObjects.hasOwnProperty(object.type) ? this[object.type](object)
-        : this.geometry(object);
-  },
-
-  geometry: function(geometry) {
-    return geometry == null ? null
-        : typeGeometries.hasOwnProperty(geometry.type) ? this[geometry.type](geometry)
-        : null;
-  },
-
-  point: function() {},
-
-  line: function(coordinates) {
-    var i = -1, n = coordinates.length;
-    while (++i < n) this.point(coordinates[i]);
-  },
-
-  polygon: function(coordinates) {
-    var i = -1, n = coordinates.length;
-    while (++i < n) this.line(coordinates[i]);
-  }
-};
-
-var typeGeometries = {
-  LineString: 1,
-  MultiLineString: 1,
-  MultiPoint: 1,
-  MultiPolygon: 1,
-  Point: 1,
-  Polygon: 1,
-  GeometryCollection: 1
-};
-
-var typeObjects = {
-  Feature: 1,
-  FeatureCollection: 1
-};
-
-},{}],213:[function(require,module,exports){
-!function() {
-  var topojson = {
-    version: "1.6.8",
-    mesh: function(topology) { return object(topology, meshArcs.apply(this, arguments)); },
-    meshArcs: meshArcs,
-    merge: function(topology) { return object(topology, mergeArcs.apply(this, arguments)); },
-    mergeArcs: mergeArcs,
-    feature: featureOrCollection,
-    neighbors: neighbors,
-    presimplify: presimplify
-  };
-
-  function stitchArcs(topology, arcs) {
-    var stitchedArcs = {},
-        fragmentByStart = {},
-        fragmentByEnd = {},
-        fragments = [],
-        emptyIndex = -1;
-
-    // Stitch empty arcs first, since they may be subsumed by other arcs.
-    arcs.forEach(function(i, j) {
-      var arc = topology.arcs[i < 0 ? ~i : i], t;
-      if (arc.length < 3 && !arc[1][0] && !arc[1][1]) {
-        t = arcs[++emptyIndex], arcs[emptyIndex] = i, arcs[j] = t;
-      }
-    });
-
-    arcs.forEach(function(i) {
-      var e = ends(i),
-          start = e[0],
-          end = e[1],
-          f, g;
-
-      if (f = fragmentByEnd[start]) {
-        delete fragmentByEnd[f.end];
-        f.push(i);
-        f.end = end;
-        if (g = fragmentByStart[end]) {
-          delete fragmentByStart[g.start];
-          var fg = g === f ? f : f.concat(g);
-          fragmentByStart[fg.start = f.start] = fragmentByEnd[fg.end = g.end] = fg;
-        } else {
-          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;
-        }
-      } else if (f = fragmentByStart[end]) {
-        delete fragmentByStart[f.start];
-        f.unshift(i);
-        f.start = start;
-        if (g = fragmentByEnd[start]) {
-          delete fragmentByEnd[g.end];
-          var gf = g === f ? f : g.concat(f);
-          fragmentByStart[gf.start = g.start] = fragmentByEnd[gf.end = f.end] = gf;
-        } else {
-          fragmentByStart[f.start] = fragmentByEnd[f.end] = f;
-        }
-      } else {
-        f = [i];
-        fragmentByStart[f.start = start] = fragmentByEnd[f.end = end] = f;
-      }
-    });
-
-    function ends(i) {
-      var arc = topology.arcs[i < 0 ? ~i : i], p0 = arc[0], p1;
-      if (topology.transform) p1 = [0, 0], arc.forEach(function(dp) { p1[0] += dp[0], p1[1] += dp[1]; });
-      else p1 = arc[arc.length - 1];
-      return i < 0 ? [p1, p0] : [p0, p1];
-    }
-
-    function flush(fragmentByEnd, fragmentByStart) {
-      for (var k in fragmentByEnd) {
-        var f = fragmentByEnd[k];
-        delete fragmentByStart[f.start];
-        delete f.start;
-        delete f.end;
-        f.forEach(function(i) { stitchedArcs[i < 0 ? ~i : i] = 1; });
-        fragments.push(f);
-      }
-    }
-
-    flush(fragmentByEnd, fragmentByStart);
-    flush(fragmentByStart, fragmentByEnd);
-    arcs.forEach(function(i) { if (!stitchedArcs[i < 0 ? ~i : i]) fragments.push([i]); });
-
-    return fragments;
-  }
-
-  function meshArcs(topology, o, filter) {
-    var arcs = [];
-
-    if (arguments.length > 1) {
-      var geomsByArc = [],
-          geom;
-
-      function arc(i) {
-        var j = i < 0 ? ~i : i;
-        (geomsByArc[j] || (geomsByArc[j] = [])).push({i: i, g: geom});
-      }
-
-      function line(arcs) {
-        arcs.forEach(arc);
-      }
-
-      function polygon(arcs) {
-        arcs.forEach(line);
-      }
-
-      function geometry(o) {
-        if (o.type === "GeometryCollection") o.geometries.forEach(geometry);
-        else if (o.type in geometryType) geom = o, geometryType[o.type](o.arcs);
-      }
-
-      var geometryType = {
-        LineString: line,
-        MultiLineString: polygon,
-        Polygon: polygon,
-        MultiPolygon: function(arcs) { arcs.forEach(polygon); }
-      };
-
-      geometry(o);
-
-      geomsByArc.forEach(arguments.length < 3
-          ? function(geoms) { arcs.push(geoms[0].i); }
-          : function(geoms) { if (filter(geoms[0].g, geoms[geoms.length - 1].g)) arcs.push(geoms[0].i); });
-    } else {
-      for (var i = 0, n = topology.arcs.length; i < n; ++i) arcs.push(i);
-    }
-
-    return {type: "MultiLineString", arcs: stitchArcs(topology, arcs)};
-  }
-
-  function mergeArcs(topology, objects) {
-    var polygonsByArc = {},
-        polygons = [],
-        components = [];
-
-    objects.forEach(function(o) {
-      if (o.type === "Polygon") register(o.arcs);
-      else if (o.type === "MultiPolygon") o.arcs.forEach(register);
-    });
-
-    function register(polygon) {
-      polygon.forEach(function(ring) {
-        ring.forEach(function(arc) {
-          (polygonsByArc[arc = arc < 0 ? ~arc : arc] || (polygonsByArc[arc] = [])).push(polygon);
-        });
-      });
-      polygons.push(polygon);
-    }
-
-    function exterior(ring) {
-      return cartesianRingArea(object(topology, {type: "Polygon", arcs: [ring]}).coordinates[0]) > 0; // TODO allow spherical?
-    }
-
-    polygons.forEach(function(polygon) {
-      if (!polygon._) {
-        var component = [],
-            neighbors = [polygon];
-        polygon._ = 1;
-        components.push(component);
-        while (polygon = neighbors.pop()) {
-          component.push(polygon);
-          polygon.forEach(function(ring) {
-            ring.forEach(function(arc) {
-              polygonsByArc[arc < 0 ? ~arc : arc].forEach(function(polygon) {
-                if (!polygon._) {
-                  polygon._ = 1;
-                  neighbors.push(polygon);
-                }
-              });
-            });
-          });
-        }
-      }
-    });
-
-    polygons.forEach(function(polygon) {
-      delete polygon._;
-    });
-
-    return {
-      type: "MultiPolygon",
-      arcs: components.map(function(polygons) {
-        var arcs = [];
-
-        // Extract the exterior (unique) arcs.
-        polygons.forEach(function(polygon) {
-          polygon.forEach(function(ring) {
-            ring.forEach(function(arc) {
-              if (polygonsByArc[arc < 0 ? ~arc : arc].length < 2) {
-                arcs.push(arc);
-              }
-            });
-          });
-        });
-
-        // Stitch the arcs into one or more rings.
-        arcs = stitchArcs(topology, arcs);
-
-        // If more than one ring is returned,
-        // at most one of these rings can be the exterior;
-        // this exterior ring has the same winding order
-        // as any exterior ring in the original polygons.
-        if ((n = arcs.length) > 1) {
-          var sgn = exterior(polygons[0][0]);
-          for (var i = 0, t; i < n; ++i) {
-            if (sgn === exterior(arcs[i])) {
-              t = arcs[0], arcs[0] = arcs[i], arcs[i] = t;
-              break;
-            }
-          }
-        }
-
-        return arcs;
-      })
-    };
-  }
-
-  function featureOrCollection(topology, o) {
-    return o.type === "GeometryCollection" ? {
-      type: "FeatureCollection",
-      features: o.geometries.map(function(o) { return feature(topology, o); })
-    } : feature(topology, o);
-  }
-
-  function feature(topology, o) {
-    var f = {
-      type: "Feature",
-      id: o.id,
-      properties: o.properties || {},
-      geometry: object(topology, o)
-    };
-    if (o.id == null) delete f.id;
-    return f;
-  }
-
-  function object(topology, o) {
-    var absolute = transformAbsolute(topology.transform),
-        arcs = topology.arcs;
-
-    function arc(i, points) {
-      if (points.length) points.pop();
-      for (var a = arcs[i < 0 ? ~i : i], k = 0, n = a.length, p; k < n; ++k) {
-        points.push(p = a[k].slice());
-        absolute(p, k);
-      }
-      if (i < 0) reverse(points, n);
-    }
-
-    function point(p) {
-      p = p.slice();
-      absolute(p, 0);
-      return p;
-    }
-
-    function line(arcs) {
-      var points = [];
-      for (var i = 0, n = arcs.length; i < n; ++i) arc(arcs[i], points);
-      if (points.length < 2) points.push(points[0].slice());
-      return points;
-    }
-
-    function ring(arcs) {
-      var points = line(arcs);
-      while (points.length < 4) points.push(points[0].slice());
-      return points;
-    }
-
-    function polygon(arcs) {
-      return arcs.map(ring);
-    }
-
-    function geometry(o) {
-      var t = o.type;
-      return t === "GeometryCollection" ? {type: t, geometries: o.geometries.map(geometry)}
-          : t in geometryType ? {type: t, coordinates: geometryType[t](o)}
-          : null;
-    }
-
-    var geometryType = {
-      Point: function(o) { return point(o.coordinates); },
-      MultiPoint: function(o) { return o.coordinates.map(point); },
-      LineString: function(o) { return line(o.arcs); },
-      MultiLineString: function(o) { return o.arcs.map(line); },
-      Polygon: function(o) { return polygon(o.arcs); },
-      MultiPolygon: function(o) { return o.arcs.map(polygon); }
-    };
-
-    return geometry(o);
-  }
-
-  function reverse(array, n) {
-    var t, j = array.length, i = j - n; while (i < --j) t = array[i], array[i++] = array[j], array[j] = t;
-  }
-
-  function bisect(a, x) {
-    var lo = 0, hi = a.length;
-    while (lo < hi) {
-      var mid = lo + hi >>> 1;
-      if (a[mid] < x) lo = mid + 1;
-      else hi = mid;
-    }
-    return lo;
-  }
-
-  function neighbors(objects) {
-    var indexesByArc = {}, // arc index -> array of object indexes
-        neighbors = objects.map(function() { return []; });
-
-    function line(arcs, i) {
-      arcs.forEach(function(a) {
-        if (a < 0) a = ~a;
-        var o = indexesByArc[a];
-        if (o) o.push(i);
-        else indexesByArc[a] = [i];
-      });
-    }
-
-    function polygon(arcs, i) {
-      arcs.forEach(function(arc) { line(arc, i); });
-    }
-
-    function geometry(o, i) {
-      if (o.type === "GeometryCollection") o.geometries.forEach(function(o) { geometry(o, i); });
-      else if (o.type in geometryType) geometryType[o.type](o.arcs, i);
-    }
-
-    var geometryType = {
-      LineString: line,
-      MultiLineString: polygon,
-      Polygon: polygon,
-      MultiPolygon: function(arcs, i) { arcs.forEach(function(arc) { polygon(arc, i); }); }
-    };
-
-    objects.forEach(geometry);
-
-    for (var i in indexesByArc) {
-      for (var indexes = indexesByArc[i], m = indexes.length, j = 0; j < m; ++j) {
-        for (var k = j + 1; k < m; ++k) {
-          var ij = indexes[j], ik = indexes[k], n;
-          if ((n = neighbors[ij])[i = bisect(n, ik)] !== ik) n.splice(i, 0, ik);
-          if ((n = neighbors[ik])[i = bisect(n, ij)] !== ij) n.splice(i, 0, ij);
-        }
-      }
-    }
-
-    return neighbors;
-  }
-
-  function presimplify(topology, triangleArea) {
-    var absolute = transformAbsolute(topology.transform),
-        relative = transformRelative(topology.transform),
-        heap = minAreaHeap(),
-        maxArea = 0,
-        triangle;
-
-    if (!triangleArea) triangleArea = cartesianTriangleArea;
-
-    topology.arcs.forEach(function(arc) {
-      var triangles = [];
-
-      arc.forEach(absolute);
-
-      for (var i = 1, n = arc.length - 1; i < n; ++i) {
-        triangle = arc.slice(i - 1, i + 2);
-        triangle[1][2] = triangleArea(triangle);
-        triangles.push(triangle);
-        heap.push(triangle);
-      }
-
-      // Always keep the arc endpoints!
-      arc[0][2] = arc[n][2] = Infinity;
-
-      for (var i = 0, n = triangles.length; i < n; ++i) {
-        triangle = triangles[i];
-        triangle.previous = triangles[i - 1];
-        triangle.next = triangles[i + 1];
-      }
-    });
-
-    while (triangle = heap.pop()) {
-      var previous = triangle.previous,
-          next = triangle.next;
-
-      // If the area of the current point is less than that of the previous point
-      // to be eliminated, use the latter's area instead. This ensures that the
-      // current point cannot be eliminated without eliminating previously-
-      // eliminated points.
-      if (triangle[1][2] < maxArea) triangle[1][2] = maxArea;
-      else maxArea = triangle[1][2];
-
-      if (previous) {
-        previous.next = next;
-        previous[2] = triangle[2];
-        update(previous);
-      }
-
-      if (next) {
-        next.previous = previous;
-        next[0] = triangle[0];
-        update(next);
-      }
-    }
-
-    topology.arcs.forEach(function(arc) {
-      arc.forEach(relative);
-    });
-
-    function update(triangle) {
-      heap.remove(triangle);
-      triangle[1][2] = triangleArea(triangle);
-      heap.push(triangle);
-    }
-
-    return topology;
-  };
-
-  function cartesianRingArea(ring) {
-    var i = -1,
-        n = ring.length,
-        a,
-        b = ring[n - 1],
-        area = 0;
-
-    while (++i < n) {
-      a = b;
-      b = ring[i];
-      area += a[0] * b[1] - a[1] * b[0];
-    }
-
-    return area * .5;
-  }
-
-  function cartesianTriangleArea(triangle) {
-    var a = triangle[0], b = triangle[1], c = triangle[2];
-    return Math.abs((a[0] - c[0]) * (b[1] - a[1]) - (a[0] - b[0]) * (c[1] - a[1]));
-  }
-
-  function compareArea(a, b) {
-    return a[1][2] - b[1][2];
-  }
-
-  function minAreaHeap() {
-    var heap = {},
-        array = [],
-        size = 0;
-
-    heap.push = function(object) {
-      up(array[object._ = size] = object, size++);
-      return size;
-    };
-
-    heap.pop = function() {
-      if (size <= 0) return;
-      var removed = array[0], object;
-      if (--size > 0) object = array[size], down(array[object._ = 0] = object, 0);
-      return removed;
-    };
-
-    heap.remove = function(removed) {
-      var i = removed._, object;
-      if (array[i] !== removed) return; // invalid request
-      if (i !== --size) object = array[size], (compareArea(object, removed) < 0 ? up : down)(array[object._ = i] = object, i);
-      return i;
-    };
-
-    function up(object, i) {
-      while (i > 0) {
-        var j = ((i + 1) >> 1) - 1,
-            parent = array[j];
-        if (compareArea(object, parent) >= 0) break;
-        array[parent._ = i] = parent;
-        array[object._ = i = j] = object;
-      }
-    }
-
-    function down(object, i) {
-      while (true) {
-        var r = (i + 1) << 1,
-            l = r - 1,
-            j = i,
-            child = array[j];
-        if (l < size && compareArea(array[l], child) < 0) child = array[j = l];
-        if (r < size && compareArea(array[r], child) < 0) child = array[j = r];
-        if (j === i) break;
-        array[child._ = i] = child;
-        array[object._ = i = j] = object;
-      }
-    }
-
-    return heap;
-  }
-
-  function transformAbsolute(transform) {
-    if (!transform) return noop;
-    var x0,
-        y0,
-        kx = transform.scale[0],
-        ky = transform.scale[1],
-        dx = transform.translate[0],
-        dy = transform.translate[1];
-    return function(point, i) {
-      if (!i) x0 = y0 = 0;
-      point[0] = (x0 += point[0]) * kx + dx;
-      point[1] = (y0 += point[1]) * ky + dy;
-    };
-  }
-
-  function transformRelative(transform) {
-    if (!transform) return noop;
-    var x0,
-        y0,
-        kx = transform.scale[0],
-        ky = transform.scale[1],
-        dx = transform.translate[0],
-        dy = transform.translate[1];
-    return function(point, i) {
-      if (!i) x0 = y0 = 0;
-      var x1 = (point[0] - dx) / kx | 0,
-          y1 = (point[1] - dy) / ky | 0;
-      point[0] = x1 - x0;
-      point[1] = y1 - y0;
-      x0 = x1;
-      y0 = y1;
-    };
-  }
-
-  function noop() {}
-
-  if (typeof define === "function" && define.amd) define(topojson);
-  else if (typeof module === "object" && module.exports) module.exports = topojson;
-  else this.topojson = topojson;
-}();
-
-},{}],214:[function(require,module,exports){
+},{}],187:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -68631,7 +72475,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],215:[function(require,module,exports){
+},{}],188:[function(require,module,exports){
 module.exports = function(request) {
     var parent = ce('div', 'treeui'),
         onclick = function() { };
@@ -68730,9 +72574,9 @@ function ae(x, y, z) {
     return x.addEventListener(y, z);
 }
 
-},{}],216:[function(require,module,exports){
-arguments[4][44][0].apply(exports,arguments)
-},{"dup":44}],217:[function(require,module,exports){
+},{}],189:[function(require,module,exports){
+arguments[4][59][0].apply(exports,arguments)
+},{"dup":59}],190:[function(require,module,exports){
 // Currently in sync with Node.js lib/internal/util/types.js
 // https://github.com/nodejs/node/commit/112cc7c27551254aa2b17098fb774867f05ed0d9
 
@@ -69068,7 +72912,7 @@ exports.isAnyArrayBuffer = isAnyArrayBuffer;
   });
 });
 
-},{"is-arguments":99,"is-generator-function":102,"is-typed-array":104,"which-typed-array":221}],218:[function(require,module,exports){
+},{"is-arguments":106,"is-generator-function":109,"is-typed-array":111,"which-typed-array":193}],191:[function(require,module,exports){
 (function (process){(function (){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -69787,263 +73631,279 @@ function callbackify(original) {
 exports.callbackify = callbackify;
 
 }).call(this)}).call(this,require('_process'))
-},{"./support/isBuffer":216,"./support/types":217,"_process":160,"inherits":98}],219:[function(require,module,exports){
+},{"./support/isBuffer":189,"./support/types":190,"_process":165,"inherits":105}],192:[function(require,module,exports){
+/*eslint-disable no-cond-assign */
 module.exports = parse;
 module.exports.parse = parse;
 module.exports.stringify = stringify;
 
-var numberRegexp = /^[-+]?([0-9]*\.[0-9]+|[0-9]+)([eE][-+]?[0-9]+)?/;
+var numberRegexp = /[-+]?([0-9]*\.[0-9]+|[0-9]+)([eE][-+]?[0-9]+)?/;
+// Matches sequences like '100 100' or '100 100 100'.
+var tuples = new RegExp('^' + numberRegexp.source + '(\\s' + numberRegexp.source + '){1,}');
 
- /*
+/*
  * Parse WKT and return GeoJSON.
  *
  * @param {string} _ A WKT geometry
  * @return {?Object} A GeoJSON geometry object
  */
-function parse(_) {
-    var parts = _.split(";"),
-        _ = parts.pop(),
-        srid = (parts.shift() || "").split("=").pop();
+function parse (input) {
+  var parts = input.split(';');
+  var _ = parts.pop();
+  var srid = (parts.shift() || '').split('=').pop();
 
-    var i = 0;
+  var i = 0;
 
-    function $(re) {
-        var match = _.substring(i).match(re);
-        if (!match) return null;
-        else {
-            i += match[0].length;
-            return match[0];
+  function $ (re) {
+    var match = _.substring(i).match(re);
+    if (!match) return null;
+    else {
+      i += match[0].length;
+      return match[0];
+    }
+  }
+
+  function crs (obj) {
+    if (obj && srid.match(/\d+/)) {
+      obj.crs = {
+        type: 'name',
+        properties: {
+          name: 'urn:ogc:def:crs:EPSG::' + srid
         }
+      };
     }
 
-    function crs(obj) {
-        if (obj && srid.match(/\d+/)) {
-            obj.crs = {
-                type: 'name',
-                properties: {
-                    name: 'urn:ogc:def:crs:EPSG::' + srid
-                }
-            };
-        }
+    return obj;
+  }
 
-        return obj;
+  function white () { $(/^\s*/); }
+
+  function multicoords () {
+    white();
+    var depth = 0;
+    var rings = [];
+    var stack = [rings];
+    var pointer = rings;
+    var elem;
+
+    while (elem =
+           $(/^(\()/) ||
+             $(/^(\))/) ||
+               $(/^(,)/) ||
+                 $(tuples)) {
+      if (elem === '(') {
+        stack.push(pointer);
+        pointer = [];
+        stack[stack.length - 1].push(pointer);
+        depth++;
+      } else if (elem === ')') {
+        // For the case: Polygon(), ...
+        if (pointer.length === 0) return null;
+
+        pointer = stack.pop();
+        // the stack was empty, input was malformed
+        if (!pointer) return null;
+        depth--;
+        if (depth === 0) break;
+      } else if (elem === ',') {
+        pointer = [];
+        stack[stack.length - 1].push(pointer);
+      } else if (!elem.split(/\s/g).some(isNaN)) {
+        Array.prototype.push.apply(pointer, elem.split(/\s/g).map(parseFloat));
+      } else {
+        return null;
+      }
+      white();
     }
 
-    function white() { $(/^\s*/); }
+    if (depth !== 0) return null;
 
-    function multicoords() {
-        white();
-        var depth = 0, rings = [], stack = [rings],
-            pointer = rings, elem;
+    return rings;
+  }
 
-        while (elem =
-            $(/^(\()/) ||
-            $(/^(\))/) ||
-            $(/^(\,)/) ||
-            $(numberRegexp)) {
-            if (elem == '(') {
-                stack.push(pointer);
-                pointer = [];
-                stack[stack.length - 1].push(pointer);
-                depth++;
-            } else if (elem == ')') {
-                pointer = stack.pop();
-                // the stack was empty, input was malformed
-                if (!pointer) return;
-                depth--;
-                if (depth === 0) break;
-            } else if (elem === ',') {
-                pointer = [];
-                stack[stack.length - 1].push(pointer);
-            } else if (!isNaN(parseFloat(elem))) {
-                pointer.push(parseFloat(elem));
-            } else {
-                return null;
-            }
-            white();
-        }
-
-        if (depth !== 0) return null;
-        return rings;
+  function coords () {
+    var list = [];
+    var item;
+    var pt;
+    while (pt =
+           $(tuples) ||
+             $(/^(,)/)) {
+      if (pt === ',') {
+        list.push(item);
+        item = [];
+      } else if (!pt.split(/\s/g).some(isNaN)) {
+        if (!item) item = [];
+        Array.prototype.push.apply(item, pt.split(/\s/g).map(parseFloat));
+      }
+      white();
     }
 
-    function coords() {
-        var list = [], item, pt;
-        while (pt =
-            $(numberRegexp) ||
-            $(/^(\,)/)) {
-            if (pt == ',') {
-                list.push(item);
-                item = [];
-            } else {
-                if (!item) item = [];
-                item.push(parseFloat(pt));
-            }
-            white();
-        }
-        if (item) list.push(item);
-        return list.length ? list : null;
+    if (item) list.push(item);
+    else return null;
+
+    return list.length ? list : null;
+  }
+
+  function point () {
+    if (!$(/^(point(\sz)?)/i)) return null;
+    white();
+    if (!$(/^(\()/)) return null;
+    var c = coords();
+    if (!c) return null;
+    white();
+    if (!$(/^(\))/)) return null;
+    return {
+      type: 'Point',
+      coordinates: c[0]
+    };
+  }
+
+  function multipoint () {
+    if (!$(/^(multipoint)/i)) return null;
+    white();
+    var newCoordsFormat = _
+      .substring(_.indexOf('(') + 1, _.length - 1)
+      .replace(/\(/g, '')
+      .replace(/\)/g, '');
+    _ = 'MULTIPOINT (' + newCoordsFormat + ')';
+    var c = multicoords();
+    if (!c) return null;
+    white();
+    return {
+      type: 'MultiPoint',
+      coordinates: c
+    };
+  }
+
+  function multilinestring () {
+    if (!$(/^(multilinestring)/i)) return null;
+    white();
+    var c = multicoords();
+    if (!c) return null;
+    white();
+    return {
+      type: 'MultiLineString',
+      coordinates: c
+    };
+  }
+
+  function linestring () {
+    if (!$(/^(linestring(\sz)?)/i)) return null;
+    white();
+    if (!$(/^(\()/)) return null;
+    var c = coords();
+    if (!c) return null;
+    if (!$(/^(\))/)) return null;
+    return {
+      type: 'LineString',
+      coordinates: c
+    };
+  }
+
+  function polygon () {
+    if (!$(/^(polygon(\sz)?)/i)) return null;
+    white();
+    var c = multicoords();
+    if (!c) return null;
+    return {
+      type: 'Polygon',
+      coordinates: c
+    };
+  }
+
+  function multipolygon () {
+    if (!$(/^(multipolygon)/i)) return null;
+    white();
+    var c = multicoords();
+    if (!c) return null;
+    return {
+      type: 'MultiPolygon',
+      coordinates: c
+    };
+  }
+
+  function geometrycollection () {
+    var geometries = [];
+    var geometry;
+
+    if (!$(/^(geometrycollection)/i)) return null;
+    white();
+
+    if (!$(/^(\()/)) return null;
+    while (geometry = root()) {
+      geometries.push(geometry);
+      white();
+      $(/^(,)/);
+      white();
     }
+    if (!$(/^(\))/)) return null;
 
-    function point() {
-        if (!$(/^(point)/i)) return null;
-        white();
-        if (!$(/^(\()/)) return null;
-        var c = coords();
-        if (!c) return null;
-        white();
-        if (!$(/^(\))/)) return null;
-        return {
-            type: 'Point',
-            coordinates: c[0]
-        };
-    }
+    return {
+      type: 'GeometryCollection',
+      geometries: geometries
+    };
+  }
 
-    function multipoint() {
-        if (!$(/^(multipoint)/i)) return null;
-        white();
-        var c = multicoords();
-        if (!c) return null;
-        white();
-        return {
-            type: 'MultiPoint',
-            coordinates: c
-        };
-    }
+  function root () {
+    return point() ||
+      linestring() ||
+      polygon() ||
+      multipoint() ||
+      multilinestring() ||
+      multipolygon() ||
+      geometrycollection();
+  }
 
-    function multilinestring() {
-        if (!$(/^(multilinestring)/i)) return null;
-        white();
-        var c = multicoords();
-        if (!c) return null;
-        white();
-        return {
-            type: 'MultiLineString',
-            coordinates: c
-        };
-    }
-
-    function linestring() {
-        if (!$(/^(linestring)/i)) return null;
-        white();
-        if (!$(/^(\()/)) return null;
-        var c = coords();
-        if (!c) return null;
-        if (!$(/^(\))/)) return null;
-        return {
-            type: 'LineString',
-            coordinates: c
-        };
-    }
-
-    function polygon() {
-        if (!$(/^(polygon)/i)) return null;
-        white();
-        return {
-            type: 'Polygon',
-            coordinates: multicoords()
-        };
-    }
-
-    function multipolygon() {
-        if (!$(/^(multipolygon)/i)) return null;
-        white();
-        return {
-            type: 'MultiPolygon',
-            coordinates: multicoords()
-        };
-    }
-
-    function geometrycollection() {
-        var geometries = [], geometry;
-
-        if (!$(/^(geometrycollection)/i)) return null;
-        white();
-
-        if (!$(/^(\()/)) return null;
-        while (geometry = root()) {
-            geometries.push(geometry);
-            white();
-            $(/^(\,)/);
-            white();
-        }
-        if (!$(/^(\))/)) return null;
-
-        return {
-            type: 'GeometryCollection',
-            geometries: geometries
-        };
-    }
-
-    function root() {
-        return point() ||
-            linestring() ||
-            polygon() ||
-            multipoint() ||
-            multilinestring() ||
-            multipolygon() ||
-            geometrycollection();
-    }
-
-    return crs(root());
+  return crs(root());
 }
 
 /**
  * Stringifies a GeoJSON object into WKT
  */
-function stringify(gj) {
-    if (gj.type === 'Feature') {
-        gj = gj.geometry;
-    }
+function stringify (gj) {
+  if (gj.type === 'Feature') {
+    gj = gj.geometry;
+  }
 
-    function pairWKT(c) {
-        if (c.length === 2) {
-            return c[0] + ' ' + c[1];
-        } else if (c.length === 3) {
-            return c[0] + ' ' + c[1] + ' ' + c[2];
-        }
-    }
+  function pairWKT (c) {
+    return c.join(' ');
+  }
 
-    function ringWKT(r) {
-        return r.map(pairWKT).join(', ');
-    }
+  function ringWKT (r) {
+    return r.map(pairWKT).join(', ');
+  }
 
-    function ringsWKT(r) {
-        return r.map(ringWKT).map(wrapParens).join(', ');
-    }
+  function ringsWKT (r) {
+    return r.map(ringWKT).map(wrapParens).join(', ');
+  }
 
-    function multiRingsWKT(r) {
-        return r.map(ringsWKT).map(wrapParens).join(', ');
-    }
+  function multiRingsWKT (r) {
+    return r.map(ringsWKT).map(wrapParens).join(', ');
+  }
 
-    function wrapParens(s) { return '(' + s + ')'; }
+  function wrapParens (s) { return '(' + s + ')'; }
 
-    switch (gj.type) {
-        case 'Point':
-            return 'POINT (' + pairWKT(gj.coordinates) + ')';
-        case 'LineString':
-            return 'LINESTRING (' + ringWKT(gj.coordinates) + ')';
-        case 'Polygon':
-            return 'POLYGON (' + ringsWKT(gj.coordinates) + ')';
-        case 'MultiPoint':
-            return 'MULTIPOINT (' + ringWKT(gj.coordinates) + ')';
-        case 'MultiPolygon':
-            return 'MULTIPOLYGON (' + multiRingsWKT(gj.coordinates) + ')';
-        case 'MultiLineString':
-            return 'MULTILINESTRING (' + ringsWKT(gj.coordinates) + ')';
-        case 'GeometryCollection':
-            return 'GEOMETRYCOLLECTION (' + gj.geometries.map(stringify).join(', ') + ')';
-        default:
-            throw new Error('stringify requires a valid GeoJSON Feature or geometry object as input');
-    }
+  switch (gj.type) {
+    case 'Point':
+      return 'POINT (' + pairWKT(gj.coordinates) + ')';
+    case 'LineString':
+      return 'LINESTRING (' + ringWKT(gj.coordinates) + ')';
+    case 'Polygon':
+      return 'POLYGON (' + ringsWKT(gj.coordinates) + ')';
+    case 'MultiPoint':
+      return 'MULTIPOINT (' + ringWKT(gj.coordinates) + ')';
+    case 'MultiPolygon':
+      return 'MULTIPOLYGON (' + multiRingsWKT(gj.coordinates) + ')';
+    case 'MultiLineString':
+      return 'MULTILINESTRING (' + ringsWKT(gj.coordinates) + ')';
+    case 'GeometryCollection':
+      return 'GEOMETRYCOLLECTION (' + gj.geometries.map(stringify).join(', ') + ')';
+    default:
+      throw new Error('stringify requires a valid GeoJSON Feature or geometry object as input');
+  }
 }
 
-},{}],220:[function(require,module,exports){
-module.exports.RADIUS = 6378137;
-module.exports.FLATTENING = 1/298.257223563;
-module.exports.POLAR_RADIUS = 6356752.3142;
-
-},{}],221:[function(require,module,exports){
+},{}],193:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -70102,7 +73962,7 @@ module.exports = function whichTypedArray(value) {
 };
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"available-typed-arrays":46,"call-bind/callBound":53,"es-abstract/helpers/getOwnPropertyDescriptor":70,"for-each":76,"has-tostringtag/shams":95,"is-typed-array":104}],222:[function(require,module,exports){
+},{"available-typed-arrays":61,"call-bind/callBound":67,"es-abstract/helpers/getOwnPropertyDescriptor":85,"for-each":90,"has-tostringtag/shams":102,"is-typed-array":111}],194:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryReader;
 
@@ -70153,7 +74013,7 @@ BinaryReader.prototype.readVarInt = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":52}],223:[function(require,module,exports){
+},{"buffer":66}],195:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = BinaryWriter;
 
@@ -70222,7 +74082,7 @@ BinaryWriter.prototype.ensureSize = function (size) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":52}],224:[function(require,module,exports){
+},{"buffer":66}],196:[function(require,module,exports){
 (function (Buffer){(function (){
 module.exports = Geometry;
 
@@ -70610,7 +74470,7 @@ Geometry.prototype.toGeoJSON = function (options) {
 };
 
 }).call(this)}).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":100,"./binaryreader":222,"./binarywriter":223,"./geometrycollection":225,"./linestring":226,"./multilinestring":227,"./multipoint":228,"./multipolygon":229,"./point":230,"./polygon":231,"./types":232,"./wktparser":233,"./zigzag.js":235}],225:[function(require,module,exports){
+},{"../../is-buffer/index.js":107,"./binaryreader":194,"./binarywriter":195,"./geometrycollection":197,"./linestring":198,"./multilinestring":199,"./multipoint":200,"./multipolygon":201,"./point":202,"./polygon":203,"./types":204,"./wktparser":205,"./zigzag.js":207}],197:[function(require,module,exports){
 module.exports = GeometryCollection;
 
 var util = require('util');
@@ -70781,7 +74641,7 @@ GeometryCollection.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":223,"./geometry":224,"./types":232,"util":218}],226:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./types":204,"util":191}],198:[function(require,module,exports){
 module.exports = LineString;
 
 var util = require('util');
@@ -70961,7 +74821,7 @@ LineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":223,"./geometry":224,"./point":230,"./types":232,"util":218}],227:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./point":202,"./types":204,"util":191}],199:[function(require,module,exports){
 module.exports = MultiLineString;
 
 var util = require('util');
@@ -71152,7 +75012,7 @@ MultiLineString.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":223,"./geometry":224,"./linestring":226,"./point":230,"./types":232,"util":218}],228:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./linestring":198,"./point":202,"./types":204,"util":191}],200:[function(require,module,exports){
 module.exports = MultiPoint;
 
 var util = require('util');
@@ -71326,7 +75186,7 @@ MultiPoint.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":223,"./geometry":224,"./point":230,"./types":232,"util":218}],229:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./point":202,"./types":204,"util":191}],201:[function(require,module,exports){
 module.exports = MultiPolygon;
 
 var util = require('util');
@@ -71554,7 +75414,7 @@ MultiPolygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":223,"./geometry":224,"./point":230,"./polygon":231,"./types":232,"util":218}],230:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./point":202,"./polygon":203,"./types":204,"util":191}],202:[function(require,module,exports){
 module.exports = Point;
 
 var util = require('util');
@@ -71773,7 +75633,7 @@ Point.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":223,"./geometry":224,"./types":232,"./zigzag.js":235,"util":218}],231:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./types":204,"./zigzag.js":207,"util":191}],203:[function(require,module,exports){
 module.exports = Polygon;
 
 var util = require('util');
@@ -72063,7 +75923,7 @@ Polygon.prototype.toGeoJSON = function (options) {
     return geoJSON;
 };
 
-},{"./binarywriter":223,"./geometry":224,"./point":230,"./types":232,"util":218}],232:[function(require,module,exports){
+},{"./binarywriter":195,"./geometry":196,"./point":202,"./types":204,"util":191}],204:[function(require,module,exports){
 module.exports = {
     wkt: {
         Point: 'POINT',
@@ -72094,7 +75954,7 @@ module.exports = {
     }
 };
 
-},{}],233:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 module.exports = WktParser;
 
 var Types = require('./types');
@@ -72220,7 +76080,7 @@ WktParser.prototype.skipWhitespaces = function () {
         this.position++;
 };
 
-},{"./point":230,"./types":232}],234:[function(require,module,exports){
+},{"./point":202,"./types":204}],206:[function(require,module,exports){
 exports.Types = require('./types');
 exports.Geometry = require('./geometry');
 exports.Point = require('./point');
@@ -72230,7 +76090,7 @@ exports.MultiPoint = require('./multipoint');
 exports.MultiLineString = require('./multilinestring');
 exports.MultiPolygon = require('./multipolygon');
 exports.GeometryCollection = require('./geometrycollection');
-},{"./geometry":224,"./geometrycollection":225,"./linestring":226,"./multilinestring":227,"./multipoint":228,"./multipolygon":229,"./point":230,"./polygon":231,"./types":232}],235:[function(require,module,exports){
+},{"./geometry":196,"./geometrycollection":197,"./linestring":198,"./multilinestring":199,"./multipoint":200,"./multipolygon":201,"./point":202,"./polygon":203,"./types":204}],207:[function(require,module,exports){
 module.exports = {
     encode: function (value) {
         return (value << 1) ^ (value >> 31);
@@ -72240,7 +76100,7 @@ module.exports = {
     }
 };
 
-},{}],236:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -72259,20 +76119,20 @@ function extend() {
     return target
 }
 
-},{}],237:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 module.exports = function () {
   return {
     GithubAPI: false
   };
 };
 
-},{}],238:[function(require,module,exports){
+},{}],210:[function(require,module,exports){
 module.exports = {
   DEFAULT_PROJECTION: 'globe',
   DEFAULT_STYLE: 'Streets'
 };
 
-},{}],239:[function(require,module,exports){
+},{}],211:[function(require,module,exports){
 const clone = require('clone'),
   xtend = require('xtend'),
   config = require('../config.js')(location.hostname),
@@ -72567,7 +76427,7 @@ module.exports = function (context) {
   return data;
 };
 
-},{"../config.js":237,"../source/gist":254,"../source/github":255,"../source/local":256,"clone":55,"xtend":236}],240:[function(require,module,exports){
+},{"../config.js":209,"../source/gist":226,"../source/github":227,"../source/local":228,"clone":69,"xtend":208}],212:[function(require,module,exports){
 const qs = require('qs-hash'),
   zoomextent = require('../lib/zoomextent'),
   flash = require('../ui/flash');
@@ -72666,7 +76526,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../lib/zoomextent":249,"../ui/flash":266,"qs-hash":161}],241:[function(require,module,exports){
+},{"../lib/zoomextent":221,"../ui/flash":238,"qs-hash":166}],213:[function(require,module,exports){
 const config = require('../config.js')(location.hostname);
 
 module.exports = function (context) {
@@ -72716,7 +76576,7 @@ module.exports = function (context) {
   return repo;
 };
 
-},{"../config.js":237}],242:[function(require,module,exports){
+},{"../config.js":209}],214:[function(require,module,exports){
 const qs = require('qs-hash'),
   xtend = require('xtend');
 
@@ -72790,7 +76650,7 @@ module.exports = function (context) {
   return router;
 };
 
-},{"qs-hash":161,"xtend":236}],243:[function(require,module,exports){
+},{"qs-hash":166,"xtend":208}],215:[function(require,module,exports){
 const config = require('../config.js')(location.hostname);
 
 module.exports = function (context) {
@@ -72888,13 +76748,13 @@ module.exports = function (context) {
   return user;
 };
 
-},{"../config.js":237}],244:[function(require,module,exports){
+},{"../config.js":209}],216:[function(require,module,exports){
 (function (Buffer){(function (){
 const escape = require('escape-html'),
   geojsonRandom = require('geojson-random'),
-  geojsonExtent = require('geojson-extent'),
+  geojsonExtent = require('@mapbox/geojson-extent'),
   geojsonFlatten = require('geojson-flatten'),
-  polyline = require('polyline'),
+  polyline = require('@mapbox/polyline'),
   wkx = require('wkx'),
   zoomextent = require('../lib/zoomextent');
 
@@ -73014,7 +76874,7 @@ module.exports.wkxString = function (context) {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../lib/zoomextent":249,"buffer":52,"escape-html":71,"geojson-extent":83,"geojson-flatten":84,"geojson-random":86,"polyline":158,"wkx":234}],245:[function(require,module,exports){
+},{"../lib/zoomextent":221,"@mapbox/geojson-extent":7,"@mapbox/polyline":43,"buffer":66,"escape-html":86,"geojson-flatten":94,"geojson-random":95,"wkx":206}],217:[function(require,module,exports){
 module.exports = function (context) {
   return function (e, id) {
     const sel = d3.select(e.target._content);
@@ -73195,14 +77055,16 @@ module.exports = function (context) {
   };
 };
 
-},{}],246:[function(require,module,exports){
-const topojson = require('topojson'),
-  toGeoJSON = require('togeojson'),
+},{}],218:[function(require,module,exports){
+const topojson = require('topojson-client'),
+  toGeoJSON = require('@tmcw/togeojson'),
   gtfs2geojson = require('gtfs2geojson'),
   csv2geojson = require('csv2geojson'),
   osmtogeojson = require('osmtogeojson'),
   polytogeojson = require('polytogeojson'),
-  geojsonNormalize = require('geojson-normalize');
+  geojsonNormalize = require('@mapbox/geojson-normalize');
+
+console.log(gtfs2geojson);
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
@@ -73363,11 +77225,19 @@ function readFile(f, text, callback) {
         }
       }
     );
-  } else if (fileType === 'gtfs') {
+  } else if (fileType === 'gtfs-shapes') {
     try {
-      return callback(null, gtfs2geojson(text));
+      return callback(null, gtfs2geojson.lines(text));
     } catch (e) {
-      return callback({ message: 'Invalid GTFS file' });
+      console.log(e);
+      return callback({ message: 'Invalid GTFS shapes.txt file' });
+    }
+  } else if (fileType === 'gtfs-stops') {
+    try {
+      return callback(null, gtfs2geojson.stops(text));
+    } catch (e) {
+      console.log(e);
+      return callback({ message: 'Invalid GTFS stops.txt file' });
     }
   } else if (fileType === 'poly') {
     callback(null, polytogeojson(text));
@@ -73393,12 +77263,20 @@ function readFile(f, text, callback) {
     if (ext('.xml') || ext('.osm')) return 'xml';
     if (ext('.poly')) return 'poly';
     if (text && text.indexOf('shape_id,shape_pt_lat,shape_pt_lon') !== -1) {
-      return 'gtfs';
+      return 'gtfs-shapes';
+    }
+    if (
+      text &&
+      text.indexOf(
+        'stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon'
+      ) !== -1
+    ) {
+      return 'gtfs-stops';
     }
   }
 }
 
-},{"csv2geojson":62,"geojson-normalize":85,"gtfs2geojson":91,"osmtogeojson":153,"polytogeojson":159,"togeojson":182,"topojson":"topojson"}],247:[function(require,module,exports){
+},{"@mapbox/geojson-normalize":8,"@tmcw/togeojson":47,"csv2geojson":76,"gtfs2geojson":98,"osmtogeojson":161,"polytogeojson":164,"topojson-client":185}],219:[function(require,module,exports){
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (map, feature) {
@@ -73412,8 +77290,8 @@ module.exports = function (map, feature) {
   }
 };
 
-},{"@turf/bbox":34}],248:[function(require,module,exports){
-const geojsonhint = require('geojsonhint');
+},{"@turf/bbox":49}],220:[function(require,module,exports){
+const geojsonhint = require('@mapbox/geojsonhint');
 
 module.exports = function (callback) {
   return function (editor, changeObj) {
@@ -73482,7 +77360,7 @@ module.exports = function (callback) {
   };
 };
 
-},{"geojsonhint":89}],249:[function(require,module,exports){
+},{"@mapbox/geojsonhint":10}],221:[function(require,module,exports){
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (context) {
@@ -73492,7 +77370,7 @@ module.exports = function (context) {
   });
 };
 
-},{"@turf/bbox":34}],250:[function(require,module,exports){
+},{"@turf/bbox":49}],222:[function(require,module,exports){
 const ui = require('./ui'),
   map = require('./ui/map'),
   data = require('./core/data'),
@@ -73522,7 +77400,7 @@ function geojsonIO() {
   return context;
 }
 
-},{"./core/data":239,"./core/loader":240,"./core/repo":241,"./core/router":242,"./core/user":243,"./ui":257,"./ui/map":270,"store":175}],251:[function(require,module,exports){
+},{"./core/data":211,"./core/loader":212,"./core/repo":213,"./core/router":214,"./core/user":215,"./ui":229,"./ui/map":242,"store":179}],223:[function(require,module,exports){
 (function (Buffer){(function (){
 
 const marked = require('marked');
@@ -73542,7 +77420,7 @@ module.exports = function () {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":52,"marked":148}],252:[function(require,module,exports){
+},{"buffer":66,"marked":154}],224:[function(require,module,exports){
 const _ = require('lodash');
 const { createPopper } = require('@popperjs/core');
 
@@ -73705,7 +77583,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/validate":248,"../lib/zoomextent":249,"../ui/saver.js":277,"@popperjs/core":32,"codemirror/addon/edit/matchbrackets":56,"codemirror/addon/fold/brace-fold":57,"codemirror/addon/fold/foldcode":58,"codemirror/addon/fold/foldgutter":59,"codemirror/lib/codemirror":60,"codemirror/mode/javascript/javascript":61,"lodash":146}],253:[function(require,module,exports){
+},{"../lib/validate":220,"../lib/zoomextent":221,"../ui/saver.js":249,"@popperjs/core":46,"codemirror/addon/edit/matchbrackets":70,"codemirror/addon/fold/brace-fold":71,"codemirror/addon/fold/foldcode":72,"codemirror/addon/fold/foldgutter":73,"codemirror/lib/codemirror":74,"codemirror/mode/javascript/javascript":75,"lodash":152}],225:[function(require,module,exports){
 const metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -73770,7 +77648,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/smartzoom.js":247,"d3-metatable":63}],254:[function(require,module,exports){
+},{"../lib/smartzoom.js":219,"d3-metatable":78}],226:[function(require,module,exports){
 
 const tmpl = "<!DOCTYPE html>\n<html>\n<head>\n  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\n  <style>\n  body { margin:0; padding:0; }\n  #map { position:absolute; top:0; bottom:0; width:100%; }\n  .marker-properties {\n    border-collapse:collapse;\n    font-size:11px;\n    border:1px solid #eee;\n    margin:0;\n}\n.marker-properties th {\n    white-space:nowrap;\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties td {\n    border:1px solid #eee;\n    padding:5px 10px;\n}\n.marker-properties tr:last-child td,\n.marker-properties tr:last-child th {\n    border-bottom:none;\n}\n.marker-properties tr:nth-child(even) th,\n.marker-properties tr:nth-child(even) td {\n    background-color:#f7f7f7;\n}\n  </style>\n  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>\n  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>\n  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />\n</head>\n<body>\n<div id='map'></div>\n<script type='text/javascript'>\nL.mapbox.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';\nvar map = L.mapbox.map('map');\n\nL.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken).addTo(map);\n\n$.getJSON('map.geojson', function(geojson) {\n    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);\n    var bounds = geojsonLayer.getBounds();\n    if (bounds.isValid()) {\n        map.fitBounds(geojsonLayer.getBounds());\n    } else {\n        map.setView([0, 0], 2);\n    }\n    geojsonLayer.eachLayer(function(l) {\n        showProperties(l);\n    });\n});\n\nfunction showProperties(l) {\n    var properties = l.toGeoJSON().properties;\n    var table = document.createElement('table');\n    table.setAttribute('class', 'marker-properties display')\n    for (var key in properties) {\n        var tr = createTableRows(key, properties[key]);\n        table.appendChild(tr);\n    }\n    if (table) l.bindPopup(table);\n}\n\nfunction createTableRows(key, value) {\n    var tr = document.createElement('tr');\n    var th = document.createElement('th');\n    var td = document.createElement('td');\n    key = document.createTextNode(key);\n    value = document.createTextNode(value);\n    th.appendChild(key);\n    td.appendChild(value);\n    tr.appendChild(th);\n    tr.appendChild(td);\n    return tr\n}\n\n</script>\n</body>\n</html>\n";
 
@@ -73907,7 +77785,7 @@ function loadRaw(url, context, callback) {
   }
 }
 
-},{"../config.js":237}],255:[function(require,module,exports){
+},{"../config.js":209}],227:[function(require,module,exports){
 module.exports.save = save;
 module.exports.load = load;
 module.exports.loadRaw = loadRaw;
@@ -74054,7 +77932,7 @@ function shaUrl(parts, sha) {
   );
 }
 
-},{"../config.js":237}],256:[function(require,module,exports){
+},{"../config.js":209}],228:[function(require,module,exports){
 let fs;
 
 try {
@@ -74080,7 +77958,7 @@ function save(context, callback) {
   });
 }
 
-},{"fs":51}],257:[function(require,module,exports){
+},{"fs":65}],229:[function(require,module,exports){
 const buttons = require('./ui/mode_buttons'),
   file_bar = require('./ui/file_bar'),
   dnd = require('./ui/dnd'),
@@ -74155,7 +78033,7 @@ function ui(context) {
   };
 }
 
-},{"./ui/dnd":258,"./ui/file_bar":265,"./ui/layer_switch":267,"./ui/mode_buttons":275,"./ui/projection_switch":276}],258:[function(require,module,exports){
+},{"./ui/dnd":230,"./ui/file_bar":237,"./ui/layer_switch":239,"./ui/mode_buttons":247,"./ui/projection_switch":248}],230:[function(require,module,exports){
 const readDrop = require('../lib/readfile.js').readDrop,
   flash = require('./flash.js'),
   zoomextent = require('../lib/zoomextent');
@@ -74203,7 +78081,7 @@ module.exports = function (context) {
   }
 };
 
-},{"../lib/readfile.js":246,"../lib/zoomextent":249,"./flash.js":266}],259:[function(require,module,exports){
+},{"../lib/readfile.js":218,"../lib/zoomextent":221,"./flash.js":238}],231:[function(require,module,exports){
 // custom mapbopx-gl-draw mode that extends draw_line_string
 // shows a center point, radius line, and circle polygon while drawing
 // forces draw.create on creation of second vertex
@@ -74316,7 +78194,7 @@ const CircleMode = {
 
 module.exports = CircleMode;
 
-},{"./util.js":264,"@mapbox/mapbox-gl-draw":5,"@turf/circle":35,"@turf/length":40}],260:[function(require,module,exports){
+},{"./util.js":236,"@mapbox/mapbox-gl-draw":16,"@turf/circle":50,"@turf/length":55}],232:[function(require,module,exports){
 // from https://jsfiddle.net/fxi/xf51zet4/
 class extendDrawBar {
   constructor(opt) {
@@ -74364,7 +78242,7 @@ class extendDrawBar {
 
 module.exports = extendDrawBar;
 
-},{}],261:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
 // this mode extends the build-in linestring tool, displaying the current length
 // of the line as the user draws using a point feature and a symbol layer
 const MapboxDraw = require('@mapbox/mapbox-gl-draw');
@@ -74429,7 +78307,7 @@ const ExtendedLineStringMode = {
 
 module.exports = ExtendedLineStringMode;
 
-},{"./util.js":264,"@mapbox/mapbox-gl-draw":5}],262:[function(require,module,exports){
+},{"./util.js":236,"@mapbox/mapbox-gl-draw":16}],234:[function(require,module,exports){
 // from https://github.com/thegisdev/mapbox-gl-draw-rectangle-mode
 const doubleClickZoom = {
   enable: (ctx) => {
@@ -74571,7 +78449,7 @@ const DrawRectangle = {
 
 module.exports = DrawRectangle;
 
-},{}],263:[function(require,module,exports){
+},{}],235:[function(require,module,exports){
 module.exports = [
   {
     id: 'gl-draw-polygon-fill-inactive',
@@ -74826,7 +78704,7 @@ module.exports = [
   }
 ];
 
-},{}],264:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 const turfLength = require('@turf/length').default;
 const numeral = require('numeral');
 
@@ -74873,16 +78751,16 @@ module.exports = {
   getDisplayMeasurements
 };
 
-},{"@turf/length":40,"numeral":151}],265:[function(require,module,exports){
+},{"@turf/length":55,"numeral":157}],237:[function(require,module,exports){
 const shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
-  topojson = require('topojson'),
-  saveAs = require('filesaver.js'),
-  tokml = require('tokml'),
+  topojson = require('topojson-server'),
+  saveAs = require('file-saver'),
+  tokml = require('@placemarkio/tokml'),
   githubBrowser = require('@mapbox/github-file-browser'),
   gistBrowser = require('@mapbox/gist-map-browser'),
-  geojsonNormalize = require('geojson-normalize'),
+  geojsonNormalize = require('@mapbox/geojson-normalize'),
   wellknown = require('wellknown');
 
 const share = require('./share'),
@@ -75481,7 +79359,7 @@ module.exports = function fileBar(context) {
 
   function downloadKML() {
     if (d3.event) d3.event.preventDefault();
-    const content = tokml(context.data.get('map'));
+    const content = tokml.toKML(context.data.get('map'));
     saveAs(
       new Blob([content], {
         type: 'text/plain;charset=utf-8'
@@ -75521,7 +79399,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":237,"../lib/meta.js":244,"../lib/readfile":246,"../lib/zoomextent":249,"../ui/saver.js":277,"./flash":266,"./modal.js":274,"./share":278,"@mapbox/gist-map-browser":3,"@mapbox/github-file-browser":4,"clone":55,"filesaver.js":75,"geojson-normalize":85,"geojson2dsv":88,"shp-write":164,"tokml":183,"topojson":"topojson","wellknown":219}],266:[function(require,module,exports){
+},{"../config.js":209,"../lib/meta.js":216,"../lib/readfile":218,"../lib/zoomextent":221,"../ui/saver.js":249,"./flash":238,"./modal.js":246,"./share":250,"@mapbox/geojson-normalize":8,"@mapbox/gist-map-browser":14,"@mapbox/github-file-browser":15,"@placemarkio/tokml":45,"clone":69,"file-saver":89,"geojson2dsv":96,"shp-write":168,"topojson-server":186,"wellknown":192}],238:[function(require,module,exports){
 const message = require('./message');
 
 module.exports = flash;
@@ -75540,7 +79418,7 @@ function flash(selection, txt) {
   return msg;
 }
 
-},{"./message":273}],267:[function(require,module,exports){
+},{"./message":245}],239:[function(require,module,exports){
 const styles = require('./map/styles');
 const { DEFAULT_STYLE } = require('../constants');
 
@@ -75595,7 +79473,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":238,"./map/styles":271}],268:[function(require,module,exports){
+},{"../constants":210,"./map/styles":243}],240:[function(require,module,exports){
 // extend mapboxGL Marker so we can pass in an onClick handler
 const mapboxgl = require('mapbox-gl');
 
@@ -75623,7 +79501,7 @@ class ClickableMarker extends mapboxgl.Marker {
 
 module.exports = ClickableMarker;
 
-},{"mapbox-gl":147}],269:[function(require,module,exports){
+},{"mapbox-gl":153}],241:[function(require,module,exports){
 class EditControl {
   onAdd(map) {
     this.map = map;
@@ -75684,11 +79562,11 @@ module.exports = {
   TrashControl
 };
 
-},{}],270:[function(require,module,exports){
+},{}],242:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl');
 
 require('qs-hash');
-const geojsonRewind = require('geojson-rewind');
+const geojsonRewind = require('@mapbox/geojson-rewind');
 const MapboxDraw = require('@mapbox/mapbox-gl-draw');
 const MapboxGeocoder = require('@mapbox/mapbox-gl-geocoder');
 
@@ -76111,7 +79989,7 @@ module.exports = function (context, readonly) {
   return map;
 };
 
-},{"../../constants":238,"../draw/circle":259,"../draw/extend_draw_bar":260,"../draw/linestring":261,"../draw/rectangle":262,"../draw/styles":263,"./controls":269,"./styles":271,"./util":272,"@mapbox/mapbox-gl-draw":5,"@mapbox/mapbox-gl-geocoder":9,"geojson-rewind":87,"mapbox-gl":147,"qs-hash":161}],271:[function(require,module,exports){
+},{"../../constants":210,"../draw/circle":231,"../draw/extend_draw_bar":232,"../draw/linestring":233,"../draw/rectangle":234,"../draw/styles":235,"./controls":241,"./styles":243,"./util":244,"@mapbox/geojson-rewind":9,"@mapbox/mapbox-gl-draw":16,"@mapbox/mapbox-gl-geocoder":20,"mapbox-gl":153,"qs-hash":166}],243:[function(require,module,exports){
 module.exports = [
   {
     title: 'Streets',
@@ -76160,7 +80038,7 @@ module.exports = [
   }
 ];
 
-},{}],272:[function(require,module,exports){
+},{}],244:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl');
 const escape = require('escape-html');
 const length = require('@turf/length').default;
@@ -76530,7 +80408,7 @@ module.exports = {
   bindPopup
 };
 
-},{"../../lib/popup":245,"./clickable_marker":268,"@turf/area":33,"@turf/length":40,"escape-html":71,"mapbox-gl":147}],273:[function(require,module,exports){
+},{"../../lib/popup":217,"./clickable_marker":240,"@turf/area":48,"@turf/length":55,"escape-html":86,"mapbox-gl":153}],245:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -76559,7 +80437,7 @@ function message(selection) {
   return sel;
 }
 
-},{}],274:[function(require,module,exports){
+},{}],246:[function(require,module,exports){
 module.exports = function (selection, blocking) {
   const previous = selection.select('div.modal');
   const animate = previous.empty();
@@ -76611,7 +80489,7 @@ module.exports = function (selection, blocking) {
   return shaded;
 };
 
-},{}],275:[function(require,module,exports){
+},{}],247:[function(require,module,exports){
 const table = require('../panel/table'),
   json = require('../panel/json'),
   help = require('../panel/help');
@@ -76672,7 +80550,7 @@ module.exports = function (context, pane) {
   };
 };
 
-},{"../panel/help":251,"../panel/json":252,"../panel/table":253}],276:[function(require,module,exports){
+},{"../panel/help":223,"../panel/json":224,"../panel/table":225}],248:[function(require,module,exports){
 const { DEFAULT_PROJECTION } = require('../constants');
 
 module.exports = function (context) {
@@ -76729,7 +80607,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":238}],277:[function(require,module,exports){
+},{"../constants":210}],249:[function(require,module,exports){
 const flash = require('./flash');
 
 module.exports = function (context) {
@@ -76797,7 +80675,7 @@ module.exports = function (context) {
   }
 };
 
-},{"./flash":266}],278:[function(require,module,exports){
+},{"./flash":238}],250:[function(require,module,exports){
 const gist = require('../source/gist'),
   modal = require('./modal');
 
@@ -76856,15 +80734,4 @@ function share(context) {
   };
 }
 
-},{"../source/gist":254,"./modal":274}],"topojson":[function(require,module,exports){
-var topojson = module.exports = require("./topojson");
-topojson.topology = require("./lib/topojson/topology");
-topojson.simplify = require("./lib/topojson/simplify");
-topojson.clockwise = require("./lib/topojson/clockwise");
-topojson.filter = require("./lib/topojson/filter");
-topojson.prune = require("./lib/topojson/prune");
-topojson.bind = require("./lib/topojson/bind");
-topojson.stitch = require("./lib/topojson/stitch");
-topojson.scale = require("./lib/topojson/scale");
-
-},{"./lib/topojson/bind":184,"./lib/topojson/clockwise":187,"./lib/topojson/filter":191,"./lib/topojson/prune":195,"./lib/topojson/scale":197,"./lib/topojson/simplify":198,"./lib/topojson/stitch":200,"./lib/topojson/topology":201,"./topojson":213}]},{},[250]);
+},{"../source/gist":226,"./modal":246}]},{},[222]);

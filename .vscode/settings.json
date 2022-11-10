@@ -12,5 +12,8 @@
     "src/*",
     "css/tailwind_src.css"
   ],
-  "liveServer.settings.wait": 500
+  "liveServer.settings.wait": 500,
+  "search.exclude": {
+    "**/dist": true,
+  },
 }
