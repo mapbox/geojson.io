@@ -178,7 +178,6 @@ function readFile(f, text, callback) {
     try {
       return callback(null, gtfs2geojson.stops(text));
     } catch (e) {
-      console.log(e);
       return callback({ message: 'Invalid GTFS stops.txt file' });
     }
   } else if (fileType === 'poly') {
