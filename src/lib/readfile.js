@@ -170,7 +170,6 @@ function readFile(f, text, callback) {
     try {
       return callback(null, gtfs2geojson.lines(text));
     } catch (e) {
-      console.log(e);
       return callback({ message: 'Invalid GTFS shapes.txt file' });
     }
   } else if (fileType === 'gtfs-stops') {
