@@ -1,4 +1,4 @@
-var shpwrite = require('shp-write'),
+const shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
   topojson = require('topojson'),
@@ -9,7 +9,7 @@ var shpwrite = require('shp-write'),
   geojsonNormalize = require('geojson-normalize'),
   wellknown = require('wellknown');
 
-var share = require('./share'),
+const share = require('./share'),
   modal = require('./modal.js'),
   flash = require('./flash'),
   zoomextent = require('../lib/zoomextent'),
@@ -24,49 +24,49 @@ var share = require('./share'),
  * sources, like GitHub.
  */
 module.exports = function fileBar(context) {
-  var shpSupport = typeof ArrayBuffer !== 'undefined';
-  var mapboxAPI = false;
-  var githubAPI = !!config.GithubAPI;
-  var githubBase = githubAPI
+  const shpSupport = typeof ArrayBuffer !== 'undefined';
+  const mapboxAPI = false;
+  const githubAPI = !!config.GithubAPI;
+  const githubBase = githubAPI
     ? config.GithubAPI + '/api/v3'
     : 'https://api.github.com';
 
-  var exportFormats = [
+  const exportFormats = [
     {
       title: 'GeoJSON',
-      action: downloadGeoJSON,
+      action: downloadGeoJSON
     },
     {
       title: 'TopoJSON',
-      action: downloadTopo,
+      action: downloadTopo
     },
     {
       title: 'CSV',
-      action: downloadDSV,
+      action: downloadDSV
     },
     {
       title: 'KML',
-      action: downloadKML,
+      action: downloadKML
     },
     {
       title: 'WKT',
-      action: downloadWKT,
-    },
+      action: downloadWKT
+    }
   ];
 
   if (shpSupport) {
     exportFormats.push({
       title: 'Shapefile',
-      action: downloadShp,
+      action: downloadShp
     });
   }
 
   function bar(selection) {
-    var actions = [
+    const actions = [
       {
         title: 'Save',
         action: mapboxAPI || githubAPI ? saveAction : function () {},
-        children: exportFormats,
+        children: exportFormats
       },
       {
         title: 'New',
@@ -74,7 +74,7 @@ module.exports = function fileBar(context) {
           window.open(
             window.location.origin + window.location.pathname + '#new'
           );
-        },
+        }
       },
       {
         title: 'Meta',
@@ -84,21 +84,21 @@ module.exports = function fileBar(context) {
             title: 'Add raster tile layer',
             alt: 'Add a custom tile layer',
             action: function () {
-              var layerURL = prompt(
+              const layerURL = prompt(
                 'Layer URL\ne.g. https://stamen-tiles-b.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg'
               );
               if (layerURL === null) return;
-              var layerName = prompt('Layer name');
+              const layerName = prompt('Layer name');
               if (layerName === null) return;
               meta.adduserlayer(context, layerURL, layerName);
-            },
+            }
           },
           {
             title: 'Zoom to features',
             alt: 'Zoom to the extent of all features',
             action: function () {
               meta.zoomextent(context);
-            },
+            }
           },
           {
             title: 'Clear',
@@ -111,63 +111,63 @@ module.exports = function fileBar(context) {
               ) {
                 meta.clear(context);
               }
-            },
+            }
           },
           {
             title: 'Random: Points',
             alt: 'Add random points to your map',
             action: function () {
-              var response = prompt('Number of points (default: 100)');
+              const response = prompt('Number of points (default: 100)');
               if (response === null) return;
-              var count = parseInt(response, 10);
+              let count = parseInt(response, 10);
               if (isNaN(count)) count = 100;
               meta.random(context, count, 'point');
-            },
+            }
           },
           {
             title: 'Add bboxes',
             alt: 'Add bounding box members to all applicable GeoJSON objects',
             action: function () {
               meta.bboxify(context);
-            },
+            }
           },
           {
             title: 'Flatten Multi Features',
             alt: 'Flatten MultiPolygons, MultiLines, and GeometryCollections into simple geometries',
             action: function () {
               meta.flatten(context);
-            },
+            }
           },
           {
             title: 'Load encoded polyline',
             alt: 'Decode and show an encoded polyline. Precision 5 is supported.',
             action: function () {
               meta.polyline(context);
-            },
+            }
           },
           {
             title: 'Load WKB Base64 Encoded String',
             alt: 'Decode and show WKX data',
             action: function () {
               meta.wkxBase64(context);
-            },
+            }
           },
           {
             title: 'Load WKB Hex Encoded String',
             alt: 'Decode and show WKX data',
             action: function () {
               meta.wkxHex(context);
-            },
+            }
           },
           {
             title: 'Load WKT String',
             alt: 'Decode and show WKX data',
             action: function () {
               meta.wkxString(context);
-            },
-          },
-        ],
-      },
+            }
+          }
+        ]
+      }
     ];
 
     if (mapboxAPI || githubAPI) {
@@ -177,34 +177,34 @@ module.exports = function fileBar(context) {
           {
             title: 'File',
             alt: 'GeoJSON, TopoJSON, GTFS, KML, CSV, GPX and OSM XML supported',
-            action: blindImport,
+            action: blindImport
           },
           {
             title: 'GitHub',
             alt: 'GeoJSON files in GitHub Repositories',
             authenticated: true,
-            action: clickGitHubOpen,
+            action: clickGitHubOpen
           },
           {
             title: 'Gist',
             alt: 'GeoJSON files in GitHub Gists',
             authenticated: true,
-            action: clickGist,
-          },
-        ],
+            action: clickGist
+          }
+        ]
       });
       actions[1].children.unshift(
         {
           title: 'GitHub',
           alt: 'GeoJSON files in GitHub Repositories',
           authenticated: true,
-          action: clickGitHubSave,
+          action: clickGitHubSave
         },
         {
           title: 'Gist',
           alt: 'GeoJSON files in GitHub Gists',
           authenticated: true,
-          action: clickGistSave,
+          action: clickGistSave
         }
       );
 
@@ -213,17 +213,17 @@ module.exports = function fileBar(context) {
           title: 'Share',
           action: function () {
             context.container.call(share(context));
-          },
+          }
         });
     } else {
       actions.unshift({
         title: 'Open',
         alt: 'CSV, GTFS, KML, GPX, and other filetypes',
-        action: blindImport,
+        action: blindImport
       });
     }
 
-    var items = selection
+    const items = selection
       .append('div')
       .attr('class', 'inline')
       .selectAll('div.item')
@@ -232,13 +232,13 @@ module.exports = function fileBar(context) {
       .append('div')
       .attr('class', 'item');
 
-    var buttons = items
+    const buttons = items
       .append('a')
       .attr('class', 'parent')
       .on('click', function (d) {
         if (d.action) d.action.apply(this, d);
       })
-      .text(function (d) {
+      .text((d) => {
         return ' ' + d.title;
       });
 
@@ -250,18 +250,15 @@ module.exports = function fileBar(context) {
         .call(submenu(d.children));
     });
 
-    var name = selection.append('div').attr('class', 'name');
-
+    const name = selection.append('div').attr('class', 'name');
+    let filename, filetype;
     if (mapboxAPI || githubAPI) {
-      var filetype = name
+      filetype = name
         .append('a')
         .attr('target', '_blank')
         .attr('class', 'icon-file-alt');
 
-      var filename = name
-        .append('span')
-        .attr('class', 'filename')
-        .text('unsaved');
+      filename = name.append('span').attr('class', 'filename').text('unsaved');
     }
 
     function clickGistSave() {
@@ -276,14 +273,14 @@ module.exports = function fileBar(context) {
     }
 
     function sourceIcon(type) {
-      if (type == 'github') return 'icon-github';
-      else if (type == 'gist') return 'icon-github-alt';
+      if (type === 'github') return 'icon-github';
+      else if (type === 'gist') return 'icon-github-alt';
       else return 'icon-file-alt';
     }
 
     function saveNoun(_) {
       buttons
-        .filter(function (b) {
+        .filter((b) => {
           return b.title === 'Save';
         })
         .select('span.title')
@@ -297,21 +294,21 @@ module.exports = function fileBar(context) {
           .data(children)
           .enter()
           .append('a')
-          .attr('title', function (d) {
+          .attr('title', (d) => {
             if (
-              d.title == 'File' ||
-              d.title == 'GitHub' ||
-              d.title == 'Gist' ||
-              d.title == 'Add map layer' ||
-              d.title == 'Zoom to features' ||
-              d.title == 'Clear' ||
-              d.title == 'Random: Points' ||
-              d.title == 'Add bboxes' ||
-              d.title == 'Flatten Multi Features'
+              d.title === 'File' ||
+              d.title === 'GitHub' ||
+              d.title === 'Gist' ||
+              d.title === 'Add map layer' ||
+              d.title === 'Zoom to features' ||
+              d.title === 'Clear' ||
+              d.title === 'Random: Points' ||
+              d.title === 'Add bboxes' ||
+              d.title === 'Flatten Multi Features'
             )
               return d.alt;
           })
-          .text(function (d) {
+          .text((d) => {
             return d.title;
           })
           .on('click', function (d) {
@@ -329,7 +326,7 @@ module.exports = function fileBar(context) {
           'You must authenticate to use this API.'
         );
 
-      var m = modal(d3.select('div.geojsonio'));
+      const m = modal(d3.select('div.geojsonio'));
 
       m.select('.m').attr('class', 'modal-splash modal col6');
 
@@ -341,9 +338,9 @@ module.exports = function fileBar(context) {
 
       githubBrowser(context.user.token(), false, githubBase)
         .open()
-        .onclick(function (d) {
+        .onclick((d) => {
           if (!d || !d.length) return;
-          var last = d[d.length - 1];
+          const last = d[d.length - 1];
           if (!last.path) {
             throw new Error('last is invalid: ' + JSON.stringify(last));
           }
@@ -353,11 +350,11 @@ module.exports = function fileBar(context) {
           if (last.type === 'blob') {
             githubBrowser.request(
               '/repos/' + d[1].full_name + '/git/blobs/' + last.sha,
-              function (err, blob) {
+              (err, blob) => {
                 d.content = JSON.parse(
                   decodeURIComponent(
                     Array.prototype.map
-                      .call(atob(blob[0].content), function (c) {
+                      .call(atob(blob[0].content), (c) => {
                         return (
                           '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
                         );
@@ -384,7 +381,7 @@ module.exports = function fileBar(context) {
           'You must authenticate to use this API.'
         );
 
-      var m = modal(d3.select('div.geojsonio'));
+      const m = modal(d3.select('div.geojsonio'));
 
       m.select('.m').attr('class', 'modal-splash modal col6');
 
@@ -396,15 +393,15 @@ module.exports = function fileBar(context) {
 
       githubBrowser(context.user.token(), true, githubBase)
         .open()
-        .onclick(function (d) {
+        .onclick((d) => {
           if (!d || !d.length) return;
-          var last = d[d.length - 1];
-          var pathparts;
-          var partial;
+          const last = d[d.length - 1];
+          let pathparts;
+          let partial;
 
           // New file
           if (last.type === 'new') {
-            var filename = prompt('New file name');
+            const filename = prompt('New file name');
             if (!filename) {
               m.close();
               return;
@@ -413,7 +410,7 @@ module.exports = function fileBar(context) {
             pathparts.pop();
             pathparts.push({ path: filename });
             partial = pathparts
-              .map(function (p) {
+              .map((p) => {
                 return p.path;
               })
               .join('/');
@@ -428,14 +425,14 @@ module.exports = function fileBar(context) {
                   '/contents/' +
                   partial +
                   '?ref=' +
-                  d[2].name,
+                  d[2].name
               },
               type: 'github',
               meta: {
                 branch: d[2].name,
                 login: d[0].login,
-                repo: d[1].name,
-              },
+                repo: d[1].name
+              }
             });
             context.data.set({ newpath: partial + filename });
             m.close();
@@ -446,7 +443,7 @@ module.exports = function fileBar(context) {
             // Build the path
             pathparts = d.slice(3);
             partial = pathparts
-              .map(function (p) {
+              .map((p) => {
                 return p.path;
               })
               .join('/');
@@ -463,14 +460,14 @@ module.exports = function fileBar(context) {
                   partial +
                   '?ref=' +
                   d[2].name,
-                sha: last.sha,
+                sha: last.sha
               },
               type: 'github',
               meta: {
                 branch: d[2].name,
                 login: d[0].login,
-                repo: d[1].name,
-              },
+                repo: d[1].name
+              }
             });
             m.close();
             saver(context);
@@ -488,13 +485,13 @@ module.exports = function fileBar(context) {
           'You must authenticate to use this API.'
         );
 
-      var m = modal(d3.select('div.geojsonio'));
+      const m = modal(d3.select('div.geojsonio'));
 
       m.select('.m').attr('class', 'modal-splash modal col6');
 
       gistBrowser(context.user.token(), githubBase)
         .open()
-        .onclick(function (d) {
+        .onclick((d) => {
           context.data.parse(d);
           zoomextent(context);
           m.close();
@@ -505,7 +502,7 @@ module.exports = function fileBar(context) {
     }
 
     function onchange(d) {
-      var data = d.obj,
+      const data = d.obj,
         type = data.type,
         path = data.path;
       if (mapboxAPI || githubAPI)
@@ -514,11 +511,11 @@ module.exports = function fileBar(context) {
           .classed('deemphasize', context.data.dirty);
       if (mapboxAPI || githubAPI)
         filetype.attr('href', data.url).attr('class', sourceIcon(type));
-      saveNoun(type == 'github' ? 'Commit' : 'Save');
+      saveNoun(type === 'github' ? 'Commit' : 'Save');
     }
 
     function blindImport() {
-      var put = d3
+      const put = d3
         .select('body')
         .append('input')
         .attr('type', 'file')
@@ -526,13 +523,13 @@ module.exports = function fileBar(context) {
         .style('position', 'absolute')
         .style('height', '0')
         .on('change', function () {
-          var files = this.files;
+          const files = this.files;
           if (!(files && files[0])) return;
-          readFile.readAsText(files[0], function (err, text) {
+          readFile.readAsText(files[0], (err, text) => {
             readFile.readFile(files[0], text, onImport);
             if (files[0].path) {
               context.data.set({
-                path: files[0].path,
+                path: files[0].path
               });
             }
           });
@@ -558,20 +555,18 @@ module.exports = function fileBar(context) {
     }
 
     d3.select(document).call(
-      d3
-        .keybinding('file_bar')
-        .on('⌘+o', function () {
-          blindImport();
-          d3.event.preventDefault();
-        })
+      d3.keybinding('file_bar').on('⌘+o', () => {
+        blindImport();
+        d3.event.preventDefault();
+      })
     );
   }
 
   function downloadTopo() {
-    var content = JSON.stringify(
+    const content = JSON.stringify(
       topojson.topology(
         {
-          collection: clone(context.data.get('map')),
+          collection: clone(context.data.get('map'))
         },
         { 'property-transform': allProperties }
       )
@@ -579,7 +574,7 @@ module.exports = function fileBar(context) {
 
     saveAs(
       new Blob([content], {
-        type: 'text/plain;charset=utf-8',
+        type: 'text/plain;charset=utf-8'
       }),
       'map.topojson'
     );
@@ -587,11 +582,11 @@ module.exports = function fileBar(context) {
 
   function downloadGeoJSON() {
     if (d3.event) d3.event.preventDefault();
-    var content = JSON.stringify(context.data.get('map'));
-    var meta = context.data.get('meta');
+    const content = JSON.stringify(context.data.get('map'));
+    const meta = context.data.get('meta');
     saveAs(
       new Blob([content], {
-        type: 'text/plain;charset=utf-8',
+        type: 'text/plain;charset=utf-8'
       }),
       (meta && meta.name) || 'map.geojson'
     );
@@ -599,10 +594,10 @@ module.exports = function fileBar(context) {
 
   function downloadDSV() {
     if (d3.event) d3.event.preventDefault();
-    var content = geojson2dsv(context.data.get('map'));
+    const content = geojson2dsv(context.data.get('map'));
     saveAs(
       new Blob([content], {
-        type: 'text/plain;charset=utf-8',
+        type: 'text/plain;charset=utf-8'
       }),
       'points.csv'
     );
@@ -610,11 +605,10 @@ module.exports = function fileBar(context) {
 
   function downloadKML() {
     if (d3.event) d3.event.preventDefault();
-    var content = tokml(context.data.get('map'));
-    var meta = context.data.get('meta');
+    const content = tokml(context.data.get('map'));
     saveAs(
       new Blob([content], {
-        type: 'text/plain;charset=utf-8',
+        type: 'text/plain;charset=utf-8'
       }),
       'map.kml'
     );
@@ -632,14 +626,12 @@ module.exports = function fileBar(context) {
 
   function downloadWKT() {
     if (d3.event) d3.event.preventDefault();
-    var contentArray = [];
-    var features = context.data.get('map').features;
+    const features = context.data.get('map').features;
     if (features.length === 0) return;
-    var content = features.map(wellknown.stringify).join('\n');
-    var meta = context.data.get('meta');
+    const content = features.map(wellknown.stringify).join('\n');
     saveAs(
       new Blob([content], {
-        type: 'text/plain;charset=utf-8',
+        type: 'text/plain;charset=utf-8'
       }),
       'map.wkt'
     );

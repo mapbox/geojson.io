@@ -2,11 +2,15 @@ const styles = require('./map/styles');
 const { DEFAULT_STYLE } = require('../constants');
 
 module.exports = function (context) {
-  
   return function (selection) {
+    const layerButtons = selection
+      .append('div')
+      .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs')
+      .selectAll('button')
+      .data(styles);
 
-    var layerSwap = function () {
-      var clicked = this instanceof d3.selection ? this.node() : this;
+    const layerSwap = function () {
+      const clicked = this instanceof d3.selection ? this.node() : this;
       layerButtons.classed('active', function () {
         return clicked === this;
       });
@@ -29,23 +33,19 @@ module.exports = function (context) {
       }
     };
 
-    var layerButtons = selection
-      .append('div')
-      .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs')
-      .selectAll('button')
-      .data(styles)
+    layerButtons
       .enter()
       .append('button')
       .attr('class', 'pad0x')
       .on('click', layerSwap)
-      .text(function (d) {
+      .text((d) => {
         return d.title;
       });
 
     const activeStyle = context.storage.get('style') || DEFAULT_STYLE;
 
     layerButtons
-      .filter(function ({ title }, i) {
+      .filter(({ title }) => {
         return title === activeStyle;
       })
       .call(layerSwap);

@@ -1,5 +1,4 @@
-const { map } = require('d3');
-var escape = require('escape-html'),
+const escape = require('escape-html'),
   geojsonRandom = require('geojson-random'),
   geojsonExtent = require('geojson-extent'),
   geojsonFlatten = require('geojson-flatten'),
@@ -7,8 +6,9 @@ var escape = require('escape-html'),
   wkx = require('wkx'),
   zoomextent = require('../lib/zoomextent');
 
-module.exports.adduserlayer = function(context, _url, _name) {
-  var url = escape(_url), name = escape(_name);
+module.exports.adduserlayer = function (context, _url, _name) {
+  const url = escape(_url),
+    name = escape(_name);
 
   // reset the control if a user-layer was added before
   d3.select('.user-layer-button').remove();
@@ -20,20 +20,18 @@ module.exports.adduserlayer = function(context, _url, _name) {
       version: 8,
       sources: {
         'user-layer': {
-          'type': 'raster',
-          'tiles': [
-            url
-          ],
-          'tileSize': 256
+          type: 'raster',
+          tiles: [url],
+          tileSize: 256
         }
-      }, 
+      },
       layers: [
         {
-          'id': 'user-layer',
-          'type': 'raster',
-          'source': 'user-layer',
-          'minzoom': 0,
-          'maxzoom': 22
+          id: 'user-layer',
+          type: 'raster',
+          source: 'user-layer',
+          minzoom: 0,
+          maxzoom: 22
         }
       ]
     });
@@ -53,71 +51,71 @@ module.exports.adduserlayer = function(context, _url, _name) {
     .attr('class', 'pad0x user-layer-button')
     .on('click', addUserSourceAndLayer)
     .text(name);
-    
+
   addUserSourceAndLayer();
 };
 
-module.exports.zoomextent = function(context) {
+module.exports.zoomextent = function (context) {
   zoomextent(context);
 };
 
-module.exports.clear = function(context) {
+module.exports.clear = function (context) {
   context.data.clear();
 };
 
-module.exports.random = function(context, count, type) {
+module.exports.random = function (context, count, type) {
   context.data.mergeFeatures(geojsonRandom(count, type).features, 'meta');
 };
 
-module.exports.bboxify = function(context) {
+module.exports.bboxify = function (context) {
   context.data.set({ map: geojsonExtent.bboxify(context.data.get('map')) });
 };
 
-module.exports.flatten = function(context) {
+module.exports.flatten = function (context) {
   context.data.set({ map: geojsonFlatten(context.data.get('map')) });
 };
 
-module.exports.polyline = function(context) {
-  var input = prompt('Enter your polyline');
+module.exports.polyline = function (context) {
+  const input = prompt('Enter your polyline');
   try {
-    var decoded = polyline.toGeoJSON(input);
+    const decoded = polyline.toGeoJSON(input);
     context.data.set({ map: decoded });
-  } catch(e) {
+  } catch (e) {
     alert('Sorry, we were unable to decode that polyline');
   }
 };
 
-module.exports.wkxBase64 = function(context) {
-  var input = prompt('Enter your Base64 encoded WKB/EWKB');
+module.exports.wkxBase64 = function (context) {
+  const input = prompt('Enter your Base64 encoded WKB/EWKB');
   try {
-    var decoded = wkx.Geometry.parse(Buffer.from(input,'base64'));
+    const decoded = wkx.Geometry.parse(Buffer.from(input, 'base64'));
     context.data.set({ map: decoded.toGeoJSON() });
     zoomextent(context);
-  } catch(e) {
+  } catch (e) {
     console.error(e);
     alert('Sorry, we were unable to decode that Base64 encoded WKX data');
   }
 };
 
-module.exports.wkxHex = function(context) {
-  var input = prompt('Enter your Hex encoded WKB/EWKB');
+module.exports.wkxHex = function (context) {
+  const input = prompt('Enter your Hex encoded WKB/EWKB');
   try {
-    var decoded = wkx.Geometry.parse(Buffer.from(input,'hex'));
+    const decoded = wkx.Geometry.parse(Buffer.from(input, 'hex'));
     context.data.set({ map: decoded.toGeoJSON() });
     zoomextent(context);
-  } catch(e) {
+  } catch (e) {
     console.error(e);
     alert('Sorry, we were unable to decode that Hex encoded WKX data');
   }
 };
 
-module.exports.wkxString = function(context) {
-  var input = prompt('Enter your WKT/EWKT String');
+module.exports.wkxString = function (context) {
+  const input = prompt('Enter your WKT/EWKT String');
   try {
-    var decoded = wkx.Geometry.parse(input);
+    const decoded = wkx.Geometry.parse(input);
     context.data.set({ map: decoded.toGeoJSON() });
     zoomextent(context);
-  } catch(e) {
+  } catch (e) {
     console.error(e);
     alert('Sorry, we were unable to decode that WKT data');
   }

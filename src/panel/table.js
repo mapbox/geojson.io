@@ -1,4 +1,4 @@
-var metatable = require('d3-metatable')(d3),
+const metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
 module.exports = function (context) {
@@ -6,8 +6,8 @@ module.exports = function (context) {
     selection.html('');
 
     function rerender() {
-      var geojson = context.data.get('map');
-      var props;
+      const geojson = context.data.get('map');
+      let props;
 
       if (
         !geojson ||
@@ -25,8 +25,8 @@ module.exports = function (context) {
         selection.select('.blank-banner').remove();
         selection.data([props]).call(
           metatable()
-            .on('change', function (row, i) {
-              var geojson = context.data.get('map');
+            .on('change', (row, i) => {
+              const geojson = context.data.get('map');
               if (geojson.geometry) {
                 geojson.properties = row;
               } else {
@@ -34,10 +34,9 @@ module.exports = function (context) {
               }
               context.data.set('map', geojson);
             })
-            .on('rowfocus', function (row, i) {
-              var geojson = context.data.get('map');
-              if (geojson.geometry) {
-              } else {
+            .on('rowfocus', (row, i) => {
+              const geojson = context.data.get('map');
+              if (!geojson.geometry) {
                 smartZoom(context.map, geojson.features[i]);
               }
             })
@@ -45,7 +44,7 @@ module.exports = function (context) {
       }
     }
 
-    context.dispatch.on('change.table', function (evt) {
+    context.dispatch.on('change.table', () => {
       rerender();
     });
 
@@ -53,14 +52,6 @@ module.exports = function (context) {
 
     function getProperties(f) {
       return f.properties;
-    }
-
-    function zoomToMap(p) {
-      var layer;
-      // layers.eachLayer(function(l) {
-      //     if (p == l.feature.properties) layer = l;
-      // });
-      return layer;
     }
   }
 

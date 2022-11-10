@@ -1,6 +1,6 @@
 module.exports = function (context) {
   return function (e, id) {
-    var sel = d3.select(e.target._content);
+    const sel = d3.select(e.target._content);
 
     sel.selectAll('.cancel').on('click', clickClose);
 
@@ -8,7 +8,9 @@ module.exports = function (context) {
 
     sel.selectAll('.add').on('click', addRow);
 
-    sel.selectAll('.add-simplestyle-properties-button').on('click', addSimplestyleProperties);
+    sel
+      .selectAll('.add-simplestyle-properties-button')
+      .on('click', addSimplestyleProperties);
 
     sel.selectAll('.delete-invert').on('click', removeFeature);
 
@@ -27,14 +29,14 @@ module.exports = function (context) {
     }
 
     function losslessNumber(x) {
-      var fl = parseFloat(x);
+      const fl = parseFloat(x);
       if (fl.toString() === x) return fl;
       else return x;
     }
 
     function saveFeature() {
-      var obj = {};
-      var table = sel.select('table.marker-properties');
+      const obj = {};
+      const table = sel.select('table.marker-properties');
       table.selectAll('tr').each(collectRow);
       function collectRow() {
         if (d3.select(this).selectAll('input')[0][0].value) {
@@ -53,7 +55,7 @@ module.exports = function (context) {
     }
 
     function addRow() {
-      var tr = sel.select('table.marker-properties tbody').append('tr');
+      const tr = sel.select('table.marker-properties tbody').append('tr');
 
       tr.append('th').append('input').attr('type', 'text');
 
@@ -62,59 +64,114 @@ module.exports = function (context) {
 
     function addSimplestyleProperties() {
       // hide the button
-      sel.selectAll('.add-simplestyle-properties-button').style('display', 'none');
+      sel
+        .selectAll('.add-simplestyle-properties-button')
+        .style('display', 'none');
 
       const data = context.data.get('map');
       const feature = data.features[id];
       const { properties, geometry } = feature;
 
       if (geometry.type === 'Point' || geometry.type === 'MultiPoint') {
-
         if (!('marker-color' in properties)) {
-          let tr = sel.select('table.marker-properties tbody').insert('tr');
-          tr.append('th').append('input').attr('type', 'text').attr('value', 'marker-color');
-          tr.append('td').append('input').attr('type', 'color').attr('value', '#7E7E7E');
+          const tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th')
+            .append('input')
+            .attr('type', 'text')
+            .attr('value', 'marker-color');
+          tr.append('td')
+            .append('input')
+            .attr('type', 'color')
+            .attr('value', '#7E7E7E');
         }
 
         if (!('marker-size' in properties)) {
-          let tr = sel.select('table.marker-properties tbody').insert('tr');
-          tr.append('th').append('input').attr('type', 'text').attr('value', 'marker-size');
-          let td = tr.append('td');
-          td.append('input').attr('type', 'text').attr('value', 'medium').attr('list', 'marker-size');
-          let datalist = td.append('datalist').attr('id', 'marker-size');
+          const tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th')
+            .append('input')
+            .attr('type', 'text')
+            .attr('value', 'marker-size');
+          const td = tr.append('td');
+          td.append('input')
+            .attr('type', 'text')
+            .attr('value', 'medium')
+            .attr('list', 'marker-size');
+          const datalist = td.append('datalist').attr('id', 'marker-size');
           datalist.append('option').attr('value', 'small');
           datalist.append('option').attr('value', 'medium');
           datalist.append('option').attr('value', 'large');
         }
-     
       }
-      if (geometry.type === 'LineString' || geometry.type === 'MultiLineString' || geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
+      if (
+        geometry.type === 'LineString' ||
+        geometry.type === 'MultiLineString' ||
+        geometry.type === 'Polygon' ||
+        geometry.type === 'MultiPolygon'
+      ) {
         if (!('stroke' in properties)) {
-          let tr = sel.select('table.marker-properties tbody').insert('tr');
-          tr.append('th').append('input').attr('type', 'text').attr('value', 'stroke');
-          tr.append('td').append('input').attr('type', 'color').attr('value', '#555555');
+          const tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th')
+            .append('input')
+            .attr('type', 'text')
+            .attr('value', 'stroke');
+          tr.append('td')
+            .append('input')
+            .attr('type', 'color')
+            .attr('value', '#555555');
         }
         if (!('stroke-width' in properties)) {
-          let tr = sel.select('table.marker-properties tbody').insert('tr');
-          tr.append('th').append('input').attr('type', 'text').attr('value', 'stroke-width');
-          tr.append('td').append('input').attr('type', 'number').attr('min', '0').attr('step', '0.1').attr('value', '2');
+          const tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th')
+            .append('input')
+            .attr('type', 'text')
+            .attr('value', 'stroke-width');
+          tr.append('td')
+            .append('input')
+            .attr('type', 'number')
+            .attr('min', '0')
+            .attr('step', '0.1')
+            .attr('value', '2');
         }
         if (!('stroke-opacity' in properties)) {
-          let tr = sel.select('table.marker-properties tbody').insert('tr');
-          tr.append('th').append('input').attr('type', 'text').attr('value', 'stroke-opacity');
-          tr.append('td').append('input').attr('type', 'number').attr('min', '0').attr('max', '1').attr('step', '0.1').attr('value', '1');
+          const tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th')
+            .append('input')
+            .attr('type', 'text')
+            .attr('value', 'stroke-opacity');
+          tr.append('td')
+            .append('input')
+            .attr('type', 'number')
+            .attr('min', '0')
+            .attr('max', '1')
+            .attr('step', '0.1')
+            .attr('value', '1');
         }
       }
       if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
         if (!('fill' in properties)) {
-          let tr = sel.select('table.marker-properties tbody').insert('tr');
-          tr.append('th').append('input').attr('type', 'text').attr('value', 'fill');
-          tr.append('td').append('input').attr('type', 'color').attr('value', '#555555');
+          const tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th')
+            .append('input')
+            .attr('type', 'text')
+            .attr('value', 'fill');
+          tr.append('td')
+            .append('input')
+            .attr('type', 'color')
+            .attr('value', '#555555');
         }
         if (!('fill-opacity' in properties)) {
-          let tr = sel.select('table.marker-properties tbody').insert('tr');
-          tr.append('th').append('input').attr('type', 'text').attr('value', 'fill-opacity');
-          tr.append('td').append('input').attr('type', 'number').attr('min', '0').attr('max', '1').attr('step', '0.1').attr('value', '0.5');
+          const tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th')
+            .append('input')
+            .attr('type', 'text')
+            .attr('value', 'fill-opacity');
+          tr.append('td')
+            .append('input')
+            .attr('type', 'number')
+            .attr('min', '0')
+            .attr('max', '1')
+            .attr('step', '0.1')
+            .attr('value', '0.5');
         }
       }
     }

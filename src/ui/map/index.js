@@ -26,10 +26,10 @@ const dummyGeojson = {
       type: 'Feature',
       geometry: {
         type: 'Point',
-        coordinates: [0, 0],
-      },
-    },
-  ],
+        coordinates: [0, 0]
+      }
+    }
+  ]
 };
 
 const DARK_FEATURE_COLOR = '#555';
@@ -39,8 +39,9 @@ module.exports = function (context, readonly) {
   writable = !readonly;
 
   // keyboard shortcuts
-  const keybinding = d3.keybinding('map')
-  // delete key triggers draw.trash()
+  const keybinding = d3
+    .keybinding('map')
+    // delete key triggers draw.trash()
     .on('⌫', () => {
       if (editing) {
         context.Draw.trash();
@@ -55,15 +56,18 @@ module.exports = function (context, readonly) {
       if (!editing) {
         context.Draw.changeMode('draw_line_string');
       }
-    }).on('p', () => {
+    })
+    .on('p', () => {
       if (!editing) {
         context.Draw.changeMode('draw_polygon');
       }
-    }).on('r', () => {
+    })
+    .on('r', () => {
       if (!editing) {
         context.Draw.changeMode('draw_rectangle');
       }
-    }).on('c', () => {
+    })
+    .on('c', () => {
       if (!editing) {
         context.Draw.changeMode('draw_circle');
       }
@@ -79,12 +83,13 @@ module.exports = function (context, readonly) {
   }
 
   function map(selection) {
-    mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
+    mapboxgl.accessToken =
+      'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
 
-    // 
+    //
     const projection = context.storage.get('projection') || DEFAULT_PROJECTION;
     const activeStyle = context.storage.get('style') || DEFAULT_STYLE;
-    const { style } = styles.find(d => d.title === activeStyle);
+    const { style } = styles.find((d) => d.title === activeStyle);
 
     context.map = new mapboxgl.Map({
       container: selection.node(),
@@ -92,7 +97,7 @@ module.exports = function (context, readonly) {
       center: [20, 0],
       zoom: 2,
       projection,
-      hash: 'map',
+      hash: 'map'
     });
 
     window.map = context.map;
@@ -102,18 +107,17 @@ module.exports = function (context, readonly) {
         new MapboxGeocoder({
           accessToken: mapboxgl.accessToken,
           mapboxgl,
-          marker: true,
+          marker: true
         })
       );
 
       context.Draw = new MapboxDraw({
-
         displayControlsDefault: false,
         modes: {
           ...MapboxDraw.modes,
           draw_line_string: DrawLineString,
           draw_rectangle: DrawRectangle,
-          draw_circle: DrawCircle,
+          draw_circle: DrawCircle
         },
         controls: {},
         styles: drawStyles
@@ -157,7 +161,7 @@ module.exports = function (context, readonly) {
             },
             classes: [
               'mapbox-gl-draw_ctrl-draw-btn',
-              'mapbox-gl-draw_rectangle',
+              'mapbox-gl-draw_rectangle'
             ],
             title: 'Draw Rectangular Polygon (r)'
           },
@@ -167,13 +171,10 @@ module.exports = function (context, readonly) {
               drawing = true;
               context.Draw.changeMode('draw_circle');
             },
-            classes: [
-              'mapbox-gl-draw_ctrl-draw-btn',
-              'mapbox-gl-draw_circle',
-            ],
+            classes: ['mapbox-gl-draw_ctrl-draw-btn', 'mapbox-gl-draw_circle'],
             title: 'Draw Circular Polygon (c)'
-          },
-        ],
+          }
+        ]
       });
 
       context.map.addControl(new mapboxgl.NavigationControl());
@@ -231,8 +232,8 @@ module.exports = function (context, readonly) {
             {
               map: {
                 ...FC,
-                features: stripIds(FC.features),
-              },
+                features: stripIds(FC.features)
+              }
             },
             'map'
           );
@@ -242,12 +243,12 @@ module.exports = function (context, readonly) {
       });
 
       // handle delete
-      d3.select('.mapbox-gl-draw_trash').on('click', function () {
+      d3.select('.mapbox-gl-draw_trash').on('click', () => {
         context.Draw.trash();
       });
 
       // enter edit mode
-      d3.selectAll('.mapbox-gl-draw_edit').on('click', function () {
+      d3.selectAll('.mapbox-gl-draw_edit').on('click', () => {
         editing = true;
         // hide the edit button and draw tools
         d3.select('.edit-control').style('display', 'none');
@@ -272,36 +273,39 @@ module.exports = function (context, readonly) {
         // import the current data into draw for editing
         const featureIds = context.Draw.add(context.data.get('map'));
         context.Draw.changeMode('simple_select', {
-          featureIds,
+          featureIds
         });
       });
     }
 
     context.map.on('idle', () => {
-      if (context.data.get('mapStyleLoaded') && !context.map.getSource('map-data')) {
+      if (
+        context.data.get('mapStyleLoaded') &&
+        !context.map.getSource('map-data')
+      ) {
         const { name } = context.map.getStyle();
         let color = DARK_FEATURE_COLOR;
         if (['Mapbox Satellite Streets', 'Mapbox Dark'].includes(name)) {
           color = LIGHT_FEATURE_COLOR;
         }
         context.map.setFog({});
-  
+
         context.map.addSource('map-data', {
           type: 'geojson',
-          data: addIds(context.data.get('map')) || dummyGeojson,
+          data: addIds(context.data.get('map')) || dummyGeojson
         });
-  
+
         context.map.addLayer({
           id: 'map-data-fill',
           type: 'fill',
           source: 'map-data',
           paint: {
             'fill-color': ['coalesce', ['get', 'fill'], color],
-            'fill-opacity': ['coalesce', ['get', 'fill-opacity'], 0.3],
+            'fill-opacity': ['coalesce', ['get', 'fill-opacity'], 0.3]
           },
-          filter: ['==', ['geometry-type'], 'Polygon'],
+          filter: ['==', ['geometry-type'], 'Polygon']
         });
-  
+
         context.map.addLayer({
           id: 'map-data-fill-outline',
           type: 'line',
@@ -311,9 +315,9 @@ module.exports = function (context, readonly) {
             'line-width': ['coalesce', ['get', 'stroke-width'], 2],
             'line-opacity': ['coalesce', ['get', 'stroke-opacity'], 1]
           },
-          filter: ['==', ['geometry-type'], 'Polygon'],
+          filter: ['==', ['geometry-type'], 'Polygon']
         });
-  
+
         context.map.addLayer({
           id: 'map-data-line',
           type: 'line',
@@ -323,9 +327,9 @@ module.exports = function (context, readonly) {
             'line-width': ['coalesce', ['get', 'stroke-width'], 2],
             'line-opacity': ['coalesce', ['get', 'stroke-opacity'], 1]
           },
-          filter: ['==', ['geometry-type'], 'LineString'],
+          filter: ['==', ['geometry-type'], 'LineString']
         });
-  
+
         addMarkers(context.data.get('map'), context, writable);
 
         context.data.set({
@@ -362,14 +366,14 @@ module.exports = function (context, readonly) {
       if (el.nodeName !== 'CANVAS') return;
       // prevent this popup from opening when drawing new features
       if (drawing) return;
- 
+
       bindPopup(e, context, writable);
     };
 
     context.map.on('load', () => {
       context.data.set({
         mapStyleLoaded: true
-      });     
+      });
       context.map.on('mouseenter', 'map-data-fill', maybeSetCursorToPointer);
       context.map.on('mouseleave', 'map-data-fill', maybeResetCursor);
       context.map.on('mouseenter', 'map-data-line', maybeSetCursorToPointer);
@@ -410,7 +414,7 @@ module.exports = function (context, readonly) {
       context.data.set({ map: FC }, 'map');
     }
 
-    context.dispatch.on('change.map', function () {
+    context.dispatch.on('change.map', () => {
       maybeShowEditControl();
 
       geojsonToLayer(context.data.get('map'), context, writable);

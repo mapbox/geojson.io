@@ -1,20 +1,23 @@
-var qs = require('qs-hash'),
+const qs = require('qs-hash'),
   zoomextent = require('../lib/zoomextent'),
   flash = require('../ui/flash');
 
-module.exports = function(context) {
-
+module.exports = function (context) {
   function success(err, d) {
     context.container.select('.map').classed('loading', false);
 
-    var message,
-      url = /(http:\/\/\S*)/g;
+    let message;
+    const url = /(http:\/\/\S*)/g;
 
     if (err) {
       try {
-        message = err.message || JSON.parse(err.responseText).message
-          .replace(url, '<a href="$&">$&</a>');
-      } catch(e) {
+        message =
+          err.message ||
+          JSON.parse(err.responseText).message.replace(
+            url,
+            '<a href="$&">$&</a>'
+          );
+      } catch (e) {
         message = 'Sorry, an error occurred.';
       }
       return flash(context.container, message);
@@ -28,7 +31,11 @@ module.exports = function(context) {
   }
 
   function mapDefault() {
-    return context.map.getZoom() == 2 || JSON.stringify(context.map.getCenter()) === JSON.stringify({lng: 20, lat: 2});
+    return (
+      context.map.getZoom() === 2 ||
+      JSON.stringify(context.map.getCenter()) ===
+        JSON.stringify({ lng: 20, lat: 2 })
+    );
   }
 
   function inlineJSON(data) {
@@ -39,7 +46,7 @@ module.exports = function(context) {
       history.replaceState('', document.title, window.location.pathname);
 
       zoomextent(context);
-    } catch(e) {
+    } catch (e) {
       return flash(context.container, 'Could not parse JSON');
     }
   }
@@ -58,23 +65,27 @@ module.exports = function(context) {
     }
 
     function onerror() {
-      return flash(context.container, 'Could not load external file. External files must be served with CORS and be valid GeoJSON.');
+      return flash(
+        context.container,
+        'Could not load external file. External files must be served with CORS and be valid GeoJSON.'
+      );
     }
   }
 
-  return function(query) {
+  return function (query) {
     if (!query.id && !query.data) return;
 
-    var oldRoute = d3.event ? qs.stringQs(d3.event.oldURL.split('#')[1]).id :
-      context.data.get('route');
+    const oldRoute = d3.event
+      ? qs.stringQs(d3.event.oldURL.split('#')[1]).id
+      : context.data.get('route');
 
     if (query.data) {
       // eslint-disable-next-line
       var type = query.data.match(/^(data\:[\w\-]+\/[\w\-]+\,?)/);
       if (type) {
-        if (type[0] == 'data:application/json,') {
+        if (type[0] === 'data:application/json,') {
           inlineJSON(query.data.replace(type[0], ''));
-        } else if (type[0] == 'data:text/x-url,') {
+        } else if (type[0] === 'data:text/x-url,') {
           loadUrl(query.data.replace(type[0], ''));
         }
       }

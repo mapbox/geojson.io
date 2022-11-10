@@ -8,7 +8,6 @@ const MapboxDraw = require('@mapbox/mapbox-gl-draw');
 const { getDisplayMeasurements } = require('./util.js');
 
 function circleFromTwoVertexLineString(geojson) {
-
   const center = geojson.geometry.coordinates[0];
   const radiusInKm = length(geojson);
 
@@ -18,26 +17,33 @@ function circleFromTwoVertexLineString(geojson) {
 const CircleMode = {
   ...MapboxDraw.modes.draw_line_string,
 
-  clickAnywhere: function(state, e) {
+  clickAnywhere: function (state, e) {
     // this ends the drawing after the user creates a second point, triggering this.onStop
     if (state.currentVertexPosition === 1) {
       state.line.addCoordinate(0, e.lngLat.lng, e.lngLat.lat);
       return this.changeMode('simple_select', { featureIds: [state.line.id] });
     }
 
-    state.line.updateCoordinate(state.currentVertexPosition, e.lngLat.lng, e.lngLat.lat);
+    state.line.updateCoordinate(
+      state.currentVertexPosition,
+      e.lngLat.lng,
+      e.lngLat.lat
+    );
     if (state.direction === 'forward') {
       state.currentVertexPosition += 1;
-      state.line.updateCoordinate(state.currentVertexPosition, e.lngLat.lng, e.lngLat.lat);
+      state.line.updateCoordinate(
+        state.currentVertexPosition,
+        e.lngLat.lng,
+        e.lngLat.lat
+      );
     } else {
       state.line.addCoordinate(0, e.lngLat.lng, e.lngLat.lat);
     }
-      
+
     return null;
   },
 
-  onStop: function(state) {
-    
+  onStop: function (state) {
     // remove last added coordinate
     state.line.removeCoordinate('0');
     if (state.line.isValid()) {
@@ -45,7 +51,7 @@ const CircleMode = {
       const circleFeature = circleFromTwoVertexLineString(lineGeoJson);
 
       this.map.fire('draw.create', {
-        features: [circleFeature],
+        features: [circleFeature]
       });
     } else {
       this.deleteFeature([state.line.id], { silent: true });
@@ -53,11 +59,10 @@ const CircleMode = {
     }
   },
 
-  toDisplayFeatures: function(state, geojson, display) {
-  
+  toDisplayFeatures: function (state, geojson, display) {
     // Only render the line if it has at least one real coordinate
     if (geojson.geometry.coordinates.length < 2) return null;
-  
+
     display({
       type: 'Feature',
       properties: {
@@ -65,45 +70,42 @@ const CircleMode = {
       },
       geometry: {
         type: 'Point',
-        coordinates: geojson.geometry.coordinates[0],
-      },
+        coordinates: geojson.geometry.coordinates[0]
+      }
     });
-  
+
     // displays the line as it is drawn
     geojson.properties.active = 'true';
     display(geojson);
-  
+
     const displayMeasurements = getDisplayMeasurements(geojson);
-  
+
     // create custom feature for the current pointer position
     const currentVertex = {
       type: 'Feature',
       properties: {
         meta: 'currentPosition',
         radius: `${displayMeasurements.metric} ${displayMeasurements.standard}`,
-        parent: state.line.id,
+        parent: state.line.id
       },
       geometry: {
         type: 'Point',
-        coordinates: geojson.geometry.coordinates[1],
-      },
+        coordinates: geojson.geometry.coordinates[1]
+      }
     };
-  
+
     display(currentVertex);
-  
+
     const circleFeature = circleFromTwoVertexLineString(geojson);
-    
+
     circleFeature.properties = {
       active: 'true'
     };
-  
+
     display(circleFeature);
-  
+
     return null;
   }
 };
-
-
-
 
 module.exports = CircleMode;

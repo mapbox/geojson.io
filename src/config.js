@@ -1,4 +1,4 @@
-module.exports = function(hostname) {
+module.exports = function () {
   return {
     GithubAPI: false
   };
