@@ -77064,7 +77064,6 @@ const topojson = require('topojson-client'),
   polytogeojson = require('polytogeojson'),
   geojsonNormalize = require('@mapbox/geojson-normalize');
 
-console.log(gtfs2geojson);
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
@@ -77229,14 +77228,12 @@ function readFile(f, text, callback) {
     try {
       return callback(null, gtfs2geojson.lines(text));
     } catch (e) {
-      console.log(e);
       return callback({ message: 'Invalid GTFS shapes.txt file' });
     }
   } else if (fileType === 'gtfs-stops') {
     try {
       return callback(null, gtfs2geojson.stops(text));
     } catch (e) {
-      console.log(e);
       return callback({ message: 'Invalid GTFS stops.txt file' });
     }
   } else if (fileType === 'poly') {
@@ -77409,7 +77406,7 @@ module.exports = function () {
   const html =
     Buffer("PGgyPkhlbHA8L2gyPgoKPHA+PHN0cm9uZz5nZW9qc29uLmlvPC9zdHJvbmc+IGlzIGEgcXVpY2ssIHNpbXBsZSB0b29sIGZvciBjcmVhdGluZywKICAgIHZpZXdpbmcsIGFuZCBzaGFyaW5nIG1hcHMuIGdlb2pzb24uaW8gaXMgbmFtZWQgYWZ0ZXIgPGEgaHJlZj0naHR0cDovL2dlb2pzb24ub3JnLycgdGFyZ2V0PSdfYmxhbmsnPkdlb0pTT048L2E+LAogICAgYW4gb3BlbiBzb3VyY2Ugc3BhdGlhbCBkYXRhIGZvcm1hdCwgYW5kIGl0IHN1cHBvcnRzIEdlb0pTT04gaW4gYWxsIHdheXMgLSBidXQgYWxzbwogICAgYWNjZXB0cyBLTUwsIEdQWCwgQ1NWLCBHVEZTLCBUb3BvSlNPTiwgYW5kIG90aGVyIGZvcm1hdHMuPC9wPgoKPHA+V2FudCB0byByZXF1ZXN0IGEgZmVhdHVyZSBvciByZXBvcnQgYSBidWc/IDxhIHRhcmdldD0nX2JsYW5rJwogICAgICAgIGhyZWY9J2h0dHBzOi8vZ2l0aHViLmNvbS9tYXBib3gvZ2VvanNvbi5pby9pc3N1ZXM/c3RhdGU9b3Blbic+T3BlbgogICAgICAgIGFuIGlzc3VlCiAgICAgICAgb24gZ2VvanNvbi5pbydzIGlzc3VlIHRyYWNrZXIuPC9hPgoKPGgzPkkndmUgZ290IGRhdGE8L2gzPgoKPHA+SWYgeW91IGhhdmUgZGF0YSwgbGlrZSBhIEtNTCwgR2VvSlNPTiwgb3IgQ1NWIGZpbGUsIGp1c3QgZHJhZyAmYW1wOyBkcm9wCiAgICBpdCBvbnRvIHRoZSBwYWdlIG9yIGNsaWNrICdPcGVuJyBhbmQgc2VsZWN0IHlvdXIgZmlsZS4gWW91ciBkYXRhIHNob3VsZCBhcHBlYXIgb24KICAgIHRoZSBtYXAhPC9wPgoKPGgzPkkgd2FudCB0byBkcmF3IGZlYXR1cmVzPC9oMz4KCjxwPlVzZSB0aGUgZHJhd2luZyB0b29scyB0byBkcmF3IHBvaW50cywgcG9seWdvbnMsCiAgICBsaW5lcywgcmVjdGFuZ2xlcywgYW5kIGNpcmNsZXMuIEFmdGVyIHlvdSdyZSBkb25lIGRyYXdpbmcgdGhlIHNoYXBlcywgeW91IGNhbiBhZGQKICAgIGluZm9ybWF0aW9uIHRvIGVhY2ggZmVhdHVyZSBieSBjbGlja2luZyBvbiBpdCwgZWRpdGluZyB0aGUgZmVhdHVyZSdzIHByb3BlcnRpZXMsCiAgICBhbmQgY2xpY2tpbmcgJ1NhdmUnLjwvcD4KCjxwPk5vdGU6IENpcmNsZXMgYXJlIG5vdCBzdXBwb3J0ZWQgaW4gR2VvSlNPTiwgc28gdGhlIGNpcmNsZSBkcmF3aW5nIHRvb2wgaXMgcmVhbGx5IGNyZWF0aW5nIGEgY2lyY2xlLXNoYXBlZCBwb2x5Z29uCiAgICB3aXRoIDY0IHZlcnRpY2VzLjwvcD4KCjxwPlByb3BlcnRpZXMgaW4gR2VvSlNPTiBhcmUgc3RvcmVkIGFzICdrZXkgdmFsdWUgcGFpcnMnIC0gc28sIGZvciBpbnN0YW5jZSwKICAgIGlmIHlvdSB3YW50ZWQgdG8gYWRkIGEgbmFtZSB0byBlYWNoIGZlYXR1cmUsIHR5cGUgJ25hbWUnIGluIHRoZSBmaXJzdCB0YWJsZQogICAgZmllbGQsIGFuZCB0aGUgbmFtZSBvZiB0aGUgZmVhdHVyZSBpbiB0aGUgc2Vjb25kLjwvcD4KCjxoMz5JJ20gYSBjb2RlcjwvaDM+Cgo8cD48YSBocmVmPScjZ2VvanNvbi1pby1hcGknPmdlb2pzb24uaW8gYWNjZXB0cyBVUkwgcGFyYW1ldGVyczwvYT4KICAgIHRoYXQgbWFrZSBpdCBlYXN5IHRvIGdvIGZyb20gYSBHZW9KU09OIGZpbGUgb24geW91ciBjb21wdXRlciB0byBnZW9qc29uLmlvLgoKPGgzPlByaXZhY3kgJmFtcDsgTGljZW5zZSBJc3N1ZXM8L2gzPgoKPHVsPgogICAgPGxpPjxzdHJvbmc+VGhlIGRhdGEgeW91IGNyZWF0ZSBhbmQgbW9kaWZ5IGluIGdlb2pzb24uaW88L3N0cm9uZz4gZG9lc24ndAogICAgICAgIGFjcXVpcmUgYW55IGFkZGl0aW9uYWwgbGljZW5zZTogaWYgaXQncyBzZWNyZXQgYW5kIGNvcHlyaWdodGVkLCBpdCB3aWxsIHJlbWFpbgogICAgICAgIHRoYXQgd2F5IC0gaXQgZG9lc24ndCBoYXZlIHRvIGJlIHB1YmxpYyBvciBvcGVuIHNvdXJjZS4KICAgIDwvbGk+CjwvdWw+","base64") +
     '<br><hr><br>' +
-    marked("## Geojson.io API\n\nYou can interact with geojson.io programmatically via url parameters:\n\n## URL API\n\nYou can do a few interesting things with just URLs and geojson.io. Here are the\ncurrent URL formats.\n\n### `map`\n\nOpen the map at a specific location. The argument is numbers separated by `/`\nin the form `zoom/latitude/longitude`.\n\n#### Example:\n\nhttp://geojson.io/#map=2/20.0/0.0\n\n### `data=data:application/json,`\n\nOpen the map and load a chunk of [GeoJSON](http://geojson.org/) data from a\nURL segment directly onto the map. The GeoJSON data should be encoded\nas per `encodeURIComponent(JSON.stringify(geojson_data))`.\n\n#### Example:\n\nhttp://geojson.io/#data=data:application/json,%7B%22type%22%3A%22LineString%22%2C%22coordinates%22%3A%5B%5B0%2C0%5D%2C%5B10%2C10%5D%5D%7D\n\n### `data=data:text/x-url,`\n\nLoad GeoJSON data from a URL on the internet onto the map. The URL must\nrefer directly to a resource that is:\n\n- Freely accessible (not behind a password)\n- Supports [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)\n- Is valid GeoJSON\n\nThe URL should be encoded as per `encodeURIComponent(url)`.\n\n#### Example:\n\nhttp://geojson.io/#data=data:text/x-url,http%3A%2F%2Fapi.tiles.mapbox.com%2Fv3%2Ftmcw.map-gdv4cswo%2Fmarkers.geojson\n\n### `id=gist:`\n\nLoad GeoJSON data from a [GitHub Gist](https://gist.github.com/), given an argument\nin the form of `login/gistid`. The Gist can be public or private, and must\ncontain a file with a `.geojson` extension that is valid GeoJSON.\n\n#### Example:\n\nhttp://geojson.io/#id=gist:tmcw/e9a29ad54dbaa83dee08&map=8/39.198/-76.981\n\n### `id=github:`\n\nLoad a file from a GitHub repository. You must have access to the file, and\nit must be valid GeoJSON.\n\nThe url is in the form:\n\n    login/repository/blob/branch/filepath\n\n#### Example:\n\nhttp://geojson.io/#id=github:benbalter/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302\n");
+    marked.parse("## Geojson.io API\n\nYou can interact with geojson.io programmatically via url parameters:\n\n## URL API\n\nYou can do a few interesting things with just URLs and geojson.io. Here are the\ncurrent URL formats.\n\n### `map`\n\nOpen the map at a specific location. The argument is numbers separated by `/`\nin the form `zoom/latitude/longitude`.\n\n#### Example:\n\nhttp://geojson.io/#map=2/20.0/0.0\n\n### `data=data:application/json,`\n\nOpen the map and load a chunk of [GeoJSON](http://geojson.org/) data from a\nURL segment directly onto the map. The GeoJSON data should be encoded\nas per `encodeURIComponent(JSON.stringify(geojson_data))`.\n\n#### Example:\n\nhttp://geojson.io/#data=data:application/json,%7B%22type%22%3A%22LineString%22%2C%22coordinates%22%3A%5B%5B0%2C0%5D%2C%5B10%2C10%5D%5D%7D\n\n### `data=data:text/x-url,`\n\nLoad GeoJSON data from a URL on the internet onto the map. The URL must\nrefer directly to a resource that is:\n\n- Freely accessible (not behind a password)\n- Supports [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)\n- Is valid GeoJSON\n\nThe URL should be encoded as per `encodeURIComponent(url)`.\n\n#### Example:\n\nhttp://geojson.io/#data=data:text/x-url,http%3A%2F%2Fapi.tiles.mapbox.com%2Fv3%2Ftmcw.map-gdv4cswo%2Fmarkers.geojson\n\n### `id=gist:`\n\nLoad GeoJSON data from a [GitHub Gist](https://gist.github.com/), given an argument\nin the form of `login/gistid`. The Gist can be public or private, and must\ncontain a file with a `.geojson` extension that is valid GeoJSON.\n\n#### Example:\n\nhttp://geojson.io/#id=gist:tmcw/e9a29ad54dbaa83dee08&map=8/39.198/-76.981\n\n### `id=github:`\n\nLoad a file from a GitHub repository. You must have access to the file, and\nit must be valid GeoJSON.\n\nThe url is in the form:\n\n    login/repository/blob/branch/filepath\n\n#### Example:\n\nhttp://geojson.io/#id=github:benbalter/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302\n");
   function render(selection) {
     selection.html('').append('div').attr('class', 'pad2 prose').html(html);
   }
@@ -80530,6 +80527,7 @@ module.exports = function (context, pane) {
         return d.alt;
       })
       .on('click', buttonClick);
+
     enter.append('i').attr('class', (d) => {
       return `fa-solid fa-${d.icon}`;
     });
