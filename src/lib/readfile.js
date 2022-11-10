@@ -6,7 +6,6 @@ const topojson = require('topojson-client'),
   polytogeojson = require('polytogeojson'),
   geojsonNormalize = require('@mapbox/geojson-normalize');
 
-console.log(gtfs2geojson);
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
