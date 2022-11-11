@@ -82,7 +82,7 @@ module.exports = function (context, readonly) {
     }
   }
 
-  function map(selection) {
+  function map() {
     mapboxgl.accessToken =
       'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
 
@@ -92,7 +92,7 @@ module.exports = function (context, readonly) {
     const { style } = styles.find((d) => d.title === activeStyle);
 
     context.map = new mapboxgl.Map({
-      container: selection.node(),
+      container: 'map',
       style,
       center: [20, 0],
       zoom: 2,

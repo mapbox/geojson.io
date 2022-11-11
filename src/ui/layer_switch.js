@@ -5,7 +5,7 @@ module.exports = function (context) {
   return function (selection) {
     const layerButtons = selection
       .append('div')
-      .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs')
+      .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs z-10')
       .selectAll('button')
       .data(styles);
 
