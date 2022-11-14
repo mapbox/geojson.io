@@ -381,6 +381,16 @@ module.exports = function (context, readonly) {
 
       context.map.on('click', 'map-data-fill', handleLinestringOrPolygonClick);
       context.map.on('click', 'map-data-line', handleLinestringOrPolygonClick);
+      context.map.on(
+        'touchstart',
+        'map-data-fill',
+        handleLinestringOrPolygonClick
+      );
+      context.map.on(
+        'touchstart',
+        'map-data-line',
+        handleLinestringOrPolygonClick
+      );
     });
 
     context.map.on('draw.create', created);

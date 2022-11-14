@@ -553,3 +553,22 @@ div.children a {
 .fullscreen .mapboxgl-ctrl-top-right {
   margin-top: 40px;
 }
+
+/* override mapbox-gl-geocoder control sytles on mobile */
+.mapboxgl-ctrl-top-right {
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
+.mapboxgl-ctrl-top-right .mapboxgl-ctrl-geocoder  {
+  margin: 0;
+  border-radius: 0;
+}
+
+@media screen and (min-width: 640px) {
+  .mapboxgl-ctrl-top-right .mapboxgl-ctrl-geocoder {
+    margin: 10px 10px 0 0;
+    border-radius: 4px;
+  }
+}

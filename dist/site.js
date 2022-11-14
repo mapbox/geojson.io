@@ -80013,6 +80013,16 @@ module.exports = function (context, readonly) {
 
       context.map.on('click', 'map-data-fill', handleLinestringOrPolygonClick);
       context.map.on('click', 'map-data-line', handleLinestringOrPolygonClick);
+      context.map.on(
+        'touchstart',
+        'map-data-fill',
+        handleLinestringOrPolygonClick
+      );
+      context.map.on(
+        'touchstart',
+        'map-data-line',
+        handleLinestringOrPolygonClick
+      );
     });
 
     context.map.on('draw.create', created);
@@ -80221,6 +80231,17 @@ const addMarkers = (geojson, context, writable) => {
         );
       })
       .addTo(context.map);
+
+    marker.getElement().addEventListener('touchstart', () => {
+      bindPopup(
+        {
+          lngLat: d.geometry.coordinates,
+          features: [d]
+        },
+        context,
+        writable
+      );
+    });
     markers.push(marker);
   });
 };
