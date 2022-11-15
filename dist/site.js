@@ -80175,7 +80175,7 @@ const addMarkers = (geojson, context, writable) => {
             type: 'Point',
             coordinates: coordinatePair
           },
-          properties,
+          properties || {},
           index
         );
       });
