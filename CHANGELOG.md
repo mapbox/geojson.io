@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 2022-11-15
+
+* Mobile Responsive Layout and CSS updates (#779)
+
+## 2022-11-10
+
+* add image and twitter card meta tags, update title (#774)
+
+## 2022-11-09
+
+* restore simplestyle ui in popups, handle marker-size style property (#766)
+* Update linting and formatting (#764)
+
 ## 2022-11-07
 
 * install mapboxgl, mapbox-gl-draw, mapbox-gl-geocoder, and turf from node_modules (#761)
