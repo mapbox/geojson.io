@@ -82,7 +82,7 @@ module.exports = function (context, readonly) {
     }
   }
 
-  function map(selection) {
+  function map() {
     mapboxgl.accessToken =
       'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
 
@@ -92,7 +92,7 @@ module.exports = function (context, readonly) {
     const { style } = styles.find((d) => d.title === activeStyle);
 
     context.map = new mapboxgl.Map({
-      container: selection.node(),
+      container: 'map',
       style,
       center: [20, 0],
       zoom: 2,
@@ -381,6 +381,16 @@ module.exports = function (context, readonly) {
 
       context.map.on('click', 'map-data-fill', handleLinestringOrPolygonClick);
       context.map.on('click', 'map-data-line', handleLinestringOrPolygonClick);
+      context.map.on(
+        'touchstart',
+        'map-data-fill',
+        handleLinestringOrPolygonClick
+      );
+      context.map.on(
+        'touchstart',
+        'map-data-line',
+        handleLinestringOrPolygonClick
+      );
     });
 
     context.map.on('draw.create', created);

@@ -34,6 +34,7 @@ module.exports = function (context, pane) {
     const enter = buttons
       .enter()
       .append('button')
+      .attr('class', 'grow')
       .attr('title', (d) => {
         return d.alt;
       })

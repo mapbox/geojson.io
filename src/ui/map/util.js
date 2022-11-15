@@ -113,6 +113,17 @@ const addMarkers = (geojson, context, writable) => {
         );
       })
       .addTo(context.map);
+
+    marker.getElement().addEventListener('touchstart', () => {
+      bindPopup(
+        {
+          lngLat: d.geometry.coordinates,
+          features: [d]
+        },
+        context,
+        writable
+      );
+    });
     markers.push(marker);
   });
 };

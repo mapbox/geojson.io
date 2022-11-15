@@ -17,7 +17,7 @@ module.exports = function (context) {
       .append('div')
       .attr(
         'class',
-        'projection-switch absolute bottom-0 right-0 mb-9 text-xs transition-all duration-200'
+        'projection-switch absolute left-0 bottom-0 mb-16 text-xs transition-all duration-200 z-10'
       )
       .selectAll('button')
       .data(projections);

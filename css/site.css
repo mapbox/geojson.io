@@ -15,24 +15,8 @@ html {
 }
 
 /* Utility classes */
-.map {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 40%;
-}
 
 .right {
-  overflow-x: hidden;
-  position: absolute;
-  bottom: 0;
-  top: 0;
-  right: 0;
-  width: 40%;
-  min-width: 400px;
-  box-sizing: border-box;
-  background: #fff;
   transition: all 200ms;
   -webkit-transition: all 200ms;
   box-shadow: rgba(0, 0, 0, 0.1) -2px 0px 0px;
@@ -102,7 +86,6 @@ p.intro-hint:hover {
 }
 
 .top .buttons {
-  margin-left: 40px;
   height: 40px;
 }
 
@@ -197,7 +180,7 @@ button.delete-invert:hover {
   bottom: 0;
   right: 0;
   left: 0;
-  top: 0;
+  top: 1px;
   height: auto !important;
   background: #fff;
   font-family: "m_1regular", monospace;
@@ -547,26 +530,6 @@ div.children a {
   display: inline-block;
 }
 
-@media screen and (max-width: 1100px) {
-  .file-bar .button-wrap button span.title {
-    display: none;
-  }
-
-  .share,
-  .download,
-  .map {
-    right: 50%;
-  }
-
-  .right {
-    width: 50%;
-  }
-
-  .file-bar {
-    right: 50%;
-  }
-}
-
 .metadata {
   width: 100%;
 }
@@ -589,4 +552,23 @@ div.children a {
 
 .fullscreen .mapboxgl-ctrl-top-right {
   margin-top: 40px;
+}
+
+/* override mapbox-gl-geocoder control sytles on mobile */
+.mapboxgl-ctrl-top-right {
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
+.mapboxgl-ctrl-top-right .mapboxgl-ctrl-geocoder  {
+  margin: 0;
+  border-radius: 0;
+}
+
+@media screen and (min-width: 640px) {
+  .mapboxgl-ctrl-top-right .mapboxgl-ctrl-geocoder {
+    margin: 10px 10px 0 0;
+    border-radius: 4px;
+  }
 }

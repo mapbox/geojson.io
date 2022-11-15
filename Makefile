@@ -4,8 +4,7 @@ CLEANCSS = node_modules/.bin/cleancss
 UGLIFY = node_modules/.bin/uglifyjs
 LIBS = $(shell find lib -type f -name '*.js')
 
-all: dist/site.js dist/site.mobile.js dist/delegate.js \
-css/tailwind_dist.css
+all: dist/site.js css/tailwind_dist.css
 
 node_modules: package.json
 	npm install
@@ -50,14 +49,8 @@ dist/lib.js: dist dist/d3.js $(LIBS)
 		lib/d3.trigger.js \
 		lib/d3-compat.js > dist/lib.js
 
-dist/delegate.js: src/delegate.js
-	$(BROWSERIFY)  src/delegate.js > dist/delegate.js
-
 dist/site.js: dist/lib.js src/index.js $(shell $(BROWSERIFY) --list src/index.js)
 	$(BROWSERIFY) --noparse=src/source/local.js -t brfs src/index.js > dist/site.js
-
-dist/site.mobile.js: dist/lib.js src/mobile.js $(shell $(BROWSERIFY) --list src/mobile.js)
-	$(BROWSERIFY) --noparse=src/source/local.js -t brfs src/mobile.js > dist/site.mobile.js
 
 css/tailwind_dist.css:
 	npx tailwindcss -i ./css/tailwind_src.css -o ./css/tailwind_dist.css

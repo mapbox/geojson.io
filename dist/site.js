@@ -78012,14 +78012,44 @@ function ui(context) {
   function init(selection) {
     const container = selection
       .append('div')
-      .attr('class', 'ui-container flex-grow relative');
+      .attr(
+        'class',
+        'ui-container grow flex-shrink-0 flex flex-col md:flex-row w-full relative overflow-x-hidden'
+      );
 
-    container
+    const map = container
       .append('div')
-      .attr('class', 'map')
-      .call(context.map)
+      .attr('id', 'map')
+      .attr(
+        'class',
+        'map grow shrink-0 top-0 bottom-0 left-0 basis-0 transition-all duration-300'
+      )
       .call(layer_switch(context))
       .call(projection_switch(context));
+
+    // sidebar handle
+    map
+      .append('div')
+      .attr(
+        'class',
+        'sidebar-handle absolute right-0 bottom-9 px-4 bg-white cursor-pointer hidden md:block z-10'
+      )
+      .attr('title', 'Toggle Sidebar')
+      .on('click', () => {
+        const collapsed = !d3.select('.map').classed('md:basis-full');
+        d3.select('.map').classed('md:basis-0', !collapsed);
+        d3.select('.map').classed('md:basis-full', collapsed);
+
+        d3.select('.sidebar-handle-icon')
+          .classed('fa-caret-left', collapsed)
+          .classed('fa-caret-right', !collapsed);
+
+        setTimeout(() => {
+          context.map.resize();
+        }, 300);
+      })
+      .append('i')
+      .attr('class', 'sidebar-handle-icon fa-solid fa-caret-right');
 
     context.container = container;
 
@@ -78029,28 +78059,16 @@ function ui(context) {
   function render(selection) {
     const container = init(selection);
 
-    const right = container.append('div').attr('class', 'right');
+    const right = container
+      .append('div')
+      .attr(
+        'class',
+        'right flex flex-col overflow-x-hidden bottom-0 top-0 right-0 box-border bg-white relative grow-0 shrink-0 w-full md:w-2/5 md:max-w-md h-2/5 md:h-auto'
+      );
 
-    const top = right.append('div').attr('class', 'top');
-
-    top
-      .append('button')
-      .attr('class', 'collapse-button')
-      .attr('title', 'Collapse')
-      .on('click', function collapse() {
-        d3.select('body').classed(
-          'fullscreen',
-          !d3.select('body').classed('fullscreen')
-        );
-        const full = d3.select('body').classed('fullscreen');
-        d3.select(this)
-          .select('.icon')
-          .classed('fa-caret-up', !full)
-          .classed('fa-caret-down', full);
-        context.map.resize();
-      })
-      .append('i')
-      .attr('class', 'icon fa-solid fa-caret-up');
+    const top = right
+      .append('div')
+      .attr('class', 'top border-b border-solid border-gray-200');
 
     const pane = right.append('div').attr('class', 'pane group');
 
@@ -78060,11 +78078,20 @@ function ui(context) {
     //     .attr('class', 'user fr pad1 deemphasize')
     //     .call(userUi(context));
 
-    top.append('div').attr('class', 'buttons').call(buttons(context, pane));
+    top
+      .append('div')
+      .attr('class', 'buttons flex')
+      .call(buttons(context, pane));
 
-    container.append('div').attr('class', 'file-bar').call(file_bar(context));
+    container
+      .append('div')
+      .attr('class', 'file-bar hidden md:block')
+      .call(file_bar(context));
 
     dnd(context);
+
+    // initialize the map after the ui has been created to avoid flex container size issues
+    context.map();
   }
 
   return {
@@ -79466,7 +79493,7 @@ module.exports = function (context) {
   return function (selection) {
     const layerButtons = selection
       .append('div')
-      .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs')
+      .attr('class', 'layer-switch absolute left-0 bottom-0 mb-9 text-xs z-10')
       .selectAll('button')
       .data(styles);
 
@@ -79687,7 +79714,7 @@ module.exports = function (context, readonly) {
     }
   }
 
-  function map(selection) {
+  function map() {
     mapboxgl.accessToken =
       'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
 
@@ -79697,7 +79724,7 @@ module.exports = function (context, readonly) {
     const { style } = styles.find((d) => d.title === activeStyle);
 
     context.map = new mapboxgl.Map({
-      container: selection.node(),
+      container: 'map',
       style,
       center: [20, 0],
       zoom: 2,
@@ -79986,6 +80013,16 @@ module.exports = function (context, readonly) {
 
       context.map.on('click', 'map-data-fill', handleLinestringOrPolygonClick);
       context.map.on('click', 'map-data-line', handleLinestringOrPolygonClick);
+      context.map.on(
+        'touchstart',
+        'map-data-fill',
+        handleLinestringOrPolygonClick
+      );
+      context.map.on(
+        'touchstart',
+        'map-data-line',
+        handleLinestringOrPolygonClick
+      );
     });
 
     context.map.on('draw.create', created);
@@ -80194,6 +80231,17 @@ const addMarkers = (geojson, context, writable) => {
         );
       })
       .addTo(context.map);
+
+    marker.getElement().addEventListener('touchstart', () => {
+      bindPopup(
+        {
+          lngLat: d.geometry.coordinates,
+          features: [d]
+        },
+        context,
+        writable
+      );
+    });
     markers.push(marker);
   });
 };
@@ -80566,11 +80614,11 @@ module.exports = function (context, pane) {
     const enter = buttons
       .enter()
       .append('button')
+      .attr('class', 'grow')
       .attr('title', (d) => {
         return d.alt;
       })
       .on('click', buttonClick);
-
     enter.append('i').attr('class', (d) => {
       return `fa-solid fa-${d.icon}`;
     });
@@ -80611,7 +80659,7 @@ module.exports = function (context) {
       .append('div')
       .attr(
         'class',
-        'projection-switch absolute bottom-0 right-0 mb-9 text-xs transition-all duration-200'
+        'projection-switch absolute left-0 bottom-0 mb-16 text-xs transition-all duration-200 z-10'
       )
       .selectAll('button')
       .data(projections);
