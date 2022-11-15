@@ -2,6 +2,7 @@
 
 ## 2022-11-15
 
+* handle null properties when rendering MultiPoint #783
 * Mobile Responsive Layout and CSS updates (#779)
 
 ## 2022-11-10
