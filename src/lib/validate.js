@@ -2,7 +2,9 @@ const geojsonhint = require('@mapbox/geojsonhint');
 
 module.exports = function (callback) {
   return function (editor, changeObj) {
-    const err = geojsonhint.hint(editor.getValue());
+    const err = geojsonhint.hint(editor.getValue(), {
+      ignoreRightHandRule: true
+    });
     editor.clearGutter('error');
 
     if (err instanceof Error) {
