@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 2022-11-16
+* show geojsonhint warnings without rejecting geojson #786
+
 ## 2022-11-15
 
 * handle null properties when rendering MultiPoint #783
