@@ -195,8 +195,16 @@ button.delete-invert:hover {
   -webkit-transition: all 100ms;
 }
 
+.error-marker.warning {
+  background: #eee0aa;
+}
+
 .error-marker:hover {
   background: #d68;
+}
+
+.error-marker.warning:hover {
+  background: #eee0aa;
 }
 
 .error-marker:before {
