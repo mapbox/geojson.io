@@ -5,6 +5,12 @@ module.exports = function (callback) {
     const err = geojsonhint.hint(editor.getValue());
     editor.clearGutter('error');
 
+    // check err for objects that don't have `level` properties
+    // if any exist, reject the geojson
+    const rejectableErrors = err.filter(
+      (d) => !Object.prototype.hasOwnProperty.call(d, 'level')
+    );
+
     if (err instanceof Error) {
       handleError(err.message);
       return callback({
@@ -12,7 +18,7 @@ module.exports = function (callback) {
         title: 'invalid JSON',
         message: 'invalid JSON'
       });
-    } else if (err.length) {
+    } else if (rejectableErrors.length) {
       handleErrors(err);
       return callback({
         class: 'icon-circle-blank',
@@ -20,6 +26,10 @@ module.exports = function (callback) {
         message: 'invalid GeoJSON'
       });
     } else {
+      // err should only include warnings at this point
+      // accept the geojson as valid but show the warnings
+      handleErrors(err);
+
       const zoom =
         changeObj.from.ch === 0 &&
         changeObj.from.line === 0 &&
@@ -53,14 +63,19 @@ module.exports = function (callback) {
     function handleErrors(errors) {
       editor.clearGutter('error');
       errors.forEach((e) => {
-        editor.setGutterMarker(e.line, 'error', makeMarker(e.message));
+        editor.setGutterMarker(e.line, 'error', makeMarker(e.message, e.level));
       });
     }
 
-    function makeMarker(msg) {
+    function makeMarker(msg, level) {
+      let className = 'error-marker';
+      if (level === 'message') {
+        className += ' warning';
+      }
+
       return d3
         .select(document.createElement('div'))
-        .attr('class', 'error-marker')
+        .attr('class', className)
         .attr('message', msg)
         .node();
     }
