@@ -77447,7 +77447,7 @@ const marked = require('marked');
 
 module.exports = function () {
   const html =
-    Buffer("PGgyPkhlbHA8L2gyPgoKPHA+PHN0cm9uZz5nZW9qc29uLmlvPC9zdHJvbmc+IGlzIGEgcXVpY2ssIHNpbXBsZSB0b29sIGZvciBjcmVhdGluZywKICAgIHZpZXdpbmcsIGFuZCBzaGFyaW5nIG1hcHMuIGdlb2pzb24uaW8gaXMgbmFtZWQgYWZ0ZXIgPGEgaHJlZj0naHR0cDovL2dlb2pzb24ub3JnLycgdGFyZ2V0PSdfYmxhbmsnPkdlb0pTT048L2E+LAogICAgYW4gb3BlbiBzb3VyY2Ugc3BhdGlhbCBkYXRhIGZvcm1hdCwgYW5kIGl0IHN1cHBvcnRzIEdlb0pTT04gaW4gYWxsIHdheXMgLSBidXQgYWxzbwogICAgYWNjZXB0cyBLTUwsIEdQWCwgQ1NWLCBHVEZTLCBUb3BvSlNPTiwgYW5kIG90aGVyIGZvcm1hdHMuPC9wPgoKPHA+V2FudCB0byByZXF1ZXN0IGEgZmVhdHVyZSBvciByZXBvcnQgYSBidWc/IDxhIHRhcmdldD0nX2JsYW5rJwogICAgICAgIGhyZWY9J2h0dHBzOi8vZ2l0aHViLmNvbS9tYXBib3gvZ2VvanNvbi5pby9pc3N1ZXM/c3RhdGU9b3Blbic+T3BlbgogICAgICAgIGFuIGlzc3VlCiAgICAgICAgb24gZ2VvanNvbi5pbydzIGlzc3VlIHRyYWNrZXIuPC9hPgoKPGgzPkkndmUgZ290IGRhdGE8L2gzPgoKPHA+SWYgeW91IGhhdmUgZGF0YSwgbGlrZSBhIEtNTCwgR2VvSlNPTiwgb3IgQ1NWIGZpbGUsIGp1c3QgZHJhZyAmYW1wOyBkcm9wCiAgICBpdCBvbnRvIHRoZSBwYWdlIG9yIGNsaWNrICdPcGVuJyBhbmQgc2VsZWN0IHlvdXIgZmlsZS4gWW91ciBkYXRhIHNob3VsZCBhcHBlYXIgb24KICAgIHRoZSBtYXAhPC9wPgoKPGgzPkkgd2FudCB0byBkcmF3IGZlYXR1cmVzPC9oMz4KCjxwPlVzZSB0aGUgZHJhd2luZyB0b29scyB0byBkcmF3IHBvaW50cywgcG9seWdvbnMsCiAgICBsaW5lcywgcmVjdGFuZ2xlcywgYW5kIGNpcmNsZXMuIEFmdGVyIHlvdSdyZSBkb25lIGRyYXdpbmcgdGhlIHNoYXBlcywgeW91IGNhbiBhZGQKICAgIGluZm9ybWF0aW9uIHRvIGVhY2ggZmVhdHVyZSBieSBjbGlja2luZyBvbiBpdCwgZWRpdGluZyB0aGUgZmVhdHVyZSdzIHByb3BlcnRpZXMsCiAgICBhbmQgY2xpY2tpbmcgJ1NhdmUnLjwvcD4KCjxwPk5vdGU6IENpcmNsZXMgYXJlIG5vdCBzdXBwb3J0ZWQgaW4gR2VvSlNPTiwgc28gdGhlIGNpcmNsZSBkcmF3aW5nIHRvb2wgaXMgcmVhbGx5IGNyZWF0aW5nIGEgY2lyY2xlLXNoYXBlZCBwb2x5Z29uCiAgICB3aXRoIDY0IHZlcnRpY2VzLjwvcD4KCjxwPlByb3BlcnRpZXMgaW4gR2VvSlNPTiBhcmUgc3RvcmVkIGFzICdrZXkgdmFsdWUgcGFpcnMnIC0gc28sIGZvciBpbnN0YW5jZSwKICAgIGlmIHlvdSB3YW50ZWQgdG8gYWRkIGEgbmFtZSB0byBlYWNoIGZlYXR1cmUsIHR5cGUgJ25hbWUnIGluIHRoZSBmaXJzdCB0YWJsZQogICAgZmllbGQsIGFuZCB0aGUgbmFtZSBvZiB0aGUgZmVhdHVyZSBpbiB0aGUgc2Vjb25kLjwvcD4KCjxoMz5JJ20gYSBjb2RlcjwvaDM+Cgo8cD48YSBocmVmPScjZ2VvanNvbi1pby1hcGknPmdlb2pzb24uaW8gYWNjZXB0cyBVUkwgcGFyYW1ldGVyczwvYT4KICAgIHRoYXQgbWFrZSBpdCBlYXN5IHRvIGdvIGZyb20gYSBHZW9KU09OIGZpbGUgb24geW91ciBjb21wdXRlciB0byBnZW9qc29uLmlvLgoKPGgzPlByaXZhY3kgJmFtcDsgTGljZW5zZSBJc3N1ZXM8L2gzPgoKPHVsPgogICAgPGxpPjxzdHJvbmc+VGhlIGRhdGEgeW91IGNyZWF0ZSBhbmQgbW9kaWZ5IGluIGdlb2pzb24uaW88L3N0cm9uZz4gZG9lc24ndAogICAgICAgIGFjcXVpcmUgYW55IGFkZGl0aW9uYWwgbGljZW5zZTogaWYgaXQncyBzZWNyZXQgYW5kIGNvcHlyaWdodGVkLCBpdCB3aWxsIHJlbWFpbgogICAgICAgIHRoYXQgd2F5IC0gaXQgZG9lc24ndCBoYXZlIHRvIGJlIHB1YmxpYyBvciBvcGVuIHNvdXJjZS4KICAgIDwvbGk+CjwvdWw+","base64") +
+    Buffer("PGgyPkhlbHA8L2gyPgoKPHA+PHN0cm9uZz5nZW9qc29uLmlvPC9zdHJvbmc+IGlzIGEgcXVpY2ssIHNpbXBsZSB0b29sIGZvciBjcmVhdGluZywKICAgIHZpZXdpbmcsIGFuZCBzaGFyaW5nIHNwYXRpYWwgZGF0YS4gZ2VvanNvbi5pbyBpcyBuYW1lZCBhZnRlciA8YSBocmVmPSdodHRwOi8vZ2VvanNvbi5vcmcvJyB0YXJnZXQ9J19ibGFuayc+R2VvSlNPTjwvYT4sCiAgICBhbiBvcGVuIHNvdXJjZSBzcGF0aWFsIGRhdGEgZm9ybWF0LCBhbmQgaXQgc3VwcG9ydHMgR2VvSlNPTiBpbiBhbGwgd2F5cyAtIGJ1dCBhbHNvCiAgICBhY2NlcHRzIEtNTCwgR1BYLCBDU1YsIEdURlMsIFRvcG9KU09OLCBhbmQgb3RoZXIgZm9ybWF0cy48L3A+Cgo8cD5XYW50IHRvIHJlcXVlc3QgYSBmZWF0dXJlIG9yIHJlcG9ydCBhIGJ1Zz8gPGEgdGFyZ2V0PSdfYmxhbmsnCiAgICAgICAgaHJlZj0naHR0cHM6Ly9naXRodWIuY29tL21hcGJveC9nZW9qc29uLmlvL2lzc3Vlcz9zdGF0ZT1vcGVuJz5PcGVuCiAgICAgICAgYW4gaXNzdWUKICAgICAgICBvbiBnZW9qc29uLmlvJ3MgaXNzdWUgdHJhY2tlci48L2E+Cgo8aDM+SSd2ZSBnb3QgZGF0YTwvaDM+Cgo8cD5JZiB5b3UgaGF2ZSBkYXRhLCBsaWtlIGEgS01MLCBHZW9KU09OLCBvciBDU1YgZmlsZSwganVzdCBkcmFnICZhbXA7IGRyb3AKICAgIGl0IG9udG8gdGhlIHBhZ2Ugb3IgY2xpY2sgJ09wZW4nIGFuZCBzZWxlY3QgeW91ciBmaWxlLiBZb3VyIGRhdGEgc2hvdWxkIGFwcGVhciBvbgogICAgdGhlIG1hcCE8L3A+Cgo8cD5Zb3UgbWF5IGFsc28gcGFzdGUgZ2VvanNvbiBkYXRhIGludG8gdGhlIGNvZGUgZWRpdG9yLjwvcD4KCjxwPlRvIGVuc3VyZSBjb25zaXN0ZW50IHJlbmRlcmluZyBhbmQgaW50ZXJvcGVyYWJpbGl0eSB3aXRoIG90aGVyIHNwYXRpYWwgZGF0YSBmb3JtYXRzLCB0aGUgd29ya2luZyBkYXRhc2V0IGluIGdlb2pzb24uaW8gaXMgYWx3YXlzIGEgZ2VvanNvbiBGZWF0dXJlQ29sbGVjdGlvbi4gSWYgeW91IGltcG9ydCBhIHN0YW5kYWxvbmUgRmVhdHVyZSBvciBHZW9tZXRyeSwgaXQgd2lsbCBiZSBub3JtYWxpemVkIGludG8gYSBGZWF0dXJlQ29sbGVjdGlvbi48L3A+Cgo8aDM+SSB3YW50IHRvIGRyYXcgZmVhdHVyZXM8L2gzPgoKPHA+VXNlIHRoZSBkcmF3aW5nIHRvb2xzIHRvIGRyYXcgcG9pbnRzLCBwb2x5Z29ucywKICAgIGxpbmVzLCByZWN0YW5nbGVzLCBhbmQgY2lyY2xlcy4gQWZ0ZXIgeW91J3JlIGRvbmUgZHJhd2luZyB0aGUgc2hhcGVzLCB5b3UgY2FuIGFkZAogICAgaW5mb3JtYXRpb24gdG8gZWFjaCBmZWF0dXJlIGJ5IGNsaWNraW5nIG9uIGl0LCBlZGl0aW5nIHRoZSBmZWF0dXJlJ3MgcHJvcGVydGllcywKICAgIGFuZCBjbGlja2luZyAnU2F2ZScuPC9wPgoKPHA+Tm90ZTogQ2lyY2xlcyBhcmUgbm90IHN1cHBvcnRlZCBpbiBHZW9KU09OLCBzbyB0aGUgY2lyY2xlIGRyYXdpbmcgdG9vbCBpcyByZWFsbHkgY3JlYXRpbmcgYSBjaXJjbGUtc2hhcGVkIHBvbHlnb24KICAgIHdpdGggNjQgdmVydGljZXMuPC9wPgoKPHA+UHJvcGVydGllcyBpbiBHZW9KU09OIGFyZSBzdG9yZWQgYXMgJ2tleSB2YWx1ZSBwYWlycycgLSBzbywgZm9yIGluc3RhbmNlLAogICAgaWYgeW91IHdhbnRlZCB0byBhZGQgYSBuYW1lIHRvIGVhY2ggZmVhdHVyZSwgdHlwZSAnbmFtZScgaW4gdGhlIGZpcnN0IHRhYmxlCiAgICBmaWVsZCwgYW5kIHRoZSBuYW1lIG9mIHRoZSBmZWF0dXJlIGluIHRoZSBzZWNvbmQuPC9wPgoKPGgzPkknbSBhIGNvZGVyPC9oMz4KCjxwPjxhIGhyZWY9JyNnZW9qc29uLWlvLWFwaSc+Z2VvanNvbi5pbyBhY2NlcHRzIFVSTCBwYXJhbWV0ZXJzPC9hPgogICAgdGhhdCBtYWtlIGl0IGVhc3kgdG8gZ28gZnJvbSBhIEdlb0pTT04gZmlsZSBvbiB5b3VyIGNvbXB1dGVyIHRvIGdlb2pzb24uaW8uCgo8aDM+UHJpdmFjeSAmYW1wOyBMaWNlbnNlIElzc3VlczwvaDM+Cgo8dWw+CiAgICA8bGk+PHN0cm9uZz5UaGUgZGF0YSB5b3UgY3JlYXRlIGFuZCBtb2RpZnkgaW4gZ2VvanNvbi5pbzwvc3Ryb25nPiBkb2Vzbid0CiAgICAgICAgYWNxdWlyZSBhbnkgYWRkaXRpb25hbCBsaWNlbnNlOiBpZiBpdCdzIHNlY3JldCBhbmQgY29weXJpZ2h0ZWQsIGl0IHdpbGwgcmVtYWluCiAgICAgICAgdGhhdCB3YXkgLSBpdCBkb2Vzbid0IGhhdmUgdG8gYmUgcHVibGljIG9yIG9wZW4gc291cmNlLgogICAgPC9saT4KPC91bD4=","base64") +
     '<br><hr><br>' +
     marked.parse("## Geojson.io API\n\nYou can interact with geojson.io programmatically via url parameters:\n\n## URL API\n\nYou can do a few interesting things with just URLs and geojson.io. Here are the\ncurrent URL formats.\n\n### `map`\n\nOpen the map at a specific location. The argument is numbers separated by `/`\nin the form `zoom/latitude/longitude`.\n\n#### Example:\n\nhttp://geojson.io/#map=2/20.0/0.0\n\n### `data=data:application/json,`\n\nOpen the map and load a chunk of [GeoJSON](http://geojson.org/) data from a\nURL segment directly onto the map. The GeoJSON data should be encoded\nas per `encodeURIComponent(JSON.stringify(geojson_data))`.\n\n#### Example:\n\nhttp://geojson.io/#data=data:application/json,%7B%22type%22%3A%22LineString%22%2C%22coordinates%22%3A%5B%5B0%2C0%5D%2C%5B10%2C10%5D%5D%7D\n\n### `data=data:text/x-url,`\n\nLoad GeoJSON data from a URL on the internet onto the map. The URL must\nrefer directly to a resource that is:\n\n- Freely accessible (not behind a password)\n- Supports [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)\n- Is valid GeoJSON\n\nThe URL should be encoded as per `encodeURIComponent(url)`.\n\n#### Example:\n\nhttp://geojson.io/#data=data:text/x-url,http%3A%2F%2Fapi.tiles.mapbox.com%2Fv3%2Ftmcw.map-gdv4cswo%2Fmarkers.geojson\n\n### `id=gist:`\n\nLoad GeoJSON data from a [GitHub Gist](https://gist.github.com/), given an argument\nin the form of `login/gistid`. The Gist can be public or private, and must\ncontain a file with a `.geojson` extension that is valid GeoJSON.\n\n#### Example:\n\nhttp://geojson.io/#id=gist:tmcw/e9a29ad54dbaa83dee08&map=8/39.198/-76.981\n\n### `id=github:`\n\nLoad a file from a GitHub repository. You must have access to the file, and\nit must be valid GeoJSON.\n\nThe url is in the form:\n\n    login/repository/blob/branch/filepath\n\n#### Example:\n\nhttp://geojson.io/#id=github:benbalter/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302\n");
   function render(selection) {
@@ -77463,6 +77463,7 @@ module.exports = function () {
 },{"buffer":66,"marked":154}],225:[function(require,module,exports){
 const _ = require('lodash');
 const { createPopper } = require('@popperjs/core');
+const geojsonNormalize = require('@mapbox/geojson-normalize');
 
 const CodeMirror = require('codemirror/lib/codemirror');
 require('codemirror/addon/fold/foldcode');
@@ -77471,9 +77472,10 @@ require('codemirror/addon/fold/brace-fold');
 require('codemirror/addon/edit/matchbrackets');
 require('codemirror/mode/javascript/javascript');
 
-const validate = require('../lib/validate'),
-  zoomextent = require('../lib/zoomextent'),
-  saver = require('../ui/saver.js');
+const validate = require('../lib/validate');
+const zoomextent = require('../lib/zoomextent');
+const saver = require('../ui/saver.js');
+const flash = require('../ui/flash');
 
 module.exports = function (context) {
   CodeMirror.keyMap.tabSpace = {
@@ -77597,9 +77599,33 @@ module.exports = function (context) {
 
     function changeValidated(err, data, zoom) {
       if (!err) {
+        let updateSource = 'json';
+        const originalType = data.type;
+        // normalize into a FeatureCollection
+        if (
+          [
+            'Feature',
+            'GeometryCollection',
+            'Point',
+            'LineString',
+            'Polygon',
+            'MultiPoint',
+            'MultiLineString',
+            'MultiPolygon'
+          ].includes(data.type)
+        ) {
+          data = geojsonNormalize(data);
+          updateSource = 'geojsonNormalize';
+
+          flash(
+            context.container,
+            `The imported ${originalType} was normalized into a FeatureCollection`
+          );
+        }
+
         // don't set data unless it has actually changed
         if (!_.isEqual(data, context.data.get('map'))) {
-          context.data.set({ map: data }, 'json');
+          context.data.set({ map: data }, updateSource);
           if (zoom) zoomextent(context);
         }
       }
@@ -77623,7 +77649,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/validate":222,"../lib/zoomextent":223,"../ui/saver.js":250,"@popperjs/core":46,"codemirror/addon/edit/matchbrackets":70,"codemirror/addon/fold/brace-fold":71,"codemirror/addon/fold/foldcode":72,"codemirror/addon/fold/foldgutter":73,"codemirror/lib/codemirror":74,"codemirror/mode/javascript/javascript":75,"lodash":152}],226:[function(require,module,exports){
+},{"../lib/validate":222,"../lib/zoomextent":223,"../ui/flash":239,"../ui/saver.js":250,"@mapbox/geojson-normalize":8,"@popperjs/core":46,"codemirror/addon/edit/matchbrackets":70,"codemirror/addon/fold/brace-fold":71,"codemirror/addon/fold/foldcode":72,"codemirror/addon/fold/foldgutter":73,"codemirror/lib/codemirror":74,"codemirror/mode/javascript/javascript":75,"lodash":152}],226:[function(require,module,exports){
 const metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -80127,19 +80153,15 @@ const ClickableMarker = require('./clickable_marker');
 const markers = [];
 
 const addIds = (geojson) => {
-  if (geojson.type === 'FeatureCollection') {
-    return {
-      ...geojson,
-      features: geojson.features.map((feature, i) => {
-        return {
-          ...feature,
-          id: i
-        };
-      })
-    };
-  }
-
-  return geojson;
+  return {
+    ...geojson,
+    features: geojson.features.map((feature, i) => {
+      return {
+        ...feature,
+        id: i
+      };
+    })
+  };
 };
 
 const addMarkers = (geojson, context, writable) => {
@@ -80188,14 +80210,10 @@ const addMarkers = (geojson, context, writable) => {
     }
   };
 
-  switch (geojson.type) {
-    case 'FeatureCollection':
-      geojson.features.forEach((d, i) => {
-        const { geometry, properties } = d;
-        handleGeometry(geometry, properties, i);
-      });
-      break;
-  }
+  geojson.features.forEach((d, i) => {
+    const { geometry, properties } = d;
+    handleGeometry(geometry, properties, i);
+  });
 
   if (pointFeatures.length === 0) {
     return;

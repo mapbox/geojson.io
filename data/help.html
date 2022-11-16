@@ -1,7 +1,7 @@
 <h2>Help</h2>
 
 <p><strong>geojson.io</strong> is a quick, simple tool for creating,
-    viewing, and sharing maps. geojson.io is named after <a href='http://geojson.org/' target='_blank'>GeoJSON</a>,
+    viewing, and sharing spatial data. geojson.io is named after <a href='http://geojson.org/' target='_blank'>GeoJSON</a>,
     an open source spatial data format, and it supports GeoJSON in all ways - but also
     accepts KML, GPX, CSV, GTFS, TopoJSON, and other formats.</p>
 
@@ -15,6 +15,10 @@
 <p>If you have data, like a KML, GeoJSON, or CSV file, just drag &amp; drop
     it onto the page or click 'Open' and select your file. Your data should appear on
     the map!</p>
+
+<p>You may also paste geojson data into the code editor.</p>
+
+<p>To ensure consistent rendering and interoperability with other spatial data formats, the working dataset in geojson.io is always a geojson FeatureCollection. If you import a standalone Feature or Geometry, it will be normalized into a FeatureCollection.</p>
 
 <h3>I want to draw features</h3>
 
