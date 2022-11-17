@@ -9,19 +9,15 @@ const ClickableMarker = require('./clickable_marker');
 const markers = [];
 
 const addIds = (geojson) => {
-  if (geojson.type === 'FeatureCollection') {
-    return {
-      ...geojson,
-      features: geojson.features.map((feature, i) => {
-        return {
-          ...feature,
-          id: i
-        };
-      })
-    };
-  }
-
-  return geojson;
+  return {
+    ...geojson,
+    features: geojson.features.map((feature, i) => {
+      return {
+        ...feature,
+        id: i
+      };
+    })
+  };
 };
 
 const addMarkers = (geojson, context, writable) => {
@@ -70,14 +66,10 @@ const addMarkers = (geojson, context, writable) => {
     }
   };
 
-  switch (geojson.type) {
-    case 'FeatureCollection':
-      geojson.features.forEach((d, i) => {
-        const { geometry, properties } = d;
-        handleGeometry(geometry, properties, i);
-      });
-      break;
-  }
+  geojson.features.forEach((d, i) => {
+    const { geometry, properties } = d;
+    handleGeometry(geometry, properties, i);
+  });
 
   if (pointFeatures.length === 0) {
     return;

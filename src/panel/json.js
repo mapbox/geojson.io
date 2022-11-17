@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const { createPopper } = require('@popperjs/core');
+const geojsonNormalize = require('@mapbox/geojson-normalize');
 
 const CodeMirror = require('codemirror/lib/codemirror');
 require('codemirror/addon/fold/foldcode');
@@ -8,9 +9,10 @@ require('codemirror/addon/fold/brace-fold');
 require('codemirror/addon/edit/matchbrackets');
 require('codemirror/mode/javascript/javascript');
 
-const validate = require('../lib/validate'),
-  zoomextent = require('../lib/zoomextent'),
-  saver = require('../ui/saver.js');
+const validate = require('../lib/validate');
+const zoomextent = require('../lib/zoomextent');
+const saver = require('../ui/saver.js');
+const flash = require('../ui/flash');
 
 module.exports = function (context) {
   CodeMirror.keyMap.tabSpace = {
@@ -134,9 +136,33 @@ module.exports = function (context) {
 
     function changeValidated(err, data, zoom) {
       if (!err) {
+        let updateSource = 'json';
+        const originalType = data.type;
+        // normalize into a FeatureCollection
+        if (
+          [
+            'Feature',
+            'GeometryCollection',
+            'Point',
+            'LineString',
+            'Polygon',
+            'MultiPoint',
+            'MultiLineString',
+            'MultiPolygon'
+          ].includes(data.type)
+        ) {
+          data = geojsonNormalize(data);
+          updateSource = 'geojsonNormalize';
+
+          flash(
+            context.container,
+            `The imported ${originalType} was normalized into a FeatureCollection`
+          );
+        }
+
         // don't set data unless it has actually changed
         if (!_.isEqual(data, context.data.get('map'))) {
-          context.data.set({ map: data }, 'json');
+          context.data.set({ map: data }, updateSource);
           if (zoom) zoomextent(context);
         }
       }
