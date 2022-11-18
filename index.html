@@ -33,7 +33,6 @@
   <meta property="og:description" content="A quick, simple tool for creating, viewing, and sharing spatial data." />
   <meta property="og:image" content="/img/twitter-card-image.png" />
 
-  <script src="lib/raven.min.js"></script>
   <meta http-equiv="Content-Security-Policy" content="
     default-src
       'self'
@@ -72,17 +71,6 @@
       'unsafe-inline'
       ;
   ">
-  <script>
-    if (location.hostname === 'geojson.io') {
-      Raven.config('https://c2d096c944dd4150ab7e44b0881b4a46@app.getsentry.com/11480', {
-        whitelistUrls: [/geojson\.io/],
-        ignoreErrors: [
-          'Uncaught Error: Error connecting to extension ckibcdccnfeookdmbahgiakhnjcddpki',
-          'Uncaught Error: Error connecting to extension pioclpoplcdbaefihamjohnefbikjilc'
-        ]
-      }).install();
-    }
-  </script>
   <style>
     /*
    * http://seclab.stanford.edu/websec/framebusting/framebust.pdf
