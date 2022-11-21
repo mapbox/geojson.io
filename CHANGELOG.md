@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2022-11-21
+* update core style urls #792
+
+## 2022-11-17
+* normalize pasted data into FeatureCollection #787
+
 ## 2022-11-16
 * show geojsonhint warnings without rejecting geojson #786
 
