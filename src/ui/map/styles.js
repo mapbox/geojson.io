@@ -1,23 +1,23 @@
 module.exports = [
   {
     title: 'Streets',
-    style: 'mapbox://styles/mapbox/streets-v11'
+    style: 'mapbox://styles/mapbox/streets-v12'
   },
   {
     title: 'Satellite Streets',
-    style: 'mapbox://styles/mapbox/satellite-streets-v11'
+    style: 'mapbox://styles/mapbox/satellite-streets-v12'
   },
   {
     title: 'Outdoors',
-    style: 'mapbox://styles/mapbox/outdoors-v11'
+    style: 'mapbox://styles/mapbox/outdoors-v12'
   },
   {
     title: 'Light',
-    style: 'mapbox://styles/mapbox/light-v10'
+    style: 'mapbox://styles/mapbox/light-v11'
   },
   {
     title: 'Dark',
-    style: 'mapbox://styles/mapbox/dark-v10'
+    style: 'mapbox://styles/mapbox/dark-v11'
   },
   {
     title: 'OSM',

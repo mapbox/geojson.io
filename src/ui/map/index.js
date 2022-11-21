@@ -284,11 +284,47 @@ module.exports = function (context, readonly) {
         !context.map.getSource('map-data')
       ) {
         const { name } = context.map.getStyle();
+
         let color = DARK_FEATURE_COLOR;
         if (['Mapbox Satellite Streets', 'Mapbox Dark'].includes(name)) {
           color = LIGHT_FEATURE_COLOR;
         }
-        context.map.setFog({});
+
+        // setFog only on Light and Dark
+        if (['Mapbox Light', 'Mapbox Dark', 'osm'].includes(name)) {
+          context.map.setFog({
+            range: [0.5, 10],
+            color: '#ffffff',
+            'high-color': '#245cdf',
+            'space-color': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              4,
+              '#010b19',
+              7,
+              '#367ab9'
+            ],
+            'horizon-blend': [
+              'interpolate',
+              ['exponential', 1.2],
+              ['zoom'],
+              5,
+              0.02,
+              7,
+              0.08
+            ],
+            'star-intensity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              5,
+              0.35,
+              6,
+              0
+            ]
+          });
+        }
 
         context.map.addSource('map-data', {
           type: 'geojson',
