@@ -1,5 +1,4 @@
-const zoomextent = require('../lib/zoomextent'),
-  qs = require('qs-hash');
+const qs = require('qs-hash');
 
 module.exports = function (context) {
   d3.select(window).on('unload', onunload);
@@ -10,10 +9,10 @@ module.exports = function (context) {
   if (location.hash !== '#new' && !query.id && !query.data) {
     const rec = context.storage.get('recover');
     if (rec && confirm('recover your map from the last time you edited?')) {
-      context.data.set(rec);
-      setTimeout(() => {
-        zoomextent(context);
-      }, 100);
+      context.data.set({
+        ...rec,
+        recovery: true
+      });
     } else {
       context.storage.remove('recover');
     }

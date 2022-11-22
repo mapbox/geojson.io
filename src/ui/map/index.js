@@ -10,7 +10,7 @@ const DrawRectangle = require('../draw/rectangle');
 const DrawCircle = require('../draw/circle');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
 const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
-const { addIds, addMarkers, geojsonToLayer, bindPopup } = require('./util');
+const { geojsonToLayer, bindPopup } = require('./util');
 const styles = require('./styles');
 const { DEFAULT_STYLE, DEFAULT_PROJECTION } = require('../../constants');
 const drawStyles = require('../draw/styles');
@@ -328,7 +328,7 @@ module.exports = function (context, readonly) {
 
         context.map.addSource('map-data', {
           type: 'geojson',
-          data: addIds(context.data.get('map')) || dummyGeojson
+          data: dummyGeojson
         });
 
         context.map.addLayer({
@@ -366,7 +366,7 @@ module.exports = function (context, readonly) {
           filter: ['==', ['geometry-type'], 'LineString']
         });
 
-        addMarkers(context.data.get('map'), context, writable);
+        geojsonToLayer(context, writable);
 
         context.data.set({
           mapStyleLoaded: false
@@ -460,10 +460,11 @@ module.exports = function (context, readonly) {
       context.data.set({ map: FC }, 'map');
     }
 
-    context.dispatch.on('change.map', () => {
+    context.dispatch.on('change.map', ({ obj }) => {
       maybeShowEditControl();
-
-      geojsonToLayer(context.data.get('map'), context, writable);
+      if (obj.map) {
+        geojsonToLayer(context, writable);
+      }
     });
   }
 

@@ -16,4 +16,5 @@
   "search.exclude": {
     "**/dist": true,
   },
+  "liveServer.settings.port": 5501,
 }

@@ -91263,8 +91263,7 @@ module.exports = function (context) {
 };
 
 },{"../lib/zoomextent":336,"../ui/flash":352,"qs-hash":279}],326:[function(require,module,exports){
-const zoomextent = require('../lib/zoomextent'),
-  qs = require('qs-hash');
+const qs = require('qs-hash');
 
 module.exports = function (context) {
   d3.select(window).on('unload', onunload);
@@ -91275,10 +91274,10 @@ module.exports = function (context) {
   if (location.hash !== '#new' && !query.id && !query.data) {
     const rec = context.storage.get('recover');
     if (rec && confirm('recover your map from the last time you edited?')) {
-      context.data.set(rec);
-      setTimeout(() => {
-        zoomextent(context);
-      }, 100);
+      context.data.set({
+        ...rec,
+        recovery: true
+      });
     } else {
       context.storage.remove('recover');
     }
@@ -91303,7 +91302,7 @@ module.exports = function (context) {
   }
 };
 
-},{"../lib/zoomextent":336,"qs-hash":279}],327:[function(require,module,exports){
+},{"qs-hash":279}],327:[function(require,module,exports){
 const config = require('../config.js')(location.hostname);
 
 module.exports = function (context) {
@@ -92195,10 +92194,22 @@ module.exports = function (callback) {
 const bbox = require('@turf/bbox').default;
 
 module.exports = function (context) {
-  const bounds = bbox(context.data.get('map'));
-  context.map.fitBounds(bounds, {
-    padding: 50
-  });
+  const geojson = context.data.get('map');
+  // if the data is a single point, flyTo()
+  if (
+    geojson.features.length === 1 &&
+    geojson.features[0].geometry.type === 'Point'
+  ) {
+    context.map.flyTo({
+      center: geojson.features[0].geometry.coordinates,
+      zoom: 6
+    });
+  } else {
+    const bounds = bbox(geojson);
+    context.map.fitBounds(bounds, {
+      padding: 50
+    });
+  }
 };
 
 },{"@turf/bbox":162}],337:[function(require,module,exports){
@@ -94429,7 +94440,7 @@ const DrawRectangle = require('../draw/rectangle');
 const DrawCircle = require('../draw/circle');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
 const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
-const { addIds, addMarkers, geojsonToLayer, bindPopup } = require('./util');
+const { geojsonToLayer, bindPopup } = require('./util');
 const styles = require('./styles');
 const { DEFAULT_STYLE, DEFAULT_PROJECTION } = require('../../constants');
 const drawStyles = require('../draw/styles');
@@ -94747,7 +94758,7 @@ module.exports = function (context, readonly) {
 
         context.map.addSource('map-data', {
           type: 'geojson',
-          data: addIds(context.data.get('map')) || dummyGeojson
+          data: dummyGeojson
         });
 
         context.map.addLayer({
@@ -94785,7 +94796,7 @@ module.exports = function (context, readonly) {
           filter: ['==', ['geometry-type'], 'LineString']
         });
 
-        addMarkers(context.data.get('map'), context, writable);
+        geojsonToLayer(context, writable);
 
         context.data.set({
           mapStyleLoaded: false
@@ -94879,10 +94890,11 @@ module.exports = function (context, readonly) {
       context.data.set({ map: FC }, 'map');
     }
 
-    context.dispatch.on('change.map', () => {
+    context.dispatch.on('change.map', ({ obj }) => {
       maybeShowEditControl();
-
-      geojsonToLayer(context.data.get('map'), context, writable);
+      if (obj.map) {
+        geojsonToLayer(context, writable);
+      }
     });
   }
 
@@ -94946,6 +94958,7 @@ const area = require('@turf/area').default;
 
 const popup = require('../../lib/popup');
 const ClickableMarker = require('./clickable_marker');
+const zoomextent = require('../../lib/zoomextent');
 
 const markers = [];
 
@@ -95017,10 +95030,10 @@ const addMarkers = (geojson, context, writable) => {
   }
 
   pointFeatures.map((d) => {
-    const color = d.properties['marker-color'] || '#7e7e7e';
+    const color = (d.properties && d.properties['marker-color']) || '#7e7e7e';
     let scale = 1;
 
-    if (d.properties['marker-size']) {
+    if (d.properties && d.properties['marker-size']) {
       if (d.properties['marker-size'] === 'small') {
         scale = 0.6;
       }
@@ -95061,11 +95074,21 @@ const addMarkers = (geojson, context, writable) => {
   });
 };
 
-function geojsonToLayer(geojson, context, writable) {
-  const dataLoaded = context.map.getSource('map-data');
-  if (dataLoaded) {
-    dataLoaded.setData(addIds(geojson));
+function geojsonToLayer(context, writable) {
+  const geojson = context.data.get('map');
+  if (!geojson) return;
+
+  const workingDatasetSource = context.map.getSource('map-data');
+
+  if (workingDatasetSource) {
+    workingDatasetSource.setData(addIds(geojson));
     addMarkers(geojson, context, writable);
+    if (context.data.get('recovery')) {
+      zoomextent(context);
+      context.data.set({
+        recovery: false
+      });
+    }
   }
 }
 
@@ -95311,7 +95334,7 @@ module.exports = {
   bindPopup
 };
 
-},{"../../lib/popup":332,"./clickable_marker":354,"@turf/area":161,"@turf/length":168,"escape-html":199,"mapbox-gl":266}],359:[function(require,module,exports){
+},{"../../lib/popup":332,"../../lib/zoomextent":336,"./clickable_marker":354,"@turf/area":161,"@turf/length":168,"escape-html":199,"mapbox-gl":266}],359:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
