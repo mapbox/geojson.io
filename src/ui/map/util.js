@@ -5,6 +5,7 @@ const area = require('@turf/area').default;
 
 const popup = require('../../lib/popup');
 const ClickableMarker = require('./clickable_marker');
+const zoomextent = require('../../lib/zoomextent');
 
 const markers = [];
 
@@ -76,10 +77,10 @@ const addMarkers = (geojson, context, writable) => {
   }
 
   pointFeatures.map((d) => {
-    const color = d.properties['marker-color'] || '#7e7e7e';
+    const color = (d.properties && d.properties['marker-color']) || '#7e7e7e';
     let scale = 1;
 
-    if (d.properties['marker-size']) {
+    if (d.properties && d.properties['marker-size']) {
       if (d.properties['marker-size'] === 'small') {
         scale = 0.6;
       }
@@ -120,11 +121,21 @@ const addMarkers = (geojson, context, writable) => {
   });
 };
 
-function geojsonToLayer(geojson, context, writable) {
-  const dataLoaded = context.map.getSource('map-data');
-  if (dataLoaded) {
-    dataLoaded.setData(addIds(geojson));
+function geojsonToLayer(context, writable) {
+  const geojson = context.data.get('map');
+  if (!geojson) return;
+
+  const workingDatasetSource = context.map.getSource('map-data');
+
+  if (workingDatasetSource) {
+    workingDatasetSource.setData(addIds(geojson));
     addMarkers(geojson, context, writable);
+    if (context.data.get('recovery')) {
+      zoomextent(context);
+      context.data.set({
+        recovery: false
+      });
+    }
   }
 }
 
