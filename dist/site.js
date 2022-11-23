@@ -94464,6 +94464,7 @@ const dummyGeojson = {
 
 const DARK_FEATURE_COLOR = '#555';
 const LIGHT_FEATURE_COLOR = '#e8e8e8';
+const PURPLE_FEATURE_COLOR = '#ff40ff';
 
 module.exports = function (context, readonly) {
   writable = !readonly;
@@ -94715,9 +94716,16 @@ module.exports = function (context, readonly) {
       ) {
         const { name } = context.map.getStyle();
 
-        let color = DARK_FEATURE_COLOR;
-        if (['Mapbox Satellite Streets', 'Mapbox Dark'].includes(name)) {
+        let color = DARK_FEATURE_COLOR; // Sets default dark color for lighter base maps
+
+        // Sets a light color for dark base map
+        if (['Mapbox Dark'].includes(name)) {
           color = LIGHT_FEATURE_COLOR;
+        }
+
+        // Sets a purple color for the satellite base map to help with visibility.
+        if (['Mapbox Satellite Streets'].includes(name)) {
+          color = PURPLE_FEATURE_COLOR;
         }
 
         // setFog only on Light and Dark
