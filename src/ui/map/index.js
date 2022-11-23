@@ -33,7 +33,7 @@ const dummyGeojson = {
 };
 
 const DARK_FEATURE_COLOR = '#555';
-const LIGHT_FEATURE_COLOR = '#e8e8e8';
+const LIGHT_FEATURE_COLOR = '#ff40ff';
 
 module.exports = function (context, readonly) {
   writable = !readonly;
