@@ -95313,9 +95313,21 @@ function bindPopup(e, context, writable) {
       : '') +
     '</form>';
 
+  const popupOffsets = {
+    top: [0, 10],
+    'top-left': [0, 10],
+    'top-right': [0, 10],
+    bottom: [0, -40],
+    'bottom-left': [0, -40],
+    'bottom-right': [0, -40],
+    left: [25, -20],
+    right: [-25, -20]
+  };
+
   new mapboxgl.Popup({
     closeButton: false,
     maxWidth: '251px',
+    offset: popupOffsets,
     className: 'geojsonio-feature'
   })
     .setLngLat(e.lngLat)
