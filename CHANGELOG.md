@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2022-11-23
+
+add marker popup offsets #795
+
 ## 2022-11-22
 
 * handle null properties, refactor layer initialization logic, refactor zoom on first load #790
