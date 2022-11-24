@@ -90868,7 +90868,7 @@ module.exports = {
   DEFAULT_STYLE: 'Streets',
   DEFAULT_DARK_FEATURE_COLOR: '#555',
   DEFAULT_LIGHT_FEATURE_COLOR: '#e8e8e8',
-  DEFAULT_PURPLE_FEATURE_COLOR: '#ff40ff'
+  DEFAULT_SATELLITE_FEATURE_COLOR: '#00f900'
 };
 
 },{}],324:[function(require,module,exports){
@@ -94450,7 +94450,7 @@ const {
   DEFAULT_PROJECTION,
   DEFAULT_DARK_FEATURE_COLOR,
   DEFAULT_LIGHT_FEATURE_COLOR,
-  DEFAULT_PURPLE_FEATURE_COLOR
+  DEFAULT_SATELLITE_FEATURE_COLOR
 } = require('../../constants');
 const drawStyles = require('../draw/styles');
 
@@ -94728,9 +94728,9 @@ module.exports = function (context, readonly) {
           color = DEFAULT_LIGHT_FEATURE_COLOR;
         }
 
-        // Sets a purple color for the satellite base map to help with visibility.
+        // Sets a brighter color for the satellite base map to help with visibility.
         if (['Mapbox Satellite Streets'].includes(name)) {
-          color = DEFAULT_PURPLE_FEATURE_COLOR;
+          color = DEFAULT_SATELLITE_FEATURE_COLOR;
         }
 
         // setFog only on Light and Dark
@@ -94975,7 +94975,7 @@ const zoomextent = require('../../lib/zoomextent');
 const {
   DEFAULT_DARK_FEATURE_COLOR,
   DEFAULT_LIGHT_FEATURE_COLOR,
-  DEFAULT_PURPLE_FEATURE_COLOR
+  DEFAULT_SATELLITE_FEATURE_COLOR
 } = require('../../constants');
 
 const markers = [];
@@ -95048,14 +95048,14 @@ const addMarkers = (geojson, context, writable) => {
   }
 
   pointFeatures.map((d) => {
-    let defaultColor = DEFAULT_DARK_FEATURE_COLOR;
+    let defaultColor = DEFAULT_DARK_FEATURE_COLOR; // Default feature color
 
     const activeStyle = context.storage.get('style');
-    console.log(`activeStyle is ${activeStyle}`);
 
+    // Adjust the feature color for certain styles to help visibility
     switch (activeStyle) {
       case 'Satellite Streets':
-        defaultColor = DEFAULT_PURPLE_FEATURE_COLOR;
+        defaultColor = DEFAULT_SATELLITE_FEATURE_COLOR;
         break;
       case 'Dark':
         defaultColor = DEFAULT_LIGHT_FEATURE_COLOR;
@@ -95064,11 +95064,10 @@ const addMarkers = (geojson, context, writable) => {
         defaultColor = DEFAULT_DARK_FEATURE_COLOR;
     }
 
+    // If the Feature Object contains styling then use that, otherwise use our default feature color.
     const color =
       (d.properties && d.properties['marker-color']) || defaultColor;
     let scale = 1;
-
-    console.log(`color is ${color}`);
 
     if (d.properties && d.properties['marker-size']) {
       if (d.properties['marker-size'] === 'small') {

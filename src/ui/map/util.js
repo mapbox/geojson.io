@@ -9,7 +9,7 @@ const zoomextent = require('../../lib/zoomextent');
 const {
   DEFAULT_DARK_FEATURE_COLOR,
   DEFAULT_LIGHT_FEATURE_COLOR,
-  DEFAULT_PURPLE_FEATURE_COLOR
+  DEFAULT_SATELLITE_FEATURE_COLOR
 } = require('../../constants');
 
 const markers = [];
@@ -82,14 +82,14 @@ const addMarkers = (geojson, context, writable) => {
   }
 
   pointFeatures.map((d) => {
-    let defaultColor = DEFAULT_DARK_FEATURE_COLOR;
+    let defaultColor = DEFAULT_DARK_FEATURE_COLOR; // Default feature color
 
     const activeStyle = context.storage.get('style');
-    console.log(`activeStyle is ${activeStyle}`);
 
+    // Adjust the feature color for certain styles to help visibility
     switch (activeStyle) {
       case 'Satellite Streets':
-        defaultColor = DEFAULT_PURPLE_FEATURE_COLOR;
+        defaultColor = DEFAULT_SATELLITE_FEATURE_COLOR;
         break;
       case 'Dark':
         defaultColor = DEFAULT_LIGHT_FEATURE_COLOR;
@@ -98,11 +98,10 @@ const addMarkers = (geojson, context, writable) => {
         defaultColor = DEFAULT_DARK_FEATURE_COLOR;
     }
 
+    // If the Feature Object contains styling then use that, otherwise use our default feature color.
     const color =
       (d.properties && d.properties['marker-color']) || defaultColor;
     let scale = 1;
-
-    console.log(`color is ${color}`);
 
     if (d.properties && d.properties['marker-size']) {
       if (d.properties['marker-size'] === 'small') {

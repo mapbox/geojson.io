@@ -17,7 +17,7 @@ const {
   DEFAULT_PROJECTION,
   DEFAULT_DARK_FEATURE_COLOR,
   DEFAULT_LIGHT_FEATURE_COLOR,
-  DEFAULT_PURPLE_FEATURE_COLOR
+  DEFAULT_SATELLITE_FEATURE_COLOR
 } = require('../../constants');
 const drawStyles = require('../draw/styles');
 
@@ -295,9 +295,9 @@ module.exports = function (context, readonly) {
           color = DEFAULT_LIGHT_FEATURE_COLOR;
         }
 
-        // Sets a purple color for the satellite base map to help with visibility.
+        // Sets a brighter color for the satellite base map to help with visibility.
         if (['Mapbox Satellite Streets'].includes(name)) {
-          color = DEFAULT_PURPLE_FEATURE_COLOR;
+          color = DEFAULT_SATELLITE_FEATURE_COLOR;
         }
 
         // setFog only on Light and Dark
