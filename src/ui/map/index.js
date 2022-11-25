@@ -12,7 +12,13 @@ const ExtendDrawBar = require('../draw/extend_draw_bar');
 const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
 const { geojsonToLayer, bindPopup } = require('./util');
 const styles = require('./styles');
-const { DEFAULT_STYLE, DEFAULT_PROJECTION } = require('../../constants');
+const {
+  DEFAULT_STYLE,
+  DEFAULT_PROJECTION,
+  DEFAULT_DARK_FEATURE_COLOR,
+  DEFAULT_LIGHT_FEATURE_COLOR,
+  DEFAULT_SATELLITE_FEATURE_COLOR
+} = require('../../constants');
 const drawStyles = require('../draw/styles');
 
 let writable = false;
@@ -31,9 +37,6 @@ const dummyGeojson = {
     }
   ]
 };
-
-const DARK_FEATURE_COLOR = '#555';
-const LIGHT_FEATURE_COLOR = '#e8e8e8';
 
 module.exports = function (context, readonly) {
   writable = !readonly;
@@ -285,9 +288,16 @@ module.exports = function (context, readonly) {
       ) {
         const { name } = context.map.getStyle();
 
-        let color = DARK_FEATURE_COLOR;
-        if (['Mapbox Satellite Streets', 'Mapbox Dark'].includes(name)) {
-          color = LIGHT_FEATURE_COLOR;
+        let color = DEFAULT_DARK_FEATURE_COLOR; // Sets default dark color for lighter base maps
+
+        // Sets a light color for dark base map
+        if (['Mapbox Dark'].includes(name)) {
+          color = DEFAULT_LIGHT_FEATURE_COLOR;
+        }
+
+        // Sets a brighter color for the satellite base map to help with visibility.
+        if (['Mapbox Satellite Streets'].includes(name)) {
+          color = DEFAULT_SATELLITE_FEATURE_COLOR;
         }
 
         // setFog only on Light and Dark

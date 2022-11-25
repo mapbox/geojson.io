@@ -6,6 +6,11 @@ const area = require('@turf/area').default;
 const popup = require('../../lib/popup');
 const ClickableMarker = require('./clickable_marker');
 const zoomextent = require('../../lib/zoomextent');
+const {
+  DEFAULT_DARK_FEATURE_COLOR,
+  DEFAULT_LIGHT_FEATURE_COLOR,
+  DEFAULT_SATELLITE_FEATURE_COLOR
+} = require('../../constants');
 
 const markers = [];
 
@@ -77,7 +82,25 @@ const addMarkers = (geojson, context, writable) => {
   }
 
   pointFeatures.map((d) => {
-    const color = (d.properties && d.properties['marker-color']) || '#7e7e7e';
+    let defaultColor = DEFAULT_DARK_FEATURE_COLOR; // Default feature color
+
+    const activeStyle = context.storage.get('style');
+
+    // Adjust the feature color for certain styles to help visibility
+    switch (activeStyle) {
+      case 'Satellite Streets':
+        defaultColor = DEFAULT_SATELLITE_FEATURE_COLOR;
+        break;
+      case 'Dark':
+        defaultColor = DEFAULT_LIGHT_FEATURE_COLOR;
+        break;
+      default:
+        defaultColor = DEFAULT_DARK_FEATURE_COLOR;
+    }
+
+    // If the Feature Object contains styling then use that, otherwise use our default feature color.
+    const color =
+      (d.properties && d.properties['marker-color']) || defaultColor;
     let scale = 1;
 
     if (d.properties && d.properties['marker-size']) {
@@ -117,6 +140,15 @@ const addMarkers = (geojson, context, writable) => {
         writable
       );
     });
+
+    // Update the dot in the Marker for Dark base map style
+    if (activeStyle === 'Dark')
+      d3.selectAll('.mapboxgl-marker svg circle').style(
+        'fill',
+        '#555',
+        'important'
+      );
+
     markers.push(marker);
   });
 };

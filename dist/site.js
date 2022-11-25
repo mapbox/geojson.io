@@ -90865,7 +90865,10 @@ module.exports = function () {
 },{}],323:[function(require,module,exports){
 module.exports = {
   DEFAULT_PROJECTION: 'globe',
-  DEFAULT_STYLE: 'Streets'
+  DEFAULT_STYLE: 'Streets',
+  DEFAULT_DARK_FEATURE_COLOR: '#555',
+  DEFAULT_LIGHT_FEATURE_COLOR: '#e8e8e8',
+  DEFAULT_SATELLITE_FEATURE_COLOR: '#00f900'
 };
 
 },{}],324:[function(require,module,exports){
@@ -94442,7 +94445,13 @@ const ExtendDrawBar = require('../draw/extend_draw_bar');
 const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
 const { geojsonToLayer, bindPopup } = require('./util');
 const styles = require('./styles');
-const { DEFAULT_STYLE, DEFAULT_PROJECTION } = require('../../constants');
+const {
+  DEFAULT_STYLE,
+  DEFAULT_PROJECTION,
+  DEFAULT_DARK_FEATURE_COLOR,
+  DEFAULT_LIGHT_FEATURE_COLOR,
+  DEFAULT_SATELLITE_FEATURE_COLOR
+} = require('../../constants');
 const drawStyles = require('../draw/styles');
 
 let writable = false;
@@ -94461,9 +94470,6 @@ const dummyGeojson = {
     }
   ]
 };
-
-const DARK_FEATURE_COLOR = '#555';
-const LIGHT_FEATURE_COLOR = '#e8e8e8';
 
 module.exports = function (context, readonly) {
   writable = !readonly;
@@ -94715,9 +94721,16 @@ module.exports = function (context, readonly) {
       ) {
         const { name } = context.map.getStyle();
 
-        let color = DARK_FEATURE_COLOR;
-        if (['Mapbox Satellite Streets', 'Mapbox Dark'].includes(name)) {
-          color = LIGHT_FEATURE_COLOR;
+        let color = DEFAULT_DARK_FEATURE_COLOR; // Sets default dark color for lighter base maps
+
+        // Sets a light color for dark base map
+        if (['Mapbox Dark'].includes(name)) {
+          color = DEFAULT_LIGHT_FEATURE_COLOR;
+        }
+
+        // Sets a brighter color for the satellite base map to help with visibility.
+        if (['Mapbox Satellite Streets'].includes(name)) {
+          color = DEFAULT_SATELLITE_FEATURE_COLOR;
         }
 
         // setFog only on Light and Dark
@@ -94959,6 +94972,11 @@ const area = require('@turf/area').default;
 const popup = require('../../lib/popup');
 const ClickableMarker = require('./clickable_marker');
 const zoomextent = require('../../lib/zoomextent');
+const {
+  DEFAULT_DARK_FEATURE_COLOR,
+  DEFAULT_LIGHT_FEATURE_COLOR,
+  DEFAULT_SATELLITE_FEATURE_COLOR
+} = require('../../constants');
 
 const markers = [];
 
@@ -95030,7 +95048,25 @@ const addMarkers = (geojson, context, writable) => {
   }
 
   pointFeatures.map((d) => {
-    const color = (d.properties && d.properties['marker-color']) || '#7e7e7e';
+    let defaultColor = DEFAULT_DARK_FEATURE_COLOR; // Default feature color
+
+    const activeStyle = context.storage.get('style');
+
+    // Adjust the feature color for certain styles to help visibility
+    switch (activeStyle) {
+      case 'Satellite Streets':
+        defaultColor = DEFAULT_SATELLITE_FEATURE_COLOR;
+        break;
+      case 'Dark':
+        defaultColor = DEFAULT_LIGHT_FEATURE_COLOR;
+        break;
+      default:
+        defaultColor = DEFAULT_DARK_FEATURE_COLOR;
+    }
+
+    // If the Feature Object contains styling then use that, otherwise use our default feature color.
+    const color =
+      (d.properties && d.properties['marker-color']) || defaultColor;
     let scale = 1;
 
     if (d.properties && d.properties['marker-size']) {
@@ -95070,6 +95106,15 @@ const addMarkers = (geojson, context, writable) => {
         writable
       );
     });
+
+    // Update the dot in the Marker for Dark base map style
+    if (activeStyle === 'Dark')
+      d3.selectAll('.mapboxgl-marker svg circle').style(
+        'fill',
+        '#555',
+        'important'
+      );
+
     markers.push(marker);
   });
 };
@@ -95346,7 +95391,7 @@ module.exports = {
   bindPopup
 };
 
-},{"../../lib/popup":332,"../../lib/zoomextent":336,"./clickable_marker":354,"@turf/area":161,"@turf/length":168,"escape-html":199,"mapbox-gl":266}],359:[function(require,module,exports){
+},{"../../constants":323,"../../lib/popup":332,"../../lib/zoomextent":336,"./clickable_marker":354,"@turf/area":161,"@turf/length":168,"escape-html":199,"mapbox-gl":266}],359:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
