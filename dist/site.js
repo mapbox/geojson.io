@@ -91265,7 +91265,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../lib/zoomextent":336,"../ui/flash":352,"qs-hash":279}],326:[function(require,module,exports){
+},{"../lib/zoomextent":336,"../ui/flash":354,"qs-hash":279}],326:[function(require,module,exports){
 const qs = require('qs-hash');
 
 module.exports = function (context) {
@@ -91569,7 +91569,7 @@ Sentry.init({
   tracesSampleRate: 1.0
 });
 
-},{"./core/data":324,"./core/loader":325,"./core/recovery":326,"./core/repo":327,"./core/router":328,"./core/user":329,"./ui":343,"./ui/map":356,"@sentry/browser":51,"@sentry/tracing":103,"store":292}],331:[function(require,module,exports){
+},{"./core/data":324,"./core/loader":325,"./core/recovery":326,"./core/repo":327,"./core/router":328,"./core/user":329,"./ui":343,"./ui/map":358,"@sentry/browser":51,"@sentry/tracing":103,"store":292}],331:[function(require,module,exports){
 (function (Buffer){(function (){
 const escape = require('escape-html'),
   geojsonRandom = require('geojson-random'),
@@ -92222,7 +92222,7 @@ const marked = require('marked');
 
 module.exports = function () {
   const html =
-    Buffer("PGgyPkhlbHA8L2gyPgoKPHA+PHN0cm9uZz5nZW9qc29uLmlvPC9zdHJvbmc+IGlzIGEgcXVpY2ssIHNpbXBsZSB0b29sIGZvciBjcmVhdGluZywKICAgIHZpZXdpbmcsIGFuZCBzaGFyaW5nIHNwYXRpYWwgZGF0YS4gZ2VvanNvbi5pbyBpcyBuYW1lZCBhZnRlciA8YSBocmVmPSdodHRwOi8vZ2VvanNvbi5vcmcvJyB0YXJnZXQ9J19ibGFuayc+R2VvSlNPTjwvYT4sCiAgICBhbiBvcGVuIHNvdXJjZSBzcGF0aWFsIGRhdGEgZm9ybWF0LCBhbmQgaXQgc3VwcG9ydHMgR2VvSlNPTiBpbiBhbGwgd2F5cyAtIGJ1dCBhbHNvCiAgICBhY2NlcHRzIEtNTCwgR1BYLCBDU1YsIEdURlMsIFRvcG9KU09OLCBhbmQgb3RoZXIgZm9ybWF0cy48L3A+Cgo8cD5XYW50IHRvIHJlcXVlc3QgYSBmZWF0dXJlIG9yIHJlcG9ydCBhIGJ1Zz8gPGEgdGFyZ2V0PSdfYmxhbmsnCiAgICAgICAgaHJlZj0naHR0cHM6Ly9naXRodWIuY29tL21hcGJveC9nZW9qc29uLmlvL2lzc3Vlcz9zdGF0ZT1vcGVuJz5PcGVuCiAgICAgICAgYW4gaXNzdWUKICAgICAgICBvbiBnZW9qc29uLmlvJ3MgaXNzdWUgdHJhY2tlci48L2E+Cgo8aDM+SSd2ZSBnb3QgZGF0YTwvaDM+Cgo8cD5JZiB5b3UgaGF2ZSBkYXRhLCBsaWtlIGEgS01MLCBHZW9KU09OLCBvciBDU1YgZmlsZSwganVzdCBkcmFnICZhbXA7IGRyb3AKICAgIGl0IG9udG8gdGhlIHBhZ2Ugb3IgY2xpY2sgJ09wZW4nIGFuZCBzZWxlY3QgeW91ciBmaWxlLiBZb3VyIGRhdGEgc2hvdWxkIGFwcGVhciBvbgogICAgdGhlIG1hcCE8L3A+Cgo8cD5Zb3UgbWF5IGFsc28gcGFzdGUgZ2VvanNvbiBkYXRhIGludG8gdGhlIGNvZGUgZWRpdG9yLjwvcD4KCjxwPlRvIGVuc3VyZSBjb25zaXN0ZW50IHJlbmRlcmluZyBhbmQgaW50ZXJvcGVyYWJpbGl0eSB3aXRoIG90aGVyIHNwYXRpYWwgZGF0YSBmb3JtYXRzLCB0aGUgd29ya2luZyBkYXRhc2V0IGluIGdlb2pzb24uaW8gaXMgYWx3YXlzIGEgZ2VvanNvbiBGZWF0dXJlQ29sbGVjdGlvbi4gSWYgeW91IGltcG9ydCBhIHN0YW5kYWxvbmUgRmVhdHVyZSBvciBHZW9tZXRyeSwgaXQgd2lsbCBiZSBub3JtYWxpemVkIGludG8gYSBGZWF0dXJlQ29sbGVjdGlvbi48L3A+Cgo8aDM+SSB3YW50IHRvIGRyYXcgZmVhdHVyZXM8L2gzPgoKPHA+VXNlIHRoZSBkcmF3aW5nIHRvb2xzIHRvIGRyYXcgcG9pbnRzLCBwb2x5Z29ucywKICAgIGxpbmVzLCByZWN0YW5nbGVzLCBhbmQgY2lyY2xlcy4gQWZ0ZXIgeW91J3JlIGRvbmUgZHJhd2luZyB0aGUgc2hhcGVzLCB5b3UgY2FuIGFkZAogICAgaW5mb3JtYXRpb24gdG8gZWFjaCBmZWF0dXJlIGJ5IGNsaWNraW5nIG9uIGl0LCBlZGl0aW5nIHRoZSBmZWF0dXJlJ3MgcHJvcGVydGllcywKICAgIGFuZCBjbGlja2luZyAnU2F2ZScuPC9wPgoKPHA+Tm90ZTogQ2lyY2xlcyBhcmUgbm90IHN1cHBvcnRlZCBpbiBHZW9KU09OLCBzbyB0aGUgY2lyY2xlIGRyYXdpbmcgdG9vbCBpcyByZWFsbHkgY3JlYXRpbmcgYSBjaXJjbGUtc2hhcGVkIHBvbHlnb24KICAgIHdpdGggNjQgdmVydGljZXMuPC9wPgoKPHA+UHJvcGVydGllcyBpbiBHZW9KU09OIGFyZSBzdG9yZWQgYXMgJ2tleSB2YWx1ZSBwYWlycycgLSBzbywgZm9yIGluc3RhbmNlLAogICAgaWYgeW91IHdhbnRlZCB0byBhZGQgYSBuYW1lIHRvIGVhY2ggZmVhdHVyZSwgdHlwZSAnbmFtZScgaW4gdGhlIGZpcnN0IHRhYmxlCiAgICBmaWVsZCwgYW5kIHRoZSBuYW1lIG9mIHRoZSBmZWF0dXJlIGluIHRoZSBzZWNvbmQuPC9wPgoKPGgzPkknbSBhIGNvZGVyPC9oMz4KCjxwPjxhIGhyZWY9JyNnZW9qc29uLWlvLWFwaSc+Z2VvanNvbi5pbyBhY2NlcHRzIFVSTCBwYXJhbWV0ZXJzPC9hPgogICAgdGhhdCBtYWtlIGl0IGVhc3kgdG8gZ28gZnJvbSBhIEdlb0pTT04gZmlsZSBvbiB5b3VyIGNvbXB1dGVyIHRvIGdlb2pzb24uaW8uCgo8aDM+UHJpdmFjeSAmYW1wOyBMaWNlbnNlIElzc3VlczwvaDM+Cgo8dWw+CiAgICA8bGk+PHN0cm9uZz5UaGUgZGF0YSB5b3UgY3JlYXRlIGFuZCBtb2RpZnkgaW4gZ2VvanNvbi5pbzwvc3Ryb25nPiBkb2Vzbid0CiAgICAgICAgYWNxdWlyZSBhbnkgYWRkaXRpb25hbCBsaWNlbnNlOiBpZiBpdCdzIHNlY3JldCBhbmQgY29weXJpZ2h0ZWQsIGl0IHdpbGwgcmVtYWluCiAgICAgICAgdGhhdCB3YXkgLSBpdCBkb2Vzbid0IGhhdmUgdG8gYmUgcHVibGljIG9yIG9wZW4gc291cmNlLgogICAgPC9saT4KPC91bD4=","base64") +
+    Buffer("PGgyPkhlbHA8L2gyPgoKPHA+PHN0cm9uZz5nZW9qc29uLmlvPC9zdHJvbmc+IGlzIGEgcXVpY2ssIHNpbXBsZSB0b29sIGZvciBjcmVhdGluZywKICAgIHZpZXdpbmcsIGFuZCBzaGFyaW5nIHNwYXRpYWwgZGF0YS4gZ2VvanNvbi5pbyBpcyBuYW1lZCBhZnRlciA8YSBocmVmPSdodHRwOi8vZ2VvanNvbi5vcmcvJyB0YXJnZXQ9J19ibGFuayc+R2VvSlNPTjwvYT4sCiAgICBhbiBvcGVuIHNvdXJjZSBzcGF0aWFsIGRhdGEgZm9ybWF0LCBhbmQgaXQgc3VwcG9ydHMgR2VvSlNPTiBpbiBhbGwgd2F5cyAtIGJ1dCBhbHNvCiAgICBhY2NlcHRzIEtNTCwgR1BYLCBDU1YsIEdURlMsIFRvcG9KU09OLCBhbmQgb3RoZXIgZm9ybWF0cy48L3A+Cgo8cD5XYW50IHRvIHJlcXVlc3QgYSBmZWF0dXJlIG9yIHJlcG9ydCBhIGJ1Zz8gPGEgdGFyZ2V0PSdfYmxhbmsnCiAgICAgICAgaHJlZj0naHR0cHM6Ly9naXRodWIuY29tL21hcGJveC9nZW9qc29uLmlvL2lzc3Vlcz9zdGF0ZT1vcGVuJz5PcGVuCiAgICAgICAgYW4gaXNzdWUKICAgICAgICBvbiBnZW9qc29uLmlvJ3MgaXNzdWUgdHJhY2tlci48L2E+Cgo8aDM+SSd2ZSBnb3QgZGF0YTwvaDM+Cgo8cD5JZiB5b3UgaGF2ZSBkYXRhLCBsaWtlIGEgS01MLCBHZW9KU09OLCBvciBDU1YgZmlsZSwganVzdCBkcmFnICZhbXA7IGRyb3AKICAgIGl0IG9udG8gdGhlIHBhZ2Ugb3IgY2xpY2sgJ09wZW4nIGFuZCBzZWxlY3QgeW91ciBmaWxlLiBZb3VyIGRhdGEgc2hvdWxkIGFwcGVhciBvbgogICAgdGhlIG1hcCE8L3A+Cgo8cD5Zb3UgbWF5IGFsc28gcGFzdGUgZ2VvanNvbiBkYXRhIGludG8gdGhlIGNvZGUgZWRpdG9yLjwvcD4KCjxwPlRvIGVuc3VyZSBjb25zaXN0ZW50IHJlbmRlcmluZyBhbmQgaW50ZXJvcGVyYWJpbGl0eSB3aXRoIG90aGVyIHNwYXRpYWwgZGF0YSBmb3JtYXRzLCB0aGUgd29ya2luZyBkYXRhc2V0IGluIGdlb2pzb24uaW8gaXMgYWx3YXlzIGEgZ2VvanNvbiBGZWF0dXJlQ29sbGVjdGlvbi4gSWYgeW91IGltcG9ydCBhIHN0YW5kYWxvbmUgRmVhdHVyZSBvciBHZW9tZXRyeSwgaXQgd2lsbCBiZSBub3JtYWxpemVkIGludG8gYSBGZWF0dXJlQ29sbGVjdGlvbi48L3A+Cgo8aDM+SSB3YW50IHRvIGRyYXcgZmVhdHVyZXM8L2gzPgoKPHA+VXNlIHRoZSBkcmF3aW5nIHRvb2xzIHRvIGRyYXcgcG9pbnRzLCBwb2x5Z29ucywKICAgIGxpbmVzLCByZWN0YW5nbGVzLCBhbmQgY2lyY2xlcy4gQWZ0ZXIgeW91J3JlIGRvbmUgZHJhd2luZyB0aGUgc2hhcGVzLCB5b3UgY2FuIGFkZAogICAgaW5mb3JtYXRpb24gdG8gZWFjaCBmZWF0dXJlIGJ5IGNsaWNraW5nIG9uIGl0LCBlZGl0aW5nIHRoZSBmZWF0dXJlJ3MgcHJvcGVydGllcywKICAgIGFuZCBjbGlja2luZyAnU2F2ZScuPC9wPgoKPHA+Tm90ZTogQ2lyY2xlcyBhcmUgbm90IHN1cHBvcnRlZCBpbiBHZW9KU09OLCBzbyB0aGUgY2lyY2xlIGRyYXdpbmcgdG9vbCBpcyByZWFsbHkgY3JlYXRpbmcgYSBjaXJjbGUtc2hhcGVkIHBvbHlnb24KICAgIHdpdGggNjQgdmVydGljZXMuPC9wPgoKPGgzPkkgd2FudCB0byBlZGl0IGZlYXR1cmVzPC9oMz4KCjxwPlRvIGVkaXQgZ2VvbWV0cmllcywgY2xpY2sgdGhlIGVkaXQgYnV0dG9uIHRvIGVudGVyIGVkaXRuZyBtb2RlLiBBbGwgRmVhdHVyZXMgYXJlIHNlbGVjdGVkIGJ5IGRlZmF1bHQuIENsaWNrIHRvIHNlbGVjdCBhIEZlYXR1cmUgb3IgVmVydGV4LiBQcmVzcyBkZWxldGUgdG8gcmVtb3ZlIHNlbGVjdGVkIEZlYXR1cmUgb3IgVmVydGV4LiBEcmFnIHRvIG1vdmUgc2VsZWN0ZWQgdmVydGV4LiBTaGlmdCArIGRyYWcgdG8gbW92ZSBzZWxlY3RlZCBGZWF0dXJlKHMpPC9wPgoKPHA+UHJvcGVydGllcyBpbiBHZW9KU09OIGFyZSBzdG9yZWQgYXMgJ2tleSB2YWx1ZSBwYWlycycuIFlvdSBjYW4gZWRpdCBwcm9wZXJ0aWVzIGluIHRocmVlIHdheXM6IDEgLSBDbGljayB0aGUgZmVhdHVyZSBvbiB0aGUgbWFwIGFuZCBlZGl0IHByb3BlcnRpZXMgaW4gdGhlIHBvcHVwLiAyIC0gRWRpdCBwcm9wZXJ0aWVzIGluIHRoZSBkYXRhIHRhYmxlLCAzIC0gRWRpdCBwcm9wZXJ0aWVzIGluIHRoZSBDb2RlIGVkaXRvcjwvcD4KCgo8aDM+SSdtIGEgY29kZXI8L2gzPgoKPHA+PGEgaHJlZj0nI2dlb2pzb24taW8tYXBpJz5nZW9qc29uLmlvIGFjY2VwdHMgVVJMIHBhcmFtZXRlcnM8L2E+CiAgICB0aGF0IG1ha2UgaXQgZWFzeSB0byBnbyBmcm9tIGEgR2VvSlNPTiBmaWxlIG9uIHlvdXIgY29tcHV0ZXIgdG8gZ2VvanNvbi5pby4KCjxoMz5Qcml2YWN5ICZhbXA7IExpY2Vuc2UgSXNzdWVzPC9oMz4KCjx1bD4KICAgIDxsaT48c3Ryb25nPlRoZSBkYXRhIHlvdSBjcmVhdGUgYW5kIG1vZGlmeSBpbiBnZW9qc29uLmlvPC9zdHJvbmc+IGRvZXNuJ3QKICAgICAgICBhY3F1aXJlIGFueSBhZGRpdGlvbmFsIGxpY2Vuc2U6IGlmIGl0J3Mgc2VjcmV0IGFuZCBjb3B5cmlnaHRlZCwgaXQgd2lsbCByZW1haW4KICAgICAgICB0aGF0IHdheSAtIGl0IGRvZXNuJ3QgaGF2ZSB0byBiZSBwdWJsaWMgb3Igb3BlbiBzb3VyY2UuCiAgICA8L2xpPgo8L3VsPg==","base64") +
     '<br><hr><br>' +
     marked.parse("## Geojson.io API\n\nYou can interact with geojson.io programmatically via url parameters:\n\n## URL API\n\nYou can do a few interesting things with just URLs and geojson.io. Here are the\ncurrent URL formats.\n\n### `map`\n\nOpen the map at a specific location. The argument is numbers separated by `/`\nin the form `zoom/latitude/longitude`.\n\n#### Example:\n\nhttp://geojson.io/#map=2/20.0/0.0\n\n### `data=data:application/json,`\n\nOpen the map and load a chunk of [GeoJSON](http://geojson.org/) data from a\nURL segment directly onto the map. The GeoJSON data should be encoded\nas per `encodeURIComponent(JSON.stringify(geojson_data))`.\n\n#### Example:\n\nhttp://geojson.io/#data=data:application/json,%7B%22type%22%3A%22LineString%22%2C%22coordinates%22%3A%5B%5B0%2C0%5D%2C%5B10%2C10%5D%5D%7D\n\n### `data=data:text/x-url,`\n\nLoad GeoJSON data from a URL on the internet onto the map. The URL must\nrefer directly to a resource that is:\n\n- Freely accessible (not behind a password)\n- Supports [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)\n- Is valid GeoJSON\n\nThe URL should be encoded as per `encodeURIComponent(url)`.\n\n#### Example:\n\nhttp://geojson.io/#data=data:text/x-url,http%3A%2F%2Fapi.tiles.mapbox.com%2Fv3%2Ftmcw.map-gdv4cswo%2Fmarkers.geojson\n\n### `id=gist:`\n\nLoad GeoJSON data from a [GitHub Gist](https://gist.github.com/), given an argument\nin the form of `login/gistid`. The Gist can be public or private, and must\ncontain a file with a `.geojson` extension that is valid GeoJSON.\n\n#### Example:\n\nhttp://geojson.io/#id=gist:tmcw/e9a29ad54dbaa83dee08&map=8/39.198/-76.981\n\n### `id=github:`\n\nLoad a file from a GitHub repository. You must have access to the file, and\nit must be valid GeoJSON.\n\nThe url is in the form:\n\n    login/repository/blob/branch/filepath\n\n#### Example:\n\nhttp://geojson.io/#id=github:benbalter/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302\n");
   function render(selection) {
@@ -92424,7 +92424,7 @@ module.exports = function (context) {
   return render;
 };
 
-},{"../lib/validate":335,"../lib/zoomextent":336,"../ui/flash":352,"../ui/saver.js":363,"@mapbox/geojson-normalize":8,"@popperjs/core":46,"codemirror/addon/edit/matchbrackets":183,"codemirror/addon/fold/brace-fold":184,"codemirror/addon/fold/foldcode":185,"codemirror/addon/fold/foldgutter":186,"codemirror/lib/codemirror":187,"codemirror/mode/javascript/javascript":188,"lodash":265}],339:[function(require,module,exports){
+},{"../lib/validate":335,"../lib/zoomextent":336,"../ui/flash":354,"../ui/saver.js":365,"@mapbox/geojson-normalize":8,"@popperjs/core":46,"codemirror/addon/edit/matchbrackets":183,"codemirror/addon/fold/brace-fold":184,"codemirror/addon/fold/foldcode":185,"codemirror/addon/fold/foldgutter":186,"codemirror/lib/codemirror":187,"codemirror/mode/javascript/javascript":188,"lodash":265}],339:[function(require,module,exports){
 const metatable = require('d3-metatable')(d3),
   smartZoom = require('../lib/smartzoom.js');
 
@@ -92901,7 +92901,7 @@ function ui(context) {
   };
 }
 
-},{"./ui/dnd":344,"./ui/file_bar":351,"./ui/layer_switch":353,"./ui/mode_buttons":361,"./ui/projection_switch":362}],344:[function(require,module,exports){
+},{"./ui/dnd":344,"./ui/file_bar":353,"./ui/layer_switch":355,"./ui/mode_buttons":363,"./ui/projection_switch":364}],344:[function(require,module,exports){
 const readDrop = require('../lib/readfile.js').readDrop,
   flash = require('./flash.js'),
   zoomextent = require('../lib/zoomextent');
@@ -92949,7 +92949,7 @@ module.exports = function (context) {
   }
 };
 
-},{"../lib/readfile.js":333,"../lib/zoomextent":336,"./flash.js":352}],345:[function(require,module,exports){
+},{"../lib/readfile.js":333,"../lib/zoomextent":336,"./flash.js":354}],345:[function(require,module,exports){
 // custom mapbopx-gl-draw mode that extends draw_line_string
 // shows a center point, radius line, and circle polygon while drawing
 // forces draw.create on creation of second vertex
@@ -93062,7 +93062,30 @@ const CircleMode = {
 
 module.exports = CircleMode;
 
-},{"./util.js":350,"@mapbox/mapbox-gl-draw":16,"@turf/circle":163,"@turf/length":168}],346:[function(require,module,exports){
+},{"./util.js":352,"@mapbox/mapbox-gl-draw":16,"@turf/circle":163,"@turf/length":168}],346:[function(require,module,exports){
+const MapboxDraw = require('@mapbox/mapbox-gl-draw');
+
+const DirectSelect = {
+  ...MapboxDraw.modes.direct_select,
+  onDrag: function (state, e) {
+    if (state.canDragMove !== true) return;
+    state.dragMoving = true;
+    e.originalEvent.stopPropagation();
+
+    const delta = {
+      lng: e.lngLat.lng - state.dragMoveLocation.lng,
+      lat: e.lngLat.lat - state.dragMoveLocation.lat
+    };
+    if (state.selectedCoordPaths.length > 0) this.dragVertex(state, e, delta);
+    else if (e.originalEvent.shiftKey) this.dragFeature(state, e, delta);
+
+    state.dragMoveLocation = e.lngLat;
+  }
+};
+
+module.exports = DirectSelect;
+
+},{"@mapbox/mapbox-gl-draw":16}],347:[function(require,module,exports){
 // from https://jsfiddle.net/fxi/xf51zet4/
 class extendDrawBar {
   constructor(opt) {
@@ -93110,7 +93133,7 @@ class extendDrawBar {
 
 module.exports = extendDrawBar;
 
-},{}],347:[function(require,module,exports){
+},{}],348:[function(require,module,exports){
 // this mode extends the build-in linestring tool, displaying the current length
 // of the line as the user draws using a point feature and a symbol layer
 const MapboxDraw = require('@mapbox/mapbox-gl-draw');
@@ -93175,7 +93198,7 @@ const ExtendedLineStringMode = {
 
 module.exports = ExtendedLineStringMode;
 
-},{"./util.js":350,"@mapbox/mapbox-gl-draw":16}],348:[function(require,module,exports){
+},{"./util.js":352,"@mapbox/mapbox-gl-draw":16}],349:[function(require,module,exports){
 // from https://github.com/thegisdev/mapbox-gl-draw-rectangle-mode
 const doubleClickZoom = {
   enable: (ctx) => {
@@ -93317,7 +93340,22 @@ const DrawRectangle = {
 
 module.exports = DrawRectangle;
 
-},{}],349:[function(require,module,exports){
+},{}],350:[function(require,module,exports){
+const MapboxDraw = require('@mapbox/mapbox-gl-draw');
+
+const SimpleSelect = {
+  ...MapboxDraw.modes.simple_select,
+  onDrag: function (state, e) {
+    if (state.canDragMove && e.originalEvent.shiftKey)
+      return this.dragMove(state, e);
+    if (this.drawConfig.boxSelect && state.canBoxSelect)
+      return this.whileBoxSelect(state, e);
+  }
+};
+
+module.exports = SimpleSelect;
+
+},{"@mapbox/mapbox-gl-draw":16}],351:[function(require,module,exports){
 module.exports = [
   {
     id: 'gl-draw-polygon-fill-inactive',
@@ -93572,7 +93610,7 @@ module.exports = [
   }
 ];
 
-},{}],350:[function(require,module,exports){
+},{}],352:[function(require,module,exports){
 const turfLength = require('@turf/length').default;
 const numeral = require('numeral');
 
@@ -93619,7 +93657,7 @@ module.exports = {
   getDisplayMeasurements
 };
 
-},{"@turf/length":168,"numeral":270}],351:[function(require,module,exports){
+},{"@turf/length":168,"numeral":270}],353:[function(require,module,exports){
 const shpwrite = require('shp-write'),
   clone = require('clone'),
   geojson2dsv = require('geojson2dsv'),
@@ -94267,7 +94305,7 @@ module.exports = function fileBar(context) {
   return bar;
 };
 
-},{"../config.js":322,"../lib/meta.js":331,"../lib/readfile":333,"../lib/zoomextent":336,"../ui/saver.js":363,"./flash":352,"./modal.js":360,"./share":364,"@mapbox/geojson-normalize":8,"@mapbox/gist-map-browser":14,"@mapbox/github-file-browser":15,"@placemarkio/tokml":45,"clone":182,"file-saver":202,"geojson2dsv":209,"shp-write":281,"topojson-server":299,"wellknown":305}],352:[function(require,module,exports){
+},{"../config.js":322,"../lib/meta.js":331,"../lib/readfile":333,"../lib/zoomextent":336,"../ui/saver.js":365,"./flash":354,"./modal.js":362,"./share":366,"@mapbox/geojson-normalize":8,"@mapbox/gist-map-browser":14,"@mapbox/github-file-browser":15,"@placemarkio/tokml":45,"clone":182,"file-saver":202,"geojson2dsv":209,"shp-write":281,"topojson-server":299,"wellknown":305}],354:[function(require,module,exports){
 const message = require('./message');
 
 module.exports = flash;
@@ -94286,7 +94324,7 @@ function flash(selection, txt) {
   return msg;
 }
 
-},{"./message":359}],353:[function(require,module,exports){
+},{"./message":361}],355:[function(require,module,exports){
 const styles = require('./map/styles');
 const { DEFAULT_STYLE } = require('../constants');
 
@@ -94341,7 +94379,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":323,"./map/styles":357}],354:[function(require,module,exports){
+},{"../constants":323,"./map/styles":359}],356:[function(require,module,exports){
 // extend mapboxGL Marker so we can pass in an onClick handler
 const mapboxgl = require('mapbox-gl');
 
@@ -94369,7 +94407,7 @@ class ClickableMarker extends mapboxgl.Marker {
 
 module.exports = ClickableMarker;
 
-},{"mapbox-gl":266}],355:[function(require,module,exports){
+},{"mapbox-gl":266}],357:[function(require,module,exports){
 class EditControl {
   onAdd(map) {
     this.map = map;
@@ -94430,7 +94468,7 @@ module.exports = {
   TrashControl
 };
 
-},{}],356:[function(require,module,exports){
+},{}],358:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl');
 
 require('qs-hash');
@@ -94441,6 +94479,8 @@ const MapboxGeocoder = require('@mapbox/mapbox-gl-geocoder');
 const DrawLineString = require('../draw/linestring');
 const DrawRectangle = require('../draw/rectangle');
 const DrawCircle = require('../draw/circle');
+const SimpleSelect = require('../draw/simple_select');
+const DirectSelect = require('../draw/direct_select');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
 const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
 const { geojsonToLayer, bindPopup } = require('./util');
@@ -94551,6 +94591,8 @@ module.exports = function (context, readonly) {
         displayControlsDefault: false,
         modes: {
           ...MapboxDraw.modes,
+          simple_select: SimpleSelect,
+          direct_select: DirectSelect,
           draw_line_string: DrawLineString,
           draw_rectangle: DrawRectangle,
           draw_circle: DrawCircle
@@ -94914,7 +94956,7 @@ module.exports = function (context, readonly) {
   return map;
 };
 
-},{"../../constants":323,"../draw/circle":345,"../draw/extend_draw_bar":346,"../draw/linestring":347,"../draw/rectangle":348,"../draw/styles":349,"./controls":355,"./styles":357,"./util":358,"@mapbox/geojson-rewind":9,"@mapbox/mapbox-gl-draw":16,"@mapbox/mapbox-gl-geocoder":20,"mapbox-gl":266,"qs-hash":279}],357:[function(require,module,exports){
+},{"../../constants":323,"../draw/circle":345,"../draw/direct_select":346,"../draw/extend_draw_bar":347,"../draw/linestring":348,"../draw/rectangle":349,"../draw/simple_select":350,"../draw/styles":351,"./controls":357,"./styles":359,"./util":360,"@mapbox/geojson-rewind":9,"@mapbox/mapbox-gl-draw":16,"@mapbox/mapbox-gl-geocoder":20,"mapbox-gl":266,"qs-hash":279}],359:[function(require,module,exports){
 module.exports = [
   {
     title: 'Streets',
@@ -94963,7 +95005,7 @@ module.exports = [
   }
 ];
 
-},{}],358:[function(require,module,exports){
+},{}],360:[function(require,module,exports){
 const mapboxgl = require('mapbox-gl');
 const escape = require('escape-html');
 const length = require('@turf/length').default;
@@ -95391,7 +95433,7 @@ module.exports = {
   bindPopup
 };
 
-},{"../../constants":323,"../../lib/popup":332,"../../lib/zoomextent":336,"./clickable_marker":354,"@turf/area":161,"@turf/length":168,"escape-html":199,"mapbox-gl":266}],359:[function(require,module,exports){
+},{"../../constants":323,"../../lib/popup":332,"../../lib/zoomextent":336,"./clickable_marker":356,"@turf/area":161,"@turf/length":168,"escape-html":199,"mapbox-gl":266}],361:[function(require,module,exports){
 module.exports = message;
 
 function message(selection) {
@@ -95420,7 +95462,7 @@ function message(selection) {
   return sel;
 }
 
-},{}],360:[function(require,module,exports){
+},{}],362:[function(require,module,exports){
 module.exports = function (selection, blocking) {
   const previous = selection.select('div.modal');
   const animate = previous.empty();
@@ -95472,7 +95514,7 @@ module.exports = function (selection, blocking) {
   return shaded;
 };
 
-},{}],361:[function(require,module,exports){
+},{}],363:[function(require,module,exports){
 const table = require('../panel/table'),
   json = require('../panel/json'),
   help = require('../panel/help');
@@ -95534,7 +95576,7 @@ module.exports = function (context, pane) {
   };
 };
 
-},{"../panel/help":337,"../panel/json":338,"../panel/table":339}],362:[function(require,module,exports){
+},{"../panel/help":337,"../panel/json":338,"../panel/table":339}],364:[function(require,module,exports){
 const { DEFAULT_PROJECTION } = require('../constants');
 
 module.exports = function (context) {
@@ -95591,7 +95633,7 @@ module.exports = function (context) {
   };
 };
 
-},{"../constants":323}],363:[function(require,module,exports){
+},{"../constants":323}],365:[function(require,module,exports){
 const flash = require('./flash');
 
 module.exports = function (context) {
@@ -95659,7 +95701,7 @@ module.exports = function (context) {
   }
 };
 
-},{"./flash":352}],364:[function(require,module,exports){
+},{"./flash":354}],366:[function(require,module,exports){
 const gist = require('../source/gist'),
   modal = require('./modal');
 
@@ -95718,4 +95760,4 @@ function share(context) {
   };
 }
 
-},{"../source/gist":340,"./modal":360}]},{},[330]);
+},{"../source/gist":340,"./modal":362}]},{},[330]);
