@@ -4,14 +4,10 @@ const shpwrite = require('shp-write'),
   topojson = require('topojson-server'),
   saveAs = require('file-saver'),
   tokml = require('@placemarkio/tokml'),
-  githubBrowser = require('@mapbox/github-file-browser'),
-  gistBrowser = require('@mapbox/gist-map-browser'),
   geojsonNormalize = require('@mapbox/geojson-normalize'),
   wellknown = require('wellknown');
 
-const share = require('./share'),
-  modal = require('./modal.js'),
-  flash = require('./flash'),
+const flash = require('./flash'),
   zoomextent = require('../lib/zoomextent'),
   readFile = require('../lib/readfile'),
   meta = require('../lib/meta.js'),
@@ -27,9 +23,6 @@ module.exports = function fileBar(context) {
   const shpSupport = typeof ArrayBuffer !== 'undefined';
   const mapboxAPI = false;
   const githubAPI = !!config.GithubAPI;
-  const githubBase = githubAPI
-    ? config.GithubAPI + '/api/v3'
-    : 'https://api.github.com';
 
   const exportFormats = [
     {
@@ -63,6 +56,11 @@ module.exports = function fileBar(context) {
 
   function bar(selection) {
     const actions = [
+      {
+        title: 'Open',
+        alt: 'CSV, GTFS, KML, GPX, and other filetypes',
+        action: blindImport
+      },
       {
         title: 'Save',
         action: mapboxAPI || githubAPI ? saveAction : function () {},
@@ -170,59 +168,6 @@ module.exports = function fileBar(context) {
       }
     ];
 
-    if (mapboxAPI || githubAPI) {
-      actions.unshift({
-        title: 'Open',
-        children: [
-          {
-            title: 'File',
-            alt: 'GeoJSON, TopoJSON, GTFS, KML, CSV, GPX and OSM XML supported',
-            action: blindImport
-          },
-          {
-            title: 'GitHub',
-            alt: 'GeoJSON files in GitHub Repositories',
-            authenticated: true,
-            action: clickGitHubOpen
-          },
-          {
-            title: 'Gist',
-            alt: 'GeoJSON files in GitHub Gists',
-            authenticated: true,
-            action: clickGist
-          }
-        ]
-      });
-      actions[1].children.unshift(
-        {
-          title: 'GitHub',
-          alt: 'GeoJSON files in GitHub Repositories',
-          authenticated: true,
-          action: clickGitHubSave
-        },
-        {
-          title: 'Gist',
-          alt: 'GeoJSON files in GitHub Gists',
-          authenticated: true,
-          action: clickGistSave
-        }
-      );
-
-      if (mapboxAPI)
-        actions.splice(3, 0, {
-          title: 'Share',
-          action: function () {
-            context.container.call(share(context));
-          }
-        });
-    } else {
-      actions.unshift({
-        title: 'Open',
-        alt: 'CSV, GTFS, KML, GPX, and other filetypes',
-        action: blindImport
-      });
-    }
-
     const items = selection
       .append('div')
       .attr('class', 'inline')
@@ -232,7 +177,7 @@ module.exports = function fileBar(context) {
       .append('div')
       .attr('class', 'item');
 
-    const buttons = items
+    items
       .append('a')
       .attr('class', 'parent')
       .on('click', function (d) {
@@ -250,41 +195,9 @@ module.exports = function fileBar(context) {
         .call(submenu(d.children));
     });
 
-    const name = selection.append('div').attr('class', 'name');
-    let filename, filetype;
-    if (mapboxAPI || githubAPI) {
-      filetype = name
-        .append('a')
-        .attr('target', '_blank')
-        .attr('class', 'icon-file-alt');
-
-      filename = name.append('span').attr('class', 'filename').text('unsaved');
-    }
-
-    function clickGistSave() {
-      if (d3.event) d3.event.preventDefault();
-      context.data.set({ type: 'gist' });
-      saver(context);
-    }
-
     function saveAction() {
       if (d3.event) d3.event.preventDefault();
       saver(context);
-    }
-
-    function sourceIcon(type) {
-      if (type === 'github') return 'icon-github';
-      else if (type === 'gist') return 'icon-github-alt';
-      else return 'icon-file-alt';
-    }
-
-    function saveNoun(_) {
-      buttons
-        .filter((b) => {
-          return b.title === 'Save';
-        })
-        .select('span.title')
-        .text(_);
     }
 
     function submenu(children) {
@@ -315,203 +228,6 @@ module.exports = function fileBar(context) {
             d.action.apply(this, d);
           });
       };
-    }
-
-    context.dispatch.on('change.filebar', onchange);
-
-    function clickGitHubOpen() {
-      if (!context.user.token())
-        return flash(
-          context.container,
-          'You must authenticate to use this API.'
-        );
-
-      const m = modal(d3.select('div.geojsonio'));
-
-      m.select('.m').attr('class', 'modal-splash modal col6');
-
-      m.select('.content')
-        .append('div')
-        .attr('class', 'header pad2 fillD')
-        .append('h1')
-        .text('GitHub');
-
-      githubBrowser(context.user.token(), false, githubBase)
-        .open()
-        .onclick((d) => {
-          if (!d || !d.length) return;
-          const last = d[d.length - 1];
-          if (!last.path) {
-            throw new Error('last is invalid: ' + JSON.stringify(last));
-          }
-          if (!last.path.match(/\.(geo)?json/i)) {
-            return alert('only GeoJSON files are supported from GitHub');
-          }
-          if (last.type === 'blob') {
-            githubBrowser.request(
-              '/repos/' + d[1].full_name + '/git/blobs/' + last.sha,
-              (err, blob) => {
-                d.content = JSON.parse(
-                  decodeURIComponent(
-                    Array.prototype.map
-                      .call(atob(blob[0].content), (c) => {
-                        return (
-                          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-                        );
-                      })
-                      .join('')
-                  )
-                );
-                context.data.parse(d);
-                zoomextent(context);
-                m.close();
-              }
-            );
-          }
-        })
-        .appendTo(
-          m.select('.content').append('div').attr('class', 'repos pad2').node()
-        );
-    }
-
-    function clickGitHubSave() {
-      if (!context.user.token())
-        return flash(
-          context.container,
-          'You must authenticate to use this API.'
-        );
-
-      const m = modal(d3.select('div.geojsonio'));
-
-      m.select('.m').attr('class', 'modal-splash modal col6');
-
-      m.select('.content')
-        .append('div')
-        .attr('class', 'header pad2 fillD')
-        .append('h1')
-        .text('GitHub');
-
-      githubBrowser(context.user.token(), true, githubBase)
-        .open()
-        .onclick((d) => {
-          if (!d || !d.length) return;
-          const last = d[d.length - 1];
-          let pathparts;
-          let partial;
-
-          // New file
-          if (last.type === 'new') {
-            const filename = prompt('New file name');
-            if (!filename) {
-              m.close();
-              return;
-            }
-            pathparts = d.slice(3);
-            pathparts.pop();
-            pathparts.push({ path: filename });
-            partial = pathparts
-              .map((p) => {
-                return p.path;
-              })
-              .join('/');
-            context.data.set({
-              source: {
-                url:
-                  githubBase +
-                  '/repos/' +
-                  d[0].login +
-                  '/' +
-                  d[1].name +
-                  '/contents/' +
-                  partial +
-                  '?ref=' +
-                  d[2].name
-              },
-              type: 'github',
-              meta: {
-                branch: d[2].name,
-                login: d[0].login,
-                repo: d[1].name
-              }
-            });
-            context.data.set({ newpath: partial + filename });
-            m.close();
-            saver(context);
-          }
-          // Update a file
-          else if (last.type === 'blob') {
-            // Build the path
-            pathparts = d.slice(3);
-            partial = pathparts
-              .map((p) => {
-                return p.path;
-              })
-              .join('/');
-
-            context.data.set({
-              source: {
-                url:
-                  githubBase +
-                  '/repos/' +
-                  d[0].login +
-                  '/' +
-                  d[1].name +
-                  '/contents/' +
-                  partial +
-                  '?ref=' +
-                  d[2].name,
-                sha: last.sha
-              },
-              type: 'github',
-              meta: {
-                branch: d[2].name,
-                login: d[0].login,
-                repo: d[1].name
-              }
-            });
-            m.close();
-            saver(context);
-          }
-        })
-        .appendTo(
-          m.select('.content').append('div').attr('class', 'repos pad2').node()
-        );
-    }
-
-    function clickGist() {
-      if (!context.user.token())
-        return flash(
-          context.container,
-          'You must authenticate to use this API.'
-        );
-
-      const m = modal(d3.select('div.geojsonio'));
-
-      m.select('.m').attr('class', 'modal-splash modal col6');
-
-      gistBrowser(context.user.token(), githubBase)
-        .open()
-        .onclick((d) => {
-          context.data.parse(d);
-          zoomextent(context);
-          m.close();
-        })
-        .appendTo(
-          m.select('.content').append('div').attr('class', 'repos pad2').node()
-        );
-    }
-
-    function onchange(d) {
-      const data = d.obj,
-        type = data.type,
-        path = data.path;
-      if (mapboxAPI || githubAPI)
-        filename
-          .text(path ? path : 'unsaved')
-          .classed('deemphasize', context.data.dirty);
-      if (mapboxAPI || githubAPI)
-        filetype.attr('href', data.url).attr('class', sourceIcon(type));
-      saveNoun(type === 'github' ? 'Commit' : 'Save');
     }
 
     function blindImport() {

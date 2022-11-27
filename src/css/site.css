@@ -1,0 +1,597 @@
+html {
+  height: 100%;
+}
+
+.fillD {
+  background: #ebebeb;
+}
+
+.inline {
+  display: inline-block;
+}
+
+.pad0x {
+  padding: 2px 5px;
+}
+
+/* Utility classes */
+
+.right {
+  transition: all 200ms;
+  -webkit-transition: all 200ms;
+  box-shadow: rgba(0, 0, 0, 0.1) -2px 0px 0px;
+}
+
+body.fullscreen .map {
+  right: 0;
+}
+
+body.fullscreen .right {
+  height: 40px;
+  bottom: auto;
+  border-bottom: 1px solid #d9d9d9;
+  overflow-y: hidden;
+}
+
+body.fullscreen .right .top .buttons,
+body.fullscreen .file-bar .fr {
+  display: none;
+}
+
+body.fullscreen .leaflet-control-mapbox-geocoder {
+  margin-top: 50px;
+}
+
+.deemphasize {
+  color: #888;
+}
+
+p.intro-hint {
+  margin: 10px auto;
+  opacity: 0.5;
+  font-size: small;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 1px;
+}
+
+p.intro-hint:hover {
+  opacity: 1;
+}
+
+.right .pane {
+  position: absolute;
+  top: 40px;
+  bottom: 0;
+  width: 100%;
+  overflow: auto;
+}
+
+/*
+   * .right ---------------------------------------------------------------------
+   */
+.top {
+  background: #eee;
+}
+
+.top .info {
+  line-height: 40px;
+  text-align: center;
+  width: 40px;
+  color: #222;
+}
+
+.top .info:hover {
+  background: #ccc;
+}
+
+.top .buttons {
+  height: 40px;
+}
+
+/*
+   * buttons --------------------------------------------------------------------
+   */
+
+button {
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-sizing: border-box;
+}
+
+.top button.active,
+.layer-switch button.active,
+.projection-switch button.active {
+  background: #34495e;
+  color: #fff;
+}
+
+button.major {
+  padding: 5px;
+  border-radius: 3px;
+  color: white;
+  background: #34495e;
+}
+
+button.major:hover {
+  background: #2980b9;
+}
+
+button.minor {
+  padding: 5px;
+  border-radius: 3px;
+  background: #eee;
+}
+
+button.minor:hover {
+  background: #f7f7f7;
+}
+
+.pill button:first-child {
+  border-radius: 3px 0 0 3px;
+}
+
+.pill button:last-child {
+  border-radius: 0 3px 3px 0;
+}
+
+button.delete-invert {
+  color: #b81b1b;
+}
+
+button.delete-invert:hover {
+  color: #e25353;
+}
+
+.top .collapse-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  line-height: 30px;
+  text-align: center;
+  border: none;
+}
+
+.top .buttons button {
+  padding: 10px 15px;
+  font-weight: normal;
+  height: 40px;
+  border: 0;
+  vertical-align: top;
+}
+
+.top .buttons button span.icon {
+  font-size: 16px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+/*
+   * CodeMirror & Markers -------------------------------------------------------
+   */
+.right .CodeMirror {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  top: 1px;
+  height: auto !important;
+  background: #fff;
+  font-family: 'm_1regular', monospace;
+  line-height: 1.5em;
+}
+
+.error-marker {
+  width: 10px;
+  height: 1.5em;
+  background: #eab;
+  transition: all 100ms;
+  -webkit-transition: all 100ms;
+}
+
+.error-marker.warning {
+  background: #eee0aa;
+}
+
+.error-marker:hover {
+  background: #d68;
+}
+
+.error-marker.warning:hover {
+  background: #eee0aa;
+}
+
+.error-marker:before {
+  opacity: 0;
+  pointer-events: none;
+  content: attr(message);
+  transition: all 100ms;
+  -webkit-transition: all 100ms;
+  content: attr(message);
+  width: 300px;
+  font-size: 10px;
+  padding: 5px;
+  border: 1px solid #000;
+  position: absolute;
+  background: #fff;
+  z-index: 999;
+}
+
+.error-marker:hover:before {
+  opacity: 1;
+  margin-left: 35px;
+}
+
+.right .edit-pane .CodeMirror-linenumber {
+  color: #666;
+  font-size: 75%;
+}
+
+#geojsonio-body .leaflet-bar a {
+  border: 0;
+  border-radius: 0;
+}
+
+#geojsonio-body .leaflet-bar {
+  border-radius: 0;
+}
+
+.leaflet-container .leaflet-control-attribution {
+  background: none;
+  box-shadow: none;
+}
+
+.mapboxgl-popup table input {
+  width: 100%;
+  background: transparent;
+}
+
+.mapboxgl-popup input[type='color'] {
+  height: 29px;
+}
+
+.leaflet-control-attribution.leaflet-control a {
+  font-size: 12px;
+  color: #555;
+}
+
+.leaflet-control-attribution.leaflet-control a:hover {
+  color: #000;
+}
+
+/*
+   * table ----------------------------------------------------------------------
+   */
+
+.controls {
+  padding: 10px;
+}
+
+body.dragover {
+  opacity: 0.6;
+}
+
+.modal-message {
+  display: none;
+}
+
+body.dragover .modal-message {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  text-align: center;
+}
+
+.right table {
+  margin: 10px;
+}
+
+th button {
+  background: #fff;
+  float: right;
+  padding: 4px;
+  color: #999;
+}
+
+th button:hover {
+  color: #222;
+}
+
+/*
+   * layer_switch ---------------------------------------------------------------
+   */
+
+.blank-banner {
+  font-size: 20px;
+  padding: 80px 20px;
+  color: #888;
+}
+
+textarea.full-width {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px;
+  height: 60px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  font: inherit;
+}
+
+.file-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 40px;
+  box-sizing: border-box;
+  line-height: 40px;
+}
+
+.file-bar .name {
+  padding: 0 10px;
+  display: inline-block;
+  vertical-align: top;
+  background: #fff;
+}
+
+.file-bar .name .filename {
+  margin-left: 10px;
+}
+
+.clickable:hover,
+.clickable.active {
+  background: #eee;
+}
+
+/* modal, flash */
+.message {
+  background: #fffce4;
+  position: absolute;
+  z-index: 9999;
+  top: 50px;
+  left: 10px;
+}
+
+.message.error {
+  background: #ffe3e3;
+}
+
+.message.success {
+  background: #e3ffe9;
+}
+
+.pre-icon {
+  margin-right: 5px;
+}
+
+body.dragover:after {
+  content: 'drop files to import';
+}
+
+.file-bar div.item {
+  display: inline-block;
+}
+
+.file-bar div.item a.parent {
+  padding: 0 10px;
+  height: 40px;
+  display: inline-block;
+  background: #fff;
+}
+
+.file-bar a:hover {
+  cursor: pointer;
+  background: #34495e;
+  color: #fff;
+}
+
+.file-bar div.item:hover a.parent {
+  background: #34495e;
+  color: #fff;
+}
+
+.file-bar div.item:hover div.children {
+  display: block;
+}
+
+div.children {
+  display: none;
+  position: absolute;
+  margin-top: -1px;
+}
+
+div.children a {
+  display: block;
+  padding: 5px 10px;
+  line-height: 20px;
+  background: #fff;
+  white-space: nowrap;
+}
+
+/*
+   * Help -----------------------------------------------------------------------
+   */
+.prose h2 {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.prose h3 {
+  font-weight: bold;
+  margin-top: 14px;
+}
+
+.prose h4 {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.prose ul {
+  margin: 20px 0;
+  border: 1px solid #ccc;
+}
+
+.prose ul li {
+  line-height: 200%;
+  padding: 5px 5px;
+  border-top: 1px solid #ccc;
+}
+
+.prose ul li:first-child {
+  border-top: none;
+}
+
+.prose strong {
+  font-weight: bold;
+}
+
+.prose code {
+  font-family: Menlo, Bitstream Vera Sans Mono, Monaco, Consolas, monospace;
+  white-space: pre-wrap;
+  background: rgba(0, 0, 0, 0.025);
+  font-size: 14px;
+  line-height: 20px;
+  padding: 3px;
+  border-radius: 3px;
+}
+
+.prose h3 code {
+  font-size: 16px;
+}
+
+/* Modals
+  ------------------------------------------------------- */
+.modal {
+  display: inline-block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: auto;
+  z-index: 2000;
+  overflow-x: hidden;
+  overflow-y: auto;
+  bottom: 20px;
+}
+
+.modal .loader {
+  margin-bottom: 10px;
+}
+
+.modal .description {
+  text-align: center;
+}
+
+.modal .content {
+  background: #fff;
+}
+
+.modal .header h1 {
+  font-size: 30px;
+}
+
+.shaded {
+  z-index: 9999999;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: auto;
+}
+
+.shaded:before {
+  content: '';
+  background: rgba(0, 0, 0, 0.75);
+  position: fixed;
+  left: 0px;
+  right: 0px;
+  top: 0px;
+  bottom: 0px;
+}
+
+.modal-section {
+  padding: 20px;
+  border-bottom: 1px solid #ccc;
+}
+
+.modal-section:last-child {
+  border-bottom: 0;
+}
+
+.loading-modal {
+  text-align: center;
+}
+
+.modal-actions button,
+.save-success a.button {
+  font-weight: normal;
+  color: #7092ff;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+  height: 160px;
+  text-align: center;
+  display: inline-block;
+}
+
+.metadata {
+  width: 100%;
+}
+
+.metadata td {
+  padding: 5px;
+}
+
+.mapbox-gl-draw_polygon {
+  background-image: url('../img/polygon.svg');
+}
+
+.mapbox-gl-draw_rectangle {
+  background-image: url('../img/rectangle.svg');
+}
+
+.mapbox-gl-draw_circle {
+  background-image: url('../img/circle.svg');
+}
+
+.fullscreen .mapboxgl-ctrl-top-right {
+  margin-top: 40px;
+}
+
+/* override mapbox-gl-geocoder control sytles on mobile */
+.mapboxgl-ctrl-top-right {
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
+.mapboxgl-ctrl-top-right .mapboxgl-ctrl-geocoder {
+  margin: 0;
+  border-radius: 0;
+}
+
+@media screen and (min-width: 640px) {
+  .mapboxgl-ctrl-top-right .mapboxgl-ctrl-geocoder {
+    margin: 10px 10px 0 0;
+    border-radius: 4px;
+  }
+}
+
+/* override path to fontawesome webfonts */
+@font-face {
+  font-family: 'Font Awesome 6 Free';
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url(../dist/webfonts/fa-solid-900.woff2) format('woff2'),
+    url(../dist/webfonts/fa-solid-900.ttf) format('truetype');
+}
+
+/* overrides a tailwind box-sizing on * */
+.mapboxgl-compact {
+  box-sizing: initial;
+}
