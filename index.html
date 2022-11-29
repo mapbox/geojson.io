@@ -4,21 +4,14 @@
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-  <link rel="stylesheet" href="css/tailwind_dist.css" type="text/css">
-  <link href='css/mapbox-gl-bundle.css' rel='stylesheet' />
-  <link rel="stylesheet" href="css/fontawesome/css/fontawesome.min.css" />
-  <link rel="stylesheet" href="css/fontawesome/css/solid.min.css" />
+  <link href='dist/bundle.css' rel='stylesheet' />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700;800&display=swap" rel="stylesheet" />
 
   <title>geojson.io | powered by Mapbox</title>
-  <link href="css/codemirror.css" rel="stylesheet" />
-  <link href="css/base.css" rel="stylesheet" />
-  <link href="css/marker.css" rel="stylesheet" />
-  <link href="css/github_browse.css" rel="stylesheet" />
-  <link href="css/theme.css" rel="stylesheet" />
-  <link href="css/site.css" rel="stylesheet" />
+
   <link rel="icon" type="image/x-icon" href="/img/favicon.png" />
   <meta name="author" content="Mapbox" />
   <meta name="description" content="A quick, simple tool for creating, viewing, and sharing spatial data." />
@@ -89,7 +82,7 @@
       </div>
       <div class="flex-grow flex justify-end">
         <div style="height: 42px"></div>
-        <div class="flex items-center" style="font-size: 10px">
+        <div class="flex items-center bg-pink" style="font-size: 10px">
           powered by
           <div class="pr-3">
             <div class="bg-no-repeat bg-center ml-2" style="
@@ -115,8 +108,7 @@
       top.location = self.location;
     }
   </script>
-  <script src="dist/lib.js"></script>
-  <script src="dist/site.js"></script>
+  <script src="dist/bundle.js"></script>
   <script type="text/javascript">
     var _gauges = _gauges || [];
     (function (i, s, o, g, r, a, m) {

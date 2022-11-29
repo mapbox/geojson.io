@@ -1,20 +1,5 @@
 {
-  "emeraldwalk.runonsave": {
-    "commands": [
-      {
-        "match": "lib|src|css/tailwind_src.css",
-        "cmd": "make"
-      }
-    ]
-  },
-  "liveServer.settings.ignoreFiles": [
-    "lib/*",
-    "src/*",
-    "css/tailwind_src.css"
-  ],
-  "liveServer.settings.wait": 500,
   "search.exclude": {
     "**/dist": true,
-  },
-  "liveServer.settings.port": 5501,
+  }
 }

@@ -1,11 +1,10 @@
 const topojson = require('topojson-client'),
   toGeoJSON = require('@tmcw/togeojson'),
-  gtfs2geojson = require('gtfs2geojson'),
+  gtfs2geojson = require('./gtfs2geojson').default,
   csv2geojson = require('csv2geojson'),
   osmtogeojson = require('osmtogeojson'),
   polytogeojson = require('polytogeojson'),
   geojsonNormalize = require('@mapbox/geojson-normalize');
-
 
 module.exports.readDrop = readDrop;
 module.exports.readAsText = readAsText;
@@ -201,14 +200,21 @@ function readFile(f, text, callback) {
     }
     if (ext('.xml') || ext('.osm')) return 'xml';
     if (ext('.poly')) return 'poly';
-    if (text && text.indexOf('shape_id,shape_pt_lat,shape_pt_lon') !== -1) {
+    if (
+      (text && text.indexOf('shape_id,shape_pt_lat,shape_pt_lon') !== -1) ||
+      (text && text.indexOf('"shape_id","shape_pt_lat","shape_pt_lon"') !== -1)
+    ) {
       return 'gtfs-shapes';
     }
     if (
-      text &&
-      text.indexOf(
-        'stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon'
-      ) !== -1
+      (text &&
+        text.indexOf(
+          'stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon'
+        ) !== -1) ||
+      (text &&
+        text.indexOf(
+          '"stop_id","stop_code","stop_name","stop_desc","stop_lat","stop_lon"'
+        ) !== -1)
     ) {
       return 'gtfs-stops';
     }

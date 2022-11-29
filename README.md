@@ -25,23 +25,19 @@ Full API documentation can be found in [API.md](API.md).
 
 ## Development
 
-Install [browserify](https://github.com/substack/node-browserify)'ied libraries:
+1. Clone this repository
+2. Install dependencies
+3. Run `npm start`
 
-`npm install`
+`npm start` uses `concurrently` to run `live-server` which will serve the project directory in your browser and listen for changes, `rollup` which will build the js and css bundles, and `npx tailwindcss` which builds `css/tailwind_dist.css` (including only the tailwind rules needed in the project)
 
-Browserify libraries, concat other libraries, build minimal d3, build tailwind css:
+`rollup` can take several seconds to build before changes appear in the browser.
 
-`make`
+## Production Build & Deployment
 
-Run a local server to preview your changes.
+`npm run build` will create minified bundles in `/dist`. You can try out the production build with `npm run serve` which will run live-server.
 
-### Development with VSCode (hot reloading)
-
-An optimized development workflow is possible with the `Live Server` and `Run on Save` VS Code extensions.  Both have workspace-specific settings in `settings.json`:
-
-- Start a live server using `Live Server's` "Go Live" button
-- `Run on Save` will watch `/lib`,`/src`, and `css/tailwind_src.css` and run `make` when any of them change.
-- `Live Server` will ignore `/lib`,`/src`, and `css/tailwind_src.css`, but will hot reload whenever any other file changes (including the files created by `make`)
+To deploy to github pages, use `npm run deploy`.  This will run the deploy script in `deploy.sh`, which creates a new orphan branch from the current branch, runs a production build, and force pushes to the `gh-pages` branch.
 
 ## License
 
