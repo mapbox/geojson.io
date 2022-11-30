@@ -1,8 +1,16 @@
 # CHANGELOG
 
+## 2022-11-29
+
+* require shift key to drag features, update help text #800
+
+## 2022-11-28
+
+* add rollup.js #798
+
 ## 2022-11-23
 
-add marker popup offsets #795
+* add marker popup offsets #795
 
 ## 2022-11-22
 
