@@ -12,17 +12,19 @@ require('../node_modules/codemirror/addon/fold/foldgutter.css');
 require('../node_modules/@fortawesome/fontawesome-free/css/fontawesome.min.css');
 require('../node_modules/@fortawesome/fontawesome-free/css/solid.min.css');
 
-// import css
+// tailwind css
 require('../dist/css/tailwind_dist.css');
-require('./css/base.css');
-require('./css/marker.css');
-require('./css/theme.css');
-require('./css/site.css');
 
 // mapboxgl, mapboxgl-draw, mapbox-gl-geocoder css
 require('../node_modules/mapbox-gl/dist/mapbox-gl.css');
 require('../node_modules/@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css');
 require('../node_modules/@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css');
+
+// import css
+require('./css/base.css');
+require('./css/marker.css');
+require('./css/theme.css');
+require('./css/site.css');
 
 const Sentry = require('@sentry/browser');
 const { BrowserTracing } = require('@sentry/tracing');
