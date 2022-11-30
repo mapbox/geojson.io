@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2022-11-30
+
+* fix css load order #802
+
 ## 2022-11-29
 
 * require shift key to drag features, update help text #800
