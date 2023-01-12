@@ -9,12 +9,14 @@ module.exports = function (context) {
   ) {
     context.map.flyTo({
       center: geojson.features[0].geometry.coordinates,
-      zoom: 6
+      zoom: 6,
+      duration: 1000
     });
   } else {
     const bounds = bbox(geojson);
     context.map.fitBounds(bounds, {
-      padding: 50
+      padding: 50,
+      duration: 1000
     });
   }
 };
