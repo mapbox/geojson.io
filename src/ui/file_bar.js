@@ -137,7 +137,7 @@ module.exports = function fileBar(context) {
             }
           },
           {
-            title: 'Load encoded polyline',
+            title: 'Load encoded polyline (precision 5)',
             alt: 'Decode and show an encoded precision 5 polyline.',
             action: function () {
               meta.polyline(context);
