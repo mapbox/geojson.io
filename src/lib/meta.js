@@ -85,6 +85,16 @@ module.exports.polyline = function (context) {
   }
 };
 
+module.exports.polyline6 = function (context) {
+  const input = prompt('Enter your polyline');
+  try {
+    const decoded = polyline.toGeoJSON(input, 6);
+    context.data.set({ map: decoded });
+  } catch (e) {
+    alert('Sorry, we were unable to decode that polyline');
+  }
+};
+
 module.exports.wkxBase64 = function (context) {
   const input = prompt('Enter your Base64 encoded WKB/EWKB');
   try {
