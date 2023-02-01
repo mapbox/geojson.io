@@ -37,6 +37,7 @@ const ui = require('./ui'),
   recovery = require('./core/recovery'),
   repo = require('./core/repo'),
   user = require('./core/user'),
+  api = require('./core/api'),
   store = require('store');
 
 const gjIO = geojsonIO(),
@@ -46,6 +47,8 @@ d3.select('.geojsonio').call(gjUI);
 
 gjIO.recovery = recovery(gjIO);
 gjIO.router.on();
+
+api(gjIO);
 
 function geojsonIO() {
   const context = {};

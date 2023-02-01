@@ -105,8 +105,6 @@ module.exports = function (context, readonly) {
       hash: 'map'
     });
 
-    window.map = context.map;
-
     if (writable) {
       context.map.addControl(
         new MapboxGeocoder({
