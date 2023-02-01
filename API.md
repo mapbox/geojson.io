@@ -39,7 +39,7 @@ The URL should be encoded as per `encodeURIComponent(url)`.
 
 #### Example:
 
-http://geojson.io/#data=data:text/x-url,http%3A%2F%2Fapi.tiles.mapbox.com%2Fv3%2Ftmcw.map-gdv4cswo%2Fmarkers.geojson
+http://geojson.io/#data=data:text/x-url,https%3A%2F%2Fraw.githubusercontent.com%2Fcodeforgermany%2Fclick_that_hood%2Fmain%2Fpublic%2Fdata%2Fcalifornia-counties.geojson
 
 ### `id=gist:`
 
