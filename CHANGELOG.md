@@ -2,6 +2,7 @@
 
 ## 2023-02-01
 
+* restore console api, update API.md to document it #807
 * add polyline6 support #813
 * fix external geojson demo link #811
 * speed up flyTo animations #809
