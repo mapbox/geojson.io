@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 2023-02-01
+
+* add polyline6 support #813
+* fix external geojson demo link #811
+* speed up flyTo animations #809
+
+## 2022-12-08
+
+* replace terser with uglify #805
+
 ## 2022-11-30
 
 * fix css load order #802
