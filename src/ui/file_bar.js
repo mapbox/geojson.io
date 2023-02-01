@@ -138,9 +138,16 @@ module.exports = function fileBar(context) {
           },
           {
             title: 'Load encoded polyline',
-            alt: 'Decode and show an encoded polyline. Precision 5 is supported.',
+            alt: 'Decode and show an encoded precision 5 polyline.',
             action: function () {
               meta.polyline(context);
+            }
+          },
+          {
+            title: 'Load encoded polyline (precision 6)',
+            alt: 'Decode and show an encoded precision 6 polyline.',
+            action: function () {
+              meta.polyline6(context);
             }
           },
           {
