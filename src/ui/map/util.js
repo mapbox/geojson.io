@@ -172,7 +172,11 @@ function geojsonToLayer(context, writable) {
 }
 
 function bindPopup(e, context, writable) {
-  const [feature] = e.features;
+  // build the popup using the actual feature from the data store,
+  // not the feature returned from queryRenderedFeatures()
+  const { id } = e.features[0];
+  const feature = context.data.get('map').features[id];
+
   const props = feature.properties;
   let table = '';
   let info = '';
