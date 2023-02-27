@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2023-02-27
+
+* fix feature area/length calculations #819
+
 ## 2023-02-01
 
 * restore console api, update API.md to document it #807
