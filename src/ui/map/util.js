@@ -177,6 +177,9 @@ function bindPopup(e, context, writable) {
   const { id } = e.features[0];
   const feature = context.data.get('map').features[id];
 
+  // the id is needed when clicking buttons in the popup, but only exists on the feature after it is added to the map
+  feature.id = id;
+
   const props = feature.properties;
   let table = '';
   let info = '';
