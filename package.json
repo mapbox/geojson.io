@@ -36,6 +36,7 @@
     "geojson-random": "0.1.0",
     "geojson2dsv": "0.1.0",
     "lodash": "^4.17.21",
+    "mapbox-gl": "2.13.0",
     "numeral": "^2.0.6",
     "osmtogeojson": "3.0.0-beta.5",
     "polytogeojson": "0.0.1",
