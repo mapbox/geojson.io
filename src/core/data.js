@@ -272,22 +272,5 @@ module.exports = function (context) {
     }
   };
 
-  data.save = function (cb) {
-    const type = context.data.get('type');
-    if (type === 'github') {
-      source.github.save(context, cb);
-    } else if (type === 'gist') {
-      source.gist.save(context, cb);
-    } else if (type === 'local') {
-      if (context.data.path) {
-        source.local.save(context, cb);
-      } else {
-        source.gist.save(context, cb);
-      }
-    } else {
-      source.gist.save(context, cb);
-    }
-  };
-
   return data;
 };

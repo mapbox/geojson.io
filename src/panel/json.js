@@ -11,7 +11,6 @@ require('codemirror/mode/javascript/javascript');
 
 const validate = require('../lib/validate');
 const zoomextent = require('../lib/zoomextent');
-const saver = require('../ui/saver.js');
 const flash = require('../ui/flash');
 
 module.exports = function (context) {
@@ -20,15 +19,8 @@ module.exports = function (context) {
       const spaces = new Array(cm.getOption('indentUnit') + 1).join(' ');
       cm.replaceSelection(spaces, 'end', '+input');
     },
-    'Ctrl-S': saveAction,
-    'Cmd-S': saveAction,
     fallthrough: ['default']
   };
-
-  function saveAction() {
-    saver(context);
-    return false;
-  }
 
   function render(selection) {
     const textarea = selection.html('').append('textarea');
