@@ -91,7 +91,12 @@ module.exports = function (context, readonly) {
     mapboxgl.accessToken =
       'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXFhYTA2bTMyeW44ZG0ybXBkMHkifQ.gUGbDOPUN1v1fTs5SeOR4A';
 
-    //
+    mapboxgl.setRTLTextPlugin(
+      'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.3/mapbox-gl-rtl-text.js',
+      null,
+      true
+    );
+
     const projection = context.storage.get('projection') || DEFAULT_PROJECTION;
     const activeStyle = context.storage.get('style') || DEFAULT_STYLE;
     const { style } = styles.find((d) => d.title === activeStyle);
