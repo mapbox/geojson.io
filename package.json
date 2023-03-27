@@ -12,7 +12,7 @@
     "@mapbox/geojsonhint": "^3.1.0",
     "@mapbox/gist-map-browser": "0.2.1",
     "@mapbox/github-file-browser": "0.6.1",
-    "@mapbox/mapbox-gl-draw": "^1.3.0",
+    "@mapbox/mapbox-gl-draw": "^1.4.1",
     "@mapbox/mapbox-gl-geocoder": "^5.0.1",
     "@mapbox/polyline": "^1.1.1",
     "@placemarkio/tokml": "^0.3.3",
