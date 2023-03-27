@@ -10,9 +10,7 @@ const shpwrite = require('shp-write'),
 const flash = require('./flash'),
   zoomextent = require('../lib/zoomextent'),
   readFile = require('../lib/readfile'),
-  meta = require('../lib/meta.js'),
-  saver = require('../ui/saver.js'),
-  config = require('../config.js')(location.hostname);
+  meta = require('../lib/meta.js');
 
 /**
  * This module provides the file picking & status bar above the map interface.
@@ -21,8 +19,6 @@ const flash = require('./flash'),
  */
 module.exports = function fileBar(context) {
   const shpSupport = typeof ArrayBuffer !== 'undefined';
-  const mapboxAPI = false;
-  const githubAPI = !!config.GithubAPI;
 
   const exportFormats = [
     {
@@ -63,7 +59,6 @@ module.exports = function fileBar(context) {
       },
       {
         title: 'Save',
-        action: mapboxAPI || githubAPI ? saveAction : function () {},
         children: exportFormats
       },
       {
@@ -201,11 +196,6 @@ module.exports = function fileBar(context) {
         .attr('class', 'children')
         .call(submenu(d.children));
     });
-
-    function saveAction() {
-      if (d3.event) d3.event.preventDefault();
-      saver(context);
-    }
 
     function submenu(children) {
       return function (selection) {
