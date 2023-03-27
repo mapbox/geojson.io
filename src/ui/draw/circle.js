@@ -44,6 +44,11 @@ const CircleMode = {
   },
 
   onStop: function (state) {
+    this.activateUIButton();
+
+    // check to see if we've deleted this feature
+    if (this.getFeature(state.line.id) === undefined) return;
+
     // remove last added coordinate
     state.line.removeCoordinate('0');
     if (state.line.isValid()) {
