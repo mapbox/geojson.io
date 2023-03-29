@@ -67,5 +67,5 @@ Sentry.init({
   dsn: 'https://c2d096c944dd4150ab7e44b0881b4a46@o5937.ingest.sentry.io/11480',
   release: 'geojson.io@latest',
   integrations: [new BrowserTracing()],
-  tracesSampleRate: 1.0
+  tracesSampleRate: 0.1
 });
