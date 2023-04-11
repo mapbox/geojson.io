@@ -9,7 +9,6 @@ const DrawLineString = require('../draw/linestring');
 const DrawRectangle = require('../draw/rectangle');
 const DrawCircle = require('../draw/circle');
 const SimpleSelect = require('../draw/simple_select');
-const DirectSelect = require('../draw/direct_select');
 const ExtendDrawBar = require('../draw/extend_draw_bar');
 const { EditControl, SaveCancelControl, TrashControl } = require('./controls');
 const { geojsonToLayer, bindPopup } = require('./util');
@@ -124,7 +123,7 @@ module.exports = function (context, readonly) {
         modes: {
           ...MapboxDraw.modes,
           simple_select: SimpleSelect,
-          direct_select: DirectSelect,
+          direct_select: MapboxDraw.modes.direct_select,
           draw_line_string: DrawLineString,
           draw_rectangle: DrawRectangle,
           draw_circle: DrawCircle
