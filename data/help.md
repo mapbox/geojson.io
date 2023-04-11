@@ -16,7 +16,7 @@ Note: Circles are not supported in GeoJSON, so the circle drawing tool is really
 
 ### I want to edit features
 
-To edit geometries, click the edit button to enter editng mode. All Features are selected by default. Click to select a Feature or Vertex. Press delete to remove selected Feature or Vertex. Drag to move selected vertex. Shift + drag to move selected Feature(s)
+To edit geometries, click the edit button to enter editng mode. All Features are selected by default. Click to select a Feature or Vertex. Press delete to remove selected Feature or Vertex. Drag to move selected vertex. Hold shift + drag to move selected Feature(s)
 
 Properties in GeoJSON are stored as 'key value pairs'. You can edit properties in three ways: 1 - Click the feature on the map and edit properties in the popup. 2 - Edit properties in the data table, 3 - Edit properties in the Code editor
 
