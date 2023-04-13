@@ -24,6 +24,7 @@ module.exports = [
     style: {
       name: 'osm',
       version: 8,
+      glyphs: 'mapbox://fonts/mapbox/{fontstack}/{range}.pbf',
       sources: {
         'osm-raster-tiles': {
           type: 'raster',
