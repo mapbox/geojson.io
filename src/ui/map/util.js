@@ -160,8 +160,15 @@ function geojsonToLayer(context, writable) {
   const workingDatasetSource = context.map.getSource('map-data');
 
   if (workingDatasetSource) {
-    workingDatasetSource.setData(addIds(geojson));
-    addMarkers(geojson, context, writable);
+    const filteredFeatures = geojson.features.filter(
+      (feature) => feature.geometry
+    );
+    const filteredGeojson = {
+      type: 'FeatureCollection',
+      features: filteredFeatures
+    };
+    workingDatasetSource.setData(addIds(filteredGeojson));
+    addMarkers(filteredGeojson, context, writable);
     if (context.data.get('recovery')) {
       zoomextent(context);
       context.data.set({
