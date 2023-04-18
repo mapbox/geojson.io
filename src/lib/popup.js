@@ -101,6 +101,23 @@ module.exports = function (context) {
           datalist.append('option').attr('value', 'medium');
           datalist.append('option').attr('value', 'large');
         }
+
+        if (!('marker-symbol' in properties)) {
+          const tr = sel.select('table.marker-properties tbody').insert('tr');
+          tr.append('th')
+            .append('input')
+            .attr('type', 'text')
+            .attr('value', 'marker-symbol');
+          const td = tr.append('td');
+          td.append('input')
+            .attr('type', 'text')
+            .attr('value', 'circle')
+            .attr('list', 'marker-symbol');
+          const datalist = td.append('datalist').attr('id', 'marker-symbol');
+          for (var i = 0; i < makiNames.length; i++) {
+              datalist.append('option').attr('value', makiNames[i]);
+          }
+        }
       }
       if (
         geometry.type === 'LineString' ||
