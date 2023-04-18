@@ -14,6 +14,13 @@ const {
 
 const markers = [];
 
+makiNames = require('@mapbox/maki/layouts/all.json');
+let makiOptions = '';
+
+for (var i = 0; i < makiNames.length; i++) {
+    makiOptions += '<option value="' + makiNames[i] + '">';
+}
+
 const addIds = (geojson) => {
   return {
     ...geojson,
@@ -83,6 +90,7 @@ const addMarkers = (geojson, context, writable) => {
 
   pointFeatures.map((d) => {
     let defaultColor = DEFAULT_DARK_FEATURE_COLOR; // Default feature color
+    let defaultSymbolColor = '#fff';
 
     const activeStyle = context.storage.get('style');
 
@@ -90,19 +98,24 @@ const addMarkers = (geojson, context, writable) => {
     switch (activeStyle) {
       case 'Satellite Streets':
         defaultColor = DEFAULT_SATELLITE_FEATURE_COLOR;
+        defaultSymbolColor = '#fff';
         break;
       case 'Dark':
         defaultColor = DEFAULT_LIGHT_FEATURE_COLOR;
+        defaultSymbolColor = DEFAULT_DARK_FEATURE_COLOR;
         break;
       default:
         defaultColor = DEFAULT_DARK_FEATURE_COLOR;
+        defaultSymbolColor = '#fff';
     }
 
     // If the Feature Object contains styling then use that, otherwise use our default feature color.
     const color =
       (d.properties && d.properties['marker-color']) || defaultColor;
-    let scale = 1;
+    const symbolColor =
+      (d.properties && d.properties['symbol-color']) || defaultSymbolColor
 
+    let scale = 1;
     if (d.properties && d.properties['marker-size']) {
       if (d.properties['marker-size'] === 'small') {
         scale = 0.6;
@@ -113,9 +126,16 @@ const addMarkers = (geojson, context, writable) => {
       }
     }
 
+    let symbol = 'circle'
+    if (d.properties && d.properties['marker-symbol']) {
+        symbol = d.properties['marker-symbol']
+    }
+
     const marker = new ClickableMarker({
       color,
-      scale
+      scale,
+      symbol,
+      symbolColor
     })
       .setLngLat(d.geometry.coordinates)
       .onClick(() => {
@@ -236,6 +256,18 @@ function bindPopup(e, context, writable) {
         '"' +
         (!writable ? ' readonly' : '') +
         ' /><datalist id="marker-size"><option value="small"><option value="medium"><option value="large"></datalist></td></tr>';
+    } else if (key === 'marker-symbol' && writable) {
+      table +=
+        '<tr class="style-row"><th><input type="text" value="' +
+        key +
+        '"' +
+        (!writable ? ' readonly' : '') +
+        ' /></th>' +
+        '<td><input type="text" list="marker-symbol" value="' +
+        properties[key] +
+        '"' +
+        (!writable ? ' readonly' : '') +
+        ' /><datalist id="marker-symbol">' + makiOptions + '</datalist></td></tr>';
     } else if (key === 'stroke-width' && writable) {
       table +=
         '<tr class="style-row"><th><input type="text" value="' +
