@@ -15,9 +15,9 @@ class ClickableMarker extends mapboxgl.Marker {
       this._element.querySelector('circle').replaceWith(symbolPath)
 
       // download svg symbol and insert its path where the circle was
-      const xml = d3.xml(`node_modules/@mapbox/maki/icons/${symbol}.svg`, function(err, xml) {
+      const xml = d3.xml(`../dist/icons/${symbol}.svg`, function(err, xml) {
         if (err) {
-          console.error(`Error downloading the svg from: node_modules/@mapbox/maki/icons/${symbol}.svg`);
+          console.error(`Error downloading the svg from: ../dist/icons/${symbol}.svg`);
         } else {
           symbolPath.outerHTML = `<path fill="${symbolColor}" transform="translate(6 6)"
             d="${xml.documentElement.getElementsByTagName("path")[0].getAttribute("d")}"></path>`
