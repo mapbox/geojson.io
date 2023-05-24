@@ -76,10 +76,10 @@
     "tape": "^5.6.1"
   },
   "scripts": {
-    "lint": "eslint src/**",
-    "format": "prettier --write src/**",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write src/**/*.{js,md,html,css}",
     "git-pre-commit": "lint-staged",
-    "test": "eslint src",
+    "test": "npm run lint",
     "test-browser": "browserify test/index.js | testling",
     "start": "concurrently --kill-others --names live-server rollup \"live-server --ignore=\"$PWD/src/**,$PWD/dist/webfonts/**,$PWD/.git\"\" \"rollup -cw\" \"npx tailwindcss -i $PWD/src/css/tailwind_src.css -o $PWD/dist/css/tailwind_dist.css --watch\"",
     "build": "rimraf dist && npx tailwindcss -i ./src/css/tailwind_src.css -o ./dist/css/tailwind_dist.css && rollup -c",
@@ -87,8 +87,8 @@
     "deploy": "sh deploy.sh"
   },
   "lint-staged": {
-    "src/**/*.{js,jsx,ts,tsx}": "eslint --fix",
-    "src/**/*.{js,jsx,ts,tsx,md,html,css}": "prettier --write"
+    "src/**/*.js": "eslint --fix",
+    "src/**/*.{js,md,html,css}": "prettier --write"
   },
   "repository": {
     "type": "git",
