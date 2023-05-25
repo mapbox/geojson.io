@@ -10,7 +10,10 @@ class ClickableMarker extends mapboxgl.Marker {
         symbolColor = "#fff"
     } = options
 
-    if (symbol && symbol != "circle") {
+    if (
+      symbol != "circle" && 
+      (makiNames.includes(symbol) || /^[a-z0-9]$/.test(symbol))
+    ) {
       const symbolPath = document.createElement('path');
       this._element.querySelector('circle').replaceWith(symbolPath)
 

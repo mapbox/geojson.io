@@ -126,8 +126,8 @@ const addMarkers = (geojson, context, writable) => {
       }
     }
 
-    let symbol = 'circle'
-    if (d.properties && d.properties['marker-symbol']) {
+    let symbol;
+    if (!(d.properties['marker-symbol'] === undefined)) {
         symbol = d.properties['marker-symbol']
     }
 
