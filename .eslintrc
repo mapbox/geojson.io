@@ -17,7 +17,8 @@
   },
   "globals": {
     "Base64": true,
-    "d3": true
+    "d3": true,
+    "makiNames": true
   },
   "parserOptions": {
     "ecmaVersion": 9,

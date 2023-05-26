@@ -11,7 +11,7 @@ class ClickableMarker extends mapboxgl.Marker {
     } = options
 
     if (
-      symbol != "circle" && 
+      symbol != "circle" &&
       (makiNames.includes(symbol) || /^[a-z0-9]$/.test(symbol))
     ) {
       const symbolPath = document.createElement('path');
