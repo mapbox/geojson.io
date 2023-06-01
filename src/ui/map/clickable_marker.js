@@ -2,6 +2,33 @@
 const mapboxgl = require('mapbox-gl');
 
 class ClickableMarker extends mapboxgl.Marker {
+  constructor(options, legacyOptions) {
+    super(options, legacyOptions);
+
+    const {
+        symbol = "circle",
+        symbolColor = "#fff"
+    } = options
+
+    if (
+      symbol != "circle" &&
+      (makiNames.includes(symbol) || /^[a-z0-9]$/.test(symbol))
+    ) {
+      const symbolPath = document.createElement('path');
+      this._element.querySelector('circle').replaceWith(symbolPath)
+
+      // download svg symbol and insert its path where the circle was
+      const xml = d3.xml(`../dist/icons/${symbol}.svg`, function(err, xml) {
+        if (err) {
+          console.error(`Error downloading the svg from: ../dist/icons/${symbol}.svg`);
+        } else {
+          symbolPath.outerHTML = `<path fill="${symbolColor}" transform="translate(6 6)"
+            d="${xml.documentElement.getElementsByTagName("path")[0].getAttribute("d")}"></path>`
+        }
+      });
+    }
+  }
+
   // new method onClick, sets _handleClick to a function you pass in
   onClick(handleClick) {
     this._handleClick = handleClick;

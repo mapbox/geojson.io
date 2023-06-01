@@ -49,6 +49,14 @@ export default {
         {
           src: 'node_modules/@fortawesome/fontawesome-free/webfonts',
           dest: './dist'
+        },
+        {
+          src: 'node_modules/@mapbox/maki/icons',
+          dest: './dist'
+        },
+        {
+          src: 'img/marker-chars/*.svg',
+          dest: './dist/icons'
         }
       ]
     })

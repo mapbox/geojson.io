@@ -20,6 +20,10 @@ To edit geometries, click the edit button to enter editng mode. All Features are
 
 Properties in GeoJSON are stored as 'key value pairs'. You can edit properties in three ways: 1 - Click the feature on the map and edit properties in the popup. 2 - Edit properties in the data table, 3 - Edit properties in the Code editor
 
+### I want to style features
+
+geojson.io supports an extended version of [simplestyle-spec](https://github.com/mapbox/simplestyle-spec/tree/master/1.1.0). For point features, besides the standard properties, `marker-color`, `marker-size` and `marker-symbol`, there is also `symbol-color` which defines the color of the symbol.
+
 
 ### I'm a coder
 
