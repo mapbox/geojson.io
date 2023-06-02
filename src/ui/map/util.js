@@ -17,8 +17,8 @@ const markers = [];
 makiNames = require('@mapbox/maki/layouts/all.json');
 let makiOptions = '';
 
-for (var i = 0; i < makiNames.length; i++) {
-    makiOptions += '<option value="' + makiNames[i] + '">';
+for (let i = 0; i < makiNames.length; i++) {
+  makiOptions += '<option value="' + makiNames[i] + '">';
 }
 
 const addIds = (geojson) => {
@@ -113,7 +113,7 @@ const addMarkers = (geojson, context, writable) => {
     const color =
       (d.properties && d.properties['marker-color']) || defaultColor;
     const symbolColor =
-      (d.properties && d.properties['symbol-color']) || defaultSymbolColor
+      (d.properties && d.properties['symbol-color']) || defaultSymbolColor;
 
     let scale = 1;
     if (d.properties && d.properties['marker-size']) {
@@ -127,8 +127,8 @@ const addMarkers = (geojson, context, writable) => {
     }
 
     let symbol;
-    if (!(d.properties['marker-symbol'] === undefined)) {
-        symbol = d.properties['marker-symbol']
+    if (d.properties && d.properties['marker-symbol'] !== undefined) {
+      symbol = d.properties['marker-symbol'];
     }
 
     const marker = new ClickableMarker({
@@ -267,7 +267,9 @@ function bindPopup(e, context, writable) {
         properties[key] +
         '"' +
         (!writable ? ' readonly' : '') +
-        ' /><datalist id="marker-symbol">' + makiOptions + '</datalist></td></tr>';
+        ' /><datalist id="marker-symbol">' +
+        makiOptions +
+        '</datalist></td></tr>';
     } else if (key === 'stroke-width' && writable) {
       table +=
         '<tr class="style-row"><th><input type="text" value="' +
