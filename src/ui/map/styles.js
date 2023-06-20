@@ -28,7 +28,7 @@ module.exports = [
       sources: {
         'osm-raster-tiles': {
           type: 'raster',
-          tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
           tileSize: 256,
           attribution:
             '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
