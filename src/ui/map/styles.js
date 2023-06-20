@@ -31,7 +31,7 @@ module.exports = [
           tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
           tileSize: 256,
           attribution:
-            '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }
       },
       layers: [
