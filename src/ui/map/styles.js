@@ -1,48 +1,22 @@
 module.exports = [
   {
     title: 'Streets',
-    style: 'mapbox://styles/mapbox/streets-v12'
+    style: 'mapbox://styles/huanglii/ckqt08oxg1kcc18ub9vowurqd?optimize=true'
   },
   {
     title: 'Satellite Streets',
-    style: 'mapbox://styles/mapbox/satellite-streets-v12'
+    style: 'mapbox://styles/huanglii/cl0j3k0wn000n14nznby52wod?optimize=true'
   },
   {
     title: 'Outdoors',
-    style: 'mapbox://styles/mapbox/outdoors-v12'
+    style: 'mapbox://styles/huanglii/clm7ulxu800mc01rc0l206t3c?optimize=true'
   },
   {
     title: 'Light',
-    style: 'mapbox://styles/mapbox/light-v11'
+    style: 'mapbox://styles/huanglii/ckqt17zld5eud17o5hte09rjz?optimize=true'
   },
   {
     title: 'Dark',
-    style: 'mapbox://styles/mapbox/dark-v11'
-  },
-  {
-    title: 'OSM',
-    style: {
-      name: 'osm',
-      version: 8,
-      glyphs: 'mapbox://fonts/mapbox/{fontstack}/{range}.pbf',
-      sources: {
-        'osm-raster-tiles': {
-          type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }
-      },
-      layers: [
-        {
-          id: 'osm-raster-layer',
-          type: 'raster',
-          source: 'osm-raster-tiles',
-          minzoom: 0,
-          maxzoom: 22
-        }
-      ]
-    }
+    style: 'mapbox://styles/huanglii/ckqt0qdsubqxu17nxf59nt9r0?optimize=true'
   }
 ];
