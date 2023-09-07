@@ -31,7 +31,7 @@ function ui(context) {
       .append('div')
       .attr(
         'class',
-        'sidebar-handle absolute right-0 bottom-9 px-4 bg-white cursor-pointer hidden md:block z-10'
+        'sidebar-handle absolute right-0 bottom-9 px-2 bg-white cursor-pointer hidden md:block z-10'
       )
       .attr('title', 'Toggle Sidebar')
       .on('click', () => {
