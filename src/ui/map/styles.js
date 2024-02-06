@@ -1,7 +1,7 @@
 module.exports = [
   {
-    title: 'Streets',
-    style: 'mapbox://styles/mapbox/streets-v12'
+    title: 'Standard',
+    style: 'mapbox://styles/mapbox/standard'
   },
   {
     title: 'Satellite Streets',
