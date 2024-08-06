@@ -115,7 +115,7 @@ module.exports = function (context) {
             .attr('list', 'marker-symbol');
           const datalist = td.append('datalist').attr('id', 'marker-symbol');
           for (let i = 0; i < makiNames.length; i++) {
-              datalist.append('option').attr('value', makiNames[i]);
+            datalist.append('option').attr('value', makiNames[i]);
           }
         }
       }
