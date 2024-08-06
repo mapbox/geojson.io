@@ -1,0 +1,28 @@
+{
+  "extends": [
+    "@mapbox/eslint-config-mapbox/base",
+    "prettier"
+  ],
+  "plugins": [
+    "prettier"
+  ],
+  "rules": {
+    "prettier/prettier": "error",
+    "strict": 0
+  },
+  "env": {
+    "es6": true,
+    "node": true,
+    "browser": true
+  },
+  "globals": {
+    "Base64": true,
+    "d3": true,
+    "makiNames": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 9,
+    "sourceType": "module",
+    "allowImportExportEverywhere": true
+  }
+}

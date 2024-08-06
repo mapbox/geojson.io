@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+  <link href='dist/bundle.css' rel='stylesheet' />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700;800&display=swap" rel="stylesheet" />
+
+  <title>geojson.io | powered by Mapbox</title>
+
+  <link rel="icon" type="image/x-icon" href="/img/favicon.png" />
+  <meta name="author" content="Mapbox" />
+  <meta name="description" content="A quick, simple tool for creating, viewing, and sharing spatial data." />
+  <meta property="og:site_name" content="geojson.io" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:site" content="@mapbox" />
+  <meta name="twitter:creator" content="@mapbox" />
+  <meta property="og:url" content="https://geojson.io" />
+  <meta property="og:title" content="geojson.io | powered by Mapbox" />
+  <meta property="og:description" content="A quick, simple tool for creating, viewing, and sharing spatial data." />
+  <meta property="og:image" content="/img/twitter-card-image.png" />
+
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src
+      'self'
+      ;
+    child-src
+      'self'
+      blob:
+      ;
+    connect-src
+      'self'
+      *
+      ;
+    font-src
+      https://fonts.gstatic.com/
+      'self'
+      ;
+    frame-src
+      'self'
+      ;
+    img-src
+      'self'
+      data:
+      *
+      ;
+    script-src
+      'self'
+      'unsafe-eval'
+      'unsafe-inline'
+      https://cdn.segment.com
+      https://assets.customer.io
+      https://secure.gaug.es
+      https://www.google-analytics.com
+      https://www.googletagmanager.com/gtag/js
+      https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.3/mapbox-gl-rtl-text.js
+      ;
+    style-src
+      'self'
+      'unsafe-inline'
+      ;
+  ">
+  <style>
+    /*
+   * http://seclab.stanford.edu/websec/framebusting/framebust.pdf
+   */
+    body {
+      display: none;
+    }
+  </style>
+</head>
+
+<body id="geojsonio-body" class="h-full">
+  <div class="geojsonio flex flex-col h-full">
+    <div class="text-white bg-mb-gray-dark font-sans px-3 flex">
+      <div class="font-extrabold flex items-center tracking-wide text-base">
+        geojson.io
+      </div>
+      <div class="flex-grow flex justify-end">
+        <div style="height: 42px"></div>
+        <div class="flex items-center bg-pink" style="font-size: 10px">
+          powered by
+          <div class="pr-3">
+            <div class="bg-no-repeat bg-center ml-2" style="
+                  height: 18px;
+                  width: 76px;
+                  background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3OTAgMTgwIj48cGF0aCBkPSJNODkuMSAxLjhDMzkuOSAxLjggMCA0MS43IDAgOTAuOSAwIDE0MC4xIDM5LjkgMTgwIDg5LjEgMTgwYzQ5LjIgMCA4OS4xLTM5LjkgODkuMS04OS4xIDAtNDkuMi0zOS45LTg5LjEtODkuMS04OS4xem00NTcuOCAxOS43Yy0xLjIgMC0yLjIgMS0yLjIgMi4ydjEwMy4yYzAgMS4yIDEgMi4yIDIuMiAyLjJoMTMuNGMxLjIgMCAyLjItMSAyLjItMi4ydi03LjFjNi45IDcuMiAxNi40IDExLjMgMjYuMyAxMS4zIDIwLjkgMCAzNy45LTE4IDM3LjktNDAuMyAwLTIyLjMtMTctNDAuMi0zNy45LTQwLjItMTAgMC0xOS41IDQuMS0yNi4zIDExLjNWMjMuN2MwLTEuMi0xLTIuMi0yLjItMi4yaC0xMy40ek05OC4zIDM2LjRjMTEuNC4zIDIyLjkgNC44IDMxLjcgMTMuNyAxNy43IDE3LjcgMTguMyA0NS43IDEuNCA2Mi43LTMwLjUgMzAuNS04NC44IDIwLjctODQuOCAyMC43cy05LjgtNTQuMyAyMC43LTg0LjhjOC41LTguNCAxOS43LTEyLjUgMzEtMTIuM3ptMTYwLjMgMTQuMmMtOC4yIDAtMTUuOSA0LTIwLjggMTAuNnYtNi40YzAtMS4yLTEtMi4yLTIuMi0yLjJoLTEzLjRjLTEuMiAwLTIuMiAxLTIuMiAyLjJWMTI3YzAgMS4yIDEgMi4yIDIuMiAyLjJoMTMuNGMxLjIgMCAyLjItMSAyLjItMi4yVjgzLjhjLjUtOS43IDcuMi0xNy4zIDE1LjQtMTcuMyA4LjUgMCAxNS42IDcuMSAxNS42IDE2LjV2NDRjMCAxLjIgMSAyLjIgMi4yIDIuMmgxMy41YzEuMiAwIDIuMi0xIDIuMi0yLjJsLS4xLTQ0LjljMS4yLTguOCA3LjYtMTUuNiAxNS4zLTE1LjYgOC41IDAgMTUuNiA3LjEgMTUuNiAxNi41djQ0YzAgMS4yIDEgMi4yIDIuMiAyLjJoMTMuNWMxLjIgMCAyLjItMSAyLjItMi4ybC0uMS00OS42Yy4zLTE0LjgtMTIuMy0yNi44LTI3LjktMjYuOC0xMCAuMS0xOS4yIDUuOS0yMy41IDE1LTUtOS4zLTE0LjctMTUuMS0yNS4zLTE1em0xMjcuOSAwYy0yMC45IDAtMzcuOSAxOC0zNy45IDQwLjMgMCAyMi4zIDE3IDQwLjMgMzcuOSA0MC4zIDEwIDAgMTkuNS00LjEgMjYuMy0xMS4zdjcuMWMwIDEuMiAxIDIuMiAyLjIgMi4yaDEzLjRjMS4yIDAgMi4yLTEgMi4yLTIuMlY1NC44Yy4xLTEuMi0uOS0yLjItMi4yLTIuMkg0MTVjLTEuMiAwLTIuMiAxLTIuMiAyLjJ2Ny4xYy02LjktNy4yLTE2LjQtMTEuMy0yNi4zLTExLjN6bTEwNi4xIDBjLTEwIDAtMTkuNSA0LjEtMjYuMyAxMS4zdi03LjFjMC0xLjItMS0yLjItMi4yLTIuMmgtMTMuNGMtMS4yIDAtMi4yIDEtMi4yIDIuMlYxNThjMCAxLjIgMSAyLjIgMi4yIDIuMmgxMy40YzEuMiAwIDIuMi0xIDIuMi0yLjJ2LTM4LjJjNi45IDcuMiAxNi40IDExLjMgMjYuMyAxMS4zIDIwLjkgMCAzNy45LTE4IDM3LjktNDAuMyAwLTIyLjMtMTctNDAuMi0zNy45LTQwLjJ6bTE4NS41IDBjLTIyLjcgMC00MSAxOC00MSA0MC4zIDAgMjIuMyAxOC40IDQwLjMgNDEgNDAuM3M0MS0xOCA0MS00MC4zYzAtMjIuMy0xOC4zLTQwLjMtNDEtNDAuM3ptNDUuNCAyYy0xLjEgMC0yIC45LTIgMiAwIC40LjEuOC4zIDEuMWwyMyAzNS0yMy4zIDM1LjRjLS42LjktLjQgMi4yLjYgMi44LjMuMi43LjMgMS4xLjNoMTUuNWMxLjIgMCAyLjMtLjYgMi45LTEuNmwxMy44LTIzLjEgMTMuOCAyMy4xYy42IDEgMS43IDEuNiAyLjkgMS42aDE1LjVjMS4xIDAgMi0uOSAyLTIgMC0uNC0uMS0uNy0uMy0xLjFMNzY2IDkwLjdsMjMtMzVjLjYtLjkuNC0yLjItLjYtMi44LS4zLS4yLS43LS4zLTEuMS0uM2gtMTUuNWMtMS4yIDAtMi4zLjYtMi45IDEuNmwtMTMuNSAyMi43LTEzLjUtMjIuN2MtLjYtMS0xLjctMS42LTIuOS0xLjZoLTE1LjV6TTk5LjMgNTRsLTguNyAxOC0xNy45IDguNyAxNy45IDguNyA4LjcgMTggOC44LTE4IDE3LjktOC43LTE3LjktOC43LTguOC0xOHptMjkwLjMgMTIuN2MxMi43IDAgMjMgMTAuNyAyMy4yIDIzLjl2LjZjLS4xIDEzLjItMTAuNSAyMy45LTIzLjIgMjMuOS0xMi44IDAtMjMuMi0xMC44LTIzLjItMjQuMiAwLTEzLjQgMTAuNC0yNC4yIDIzLjItMjQuMnptOTkuOCAwYzEyLjggMCAyMy4yIDEwLjggMjMuMiAyNC4yIDAgMTMuNC0xMC40IDI0LjItMjMuMiAyNC4yLTEyLjcgMC0yMy0xMC43LTIzLjItMjMuOXYtLjZjLjItMTMuMiAxMC41LTIzLjkgMjMuMi0yMy45em05Ni4zIDBjMTIuOCAwIDIzLjIgMTAuOCAyMy4yIDI0LjIgMCAxMy40LTEwLjQgMjQuMi0yMy4yIDI0LjItMTIuNyAwLTIzLTEwLjctMjMuMi0yMy45di0uNmMuMi0xMy4yIDEwLjUtMjMuOSAyMy4yLTIzLjl6bTkyLjIgMGMxMi44IDAgMjMuMiAxMC44IDIzLjIgMjQuMiAwIDEzLjQtMTAuNCAyNC4yLTIzLjIgMjQuMi0xMi44IDAtMjMuMi0xMC44LTIzLjItMjQuMiAwLTEzLjQgMTAuNC0yNC4yIDIzLjItMjQuMnoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=);
+                "></div>
+          </div>
+          <div class="hidden md:flex pl-3 border-l border-solid border-gray-700 h-full  items-center">
+            <a class="bg-mb-purple-500 hover:bg-mb-purple-700 hover:text-white text-white text-xs font-bold py-1 px-4 rounded transition-all duration-200"
+              href="https://account.mapbox.com/auth/signup/">
+              Sign up for Mapbox
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    if (self == top) {
+      document.getElementsByTagName("body")[0].style.display = "block";
+    } else {
+      top.location = self.location;
+    }
+  </script>
+  <script src="dist/bundle.js"></script>
+  <script type="text/javascript">
+    var _gauges = _gauges || [];
+    (function (i, s, o, g, r, a, m) {
+      i["GoogleAnalyticsObject"] = r;
+      (i[r] =
+        i[r] ||
+        function () {
+          (i[r].q = i[r].q || []).push(arguments);
+        }),
+        (i[r].l = 1 * new Date());
+      (a = s.createElement(o)), (m = s.getElementsByTagName(o)[0]);
+      a.async = 1;
+      a.src = g;
+      m.parentNode.insertBefore(a, m);
+    })(
+      window,
+      document,
+      "script",
+      "https://www.google-analytics.com/analytics.js",
+      "ga"
+    );
+    ga("create", "UA-12158002-18", "auto");
+    ga("send", "pageview");
+  </script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3K6EEFGNP0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G - 3K6EEFGNP0');
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,118 @@
+.marker-properties,
+.metadata {
+  border-collapse: collapse;
+  font-size: 11px;
+  width: 100%;
+  overflow: auto;
+  border-bottom: 1px solid #ccc;
+
+  /* Equal to 6 rows */
+  max-height: 189px;
+}
+
+.marker-properties {
+  display: block;
+}
+
+.metadata {
+  display: table;
+}
+
+.marker-properties th {
+  width: 33.3333%;
+  min-width: 100px;
+  white-space: nowrap;
+  border: 1px solid #ccc;
+}
+
+.marker-properties td {
+  width: 60%;
+}
+
+.marker-properties.display td,
+.marker-properties.display th {
+  padding: 5px 10px;
+}
+
+.marker-properties tr:last-child td,
+.marker-properties tr:last-child th {
+  border-bottom: none;
+}
+
+.marker-properties tr:nth-child(even) th,
+.marker-properties tr:nth-child(even) td,
+.metadata tr:nth-child(even) td {
+  background-color: #f7f7f7;
+}
+
+.geojsonio-feature .mapboxgl-popup-content {
+  float: left;
+  padding: 0 !important;
+}
+
+.geojsonio-feature .leaflet-popup-tip-container {
+  float: left;
+  margin-left: 50%;
+  right: 10px;
+}
+
+datalist {
+  overflow: auto;
+  height: 150px;
+}
+
+/* Tabs
+------------------------------------------------------- */
+.tabs-ui {
+  position: relative;
+  width: 250px;
+}
+
+.tabs-ui > * {
+  box-sizing: border-box;
+}
+
+.tab .tab-toggle {
+  background: #eee;
+  cursor: pointer;
+}
+
+.tab .tab-toggle:hover {
+  background: #f7f7f7;
+}
+
+.tab .hide {
+  display: none;
+}
+
+.tab .content {
+  display: none;
+  background: white;
+  overflow: auto;
+}
+
+.tab [type='radio']:checked ~ label {
+  background: white;
+  border-top-width: 0;
+  z-index: 2;
+}
+
+.tab [type='radio']:checked ~ label ~ .content {
+  z-index: 1;
+  display: block;
+}
+
+.add-row-button,
+.add-simplestyle-properties-button {
+  color: #2980b9;
+}
+
+.add-row-button:hover,
+.add-simplestyle-properties-button:hover {
+  cursor: pointer;
+  color: #199cf4;
+}
+
+.foo {
+  background: 'green';
+}

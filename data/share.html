@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
+  <style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+  .marker-properties {
+    border-collapse:collapse;
+    font-size:11px;
+    border:1px solid #eee;
+    margin:0;
+}
+.marker-properties th {
+    white-space:nowrap;
+    border:1px solid #eee;
+    padding:5px 10px;
+}
+.marker-properties td {
+    border:1px solid #eee;
+    padding:5px 10px;
+}
+.marker-properties tr:last-child td,
+.marker-properties tr:last-child th {
+    border-bottom:none;
+}
+.marker-properties tr:nth-child(even) th,
+.marker-properties tr:nth-child(even) td {
+    background-color:#f7f7f7;
+}
+  </style>
+  <script src='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>
+  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' ></script>
+  <link href='//api.tiles.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />
+</head>
+<body>
+<div id='map'></div>
+<script type='text/javascript'>
+L.mapbox.accessToken = 'pk.eyJ1Ijoic3ZjLW9rdGEtbWFwYm94LXN0YWZmLWFjY2VzcyIsImEiOiJjbG5sMnExa3kxNTJtMmtsODJld24yNGJlIn0.RQ4CHchAYPJQZSiUJ0O3VQ';
+var map = L.mapbox.map('map');
+
+L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken).addTo(map);
+
+$.getJSON('map.geojson', function(geojson) {
+    var geojsonLayer = L.mapbox.featureLayer(geojson).addTo(map);
+    var bounds = geojsonLayer.getBounds();
+    if (bounds.isValid()) {
+        map.fitBounds(geojsonLayer.getBounds());
+    } else {
+        map.setView([0, 0], 2);
+    }
+    geojsonLayer.eachLayer(function(l) {
+        showProperties(l);
+    });
+});
+
+function showProperties(l) {
+    var properties = l.toGeoJSON().properties;
+    var table = document.createElement('table');
+    table.setAttribute('class', 'marker-properties display')
+    for (var key in properties) {
+        var tr = createTableRows(key, properties[key]);
+        table.appendChild(tr);
+    }
+    if (table) l.bindPopup(table);
+}
+
+function createTableRows(key, value) {
+    var tr = document.createElement('tr');
+    var th = document.createElement('th');
+    var td = document.createElement('td');
+    key = document.createTextNode(key);
+    value = document.createTextNode(value);
+    th.appendChild(key);
+    td.appendChild(value);
+    tr.appendChild(th);
+    tr.appendChild(td);
+    return tr
+}
+
+</script>
+</body>
+</html>

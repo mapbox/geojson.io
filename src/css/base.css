@@ -1,0 +1,521 @@
+/* http://meyerweb.com/eric/tools/css/reset/
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+  display: block;
+}
+body {
+  line-height: 1;
+}
+ol,
+ul {
+  list-style: none;
+}
+blockquote,
+q {
+  quotes: none;
+}
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* base */
+
+body#geojsonio-body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  line-height: 20px;
+  color: #222;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus {
+  outline: 0;
+}
+
+a {
+  color: #2980b9;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #199cf4;
+}
+
+p {
+  padding: 10px 0;
+  line-height: 200%;
+}
+
+small {
+  font-size: 11px;
+}
+
+/* Columns
+------------------------------------------------------- */
+
+.col0 {
+  float: left;
+  width: 04.1666%;
+}
+.col1 {
+  float: left;
+  width: 08.3333%;
+}
+.col2 {
+  float: left;
+  width: 16.6666%;
+}
+.col3 {
+  float: left;
+  width: 25%;
+}
+.col4 {
+  float: left;
+  width: 33.3333%;
+}
+.col5 {
+  float: left;
+  width: 41.6666%;
+}
+.col6 {
+  float: left;
+  width: 50%;
+}
+.col7 {
+  float: left;
+  width: 58.3333%;
+}
+.col8 {
+  float: left;
+  width: 66.6666%;
+}
+.col9 {
+  float: left;
+  width: 75%;
+}
+.col10 {
+  float: left;
+  width: 83.3333%;
+}
+.col11 {
+  float: left;
+  width: 91.6666%;
+}
+.col12 {
+  float: left;
+  width: 100%;
+}
+.margin0 {
+  margin-left: 04.1666%;
+}
+.margin1 {
+  margin-left: 08.3333%;
+}
+.margin2 {
+  margin-left: 16.6666%;
+}
+.margin3 {
+  margin-left: 25%;
+}
+.margin4 {
+  margin-left: 33.3333%;
+}
+.margin5 {
+  margin-left: 41.6666%;
+}
+.margin6 {
+  margin-left: 50%;
+}
+.margin7 {
+  margin-left: 58.3333%;
+}
+.margin8 {
+  margin-left: 66.6666%;
+}
+.margin9 {
+  margin-left: 75%;
+}
+.margin10 {
+  margin-left: 83.3333%;
+}
+.margin11 {
+  margin-left: 91.6666%;
+}
+.margin12 {
+  margin-left: 100%;
+}
+
+/* Padding
+------------------------------------------------------- */
+
+.pad0 {
+  padding: 5px;
+}
+.pad0y {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.pad0x {
+  padding-right: 5px;
+  padding-left: 5px;
+}
+
+.pad1 {
+  padding: 10px;
+}
+.pad2 {
+  padding: 20px;
+}
+.pad4 {
+  padding: 40px;
+}
+
+.pad1x {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.pad2x {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+.pad4x {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.pad1y {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.pad2y {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.pad4y {
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+/* Margin
+------------------------------------------------------- */
+
+.space-bottom0 {
+  margin-bottom: 5px;
+}
+.space-bottom1 {
+  margin-bottom: 10px;
+}
+.space-bottom2 {
+  margin-bottom: 20px;
+}
+.space-bottom4 {
+  margin-bottom: 40px;
+}
+.space-top0 {
+  margin-top: 10px;
+}
+.space-top1 {
+  margin-top: 10px;
+}
+.space-top2 {
+  margin-top: 20px;
+}
+.space-top4 {
+  margin-top: 40px;
+}
+
+/* Z-index
+------------------------------------------------------- */
+
+.z1 {
+  z-index: 1;
+}
+.z10 {
+  z-index: 10;
+}
+.z100 {
+  z-index: 100;
+}
+
+/* Absolute containers
+------------------------------------------------------- */
+.pin-top,
+.pin-right,
+.pin-bottom,
+.pin-left,
+.pin-topleft,
+.pin-topright,
+.pin-bottomleft,
+.pin-bottomright {
+  position: absolute;
+}
+.pin-bottom {
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.pin-top {
+  top: 0;
+  right: 0;
+  left: 0;
+}
+.pin-left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+.pin-right {
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+.pin-bottomright {
+  bottom: 0;
+  right: 0;
+}
+.pin-bottomleft {
+  bottom: 0;
+  left: 0;
+}
+.pin-topright {
+  top: 0;
+  right: 0;
+}
+.pin-topleft {
+  top: 0;
+  left: 0;
+}
+
+/* Keylines
+------------------------------------------------------- */
+.keyline-all {
+  border: 1px solid #ccc;
+}
+.keyline-top {
+  border-top: 1px solid #ccc;
+}
+.keyline-right {
+  border-right: 1px solid #ccc;
+}
+.keyline-bottom {
+  border-bottom: 1px solid #ccc;
+}
+.keyline-left {
+  border-left: 1px solid #ccc;
+}
+
+/* Markup free clearing
+Details: http://www.positioniseverything.net/easyclearing.html
+------------------------------------------------------- */
+
+.clearfix:after {
+  content: '';
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+
+.clearfix {
+  display: inline-block;
+}
+.hide {
+  display: none;
+}
+.fl {
+  float: left;
+}
+.fr {
+  float: right;
+}
+.center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+
+/* Elements */
+table tr td input,
+table tr th input {
+  border: none;
+}
+
+table thead {
+  background: #f7f7f7;
+  border: 1px solid #ccc;
+}
+
+table td {
+  border: 1px solid #ccc;
+}
+
+table thead tr th {
+  font-weight: bold;
+}
+
+table thead tr th,
+table tr th input,
+table tbody tr td input {
+  text-align: left;
+  font: inherit;
+  padding: 5px;
+  width: 150px;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+input[type='text'] {
+  font: inherit;
+}
+
+/* Loading overlay
+------------------------------------------------------- */
+.loading:before {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  background: rgba(128, 128, 128, 0.25);
+  z-index: 10;
+}
+
+.loading:after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -20px 0px 0px -20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  opacity: 0.25;
+  background: #444 url(spinner.gif) 50% 50% no-repeat;
+}
