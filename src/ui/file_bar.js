@@ -87,6 +87,20 @@ module.exports = function fileBar(context) {
             }
           },
           {
+            title: '🪟 New Window with GeoJSON URL',
+            action: function () {
+              const geojsonURL = prompt(
+                'Load GeoJSON data from a URL\n\n Warning this will open a new window 🪟'
+              );
+              if (geojsonURL === null) return;
+
+              const encodedURL = encodeURIComponent(geojsonURL);
+              const openURL = `${window.location.origin}${window.location.pathname}#data=data:text/x-url,${encodedURL}`;
+              console.log(openURL);
+              window.open(openURL);
+            }
+          },
+          {
             title: 'Zoom to features',
             alt: 'Zoom to the extent of all features',
             action: function () {
