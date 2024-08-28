@@ -19,7 +19,7 @@ A fast, simple editor for map data. Read more on [Mapbox](https://www.mapbox.com
 
 You can interact with geojson.io programmatically via URL parameters. Here is an example of geojson encoded into the URL:
 
-http://geojson.io/#data=data:application/json,%7B%22type%22%3A%22LineString%22%2C%22coordinates%22%3A%5B%5B0%2C0%5D%2C%5B10%2C10%5D%5D%7D
+https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22LineString%22%2C%22coordinates%22%3A%5B%5B0%2C0%5D%2C%5B10%2C10%5D%5D%7D
 
 Full API documentation can be found in [API.md](API.md).
 
