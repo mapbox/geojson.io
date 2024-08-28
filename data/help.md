@@ -1,6 +1,6 @@
 ## Help
 
-**geojson.io** is a quick, simple tool for creating, viewing, and sharing maps. geojson.io is named after [GeoJSON](http://geojson.org/), an open source spatial data format, and it supports GeoJSON in all ways - but also accepts KML, GPX, CSV, GTFS, TopoJSON, and other formats.
+**geojson.io** is a quick, simple tool for creating, viewing, and sharing maps. geojson.io is named after [GeoJSON](https://geojson.org/), an open source spatial data format, and it supports GeoJSON in all ways - but also accepts KML, GPX, CSV, GTFS, TopoJSON, and other formats.
 
 Want to request a feature or report a bug? [Open an issue on geojson.io's issue tracker.](https://github.com/mapbox/geojson.io/issues?state=open)
 

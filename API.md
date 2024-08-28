@@ -35,14 +35,14 @@ Load GeoJSON data from a URL on the internet onto the map. The URL must
 refer directly to a resource that is:
 
 - Freely accessible (not behind a password)
-- Supports [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
+- Supports [CORS](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 - Is valid GeoJSON
 
 The URL should be encoded as per `encodeURIComponent(url)`.
 
 #### Example:
 
-http://geojson.io/#data=data:text/x-url,https%3A%2F%2Fraw.githubusercontent.com%2Fcodeforgermany%2Fclick_that_hood%2Fmain%2Fpublic%2Fdata%2Fcalifornia-counties.geojson
+https://geojson.io/#data=data:text/x-url,https%3A%2F%2Fraw.githubusercontent.com%2Fcodeforgermany%2Fclick_that_hood%2Fmain%2Fpublic%2Fdata%2Fcalifornia-counties.geojson
 
 ### `id=gist:`
 
@@ -65,7 +65,7 @@ The url is in the form:
 
 #### Example:
 
-http://geojson.io/#id=github:benbalter/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302
+https://geojson.io/#id=github:benbalter/dc-wifi-social/blob/master/bars.geojson&map=14/38.9140/-77.0302
 
 ## Console API
 
@@ -86,7 +86,7 @@ window.api.map.addSource('raster-tiles', {
     ],
     'tileSize': 256,
     'attribution':
-    'Map tiles by <a target="_top" rel="noopener" href="http://stamen.com">Stamen Design</a>, under <a target="_top" rel="noopener" href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a target="_top" rel="noopener" href="http://openstreetmap.org">OpenStreetMap</a>, under <a target="_top" rel="noopener" href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>'
+    'Map tiles by <a target="_top" rel="noopener" href="https://stamen.com">Stamen Design</a>, under <a target="_top" rel="noopener" href="https://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a target="_top" rel="noopener" href="https://openstreetmap.org">OpenStreetMap</a>, under <a target="_top" rel="noopener" href="https://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>'
 })
 
 window.api.map.addLayer({
