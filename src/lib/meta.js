@@ -4,6 +4,7 @@ const escape = require('escape-html'),
   geojsonFlatten = require('geojson-flatten'),
   polyline = require('@mapbox/polyline'),
   wkx = require('wkx'),
+  Buffer = require('buffer/').Buffer,
   zoomextent = require('../lib/zoomextent');
 
 module.exports.adduserlayer = function (context, _url, _name) {
