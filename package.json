@@ -14,7 +14,7 @@
     "@mapbox/github-file-browser": "0.6.1",
     "@mapbox/maki": "^8.0.1",
     "@mapbox/mapbox-gl-draw": "1.4.1",
-    "@mapbox/mapbox-gl-geocoder": "^5.0.1",
+    "@mapbox/mapbox-gl-geocoder": "^5.0.2",
     "@mapbox/polyline": "^1.1.1",
     "@placemarkio/tokml": "^0.3.3",
     "@popperjs/core": "^2.11.6",
@@ -38,7 +38,7 @@
     "geojson-random": "0.1.0",
     "geojson2dsv": "0.1.0",
     "lodash": "^4.17.21",
-    "mapbox-gl": "3.1.2",
+    "mapbox-gl": "^3.5.2",
     "numeral": "^2.0.6",
     "osmtogeojson": "3.0.0-beta.5",
     "polytogeojson": "0.0.1",
@@ -103,8 +103,5 @@
   },
   "window": {
     "toolbar": false
-  },
-  "engines": {
-    "node": "14"
   }
 }
