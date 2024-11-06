@@ -16,6 +16,7 @@
     "@mapbox/mapbox-gl-draw": "1.4.1",
     "@mapbox/mapbox-gl-geocoder": "^5.0.2",
     "@mapbox/polyline": "^1.1.1",
+    "@mapbox/web-analytics": "^0.9.0",
     "@placemarkio/tokml": "^0.3.3",
     "@popperjs/core": "^2.11.6",
     "@sentry/browser": "^7.20.0",

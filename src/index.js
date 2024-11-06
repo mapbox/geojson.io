@@ -20,6 +20,9 @@ require('../node_modules/mapbox-gl/dist/mapbox-gl.css');
 require('../node_modules/@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css');
 require('../node_modules/@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css');
 
+// web-analytics for tracking tool usage
+require('../node_modules/@mapbox/web-analytics/dist/analytics.min.js');
+
 // import css
 require('./css/base.css');
 require('./css/marker.css');
@@ -28,6 +31,18 @@ require('./css/site.css');
 
 const Sentry = require('@sentry/browser');
 const { BrowserTracing } = require('@sentry/tracing');
+
+window.mbxMetadata = {
+  product: 'GeoJSON.io',
+  service: 'maps',
+  platform: 'web, ios, android',
+  content_type: 'developer tool'
+};
+
+// eslint-disable-next-line no-undef
+initializeMapboxAnalytics({
+  marketoMunchkin: false
+});
 
 const ui = require('./ui'),
   map = require('./ui/map'),
