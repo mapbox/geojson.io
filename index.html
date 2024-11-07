@@ -60,12 +60,15 @@
       https://www.google-analytics.com
       https://www.googletagmanager.com/gtag/js
       https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.3/mapbox-gl-rtl-text.js
+      https://docs.mapbox.com
       ;
     style-src
       'self'
       'unsafe-inline'
       ;
   ">
+  <!-- Add segment tracking for tool usage -->
+  <script src="https://docs.mapbox.com/analytics.min.js"></script>
   <style>
     /*
    * http://seclab.stanford.edu/websec/framebusting/framebust.pdf
@@ -111,38 +114,6 @@
     }
   </script>
   <script src="dist/bundle.js"></script>
-  <script type="text/javascript">
-    var _gauges = _gauges || [];
-    (function (i, s, o, g, r, a, m) {
-      i["GoogleAnalyticsObject"] = r;
-      (i[r] =
-        i[r] ||
-        function () {
-          (i[r].q = i[r].q || []).push(arguments);
-        }),
-        (i[r].l = 1 * new Date());
-      (a = s.createElement(o)), (m = s.getElementsByTagName(o)[0]);
-      a.async = 1;
-      a.src = g;
-      m.parentNode.insertBefore(a, m);
-    })(
-      window,
-      document,
-      "script",
-      "https://www.google-analytics.com/analytics.js",
-      "ga"
-    );
-    ga("create", "UA-12158002-18", "auto");
-    ga("send", "pageview");
-  </script>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3K6EEFGNP0"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G - 3K6EEFGNP0');
-  </script>
 </body>
 
 </html>

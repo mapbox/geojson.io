@@ -29,6 +29,15 @@ require('./css/site.css');
 const Sentry = require('@sentry/browser');
 const { BrowserTracing } = require('@sentry/tracing');
 
+window.mbxMetadata = {
+  content_type: 'developer-tool'
+};
+
+// eslint-disable-next-line no-undef
+initializeMapboxAnalytics({
+  marketoMunchkin: false
+});
+
 const ui = require('./ui'),
   map = require('./ui/map'),
   data = require('./core/data'),
