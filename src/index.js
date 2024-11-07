@@ -20,9 +20,6 @@ require('../node_modules/mapbox-gl/dist/mapbox-gl.css');
 require('../node_modules/@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css');
 require('../node_modules/@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css');
 
-// web-analytics for tracking tool usage
-require('../node_modules/@mapbox/web-analytics/dist/analytics.min.js');
-
 // import css
 require('./css/base.css');
 require('./css/marker.css');
