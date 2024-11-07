@@ -30,10 +30,7 @@ const Sentry = require('@sentry/browser');
 const { BrowserTracing } = require('@sentry/tracing');
 
 window.mbxMetadata = {
-  product: 'Mapbox GL JS, Maps SDK for Android, Maps SDK for iOS',
-  service: 'maps',
-  platform: 'web, ios, android',
-  content_type: 'playground'
+  content_type: 'developer-tool'
 };
 
 // eslint-disable-next-line no-undef
