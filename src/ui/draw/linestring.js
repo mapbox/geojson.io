@@ -1,6 +1,6 @@
 // this mode extends the build-in linestring tool, displaying the current length
 // of the line as the user draws using a point feature and a symbol layer
-const MapboxDraw = require('@mapbox/mapbox-gl-draw');
+const MapboxDraw = require('@mapbox/mapbox-gl-draw').default;
 
 const { getDisplayMeasurements } = require('./util.js');
 

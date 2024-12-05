@@ -2,7 +2,7 @@ const mapboxgl = require('mapbox-gl');
 
 require('qs-hash');
 const geojsonRewind = require('@mapbox/geojson-rewind');
-const MapboxDraw = require('@mapbox/mapbox-gl-draw');
+const MapboxDraw = require('@mapbox/mapbox-gl-draw').default;
 const MapboxGeocoder = require('@mapbox/mapbox-gl-geocoder');
 
 const DrawLineString = require('../draw/linestring');
