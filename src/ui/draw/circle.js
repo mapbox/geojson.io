@@ -3,7 +3,7 @@
 // forces draw.create on creation of second vertex
 const circle = require('@turf/circle').default;
 const length = require('@turf/length').default;
-const MapboxDraw = require('@mapbox/mapbox-gl-draw');
+const MapboxDraw = require('@mapbox/mapbox-gl-draw').default;
 
 const { getDisplayMeasurements } = require('./util.js');
 

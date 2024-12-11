@@ -1,4 +1,4 @@
-const MapboxDraw = require('@mapbox/mapbox-gl-draw');
+const MapboxDraw = require('@mapbox/mapbox-gl-draw').default;
 
 const SimpleSelect = {
   ...MapboxDraw.modes.simple_select,
