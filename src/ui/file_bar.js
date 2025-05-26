@@ -232,19 +232,22 @@ module.exports = function fileBar(context) {
         .select('body')
         .append('input')
         .attr('type', 'file')
+        .attr('multiple', true)
         .style('visibility', 'hidden')
         .style('position', 'absolute')
         .style('height', '0')
         .on('change', function () {
           const files = this.files;
-          if (!(files && files[0])) return;
-          readFile.readAsText(files[0], (err, text) => {
-            readFile.readFile(files[0], text, onImport);
-            if (files[0].path) {
-              context.data.set({
-                path: files[0].path
-              });
-            }
+          if (!(files && files.length)) return;
+          Array.from(files).forEach((file) => {
+            readFile.readAsText(file, (err, text) => {
+              readFile.readFile(file, text, onImport);
+              if (file.path) {
+                context.data.set({
+                  path: file.path
+                });
+              }
+            });
           });
           put.remove();
         });
