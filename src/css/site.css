@@ -547,15 +547,15 @@ div.children a {
 }
 
 .mapbox-gl-draw_polygon {
-  background-image: url('../img/polygon.svg');
+  background-image: url('./img/polygon.svg');
 }
 
 .mapbox-gl-draw_rectangle {
-  background-image: url('../img/rectangle.svg');
+  background-image: url('./img/rectangle.svg');
 }
 
 .mapbox-gl-draw_circle {
-  background-image: url('../img/circle.svg');
+  background-image: url('./img/circle.svg');
 }
 
 .fullscreen .mapboxgl-ctrl-top-right {
