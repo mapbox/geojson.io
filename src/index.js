@@ -35,6 +35,7 @@ window.mbxMetadata = {
 
 // eslint-disable-next-line no-undef
 initializeMapboxAnalytics({
+  segmentWriteKeyStaging: 'fl0c8p240n',
   marketoMunchkin: false
 });
 
