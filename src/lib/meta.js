@@ -8,7 +8,7 @@ const escape = require('escape-html'),
   zoomextent = require('../lib/zoomextent');
 
 module.exports.adduserlayer = function (context, _url, _name) {
-  const url = escape(_url),
+  const url = _url,  // Don't escape the URL - it breaks query parameters
     name = escape(_name);
 
   // reset the control if a user-layer was added before
