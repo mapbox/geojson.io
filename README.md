@@ -37,7 +37,7 @@ Full API documentation can be found in [API.md](API.md).
 
 `npm run build` will create minified bundles in `/dist`. You can try out the production build with `npm run serve` which will run live-server.
 
-To deploy to github pages, use `npm run deploy`.  This will run the deploy script in `deploy.sh`, which creates a new orphan branch from the current branch, runs a production build, and force pushes to the `gh-pages` branch.
+Deployment to GitHub Pages works automatically by pushing to the main branch which triggers a GitHub Action to deploy.
 
 ## License
 

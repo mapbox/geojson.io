@@ -547,15 +547,15 @@ div.children a {
 }
 
 .mapbox-gl-draw_polygon {
-  background-image: url('../img/polygon.svg');
+  background-image: url('./img/polygon.svg');
 }
 
 .mapbox-gl-draw_rectangle {
-  background-image: url('../img/rectangle.svg');
+  background-image: url('./img/rectangle.svg');
 }
 
 .mapbox-gl-draw_circle {
-  background-image: url('../img/circle.svg');
+  background-image: url('./img/circle.svg');
 }
 
 .fullscreen .mapboxgl-ctrl-top-right {
@@ -587,8 +587,8 @@ div.children a {
   font-style: normal;
   font-weight: 900;
   font-display: block;
-  src: url(../dist/webfonts/fa-solid-900.woff2) format('woff2'),
-    url(../dist/webfonts/fa-solid-900.ttf) format('truetype');
+  src: url(./webfonts/fa-solid-900.woff2) format('woff2'),
+    url(./webfonts/fa-solid-900.ttf) format('truetype');
 }
 
 /* overrides a tailwind box-sizing on * */

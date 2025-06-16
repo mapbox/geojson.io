@@ -47,6 +47,19 @@ export default {
     copy({
       targets: [
         {
+          src: 'index.html',
+          dest: './dist',
+          transform: (contents) => {
+            return contents.toString()
+              .replace("href='dist/bundle.css'", "href='bundle.css'")
+              .replace('src="dist/bundle.js"', 'src="bundle.js"');
+          }
+        },
+        {
+          src: 'img',
+          dest: './dist'
+        },
+        {
           src: 'node_modules/@fortawesome/fontawesome-free/webfonts',
           dest: './dist'
         },
