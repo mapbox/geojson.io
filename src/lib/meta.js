@@ -30,7 +30,7 @@ function isValidTilesetName(name) {
   return (
     /^[a-zA-Z0-9 ]+$/.test(trimmed) &&
     trimmed.length >= 3 &&
-    trimmed.length <= 50
+    trimmed.length <= 25
   );
 }
 
@@ -76,7 +76,7 @@ module.exports.adduserlayer = function (context, url, name) {
 
     if (!isValidTilesetName(name)) {
       throw new Error(
-        'Invalid tileset name. Must be 3-50 characters long and contain only alphanumeric characters and spaces.'
+        'Invalid tileset name. Must be 3-25 characters long and contain only alphanumeric characters and spaces.'
       );
     }
 
