@@ -21,9 +21,11 @@ module.exports = function (context) {
       // this will likely run before the initial map style is loaded
       // streets is default, but on subsequent runs we must change styles
       if (context.map._loaded) {
-        const { title, style } = d3.select(clicked).datum();
+        const { title, style, config } = d3.select(clicked).datum();
 
-        context.map.setStyle(style);
+        context.map.setStyle(style, {
+          ...(config ? { config } : {})
+        });
 
         context.storage.set('style', title);
 
