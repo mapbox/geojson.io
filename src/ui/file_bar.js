@@ -78,7 +78,7 @@ module.exports = function fileBar(context) {
             alt: 'Add a custom tile layer',
             action: function () {
               const layerURL = prompt(
-                'Layer URL\ne.g. https://stamen-tiles-b.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg'
+                'Layer URL\ne.g. https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg'
               );
               if (layerURL === null) return;
               const layerName = prompt('Layer name');

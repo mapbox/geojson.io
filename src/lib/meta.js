@@ -1,5 +1,4 @@
-const escape = require('escape-html'),
-  geojsonRandom = require('geojson-random'),
+const geojsonRandom = require('geojson-random'),
   geojsonExtent = require('@mapbox/geojson-extent'),
   geojsonFlatten = require('geojson-flatten'),
   polyline = require('@mapbox/polyline'),
@@ -7,13 +6,35 @@ const escape = require('escape-html'),
   Buffer = require('buffer/').Buffer,
   zoomextent = require('../lib/zoomextent');
 
-module.exports.adduserlayer = function (context, _url, _name) {
-  const url = escape(_url),
-    name = escape(_name);
+function isValidTileUrl(url) {
+  try {
+    const u = new URL(url);
 
-  // reset the control if a user-layer was added before
-  d3.select('.user-layer-button').remove();
+    // Must use HTTPS
+    if (u.protocol !== 'https:') return false;
 
+    // Optional: check that {z}, {x}, {y} placeholders are present
+    const hasPlaceholders =
+      url.includes('{z}') && url.includes('{x}') && url.includes('{y}');
+    if (!hasPlaceholders) return false;
+
+    return true;
+  } catch (e) {
+    // Invalid URL format
+    return false;
+  }
+}
+
+function isValidTilesetName(name) {
+  const trimmed = name.trim();
+  return (
+    /^[a-zA-Z0-9 ]+$/.test(trimmed) &&
+    trimmed.length >= 3 &&
+    trimmed.length <= 25
+  );
+}
+
+module.exports.adduserlayer = function (context, url, name) {
   function addUserSourceAndLayer() {
     // if the source and layer aren't present, add them
     context.map.setStyle({
@@ -46,14 +67,33 @@ module.exports.adduserlayer = function (context, _url, _name) {
     });
   }
 
-  // append a button to the existing style selection UI
-  d3.select('.layer-switch')
-    .append('button')
-    .attr('class', 'pad0x user-layer-button')
-    .on('click', addUserSourceAndLayer)
-    .text(name);
+  try {
+    if (!isValidTileUrl(url)) {
+      throw new Error(
+        'Invalid tile URL. Must be HTTPS and include {z}, {x}, {y}.'
+      );
+    }
 
-  addUserSourceAndLayer();
+    if (!isValidTilesetName(name)) {
+      throw new Error(
+        'Invalid tileset name. Must be 3-25 characters long and contain only alphanumeric characters and spaces.'
+      );
+    }
+
+    // reset the control if a user-layer was added before
+    d3.select('.user-layer-button').remove();
+
+    // append a button to the existing style selection UI
+    d3.select('.layer-switch')
+      .append('button')
+      .attr('class', 'pad0x user-layer-button')
+      .on('click', addUserSourceAndLayer)
+      .text(name);
+
+    addUserSourceAndLayer(url);
+  } catch (e) {
+    alert(e.message);
+  }
 };
 
 module.exports.zoomextent = function (context) {
