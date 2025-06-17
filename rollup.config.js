@@ -25,10 +25,7 @@ export default {
     }),
 
     replace({
-      'require.main === module': 'false', // jsonhint export quirk
-      // Replace hardcoded dev path with production path in ui/map/clickable_marker.js
-      '../dist/icons': production ? '/icons' : '../dist/icons',
-      delimiters: ['', ''] 
+      'require.main === module': 'false' // jsonhint export quirk
     }),
 
     resolve({
