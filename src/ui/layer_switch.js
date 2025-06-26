@@ -46,9 +46,18 @@ module.exports = function (context) {
 
     const activeStyle = context.storage.get('style') || DEFAULT_STYLE;
 
+    // Check if activeStyle exists in styles array, default to 'Standard' if not
+    const styleExists = styles.some(({ title }) => title === activeStyle);
+    const correctedStyle = styleExists ? activeStyle : 'Standard';
+
+    // Update localStorage if we had to correct the style
+    if (!styleExists) {
+      context.storage.set('style', correctedStyle);
+    }
+
     layerButtons
       .filter(({ title }) => {
-        return title === activeStyle;
+        return title === correctedStyle;
       })
       .call(layerSwap);
   };

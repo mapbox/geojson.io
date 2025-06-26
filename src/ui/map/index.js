@@ -97,14 +97,11 @@ module.exports = function (context, readonly) {
     );
 
     const projection = context.storage.get('projection') || DEFAULT_PROJECTION;
-    let activeStyle = context.storage.get('style') || DEFAULT_STYLE;
+    const activeStyle = context.storage.get('style') || DEFAULT_STYLE;
 
-    // handle previous users who had Streets selected
-    if (activeStyle === 'Streets') {
-      activeStyle = 'Standard';
-    }
-
-    const { style, config } = styles.find((d) => d.title === activeStyle);
+    const foundStyle = styles.find((d) => d.title === activeStyle);
+    const { style, config } =
+      foundStyle || styles.find((d) => d.title === 'Standard');
 
     context.map = new mapboxgl.Map({
       container: 'map',
