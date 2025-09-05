@@ -187,7 +187,6 @@ module.exports.openLR = function (context) {
     );
     const rawLocationReference = binaryDecoder.decodeData(locationReference);
     const jsonObject = Serializer.serialize(rawLocationReference);
-    console.log(jsonObject);
     switch (jsonObject.type) {
       case 'RawLineLocationReference':
         {
