@@ -3,7 +3,8 @@ const buttons = require('./ui/mode_buttons'),
   dnd = require('./ui/dnd'),
   // userUi = require('./ui/user'),
   layer_switch = require('./ui/layer_switch'),
-  projection_switch = require('./ui/projection_switch');
+  projection_switch = require('./ui/projection_switch'),
+  toggle_3d = require('./ui/3d-buildings-toggle');
 
 module.exports = ui;
 
@@ -24,7 +25,8 @@ function ui(context) {
         'map grow shrink-0 top-0 bottom-0 left-0 basis-0 transition-all duration-300'
       )
       .call(layer_switch(context))
-      .call(projection_switch(context));
+      .call(projection_switch(context))
+      .call(toggle_3d(context));
 
     // sidebar handle
     map

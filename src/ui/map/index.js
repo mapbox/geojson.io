@@ -369,12 +369,36 @@ module.exports = function (context, readonly) {
     });
 
     // only show projection toggle on zoom < 6
+    // only show 3d Buildings toggle on Zoom > 15
+
+    context.map.on('load', () => {
+      const zoom = context.map.getZoom();
+      if (zoom < 6) {
+        d3.select('.projection-switch').style('opacity', 1);
+      } else {
+        d3.select('.projection-switch').style('opacity', 0);
+      }
+      if (zoom > 14) {
+        d3.select('.toggle-3D').style('opacity', 1);
+      } else {
+        d3.select('.toggle-3D').style('opacity', 0);
+      }
+    });
+
     context.map.on('zoomend', () => {
       const zoom = context.map.getZoom();
       if (zoom < 6) {
         d3.select('.projection-switch').style('opacity', 1);
       } else {
         d3.select('.projection-switch').style('opacity', 0);
+      }
+
+      if (zoom > 14) {
+        console.log('we should be showing the toggle');
+        d3.select('.toggle-3D').style('opacity', 1);
+      } else {
+        console.log('we should NOT be showing the toggle');
+        d3.select('.toggle-3D').style('opacity', 0);
       }
     });
 

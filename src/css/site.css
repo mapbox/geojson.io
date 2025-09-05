@@ -105,7 +105,8 @@ button {
 
 .top button.active,
 .layer-switch button.active,
-.projection-switch button.active {
+.projection-switch button.active,
+.toggle-3D button.active {
   background: #34495e;
   color: #fff;
 }
