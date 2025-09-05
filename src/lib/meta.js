@@ -194,8 +194,6 @@ module.exports.openLR = function (context) {
           const coordinates = jsonObject.properties._points.properties.map(
             ({ properties }) => [properties._longitude, properties._latitude]
           );
-
-          console.log(coordinates);
           const geojson = {
             type: 'Feature',
             geometry: {
