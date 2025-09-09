@@ -1,5 +1,3 @@
-const { DEFAULT_3D_BUILDINGS } = require('../constants');
-
 module.exports = function (context) {
   return function (selection) {
     const Buildings3D = [
@@ -35,7 +33,6 @@ module.exports = function (context) {
       });
 
       if (context.map._loaded) {
-        console.log('were loaded!');
         const { value } = d3.select(clicked).datum();
         context.map.setConfigProperty('basemap', 'show3dObjects', value);
         context.storage.set('3DBuildings', value);
@@ -50,14 +47,5 @@ module.exports = function (context) {
       .text((d) => {
         return d.label;
       });
-
-    const hasKey = context.storage.get('3DBuildings') !== undefined;
-    const active3DBuildings = hasKey
-      ? context.storage.get('3DBuildings')
-      : DEFAULT_3D_BUILDINGS;
-
-    buttons3D
-      .filter(({ value }) => value === active3DBuildings)
-      .call(set3DBuildings);
   };
 };

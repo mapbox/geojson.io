@@ -1,12 +1,7 @@
 module.exports = [
   {
     title: 'Standard',
-    style: 'mapbox://styles/mapbox/standard',
-    config: {
-      basemap: {
-        show3dObjects: false
-      }
-    }
+    style: 'mapbox://styles/mapbox/standard'
   },
   {
     title: 'Standard Satellite',
@@ -17,7 +12,6 @@ module.exports = [
     style: 'mapbox://styles/mapbox/standard',
     config: {
       basemap: {
-        show3dObjects: false,
         theme: 'monochrome'
       }
     }
@@ -27,7 +21,6 @@ module.exports = [
     style: 'mapbox://styles/mapbox/standard',
     config: {
       basemap: {
-        show3dObjects: false,
         theme: 'monochrome',
         lightPreset: 'night'
       }

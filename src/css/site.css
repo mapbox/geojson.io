@@ -111,6 +111,11 @@ button {
   color: #fff;
 }
 
+.toggle-3D.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 button.major {
   padding: 5px;
   border-radius: 3px;
