@@ -194,15 +194,20 @@ module.exports.openLR = function (context) {
             ({ properties }) => [properties._longitude, properties._latitude]
           );
           const geojson = {
-            type: 'Feature',
-            geometry: {
-              type: 'LineString',
-              coordinates: coordinates
-            },
-            properties: {
-              raw: jsonObject,
-              input: openLrString
-            }
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                geometry: {
+                  type: 'LineString',
+                  coordinates: coordinates
+                },
+                properties: {
+                  raw: jsonObject,
+                  input: openLrString
+                }
+              }
+            ]
           };
           context.data.set({ map: geojson });
           zoomextent(context);
@@ -212,15 +217,47 @@ module.exports.openLR = function (context) {
         {
           const point = jsonObject.properties._geoCoord.properties;
           const geojson = {
-            type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: [point._longitude, point._latitude]
-            },
-            properties: {
-              raw: jsonObject,
-              input: openLrString
-            }
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                geometry: {
+                  type: 'Point',
+                  coordinates: [point._longitude, point._latitude]
+                },
+                properties: {
+                  raw: jsonObject,
+                  input: openLrString
+                }
+              }
+            ]
+          };
+          context.data.set({ map: geojson });
+          zoomextent(context);
+        }
+        break;
+      case 'RawPolygonLocationReference':
+        {
+          const polygonCorners = jsonObject.properties._corners.properties;
+          const polygonCoordinates = polygonCorners.map((point) => [
+            point.properties._longitude,
+            point.properties._latitude
+          ]);
+          const geojson = {
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                geometry: {
+                  type: 'Polygon',
+                  coordinates: [[...polygonCoordinates]]
+                },
+                properties: {
+                  raw: jsonObject,
+                  input: openLrString
+                }
+              }
+            ]
           };
           context.data.set({ map: geojson });
           zoomextent(context);
