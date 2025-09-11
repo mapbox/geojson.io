@@ -165,6 +165,13 @@ module.exports = function fileBar(context) {
             action: function () {
               meta.wkxString(context);
             }
+          },
+          {
+            title: 'Load OpenLR String',
+            alt: 'Decode and show OpenLR data',
+            action: function () {
+              meta.openLR(context);
+            }
           }
         ]
       }
