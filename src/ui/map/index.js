@@ -18,7 +18,8 @@ const {
   DEFAULT_PROJECTION,
   DEFAULT_DARK_FEATURE_COLOR,
   DEFAULT_LIGHT_FEATURE_COLOR,
-  DEFAULT_SATELLITE_FEATURE_COLOR
+  DEFAULT_SATELLITE_FEATURE_COLOR,
+  DEFAULT_3D_BUILDINGS
 } = require('../../constants');
 const drawStyles = require('../draw/styles');
 
@@ -362,6 +363,25 @@ module.exports = function (context, readonly) {
 
         geojsonToLayer(context, writable);
 
+        // Initialize 3D buildings state from localStorage after style is loaded
+        // This can't live in `ui/3d-buildings-toggle.js because we have to wait for the map style to be loaded
+        const hasKey = context.storage.get('3DBuildings') !== undefined;
+        const active3DBuildings = hasKey
+          ? context.storage.get('3DBuildings')
+          : DEFAULT_3D_BUILDINGS;
+        if (context.map.getConfigProperty) {
+          context.map.setConfigProperty(
+            'basemap',
+            'show3dObjects',
+            active3DBuildings
+          );
+        }
+        // Update the UI to reflect the active state
+        d3.selectAll('.toggle-3D button').classed('active', function () {
+          const { value } = d3.select(this).datum();
+          return value === active3DBuildings;
+        });
+
         context.data.set({
           mapStyleLoaded: false
         });
@@ -369,14 +389,32 @@ module.exports = function (context, readonly) {
     });
 
     // only show projection toggle on zoom < 6
-    context.map.on('zoomend', () => {
+    // only show 3d Buildings toggle on Zoom > 14
+    function updateTogglesByZoom() {
       const zoom = context.map.getZoom();
+      const projectionSwitch = d3.select('.projection-switch');
+      const toggle3D = d3.select('.toggle-3D');
+
+      // Get current style to check if 3D buildings should be hidden
+      const currentStyle = context.storage.get('style') || DEFAULT_STYLE;
+      const shouldHide3DForStyle =
+        currentStyle === 'OSM' ||
+        currentStyle === 'Outdoors' ||
+        currentStyle === 'Standard Satellite';
+
       if (zoom < 6) {
-        d3.select('.projection-switch').style('opacity', 1);
+        projectionSwitch.style('opacity', 1);
+        toggle3D.classed('hidden', true);
+      } else if (zoom > 6 && zoom < 14) {
+        projectionSwitch.style('opacity', 0);
+        toggle3D.classed('hidden', true);
       } else {
-        d3.select('.projection-switch').style('opacity', 0);
+        // Hide 3D toggle for OSM and Outdoors styles, regardless of zoom
+        toggle3D.classed('hidden', shouldHide3DForStyle);
       }
-    });
+    }
+    context.map.on('load', () => updateTogglesByZoom());
+    context.map.on('zoomend', () => updateTogglesByZoom());
 
     const maybeSetCursorToPointer = () => {
       if (context.Draw.getMode() === 'simple_select') {
