@@ -174,29 +174,46 @@ module.exports.wkxString = function (context) {
 };
 
 module.exports.openLR = function (context) {
-  const openLrString = prompt('Enter your OpenLR String');
+  const openLrInput = prompt(
+    'Enter your OpenLR String(s) - comma separated for multiple'
+  );
   try {
+    // Split by comma and trim whitespace
+    const openLrStrings = openLrInput
+      .split(',')
+      .map((s) => s.trim().trim('"'))
+      .filter((s) => s.length > 0);
+
     const BinaryDecoder = openlr.BinaryDecoder;
     const binaryDecoder = new BinaryDecoder();
     const LocationReference = openlr.LocationReference;
     const Serializer = openlr.Serializer;
-    const openLrBinary = Buffer.from(openLrString, 'base64');
-    const locationReference = LocationReference.fromIdAndBuffer(
-      'binary',
-      openLrBinary
-    );
-    const rawLocationReference = binaryDecoder.decodeData(locationReference);
-    const jsonObject = Serializer.serialize(rawLocationReference);
-    switch (jsonObject.type) {
-      case 'RawLineLocationReference':
-        {
-          const coordinates = jsonObject.properties._points.properties.map(
-            ({ properties }) => [properties._longitude, properties._latitude]
-          );
-          const geojson = {
-            type: 'FeatureCollection',
-            features: [
-              {
+
+    const allFeatures = [];
+    const errors = [];
+
+    // Process each OpenLR string
+    for (const openLrString of openLrStrings) {
+      try {
+        const openLrBinary = Buffer.from(openLrString, 'base64');
+        const locationReference = LocationReference.fromIdAndBuffer(
+          'binary',
+          openLrBinary
+        );
+        const rawLocationReference =
+          binaryDecoder.decodeData(locationReference);
+        const jsonObject = Serializer.serialize(rawLocationReference);
+
+        switch (jsonObject.type) {
+          case 'RawLineLocationReference':
+            {
+              const coordinates = jsonObject.properties._points.properties.map(
+                ({ properties }) => [
+                  properties._longitude,
+                  properties._latitude
+                ]
+              );
+              allFeatures.push({
                 type: 'Feature',
                 geometry: {
                   type: 'LineString',
@@ -206,20 +223,13 @@ module.exports.openLR = function (context) {
                   raw: jsonObject,
                   input: openLrString
                 }
-              }
-            ]
-          };
-          context.data.set({ map: geojson });
-          zoomextent(context);
-        }
-        break;
-      case 'RawGeoCoordLocationReference':
-        {
-          const point = jsonObject.properties._geoCoord.properties;
-          const geojson = {
-            type: 'FeatureCollection',
-            features: [
-              {
+              });
+            }
+            break;
+          case 'RawGeoCoordLocationReference':
+            {
+              const point = jsonObject.properties._geoCoord.properties;
+              allFeatures.push({
                 type: 'Feature',
                 geometry: {
                   type: 'Point',
@@ -229,24 +239,17 @@ module.exports.openLR = function (context) {
                   raw: jsonObject,
                   input: openLrString
                 }
-              }
-            ]
-          };
-          context.data.set({ map: geojson });
-          zoomextent(context);
-        }
-        break;
-      case 'RawPolygonLocationReference':
-        {
-          const polygonCorners = jsonObject.properties._corners.properties;
-          const polygonCoordinates = polygonCorners.map((point) => [
-            point.properties._longitude,
-            point.properties._latitude
-          ]);
-          const geojson = {
-            type: 'FeatureCollection',
-            features: [
-              {
+              });
+            }
+            break;
+          case 'RawPolygonLocationReference':
+            {
+              const polygonCorners = jsonObject.properties._corners.properties;
+              const polygonCoordinates = polygonCorners.map((point) => [
+                point.properties._longitude,
+                point.properties._latitude
+              ]);
+              allFeatures.push({
                 type: 'Feature',
                 geometry: {
                   type: 'Polygon',
@@ -256,15 +259,41 @@ module.exports.openLR = function (context) {
                   raw: jsonObject,
                   input: openLrString
                 }
-              }
-            ]
-          };
-          context.data.set({ map: geojson });
-          zoomextent(context);
+              });
+            }
+            break;
+          default:
+            errors.push(
+              `Unsupported OpenLR location type: ${jsonObject.type} for input: ${openLrString}`
+            );
         }
-        break;
-      default:
-        alert('Unsupported OpenLR location type: ' + jsonObject.type);
+      } catch (e) {
+        errors.push(`Failed to decode: ${openLrString.substring(0, 20)}...`);
+        console.error(`Error decoding ${openLrString}:`, e);
+      }
+    }
+
+    if (allFeatures.length > 0) {
+      const geojson = {
+        type: 'FeatureCollection',
+        features: allFeatures
+      };
+      context.data.set({ map: geojson });
+      zoomextent(context);
+
+      if (errors.length > 0) {
+        alert(
+          `Successfully decoded ${
+            allFeatures.length
+          } features, but encountered ${errors.length} error(s):\n${errors.join(
+            '\n'
+          )}`
+        );
+      }
+    } else {
+      alert(
+        'Sorry, we were unable to decode any OpenLR data:\n' + errors.join('\n')
+      );
     }
   } catch (e) {
     console.error(e);
