@@ -123,7 +123,7 @@ function readFile(f, text, callback) {
     const result = osmtogeojson.toGeojson(xmldom);
     // only keep object tags as properties
     result.features.forEach((feature) => {
-      feature.properties = feature.properties.tags;
+      feature.properties = feature.properties.tags || {};
     });
     callback(null, result);
   } else if (fileType === 'gpx') {
