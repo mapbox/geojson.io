@@ -88,6 +88,9 @@
     "build": "rimraf dist && npx tailwindcss -i ./src/css/tailwind_src.css -o ./dist/css/tailwind_dist.css && rollup -c",
     "serve": "cd dist && live-server"
   },
+  "overrides": {
+    "@xmldom/xmldom": "0.9.8"
+  },
   "lint-staged": {
     "src/**/*.js": "eslint --fix",
     "src/**/*.{js,md,html,css}": "prettier --write"
