@@ -160,7 +160,7 @@ function looksLikeInitString(str) {
 }
 
 function looksLikeProj4String(str) {
-  return /^(\+[^ ]+ *)+$/.test(str);
+  return /^\+(?:\S+(?: +\+\S+)*) *$/.test(String(str));
 }
 
 export function getCRS(str) {
