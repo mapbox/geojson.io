@@ -1,0 +1,103 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "schedule": ["on the first day of the month"],
+  "timezone": "America/New_York",
+  "packageRules": [
+    {
+      "description": "Group CodeMirror packages",
+      "matchPackagePatterns": ["^@codemirror/"],
+      "groupName": "CodeMirror"
+    },
+    {
+      "description": "Group Deck.gl packages",
+      "matchPackagePatterns": ["^@deck\\.gl/"],
+      "groupName": "Deck.gl"
+    },
+    {
+      "description": "Group DnD Kit packages",
+      "matchPackagePatterns": ["^@dnd-kit/"],
+      "groupName": "DnD Kit"
+    },
+    {
+      "description": "Group Radix UI packages",
+      "matchPackagePatterns": ["^@radix-ui/"],
+      "groupName": "Radix UI"
+    },
+    {
+      "description": "Group Tiptap packages",
+      "matchPackagePatterns": ["^@tiptap/"],
+      "groupName": "Tiptap"
+    },
+    {
+      "description": "Group Turf packages",
+      "matchPackagePatterns": ["^@turf/"],
+      "groupName": "Turf"
+    },
+    {
+      "description": "Group D3 packages",
+      "matchPackagePatterns": ["^d3-", "^@types/d3-"],
+      "groupName": "D3"
+    },
+    {
+      "description": "Group ProseMirror packages",
+      "matchPackagePatterns": ["^prosemirror-"],
+      "groupName": "ProseMirror"
+    },
+    {
+      "description": "Group Placemarkio packages",
+      "matchPackagePatterns": ["^@placemarkio/"],
+      "groupName": "Placemarkio"
+    },
+    {
+      "description": "Group TypeScript and ESLint packages",
+      "matchPackagePatterns": ["^@typescript-eslint/", "^eslint", "typescript"],
+      "groupName": "TypeScript/ESLint"
+    },
+    {
+      "description": "Group React packages",
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "@types/react",
+        "@types/react-dom"
+      ],
+      "groupName": "React"
+    },
+    {
+      "description": "Group Next.js packages",
+      "matchPackagePatterns": ["^next", "^@next/", "eslint-config-next"],
+      "groupName": "Next.js"
+    },
+    {
+      "description": "Group Testing packages",
+      "matchPackagePatterns": [
+        "^@testing-library/",
+        "^vitest",
+        "^jest-",
+        "jsdom"
+      ],
+      "groupName": "Testing"
+    },
+    {
+      "description": "Group Tailwind CSS packages",
+      "matchPackagePatterns": ["^tailwindcss", "^@tailwindcss/"],
+      "groupName": "Tailwind CSS"
+    },
+    {
+      "description": "Group Node.js type packages",
+      "matchPackagePatterns": ["^@types/node"],
+      "groupName": "Node.js Types"
+    }
+  ],
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 10,
+  "dependencyDashboard": true,
+  "automerge": false,
+  "rangeStrategy": "bump",
+  "semanticCommits": "enabled",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  }
+}

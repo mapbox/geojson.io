@@ -1,0 +1,128 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`map_operations > makeConvexHull > success 1`] = `
+{
+  "geometry": {
+    "coordinates": [
+      [
+        [
+          2,
+          3,
+        ],
+        [
+          0,
+          0,
+        ],
+        [
+          1,
+          2,
+        ],
+        [
+          2,
+          3,
+        ],
+      ],
+    ],
+    "type": "Polygon",
+  },
+  "properties": {},
+  "type": "Feature",
+}
+`;
+
+exports[`map_operations > rotateFeatures 1`] = `
+[
+  {
+    "at": "0",
+    "feature": {
+      "geometry": {
+        "coordinates": [
+          [
+            -0.0945409092309879,
+            0.1044665288110096,
+          ],
+          [
+            1,
+            1,
+          ],
+          [
+            2.0945409092309877,
+            1.8955334711889904,
+          ],
+        ],
+        "type": "LineString",
+      },
+      "properties": {
+        "x": 1,
+      },
+      "type": "Feature",
+    },
+    "id": "000000000000000000000",
+    "wrappedFeatureCollectionId": "000000000000000000000",
+  },
+]
+`;
+
+exports[`map_operations > rotateFeatures 2`] = `
+[
+  {
+    "at": "0",
+    "feature": {
+      "geometry": {
+        "coordinates": [
+          [
+            -0.045152282610973815,
+            0.0496568100170216,
+          ],
+          [
+            1.0451522826109738,
+            0.9503431899829784,
+          ],
+        ],
+        "type": "MultiPoint",
+      },
+      "properties": {
+        "x": 1,
+      },
+      "type": "Feature",
+    },
+    "id": "000000000000000000000",
+    "wrappedFeatureCollectionId": "000000000000000000000",
+  },
+]
+`;
+
+exports[`map_operations > rotateFeatures 3`] = `
+[
+  {
+    "at": "0",
+    "feature": {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              -0.0945409092309879,
+              0.1044665288110096,
+            ],
+            [
+              1,
+              1,
+            ],
+            [
+              2.0945409092309877,
+              1.8955334711889904,
+            ],
+          ],
+        ],
+        "type": "MultiLineString",
+      },
+      "properties": {
+        "x": 1,
+      },
+      "type": "Feature",
+    },
+    "id": "000000000000000000000",
+    "wrappedFeatureCollectionId": "000000000000000000000",
+  },
+]
+`;

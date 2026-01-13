@@ -1,0 +1,676 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateSyntheticPoints > GeometryCollection > base 1`] = `
+[
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        0,
+        1,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000000,
+    "properties": {
+      "fp": true,
+    },
+    "type": "Feature",
+  },
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        2,
+        3,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000002,
+    "properties": {
+      "fp": true,
+    },
+    "type": "Feature",
+  },
+]
+`;
+
+exports[`generateSyntheticPoints > GeometryCollection > base 2`] = `
+{
+  "coords": [
+    [
+      [
+        0,
+        1,
+      ],
+    ],
+    [
+      [
+        2,
+        3,
+      ],
+    ],
+  ],
+  "ids": [
+    [
+      "/geometry/geometries/0/coordinates",
+    ],
+    [
+      "/geometry/geometries/1/coordinates",
+    ],
+  ],
+}
+`;
+
+exports[`generateSyntheticPoints > GeometryCollection > with null member 1`] = `
+[
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        0,
+        1,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000000,
+    "properties": {
+      "fp": true,
+    },
+    "type": "Feature",
+  },
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        2,
+        3,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000002,
+    "properties": {
+      "fp": true,
+    },
+    "type": "Feature",
+  },
+]
+`;
+
+exports[`generateSyntheticPoints > GeometryCollection > with null member 2`] = `
+{
+  "coords": [
+    [
+      [
+        0,
+        1,
+      ],
+    ],
+    [
+      [
+        2,
+        3,
+      ],
+    ],
+  ],
+  "ids": [
+    [
+      "/geometry/geometries/1/coordinates",
+    ],
+    [
+      "/geometry/geometries/2/coordinates",
+    ],
+  ],
+}
+`;
+
+exports[`generateSyntheticPoints > LineString 1`] = `
+[
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        0,
+        0,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000000,
+    "properties": null,
+    "type": "Feature",
+  },
+  Midpoint {
+    "geometry": {
+      "coordinates": [
+        0.5,
+        0.5000190396762463,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000001,
+    "properties": null,
+    "type": "Feature",
+  },
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        1,
+        1,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000002,
+    "properties": null,
+    "type": "Feature",
+  },
+  Midpoint {
+    "geometry": {
+      "coordinates": [
+        1.5,
+        1.500057130632186,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000003,
+    "properties": null,
+    "type": "Feature",
+  },
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        2,
+        2,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000004,
+    "properties": null,
+    "type": "Feature",
+  },
+]
+`;
+
+exports[`generateSyntheticPoints > LineString 2`] = `
+{
+  "coords": [
+    [
+      [
+        0,
+        0,
+      ],
+    ],
+    [
+      [
+        0,
+        0,
+      ],
+    ],
+    [
+      [
+        1,
+        1,
+      ],
+    ],
+    [
+      [
+        1,
+        1,
+      ],
+    ],
+    [
+      [
+        2,
+        2,
+      ],
+    ],
+  ],
+  "ids": [
+    [
+      "/geometry/coordinates/0",
+    ],
+    [
+      "/geometry/coordinates/0",
+    ],
+    [
+      "/geometry/coordinates/1",
+    ],
+    [
+      "/geometry/coordinates/1",
+    ],
+    [
+      "/geometry/coordinates/2",
+    ],
+  ],
+}
+`;
+
+exports[`generateSyntheticPoints > MultiLineString 1`] = `
+[
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        0,
+        0,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000000,
+    "properties": null,
+    "type": "Feature",
+  },
+  Midpoint {
+    "geometry": {
+      "coordinates": [
+        0.5,
+        0.5000190396762463,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000001,
+    "properties": null,
+    "type": "Feature",
+  },
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        1,
+        1,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000002,
+    "properties": null,
+    "type": "Feature",
+  },
+  Midpoint {
+    "geometry": {
+      "coordinates": [
+        1.5,
+        1.500057130632186,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000003,
+    "properties": null,
+    "type": "Feature",
+  },
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        2,
+        2,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000004,
+    "properties": null,
+    "type": "Feature",
+  },
+]
+`;
+
+exports[`generateSyntheticPoints > MultiLineString 2`] = `
+{
+  "coords": [
+    [
+      [
+        0,
+        0,
+      ],
+    ],
+    [
+      [
+        0,
+        0,
+      ],
+    ],
+    [
+      [
+        1,
+        1,
+      ],
+    ],
+    [
+      [
+        1,
+        1,
+      ],
+    ],
+    [
+      [
+        2,
+        2,
+      ],
+    ],
+  ],
+  "ids": [
+    [
+      "/geometry/coordinates/0/0",
+    ],
+    [
+      "/geometry/coordinates/0/0",
+    ],
+    [
+      "/geometry/coordinates/0/1",
+    ],
+    [
+      "/geometry/coordinates/0/1",
+    ],
+    [
+      "/geometry/coordinates/0/2",
+    ],
+  ],
+}
+`;
+
+exports[`generateSyntheticPoints > MultiPoint 1`] = `
+{
+  "coords": [
+    [
+      [
+        0,
+        0,
+      ],
+    ],
+    [
+      [
+        1,
+        1,
+      ],
+    ],
+  ],
+  "ids": [
+    [
+      "/geometry/coordinates/0",
+    ],
+    [
+      "/geometry/coordinates/1",
+    ],
+  ],
+}
+`;
+
+exports[`generateSyntheticPoints > MultiPolygon 1`] = `
+[
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        0,
+        0,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000000,
+    "properties": null,
+    "type": "Feature",
+  },
+  Midpoint {
+    "geometry": {
+      "coordinates": [
+        0.5,
+        1.0001523435165751,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000001,
+    "properties": null,
+    "type": "Feature",
+  },
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        1,
+        2,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000002,
+    "properties": null,
+    "type": "Feature",
+  },
+  Midpoint {
+    "geometry": {
+      "coordinates": [
+        1.5,
+        2.500095256427045,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000003,
+    "properties": null,
+    "type": "Feature",
+  },
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        2,
+        3,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000004,
+    "properties": null,
+    "type": "Feature",
+  },
+  Midpoint {
+    "geometry": {
+      "coordinates": [
+        1,
+        1.500514306302108,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000005,
+    "properties": null,
+    "type": "Feature",
+  },
+]
+`;
+
+exports[`generateSyntheticPoints > MultiPolygon 2`] = `
+{
+  "coords": [
+    [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    [
+      [
+        0,
+        0,
+      ],
+    ],
+    [
+      [
+        1,
+        2,
+      ],
+    ],
+    [
+      [
+        1,
+        2,
+      ],
+    ],
+    [
+      [
+        2,
+        3,
+      ],
+    ],
+    [
+      [
+        2,
+        3,
+      ],
+    ],
+  ],
+  "ids": [
+    [
+      "/geometry/coordinates/0/0/0",
+      "/geometry/coordinates/0/0/3",
+    ],
+    [
+      "/geometry/coordinates/0/0/0",
+    ],
+    [
+      "/geometry/coordinates/0/0/1",
+    ],
+    [
+      "/geometry/coordinates/0/0/1",
+    ],
+    [
+      "/geometry/coordinates/0/0/2",
+    ],
+    [
+      "/geometry/coordinates/0/0/2",
+    ],
+  ],
+}
+`;
+
+exports[`generateSyntheticPoints > Polygon 1`] = `
+[
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        0,
+        0,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000000,
+    "properties": null,
+    "type": "Feature",
+  },
+  Midpoint {
+    "geometry": {
+      "coordinates": [
+        0.5,
+        1.0001523435165751,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000001,
+    "properties": null,
+    "type": "Feature",
+  },
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        1,
+        2,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000002,
+    "properties": null,
+    "type": "Feature",
+  },
+  Midpoint {
+    "geometry": {
+      "coordinates": [
+        1.5,
+        2.500095256427045,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000003,
+    "properties": null,
+    "type": "Feature",
+  },
+  Vertex {
+    "geometry": {
+      "coordinates": [
+        2,
+        3,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000004,
+    "properties": null,
+    "type": "Feature",
+  },
+  Midpoint {
+    "geometry": {
+      "coordinates": [
+        1,
+        1.500514306302108,
+      ],
+      "type": "Point",
+    },
+    "id": 1000000005,
+    "properties": null,
+    "type": "Feature",
+  },
+]
+`;
+
+exports[`generateSyntheticPoints > Polygon 2`] = `
+{
+  "coords": [
+    [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    [
+      [
+        0,
+        0,
+      ],
+    ],
+    [
+      [
+        1,
+        2,
+      ],
+    ],
+    [
+      [
+        1,
+        2,
+      ],
+    ],
+    [
+      [
+        2,
+        3,
+      ],
+    ],
+    [
+      [
+        2,
+        3,
+      ],
+    ],
+  ],
+  "ids": [
+    [
+      "/geometry/coordinates/0/0",
+      "/geometry/coordinates/0/3",
+    ],
+    [
+      "/geometry/coordinates/0/0",
+    ],
+    [
+      "/geometry/coordinates/0/1",
+    ],
+    [
+      "/geometry/coordinates/0/1",
+    ],
+    [
+      "/geometry/coordinates/0/2",
+    ],
+    [
+      "/geometry/coordinates/0/2",
+    ],
+  ],
+}
+`;
