@@ -16,11 +16,11 @@ details > summary {
 }
 
 .geojsonio-cursor-default .mapboxgl-canvas-container {
-  cursor: url('/cursors/cursor-default.svg'), auto !important;
+  cursor: url('/next/cursors/cursor-default.svg'), auto !important;
 }
 
 .geojsonio-cursor-point .mapboxgl-canvas-container {
-  cursor: url('/cursors/cursor-point.svg'), auto !important;
+  cursor: url('/next/cursors/cursor-point.svg'), auto !important;
 }
 
 .geojsonio-cursor-crosshair .mapboxgl-canvas-container {

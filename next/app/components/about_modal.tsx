@@ -38,7 +38,7 @@ export default function AboutModal({ open }: { open: boolean }) {
 
   useEffect(() => {
     if (open) {
-      fetch('/about.md')
+      fetch('/next/about.md')
         .then((res) => res.text())
         .then((md) => {
           setMarkdown(md);

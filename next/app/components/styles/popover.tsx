@@ -19,7 +19,7 @@ export function StylesPopover() {
             const isActive = id === activeStyleId;
             // Image file convention: public/layer-icons/{id}.png (or .jpg, .svg, etc.)
             // You will need to place the images in public/layer-icons/ with the correct names
-            const iconSrc = `/layer-icons/${id}.png`;
+            const iconSrc = `/next/layer-icons/${id}.png`;
             return (
               <div key={id} className="flex flex-col items-center">
                 <button

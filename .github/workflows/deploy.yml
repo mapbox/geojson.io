@@ -19,10 +19,16 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - run: npm ci
+      - name: Install dependencies (root)
+        run: npm ci
 
-      - name: Build
+      - name: Build original app
         run: npm run build
+
+      - name: Build next app
+        env:
+          VITE_PUBLIC_MAPBOX_TOKEN: ${{ secrets.VITE_PUBLIC_MAPBOX_TOKEN }}
+        run: npm run build:next
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
