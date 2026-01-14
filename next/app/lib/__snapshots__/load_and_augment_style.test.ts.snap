@@ -1,0 +1,1850 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`loadAndAugmentStyle 1`] = `
+{
+  "glyphs": "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
+  "layers": [
+    {
+      "filter": [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+      "id": "features-fill",
+      "paint": {
+        "fill-color": [
+          "match",
+          [
+            "feature-state",
+            "state",
+          ],
+          "selected",
+          "#3195ff",
+          "#312E81",
+        ],
+        "fill-emissive-strength": 1,
+        "fill-opacity": 0.3,
+      },
+      "source": "features",
+      "type": "fill",
+    },
+    {
+      "filter": [
+        "any",
+        [
+          "==",
+          "$type",
+          "LineString",
+        ],
+        [
+          "==",
+          "$type",
+          "Polygon",
+        ],
+      ],
+      "id": "features-line",
+      "paint": {
+        "line-color": [
+          "match",
+          [
+            "feature-state",
+            "state",
+          ],
+          "selected",
+          "#3195ff",
+          "#312E81",
+        ],
+        "line-emissive-strength": 1,
+        "line-opacity": 1,
+        "line-width": 2,
+      },
+      "source": "features",
+      "type": "line",
+    },
+    {
+      "filter": [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+      "id": "ephemeral-fill",
+      "paint": {
+        "fill-color": [
+          "match",
+          [
+            "feature-state",
+            "state",
+          ],
+          "selected",
+          "#3195ff",
+          "#312E81",
+        ],
+        "fill-emissive-strength": 1,
+        "fill-opacity": 0.3,
+      },
+      "source": "ephemeral",
+      "type": "fill",
+    },
+    {
+      "filter": [
+        "any",
+        [
+          "==",
+          "$type",
+          "LineString",
+        ],
+        [
+          "==",
+          "$type",
+          "Polygon",
+        ],
+      ],
+      "id": "ephemeral-line",
+      "paint": {
+        "line-color": [
+          "match",
+          [
+            "feature-state",
+            "state",
+          ],
+          "selected",
+          "#3195ff",
+          "#312E81",
+        ],
+        "line-emissive-strength": 1,
+        "line-opacity": 1,
+        "line-width": 2,
+      },
+      "source": "ephemeral",
+      "type": "line",
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "$type",
+          "Point",
+        ],
+      ],
+      "id": "features-symbol-halo",
+      "layout": {},
+      "paint": {
+        "circle-color": [
+          "match",
+          [
+            "feature-state",
+            "state",
+          ],
+          "selected",
+          "white",
+          "#312E81",
+        ],
+        "circle-radius": [
+          "match",
+          [
+            "feature-state",
+            "state",
+          ],
+          "selected",
+          8,
+          6,
+        ],
+      },
+      "source": "features",
+      "type": "circle",
+    },
+    {
+      "filter": [
+        "all",
+        [
+          "==",
+          "$type",
+          "Point",
+        ],
+      ],
+      "id": "features-symbol",
+      "layout": {},
+      "paint": {
+        "circle-color": [
+          "match",
+          [
+            "feature-state",
+            "state",
+          ],
+          "selected",
+          "white",
+          "#312E81",
+        ],
+        "circle-opacity": 1,
+        "circle-radius": [
+          "match",
+          [
+            "feature-state",
+            "state",
+          ],
+          "selected",
+          6,
+          4,
+        ],
+        "circle-stroke-color": [
+          "match",
+          [
+            "feature-state",
+            "state",
+          ],
+          "selected",
+          "#3195ff",
+          "white",
+        ],
+        "circle-stroke-width": 1,
+      },
+      "source": "features",
+      "type": "circle",
+    },
+  ],
+  "name": "Empty",
+  "sources": {
+    "ephemeral": {
+      "buffer": 4,
+      "data": {
+        "features": [],
+        "type": "FeatureCollection",
+      },
+      "tolerance": 0,
+      "type": "geojson",
+    },
+    "features": {
+      "buffer": 4,
+      "data": {
+        "features": [],
+        "type": "FeatureCollection",
+      },
+      "tolerance": 0,
+      "type": "geojson",
+    },
+  },
+  "sprite": "mapbox://sprites/mapbox/streets-v8",
+  "version": 8,
+}
+`;
+
+exports[`makeLayers > categorical 1`] = `
+[
+  {
+    "name": "Mapbox GL Style: Line",
+    "value": "{
+  "line-opacity": 1,
+  "line-width": 2,
+  "line-color": [
+    "match",
+    [
+      "get",
+      "foo"
+    ],
+    1,
+    "#fff000",
+    "#312E81"
+  ],
+  "line-emissive-strength": 1
+}",
+  },
+  {
+    "name": "Mapbox GL Style: Fill",
+    "value": "{
+  "fill-opacity": 0.3,
+  "fill-color": [
+    "match",
+    [
+      "get",
+      "foo"
+    ],
+    1,
+    "#fff000",
+    "#312E81"
+  ],
+  "fill-emissive-strength": 1
+}",
+  },
+  {
+    "name": "Mapbox GL Style: Circle",
+    "value": "{
+  "circle-stroke-color": [
+    "match",
+    [
+      "feature-state",
+      "state"
+    ],
+    "selected",
+    "#3195ff",
+    "white"
+  ],
+  "circle-stroke-width": 1,
+  "circle-radius": [
+    "match",
+    [
+      "feature-state",
+      "state"
+    ],
+    "selected",
+    6,
+    4
+  ],
+  "circle-opacity": 1,
+  "circle-color": [
+    "match",
+    [
+      "feature-state",
+      "state"
+    ],
+    "selected",
+    "white",
+    [
+      "match",
+      [
+        "get",
+        "foo"
+      ],
+      1,
+      "#fff000",
+      "#312E81"
+    ]
+  ]
+}",
+  },
+  {
+    "name": "Mapbox GL Expression",
+    "value": "[
+  "match",
+  [
+    "get",
+    "foo"
+  ],
+  1,
+  "#fff000",
+  "#312E81"
+]",
+  },
+  {
+    "name": "Leaflet",
+    "value": "function style(feature) {
+  const properties = feature.properties || {};
+  const fallback = "#312E81";
+  const property = "foo";
+  const drivenValue = properties[property];
+  // Data-driven styles
+  const ramp = {
+  "1": "#fff000"
+};
+  const color = ramp[drivenValue] || fallback;
+  return {
+    color: color || "#312E81",
+    weight: 2,
+    opacity: 1,
+    fillColor: color || "#312E81",
+    fillOpacity: 0.5,
+  }
+}",
+  },
+]
+`;
+
+exports[`makeLayers > categorical 2`] = `
+[
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Polygon",
+    ],
+    "id": "features-fill",
+    "paint": {
+      "fill-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        [
+          "match",
+          [
+            "get",
+            "foo",
+          ],
+          1,
+          "#fff000",
+          "#312E81",
+        ],
+      ],
+      "fill-emissive-strength": 1,
+      "fill-opacity": 0.3,
+    },
+    "source": "features",
+    "type": "fill",
+  },
+  {
+    "filter": [
+      "any",
+      [
+        "==",
+        "$type",
+        "LineString",
+      ],
+      [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+    ],
+    "id": "features-line",
+    "paint": {
+      "line-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        [
+          "match",
+          [
+            "get",
+            "foo",
+          ],
+          1,
+          "#fff000",
+          "#312E81",
+        ],
+      ],
+      "line-emissive-strength": 1,
+      "line-opacity": 1,
+      "line-width": 2,
+    },
+    "source": "features",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Polygon",
+    ],
+    "id": "ephemeral-fill",
+    "paint": {
+      "fill-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        [
+          "match",
+          [
+            "get",
+            "foo",
+          ],
+          1,
+          "#fff000",
+          "#312E81",
+        ],
+      ],
+      "fill-emissive-strength": 1,
+      "fill-opacity": 0.3,
+    },
+    "source": "ephemeral",
+    "type": "fill",
+  },
+  {
+    "filter": [
+      "any",
+      [
+        "==",
+        "$type",
+        "LineString",
+      ],
+      [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+    ],
+    "id": "ephemeral-line",
+    "paint": {
+      "line-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        [
+          "match",
+          [
+            "get",
+            "foo",
+          ],
+          1,
+          "#fff000",
+          "#312E81",
+        ],
+      ],
+      "line-emissive-strength": 1,
+      "line-opacity": 1,
+      "line-width": 2,
+    },
+    "source": "ephemeral",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "==",
+        "$type",
+        "Point",
+      ],
+    ],
+    "id": "features-symbol-halo",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "white",
+        [
+          "match",
+          [
+            "get",
+            "foo",
+          ],
+          1,
+          "#fff000",
+          "#312E81",
+        ],
+      ],
+      "circle-radius": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        8,
+        6,
+      ],
+    },
+    "source": "features",
+    "type": "circle",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "==",
+        "$type",
+        "Point",
+      ],
+    ],
+    "id": "features-symbol",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "white",
+        [
+          "match",
+          [
+            "get",
+            "foo",
+          ],
+          1,
+          "#fff000",
+          "#312E81",
+        ],
+      ],
+      "circle-opacity": 1,
+      "circle-radius": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        6,
+        4,
+      ],
+      "circle-stroke-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "white",
+      ],
+      "circle-stroke-width": 1,
+    },
+    "source": "features",
+    "type": "circle",
+  },
+]
+`;
+
+exports[`makeLayers > categorical with override 1`] = `
+[
+  {
+    "name": "Mapbox GL Style: Line",
+    "value": "{
+  "line-opacity": [
+    "coalesce",
+    [
+      "get",
+      "stroke-opacity"
+    ],
+    1
+  ],
+  "line-width": [
+    "coalesce",
+    [
+      "get",
+      "stroke-width"
+    ],
+    2
+  ],
+  "line-color": [
+    "coalesce",
+    [
+      "get",
+      "stroke"
+    ],
+    [
+      "match",
+      [
+        "get",
+        "foo"
+      ],
+      1,
+      "#fff000",
+      "#312E81"
+    ]
+  ],
+  "line-emissive-strength": 1
+}",
+  },
+  {
+    "name": "Mapbox GL Style: Fill",
+    "value": "{
+  "fill-opacity": [
+    "coalesce",
+    [
+      "get",
+      "fill-opacity"
+    ],
+    0.3
+  ],
+  "fill-color": [
+    "coalesce",
+    [
+      "get",
+      "fill"
+    ],
+    [
+      "match",
+      [
+        "get",
+        "foo"
+      ],
+      1,
+      "#fff000",
+      "#312E81"
+    ]
+  ],
+  "fill-emissive-strength": 1
+}",
+  },
+  {
+    "name": "Mapbox GL Style: Circle",
+    "value": "{
+  "circle-stroke-color": [
+    "match",
+    [
+      "feature-state",
+      "state"
+    ],
+    "selected",
+    "#3195ff",
+    "white"
+  ],
+  "circle-stroke-width": 1,
+  "circle-radius": [
+    "match",
+    [
+      "feature-state",
+      "state"
+    ],
+    "selected",
+    6,
+    4
+  ],
+  "circle-opacity": 1,
+  "circle-color": [
+    "match",
+    [
+      "feature-state",
+      "state"
+    ],
+    "selected",
+    "white",
+    [
+      "coalesce",
+      [
+        "get",
+        "stroke"
+      ],
+      [
+        "match",
+        [
+          "get",
+          "foo"
+        ],
+        1,
+        "#fff000",
+        "#312E81"
+      ]
+    ]
+  ]
+}",
+  },
+  {
+    "name": "Mapbox GL Expression",
+    "value": "[
+  "match",
+  [
+    "get",
+    "foo"
+  ],
+  1,
+  "#fff000",
+  "#312E81"
+]",
+  },
+  {
+    "name": "Leaflet",
+    "value": "function style(feature) {
+  const properties = feature.properties || {};
+  const fallback = "#312E81";
+  const property = "foo";
+  const drivenValue = properties[property];
+  // Data-driven styles
+  const ramp = {
+  "1": "#fff000"
+};
+  const color = ramp[drivenValue] || fallback;
+  return {
+    color: properties.stroke || color || "#312E81",
+    weight: properties['stroke-width'] || 2,
+    opacity: properties['stroke-opacity'] || 1,
+    fillColor: properties['fill'] || color || "#312E81",
+    fillOpacity: properties['fill-opacity'] || 0.5,
+  }
+}",
+  },
+]
+`;
+
+exports[`makeLayers > none 1`] = `
+[
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Polygon",
+    ],
+    "id": "features-fill",
+    "paint": {
+      "fill-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "#312E81",
+      ],
+      "fill-emissive-strength": 1,
+      "fill-opacity": 0.3,
+    },
+    "source": "features",
+    "type": "fill",
+  },
+  {
+    "filter": [
+      "any",
+      [
+        "==",
+        "$type",
+        "LineString",
+      ],
+      [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+    ],
+    "id": "features-line",
+    "paint": {
+      "line-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "#312E81",
+      ],
+      "line-emissive-strength": 1,
+      "line-opacity": 1,
+      "line-width": 2,
+    },
+    "source": "features",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Polygon",
+    ],
+    "id": "ephemeral-fill",
+    "paint": {
+      "fill-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "#312E81",
+      ],
+      "fill-emissive-strength": 1,
+      "fill-opacity": 0.3,
+    },
+    "source": "ephemeral",
+    "type": "fill",
+  },
+  {
+    "filter": [
+      "any",
+      [
+        "==",
+        "$type",
+        "LineString",
+      ],
+      [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+    ],
+    "id": "ephemeral-line",
+    "paint": {
+      "line-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "#312E81",
+      ],
+      "line-emissive-strength": 1,
+      "line-opacity": 1,
+      "line-width": 2,
+    },
+    "source": "ephemeral",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "==",
+        "$type",
+        "Point",
+      ],
+    ],
+    "id": "features-symbol-halo",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "white",
+        "#312E81",
+      ],
+      "circle-radius": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        8,
+        6,
+      ],
+    },
+    "source": "features",
+    "type": "circle",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "==",
+        "$type",
+        "Point",
+      ],
+    ],
+    "id": "features-symbol",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "white",
+        "#312E81",
+      ],
+      "circle-opacity": 1,
+      "circle-radius": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        6,
+        4,
+      ],
+      "circle-stroke-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "white",
+      ],
+      "circle-stroke-width": 1,
+    },
+    "source": "features",
+    "type": "circle",
+  },
+]
+`;
+
+exports[`makeLayers > ramp 1`] = `
+[
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Polygon",
+    ],
+    "id": "features-fill",
+    "paint": {
+      "fill-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        [
+          "match",
+          [
+            "typeof",
+            [
+              "get",
+              "foo",
+            ],
+          ],
+          "number",
+          [
+            "interpolate-lab",
+            [
+              "linear",
+            ],
+            [
+              "get",
+              "foo",
+            ],
+            1,
+            "#fff000",
+            10,
+            "#fff000",
+          ],
+          "#312E81",
+        ],
+      ],
+      "fill-emissive-strength": 1,
+      "fill-opacity": 0.3,
+    },
+    "source": "features",
+    "type": "fill",
+  },
+  {
+    "filter": [
+      "any",
+      [
+        "==",
+        "$type",
+        "LineString",
+      ],
+      [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+    ],
+    "id": "features-line",
+    "paint": {
+      "line-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        [
+          "match",
+          [
+            "typeof",
+            [
+              "get",
+              "foo",
+            ],
+          ],
+          "number",
+          [
+            "interpolate-lab",
+            [
+              "linear",
+            ],
+            [
+              "get",
+              "foo",
+            ],
+            1,
+            "#fff000",
+            10,
+            "#fff000",
+          ],
+          "#312E81",
+        ],
+      ],
+      "line-emissive-strength": 1,
+      "line-opacity": 1,
+      "line-width": 2,
+    },
+    "source": "features",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Polygon",
+    ],
+    "id": "ephemeral-fill",
+    "paint": {
+      "fill-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        [
+          "match",
+          [
+            "typeof",
+            [
+              "get",
+              "foo",
+            ],
+          ],
+          "number",
+          [
+            "interpolate-lab",
+            [
+              "linear",
+            ],
+            [
+              "get",
+              "foo",
+            ],
+            1,
+            "#fff000",
+            10,
+            "#fff000",
+          ],
+          "#312E81",
+        ],
+      ],
+      "fill-emissive-strength": 1,
+      "fill-opacity": 0.3,
+    },
+    "source": "ephemeral",
+    "type": "fill",
+  },
+  {
+    "filter": [
+      "any",
+      [
+        "==",
+        "$type",
+        "LineString",
+      ],
+      [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+    ],
+    "id": "ephemeral-line",
+    "paint": {
+      "line-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        [
+          "match",
+          [
+            "typeof",
+            [
+              "get",
+              "foo",
+            ],
+          ],
+          "number",
+          [
+            "interpolate-lab",
+            [
+              "linear",
+            ],
+            [
+              "get",
+              "foo",
+            ],
+            1,
+            "#fff000",
+            10,
+            "#fff000",
+          ],
+          "#312E81",
+        ],
+      ],
+      "line-emissive-strength": 1,
+      "line-opacity": 1,
+      "line-width": 2,
+    },
+    "source": "ephemeral",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "==",
+        "$type",
+        "Point",
+      ],
+    ],
+    "id": "features-symbol-halo",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "white",
+        [
+          "match",
+          [
+            "typeof",
+            [
+              "get",
+              "foo",
+            ],
+          ],
+          "number",
+          [
+            "interpolate-lab",
+            [
+              "linear",
+            ],
+            [
+              "get",
+              "foo",
+            ],
+            1,
+            "#fff000",
+            10,
+            "#fff000",
+          ],
+          "#312E81",
+        ],
+      ],
+      "circle-radius": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        8,
+        6,
+      ],
+    },
+    "source": "features",
+    "type": "circle",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "==",
+        "$type",
+        "Point",
+      ],
+    ],
+    "id": "features-symbol",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "white",
+        [
+          "match",
+          [
+            "typeof",
+            [
+              "get",
+              "foo",
+            ],
+          ],
+          "number",
+          [
+            "interpolate-lab",
+            [
+              "linear",
+            ],
+            [
+              "get",
+              "foo",
+            ],
+            1,
+            "#fff000",
+            10,
+            "#fff000",
+          ],
+          "#312E81",
+        ],
+      ],
+      "circle-opacity": 1,
+      "circle-radius": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        6,
+        4,
+      ],
+      "circle-stroke-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "white",
+      ],
+      "circle-stroke-width": 1,
+    },
+    "source": "features",
+    "type": "circle",
+  },
+]
+`;
+
+exports[`makeLayers > ramp 2`] = `
+[
+  {
+    "name": "Mapbox GL Style: Line",
+    "value": "{
+  "line-opacity": 1,
+  "line-width": 2,
+  "line-color": [
+    "match",
+    [
+      "typeof",
+      [
+        "get",
+        "foo"
+      ]
+    ],
+    "number",
+    [
+      "interpolate-lab",
+      [
+        "linear"
+      ],
+      [
+        "get",
+        "foo"
+      ],
+      1,
+      "#fff000",
+      10,
+      "#fff000"
+    ],
+    "#312E81"
+  ],
+  "line-emissive-strength": 1
+}",
+  },
+  {
+    "name": "Mapbox GL Style: Fill",
+    "value": "{
+  "fill-opacity": 0.3,
+  "fill-color": [
+    "match",
+    [
+      "typeof",
+      [
+        "get",
+        "foo"
+      ]
+    ],
+    "number",
+    [
+      "interpolate-lab",
+      [
+        "linear"
+      ],
+      [
+        "get",
+        "foo"
+      ],
+      1,
+      "#fff000",
+      10,
+      "#fff000"
+    ],
+    "#312E81"
+  ],
+  "fill-emissive-strength": 1
+}",
+  },
+  {
+    "name": "Mapbox GL Style: Circle",
+    "value": "{
+  "circle-stroke-color": [
+    "match",
+    [
+      "feature-state",
+      "state"
+    ],
+    "selected",
+    "#3195ff",
+    "white"
+  ],
+  "circle-stroke-width": 1,
+  "circle-radius": [
+    "match",
+    [
+      "feature-state",
+      "state"
+    ],
+    "selected",
+    6,
+    4
+  ],
+  "circle-opacity": 1,
+  "circle-color": [
+    "match",
+    [
+      "feature-state",
+      "state"
+    ],
+    "selected",
+    "white",
+    [
+      "match",
+      [
+        "typeof",
+        [
+          "get",
+          "foo"
+        ]
+      ],
+      "number",
+      [
+        "interpolate-lab",
+        [
+          "linear"
+        ],
+        [
+          "get",
+          "foo"
+        ],
+        1,
+        "#fff000",
+        10,
+        "#fff000"
+      ],
+      "#312E81"
+    ]
+  ]
+}",
+  },
+  {
+    "name": "Mapbox GL Expression",
+    "value": "[
+  "match",
+  [
+    "typeof",
+    [
+      "get",
+      "foo"
+    ]
+  ],
+  "number",
+  [
+    "interpolate-lab",
+    [
+      "linear"
+    ],
+    [
+      "get",
+      "foo"
+    ],
+    1,
+    "#fff000",
+    10,
+    "#fff000"
+  ],
+  "#312E81"
+]",
+  },
+  {
+    "name": "Leaflet",
+    "value": "function style(feature) {
+  const properties = feature.properties || {};
+  const fallback = "#312E81";
+  const property = "foo";
+  const drivenValue = properties[property];
+
+  const ramp = [
+  1,
+  "#fff000",
+  10,
+  "#fff000"
+];
+
+  let color = fallback;
+  for (let i = 0; i < ramp.length; i += 2) {
+    if (drivenValue >= ramp[i]) {
+      color = ramp[i + 1];
+    }
+  }
+  
+  return {
+    color: color || "#312E81",
+    weight: 2,
+    opacity: 1,
+    fillColor: color || "#312E81",
+    fillOpacity: 0.5,
+  }
+}",
+  },
+]
+`;
+
+exports[`makeLayers > with preview property 1`] = `
+[
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Polygon",
+    ],
+    "id": "features-fill",
+    "paint": {
+      "fill-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "#312E81",
+      ],
+      "fill-emissive-strength": 1,
+      "fill-opacity": 0.3,
+    },
+    "source": "features",
+    "type": "fill",
+  },
+  {
+    "filter": [
+      "any",
+      [
+        "==",
+        "$type",
+        "LineString",
+      ],
+      [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+    ],
+    "id": "features-line",
+    "paint": {
+      "line-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "#312E81",
+      ],
+      "line-emissive-strength": 1,
+      "line-opacity": 1,
+      "line-width": 2,
+    },
+    "source": "features",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Polygon",
+    ],
+    "id": "ephemeral-fill",
+    "paint": {
+      "fill-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "#312E81",
+      ],
+      "fill-emissive-strength": 1,
+      "fill-opacity": 0.3,
+    },
+    "source": "ephemeral",
+    "type": "fill",
+  },
+  {
+    "filter": [
+      "any",
+      [
+        "==",
+        "$type",
+        "LineString",
+      ],
+      [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+    ],
+    "id": "ephemeral-line",
+    "paint": {
+      "line-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "#312E81",
+      ],
+      "line-emissive-strength": 1,
+      "line-opacity": 1,
+      "line-width": 2,
+    },
+    "source": "ephemeral",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "==",
+        "$type",
+        "Point",
+      ],
+    ],
+    "id": "features-symbol-halo",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "white",
+        "#312E81",
+      ],
+      "circle-radius": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        8,
+        6,
+      ],
+    },
+    "source": "features",
+    "type": "circle",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "==",
+        "$type",
+        "Point",
+      ],
+    ],
+    "id": "features-symbol",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "white",
+        "#312E81",
+      ],
+      "circle-opacity": 1,
+      "circle-radius": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        6,
+        4,
+      ],
+      "circle-stroke-color": [
+        "match",
+        [
+          "feature-state",
+          "state",
+        ],
+        "selected",
+        "#3195ff",
+        "white",
+      ],
+      "circle-stroke-width": 1,
+    },
+    "source": "features",
+    "type": "circle",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "all",
+        [
+          "==",
+          "$type",
+          "Point",
+        ],
+      ],
+      [
+        "has",
+        "foo",
+      ],
+    ],
+    "id": "features-point-label",
+    "layout": {
+      "icon-optional": true,
+      "symbol-placement": "point",
+      "text-field": [
+        "get",
+        "foo",
+      ],
+      "text-justify": "auto",
+      "text-radial-offset": 0.5,
+      "text-size": 13,
+      "text-variable-anchor": [
+        "top",
+        "bottom",
+        "left",
+        "right",
+      ],
+    },
+    "paint": {
+      "text-halo-blur": 0.8,
+      "text-halo-color": "#fff",
+      "text-halo-width": 1,
+    },
+    "source": "features",
+    "type": "symbol",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "any",
+        [
+          "==",
+          "$type",
+          "LineString",
+        ],
+        [
+          "==",
+          "$type",
+          "Polygon",
+        ],
+      ],
+      [
+        "has",
+        "foo",
+      ],
+    ],
+    "id": "features-line-label",
+    "layout": {
+      "icon-optional": true,
+      "symbol-placement": "line",
+      "text-field": [
+        "get",
+        "foo",
+      ],
+      "text-justify": "auto",
+      "text-radial-offset": 0.5,
+      "text-size": 13,
+      "text-variable-anchor": [
+        "top",
+        "bottom",
+        "left",
+        "right",
+      ],
+    },
+    "paint": {
+      "text-halo-blur": 0.8,
+      "text-halo-color": "#fff",
+      "text-halo-width": 1,
+    },
+    "source": "features",
+    "type": "symbol",
+  },
+  {
+    "filter": [
+      "all",
+      [
+        "==",
+        "$type",
+        "Polygon",
+      ],
+      [
+        "has",
+        "foo",
+      ],
+    ],
+    "id": "features-fill-label",
+    "layout": {
+      "icon-optional": true,
+      "symbol-placement": "point",
+      "text-field": [
+        "get",
+        "foo",
+      ],
+      "text-justify": "auto",
+      "text-radial-offset": 0.5,
+      "text-size": 13,
+      "text-variable-anchor": [
+        "top",
+        "bottom",
+        "left",
+        "right",
+      ],
+    },
+    "paint": {
+      "text-halo-blur": 0.8,
+      "text-halo-color": "#fff",
+      "text-halo-width": 1,
+    },
+    "source": "features",
+    "type": "symbol",
+  },
+]
+`;

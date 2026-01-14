@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`syntheticIds > GeometryCollection 1`] = `
+[
+  [
+    "/geometry/geometries/0/coordinates/0",
+  ],
+  [
+    "/geometry/geometries/0/coordinates/0",
+  ],
+  [
+    "/geometry/geometries/0/coordinates/1",
+  ],
+  [
+    "/geometry/geometries/0/coordinates/1",
+  ],
+  [
+    "/geometry/geometries/0/coordinates/2",
+  ],
+  [
+    "/geometry/geometries/1/coordinates/0",
+  ],
+  [
+    "/geometry/geometries/1/coordinates/1",
+  ],
+]
+`;

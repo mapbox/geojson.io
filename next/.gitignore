@@ -1,0 +1,63 @@
+toms-air*
+# dependencies
+node_modules
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.pnp.*
+.npm
+web_modules/
+
+# blitz
+/.blitz/
+/.next/
+/out/
+*.sqlite
+*.sqlite-journal
+.now
+.blitz-console-history
+blitz-log.log
+.blitz.config.compiled.js
+
+# misc
+.DS_Store
+
+# local env files
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+.envrc
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Testing
+.coverage
+coverage
+*.lcov
+.nyc_output
+lib-cov
+
+# Caches
+*.tsbuildinfo
+.eslintcache
+.node_repl_history
+.yarn-integrity
+
+# Serverless directories
+.serverless/
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+.nova
+dist

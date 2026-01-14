@@ -1,0 +1,27 @@
+{
+  "short_name": "geojson.io",
+  "name": "geojson.io: A fast, simple editor for map data.",
+  "icons": [
+    {
+      "src": "/next/favicon.png",
+      "type": "image/png",
+      "sizes": "282x282"
+    }
+  ],
+  "start_url": "/next/?source=pwa",
+  "background_color": "#3367D6",
+  "display": "standalone",
+  "scope": "/next/",
+  "theme_color": "#3367D6",
+  "shortcuts": [],
+  "description": "Edit map data",
+  "screenshots": [],
+  "file_handlers": [
+    {
+      "action": "/next/",
+      "accept": {
+        "application/json": [".geojson"]
+      }
+    }
+  ]
+}
