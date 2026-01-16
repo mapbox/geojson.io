@@ -2,6 +2,7 @@ const mapboxgl = require('mapbox-gl');
 const escape = require('escape-html');
 const length = require('@turf/length').default;
 const area = require('@turf/area').default;
+const DOMPurify = require('dompurify');
 
 const popup = require('../../lib/popup');
 const ClickableMarker = require('./clickable_marker');
@@ -113,7 +114,8 @@ const addMarkers = (geojson, context, writable) => {
     const color =
       (d.properties && d.properties['marker-color']) || defaultColor;
     const symbolColor =
-      (d.properties && d.properties['symbol-color']) || defaultSymbolColor;
+      (d.properties && DOMPurify.sanitize(d.properties['symbol-color'])) ||
+      defaultSymbolColor;
 
     let scale = 1;
     if (d.properties && d.properties['marker-size']) {
