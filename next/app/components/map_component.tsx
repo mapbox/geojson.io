@@ -160,11 +160,16 @@ export const MapComponent = memo(function MapComponent({
   // Zoom to initial features once map is ready
   // Used for handling features loaded from sessionStorage
   useEffect(() => {
-    if (!map?.map || hasZoomedRef.current || featureMap.size === 0) return;
+    if (!map?.map || hasZoomedRef.current) return;
 
     const handleLoad = () => {
-      const selectedFeatures = Array.from(featureMap.values());
-      zoomTo(selectedFeatures);
+      // Only zoom if there are features (loaded from sessionStorage)
+      if (featureMap.size > 0) {
+        const selectedFeatures = Array.from(featureMap.values());
+        zoomTo(selectedFeatures);
+      }
+      // Mark as complete even if there were no features to prevent
+      // zooming to newly drawn features
       hasZoomedRef.current = true;
     };
 
