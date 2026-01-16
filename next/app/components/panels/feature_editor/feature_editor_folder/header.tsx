@@ -77,7 +77,11 @@ export function FeatureEditorFolderHeader({
       </P.Root>
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
-          <Button onClick={handleZoomToAll} size="xs">
+          <Button
+            onClick={handleZoomToAll}
+            size="xs"
+            disabled={featureMap.size === 0}
+          >
             <Crosshair1Icon />
           </Button>
         </Tooltip.Trigger>
