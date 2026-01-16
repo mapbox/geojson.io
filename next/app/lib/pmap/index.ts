@@ -186,6 +186,7 @@ export default class PMap {
     map.on('touchstart', this.onMapTouchStart);
     map.on('touchmove', this.onMapTouchMove);
     map.on('touchend', this.onMapTouchEnd);
+    map.on('style.load', this.onMapStyleLoad);
 
     this.presenceMarkers = new Map();
     this.lastSymbolization = symbolization;
@@ -244,6 +245,11 @@ export default class PMap {
 
   onMapTouchMove = (e: mapboxgl.MapTouchEvent) => {
     this.handlers.current.onMapTouchMove(e);
+  };
+
+  onMapStyleLoad = (event: mapboxgl.MapEvent) => {
+    // disable terrain. If enabled in the style (as in Mapbox Standard style), it causes an alignment bug in the deck.gl overlay
+    (event.target as mapboxgl.Map).setTerrain(null);
   };
 
   onMapDoubleClick = (e: mapboxgl.MapMouseEvent) => {
