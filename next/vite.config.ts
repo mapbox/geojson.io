@@ -17,7 +17,7 @@ export default defineConfig((env) => ({
     // Use same public token as original geojson.io if env var not set
     'import.meta.env.VITE_PUBLIC_MAPBOX_TOKEN': JSON.stringify(
       process.env.VITE_PUBLIC_MAPBOX_TOKEN ||
-        'pk.eyJ1Ijoic3ZjLW9rdGEtbWFwYm94LXN0YWZmLWFjY2VzcyIsImEiOiJjbG5sMnExa3kxNTJtMmtsODJld24yNGJlIn0.RQ4CHchAYPJQZSiUJ0O3VQ'
+        'pk.eyJ1IjoiZXhhbXBsZXMiLCJhIjoiY21rbzVreHNrMDJ2NDNlbXhudTkxMGI3aiJ9.0zBA_9egcHq59cvlpytLoA'
     )
   },
   worker: {
