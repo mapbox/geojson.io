@@ -13,7 +13,7 @@ export type PersistenceMetadataMemory = {
 
 type PersistenceMetadata = PersistenceMetadataMemory;
 
-interface TransactOptions {
+export interface TransactOptions {
   quiet?: boolean;
 }
 
