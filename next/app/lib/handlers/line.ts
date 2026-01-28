@@ -38,7 +38,7 @@ export function useLineHandlers({
     click: (e) => {
       const { modeOptions } = mode;
 
-      if (selection.type === 'none' || selection.type === 'folder') {
+      if (selection.type === 'none') {
         /**
          * Drawing a new line: create the line and set the new
          * selection

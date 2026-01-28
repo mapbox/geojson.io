@@ -13,13 +13,6 @@ export default defineConfig((env) => ({
   build: {
     outDir: '../dist/next'
   },
-  define: {
-    // Use same public token as original geojson.io if env var not set
-    'import.meta.env.VITE_PUBLIC_MAPBOX_TOKEN': JSON.stringify(
-      process.env.VITE_PUBLIC_MAPBOX_TOKEN ||
-        'pk.eyJ1IjoiZXhhbXBsZXMiLCJhIjoiY21rbzVreHNrMDJ2NDNlbXhudTkxMGI3aiJ9.0zBA_9egcHq59cvlpytLoA'
-    )
-  },
   worker: {
     format: 'es',
     plugins: () => [tsconfigPaths()]

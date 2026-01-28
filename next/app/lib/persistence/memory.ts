@@ -3,7 +3,8 @@ import { sortAts } from 'app/lib/parse_stored';
 import type {
   IPersistence,
   MetaPair,
-  MetaUpdatesInput
+  MetaUpdatesInput,
+  TransactOptions
 } from 'app/lib/persistence/ipersistence';
 import {
   EMPTY_MOMENT,
@@ -86,14 +87,19 @@ export class MemPersistence implements IPersistence {
   }
 
   useTransact() {
-    return (partialMoment: Partial<MomentInput>) => {
-      trackMoment(partialMoment);
-      const moment: MomentInput = { ...EMPTY_MOMENT, ...partialMoment };
+    return (partialMoment: Partial<MomentInput> & TransactOptions) => {
+      const { quiet, ...momentData } = partialMoment;
+      trackMoment(momentData);
+      const moment: MomentInput = { ...EMPTY_MOMENT, ...momentData };
+      // Update app state - dataAtom
       const result = this.apply(moment);
-      this.store.set(
-        momentLogAtom,
-        UMomentLog.pushMoment(this.store.get(momentLogAtom), result)
-      );
+      // If update is not quiet, then update the momentLog / history
+      if (!quiet) {
+        this.store.set(
+          momentLogAtom,
+          UMomentLog.pushMoment(this.store.get(momentLogAtom), result)
+        );
+      }
       return Promise.resolve();
     };
   }
