@@ -8,6 +8,7 @@ import type {
   Polygon,
   Position
 } from 'types';
+import { getCircleProp } from '../circle';
 
 export type SimplifySupportedGeometry =
   | LineString
@@ -161,6 +162,17 @@ export function simplify(
   feature: IFeature<SimplifySupportedGeometry>,
   options: SimplifyOptions
 ) {
+  // if a circle is simplified, remove its @circle property
+  // it will be treated as a normal polygon going forward
+  // this prevents restoring the unsimplified circle geometry
+  // if it is moved (shift + drag)
+
+  const circleProp = getCircleProp(feature);
+
+  if (circleProp && feature.properties) {
+    delete feature.properties['@circle'];
+  }
+
   return {
     ...feature,
     geometry: simplifyGeom(feature.geometry, options)
