@@ -55,5 +55,17 @@ module.exports = [
         }
       ]
     }
+  },
+  {
+    title: 'HD',
+    style: 'mapbox://styles/mapbox-map-design/standard-hd-beta'
+  },
+  {
+    title: 'HD-3DLN',
+    style: 'mapbox://styles/mapbox-3dln/mbx-3d-line-navigation-demo-style'
+  },
+  {
+    title: 'HD-ROADS',
+    style: 'mapbox://styles/mapbox/high-definition-roads-beta'
   }
 ];
