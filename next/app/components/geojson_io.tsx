@@ -41,7 +41,7 @@ import { Visual } from './visual';
 import { UrlAPI } from './url_api';
 import { splitsAtom } from 'state/jotai';
 
-export type ResolvedLayout = 'HORIZONTAL' | 'VERTICAL' | 'FLOATING';
+export type ResolvedLayout = 'HORIZONTAL' | 'VERTICAL';
 
 interface Transform {
   x: number;

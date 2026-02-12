@@ -9,7 +9,6 @@ export default function FeatureEditor({ layout }: { layout: ResolvedLayout }) {
   const selectedFeatures = useAtomValue(selectedFeaturesAtom);
   const mode = useAtomValue(modeAtom);
 
-  console.log('here layout', layout);
   // Don't show panel while drawing a feature
   const isDrawing = [
     Mode.DRAW_POLYGON,
