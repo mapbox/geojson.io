@@ -2,8 +2,10 @@ import { useAtomValue } from 'jotai';
 import { Mode, modeAtom, selectedFeaturesAtom } from 'state/jotai';
 import { FeatureEditorInner } from './feature_editor/feature_editor_inner';
 import FeatureEditorMulti from './feature_editor/feature_editor_multi';
+import { ResolvedLayout } from '../geojson_io';
+import clsx from 'clsx';
 
-export default function FeatureEditor() {
+export default function FeatureEditor({ layout }: { layout: ResolvedLayout }) {
   const selectedFeatures = useAtomValue(selectedFeaturesAtom);
   const mode = useAtomValue(modeAtom);
 
@@ -20,7 +22,13 @@ export default function FeatureEditor() {
 
   return (
     <div
-      className={`absolute bg-white transition-all z-20  h-1/3 drop-shadow-md left-4 right-4 bottom-4 rounded overflow-hidden`}
+      className={clsx(
+        `absolute bg-white transition-all z-20 drop-shadow-md overflow-hidden`,
+        {
+          'h-1/3 left-4 right-4 bottom-4 rounded': layout === 'HORIZONTAL',
+          'h-full w-full': layout === 'VERTICAL'
+        }
+      )}
       style={{ transform: hasSelected ? 'translateY(0)' : 'translateY(110%)' }}
     >
       <h2 className="text-center py-1 px-3 focus:outline-none text-white dark:text-white bg-[#34495e]">

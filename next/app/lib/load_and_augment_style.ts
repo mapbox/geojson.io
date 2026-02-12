@@ -339,7 +339,8 @@ export function CIRCLE_PAINT(
         'selected',
         6 + r,
         4 + r
-      ]
+      ],
+      'circle-emissive-strength': 1
     };
   }
   return {
@@ -362,7 +363,8 @@ export function CIRCLE_PAINT(
         symbolization,
         part: 'stroke'
       })
-    ]
+    ],
+    'circle-emissive-strength': 1
   };
 }
 
