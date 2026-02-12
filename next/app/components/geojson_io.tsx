@@ -21,10 +21,16 @@ import { ErrorBoundary } from 'app/components/elements';
 import { Keybindings } from 'app/components/keybindings';
 import { Legend } from 'app/components/legend';
 import Notifications from 'app/components/notifications';
-import { SidePanel } from 'app/components/panels';
-import { Resizer, useWindowResizeSplits } from 'app/components/resizer';
+import { SidePanel, BottomPanel } from 'app/components/panels';
+import {
+  BottomResizer,
+  Resizer,
+  useBigScreen,
+  useWindowResizeSplits
+} from 'app/components/resizer';
 import { MapContext } from 'app/context/map_context';
-import { atom, useAtom } from 'jotai';
+import clsx from 'clsx';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import debounce from 'lodash/debounce';
 import { Tooltip as T } from 'radix-ui';
 import SearchBoxButton from './search/search_box_button';
@@ -33,6 +39,9 @@ import { Button } from './elements';
 import { FeatureEditorFolder } from './panels/feature_editor/feature_editor_folder';
 import { Visual } from './visual';
 import { UrlAPI } from './url_api';
+import { splitsAtom } from 'state/jotai';
+
+export type ResolvedLayout = 'HORIZONTAL' | 'VERTICAL' | 'FLOATING';
 
 interface Transform {
   x: number;
@@ -47,6 +56,10 @@ const persistentTransformAtom = atom<Transform>({
 export function GeojsonIO() {
   const [map, setMap] = useState<PMap | null>(null);
   useWindowResizeSplits();
+  const splits = useAtomValue(splitsAtom);
+  const isBigScreen = useBigScreen();
+
+  const layout: ResolvedLayout = isBigScreen ? 'HORIZONTAL' : 'VERTICAL';
 
   const sensor = useSensors(
     useSensor(PointerSensor, {
@@ -93,11 +106,12 @@ export function GeojsonIO() {
             </div>
           </ErrorBoundary>
           <div
-            className={
-              'flex flex-auto relative border-t border-gray-200 dark:border-gray-900'
-            }
+            className={clsx(
+              layout === 'VERTICAL' && 'flex-col',
+              'flex flex-auto relative border-t border-gray-200 dark:border-gray-900 overflow-hidden'
+            )}
           >
-            <FeatureEditorFolder />
+            {layout === 'HORIZONTAL' ? <FeatureEditorFolder /> : null}
             <DndContext
               sensors={sensor}
               modifiers={[restrictToWindowEdges]}
@@ -110,11 +124,24 @@ export function GeojsonIO() {
                 });
               }}
             >
-              <Map persistentTransform={persistentTransform} setMap={setMap} />
+              <Map
+                persistentTransform={persistentTransform}
+                setMap={setMap}
+                layout={layout}
+              />
             </DndContext>
-            <SidePanel />
-            <Resizer side="left" />
-            <Resizer side="right" />
+            {layout === 'HORIZONTAL' ? (
+              <>
+                <SidePanel />
+                <Resizer side="left" />
+                <Resizer side="right" />
+              </>
+            ) : layout === 'VERTICAL' ? (
+              <>
+                <BottomPanel layout={layout} />
+                <BottomResizer />
+              </>
+            ) : null}
           </div>
           <Drop />
           <UrlAPI />
@@ -130,8 +157,10 @@ export function GeojsonIO() {
 }
 
 function Map({
+  layout,
   setMap
 }: {
+  layout: ResolvedLayout;
   setMap: (arg0: PMap | null) => void;
   persistentTransform: Transform;
 }) {
@@ -156,7 +185,7 @@ function Map({
         <Legend />
       </div>
       {/* Feature Editor bottom of map */}
-      <FeatureEditor />
+      {layout === 'HORIZONTAL' && <FeatureEditor layout={layout} />}
     </div>
   );
 }

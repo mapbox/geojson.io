@@ -12,6 +12,9 @@ import {
   TabOption,
   tabAtom
 } from 'state/jotai';
+import FeatureEditor from './feature_editor';
+import { ResolvedLayout } from '../geojson_io';
+import { FeatureEditorFolderInner } from './feature_editor/feature_editor_folder';
 
 // Configuration for tabs
 const TAB_CONFIG = {
@@ -26,7 +29,7 @@ const TAB_CONFIG = {
 };
 
 const TAB_ORDER_RIGHT = [TabOption.JSON, TabOption.Table];
-const TAB_ORDER_BOTTOM = [TabOption.Table, TabOption.JSON, TabOption.List];
+const TAB_ORDER_BOTTOM = [TabOption.JSON, TabOption.Table, TabOption.List];
 
 export function Tab({
   onClick,
@@ -83,6 +86,8 @@ const ActiveTab = memo(function ActiveTab({
       return <FeatureCollectionCodeBlock />;
     case TabOption.Table:
       return <FeatureTable />;
+    case TabOption.List:
+      return <FeatureEditorFolderInner />;
   }
 });
 
@@ -146,7 +151,11 @@ export const SidePanel = memo(function SidePanelInner() {
   );
 });
 
-export const BottomPanel = memo(function BottomPanelInner() {
+export const BottomPanel = memo(function BottomPanelInner({
+  layout
+}: {
+  layout: ResolvedLayout;
+}) {
   const splits = useAtomValue(splitsAtom);
   const showPanel = useAtomValue(showPanelBottomAtom);
   if (!showPanel) return null;
@@ -158,6 +167,7 @@ export const BottomPanel = memo(function BottomPanelInner() {
       className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-900 relative"
     >
       <Panel tabOrder={TAB_ORDER_BOTTOM} showSymbolization={false} />
+      {layout === 'VERTICAL' && <FeatureEditor layout={layout} />}
     </div>
   );
 });
