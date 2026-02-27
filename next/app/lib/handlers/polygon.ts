@@ -231,7 +231,7 @@ export function usePolygonHandlers({
       }
       const feature = wrappedFeature.feature as IFeature<Polygon>;
       const newRing = feature.geometry.coordinates[0].slice();
-      newRing.splice(-2, 1);
+      newRing.splice(-3, 2);
       const finalFeature = replaceCoordinates(feature, [newRing]);
 
       if (!multi) {
