@@ -80,6 +80,7 @@ describe('makeLayers', () => {
 
     const emptyStyle: mapboxgl.Style = {
       version: 8,
+      glyphs: 'https://foo.com/foo{fontstack}/{range}',
       sources: {},
       layers: []
     };
@@ -108,6 +109,7 @@ describe('makeLayers', () => {
     const layers = makeLayers(inputs);
     const emptyStyle: mapboxgl.Style = {
       version: 8,
+      glyphs: 'https://foo.com/foo{fontstack}/{range}',
       sources: {},
       layers: []
     };
