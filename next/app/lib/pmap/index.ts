@@ -1,6 +1,7 @@
 import { PolygonLayer, ScatterplotLayer } from '@deck.gl/layers';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { colorFromPresence } from 'app/lib/color';
+import { loadMakiIcons } from 'app/lib/maki';
 import {
   CURSOR_DEFAULT,
   DECK_LASSO_ID,
@@ -248,8 +249,11 @@ export default class PMap {
   };
 
   onMapStyleLoad = (event: mapboxgl.MapEvent) => {
+    const map = event.target as mapboxgl.Map;
     // disable terrain. If enabled in the style (as in Mapbox Standard style), it causes an alignment bug in the deck.gl overlay
-    (event.target as mapboxgl.Map).setTerrain(null);
+    map.setTerrain(null);
+    // Load maki icons as SDF images so marker-symbol icons can be recolored via icon-color.
+    void loadMakiIcons(map);
   };
 
   onMapDoubleClick = (e: mapboxgl.MapMouseEvent) => {
