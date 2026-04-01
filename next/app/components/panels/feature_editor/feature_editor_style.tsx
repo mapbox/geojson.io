@@ -2,24 +2,33 @@ import { ColorPopoverField } from 'app/components/color_popover';
 import {
   Button,
   inputClass,
+  PopoverContent2,
   StyledLabelSpan,
   styledCheckbox,
   TextWell
 } from 'app/components/elements';
 import { useAutoSubmit } from 'app/hooks/use_auto_submit';
 import { purple900 } from 'app/lib/constants';
+import { MAKI_ICONS } from 'app/lib/maki';
 import { usePersistence } from 'app/lib/persistence/context';
 import * as d3 from 'd3-color';
 import { Field, Form, Formik, type FormikProps } from 'formik';
 import { useSetAtom } from 'jotai';
 import cloneDeep from 'lodash/cloneDeep';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Popover as P } from 'radix-ui';
 import { TabOption, tabAtom } from 'state/jotai';
 import type { JsonValue } from 'type-fest';
 import type { GeoJsonProperties, IWrappedFeature } from 'types';
 import { z } from 'zod';
 
-interface FormValues {
+// ---------------------------------------------------------------------------
+// Shared types
+// ---------------------------------------------------------------------------
+
+type MarkerSize = 'small' | 'medium' | 'large';
+
+interface StrokeFillFormValues {
   enableFill: boolean;
   fill: string;
   enableFillOpacity: boolean;
@@ -31,6 +40,18 @@ interface FormValues {
   enableStrokeWidth: boolean;
   'stroke-width': number;
 }
+
+interface MarkerFormValues {
+  enableMarkerColor: boolean;
+  'marker-color': string;
+  'marker-size': MarkerSize;
+  enableMarkerSymbol: boolean;
+  'marker-symbol': string;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function getString(set: Set<JsonValue>): string | undefined {
   if (set.size === 1) {
@@ -45,6 +66,32 @@ function getNumber(set: Set<JsonValue>): number | undefined {
     if (typeof val === 'number') return val;
   }
 }
+
+function colorRefine(val: string) {
+  return d3.color(val) !== null;
+}
+
+function AutoSubmit() {
+  useAutoSubmit();
+  return null;
+}
+
+function LiteralStyleNotice() {
+  const setTab = useSetAtom(tabAtom);
+  return (
+    <TextWell>
+      The current map symbolization has literal styles disabled.{' '}
+      <Button onClick={() => setTab(TabOption.Symbolization)} size="xs">
+        Enable literal styles
+      </Button>{' '}
+      for your changes to be seen on the map.
+    </TextWell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Parse helpers
+// ---------------------------------------------------------------------------
 
 export function parseProperties(properties: GeoJsonProperties) {
   const enables = {
@@ -84,37 +131,270 @@ export function parseProperties(properties: GeoJsonProperties) {
     })
   });
 
-  const defaults = zStyles.parse(properties);
+  return { ...zStyles.parse(properties), ...enables };
+}
 
-  const initialValues = {
-    ...defaults,
-    ...enables
+function parseMarkerProperties(
+  properties: GeoJsonProperties
+): MarkerFormValues {
+  const raw = properties || {};
+  const colorRaw = raw['marker-color'];
+  const hasColor = typeof colorRaw === 'string' && d3.color(colorRaw) !== null;
+
+  const symbolRaw = raw['marker-symbol'];
+  const hasSymbol = typeof symbolRaw === 'string' && symbolRaw.length > 0;
+
+  const sizeRaw = raw['marker-size'];
+  const size: MarkerSize =
+    sizeRaw === 'small' || sizeRaw === 'large' ? sizeRaw : 'medium';
+
+  return {
+    enableMarkerColor: hasColor,
+    'marker-color': hasColor ? String(colorRaw) : purple900,
+    'marker-size': size,
+    enableMarkerSymbol: hasSymbol,
+    'marker-symbol': hasSymbol ? String(symbolRaw) : ''
   };
-
-  return initialValues;
 }
 
-/**
- * Used to validate that a string can
- * be parsed as a color.
- */
-function colorRefine(val: string) {
-  const c = d3.color(val);
-  return c !== null;
+// ---------------------------------------------------------------------------
+// Maki icon picker
+// ---------------------------------------------------------------------------
+
+type PickerItem =
+  | { kind: 'char'; name: string }
+  | { kind: 'icon'; name: string; dataUri: string };
+
+// 0-9 then a-z, followed by all maki icons.
+const CHAR_ITEMS: PickerItem[] = [
+  ...'0123456789abcdefghijklmnopqrstuvwxyz'
+    .split('')
+    .map((ch): PickerItem => ({ kind: 'char', name: ch }))
+];
+
+const ALL_PICKER_ITEMS: PickerItem[] = [
+  ...CHAR_ITEMS,
+  ...MAKI_ICONS.map(
+    ({ name, dataUri }): PickerItem => ({ kind: 'icon', name, dataUri })
+  )
+];
+
+function PickerItemButton({
+  item,
+  selected,
+  onSelect,
+  onHover
+}: {
+  item: PickerItem;
+  selected: boolean;
+  onSelect: (name: string) => void;
+  onHover: (name: string | null) => void;
+}) {
+  const base = `w-7 h-7 flex items-center justify-center rounded border transition-colors`;
+  const active = 'bg-blue-500 border-blue-600 text-white';
+  const inactive =
+    'border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700';
+
+  return (
+    <button
+      type="button"
+      title={item.name}
+      onClick={() => onSelect(item.name)}
+      onMouseEnter={() => onHover(item.name)}
+      onMouseLeave={() => onHover(null)}
+      className={`${base} ${selected ? active : inactive}`}
+    >
+      {item.kind === 'char' ? (
+        <span className="font-bold text-xs leading-none">
+          {item.name.toUpperCase()}
+        </span>
+      ) : (
+        <img
+          src={item.dataUri}
+          alt={item.name}
+          className={`w-4 h-4 ${selected ? 'invert' : 'dark:invert'}`}
+        />
+      )}
+    </button>
+  );
 }
 
-const STYLE_PROPS = [
-  'fill',
-  'stroke',
-  'fill-opacity',
-  'stroke-opacity',
-  'stroke-width'
-] as const;
+function MakiIconPicker({
+  value,
+  onChange
+}: {
+  value: string;
+  onChange: (name: string) => void;
+}) {
+  const [search, setSearch] = useState('');
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
-function AutoSubmit() {
-  useAutoSubmit();
-  return null;
+  const filtered = useMemo(() => {
+    if (!search) return ALL_PICKER_ITEMS;
+    const q = search.toLowerCase();
+    return ALL_PICKER_ITEMS.filter((item) => item.name.includes(q));
+  }, [search]);
+
+  const selectedItem = ALL_PICKER_ITEMS.find((i) => i.name === value) ?? null;
+
+  function handleSelect(name: string) {
+    onChange(name);
+    setOpen(false);
+    setSearch('');
+  }
+
+  return (
+    <P.Root open={open} onOpenChange={setOpen}>
+      <P.Trigger asChild>
+        <button
+          type="button"
+          className={
+            inputClass({ _size: 'sm' }) +
+            ' flex items-center gap-x-2 w-full text-left'
+          }
+        >
+          {selectedItem ? (
+            <>
+              {selectedItem.kind === 'char' ? (
+                <span className="w-4 h-4 flex items-center justify-center font-bold text-xs shrink-0">
+                  {selectedItem.name.toUpperCase()}
+                </span>
+              ) : (
+                <img
+                  src={selectedItem.dataUri}
+                  alt={selectedItem.name}
+                  className="w-4 h-4 shrink-0 dark:invert"
+                />
+              )}
+              <span className="font-mono text-xs truncate">
+                {selectedItem.name}
+              </span>
+            </>
+          ) : (
+            <span className="text-gray-400 text-xs">None</span>
+          )}
+        </button>
+      </P.Trigger>
+
+      <PopoverContent2 size="md">
+        <div className="flex flex-col gap-2">
+          <input
+            type="text"
+            placeholder="Search icons…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={inputClass({ _size: 'sm' }) + ' w-full'}
+            autoFocus
+          />
+
+          <div
+            className="grid overflow-y-auto"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(28px, 1fr))',
+              maxHeight: 220,
+              gap: 2
+            }}
+          >
+            {filtered.map((item) => (
+              <PickerItemButton
+                key={item.name}
+                item={item}
+                selected={item.name === value}
+                onSelect={handleSelect}
+                onHover={setHovered}
+              />
+            ))}
+          </div>
+
+          {/* Hover label */}
+          <div className="h-4 text-xs text-gray-500 font-mono truncate">
+            {hovered ?? '\u00a0'}
+          </div>
+        </div>
+      </PopoverContent2>
+    </P.Root>
+  );
 }
+
+// ---------------------------------------------------------------------------
+// Point marker fields
+// ---------------------------------------------------------------------------
+
+function MarkerFields({ helpers }: { helpers: FormikProps<MarkerFormValues> }) {
+  return (
+    <div className="grid grid-cols-2 gap-y-1 gap-x-2 items-center">
+      {/* Marker color */}
+      <div className="py-1 whitespace-nowrap">
+        <StyledLabelSpan size="xs">Marker color</StyledLabelSpan>
+      </div>
+      <div className="flex items-center gap-x-2">
+        <Field
+          type="checkbox"
+          name="enableMarkerColor"
+          className={styledCheckbox({ variant: 'default' })}
+        />
+        {helpers.values.enableMarkerColor ? (
+          <Field
+            component={ColorPopoverField}
+            name="marker-color"
+            _size="sm"
+            className={inputClass({ _size: 'sm' })}
+          />
+        ) : null}
+      </div>
+
+      {/* Marker size */}
+      <div className="py-1 whitespace-nowrap">
+        <StyledLabelSpan size="xs">Marker size</StyledLabelSpan>
+      </div>
+      <div>
+        <Field
+          as="select"
+          name="marker-size"
+          className={inputClass({ _size: 'sm' }) + ' w-full'}
+        >
+          <option value="small">Small</option>
+          <option value="medium">Medium</option>
+          <option value="large">Large</option>
+        </Field>
+      </div>
+
+      {/* Marker icon */}
+      <div className="py-1 whitespace-nowrap">
+        <StyledLabelSpan size="xs">Marker symbol</StyledLabelSpan>
+      </div>
+      <div className="flex items-center gap-x-2">
+        <Field
+          type="checkbox"
+          name="enableMarkerSymbol"
+          className={styledCheckbox({ variant: 'default' })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            helpers.setFieldValue('enableMarkerSymbol', e.target.checked);
+            if (!e.target.checked) {
+              helpers.setFieldValue('marker-symbol', '');
+            }
+          }}
+        />
+        {helpers.values.enableMarkerSymbol ? (
+          <div className="flex-1 min-w-0">
+            <MakiIconPicker
+              value={helpers.values['marker-symbol']}
+              onChange={(name) => {
+                helpers.setFieldValue('marker-symbol', name);
+                helpers.submitForm();
+              }}
+            />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Stroke/fill fields
+// ---------------------------------------------------------------------------
 
 function ColorField({
   enableName,
@@ -123,7 +403,7 @@ function ColorField({
 }: {
   enableName: 'enableFill' | 'enableStroke';
   name: 'fill' | 'stroke';
-  helpers: FormikProps<FormValues>;
+  helpers: FormikProps<StrokeFillFormValues>;
 }) {
   return (
     <div className="flex items-center gap-x-2">
@@ -137,42 +417,20 @@ function ColorField({
           component={ColorPopoverField}
           name={name}
           _size="sm"
-          className={inputClass({
-            _size: 'sm'
-          })}
+          className={inputClass({ _size: 'sm' })}
         />
       ) : null}
     </div>
   );
 }
 
-function StyleFields({ helpers }: { helpers: FormikProps<FormValues> }) {
+function StrokeFields({
+  helpers
+}: {
+  helpers: FormikProps<StrokeFillFormValues>;
+}) {
   return (
-    <div className="grid grid-cols-2 gap-y-1 gap-x-2 items-center">
-      <div className="py-1">
-        <StyledLabelSpan size="xs">Fill</StyledLabelSpan>
-      </div>
-      <ColorField name="fill" enableName="enableFill" helpers={helpers} />
-      <div className="py-1 whitespace-nowrap">
-        <StyledLabelSpan size="xs">Fill opacity</StyledLabelSpan>
-      </div>
-      <div className="flex items-center gap-x-2">
-        <Field
-          type="checkbox"
-          name="enableFillOpacity"
-          className={styledCheckbox({ variant: 'default' })}
-        />
-        {helpers.values.enableFillOpacity ? (
-          <Field
-            type="number"
-            name="fill-opacity"
-            step="0.1"
-            min="0"
-            max="1"
-            className={inputClass({ _size: 'sm' })}
-          />
-        ) : null}
-      </div>
+    <>
       <div className="py-1">
         <StyledLabelSpan size="xs">Stroke</StyledLabelSpan>
       </div>
@@ -214,27 +472,104 @@ function StyleFields({ helpers }: { helpers: FormikProps<FormValues> }) {
           />
         ) : null}
       </div>
+    </>
+  );
+}
+
+function AllStyleFields({
+  helpers
+}: {
+  helpers: FormikProps<StrokeFillFormValues>;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-y-1 gap-x-2 items-center">
+      <div className="py-1">
+        <StyledLabelSpan size="xs">Fill</StyledLabelSpan>
+      </div>
+      <ColorField name="fill" enableName="enableFill" helpers={helpers} />
+      <div className="py-1 whitespace-nowrap">
+        <StyledLabelSpan size="xs">Fill opacity</StyledLabelSpan>
+      </div>
+      <div className="flex items-center gap-x-2">
+        <Field
+          type="checkbox"
+          name="enableFillOpacity"
+          className={styledCheckbox({ variant: 'default' })}
+        />
+        {helpers.values.enableFillOpacity ? (
+          <Field
+            type="number"
+            name="fill-opacity"
+            step="0.1"
+            min="0"
+            max="1"
+            className={inputClass({ _size: 'sm' })}
+          />
+        ) : null}
+      </div>
+      <StrokeFields helpers={helpers} />
     </div>
   );
 }
 
-function LiteralStyleNotice() {
-  const setTab = useSetAtom(tabAtom);
+function LineStyleFields({
+  helpers
+}: {
+  helpers: FormikProps<StrokeFillFormValues>;
+}) {
   return (
-    <TextWell>
-      The current map symbolization has literal styles disabled.{' '}
-      <Button
-        onClick={() => {
-          setTab(TabOption.Symbolization);
-        }}
-        size="xs"
-      >
-        Enable literal styles
-      </Button>{' '}
-      for your changes to be seen on the map.
-    </TextWell>
+    <div className="grid grid-cols-2 gap-y-1 gap-x-2 items-center">
+      <StrokeFields helpers={helpers} />
+    </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Stroke/fill form submit helper
+// ---------------------------------------------------------------------------
+
+function buildStrokeFillProps(
+  base: GeoJsonProperties,
+  values: StrokeFillFormValues,
+  includesFill: boolean
+): GeoJsonProperties {
+  const props = cloneDeep(base || {}) as Record<string, unknown>;
+
+  if (includesFill) {
+    if (values.enableFill) {
+      props.fill = values.fill;
+    } else {
+      delete props.fill;
+    }
+    if (values.enableFillOpacity) {
+      props['fill-opacity'] = values['fill-opacity'];
+    } else {
+      delete props['fill-opacity'];
+    }
+  }
+
+  if (values.enableStroke) {
+    props.stroke = values.stroke;
+  } else {
+    delete props.stroke;
+  }
+  if (values.enableStrokeOpacity) {
+    props['stroke-opacity'] = values['stroke-opacity'];
+  } else {
+    delete props['stroke-opacity'];
+  }
+  if (values.enableStrokeWidth) {
+    props['stroke-width'] = values['stroke-width'];
+  } else {
+    delete props['stroke-width'];
+  }
+
+  return props;
+}
+
+// ---------------------------------------------------------------------------
+// FeatureEditorStyle — single feature
+// ---------------------------------------------------------------------------
 
 export function FeatureEditorStyle({
   wrappedFeature
@@ -243,87 +578,109 @@ export function FeatureEditorStyle({
 }) {
   const rep = usePersistence();
   const transact = rep.useTransact();
-  const [meta] = rep.useMetadata();
 
   const properties = wrappedFeature.feature.properties;
+  const geometryType = wrappedFeature.feature.geometry?.type;
+
+  const isPoint = geometryType === 'Point' || geometryType === 'MultiPoint';
+  // Polygons get fill + stroke; lines and everything else get stroke only
+  const isPolygon =
+    geometryType === 'Polygon' || geometryType === 'MultiPolygon';
+
+  // ---- Point ----------------------------------------------------------------
+  if (isPoint) {
+    const initialValues = parseMarkerProperties(properties);
+
+    return (
+      <div className="px-4 py-2">
+        <Formik<MarkerFormValues>
+          onSubmit={(values) => {
+            const props = cloneDeep(properties || {}) as GeoJsonProperties;
+
+            if (values.enableMarkerColor) {
+              props!['marker-color'] = values['marker-color'];
+            } else {
+              delete props!['marker-color'];
+            }
+
+            props!['marker-size'] = values['marker-size'];
+
+            if (values.enableMarkerSymbol && values['marker-symbol']) {
+              props!['marker-symbol'] = values['marker-symbol'];
+            } else {
+              delete props!['marker-symbol'];
+            }
+
+            return transact({
+              track: 'feature-update-style',
+              putFeatures: [
+                {
+                  ...wrappedFeature,
+                  feature: { ...wrappedFeature.feature, properties: props }
+                }
+              ]
+            });
+          }}
+          initialValues={initialValues}
+        >
+          {(helpers) => (
+            <Form>
+              <AutoSubmit />
+              <MarkerFields helpers={helpers} />
+            </Form>
+          )}
+        </Formik>
+      </div>
+    );
+  }
+
+  // ---- Line / Polygon -------------------------------------------------------
   const initialValues = parseProperties(properties);
+  const includesFill = isPolygon;
 
   return (
     <div className="px-4 py-2">
-      <Formik<FormValues>
+      <Formik<StrokeFillFormValues>
         onSubmit={(values) => {
-          const properties: GeoJsonProperties = cloneDeep(
-            wrappedFeature.feature.properties || {}
-          );
-
-          if (values.enableFill) {
-            properties.fill = values.fill;
-          } else {
-            delete properties.fill;
-          }
-
-          if (values.enableFillOpacity) {
-            properties['fill-opacity'] = values['fill-opacity'];
-          } else {
-            delete properties['fill-opacity'];
-          }
-
-          if (values.enableStroke) {
-            properties.stroke = values.stroke;
-          } else {
-            delete properties.stroke;
-          }
-
-          if (values.enableStrokeOpacity) {
-            properties['stroke-opacity'] = values['stroke-opacity'];
-          } else {
-            delete properties['stroke-opacity'];
-          }
-
-          if (values.enableStrokeWidth) {
-            properties['stroke-width'] = values['stroke-width'];
-          } else {
-            delete properties['stroke-width'];
-          }
-
+          const props = buildStrokeFillProps(properties, values, includesFill);
           return transact({
             track: 'feature-update-style',
             putFeatures: [
               {
                 ...wrappedFeature,
-                feature: {
-                  ...wrappedFeature.feature,
-                  properties
-                }
+                feature: { ...wrappedFeature.feature, properties: props }
               }
             ]
           });
         }}
         initialValues={initialValues}
       >
-        {(helpers) => {
-          return (
-            <Form>
-              <AutoSubmit />
-              <StyleFields helpers={helpers} />
-              {/*<AutoReset properties={properties} />*/}
-            </Form>
-          );
-        }}
+        {(helpers) => (
+          <Form>
+            <AutoSubmit />
+            {isPolygon ? (
+              <AllStyleFields helpers={helpers} />
+            ) : (
+              <LineStyleFields helpers={helpers} />
+            )}
+          </Form>
+        )}
       </Formik>
     </div>
   );
 }
 
-// function AutoReset({ properties }: { properties: GeoJsonProperties }) {
-//   const context = useFormikContext();
-//
-//   // useEffect(() => {
-//   //   context.resetForm();
-//   // }, [context, properties]);
-//
-//   return null;
-// }
+// ---------------------------------------------------------------------------
+// FeatureEditorStyleMulti — multiple features selected
+// ---------------------------------------------------------------------------
+
+const STROKE_FILL_PROPS = [
+  'fill',
+  'stroke',
+  'fill-opacity',
+  'stroke-opacity',
+  'stroke-width'
+] as const;
 
 export function FeatureEditorStyleMulti({
   wrappedFeatures
@@ -335,7 +692,10 @@ export function FeatureEditorStyleMulti({
   const [meta] = rep.useMetadata();
 
   const uniformValues = useMemo(() => {
-    const allValues: Record<typeof STYLE_PROPS[number], Set<JsonValue>> = {
+    const allValues: Record<
+      (typeof STROKE_FILL_PROPS)[number],
+      Set<JsonValue>
+    > = {
       fill: new Set(),
       stroke: new Set(),
       'fill-opacity': new Set(),
@@ -346,21 +706,18 @@ export function FeatureEditorStyleMulti({
     for (const { feature } of wrappedFeatures) {
       const { properties } = feature;
       if (!properties) continue;
-      for (const key of STYLE_PROPS) {
-        const val = properties[key];
-        allValues[key].add(val);
+      for (const key of STROKE_FILL_PROPS) {
+        allValues[key].add(properties[key]);
       }
     }
 
-    const uniformValues = {
+    return {
       fill: getString(allValues.fill),
       'fill-opacity': getNumber(allValues['fill-opacity']),
       stroke: getString(allValues.stroke),
       'stroke-opacity': getNumber(allValues['stroke-opacity']),
       'stroke-width': getNumber(allValues['stroke-width'])
     };
-
-    return uniformValues;
   }, [wrappedFeatures]);
 
   const initialValues = parseProperties(uniformValues);
@@ -370,55 +727,31 @@ export function FeatureEditorStyleMulti({
       {meta.symbolization?.simplestyle === false ? (
         <LiteralStyleNotice />
       ) : null}
-      <Formik<FormValues>
+      <Formik<StrokeFillFormValues>
         onSubmit={(values) => {
           return transact({
             track: 'feature-update-style-multi',
             putFeatures: wrappedFeatures.map((wrappedFeature) => {
-              const properties: GeoJsonProperties = cloneDeep(
-                wrappedFeature.feature.properties || {}
+              const props = buildStrokeFillProps(
+                wrappedFeature.feature.properties,
+                values,
+                true
               );
-
-              if (values.enableFill) {
-                properties.fill = values.fill;
-              }
-
-              if (values.enableFillOpacity) {
-                properties['fill-opacity'] = values['fill-opacity'];
-              }
-
-              if (values.enableStroke) {
-                properties.stroke = values.stroke;
-              }
-
-              if (values.enableStrokeOpacity) {
-                properties['stroke-opacity'] = values['stroke-opacity'];
-              }
-
-              if (values.enableStrokeWidth) {
-                properties['stroke-width'] = values['stroke-width'];
-              }
-
               return {
                 ...wrappedFeature,
-                feature: {
-                  ...wrappedFeature.feature,
-                  properties
-                }
+                feature: { ...wrappedFeature.feature, properties: props }
               };
             })
           });
         }}
         initialValues={initialValues}
       >
-        {(helpers) => {
-          return (
-            <Form>
-              <AutoSubmit />
-              <StyleFields helpers={helpers} />
-            </Form>
-          );
-        }}
+        {(helpers) => (
+          <Form>
+            <AutoSubmit />
+            <AllStyleFields helpers={helpers} />
+          </Form>
+        )}
       </Formik>
     </div>
   );

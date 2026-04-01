@@ -173,8 +173,7 @@ export const SIMPLESTYLE_PROPERTIES = [
   'fill-opacity',
   'marker-color',
   'marker-size',
-  'marker-symbol',
-  'marker-icon'
+  'marker-symbol'
 ] as const;
 
 const geojsonTypes: GeoJSONTypeList = [

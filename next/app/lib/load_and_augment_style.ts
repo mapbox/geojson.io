@@ -175,23 +175,19 @@ export function makeLayers({
     },
 
     // Simplestyle marker-symbol / marker-icon: maki icons or single char text.
-    // Supports both `marker-symbol` (simplestyle spec) and `marker-icon`
+    // Supports both `marker-symbol` (simplestyle spec)
     // (geojson.io legacy convention).
     {
       id: FEATURES_MARKER_SYMBOL_LAYER_NAME,
       type: 'symbol',
       source: FEATURES_SOURCE_NAME,
-      filter: [
-        'all',
-        ['==', '$type', 'Point'],
-        ['any', ['has', 'marker-symbol'], ['has', 'marker-icon']]
-      ],
+      filter: ['all', ['==', '$type', 'Point'], ['has', 'marker-symbol']],
       layout: {
         // Resolve the icon value from either property.
         'icon-image': [
           'let',
           'sym',
-          ['coalesce', ['get', 'marker-symbol'], ['get', 'marker-icon'], ''],
+          ['coalesce', ['get', 'marker-symbol'], ''],
           ['case', ['>', ['length', ['var', 'sym']], 1], ['var', 'sym'], '']
         ],
         'icon-size': [
@@ -209,7 +205,7 @@ export function makeLayers({
         'text-field': [
           'let',
           'sym',
-          ['coalesce', ['get', 'marker-symbol'], ['get', 'marker-icon'], ''],
+          ['coalesce', ['get', 'marker-symbol'], ''],
           [
             'case',
             ['==', ['length', ['var', 'sym']], 1],
