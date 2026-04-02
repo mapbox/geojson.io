@@ -30,6 +30,7 @@ const EPHEMERAL_FILL_LAYER_NAME = 'ephemeral-fill';
 
 const FEATURES_POINT_HALO_LAYER_NAME = 'features-symbol-halo';
 const FEATURES_POINT_LAYER_NAME = 'features-symbol';
+const FEATURES_MARKER_SYMBOL_LAYER_NAME = 'features-marker-symbol';
 const FEATURES_POINT_LABEL_LAYER_NAME = 'features-point-label';
 const FEATURES_FILL_LABEL_LAYER_NAME = 'features-fill-label';
 const FEATURES_LINE_LABEL_LAYER_NAME = 'features-line-label';
@@ -172,6 +173,66 @@ export function makeLayers({
       filter: CONTENT_LAYER_FILTERS[FEATURES_POINT_LAYER_NAME],
       paint: CIRCLE_PAINT(symbolization)
     },
+
+    // Simplestyle marker-symbol / marker-icon: maki icons or single char text.
+    // Supports both `marker-symbol` (simplestyle spec)
+    // (geojson.io legacy convention).
+    {
+      id: FEATURES_MARKER_SYMBOL_LAYER_NAME,
+      type: 'symbol',
+      source: FEATURES_SOURCE_NAME,
+      filter: ['all', ['==', '$type', 'Point'], ['has', 'marker-symbol']],
+      layout: {
+        // Resolve the icon value from either property.
+        'icon-image': [
+          'let',
+          'sym',
+          ['coalesce', ['get', 'marker-symbol'], ''],
+          ['case', ['>', ['length', ['var', 'sym']], 1], ['var', 'sym'], '']
+        ],
+        'icon-size': [
+          'match',
+          ['get', 'marker-size'],
+          'small',
+          0.4,
+          'large',
+          1.2,
+          0.8
+        ],
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
+        // Single-char symbols rendered as text.
+        'text-field': [
+          'let',
+          'sym',
+          ['coalesce', ['get', 'marker-symbol'], ''],
+          [
+            'case',
+            ['==', ['length', ['var', 'sym']], 1],
+            ['upcase', ['var', 'sym']],
+            ''
+          ]
+        ],
+        'text-size': [
+          'match',
+          ['get', 'marker-size'],
+          'small',
+          8,
+          'large',
+          18,
+          13
+        ],
+        'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
+        'text-allow-overlap': true,
+        'text-ignore-placement': true
+      } as mapboxgl.SymbolLayout,
+      paint: {
+        'icon-color': 'white',
+        'text-color': 'white',
+        'icon-emissive-strength': 1,
+        'text-emissive-strength': 1
+      } as mapboxgl.SymbolPaint
+    } as mapboxgl.AnyLayer,
 
     ...(typeof previewProperty === 'string'
       ? [
@@ -316,10 +377,78 @@ function LABEL_LAYOUT(
   return paint;
 }
 
+/**
+ * Maps simplestyle marker-size (small/medium/large) to a pixel radius.
+ * Defaults to small (4px) when the property is absent.
+ */
+function markerSizeRadius(): mapboxgl.Expression {
+  // small  → 4 px  (matches the normal non-simplestyle marker appearance)
+  // medium → 8 px (slightly larger)
+  // large  → 12 px (clearly distinct)
+  return ['match', ['get', 'marker-size'], 'medium', 8, 'large', 12, 4];
+}
+
 export function CIRCLE_PAINT(
   symbolization: ISymbolization,
   halo = false
 ): mapboxgl.CirclePaint {
+  if (symbolization.simplestyle) {
+    // marker-color overrides the symbolization color when present.
+    const markerColor: mapboxgl.Expression = [
+      'coalesce',
+      ['get', 'marker-color'],
+      asColorExpressionInner({ symbolization })
+    ];
+
+    if (halo) {
+      return {
+        'circle-color': [
+          'match',
+          ['feature-state', 'state'],
+          'selected',
+          'white',
+          markerColor
+        ],
+        // Halo is always 2 px larger than the main circle.
+        'circle-radius': [
+          'match',
+          ['feature-state', 'state'],
+          'selected',
+          ['+', markerSizeRadius(), 4],
+          ['+', markerSizeRadius(), 2]
+        ],
+        'circle-emissive-strength': 1
+      };
+    }
+    return {
+      'circle-stroke-color': [
+        'match',
+        ['feature-state', 'state'],
+        'selected',
+        LINE_COLORS_SELECTED,
+        'white'
+      ],
+      'circle-stroke-width': 1,
+      'circle-radius': [
+        'match',
+        ['feature-state', 'state'],
+        'selected',
+        ['+', markerSizeRadius(), 2],
+        markerSizeRadius()
+      ],
+      'circle-opacity': 1,
+      'circle-color': [
+        'match',
+        ['feature-state', 'state'],
+        'selected',
+        'white',
+        markerColor
+      ],
+      'circle-emissive-strength': 1
+    };
+  }
+
+  // Non-simplestyle: original fixed-size behaviour.
   const r = halo ? 2 : 0;
   if (halo) {
     return {

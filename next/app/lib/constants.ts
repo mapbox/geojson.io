@@ -170,7 +170,10 @@ export const SIMPLESTYLE_PROPERTIES = [
   'stroke-width',
   'stroke-opacity',
   'fill',
-  'fill-opacity'
+  'fill-opacity',
+  'marker-color',
+  'marker-size',
+  'marker-symbol'
 ] as const;
 
 const geojsonTypes: GeoJSONTypeList = [
@@ -229,7 +232,7 @@ export const FILE_LIMIT_MB = Infinity;
 export const FILE_LIMIT_BYTES = FILE_LIMIT_MB * MB_TO_BYTES;
 
 export const SCALE_UNITS = ['imperial', 'metric', 'nautical'] as const;
-export type ScaleUnit = typeof SCALE_UNITS[number];
+export type ScaleUnit = (typeof SCALE_UNITS)[number];
 export const zScaleUnit = z.enum(SCALE_UNITS);
 
 export const WHITE: RGBA = [255, 255, 255, 255];
