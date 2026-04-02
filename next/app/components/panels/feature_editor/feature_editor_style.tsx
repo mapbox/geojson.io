@@ -44,6 +44,7 @@ interface StrokeFillFormValues {
 interface MarkerFormValues {
   enableMarkerColor: boolean;
   'marker-color': string;
+  enableMarkerSize: boolean;
   'marker-size': MarkerSize;
   enableMarkerSymbol: boolean;
   'marker-symbol': string;
@@ -145,12 +146,15 @@ function parseMarkerProperties(
   const hasSymbol = typeof symbolRaw === 'string' && symbolRaw.length > 0;
 
   const sizeRaw = raw['marker-size'];
+  const hasSize =
+    sizeRaw === 'small' || sizeRaw === 'medium' || sizeRaw === 'large';
   const size: MarkerSize =
     sizeRaw === 'small' || sizeRaw === 'large' ? sizeRaw : 'medium';
 
   return {
     enableMarkerColor: hasColor,
     'marker-color': hasColor ? String(colorRaw) : purple900,
+    enableMarkerSize: hasSize,
     'marker-size': size,
     enableMarkerSymbol: hasSymbol,
     'marker-symbol': hasSymbol ? String(symbolRaw) : ''
@@ -348,16 +352,23 @@ function MarkerFields({ helpers }: { helpers: FormikProps<MarkerFormValues> }) {
       <div className="py-1 whitespace-nowrap">
         <StyledLabelSpan size="xs">Marker size</StyledLabelSpan>
       </div>
-      <div>
+      <div className="flex items-center gap-x-2">
         <Field
-          as="select"
-          name="marker-size"
-          className={inputClass({ _size: 'sm' }) + ' w-full'}
-        >
-          <option value="small">Small</option>
-          <option value="medium">Medium</option>
-          <option value="large">Large</option>
-        </Field>
+          type="checkbox"
+          name="enableMarkerSize"
+          className={styledCheckbox({ variant: 'default' })}
+        />
+        {helpers.values.enableMarkerSize ? (
+          <Field
+            as="select"
+            name="marker-size"
+            className={inputClass({ _size: 'sm' }) + ' w-full'}
+          >
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+          </Field>
+        ) : null}
       </div>
 
       {/* Marker icon */}
@@ -603,7 +614,11 @@ export function FeatureEditorStyle({
               delete props!['marker-color'];
             }
 
-            props!['marker-size'] = values['marker-size'];
+            if (values.enableMarkerSize) {
+              props!['marker-size'] = values['marker-size'];
+            } else {
+              delete props!['marker-size'];
+            }
 
             if (values.enableMarkerSymbol && values['marker-symbol']) {
               props!['marker-symbol'] = values['marker-symbol'];
