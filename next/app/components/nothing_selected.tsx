@@ -27,23 +27,23 @@ export const NothingSelected = memo(function NothingSelected() {
         <div className="pt-1">
           <DotFilledIcon />
         </div>
-        <div>Draw points</div>
+        <div className="text-gray-500">Draw points</div>
         <div className="pt-1">
           <Line />
         </div>
-        <div>Draw line strings</div>
+        <div className="text-gray-500">Draw line strings</div>
         <div className="pt-1">
           <SvgPolygon />
         </div>
-        <div>Draw polygons</div>
+        <div className="text-gray-500">Draw polygons</div>
         <div className="pt-1">
           <SquareIcon />
         </div>
-        <div>Draw rectangles</div>
+        <div className="text-gray-500">Draw rectangles</div>
         <div className="pt-1">
           <CircleIcon />
         </div>
-        <div>Draw circles</div>
+        <div className="text-gray-500">Draw circles</div>
       </div>
       <div className="pt-4 space-y-3">
         <div className="text-sm font-semibold">Import a file</div>
