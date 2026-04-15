@@ -36,6 +36,7 @@ import {
   useFlattenedFeatures
 } from './feature_editor_folder/math';
 import { virtualPosition } from './feature_editor_folder/utils';
+import { NothingSelected } from 'app/components/nothing_selected';
 
 /**
  * Returns the coordinates of the center of a given ClientRect
@@ -346,37 +347,43 @@ export function FeatureEditorFolderInner() {
           data-keybinding-scope="editor_folder"
           className="geojsonio-scrollbar overflow-y-scroll flex-auto group"
         >
-          <div
-            className="relative w-full"
-            style={{
-              willChange: 'transform',
-              height: `${rowVirtualizer.getTotalSize()}px`
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map((row) => {
-              const item = tree[row.index];
-              const isDragging = activeId === item.id;
+          {tree.length === 0 ? (
+            <div className="relative w-full">
+              <NothingSelected />
+            </div>
+          ) : (
+            <div
+              className="relative w-full"
+              style={{
+                willChange: 'transform',
+                height: `${rowVirtualizer.getTotalSize()}px`
+              }}
+            >
+              {rowVirtualizer.getVirtualItems().map((row) => {
+                const item = tree[row.index];
+                const isDragging = activeId === item.id;
 
-              return (
-                <div key={row.index} style={virtualPosition(row)}>
-                  <SortableItem
-                    key={item.id}
-                    id={item.id}
-                    treeCurrentValueRef={treeCurrentValueRef}
-                    depth={
-                      item.id === activeId && projected
-                        ? projected.depth
-                        : item.depth
-                    }
-                    highlight={false}
-                    item={item}
-                    preview={meta.label}
-                    isDragging={isDragging}
-                  />
-                </div>
-              );
-            })}
-          </div>
+                return (
+                  <div key={row.index} style={virtualPosition(row)}>
+                    <SortableItem
+                      key={item.id}
+                      id={item.id}
+                      treeCurrentValueRef={treeCurrentValueRef}
+                      depth={
+                        item.id === activeId && projected
+                          ? projected.depth
+                          : item.depth
+                      }
+                      highlight={false}
+                      item={item}
+                      preview={meta.label}
+                      isDragging={isDragging}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </SortableContext>
       <Portal.Root>

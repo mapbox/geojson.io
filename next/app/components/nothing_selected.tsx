@@ -31,31 +31,22 @@ export const NothingSelected = memo(function NothingSelected() {
         <div className="pt-1">
           <DotFilledIcon />
         </div>
-        <div>Draw points by clicking</div>
+        <div>Draw points</div>
         <div className="pt-1">
           <Line />
         </div>
-        <div>
-          Click to draw vertexes along a line. Finish the line by
-          double-clicking or pressing Enter or Escape.
-        </div>
+        <div>Draw line strings</div>
         <div className="pt-1">
           <SvgPolygon />
         </div>
-        <div>
-          Click to draw vertexes for a polygon. Finish the polygon by clicking
-          the first point or pressing Enter or Escape.
-        </div>
+        <div>Draw polygons</div>
         <div className="pt-1">
           <SquareIcon />
         </div>
-        <div>
-          Draw a rectangle by clicking and dragging to define the rectangle's
-          size.
-        </div>
+        <div>Draw rectangles</div>
       </div>
       <div className="pt-4 space-y-3">
-        <div className="text-sm font-semibold">Working with files</div>
+        <div className="text-sm font-semibold">Import a file</div>
         <div className="flex items-center gap-x-2">
           <Button
             type="button"
@@ -65,15 +56,6 @@ export const NothingSelected = memo(function NothingSelected() {
           >
             <PlusIcon />
             Import
-          </Button>
-          <Button
-            type="button"
-            onClick={() => {
-              setDialogState(DialogHelpers.export());
-            }}
-          >
-            <DownloadIcon />
-            Export
           </Button>
         </div>
       </div>
