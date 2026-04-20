@@ -3,6 +3,7 @@ import once from 'lodash/once';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'react-hot-toast';
 import type { IStyleConfig, StyleOptions } from 'types';
+import type { CustomRasterLayer } from 'state/jotai';
 
 const warnOffline = once(() => {
   toast.error('Offline: falling back to blank background');
@@ -11,7 +12,8 @@ const warnOffline = once(() => {
 export async function addMapboxStyle(
   _base: mapboxgl.Style,
   layer: IStyleConfig,
-  styleOptions: StyleOptions
+  styleOptions: StyleOptions,
+  customRasterLayers: CustomRasterLayer[] = []
 ): Promise<mapboxgl.Style> {
   let style: mapboxgl.Style;
 
@@ -42,7 +44,8 @@ export async function addMapboxStyle(
   }
 
   const updatedStyle = updateMapboxStyle(style, {
-    labelVisibility: styleOptions.labelVisibility
+    labelVisibility: styleOptions.labelVisibility,
+    customRasterLayers
   });
   return updatedStyle;
 }
@@ -52,13 +55,32 @@ function updateMapboxStyle(
   options: {
     labelVisibility?: boolean;
     rasterOpacity?: number;
+    customRasterLayers?: CustomRasterLayer[];
   }
 ): mapboxgl.Style {
-  const { labelVisibility = true, rasterOpacity } = options;
+  const {
+    labelVisibility = true,
+    rasterOpacity,
+    customRasterLayers = []
+  } = options;
 
   if (!style.layers) {
     return style;
   }
+
+  // Add custom raster sources
+  const updatedSources = { ...style.sources };
+  // Only include visible layers
+  const visibleCustomRasterLayers = customRasterLayers.filter(
+    (layer) => layer.visible !== false
+  );
+  visibleCustomRasterLayers.forEach((layer) => {
+    updatedSources[`custom-raster-${layer.id}`] = {
+      type: 'raster',
+      tiles: [layer.tileUrl],
+      tileSize: 256
+    } as mapboxgl.RasterSource;
+  });
 
   const isSatelliteStyle =
     style.name === 'Mapbox Satellite Streets' ||
@@ -102,6 +124,24 @@ function updateMapboxStyle(
     })
     .filter(Boolean) as mapboxgl.AnyLayer[];
 
+  // Add custom raster layers to the layers array
+  // Insert them at the beginning so they appear below the basemap
+  // Reverse the order so layers at the top of the UI list render on top on the map
+  const customRasterMapboxLayers: mapboxgl.AnyLayer[] =
+    visibleCustomRasterLayers
+      .slice()
+      .reverse()
+      .map((layer) => ({
+        id: `custom-raster-layer-${layer.id}`,
+        type: 'raster',
+        source: `custom-raster-${layer.id}`,
+        minzoom: 0,
+        maxzoom: 22,
+        paint: {
+          'raster-emissive-strength': 1
+        }
+      }));
+
   let updatedImports = style.imports;
   // update imports for styles that use Mapbox standard or standard satellite style
   if (style.imports) {
@@ -124,7 +164,8 @@ function updateMapboxStyle(
 
   const result: any = {
     ...style,
-    layers: updatedLayers
+    sources: updatedSources,
+    layers: [...customRasterMapboxLayers, ...updatedLayers]
   };
   if (typeof updatedImports !== 'undefined') {
     result.imports = updatedImports;

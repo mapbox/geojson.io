@@ -68,6 +68,21 @@ export const styleOptionsAtom = atomWithStorage<StyleOptions>('styleOptions', {
   labelVisibility: true
 });
 
+// Custom raster layer configuration
+export interface CustomRasterLayer {
+  id: string;
+  name: string;
+  tileUrl: string;
+  order: number;
+  visible?: boolean;
+}
+
+// tracks custom raster layers added by the user
+export const customRasterLayersAtom = atomWithStorage<CustomRasterLayer[]>(
+  'customRasterLayers',
+  []
+);
+
 export const styleConfigAtom = atom((get) => {
   const activeId = get(activeStyleIdAtom);
   const baseLayer = LAYERS[activeId] || LAYERS.STANDARD_LIGHT;

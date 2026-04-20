@@ -8,7 +8,8 @@ import type {
   DialogStateImportNotes,
   DialogStateCastProperty,
   DialogStateBuffer,
-  DialogStateSimplify
+  DialogStateSimplify,
+  DialogStateRasterLayer
 } from './dialog_state';
 
 /**
@@ -35,6 +36,14 @@ export const DIALOG_CONFIGS = {
   circle_types: {
     title: 'Circle Type',
     description: 'Choose circle creation method'
+  },
+  raster_layer: {
+    title: 'Add Raster Layer',
+    description: 'Configure custom raster layer'
+  },
+  edit_raster_layer: {
+    title: 'Edit Raster Layer',
+    description: 'Edit custom raster layer'
   }
 } as const;
 
@@ -112,5 +121,20 @@ export const DialogHelpers = {
     title: 'Create Circle',
     description: 'Configure circle parameters',
     position
+  }),
+
+  addRasterLayer: (): DialogStateRasterLayer => ({
+    type: 'raster_layer',
+    ...DIALOG_CONFIGS.raster_layer
+  }),
+
+  editRasterLayer: (layer: {
+    id: string;
+    name: string;
+    tileUrl: string;
+  }): DialogStateRasterLayer => ({
+    type: 'raster_layer',
+    ...DIALOG_CONFIGS.edit_raster_layer,
+    editingLayer: layer
   })
 };
