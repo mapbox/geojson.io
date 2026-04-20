@@ -43,7 +43,6 @@ const MAP_OPTIONS: Omit<mapboxgl.MapboxOptions, 'container'> = {
   style: { version: 8, layers: [], sources: {} },
   maxZoom: 26,
   boxZoom: false,
-  dragRotate: false,
   attributionControl: false,
   fadeDuration: 0
 };
@@ -344,6 +343,7 @@ export default class PMap {
           pickable: true,
           stroked: true,
           filled: true,
+          billboard: true,
 
           data: groups.synthetic,
 
