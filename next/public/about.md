@@ -10,7 +10,7 @@ You can start working with data in several ways:
 - **Drag & Drop:** Drag a data file directly onto the map.
 - **Paste GeoJSON:** Paste GeoJSON text directly into the **JSON panel**.
 
-When importing GeoJSON, you can import a `Geometry`, `Feature`, or `FeatureCollection`.
+When importing GeoJSON, you can import a `Geometry`, `Feature`, or `FeatureCollection`. See the [Supported File Types](#supported-file-types) table below.
 
 You don't have to import data to get started—just use the drawing tools to create new features from scratch!
 
@@ -52,6 +52,32 @@ Use the **export button** to save your data, or copy GeoJSON from the **JSON pan
 In addition to exporting GeoJSON, you can choose other file formats such as KML, CSV, or Shapefile.
 
 When export GeoJSON, geojson.io always exports a FeatureCollection.
+
+## Supported File Types
+
+Geojson.io supports the following file types for import and export as outlined in the table below.
+
+| Format                                           | Import | Export |
+| ------------------------------------------------ | ------ | ------ |
+| **GeoJSON** - .geojson, .json                    | ✓      | ✓      |
+| **GeoJSONL** - .geojsonl, .geojsons, .ld         | ✓      | ✓      |
+| **KML** - .kml                                   | ✓      | ✓      |
+| **KMZ** - .kmz                                   | ✓      | ✓      |
+| **CSV** - .csv, .tsv                             | ✓      | ✓      |
+| **TopoJSON** - .topojson, .json                  | ✓      | ✓      |
+| **Shapefile** - .zip                             | ✓      | ✓      |
+| **FlatGeobuf** - .fgb                            | ✓      | ✓      |
+| **Polyline** - Google encoded polyline           | ✓      | ✓      |
+| **WKT** - Well-Known Text                        | ✓      | ✓      |
+| **Coordinate String** - Plain text lon,lat       | ✓      | ✓      |
+| **GPX** - .gpx — GPS exchange                    | ✓      |        |
+| **TCX** - .tcx — GPS training data               | ✓      |        |
+| **GTFS** - shapes.txt — transit data             | ✓      |        |
+| **GeoTIFF** - .tif, .tiff — georeferenced raster | ✓      |        |
+| **EXIF** - jpg, .jpeg — GPS from photo metadata  | ✓      |        |
+| **XLS/XLSX** - Excel spreadsheets                | ✓      |        |
+| **OSM** - .osm, .xml — OpenStreetMap XML         | ✓      |        |
+| **Bounding Box** - Plain text bbox string        | ✓      |        |
 
 ## Keyboard Shortcuts
 
