@@ -19,7 +19,7 @@ export default function SimpleDialogActions({
   };
   variant?: 'md' | 'xs';
 }) {
-  const { isSubmitting } = useFormikContext();
+  const { isSubmitting, isValid } = useFormikContext();
   return (
     <div
       className={clsx(
@@ -33,7 +33,7 @@ export default function SimpleDialogActions({
       {action ? (
         <Button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !isValid}
           variant="primary"
           size={fullWidthSubmit ? 'full-width' : 'sm'}
         >

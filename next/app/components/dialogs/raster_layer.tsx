@@ -2,11 +2,9 @@ import { LayersIcon } from '@radix-ui/react-icons';
 import { DialogHeader } from 'app/components/dialog';
 import SimpleDialogActions from 'app/components/dialogs/simple_dialog_actions';
 import { TextWell } from 'app/components/elements';
-import { InlineError } from 'app/components/inline_error';
 import { LabeledTextField } from 'app/core/components/LabeledTextField';
 import { Form, Formik } from 'formik';
 import { useAtom } from 'jotai';
-import { useState } from 'react';
 import { customRasterLayersAtom } from 'state/jotai';
 import type { DialogStateRasterLayer } from 'state/dialog_state';
 import { toast } from 'react-hot-toast';
@@ -32,7 +30,6 @@ export function RasterLayerDialog({
   const [customRasterLayers, setCustomRasterLayers] = useAtom(
     customRasterLayersAtom
   );
-  const [formError, setFormError] = useState<string | null>(null);
 
   const isEditing = !!modal.editingLayer;
   const initialValues: RasterLayerFormValues = isEditing
@@ -52,28 +49,23 @@ export function RasterLayerDialog({
         titleIcon={LayersIcon}
       />
       <Formik<RasterLayerFormValues>
+        validate={(values) => {
+          const errors: Partial<Record<keyof RasterLayerFormValues, string>> =
+            {};
+
+          if (!values.name.trim()) {
+            errors.name = 'Layer name is required';
+          }
+
+          if (!values.tileUrl.trim()) {
+            errors.tileUrl = 'Tile URL is required';
+          } else if (!validateTileUrl(values.tileUrl)) {
+            errors.tileUrl = 'Must include {z}, {x}, and {y} placeholders';
+          }
+
+          return errors;
+        }}
         onSubmit={function onSubmit({ name, tileUrl }) {
-          setFormError(null);
-
-          // Validate name
-          if (!name.trim()) {
-            setFormError('Please provide a name for the layer.');
-            return;
-          }
-
-          // Validate tile URL
-          if (!tileUrl.trim()) {
-            setFormError('Please provide a tile URL.');
-            return;
-          }
-
-          if (!validateTileUrl(tileUrl)) {
-            setFormError(
-              'Tile URL must include {z}, {x}, and {y} placeholders.'
-            );
-            return;
-          }
-
           if (isEditing) {
             // Update existing layer
             const updatedLayers = customRasterLayers.map((layer) =>
@@ -84,15 +76,20 @@ export function RasterLayerDialog({
             setCustomRasterLayers(updatedLayers);
             toast.success('Raster layer updated');
           } else {
-            // Add new layer
+            // Add new layer at the top of the stack
             const newLayer = {
               id: uuidv4(),
               name,
               tileUrl,
-              order: customRasterLayers.length,
+              order: 0,
               visible: true
             };
-            setCustomRasterLayers([...customRasterLayers, newLayer]);
+            // Increment order of all existing layers
+            const updatedExistingLayers = customRasterLayers.map((layer) => ({
+              ...layer,
+              order: layer.order + 1
+            }));
+            setCustomRasterLayers([newLayer, ...updatedExistingLayers]);
             toast.success('Raster layer added');
           }
 
@@ -110,11 +107,10 @@ export function RasterLayerDialog({
             />
             <LabeledTextField
               type="text"
-              label="Tile URL"
+              label="Tile URL template"
               name="tileUrl"
               placeholder="https://example.com/tiles/{z}/{x}/{y}.png"
             />
-            {formError && <InlineError>{formError}</InlineError>}
             <TextWell>
               Provide a tile URL template with {'{z}'}, {'{x}'}, and {'{y}'}{' '}
               placeholders for zoom level and tile coordinates.

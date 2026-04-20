@@ -34,6 +34,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { memo } from 'react';
+import { toast } from 'react-hot-toast';
 
 const SortableRasterLayer = memo(function SortableRasterLayer({
   layer,
@@ -137,9 +138,8 @@ export function StylesPopover() {
   };
 
   const handleDeleteRasterLayer = (id: string) => {
-    if (confirm('Are you sure you want to remove this raster layer?')) {
-      setCustomRasterLayers(customRasterLayers.filter((l) => l.id !== id));
-    }
+    setCustomRasterLayers(customRasterLayers.filter((l) => l.id !== id));
+    toast.success('Raster layer removed');
   };
 
   const handleToggleVisibility = (id: string) => {
