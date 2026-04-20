@@ -205,14 +205,34 @@ export default function AboutModal({ open }: { open: boolean }) {
                   li: ({ node, ...props }) => (
                     <li className="mb-1" {...props} />
                   ),
-                  a: ({ node, ...props }) => (
-                    <a
-                      className="text-mb-blue-500 underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      {...props}
-                    />
-                  ),
+                  a: ({ node, href, ...props }) => {
+                    if (href?.startsWith('#')) {
+                      const id = href.slice(1);
+                      return (
+                        <a
+                          href={href}
+                          className="text-mb-blue-500 underline"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            headingRefs.current[id]?.scrollIntoView({
+                              behavior: 'smooth',
+                              block: 'start'
+                            });
+                          }}
+                          {...props}
+                        />
+                      );
+                    }
+                    return (
+                      <a
+                        href={href}
+                        className="text-mb-blue-500 underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        {...props}
+                      />
+                    );
+                  },
                   code: ({ node, ...props }) => (
                     <code
                       className="bg-gray-100 dark:bg-gray-800 px-1 rounded text-sm"
