@@ -55,7 +55,7 @@ When export GeoJSON, geojson.io always exports a FeatureCollection.
 
 ## Supported File Types
 
-Geojson.io supports the following file types for import and export as outlined in the table below.
+**geojson.io** supports the following file types for import and export as outlined in the table below.
 
 | Format                                           | Import | Export |
 | ------------------------------------------------ | ------ | ------ |
