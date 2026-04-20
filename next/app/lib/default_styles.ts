@@ -88,6 +88,9 @@ const STYLES: Record<string, StyleConfigTemplate> = {
     name: 'OSM',
     json: {
       version: 8,
+      // sprite and glyphs are unused, but required to prevent an error when switching to this style
+      sprite: 'mapbox://sprites/mapbox/streets-v8',
+      glyphs: 'mapbox://fonts/mapbox/{fontstack}/{range}.pbf',
       sources: {
         'osm-tiles': {
           type: 'raster',

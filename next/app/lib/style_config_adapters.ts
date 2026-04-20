@@ -124,8 +124,6 @@ function updateMapboxStyle(
     })
     .filter(Boolean) as mapboxgl.AnyLayer[];
 
-  // Add custom raster layers to the layers array
-  // Insert them at the beginning so they appear below the basemap
   // Reverse the order so layers at the top of the UI list render on top on the map
   const customRasterMapboxLayers: mapboxgl.AnyLayer[] =
     visibleCustomRasterLayers
@@ -162,10 +160,18 @@ function updateMapboxStyle(
     });
   }
 
+  // For import-based styles (Standard variants), layers in the parent style render
+  // above the imported basemap, so custom rasters go at the start of layers.
+  // For traditional styles (Outdoors, OSM), basemap layers are in the layers array
+  // directly, so custom rasters must go at the end to appear on top of the basemap.
+  const layers = style.imports
+    ? [...customRasterMapboxLayers, ...updatedLayers]
+    : [...updatedLayers, ...customRasterMapboxLayers];
+
   const result: any = {
     ...style,
     sources: updatedSources,
-    layers: [...customRasterMapboxLayers, ...updatedLayers]
+    layers
   };
   if (typeof updatedImports !== 'undefined') {
     result.imports = updatedImports;
