@@ -6,6 +6,7 @@ import { ExportDialog } from 'app/components/dialogs/export';
 import { ImportDialog } from 'app/components/dialogs/import';
 import { ImportNotesDialog } from 'app/components/dialogs/import_notes';
 import { ImportURLDialog } from 'app/components/dialogs/import_url';
+import { RasterLayerDialog } from 'app/components/dialogs/raster_layer';
 import { QuickswitcherDialog } from 'app/components/search/quickswitcher';
 import SimplifyDialog from 'app/components/dialogs/simplify';
 import AboutModal from 'app/components/about_modal';
@@ -60,6 +61,9 @@ export const Dialogs = memo(function Dialogs() {
       <BufferDialog onClose={onClose} modal={modal} />
     ))
     .with({ type: 'from_url' }, () => <ImportURLDialog onClose={onClose} />)
+    .with({ type: 'raster_layer' }, (modal) => (
+      <RasterLayerDialog modal={modal} onClose={onClose} />
+    ))
     .with({ type: 'about' }, () => {
       extraWide = true;
       return <AboutModal open={true} />;

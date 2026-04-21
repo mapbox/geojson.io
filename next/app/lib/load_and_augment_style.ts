@@ -5,7 +5,7 @@ import {
 import { addMapboxStyle } from 'app/lib/style_config_adapters';
 // TODO: this is a UI concern that should be separate.
 import type { Style } from 'mapbox-gl';
-import type { PreviewProperty } from 'state/jotai';
+import type { PreviewProperty, CustomRasterLayer } from 'state/jotai';
 import type { ISymbolization, IStyleConfig, StyleOptions } from 'types';
 
 function getEmptyStyle() {
@@ -73,15 +73,22 @@ export default async function loadAndAugmentStyle({
   styleConfig,
   symbolization,
   previewProperty,
-  styleOptions
+  styleOptions,
+  customRasterLayers = []
 }: {
   styleConfig: IStyleConfig;
   symbolization: ISymbolization;
   previewProperty: PreviewProperty;
   styleOptions: StyleOptions;
+  customRasterLayers?: CustomRasterLayer[];
 }): Promise<Style> {
   let style = getEmptyStyle();
-  style = await addMapboxStyle(style, styleConfig, styleOptions);
+  style = await addMapboxStyle(
+    style,
+    styleConfig,
+    styleOptions,
+    customRasterLayers
+  );
   addEditingLayers({ style, symbolization, previewProperty });
   return style;
 }

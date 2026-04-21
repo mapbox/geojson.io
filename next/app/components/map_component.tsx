@@ -33,7 +33,8 @@ import {
   Mode,
   modeAtom,
   selectedFeaturesAtom,
-  styleOptionsAtom
+  styleOptionsAtom,
+  customRasterLayersAtom
 } from 'state/jotai';
 import type { DragTarget, HandlerContext, IWrappedFeature } from 'types';
 import { SYMBOLIZATION_NONE } from 'types';
@@ -74,6 +75,8 @@ export const MapComponent = memo(function MapComponent({
   const styleConfig = useAtomValue(styleConfigAtom);
 
   const styleOptions = useAtomValue(styleOptionsAtom);
+
+  const customRasterLayers = useAtomValue(customRasterLayersAtom);
 
   const zoomTo = useZoomTo();
 
@@ -200,11 +203,21 @@ export const MapComponent = memo(function MapComponent({
           styleConfig,
           symbolization: symbolization || SYMBOLIZATION_NONE,
           previewProperty: label,
-          styleOptions
+          styleOptions,
+          customRasterLayers
         })
         .catch((e) => captureException(e));
     },
-    [map, symbolization, data, styleConfig, ephemeralState, label, styleOptions]
+    [
+      map,
+      symbolization,
+      data,
+      styleConfig,
+      ephemeralState,
+      label,
+      styleOptions,
+      customRasterLayers
+    ]
   );
 
   const throttledMovePointer = useMemo(() => {

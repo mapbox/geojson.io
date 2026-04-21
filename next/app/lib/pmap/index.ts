@@ -26,7 +26,8 @@ import type {
   Data,
   EphemeralEditingState,
   PreviewProperty,
-  Sel
+  Sel,
+  CustomRasterLayer
 } from 'state/jotai';
 import type {
   Feature,
@@ -117,6 +118,7 @@ export default class PMap {
   lastLayer: IStyleConfig | null;
   lastPreviewProperty: PreviewProperty;
   lastStyleOptions: StyleOptions | null;
+  lastCustomRasterLayers: CustomRasterLayer[] | null;
   overlay: MapboxOverlay;
 
   constructor({
@@ -198,6 +200,7 @@ export default class PMap {
     this.lastLayer = null;
     this.lastPreviewProperty = null;
     this.lastStyleOptions = null;
+    this.lastCustomRasterLayers = null;
     this.handlers = handlers;
     this.map = map;
     void this.setStyle({
@@ -401,25 +404,34 @@ export default class PMap {
     styleConfig,
     symbolization,
     previewProperty,
-    styleOptions
+    styleOptions,
+    customRasterLayers = []
   }: {
     styleConfig: IStyleConfig;
     symbolization: ISymbolization;
     previewProperty: PreviewProperty;
     styleOptions: StyleOptions;
+    customRasterLayers?: CustomRasterLayer[];
   }) {
+    // Check if custom raster layers changed
+    const customRasterLayersChanged =
+      JSON.stringify(this.lastCustomRasterLayers) !==
+      JSON.stringify(customRasterLayers);
+
     // If only styleOptions changed, and the style has imports, update config properties instead of reloading style
     const onlyStyleOptionsChanged =
       styleConfig === this.lastLayer &&
       symbolization === this.lastSymbolization &&
       previewProperty === this.lastPreviewProperty &&
-      styleOptions !== this.lastStyleOptions;
+      styleOptions !== this.lastStyleOptions &&
+      !customRasterLayersChanged;
 
     if (
       styleConfig === this.lastLayer &&
       symbolization === this.lastSymbolization &&
       previewProperty === this.lastPreviewProperty &&
-      styleOptions === this.lastStyleOptions
+      styleOptions === this.lastStyleOptions &&
+      !customRasterLayersChanged
     ) {
       return;
     }
@@ -429,12 +441,14 @@ export default class PMap {
     this.lastSymbolization = symbolization;
     this.lastPreviewProperty = previewProperty;
     this.lastStyleOptions = styleOptions;
+    this.lastCustomRasterLayers = customRasterLayers;
 
     const style = await loadAndAugmentStyle({
       styleConfig,
       symbolization,
       previewProperty,
-      styleOptions
+      styleOptions,
+      customRasterLayers
     });
 
     // If only styleOptions changed and style has imports, update config properties instead of reloading style

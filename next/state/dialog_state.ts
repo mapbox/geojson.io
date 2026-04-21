@@ -50,6 +50,17 @@ export type DialogStateSimplify = {
   features: IWrappedFeature<IFeature<SimplifySupportedGeometry>>[];
 };
 
+export type DialogStateRasterLayer = {
+  type: 'raster_layer';
+  title: string;
+  description: string;
+  editingLayer?: {
+    id: string;
+    name: string;
+    tileUrl: string;
+  };
+};
+
 type DialogState =
   | DialogStateImport
   | DialogStateImportNotes
@@ -57,6 +68,7 @@ type DialogState =
   | DialogStateSimplify
   | DialogStateBuffer
   | DialogStateCircle
+  | DialogStateRasterLayer
   | {
       type: 'circle_types';
       title: string;
