@@ -189,6 +189,11 @@ export type {
   DialogStateCastProperty as ModalStateCastProperty,
   DialogStateImport as ModalStateImport
 } from 'state/dialog_state';
+
+export const featureEditorMinimized = atomWithStorage(
+  'featureEditorMinimized',
+  false
+);
 // ----------------------------------------------------------------------------
 /**
  * Modal state

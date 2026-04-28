@@ -1,12 +1,17 @@
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useAtom } from 'jotai';
 import { Mode, modeAtom, selectedFeaturesAtom } from 'state/jotai';
 import { FeatureEditorInner } from './feature_editor/feature_editor_inner';
 import FeatureEditorMulti from './feature_editor/feature_editor_multi';
+import { featureEditorMinimized } from 'state/jotai';
 import { ResolvedLayout } from '../geojson_io';
+import { SizeIcon } from '@radix-ui/react-icons';
 import clsx from 'clsx';
+import { Tooltip } from 'radix-ui';
+import { TContent } from '../elements';
 
 export default function FeatureEditor({ layout }: { layout: ResolvedLayout }) {
   const selectedFeatures = useAtomValue(selectedFeaturesAtom);
+  const [minimizedEditor, setMinimizedEditor] = useAtom(featureEditorMinimized);
   const mode = useAtomValue(modeAtom);
 
   // Don't show panel while drawing a feature
@@ -20,30 +25,48 @@ export default function FeatureEditor({ layout }: { layout: ResolvedLayout }) {
 
   const hasSelected = selectedFeatures.length > 0 && !isDrawing;
 
+  const classes = {
+    'absolute bg-white transition-all z-20 drop-shadow-md overflow-hidden': true,
+    'left-4 right-4 bottom-4 rounded': layout === 'HORIZONTAL',
+    'h-1/3': layout === 'HORIZONTAL' && !minimizedEditor,
+    'h-[32px]': layout === 'HORIZONTAL' && !!minimizedEditor,
+    'h-full w-full': layout === 'VERTICAL'
+  };
+
+  const translateDistance = !minimizedEditor
+    ? 'translateY(110%)'
+    : 'translateY(200%)';
+
   return (
     <div
-      className={clsx(
-        `absolute bg-white transition-all z-20 drop-shadow-md overflow-hidden`,
-        {
-          'h-1/3 left-4 right-4 bottom-4 rounded': layout === 'HORIZONTAL',
-          'h-full w-full': layout === 'VERTICAL'
-        }
-      )}
-      style={{ transform: hasSelected ? 'translateY(0)' : 'translateY(110%)' }}
+      className={clsx(classes)}
+      style={{ transform: hasSelected ? 'translateY(0)' : translateDistance }}
     >
-      <h2 className="text-center py-1 px-3 focus:outline-none text-white dark:text-white bg-[#34495e]">
+      <h2 className="text-center relative py-1 px-3 focus:outline-none text-white dark:text-white bg-[#34495e]">
         Feature Editor
         <span className="text-sm text-[#c7c7c7]">
           {selectedFeatures.length > 1
             ? ` (${selectedFeatures.length} features selected)`
             : ''}
         </span>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <div className="absolute top-2 right-2 cursor-pointer hover:text-gray-200">
+              <SizeIcon onClick={() => setMinimizedEditor((prev) => !prev)} />
+            </div>
+          </Tooltip.Trigger>
+          <TContent side="left">
+            <div className="flex gap-x-2 items-center ">
+              {minimizedEditor ? 'Expand' : 'Minimize'}
+            </div>
+          </TContent>
+        </Tooltip.Root>
       </h2>
 
-      {selectedFeatures.length > 1 && (
+      {selectedFeatures.length > 1 && minimizedEditor === false && (
         <FeatureEditorMulti selectedFeatures={selectedFeatures} />
       )}
-      {selectedFeatures.length === 1 && (
+      {selectedFeatures.length === 1 && minimizedEditor === false && (
         <FeatureEditorInner selectedFeature={selectedFeatures[0]} />
       )}
     </div>
