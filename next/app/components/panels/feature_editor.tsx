@@ -27,10 +27,11 @@ export default function FeatureEditor({ layout }: { layout: ResolvedLayout }) {
 
   const classes = {
     'absolute bg-white transition-all z-20 drop-shadow-md overflow-hidden': true,
-    'left-4 right-4 bottom-4 rounded': layout === 'HORIZONTAL',
-    'h-1/3': layout === 'HORIZONTAL' && !minimizedEditor,
-    'h-[32px]': layout === 'HORIZONTAL' && !!minimizedEditor,
-    'h-full w-full': layout === 'VERTICAL'
+    'right-4 bottom-4 rounded': layout === 'HORIZONTAL',
+    'w-[calc(100%-2rem)] h-1/3': layout === 'HORIZONTAL' && !minimizedEditor,
+    'w-80 h-[32px]': layout === 'HORIZONTAL' && minimizedEditor,
+    'h-[32px] w-full bottom-0': layout === 'VERTICAL' && minimizedEditor,
+    'h-full w-full': layout === 'VERTICAL' && !minimizedEditor
   };
 
   const translateDistance = !minimizedEditor
@@ -42,7 +43,7 @@ export default function FeatureEditor({ layout }: { layout: ResolvedLayout }) {
       className={clsx(classes)}
       style={{ transform: hasSelected ? 'translateY(0)' : translateDistance }}
     >
-      <h2 className="text-center relative py-1 px-3 focus:outline-none text-white dark:text-white bg-[#34495e]">
+      <h2 className="text-center relative py-1 px-8 focus:outline-none text-white dark:text-white bg-[#34495e]">
         Feature Editor
         <span className="text-sm text-[#c7c7c7]">
           {selectedFeatures.length > 1
