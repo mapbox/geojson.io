@@ -181,15 +181,23 @@ export function UrlAPI() {
       }
     };
 
+    const stripQueryParams = (...keys: string[]) => {
+      const newUrl = new URL(window.location.href);
+      for (const key of keys) newUrl.searchParams.delete(key);
+      window.history.replaceState(null, '', newUrl.toString());
+    };
+
     (async () => {
       try {
         const effectiveData = legacyData ?? data;
         if (effectiveData) {
           done.current = true;
           await handleDataParam(effectiveData);
+          stripQueryParams('data');
         } else if (id) {
           done.current = true;
           await handleIdParam(id);
+          stripQueryParams('id');
         }
       } catch (e) {
         toast.error(
