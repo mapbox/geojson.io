@@ -51,6 +51,21 @@ export function UrlAPI() {
     if (done.current) return;
     if (!map) return; // Wait for map to be available
 
+    // Handle legacy hash-based data params (e.g. #data=data:application/json,... or #data=data:text/x-url,...)
+    let legacyData: string | null = null;
+    const hashString = window.location.hash;
+    if (!data && !id && !gist && hashString.startsWith('#data=')) {
+      const rawHashValue = hashString.slice('#data='.length);
+      const decodedHashValue = decodeURIComponent(rawHashValue);
+      if (decodedHashValue.startsWith('data:text/x-url,')) {
+        // Extract the bare URL from the x-url wrapper
+        legacyData = decodedHashValue.slice('data:text/x-url,'.length);
+      } else {
+        // data:application/json,... or other — pass through as-is
+        legacyData = decodedHashValue;
+      }
+    }
+
     // Helper to fetch and import from a URL
     const fetchAndImport = async (url: string, name?: string) => {
       const res = await fetch(url);
@@ -160,14 +175,24 @@ export function UrlAPI() {
       }
     };
 
+    const cleanUrl = (removeHash: boolean, ...queryKeys: string[]) => {
+      const newUrl = new URL(window.location.href);
+      for (const key of queryKeys) newUrl.searchParams.delete(key);
+      if (removeHash) newUrl.hash = '';
+      window.history.replaceState(null, '', newUrl.toString());
+    };
+
     (async () => {
       try {
-        if (data) {
+        const effectiveData = legacyData ?? data;
+        if (effectiveData) {
           done.current = true;
-          await handleDataParam(data);
+          await handleDataParam(effectiveData);
+          cleanUrl(!!legacyData, 'data');
         } else if (id) {
           done.current = true;
           await handleIdParam(id);
+          cleanUrl(false, 'id');
         }
       } catch (e) {
         toast.error(
