@@ -2,6 +2,7 @@ import { PolygonLayer, ScatterplotLayer } from '@deck.gl/layers';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { colorFromPresence } from 'app/lib/color';
 import { loadMakiIcons } from 'app/lib/maki';
+import type { CameraPosition } from 'app/lib/parse_map_param';
 import {
   CURSOR_DEFAULT,
   DECK_LASSO_ID,
@@ -129,7 +130,8 @@ export default class PMap {
     symbolization,
     idMap,
     controlsCorner = 'bottom-left',
-    styleOptions
+    styleOptions,
+    initialCamera
   }: {
     element: HTMLDivElement;
     styleConfig: IStyleConfig;
@@ -139,11 +141,19 @@ export default class PMap {
     idMap: IDMap;
     controlsCorner?: Parameters<mapboxgl.Map['addControl']>[1];
     styleOptions: StyleOptions;
+    initialCamera?: CameraPosition;
   }) {
     this.idMap = idMap;
-    const positionOptions = {
-      bounds: DEFAULT_MAP_BOUNDS as mapboxgl.LngLatBoundsLike
-    };
+    const positionOptions = initialCamera
+      ? {
+          center: [initialCamera.lng, initialCamera.lat] as mapboxgl.LngLatLike,
+          zoom: initialCamera.zoom,
+          bearing: initialCamera.bearing,
+          pitch: initialCamera.pitch
+        }
+      : {
+          bounds: DEFAULT_MAP_BOUNDS as mapboxgl.LngLatBoundsLike
+        };
 
     const map = new mapboxgl.Map({
       projection: 'mercator',

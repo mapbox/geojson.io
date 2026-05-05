@@ -48,6 +48,7 @@ import { useAtom, useAtomValue } from 'jotai';
 import { useAtomCallback } from 'jotai/utils';
 import { LastSearchResult } from './search/last_search_result';
 import { ModeHints } from './mode_hints';
+import { parseMapParam, serializeMapParam } from 'app/lib/parse_map_param';
 
 mapboxgl.accessToken = env.MAPBOX_TOKEN;
 
@@ -125,6 +126,17 @@ export const MapComponent = memo(function MapComponent({
   // Track if initial zoom has been performed
   const hasZoomedRef = useRef(false);
 
+  // Read the map param once on mount to set the initial camera position.
+  // We read from window.location.search directly to avoid subscribing to URL
+  // changes and causing re-renders every time the URL is updated on moveend.
+  const initialMapParam = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    const mapParam = params.get('map');
+    return mapParam ? parseMapParam(mapParam) : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // useMap
   //
   // Receives
@@ -145,7 +157,8 @@ export const MapComponent = memo(function MapComponent({
       symbolization: symbolization || SYMBOLIZATION_NONE,
       previewProperty: label,
       idMap: idMap,
-      styleOptions
+      styleOptions,
+      initialCamera: initialMapParam ?? undefined
     });
 
     setMap(mapRef.current);
@@ -167,7 +180,8 @@ export const MapComponent = memo(function MapComponent({
 
     const handleLoad = () => {
       // Only zoom if there are features (loaded from sessionStorage)
-      if (featureMap.size > 0) {
+      // and no `map` query param was provided (which takes priority).
+      if (featureMap.size > 0 && !initialMapParam) {
         const selectedFeatures = Array.from(featureMap.values());
         zoomTo(selectedFeatures);
       }
@@ -181,7 +195,7 @@ export const MapComponent = memo(function MapComponent({
     } else {
       map.map.once('load', handleLoad);
     }
-  }, [map, featureMap, zoomTo]);
+  }, [map, featureMap, zoomTo, initialMapParam]);
 
   useEffect(
     function mapSetDataMethods() {
@@ -314,7 +328,30 @@ export const MapComponent = memo(function MapComponent({
       // if (log) console.log(`${mode.mode} double`);
       HANDLERS[mode.mode].double(e);
     },
-    onMoveEnd() {},
+    onMoveEnd(e: mapboxgl.MapboxEvent) {
+      const m = e.target as mapboxgl.Map;
+      const center = m.getCenter();
+      const cameraStr = serializeMapParam({
+        zoom: m.getZoom(),
+        lat: center.lat,
+        lng: center.lng,
+        bearing: m.getBearing(),
+        pitch: m.getPitch()
+      });
+      // Build the search string manually so that `/` in the map value
+      // is not percent-encoded (URLSearchParams would encode it as %2F).
+      const existing = new URLSearchParams(window.location.search);
+      existing.delete('map');
+      const otherParams = existing.toString();
+      const newSearch = otherParams
+        ? `?${otherParams}&map=${cameraStr}`
+        : `?map=${cameraStr}`;
+      window.history.replaceState(
+        null,
+        '',
+        window.location.pathname + newSearch + window.location.hash
+      );
+    },
     onMove: throttle((e: mapboxgl.MapboxEvent) => {
       const center = e.target.getCenter().toArray();
       const bounds = e.target.getBounds()?.toArray();
