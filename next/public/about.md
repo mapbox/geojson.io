@@ -37,7 +37,7 @@ Select a feature to edit its geometry.
 - <kbd>Delete</kbd> to delete a selected vertex.
 - <kbd>Option</kbd> + drag a vertex to snap to nearby features.
 - Hold <kbd>Space</kbd> and drag to move a feature.
-- <kbd>CMD</kbd> + <kbd>Option</kbd> + drag to rotate a feature.
+- <kbd>Command</kbd> + <kbd>Option</kbd> + drag to rotate a feature.
 
 ### Editing Properties
 
@@ -97,12 +97,12 @@ When export GeoJSON, geojson.io always exports a FeatureCollection.
     <tr><td><kbd>Esc</kbd></td><td>Exit drawing / clear selection</td></tr>
     <tr><td><kbd>]</kbd></td><td>Next panel</td></tr>
     <tr><td><kbd>[</kbd></td><td>Previous panel</td></tr>
-    <tr><td><kbd>⌘+k</kbd></td><td>Search</td></tr>
-    <tr><td><kbd>⌘+o</kbd></td><td>Open</td></tr>
-    <tr><td><kbd>⌘+s</kbd></td><td>Save</td></tr>
-    <tr><td><kbd>⌘+a</kbd></td><td>Select all</td></tr>
-    <tr><td><kbd>⌘+z</kbd></td><td>Undo</td></tr>
-    <tr><td><kbd>⌘+y</kbd></td><td>Redo</td></tr>
+    <tr><td><kbd>Command</kbd> + <kbd>k</kbd></td><td>Search</td></tr>
+    <tr><td><kbd>Command</kbd> + <kbd>o</kbd></td><td>Open</td></tr>
+    <tr><td><kbd>Command</kbd> + <kbd>s</kbd></td><td>Save</td></tr>
+    <tr><td><kbd>Command</kbd> + <kbd>a</kbd></td><td>Select all</td></tr>
+    <tr><td><kbd>Command</kbd> + <kbd>z</kbd></td><td>Undo</td></tr>
+    <tr><td><kbd>Command</kbd> + <kbd>y</kbd></td><td>Redo</td></tr>
   </tbody>
 </table>
 
