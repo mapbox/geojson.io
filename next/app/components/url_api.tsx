@@ -51,6 +51,27 @@ export function UrlAPI() {
     if (done.current) return;
     if (!map) return; // Wait for map to be available
 
+    // Handle legacy hash-based data params (e.g. #data=data:application/json,... or #data=data:text/x-url,...)
+    // Normalize to canonical ?data= query param and update the URL
+    let legacyData: string | null = null;
+    const hashString = window.location.hash;
+    if (!data && !id && !gist && hashString.startsWith('#data=')) {
+      const rawHashValue = hashString.slice('#data='.length);
+      const decodedHashValue = decodeURIComponent(rawHashValue);
+      if (decodedHashValue.startsWith('data:text/x-url,')) {
+        // Extract the bare URL from the x-url wrapper
+        legacyData = decodedHashValue.slice('data:text/x-url,'.length);
+      } else {
+        // data:application/json,... or other — pass through as-is
+        legacyData = decodedHashValue;
+      }
+      // Rewrite the URL to canonical ?data= form without a page reload
+      const newUrl = new URL(window.location.href);
+      newUrl.hash = '';
+      newUrl.searchParams.set('data', legacyData);
+      window.history.replaceState(null, '', newUrl.toString());
+    }
+
     // Helper to fetch and import from a URL
     const fetchAndImport = async (url: string, name?: string) => {
       const res = await fetch(url);
@@ -162,9 +183,10 @@ export function UrlAPI() {
 
     (async () => {
       try {
-        if (data) {
+        const effectiveData = legacyData ?? data;
+        if (effectiveData) {
           done.current = true;
-          await handleDataParam(data);
+          await handleDataParam(effectiveData);
         } else if (id) {
           done.current = true;
           await handleIdParam(id);
