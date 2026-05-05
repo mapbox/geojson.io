@@ -5,6 +5,7 @@ import FeatureEditorMulti from './feature_editor/feature_editor_multi';
 import { featureEditorMinimized } from 'state/jotai';
 import { ResolvedLayout } from '../geojson_io';
 import { SizeIcon } from '@radix-ui/react-icons';
+import MinimizeIcon from '../icons/minimize';
 import clsx from 'clsx';
 import { Tooltip } from 'radix-ui';
 import { TContent } from '../elements';
@@ -27,7 +28,7 @@ export default function FeatureEditor({ layout }: { layout: ResolvedLayout }) {
 
   const classes = {
     'absolute bg-white transition-all z-20 drop-shadow-md overflow-hidden': true,
-    'right-4 bottom-4 rounded': layout === 'HORIZONTAL',
+    'left-1/2 bottom-4 rounded': layout === 'HORIZONTAL',
     'w-[calc(100%-2rem)] h-1/3': layout === 'HORIZONTAL' && !minimizedEditor,
     'w-80 h-[32px]': layout === 'HORIZONTAL' && minimizedEditor,
     'h-[32px] w-full bottom-0': layout === 'VERTICAL' && minimizedEditor,
@@ -38,11 +39,15 @@ export default function FeatureEditor({ layout }: { layout: ResolvedLayout }) {
     ? 'translateY(110%)'
     : 'translateY(200%)';
 
+  const horizontalTransform =
+    layout === 'HORIZONTAL'
+      ? `translateX(-50%) ${hasSelected ? 'translateY(0)' : translateDistance}`
+      : hasSelected
+        ? 'translateY(0)'
+        : translateDistance;
+
   return (
-    <div
-      className={clsx(classes)}
-      style={{ transform: hasSelected ? 'translateY(0)' : translateDistance }}
-    >
+    <div className={clsx(classes)} style={{ transform: horizontalTransform }}>
       <h2 className="text-center relative py-1 px-8 focus:outline-none text-white dark:text-white bg-[#34495e]">
         Feature Editor
         <span className="text-sm text-[#c7c7c7]">
@@ -53,7 +58,13 @@ export default function FeatureEditor({ layout }: { layout: ResolvedLayout }) {
         <Tooltip.Root>
           <Tooltip.Trigger asChild>
             <div className="absolute top-2 right-2 cursor-pointer hover:text-gray-200">
-              <SizeIcon onClick={() => setMinimizedEditor((prev) => !prev)} />
+              {minimizedEditor ? (
+                <SizeIcon onClick={() => setMinimizedEditor((prev) => !prev)} />
+              ) : (
+                <MinimizeIcon
+                  onClick={() => setMinimizedEditor((prev) => !prev)}
+                />
+              )}
             </div>
           </Tooltip.Trigger>
           <TContent side="left">
