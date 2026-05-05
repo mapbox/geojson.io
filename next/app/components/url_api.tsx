@@ -52,7 +52,6 @@ export function UrlAPI() {
     if (!map) return; // Wait for map to be available
 
     // Handle legacy hash-based data params (e.g. #data=data:application/json,... or #data=data:text/x-url,...)
-    // Normalize to canonical ?data= query param and update the URL
     let legacyData: string | null = null;
     const hashString = window.location.hash;
     if (!data && !id && !gist && hashString.startsWith('#data=')) {
@@ -65,11 +64,6 @@ export function UrlAPI() {
         // data:application/json,... or other — pass through as-is
         legacyData = decodedHashValue;
       }
-      // Rewrite the URL to canonical ?data= form without a page reload
-      const newUrl = new URL(window.location.href);
-      newUrl.hash = '';
-      newUrl.searchParams.set('data', legacyData);
-      window.history.replaceState(null, '', newUrl.toString());
     }
 
     // Helper to fetch and import from a URL
@@ -181,9 +175,10 @@ export function UrlAPI() {
       }
     };
 
-    const stripQueryParams = (...keys: string[]) => {
+    const cleanUrl = (removeHash: boolean, ...queryKeys: string[]) => {
       const newUrl = new URL(window.location.href);
-      for (const key of keys) newUrl.searchParams.delete(key);
+      for (const key of queryKeys) newUrl.searchParams.delete(key);
+      if (removeHash) newUrl.hash = '';
       window.history.replaceState(null, '', newUrl.toString());
     };
 
@@ -193,11 +188,11 @@ export function UrlAPI() {
         if (effectiveData) {
           done.current = true;
           await handleDataParam(effectiveData);
-          stripQueryParams('data');
+          cleanUrl(!!legacyData, 'data');
         } else if (id) {
           done.current = true;
           await handleIdParam(id);
-          stripQueryParams('id');
+          cleanUrl(false, 'id');
         }
       } catch (e) {
         toast.error(
