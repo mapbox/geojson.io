@@ -6,6 +6,7 @@ import { Keycap } from './elements';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { DialogHeader } from 'app/components/dialog';
+import { getIsMac, localizeKeybinding } from 'app/lib/utils';
 
 // Utility to extract headings from markdown
 function extractHeadings(markdown: string) {
@@ -27,6 +28,12 @@ function extractHeadings(markdown: string) {
   return headings;
 }
 
+const isMac = getIsMac();
+
+function localizeMarkdown(md: string): string {
+  return localizeKeybinding(md, isMac);
+}
+
 export default function AboutModal({ open }: { open: boolean }) {
   const [markdown, setMarkdown] = useState<string>('');
   const [headings, setHeadings] = useState<
@@ -41,7 +48,7 @@ export default function AboutModal({ open }: { open: boolean }) {
       fetch('/next/about.md')
         .then((res) => res.text())
         .then((md) => {
-          setMarkdown(md);
+          setMarkdown(localizeMarkdown(md));
           setHeadings(extractHeadings(md));
         })
         .catch(() => setMarkdown('Failed to load info.'));

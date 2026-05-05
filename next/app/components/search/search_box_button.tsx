@@ -29,7 +29,9 @@ const SearchBoxButton = () => {
               <span className="ml-2 text-gray-400">Search</span>
             </div>
 
-            <span className="text-gray-400 txt-bold">⌘K</span>
+            <span className="text-gray-400 txt-bold">
+              {localizeKeybinding(SEARCH_KEYBINDING, isMac)}
+            </span>
           </E.Button>
         </T.Trigger>
         <E.TContent>
