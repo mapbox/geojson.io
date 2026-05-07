@@ -118,7 +118,7 @@ When export GeoJSON, geojson.io always exports a FeatureCollection.
 
 ## URL Parameters
 
-You can load data into geojson.io using URL parameters.
+geojson.io supports URL parameters for adding data to the map and storing the map's location and view settings.
 
 | Parameter                                                                 | Example                                                                                                                                                                                                                                                                                                                                                                                         |
 | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
