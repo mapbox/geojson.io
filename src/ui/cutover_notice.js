@@ -4,6 +4,8 @@ const DISMISS_KEY = 'cutover_notice_dismissed_v1';
 const DISMISS_TTL_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
 const NEXT_URL = '/next';
 const ISSUES_URL = 'https://github.com/mapbox/geojson.io/issues';
+const CHANGELOG_URL =
+  'https://github.com/mapbox/geojson.io/blob/main/next/CHANGELOG.md';
 
 module.exports = function (context) {
   const dismissedAt = context.storage.get(DISMISS_KEY);
@@ -33,6 +35,17 @@ module.exports = function (context) {
         NEXT_URL +
         '" target="_blank" class="underline">/next</a>) ' +
         'will replace this version.'
+    );
+
+  body
+    .append('p')
+    .attr('class', 'mb-4')
+    .html(
+      "We've been actively incorporating feedback from users — " +
+        '<a href="' +
+        CHANGELOG_URL +
+        '" target="_blank" rel="noopener" class="underline">' +
+        "see what's changed</a> in the new version."
     );
 
   body
