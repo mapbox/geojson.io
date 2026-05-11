@@ -7,6 +7,7 @@ import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { DialogHeader } from 'app/components/dialog';
 import { getIsMac, localizeKeybinding } from 'app/lib/utils';
+import { changelogForAboutModal } from 'state/changelog';
 
 // Utility to extract headings from markdown
 function extractHeadings(markdown: string) {
@@ -42,14 +43,14 @@ export default function AboutModal({ open }: { open: boolean }) {
   const headingRefs = useRef<Record<string, HTMLHeadingElement | null>>({});
   const [activeHeading, setActiveHeading] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     if (open) {
       fetch('/next/about.md')
         .then((res) => res.text())
         .then((md) => {
-          setMarkdown(localizeMarkdown(md));
-          setHeadings(extractHeadings(md));
+          const combined = `${md}\n\n${changelogForAboutModal}`;
+          setMarkdown(localizeMarkdown(combined));
+          setHeadings(extractHeadings(combined));
         })
         .catch(() => setMarkdown('Failed to load info.'));
     }
