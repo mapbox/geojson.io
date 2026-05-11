@@ -28,7 +28,6 @@ module.exports = function (context) {
 
   body
     .append('p')
-    .attr('class', 'mb-4')
     .html(
       'On <strong>June 1st</strong>, the new geojson.io (currently at ' +
         '<a href="' +
@@ -39,7 +38,6 @@ module.exports = function (context) {
 
   body
     .append('p')
-    .attr('class', 'mb-4')
     .html(
       "We've been actively incorporating feedback from users — " +
         '<a href="' +
@@ -50,7 +48,6 @@ module.exports = function (context) {
 
   body
     .append('p')
-    .attr('class', 'mb-4')
     .html(
       'Found a bug or have feedback on the new version? Please ' +
         '<a href="' +
