@@ -60,6 +60,8 @@ gjIO.router.on();
 
 api(gjIO);
 
+require('./ui/cutover_notice')(gjIO);
+
 function geojsonIO() {
   const context = {};
   context.dispatch = d3.dispatch('change', 'route');
