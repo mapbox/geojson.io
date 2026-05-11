@@ -16,5 +16,5 @@ export const changelogForAboutModal: string = (() => {
     .join('')
     .replace(/^##\s+(\d{4}-\d{2}-\d{2})\s*$/gm, '**$1**')
     .trim();
-  return `## What's new\n\n${recent}\n\n[View full changelog on GitHub →](${FULL_CHANGELOG_URL})\n`;
+  return `## Changelog\n\n${recent}\n\n[View full changelog on GitHub →](${FULL_CHANGELOG_URL})\n`;
 })();

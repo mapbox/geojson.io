@@ -4,7 +4,7 @@ Recent changes to the geojson.io application. Entries are grouped by ship date.
 
 ## 2026-05-05
 
-- **Feature editor:** Collapsible UI in the Feature Editor for working with large property sets ([#965](https://github.com/mapbox/geojson.io/pull/965))
+- **Feature editor:** Collapsible UI in the Feature Editor to reduce visual clutter when not using Selected Feature editor ([#965](https://github.com/mapbox/geojson.io/pull/965))
 - **URL sharing:** Support legacy hash-based `#data=` URLs and strip query params from the URL after data loads ([#966](https://github.com/mapbox/geojson.io/pull/966))
 
 ## 2026-05-04
@@ -17,7 +17,7 @@ Recent changes to the geojson.io application. Entries are grouped by ship date.
 
 ## 2026-04-20
 
-- **Map controls:** Pitch and bearing support for tilted/rotated map views
+- **Pitch & Rotation:** Pitch and rotation/bearing support for tilted/rotated map views
 - **Left panel:** Default starter state with helpful links to supported file types ([#962](https://github.com/mapbox/geojson.io/pull/962))
 - **Basemap:** Restored OpenStreetMap basemap option
 
