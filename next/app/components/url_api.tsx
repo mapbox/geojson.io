@@ -18,6 +18,7 @@ export function UrlAPI() {
   const data = searchParams?.get('data');
   const id = searchParams?.get('id');
   const gist = searchParams?.get('gist');
+  const mapParam = searchParams?.get('map');
   const done = useRef<boolean>(false);
   const zoomTo = useZoomTo();
   const map = useContext(MapContext); // get map instance
@@ -40,11 +41,14 @@ export function UrlAPI() {
 
   const getExtentAndZoomTo = useCallback(
     (geojson: any) => {
+      // If a `map` query param is present, honor its camera position
+      // instead of flying to the data extent.
+      if (mapParam) return;
       const parsed = JSON.parse(geojson);
       const maybeExtent = getExtent(parsed);
       zoomTo(maybeExtent);
     },
-    [zoomTo]
+    [zoomTo, mapParam]
   );
 
   useEffect(() => {
@@ -205,6 +209,7 @@ export function UrlAPI() {
     data,
     id,
     map,
+    mapParam,
     doImportString,
     doImportFile,
     setDialogState,
