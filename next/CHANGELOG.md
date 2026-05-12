@@ -2,6 +2,11 @@
 
 Recent changes to the geojson.io application. Entries are grouped by ship date.
 
+## 2026-05-12
+
+- **Persist Camera View:** Camera options (map view) are persisted in sessionStorage and are available via query params for sharing specific views ([#967](https://github.com/mapbox/geojson.io/pull/967))
+- **ChangeLog added to About:** - The About Modal now includes 5 most recent changelog entries and includes link to full changelog (Github)([#970](https://github.com/mapbox/geojson.io/pull/970))
+
 ## 2026-05-05
 
 - **Feature editor:** Collapsible UI in the Feature Editor to reduce visual clutter when not using Selected Feature editor ([#965](https://github.com/mapbox/geojson.io/pull/965))
