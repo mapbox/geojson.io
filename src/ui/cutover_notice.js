@@ -56,7 +56,21 @@ module.exports = function (context) {
         'file an issue on GitHub</a>.'
     );
 
-  const actions = body.append('div').attr('class', 'flex gap-2 mt-4');
+  const actions = body
+    .append('div')
+    .attr('class', 'flex justify-between gap-2 mt-4');
+
+  actions
+    .append('button')
+    .attr('type', 'button')
+    .attr(
+      'class',
+      'bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-bold py-2 px-4 rounded inline-flex items-center no-underline'
+    )
+    .text('Continue to legacy geojson.io')
+    .on('click', () => {
+      m.close();
+    });
 
   actions
     .append('a')
@@ -67,17 +81,6 @@ module.exports = function (context) {
       'bg-pink hover:bg-pink-dark text-white text-sm font-bold py-2 px-4 rounded inline-flex items-center gap-2 no-underline'
     )
     .html('Try the new geojson.io <span>&rarr;</span>');
-
-  actions
-    .append('a')
-    .attr('href', ISSUES_URL)
-    .attr('target', '_blank')
-    .attr('rel', 'noopener')
-    .attr(
-      'class',
-      'bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-bold py-2 px-4 rounded inline-flex items-center no-underline'
-    )
-    .text('File an issue on GitHub');
 
   // Persist dismissal regardless of how the modal is closed (X, backdrop, ESC).
   const baseClose = m.close;
