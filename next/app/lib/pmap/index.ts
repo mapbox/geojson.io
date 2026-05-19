@@ -1,3 +1,4 @@
+import { _GlobeView as GlobeView } from '@deck.gl/core';
 import { PolygonLayer, ScatterplotLayer } from '@deck.gl/layers';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { colorFromPresence } from 'app/lib/color';
@@ -32,7 +33,6 @@ import type {
 } from 'state/jotai';
 import type {
   Feature,
-  IFeature,
   IFeatureCollection,
   IPresence,
   ISymbolization,
@@ -122,6 +122,11 @@ export default class PMap {
   lastCustomRasterLayers: CustomRasterLayer[] | null;
   overlay: MapboxOverlay;
 
+  // Stored state for per-frame globe projection correction
+  private _deckSyntheticData: Feature[] = [];
+  private _deckSelectionIds: Set<RawId> = new Set();
+  private _deckEphemeralState: EphemeralEditingState = { type: 'none' };
+
   constructor({
     element,
     styleConfig,
@@ -156,7 +161,7 @@ export default class PMap {
         };
 
     const map = new mapboxgl.Map({
-      projection: 'mercator',
+      projection: 'globe',
       container: element,
       ...MAP_OPTIONS,
       ...positionOptions
@@ -168,6 +173,10 @@ export default class PMap {
     });
 
     map.addControl(this.overlay as any);
+
+    // Registered AFTER addControl so it fires after MapboxOverlay._updateViewState,
+    // ensuring the deck viewport reflects the current frame before we rebuild layers.
+    map.on('render', this._syncDeckLayers);
 
     map.addControl(
       new mapboxgl.GeolocateControl({
@@ -192,6 +201,7 @@ export default class PMap {
     map.on('dblclick', this.onMapDoubleClick);
     map.on('mouseup', this.onMapMouseUp);
     map.on('moveend', this.onMoveEnd);
+    map.on('moveend', this._syncDeckLayers);
     map.on('touchend', this.onMapTouchEnd);
     map.on('move', this.onMove);
 
@@ -345,46 +355,114 @@ export default class PMap {
     mSetData(ephemeralSource, groups.ephemeral, 'ephem');
     mSetData(featuresSource, groups.features, 'features', force);
 
+    this._deckSyntheticData = groups.synthetic;
+    this._deckSelectionIds = groups.selectionIds;
+    this._deckEphemeralState = ephemeralState;
+    this._syncDeckLayers();
+
+    this.lastData = data;
+    this.updateSelections(groups.selectionIds);
+    this.lastEphemeralState = ephemeralState;
+  }
+
+  /**
+   * Builds the ScatterplotLayer with globe-corrected vertex positions.
+   *
+   * deck.gl's GlobeViewport applies a latitude-dependent scaleAdjust that doesn't
+   * match Mapbox GL JS's globe projection. We correct each point by round-tripping
+   * through map.project() (Mapbox's exact globe math → screen pixels) and then
+   * viewport.unproject() (screen pixels → the lng/lat that deck.gl maps there).
+   * A fresh closure is created each call so deck.gl sees a new getPosition reference
+   * and re-evaluates all positions.
+   */
+  private _buildScatterplotLayer(
+    viewport: ReturnType<typeof GlobeView.prototype.makeViewport>
+  ): ScatterplotLayer<Feature> {
+    const map = this.map;
+    const selectionIds = this._deckSelectionIds;
+
+    const getPosition = viewport
+      ? (d: Feature): [number, number] => {
+          const [lng, lat] = (d.geometry as Point).coordinates as [
+            number,
+            number
+          ];
+          try {
+            const pt = map.project([lng, lat]);
+            const adjusted = viewport.unproject([pt.x, pt.y]) as number[];
+            if (Number.isFinite(adjusted[0]) && Number.isFinite(adjusted[1])) {
+              return [adjusted[0], adjusted[1]];
+            }
+          } catch {
+            // fall through to original coords
+          }
+          return [lng, lat];
+        }
+      : (d: Feature) => (d.geometry as Point).coordinates as [number, number];
+
+    return new ScatterplotLayer<Feature>({
+      id: DECK_SYNTHETIC_ID,
+      radiusUnits: 'pixels',
+      lineWidthUnits: 'pixels',
+      pickable: true,
+      stroked: true,
+      filled: true,
+      billboard: true,
+      data: this._deckSyntheticData,
+      getPosition,
+      // updateTriggers tells deck.gl to re-evaluate getPosition whenever the
+      // viewport changes. Without this, deck.gl reuses the cached position
+      // attribute buffer even though getPosition captures a new viewport closure.
+      updateTriggers: {
+        getPosition: viewport
+          ? [
+              map.getCenter().lng,
+              map.getCenter().lat,
+              map.getZoom(),
+              map.getBearing(),
+              map.getPitch()
+            ]
+          : []
+      },
+      getFillColor: (d) =>
+        selectionIds.has(d.id as RawId) ? WHITE : LINE_COLORS_SELECTED_RGB,
+      getLineColor: (d) =>
+        selectionIds.has(d.id as RawId) ? LINE_COLORS_SELECTED_RGB : WHITE,
+      getLineWidth: 1.5,
+      getRadius: (d) => {
+        const id = Number(d.id || 0);
+        const fp = d.properties?.fp;
+        if (fp) return 10;
+        return id % 2 === 0 ? 5 : 3.5;
+      }
+    });
+  }
+
+  /**
+   * Called on every Mapbox render event (after MapboxOverlay._updateViewState
+   * has already updated the deck viewport for this frame). Rebuilds the deck
+   * layers with fresh globe-corrected positions and forces an immediate redraw
+   * so corrections apply in the same frame rather than one frame behind.
+   */
+  private _syncDeckLayers = () => {
+    const ephemeralState = this._deckEphemeralState;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const deckInst = (this.overlay as any)._deck;
+    // Use deck's own rendering viewport — it has a √2 scale factor vs a manually
+    // constructed GlobeView.makeViewport(), so this is the only viewport that
+    // produces correct round-trip corrections via map.project → viewport.unproject.
+    const viewport = deckInst?.isInitialized
+      ? deckInst.getViewports()?.[0]
+      : undefined;
+
     this.overlay.setProps({
       layers: [
-        new ScatterplotLayer<IFeature<Point>>({
-          id: DECK_SYNTHETIC_ID,
-
-          radiusUnits: 'pixels',
-          lineWidthUnits: 'pixels',
-
-          pickable: true,
-          stroked: true,
-          filled: true,
-          billboard: true,
-
-          data: groups.synthetic,
-
-          getPosition: (d) => d.geometry.coordinates as [number, number],
-          getFillColor: (d) => {
-            return groups.selectionIds.has(d.id as RawId)
-              ? WHITE
-              : LINE_COLORS_SELECTED_RGB;
-          },
-          getLineColor: (d) => {
-            return groups.selectionIds.has(d.id as RawId)
-              ? LINE_COLORS_SELECTED_RGB
-              : WHITE;
-          },
-          getLineWidth: 1.5,
-          getRadius: (d) => {
-            const id = Number(d.id || 0);
-            const fp = d.properties?.fp;
-            if (fp) return 10;
-            return id % 2 === 0 ? 5 : 3.5;
-          }
-        }),
-
+        this._buildScatterplotLayer(viewport),
         ephemeralState.type === 'lasso' &&
           new PolygonLayer<number[]>({
             id: DECK_LASSO_ID,
             data: [makeRectangle(ephemeralState)],
-            visible: ephemeralState.type === 'lasso',
+            visible: true,
             pickable: false,
             stroked: true,
             filled: true,
@@ -398,12 +476,16 @@ export default class PMap {
       ]
     });
 
-    this.lastData = data;
-    this.updateSelections(groups.selectionIds);
-    this.lastEphemeralState = ephemeralState;
-  }
+    // Force a second redraw this frame so corrected positions overwrite the
+    // draw that _updateViewState already issued with stale positions.
+    if (deckInst?.isInitialized) {
+      deckInst.redraw();
+    }
+  };
 
   remove() {
+    this.map.off('render', this._syncDeckLayers);
+    this.map.off('moveend', this._syncDeckLayers);
     this.map.remove();
   }
 
