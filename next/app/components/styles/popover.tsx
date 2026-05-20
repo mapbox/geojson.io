@@ -168,6 +168,11 @@ export function StylesPopover() {
     }
   };
 
+  const activeStyle = LAYERS[activeStyleId];
+  // Standard-based styles expose 3D feature config via imports; legacy/raster styles don't
+  const supports3dFeatures = !!(activeStyle as { json?: { imports?: unknown } })
+    ?.json?.imports;
+
   return (
     <div>
       <div className="flex justify-between pb-2">
@@ -239,6 +244,35 @@ export function StylesPopover() {
             />
             <E.StyledLabelSpan size="xs" style={{ color: '#888' }}>
               Show map labels
+            </E.StyledLabelSpan>
+          </span>
+        )}
+
+        {supports3dFeatures ? (
+          <label className="flex items-center gap-x-2 mt-2">
+            <input
+              type="checkbox"
+              checked={styleOptions.show3dFeatures ?? true}
+              onChange={(e) =>
+                setStyleOptions({
+                  ...styleOptions,
+                  show3dFeatures: e.target.checked
+                })
+              }
+              className={styledCheckbox({ variant: 'default' })}
+            />
+            <E.StyledLabelSpan size="xs">Show 3D features</E.StyledLabelSpan>
+          </label>
+        ) : (
+          <span className="flex items-center gap-x-2 mt-2 opacity-50 cursor-not-allowed">
+            <input
+              type="checkbox"
+              checked={false}
+              disabled
+              className={styledCheckbox({ variant: 'default' })}
+            />
+            <E.StyledLabelSpan size="xs" style={{ color: '#888' }}>
+              Show 3D features
             </E.StyledLabelSpan>
           </span>
         )}

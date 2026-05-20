@@ -74,6 +74,7 @@ export type IStyleConfig = IStyleConfigUrl | IStyleConfigJson;
 
 export interface StyleOptions {
   labelVisibility: boolean;
+  show3dFeatures: boolean;
 }
 
 export interface IWrappedFeature<T = Feature> {

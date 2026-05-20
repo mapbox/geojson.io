@@ -562,6 +562,16 @@ export default class PMap {
           styleOptions.labelVisibility
         );
       }
+      const show3d = styleOptions.show3dFeatures ?? true;
+      for (const property of [
+        'show3dOptions',
+        'show3dBuildings',
+        'show3dTrees',
+        'show3dLandmarks',
+        'show3dFacades'
+      ]) {
+        this.map.setConfigProperty('basemap', property, show3d);
+      }
       return;
     }
 
