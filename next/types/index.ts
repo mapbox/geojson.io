@@ -75,6 +75,7 @@ export type IStyleConfig = IStyleConfigUrl | IStyleConfigJson;
 export interface StyleOptions {
   labelVisibility: boolean;
   show3dFeatures: boolean;
+  mapProjection: 'globe' | 'mercator';
 }
 
 export interface IWrappedFeature<T = Feature> {

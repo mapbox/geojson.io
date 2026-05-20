@@ -8,7 +8,6 @@ import {
   CURSOR_DEFAULT,
   DECK_LASSO_ID,
   DECK_SYNTHETIC_ID,
-  DEFAULT_MAP_BOUNDS,
   emptySelection,
   LASSO_DARK_YELLOW,
   LASSO_YELLOW,
@@ -122,6 +121,10 @@ export default class PMap {
   lastCustomRasterLayers: CustomRasterLayer[] | null;
   overlay: MapboxOverlay;
 
+  // Sequence counter to prevent stale setStyle calls from overwriting newer ones.
+  // Incremented on each setStyle call; only the most recent call applies its result.
+  private _setStyleSeq = 0;
+
   // Stored state for per-frame globe projection correction
   private _deckSyntheticData: Feature[] = [];
   private _deckSelectionIds: Set<RawId> = new Set();
@@ -157,11 +160,11 @@ export default class PMap {
           pitch: initialCamera.pitch
         }
       : {
-          bounds: DEFAULT_MAP_BOUNDS as mapboxgl.LngLatBoundsLike
+          center: [0, 20] as mapboxgl.LngLatLike,
+          zoom: 2
         };
 
     const map = new mapboxgl.Map({
-      projection: 'globe',
       container: element,
       ...MAP_OPTIONS,
       ...positionOptions
@@ -274,6 +277,10 @@ export default class PMap {
     const map = event.target as mapboxgl.Map;
     // disable terrain. If enabled in the style (as in Mapbox Standard style), it causes an alignment bug in the deck.gl overlay
     map.setTerrain(null);
+    // Apply the desired projection after each style load. Setting projection before
+    // setStyle() can cause Mapbox to internally load a default Standard style (which
+    // it requires for globe), racing with our explicit setStyle() call.
+    map.setProjection(this.lastStyleOptions?.mapProjection ?? 'globe');
     // Load maki icons as SDF images so marker-symbol icons can be recolored via icon-color.
     void loadMakiIcons(map);
   };
@@ -448,12 +455,18 @@ export default class PMap {
     const ephemeralState = this._deckEphemeralState;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const deckInst = (this.overlay as any)._deck;
+    // Only apply globe correction when the map is actually in globe projection.
+    // In Mercator mode, deck.gl and Mapbox agree on screen positions, so no
+    // correction is needed (and passing a viewport would do unnecessary work).
+    const isGlobe = this.map.getProjection()?.name === 'globe';
+
     // Use deck's own rendering viewport — it has a √2 scale factor vs a manually
     // constructed GlobeView.makeViewport(), so this is the only viewport that
     // produces correct round-trip corrections via map.project → viewport.unproject.
-    const viewport = deckInst?.isInitialized
-      ? deckInst.getViewports()?.[0]
-      : undefined;
+    const viewport =
+      isGlobe && deckInst?.isInitialized
+        ? deckInst.getViewports()?.[0]
+        : undefined;
 
     this.overlay.setProps({
       layers: [
@@ -528,6 +541,10 @@ export default class PMap {
       return;
     }
 
+    // Stamp this call so we can discard results if a newer call supersedes it
+    // (prevents a slow first fetch from overwriting a faster subsequent one).
+    const seq = ++this._setStyleSeq;
+
     // Always update last* values
     this.lastLayer = styleConfig;
     this.lastSymbolization = symbolization;
@@ -542,6 +559,8 @@ export default class PMap {
       styleOptions,
       customRasterLayers
     });
+
+    if (seq !== this._setStyleSeq) return;
 
     // If only styleOptions changed and style has imports, update config properties instead of reloading style
     if (
@@ -572,6 +591,8 @@ export default class PMap {
       ]) {
         this.map.setConfigProperty('basemap', property, show3d);
       }
+      // Projection can change without a full style reload
+      this.map.setProjection(styleOptions.mapProjection ?? 'globe');
       return;
     }
 

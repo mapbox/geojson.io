@@ -66,7 +66,8 @@ export const activeStyleIdAtom = atomWithStorage<string>(
 // tracks style options (currently only labelVisibility, not style-specific)
 export const styleOptionsAtom = atomWithStorage<StyleOptions>('styleOptions', {
   labelVisibility: true,
-  show3dFeatures: true
+  show3dFeatures: true,
+  mapProjection: 'globe'
 });
 
 // Custom raster layer configuration
