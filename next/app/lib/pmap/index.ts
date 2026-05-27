@@ -277,9 +277,7 @@ export default class PMap {
     const map = event.target as mapboxgl.Map;
     // disable terrain. If enabled in the style (as in Mapbox Standard style), it causes an alignment bug in the deck.gl overlay
     map.setTerrain(null);
-    // Apply the desired projection after each style load. Setting projection before
-    // setStyle() can cause Mapbox to internally load a default Standard style (which
-    // it requires for globe), racing with our explicit setStyle() call.
+    // set projection to last known value (if any) so that style reloads don't reset it to default
     map.setProjection(this.lastStyleOptions?.mapProjection ?? 'globe');
     // Load maki icons as SDF images so marker-symbol icons can be recolored via icon-color.
     void loadMakiIcons(map);
@@ -545,6 +543,9 @@ export default class PMap {
     // (prevents a slow first fetch from overwriting a faster subsequent one).
     const seq = ++this._setStyleSeq;
 
+    // Save previous styleOptions so we can compare individual fields after the async fetch.
+    const prevStyleOptions = this.lastStyleOptions;
+
     // Always update last* values
     this.lastLayer = styleConfig;
     this.lastSymbolization = symbolization;
@@ -591,12 +592,25 @@ export default class PMap {
       ]) {
         this.map.setConfigProperty('basemap', property, show3d);
       }
-      // Projection can change without a full style reload
       this.map.setProjection(styleOptions.mapProjection ?? 'globe');
       return;
     }
 
-    this.map.setStyle(style);
+    // For non-import styles (OSM, Outdoors, etc.) when only styleOptions changed:
+    // setStyle(style) with the default diff:true would see no changes in the style JSON
+    // (projection is not embedded in the style) and skip the reload, so style.load never
+    // fires and setProjection in onMapStyleLoad never runs. Call setProjection directly
+    // instead, and skip the style reload when only the projection changed.
+    if (onlyStyleOptionsChanged) {
+      this.map.setProjection(styleOptions.mapProjection ?? 'globe');
+      const onlyProjectionChanged =
+        prevStyleOptions?.labelVisibility === styleOptions.labelVisibility &&
+        prevStyleOptions?.show3dFeatures === styleOptions.show3dFeatures;
+      if (onlyProjectionChanged) return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.map.setStyle(style, { diff: false } as any);
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 

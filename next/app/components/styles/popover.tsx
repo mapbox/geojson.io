@@ -169,9 +169,7 @@ export function StylesPopover() {
   };
 
   const activeStyle = LAYERS[activeStyleId];
-  // Standard-based styles expose 3D feature config via imports; legacy/raster styles don't
-  const supports3dFeatures = !!(activeStyle as { json?: { imports?: unknown } })
-    ?.json?.imports;
+  const supports3dFeatures = !!activeStyle?.supports3dFeatures;
 
   return (
     <div>

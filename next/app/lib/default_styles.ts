@@ -9,6 +9,7 @@ export type StyleConfigTemplate = {
   name: string;
   url?: string;
   json?: mapboxgl.Style;
+  supports3dFeatures?: boolean;
 };
 
 const STYLES: Record<string, StyleConfigTemplate> = {
@@ -28,6 +29,7 @@ const STYLES: Record<string, StyleConfigTemplate> = {
         }
       ]
     },
+    supports3dFeatures: true,
     ...defaults
   },
   STANDARD_DARK: {
@@ -47,6 +49,7 @@ const STYLES: Record<string, StyleConfigTemplate> = {
         }
       ]
     },
+    supports3dFeatures: true,
     ...defaults
   },
   STANDARD_SATELLITE: {
@@ -77,6 +80,7 @@ const STYLES: Record<string, StyleConfigTemplate> = {
         }
       ]
     },
+    supports3dFeatures: true,
     ...defaults
   },
   OUTDOORS: {
