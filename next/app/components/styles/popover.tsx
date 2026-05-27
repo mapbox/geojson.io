@@ -168,6 +168,9 @@ export function StylesPopover() {
     }
   };
 
+  const activeStyle = LAYERS[activeStyleId];
+  const supports3dFeatures = !!activeStyle?.supports3dFeatures;
+
   return (
     <div>
       <div className="flex justify-between pb-2">
@@ -242,6 +245,79 @@ export function StylesPopover() {
             </E.StyledLabelSpan>
           </span>
         )}
+
+        {supports3dFeatures ? (
+          <label className="flex items-center gap-x-2 mt-2">
+            <input
+              type="checkbox"
+              checked={styleOptions.show3dFeatures ?? true}
+              onChange={(e) =>
+                setStyleOptions({
+                  ...styleOptions,
+                  show3dFeatures: e.target.checked
+                })
+              }
+              className={styledCheckbox({ variant: 'default' })}
+            />
+            <E.StyledLabelSpan size="xs">Show 3D features</E.StyledLabelSpan>
+          </label>
+        ) : (
+          <span className="flex items-center gap-x-2 mt-2 opacity-50 cursor-not-allowed">
+            <input
+              type="checkbox"
+              checked={false}
+              disabled
+              className={styledCheckbox({ variant: 'default' })}
+            />
+            <E.StyledLabelSpan size="xs" style={{ color: '#888' }}>
+              Show 3D features
+            </E.StyledLabelSpan>
+          </span>
+        )}
+      </div>
+
+      {/* Projection section */}
+      <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex justify-between pb-2 px-2">
+          <div className="font-bold">Projection</div>
+        </div>
+        <div className="flex flex-row gap-4 p-2">
+          {(
+            [
+              { id: 'globe', label: 'Globe' },
+              { id: 'mercator', label: 'Mercator' }
+            ] as const
+          ).map(({ id, label }) => {
+            const isActive = (styleOptions.mapProjection ?? 'globe') === id;
+            return (
+              <div key={id} className="flex flex-col items-center">
+                <button
+                  className={`w-16 h-16 rounded border flex items-center justify-center transition-colors ${
+                    isActive
+                      ? 'border-blue-500 ring-4 ring-blue-400 bg-blue-100 ring-offset-2'
+                      : 'border-gray-400 bg-gray-200'
+                  }`}
+                  aria-label={`Use ${label} projection`}
+                  onClick={() =>
+                    setStyleOptions({ ...styleOptions, mapProjection: id })
+                  }
+                  type="button"
+                >
+                  <img
+                    src={`/next/layer-icons/projection-${id}.png`}
+                    alt={label}
+                    className="w-full h-full object-cover rounded"
+                    style={{ aspectRatio: '1 / 1', objectFit: 'cover' }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </button>
+                <div className="text-xs mt-1 text-center">{label}</div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Raster Layers section */}

@@ -45,6 +45,7 @@ export async function addMapboxStyle(
 
   const updatedStyle = updateMapboxStyle(style, {
     labelVisibility: styleOptions.labelVisibility,
+    show3dFeatures: styleOptions.show3dFeatures,
     customRasterLayers
   });
   return updatedStyle;
@@ -54,12 +55,14 @@ function updateMapboxStyle(
   style: mapboxgl.Style,
   options: {
     labelVisibility?: boolean;
+    show3dFeatures?: boolean;
     rasterOpacity?: number;
     customRasterLayers?: CustomRasterLayer[];
   }
 ): mapboxgl.Style {
   const {
     labelVisibility = true,
+    show3dFeatures = true,
     rasterOpacity,
     customRasterLayers = []
   } = options;
@@ -152,7 +155,12 @@ function updateMapboxStyle(
             showRoadLabels: labelVisibility,
             showPlaceLabels: labelVisibility,
             showTransitLabels: labelVisibility,
-            showPointOfInterestLabels: labelVisibility
+            showPointOfInterestLabels: labelVisibility,
+            show3dOptions: show3dFeatures,
+            show3dBuildings: show3dFeatures,
+            show3dTrees: show3dFeatures,
+            show3dLandmarks: show3dFeatures,
+            show3dFacades: show3dFeatures
           }
         };
       }
