@@ -1,4 +1,5 @@
 import { getMapboxLayerURL } from 'app/lib/utils';
+import STANDARD_FOG from 'app/lib/standard_fog';
 import once from 'lodash/once';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'react-hot-toast';
@@ -183,6 +184,11 @@ function updateMapboxStyle(
   };
   if (typeof updatedImports !== 'undefined') {
     result.imports = updatedImports;
+  }
+  // Apply Standard fog to non-import styles (OSM, Outdoors) so they get
+  // stars and atmospheric haze when in globe projection.
+  if (!style.imports) {
+    result.fog = STANDARD_FOG;
   }
   return result;
 }
