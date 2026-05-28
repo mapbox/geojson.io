@@ -39,6 +39,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@headlessui/react": "^2.2.6",
     "@lezer/highlight": "^1.2.1",
+    "@mapbox/maki": "^8.2.0",
     "@mapbox/search-js-core": "^1.5.1",
     "@placemarkio/check-geojson": "0.1.12",
     "@placemarkio/flat-drop-files": "^1.0.2",

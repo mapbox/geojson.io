@@ -9,9 +9,9 @@ export default defineConfig((env) => ({
     env.mode === 'test'
       ? [react(), tsconfigPaths()]
       : [react(), tsconfigPaths(), nodePolyfills()],
-  base: '/next/',
+  base: '/',
   build: {
-    outDir: '../dist/next'
+    outDir: './dist'
   },
   worker: {
     format: 'es',
