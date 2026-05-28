@@ -2,6 +2,14 @@
 
 Recent changes to the geojson.io application. Entries are grouped by ship date.
 
+## 2026-06-28
+
+- **Add fog to non-standard styles:** Adds fog to the OSM and Outdoors basemaps for consistency across all basemap options. ([#980](https://github.com/mapbox/geojson.io/pull/980))
+
+## 2026-06-27
+
+- **Add globe projection and 3d features toggle:** Adds a toggle to switch between globe and mercator projections and to toggle 3d features on basemaps that support them. ([#975](https://github.com/mapbox/geojson.io/pull/975))
+
 ## 2026-05-12
 
 - **Persist Camera View:** Camera options (map view) are persisted in sessionStorage and are available via query params for sharing specific views ([#967](https://github.com/mapbox/geojson.io/pull/967))
