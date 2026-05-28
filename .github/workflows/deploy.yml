@@ -1,50 +1,63 @@
-name: Deploy to GitHub Pages
+name: Node CI & Pages Deploy
 
 on:
-  push:
-    branches:
-      - main
+  push: # run on pushes to any branch
+  pull_request: # run on PRs targeting any branch
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    env:
+      NODE_ENV: test
+      VITE_PUBLIC_MAPBOX_TOKEN: ${{ secrets.VITE_PUBLIC_MAPBOX_TOKEN }}
     steps:
-      - name: Checkout repository
+      - name: Check out repo
         uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
+      - name: Install packages
+        run: npm ci -f
+      - name: Run tests
+        run: npm test
 
-      - name: Install dependencies (root)
-        run: npm ci
-
-      - name: Build original app
-        run: npm run build
-
-      - name: Build next app
-        env:
-          VITE_PUBLIC_MAPBOX_TOKEN: ${{ secrets.VITE_PUBLIC_MAPBOX_TOKEN }}
-        run: npm run build:next
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  deploy:
-    needs: build
+  build_and_deploy:
+    needs: test
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # only deploy when running on main
     permissions:
+      contents: read
       pages: write
       id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      VITE_PUBLIC_MAPBOX_TOKEN: ${{ secrets.VITE_PUBLIC_MAPBOX_TOKEN }}
     steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - name: Install packages
+        run: npm ci -f
+      - name: Build
+        run: npm run build
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./dist
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          path: ./dist

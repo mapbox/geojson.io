@@ -1,44 +1,50 @@
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io?ref=badge_shield)
-
 # geojson.io
 
-![](http://i.cloudup.com/kz3BAF7Hnx.png)
+A fast, simple editor for map data. geojson.io is a browser-based tool for creating and editing spatial data for your mapping projects.
 
-A fast, simple editor for map data. Read more on [Mapbox](https://www.mapbox.com/blog/geojsonio-announce/),
-[macwright.org](https://macwright.org/2013/07/26/geojsonio.html).
+## Features
 
-## Goes Great With!
+- Create and edit spatial data (geometries and attributes/properties) in the browser.
+- Import and export data in multiple formats, including GeoJSON, KML, CSV, and Shapefile.
+- Draw points, lines, polygons, rectangles, and circles on an interactive map.
+- Edit feature properties in bulk using the Feature Editor or Table Panel.
+- Keyboard shortcuts for efficient editing and navigation.
+- Query parameters allow preloading data from external sources.
 
-**Tools**
+## Bug Reports & Feature Requests
 
-- [Using geojson.io with GitHub is better with the Chrome Extension](https://chrome.google.com/webstore/detail/geojsonio/oibjgofbhldcajfamjganpeacipebckp)
-- [geojsonio-cli](https://github.com/mapbox/geojsonio-cli) lets you shoot geojson from your terminal to geojson.io! (with nodejs)
-- [geojsonio.py](https://github.com/jwass/geojsonio.py) lets you shoot geojson from your terminal to geojson.io! (with python)
-
-## API
-
-You can interact with geojson.io programmatically via URL parameters. Here is an example of geojson encoded into the URL:
-
-https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22LineString%22%2C%22coordinates%22%3A%5B%5B0%2C0%5D%2C%5B10%2C10%5D%5D%7D
-
-Full API documentation can be found in [API.md](API.md).
+If you encounter any issues or have suggestions for new features, please open an issue on the [geojson.io GitHub repository](https://github.com/mapbox/geojson.io/issues).
 
 ## Development
 
-1. Clone this repository
-2. Install dependencies
-3. Run `npm start`
+To run this project locally, you'll need [Node.js](https://nodejs.org/) installed. Then, clone the repository and install dependencies:
 
-`npm start` uses `concurrently` to run `live-server` which will serve the project directory in your browser and listen for changes, `rollup` which will build the js and css bundles, and `npx tailwindcss` which builds `css/tailwind_dist.css` (including only the tailwind rules needed in the project)
+```bash
+git clone https://github.com/mapbox/geojson-io.git
+cd geojson.io
+npm install
+```
 
-`rollup` can take several seconds to build before changes appear in the browser.
+Copy `.env.example` to `.env` and add your public Mapbox token as `VITE_PUBLIC_MAPBOX_TOKEN`.
 
-## Production Build & Deployment
+Then, start the development server:
 
-`npm run build` will create minified bundles in `/dist`. You can try out the production build with `npm run serve` which will run live-server.
+```bash
+npm run dev
+```
 
-Deployment to GitHub Pages works automatically by pushing to the main branch which triggers a GitHub Action to deploy.
+This will start the application on `http://localhost:5173`. Open this URL in your web browser to view and interact with the application.
 
-## License
+## History & Attribution
 
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io.svg?type=large)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fmapbox%2Fgeojson.io?ref=badge_large)
+geojson.io was [originally created](https://github.com/mapbox/geojson.io/commits/main/?after=cb1c8d9d36ad4f6bc1b1c5b602db2f273e780ace+1084) in 2013 by Mapbox engineer [Tom MacWright](https://macwright.com) as a simple editor for GeoJSON, the widely-used format for encoding geographic data structures used heavily in web mapping applications. The earliest versions of the app used Mapbox.js (a Leaflet.js-based mapping library) for map rendering and leaflet-draw for drawing tools.
+
+It has since become a staple tool for developers and GIS professionals working with spatial data, allowing for quick visualization and editing of spatial directly in the browser without the need for complex GIS software or coding. As an open-source project, geojson.io has benefited from hundreds of code contributions from the mapping community over the years.
+
+In late 2022, geojson.io was refactored to use Mapbox GL JS and Mapbox GL Draw, providing vector-based map rendering and improved drawing tools, taking advantage of the latest features from the Mapbox ecosystem.
+
+In early 2026, geojson.io was overhauled using a fork of [Placemark Play](https://play.placemark.io/), another open-source map editor developed by Tom MacWright. These changes improve every aspect of the application, including a modernized React and typescript-based codebase, a more intuitive user interface, superior drawing tools, enhanced performance, and new features such as mulitselect, bulk editing, spatial operations, adding search results as Point features, and improved data import/export options.
+
+- [2013 blog post on mapbox.com (via internet archive)](https://web.archive.org/web/20150918163329/https://www.mapbox.com/blog/geojsonio-announce/)
+- [2013 blog post on macwright.com](https://macwright.com/2013/07/26/geojsonio.html)
+- [2022 blog post - Updating geojson.io](https://www.mapbox.com/blog/updating-geojson-io)
