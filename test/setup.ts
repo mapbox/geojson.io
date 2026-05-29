@@ -2,6 +2,8 @@
 // It's a good place to set globals, add global before/after hooks, etc
 //
 
+vi.mock('@mapbox/maki', () => ({ svgArray: [] }));
+
 import { TextDecoder, TextEncoder } from 'fastestsmallesttextencoderdecoder';
 import Fs from 'fs';
 import { diff } from 'jest-diff';
