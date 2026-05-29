@@ -45,7 +45,7 @@ export default function AboutModal({ open }: { open: boolean }) {
   const contentRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (open) {
-      fetch('/next/about.md')
+      fetch('/about.md')
         .then((res) => res.text())
         .then((md) => {
           const combined = `${md}\n\n${changelogForAboutModal}`;

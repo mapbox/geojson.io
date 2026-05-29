@@ -182,7 +182,7 @@ export function StylesPopover() {
             const isActive = id === activeStyleId;
             // Image file convention: public/layer-icons/{id}.png (or .jpg, .svg, etc.)
             // You will need to place the images in public/layer-icons/ with the correct names
-            const iconSrc = `/next/layer-icons/${id}.png`;
+            const iconSrc = `/layer-icons/${id}.png`;
             return (
               <div key={id} className="flex flex-col items-center">
                 <button
@@ -304,7 +304,7 @@ export function StylesPopover() {
                   type="button"
                 >
                   <img
-                    src={`/next/layer-icons/projection-${id}.png`}
+                    src={`/layer-icons/projection-${id}.png`}
                     alt={label}
                     className="w-full h-full object-cover rounded"
                     style={{ aspectRatio: '1 / 1', objectFit: 'cover' }}

@@ -2,7 +2,7 @@ import changelogMarkdown from '../CHANGELOG.md?raw';
 
 const RECENT_ENTRY_COUNT = 5;
 const FULL_CHANGELOG_URL =
-  'https://github.com/mapbox/geojson.io/blob/main/next/CHANGELOG.md';
+  'https://github.com/mapbox/geojson.io/blob/main/CHANGELOG.md';
 
 // Reformats the standalone CHANGELOG.md to embed cleanly in the About modal:
 // keep the most recent N date entries, demote each date heading to inline

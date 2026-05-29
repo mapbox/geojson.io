@@ -28,7 +28,7 @@ function App() {
       <StrictMode>
         <QueryClientProvider client={queryClient}>
           <T.Provider>
-            <Router base="/next">
+            <Router base="">
               <Switch>
                 <Route path="/">
                   <Provider store={store}>
