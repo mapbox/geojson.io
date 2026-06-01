@@ -2,11 +2,15 @@
 
 Recent changes to the geojson.io application. Entries are grouped by ship date.
 
-## 2026-06-28
+## 2026-06-01
+
+- **Add Mobile Meta viewport Tag** - Fix for browsers properly handling mobile viewports.
+
+## 2026-05-28
 
 - **Add fog to non-standard styles:** Adds fog to the OSM and Outdoors basemaps for consistency across all basemap options. ([#980](https://github.com/mapbox/geojson.io/pull/980))
 
-## 2026-06-27
+## 2026-05-27
 
 - **Add globe projection and 3d features toggle:** Adds a toggle to switch between globe and mercator projections and to toggle 3d features on basemaps that support them. ([#975](https://github.com/mapbox/geojson.io/pull/975))
 
