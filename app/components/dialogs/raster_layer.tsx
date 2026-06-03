@@ -16,7 +16,10 @@ interface RasterLayerFormValues {
 }
 
 function validateTileUrl(url: string): string | undefined {
-  if (!url.startsWith('https://')) return 'URL must start with https://';
+  const isLocal = url.includes('localhost') || url.includes('127.0.0.1');
+  if (!url.startsWith('https://') && !(isLocal && url.startsWith('http://'))) {
+    return 'URL must start with https://';
+  }
   // Accept {y} (XYZ scheme) or {-y} (TMS scheme, flipped Y axis)
   if (
     !url.includes('{z}') ||
@@ -120,10 +123,11 @@ export function RasterLayerDialog({
               placeholder="https://example.com/tiles/{z}/{x}/{y}.png"
             />
             <TextWell>
-              Provide a tile URL template starting with https:// and including{' '}
-              {'{z}'}, {'{x}'}, and {'{y}'} placeholders for zoom level and tile
-              coordinates. Use {'{-y}'} instead of {'{y}'} for TMS layers with a
-              flipped Y axis (e.g. from JOSM or QGIS).
+              Provide a tile URL template starting with https:// (or http:// for
+              localhost) and including {'{z}'}, {'{x}'}, and {'{y}'}{' '}
+              placeholders for zoom level and tile coordinates. Use {'{-y}'}{' '}
+              instead of {'{y}'} for TMS layers with a flipped Y axis (e.g. from
+              JOSM or QGIS).
             </TextWell>
             <TextWell>
               <strong>Note:</strong> Your raster layer configuration will be
