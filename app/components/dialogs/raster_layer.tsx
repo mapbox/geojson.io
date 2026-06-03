@@ -15,9 +15,16 @@ interface RasterLayerFormValues {
   tileUrl: string;
 }
 
-function validateTileUrl(url: string): boolean {
-  // Check if the URL contains {z}, {x}, and {y} placeholders
-  return url.includes('{z}') && url.includes('{x}') && url.includes('{y}');
+function validateTileUrl(url: string): string | undefined {
+  if (!url.startsWith('https://')) return 'URL must start with https://';
+  // Accept {y} (XYZ scheme) or {-y} (TMS scheme, flipped Y axis)
+  if (
+    !url.includes('{z}') ||
+    !url.includes('{x}') ||
+    (!url.includes('{y}') && !url.includes('{-y}'))
+  ) {
+    return 'Must include {z}, {x}, and {y} (or {-y} for TMS) placeholders';
+  }
 }
 
 export function RasterLayerDialog({
@@ -59,8 +66,9 @@ export function RasterLayerDialog({
 
           if (!values.tileUrl.trim()) {
             errors.tileUrl = 'Tile URL is required';
-          } else if (!validateTileUrl(values.tileUrl)) {
-            errors.tileUrl = 'Must include {z}, {x}, and {y} placeholders';
+          } else {
+            const urlError = validateTileUrl(values.tileUrl);
+            if (urlError) errors.tileUrl = urlError;
           }
 
           return errors;
@@ -112,8 +120,10 @@ export function RasterLayerDialog({
               placeholder="https://example.com/tiles/{z}/{x}/{y}.png"
             />
             <TextWell>
-              Provide a tile URL template with {'{z}'}, {'{x}'}, and {'{y}'}{' '}
-              placeholders for zoom level and tile coordinates.
+              Provide a tile URL template starting with https:// and including{' '}
+              {'{z}'}, {'{x}'}, and {'{y}'} placeholders for zoom level and tile
+              coordinates. Use {'{-y}'} instead of {'{y}'} for TMS layers with a
+              flipped Y axis (e.g. from JOSM or QGIS).
             </TextWell>
             <TextWell>
               <strong>Note:</strong> Your raster layer configuration will be

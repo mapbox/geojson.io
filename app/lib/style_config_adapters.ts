@@ -79,10 +79,15 @@ function updateMapboxStyle(
     (layer) => layer.visible !== false
   );
   visibleCustomRasterLayers.forEach((layer) => {
+    const isTms = layer.tileUrl.includes('{-y}');
+    const tiles = [
+      isTms ? layer.tileUrl.replace('{-y}', '{y}') : layer.tileUrl
+    ];
     updatedSources[`custom-raster-${layer.id}`] = {
       type: 'raster',
-      tiles: [layer.tileUrl],
-      tileSize: 256
+      tiles,
+      tileSize: 256,
+      ...(isTms ? { scheme: 'tms' } : {})
     } as mapboxgl.RasterSource;
   });
 
