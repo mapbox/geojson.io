@@ -102,7 +102,7 @@
     "jotai-optics": "^0.4.0",
     "jotai-xstate": "^0.3.0",
     "lodash": "^4.17.21",
-    "mapbox-gl": "3.17.0",
+    "mapbox-gl": "3.24.0",
     "memoize-one": "^6.0.0",
     "mproj": "^0.0.40",
     "nanoid": "^5.1.5",
@@ -139,11 +139,10 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@mapbox/mapbox-gl-style-spec": "^14.17.0",
+    "@mapbox/mapbox-gl-style-spec": "^14.24.0",
     "@types/d3-dsv": "^3.0.7",
     "@types/deep-freeze": "^0.1.5",
     "@types/lodash": "^4.17.20",
-    "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^22.16.5",
     "@types/randomcolor": "^0.5.9",
     "@types/rbush": "^4.0.0",
