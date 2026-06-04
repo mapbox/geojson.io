@@ -60,7 +60,7 @@ const layerId = NIL;
 // tracks the active style
 export const activeStyleIdAtom = atomWithStorage<string>(
   'activeStyleId',
-  'STANDARD_LIGHT'
+  'LIGHT'
 );
 
 // tracks style options (currently only labelVisibility, not style-specific)
@@ -87,7 +87,7 @@ export const customRasterLayersAtom = atomWithStorage<CustomRasterLayer[]>(
 
 export const styleConfigAtom = atom((get) => {
   const activeId = get(activeStyleIdAtom);
-  const baseLayer = LAYERS[activeId] || LAYERS.STANDARD_LIGHT;
+  const baseLayer = LAYERS[activeId] || LAYERS.LIGHT;
   return {
     ...baseLayer,
     id: layerId

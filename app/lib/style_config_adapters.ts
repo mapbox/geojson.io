@@ -96,8 +96,14 @@ function updateMapboxStyle(
       const isLabelLayer =
         layer.type === 'symbol' && layer.layout?.['text-field'] !== undefined;
 
-      if (!labelVisibility && isLabelLayer) {
-        return null;
+      if (isLabelLayer && !labelVisibility) {
+        return {
+          ...layer,
+          layout: {
+            ...(layer.layout || {}),
+            visibility: 'none'
+          }
+        };
       }
 
       if (
