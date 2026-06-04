@@ -49,8 +49,8 @@ export function serializeMapParam(camera: CameraPosition): string {
 
   const parts: number[] = [
     round(camera.zoom, 2),
-    round(camera.lat, 2),
-    round(camera.lng, 2)
+    round(camera.lat, 5),
+    round(camera.lng, 5)
   ];
 
   if (bearing !== 0 || pitch !== 0) {
