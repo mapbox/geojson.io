@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { EditorState, Transaction } from '@codemirror/state';
 import { EditorView, lineNumbers } from '@codemirror/view';
+import { foldGutter } from '@codemirror/language';
 import isEqual from 'lodash/isEqual';
 import debounce from 'lodash/debounce';
 import { Button } from 'app/components/elements';
@@ -76,6 +77,7 @@ export function GeoJSONEditor({
       checker,
       lintGutter(),
       lineNumbers(),
+      foldGutter(),
       preventDrop
     ],
     [preventDrop]
