@@ -76,9 +76,19 @@ export function FeatureEditorFolderHeader({
           deleteFeatures: allIds
         });
         // UI notif with fallback note
-        toast('All features deleted:', {
-          icon: '👏'
-        });
+        toast.success(
+          (t) => (
+            <div>
+              <p>
+                <strong>All features deleted.</strong>
+              </p>
+              <p>
+                Use <pre style={{ display: 'inline' }}>Ctrl-z</pre> to undo.
+              </p>
+            </div>
+          ),
+          { duration: 2000 }
+        );
       },
       [transact]
     )
