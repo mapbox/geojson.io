@@ -155,16 +155,16 @@ describe('serializeMapParam', () => {
     ).toBe('9.12/40/-73');
   });
 
-  it('rounds lat/lng to 2 decimal places', () => {
+  it('rounds lat/lng to 5 decimal places', () => {
     expect(
       serializeMapParam({
         zoom: 10,
-        lat: 40.12789,
-        lng: -73.98654,
+        lat: 40.12789817,
+        lng: -73.9865419238,
         bearing: 0,
         pitch: 0
       })
-    ).toBe('10/40.13/-73.99');
+    ).toBe('10/40.1279/-73.98654');
   });
 
   it('rounds bearing to 1 decimal place', () => {
