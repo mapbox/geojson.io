@@ -132,7 +132,7 @@ export function useMapKeybindings() {
       e.preventDefault();
       void onDelete();
     },
-    keybindingOptions,
+    { ...keybindingOptions, useKey: true },
     [onDelete]
   );
 }
