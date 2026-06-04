@@ -607,6 +607,24 @@ export default class PMap {
         prevStyleOptions?.labelVisibility === styleOptions.labelVisibility &&
         prevStyleOptions?.show3dFeatures === styleOptions.show3dFeatures;
       if (onlyProjectionChanged) return;
+
+      // For classic styles, toggle label layer visibility without a full reload.
+      if (prevStyleOptions?.labelVisibility !== styleOptions.labelVisibility) {
+        const visibility = styleOptions.labelVisibility ? 'visible' : 'none';
+        for (const layer of this.map.getStyle()?.layers ?? []) {
+          if (
+            layer.type === 'symbol' &&
+            (layer.layout as mapboxgl.SymbolLayout | undefined)?.[
+              'text-field'
+            ] !== undefined
+          ) {
+            this.map.setLayoutProperty(layer.id, 'visibility', visibility);
+          }
+        }
+        const onlyLabelsChanged =
+          prevStyleOptions?.show3dFeatures === styleOptions.show3dFeatures;
+        if (onlyLabelsChanged) return;
+      }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

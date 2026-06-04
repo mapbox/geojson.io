@@ -13,43 +13,14 @@ export type StyleConfigTemplate = {
 };
 
 const STYLES: Record<string, StyleConfigTemplate> = {
-  STANDARD_LIGHT: {
-    name: 'Standard Light',
-    json: {
-      version: 8,
-      sources: {},
-      layers: [],
-      imports: [
-        {
-          id: 'basemap',
-          url: 'mapbox://styles/mapbox/standard',
-          config: {
-            theme: 'monochrome'
-          }
-        }
-      ]
-    },
-    supports3dFeatures: true,
+  LIGHT: {
+    name: 'Light',
+    url: 'mapbox://styles/mapbox/light-v11',
     ...defaults
   },
-  STANDARD_DARK: {
-    name: 'Standard Dark',
-    json: {
-      version: 8,
-      sources: {},
-      layers: [],
-      imports: [
-        {
-          id: 'basemap',
-          url: 'mapbox://styles/mapbox/standard',
-          config: {
-            theme: 'monochrome',
-            lightPreset: 'night'
-          }
-        }
-      ]
-    },
-    supports3dFeatures: true,
+  DARK: {
+    name: 'Dark',
+    url: 'mapbox://styles/mapbox/dark-v11',
     ...defaults
   },
   STANDARD_SATELLITE: {
