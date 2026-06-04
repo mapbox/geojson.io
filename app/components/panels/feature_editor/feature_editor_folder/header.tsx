@@ -1,4 +1,8 @@
-import { CaretDownIcon, Crosshair1Icon } from '@radix-ui/react-icons';
+import {
+  CaretDownIcon,
+  Crosshair1Icon,
+  TrashIcon
+} from '@radix-ui/react-icons';
 import {
   Button,
   StyledLabelSpan,
@@ -13,6 +17,11 @@ import { usePersistence } from 'app/lib/persistence/context';
 import { useZoomTo } from 'app/hooks/use_zoom_to';
 import { Popover as P, Tooltip } from 'radix-ui';
 import type { FeatureMap } from 'types';
+import { useCallback } from 'react';
+import { dataAtom } from 'state/jotai';
+import { useAtomCallback } from 'jotai/utils';
+import { EMPTY_MOMENT } from 'app/lib/persistence/moment';
+import { toast } from 'react-hot-toast';
 
 function PreviewProperty({ featureMap }: { featureMap: FeatureMap }) {
   const rep = usePersistence();
@@ -53,6 +62,27 @@ export function FeatureEditorFolderHeader({
   const rep = usePersistence();
   const [meta] = rep.useMetadata();
   const zoomTo = useZoomTo();
+  const transact = rep.useTransact();
+
+  const handleDeleteAll = useAtomCallback(
+    useCallback(
+      async (get) => {
+        const data = get(dataAtom);
+        const allIds = Array.from(data.featureMap.keys());
+        if (allIds.length === 0) return;
+        await transact({
+          ...EMPTY_MOMENT,
+          note: 'Deleted all features',
+          deleteFeatures: allIds
+        });
+        // UI notif with fallback note
+        toast('All features deleted:', {
+          icon: '👏'
+        });
+      },
+      [transact]
+    )
+  );
 
   const handleZoomToAll = () => {
     const allFeatures = Array.from(featureMap.values());
@@ -75,18 +105,34 @@ export function FeatureEditorFolderHeader({
           <PreviewProperty featureMap={featureMap} />
         </StyledPopoverContent>
       </P.Root>
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          <Button
-            onClick={handleZoomToAll}
-            size="xs"
-            disabled={featureMap.size === 0}
-          >
-            <Crosshair1Icon />
-          </Button>
-        </Tooltip.Trigger>
-        <TContent side="bottom">Zoom to all</TContent>
-      </Tooltip.Root>
+      <div>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <Button
+              className="mr-3"
+              onClick={handleZoomToAll}
+              size="xs"
+              disabled={featureMap.size === 0}
+            >
+              <Crosshair1Icon />
+            </Button>
+          </Tooltip.Trigger>
+          <TContent side="bottom">Zoom to all</TContent>
+        </Tooltip.Root>
+
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <Button
+              onClick={handleDeleteAll}
+              size="xs"
+              disabled={featureMap.size === 0}
+            >
+              <TrashIcon />
+            </Button>
+          </Tooltip.Trigger>
+          <TContent side="bottom">Delete all features</TContent>
+        </Tooltip.Root>
+      </div>
     </div>
   );
 }
