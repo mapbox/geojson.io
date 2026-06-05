@@ -2,6 +2,16 @@
 
 Recent changes to the geojson.io application. Entries are grouped by ship date.
 
+## 2026-06-04
+
+- **Delete all features:** Adds a delete all button to the feature editor header. Operation is undoable via Ctrl-Z. ([#993](https://github.com/mapbox/geojson.io/pull/993))
+- **Numpad Delete key fix:** The Delete key on numpads (numlock off) now correctly deletes selected features. ([#993](https://github.com/mapbox/geojson.io/pull/993))
+- **Map URL coordinate precision:** Increased lat/lng precision in the `?map=` query param from 2 to 4 decimal places. ([#993](https://github.com/mapbox/geojson.io/pull/993))
+- **GeoJSON editor fold gutter:** Adds a fold gutter to the GeoJSON editor panel for collapsing nested objects and arrays. ([#993](https://github.com/mapbox/geojson.io/pull/993))
+- **GL JS Update:** Bump to `v3.24.0` [#992](https://github.com/mapbox/geojson.io/pull/992)
+- **Replace Standard Light and Dark with Classic Light/Dark:** Removes light and dark themes based on Mapbox Standard for `light-v11` and `dark-v11` for faster performance by default. [#992](https://github.com/mapbox/geojson.io/pull/992)
+- **TMS Support for inverted -y**: Adds support for TMS raster tileset URLs which use an inverted y in the url `...{z}/{x}/{-y}.png` [#991](https://github.com/mapbox/geojson.io/pull/991)
+
 ## 2026-06-01
 
 - **Add Mobile Meta viewport Tag** - Fix for browsers properly handling mobile viewports.
