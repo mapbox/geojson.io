@@ -9,6 +9,7 @@ import { decodeId, encodeVertex } from 'app/lib/id';
 import { UIDMap } from 'app/lib/id_mapper';
 import * as utils from 'app/lib/map_component_utils';
 import * as ops from 'app/lib/map_operations';
+import { getCircleProp, getRadiusDisplayText } from 'app/lib/circle';
 import { useEndSnapshot, useStartSnapshot } from 'app/lib/persistence/shared';
 import { captureException } from 'integrations/errors';
 import { useSetAtom } from 'jotai';
@@ -17,6 +18,7 @@ import { useRef } from 'react';
 import { USelection } from 'state';
 import {
   cursorStyleAtom,
+  drawCursorLabelAtom,
   ephemeralStateAtom,
   Mode,
   selectionAtom
@@ -52,6 +54,7 @@ export function useNoneHandlers({
   const setMode = useSetAtom(modeAtom);
   const setSelection = useSetAtom(selectionAtom);
   const setCursor = useSetAtom(cursorStyleAtom);
+  const setDrawCursorLabel = useSetAtom(drawCursorLabelAtom);
   const transact = rep.useTransact();
   const endSnapshot = useEndSnapshot();
   const startSnapshot = useStartSnapshot();
@@ -217,6 +220,7 @@ export function useNoneHandlers({
       dragTargetRef.current = null;
       void endSnapshot();
       setCursor(CURSOR_DEFAULT);
+      setDrawCursorLabel(null);
     },
     move: (e) => {
       if (dragTargetRef.current === null) {
@@ -287,12 +291,27 @@ export function useNoneHandlers({
               ) as Pos2;
             }
 
-            const { feature: newFeature, wasRectangle } = ops.setCoordinates({
+            const {
+              feature: newFeature,
+              wasRectangle,
+              wasCircle
+            } = ops.setCoordinates({
               feature: feature.feature,
               position: nextCoord,
               breakRectangle: e.originalEvent.metaKey,
               vertexId: id
             });
+
+            if (wasCircle) {
+              const prop = getCircleProp(feature.feature);
+              if (prop) {
+                setDrawCursorLabel({
+                  text: getRadiusDisplayText(prop.center, nextCoord, prop.type),
+                  x: e.point.x,
+                  y: e.point.y
+                });
+              }
+            }
 
             if (wasRectangle && !mode?.modeOptions?.hasResizedRectangle) {
               setMode((mode) => {

@@ -1,12 +1,22 @@
 import { MapContext } from 'app/context/map_context';
-import { type ICircleProp, makeCircle } from 'app/lib/circle';
+import {
+  type ICircleProp,
+  makeCircle,
+  getRadiusDisplayText
+} from 'app/lib/circle';
 import { isRectangleNonzero } from 'app/lib/geometry';
 import { useSetAtom } from 'jotai';
 import noop from 'lodash/noop';
 import { useContext, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { USelection } from 'state';
-import { cursorStyleAtom, Mode, modeAtom, selectionAtom } from 'state/jotai';
+import {
+  cursorStyleAtom,
+  drawCursorLabelAtom,
+  Mode,
+  modeAtom,
+  selectionAtom
+} from 'state/jotai';
 import { CIRCLE_TYPE } from 'state/mode';
 import type { HandlerContext, IFeature, Polygon, Position } from 'types';
 import { createOrUpdateFeature, getMapCoord } from './utils';
@@ -30,12 +40,15 @@ export function useCircleHandlers({
   const setMode = useSetAtom(modeAtom);
   const pmap = useContext(MapContext);
   const setCursor = useSetAtom(cursorStyleAtom);
+  const setDrawCursorLabel = useSetAtom(drawCursorLabelAtom);
   const transact = rep.useTransact();
   const [center, setCenter] = useState<Pos2 | null>(null);
   return {
     click: noop,
     move: (e) => {
       if (selection?.type !== 'single' || !center || !pmap) return;
+
+      const mouse = e.lngLat.toArray() as Pos2;
 
       const wrappedFeature = featureMap.get(selection.id);
 
@@ -44,8 +57,18 @@ export function useCircleHandlers({
 
         const geometry = makeCircle({
           center: center,
-          mouse: e.lngLat.toArray() as Pos2,
+          mouse,
           type: mode.modeOptions?.circleType || CIRCLE_TYPE.MERCATOR
+        });
+
+        setDrawCursorLabel({
+          text: getRadiusDisplayText(
+            center,
+            mouse,
+            mode.modeOptions?.circleType || CIRCLE_TYPE.MERCATOR
+          ),
+          x: e.point.x,
+          y: e.point.y
         });
 
         return transact({
@@ -97,6 +120,7 @@ export function useCircleHandlers({
     },
     up: () => {
       dragTargetRef.current = null;
+      setDrawCursorLabel(null);
       if (selection?.type !== 'single') return;
       const wrappedFeature = featureMap.get(selection.id);
       if (wrappedFeature) {
@@ -119,6 +143,7 @@ export function useCircleHandlers({
       setCursor('');
     },
     enter() {
+      setDrawCursorLabel(null);
       setMode({ mode: Mode.NONE });
     },
     double: noop

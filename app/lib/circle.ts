@@ -288,3 +288,28 @@ export function getCircleProp(feature: Feature) {
   if (!prop.success) return null;
   return prop.data['@circle'];
 }
+
+export function getRadiusDisplayText(
+  center: Pos2,
+  mouse: Pos2,
+  type: CIRCLE_TYPE
+): string {
+  switch (type) {
+    case CIRCLE_TYPE.MERCATOR: {
+      const meters = distanceInMercatorMeters(center, mouse);
+      return `${Math.round(meters)} Mercator m`;
+    }
+    case CIRCLE_TYPE.GEODESIC: {
+      const radians = distanceInRadians(center, mouse);
+      const km = radians * 6371;
+      const miles = km * 0.621371;
+      if (km < 1) {
+        return `${Math.round(km * 1000)} m / ${Math.round(miles * 5280)} ft`;
+      }
+      return `${km.toFixed(2)} km / ${miles.toFixed(2)} mi`;
+    }
+    case CIRCLE_TYPE.DEGREES: {
+      return `${distanceInDegrees(center, mouse).toFixed(4)}°`;
+    }
+  }
+}

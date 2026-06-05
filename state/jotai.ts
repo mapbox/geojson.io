@@ -272,6 +272,12 @@ export type EphemeralEditingState =
 
 export const ephemeralStateAtom = atom<EphemeralEditingState>({ type: 'none' });
 
+export const drawCursorLabelAtom = atom<{
+  text: string;
+  x: number;
+  y: number;
+} | null>(null);
+
 export { Mode, MODE_INFO, modeAtom };
 
 export const lastSearchResultAtom = atom<QItemAddable | null>(null);
