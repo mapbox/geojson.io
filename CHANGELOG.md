@@ -2,6 +2,10 @@
 
 Recent changes to the geojson.io application. Entries are grouped by ship date.
 
+## 2026-06-05
+
+- **Google Analytics:** Added GA4 tracking via `VITE_GA_MEASUREMENT_ID` environment variable ([#994](https://github.com/mapbox/geojson.io/pull/994))
+
 ## 2026-06-04
 
 - **Delete all features:** Adds a delete all button to the feature editor header. Operation is undoable via Ctrl-Z. ([#993](https://github.com/mapbox/geojson.io/pull/993))
