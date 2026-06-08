@@ -13,6 +13,7 @@ import { USelection } from 'state';
 import {
   cursorStyleAtom,
   drawCursorLabelAtom,
+  ephemeralStateAtom,
   Mode,
   modeAtom,
   selectionAtom
@@ -41,6 +42,7 @@ export function useCircleHandlers({
   const pmap = useContext(MapContext);
   const setCursor = useSetAtom(cursorStyleAtom);
   const setDrawCursorLabel = useSetAtom(drawCursorLabelAtom);
+  const setEphemeralState = useSetAtom(ephemeralStateAtom);
   const transact = rep.useTransact();
   const [center, setCenter] = useState<Pos2 | null>(null);
   return {
@@ -70,6 +72,8 @@ export function useCircleHandlers({
           x: e.point.x,
           y: e.point.y
         });
+
+        setEphemeralState({ type: 'circle-drawing', center, mouse });
 
         return transact({
           putFeatures: [
@@ -121,6 +125,7 @@ export function useCircleHandlers({
     up: () => {
       dragTargetRef.current = null;
       setDrawCursorLabel(null);
+      setEphemeralState({ type: 'none' });
       if (selection?.type !== 'single') return;
       const wrappedFeature = featureMap.get(selection.id);
       if (wrappedFeature) {
@@ -144,6 +149,7 @@ export function useCircleHandlers({
     },
     enter() {
       setDrawCursorLabel(null);
+      setEphemeralState({ type: 'none' });
       setMode({ mode: Mode.NONE });
     },
     double: noop

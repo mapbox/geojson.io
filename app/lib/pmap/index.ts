@@ -16,6 +16,7 @@ import {
 } from 'app/lib/constants';
 import type { IDMap } from 'app/lib/id_mapper';
 import loadAndAugmentStyle, {
+  CIRCLE_DRAWING_SOURCE_NAME,
   EPHEMERAL_SOURCE_NAME,
   FEATURES_SOURCE_NAME
 } from 'app/lib/load_and_augment_style';
@@ -359,6 +360,40 @@ export default class PMap {
     // TODO: fix flash
     mSetData(ephemeralSource, groups.ephemeral, 'ephem');
     mSetData(featuresSource, groups.features, 'features', force);
+
+    const circleDrawingSource = this.map.getSource(
+      CIRCLE_DRAWING_SOURCE_NAME
+    ) as mapboxgl.GeoJSONSource | undefined;
+    if (circleDrawingSource) {
+      if (ephemeralState.type === 'circle-drawing') {
+        circleDrawingSource.setData({
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: [ephemeralState.center, ephemeralState.mouse]
+              }
+            },
+            {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'Point',
+                coordinates: ephemeralState.center
+              }
+            }
+          ]
+        });
+      } else if (this.lastEphemeralState.type === 'circle-drawing') {
+        circleDrawingSource.setData({
+          type: 'FeatureCollection',
+          features: []
+        });
+      }
+    }
 
     this._deckSyntheticData = groups.synthetic;
     this._deckSelectionIds = groups.selectionIds;

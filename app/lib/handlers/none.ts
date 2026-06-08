@@ -221,6 +221,7 @@ export function useNoneHandlers({
       void endSnapshot();
       setCursor(CURSOR_DEFAULT);
       setDrawCursorLabel(null);
+      setEphemeralState({ type: 'none' });
     },
     move: (e) => {
       if (dragTargetRef.current === null) {
@@ -309,6 +310,11 @@ export function useNoneHandlers({
                   text: getRadiusDisplayText(prop.center, nextCoord, prop.type),
                   x: e.point.x,
                   y: e.point.y
+                });
+                setEphemeralState({
+                  type: 'circle-drawing',
+                  center: prop.center,
+                  mouse: nextCoord
                 });
               }
             }

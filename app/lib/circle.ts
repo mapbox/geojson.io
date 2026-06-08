@@ -297,7 +297,7 @@ export function getRadiusDisplayText(
   switch (type) {
     case CIRCLE_TYPE.MERCATOR: {
       const meters = distanceInMercatorMeters(center, mouse);
-      return `${Math.round(meters)} Mercator m`;
+      return `${Math.round(meters)} m`;
     }
     case CIRCLE_TYPE.GEODESIC: {
       const radians = distanceInRadians(center, mouse);
