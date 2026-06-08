@@ -195,7 +195,12 @@ export function makeLayers({
           'let',
           'sym',
           ['coalesce', ['get', 'marker-symbol'], ''],
-          ['case', ['>', ['length', ['var', 'sym']], 1], ['var', 'sym'], '']
+          [
+            'case',
+            ['>', ['length', ['var', 'sym']], 1],
+            ['concat', 'maki-', ['var', 'sym']],
+            ''
+          ]
         ],
         'icon-size': [
           'match',

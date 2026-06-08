@@ -124,7 +124,6 @@ export default class PMap {
   // Sequence counter to prevent stale setStyle calls from overwriting newer ones.
   // Incremented on each setStyle call; only the most recent call applies its result.
   private _setStyleSeq = 0;
-  private _iconsLoaded = false;
 
   // Stored state for per-frame globe projection correction
   private _deckSyntheticData: Feature[] = [];
@@ -213,7 +212,6 @@ export default class PMap {
     map.on('touchmove', this.onMapTouchMove);
     map.on('touchend', this.onMapTouchEnd);
     map.on('style.load', this.onMapStyleLoad);
-    map.on('idle', this.onMapIdle);
 
     this.presenceMarkers = new Map();
     this.lastSymbolization = symbolization;
@@ -281,17 +279,8 @@ export default class PMap {
     map.setTerrain(null);
     // set projection to last known value (if any) so that style reloads don't reset it to default
     map.setProjection(this.lastStyleOptions?.mapProjection ?? 'globe');
-    // reset so icons are reloaded for the new style on next idle
-    this._iconsLoaded = false;
-  };
-
-  onMapIdle = (event: mapboxgl.MapEvent) => {
-    if (this._iconsLoaded) return;
-    this._iconsLoaded = true;
-    const map = event.target as mapboxgl.Map;
-    // Load maki icons as SDF images so marker-symbol icons can be recolored via icon-color.
-    // Done on idle (rather than style.load) to ensure the style sprite has fully loaded first,
-    // avoiding "image already exists" errors when the sprite contains icons with the same names.
+    // Load maki icons as SDF so they can be recolored via icon-color. Done here rather than on
+    // idle so the replace happens before tiles are painted, avoiding a visible flash.
     void loadMakiIcons(map);
   };
 
