@@ -124,7 +124,6 @@ export default class PMap {
   // Sequence counter to prevent stale setStyle calls from overwriting newer ones.
   // Incremented on each setStyle call; only the most recent call applies its result.
   private _setStyleSeq = 0;
-
   private _iconsLoaded = false;
 
   // Stored state for per-frame globe projection correction
@@ -534,13 +533,17 @@ export default class PMap {
       JSON.stringify(this.lastCustomRasterLayers) !==
       JSON.stringify(customRasterLayers);
 
-    // If only styleOptions changed, and the style has imports, update config properties instead of reloading style
+    // If only styleOptions changed, and the style has imports, update config properties instead of reloading style.
+    // Only treat as a styleOptions-only change if the style is already applied to the map (features source exists).
+    // Without this guard, the optimization fires on initial load when the map still has the empty placeholder style,
+    // causing the in-flight style fetch to be discarded and leaving the map blank (especially in Firefox).
     const onlyStyleOptionsChanged =
       styleConfig === this.lastLayer &&
       symbolization === this.lastSymbolization &&
       previewProperty === this.lastPreviewProperty &&
       styleOptions !== this.lastStyleOptions &&
-      !customRasterLayersChanged;
+      !customRasterLayersChanged &&
+      !!this.map.getSource(FEATURES_SOURCE_NAME);
 
     if (
       styleConfig === this.lastLayer &&
