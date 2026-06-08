@@ -236,7 +236,8 @@ export const MapComponent = memo(function MapComponent({
 
   const throttledMovePointer = useMemo(() => {
     function fastMovePointer(point: mapboxgl.Point) {
-      if (!map) return;
+      if (!map || map.map.isStyleLoaded()) return;
+
       const features = map.map.queryRenderedFeatures(point, {
         layers: CLICKABLE_LAYERS
       });
