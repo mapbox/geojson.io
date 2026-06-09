@@ -24,9 +24,12 @@ const CIRCLE_LAYOUT: mapboxgl.CircleLayout = {};
 
 export const FEATURES_SOURCE_NAME = 'features';
 export const EPHEMERAL_SOURCE_NAME = 'ephemeral';
+export const CIRCLE_DRAWING_SOURCE_NAME = 'circle-drawing';
 
 const EPHEMERAL_LINE_LAYER_NAME = 'ephemeral-line';
 const EPHEMERAL_FILL_LAYER_NAME = 'ephemeral-fill';
+export const CIRCLE_DRAWING_LINE_LAYER_NAME = 'circle-drawing-line';
+export const CIRCLE_DRAWING_CENTER_LAYER_NAME = 'circle-drawing-center';
 
 const FEATURES_POINT_HALO_LAYER_NAME = 'features-symbol-halo';
 const FEATURES_POINT_LAYER_NAME = 'features-symbol';
@@ -104,6 +107,10 @@ export function addEditingLayers({
 }) {
   style.sources[FEATURES_SOURCE_NAME] = emptyGeoJSONSource;
   style.sources[EPHEMERAL_SOURCE_NAME] = emptyGeoJSONSource;
+  style.sources[CIRCLE_DRAWING_SOURCE_NAME] = {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] }
+  };
 
   if (!style.layers) {
     throw new Error('Style unexpectedly had no layers');
@@ -239,6 +246,34 @@ export function makeLayers({
         'icon-emissive-strength': 1,
         'text-emissive-strength': 1
       } as mapboxgl.SymbolPaint
+    } as mapboxgl.AnyLayer,
+
+    {
+      id: CIRCLE_DRAWING_LINE_LAYER_NAME,
+      type: 'line',
+      source: CIRCLE_DRAWING_SOURCE_NAME,
+      filter: ['==', '$type', 'LineString'],
+      paint: {
+        'line-color': LINE_COLORS_SELECTED,
+        'line-width': 1.5,
+        'line-dasharray': [4, 3],
+        'line-emissive-strength': 1
+      } as mapboxgl.LinePaint
+    } as mapboxgl.AnyLayer,
+
+    {
+      id: CIRCLE_DRAWING_CENTER_LAYER_NAME,
+      type: 'circle',
+      source: CIRCLE_DRAWING_SOURCE_NAME,
+      filter: ['==', '$type', 'Point'],
+      layout: CIRCLE_LAYOUT,
+      paint: {
+        'circle-color': 'white',
+        'circle-radius': 5,
+        'circle-stroke-color': LINE_COLORS_SELECTED,
+        'circle-stroke-width': 2,
+        'circle-emissive-strength': 1
+      } as mapboxgl.CirclePaint
     } as mapboxgl.AnyLayer,
 
     ...(typeof previewProperty === 'string'

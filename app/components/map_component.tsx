@@ -28,6 +28,7 @@ import {
 import {
   cursorStyleAtom,
   dataAtom,
+  drawCursorLabelAtom,
   ephemeralStateAtom,
   styleConfigAtom,
   Mode,
@@ -102,6 +103,7 @@ export const MapComponent = memo(function MapComponent({
   const ephemeralState = useAtomValue(ephemeralStateAtom);
   const mode = useAtomValue(modeAtom);
   const [cursor, setCursor] = useAtom(cursorStyleAtom);
+  const drawCursorLabel = useAtomValue(drawCursorLabelAtom);
 
   // Refs
   const mapRef: React.MutableRefObject<PMap | null> = useRef<PMap>(null);
@@ -452,6 +454,17 @@ export const MapComponent = memo(function MapComponent({
       <MapContextMenu contextInfo={contextInfo} />
       <LastSearchResult />
       <ModeHints />
+      {drawCursorLabel && (
+        <div
+          className="absolute z-10 pointer-events-none px-2 py-1 rounded text-xs bg-white dark:bg-gray-800 dark:text-white shadow whitespace-nowrap"
+          style={{
+            left: drawCursorLabel.x + 12,
+            top: drawCursorLabel.y + 12
+          }}
+        >
+          {drawCursorLabel.text}
+        </div>
+      )}
     </CM.Root>
   );
 });

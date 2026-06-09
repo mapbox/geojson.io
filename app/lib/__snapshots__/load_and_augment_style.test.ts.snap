@@ -544,9 +544,53 @@ exports[`loadAndAugmentStyle 1`] = `
       "source": "features",
       "type": "symbol",
     },
+    {
+      "filter": [
+        "==",
+        "$type",
+        "LineString",
+      ],
+      "id": "circle-drawing-line",
+      "paint": {
+        "line-color": "#3195ff",
+        "line-dasharray": [
+          4,
+          3,
+        ],
+        "line-emissive-strength": 1,
+        "line-width": 1.5,
+      },
+      "source": "circle-drawing",
+      "type": "line",
+    },
+    {
+      "filter": [
+        "==",
+        "$type",
+        "Point",
+      ],
+      "id": "circle-drawing-center",
+      "layout": {},
+      "paint": {
+        "circle-color": "white",
+        "circle-emissive-strength": 1,
+        "circle-radius": 5,
+        "circle-stroke-color": "#3195ff",
+        "circle-stroke-width": 2,
+      },
+      "source": "circle-drawing",
+      "type": "circle",
+    },
   ],
   "name": "Empty",
   "sources": {
+    "circle-drawing": {
+      "data": {
+        "features": [],
+        "type": "FeatureCollection",
+      },
+      "type": "geojson",
+    },
     "ephemeral": {
       "buffer": 4,
       "data": {
@@ -1070,6 +1114,43 @@ exports[`makeLayers > categorical 2`] = `
     "source": "features",
     "type": "symbol",
   },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "LineString",
+    ],
+    "id": "circle-drawing-line",
+    "paint": {
+      "line-color": "#3195ff",
+      "line-dasharray": [
+        4,
+        3,
+      ],
+      "line-emissive-strength": 1,
+      "line-width": 1.5,
+    },
+    "source": "circle-drawing",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Point",
+    ],
+    "id": "circle-drawing-center",
+    "layout": {},
+    "paint": {
+      "circle-color": "white",
+      "circle-emissive-strength": 1,
+      "circle-radius": 5,
+      "circle-stroke-color": "#3195ff",
+      "circle-stroke-width": 2,
+    },
+    "source": "circle-drawing",
+    "type": "circle",
+  },
 ]
 `;
 
@@ -1586,6 +1667,43 @@ exports[`makeLayers > none 1`] = `
     "source": "features",
     "type": "symbol",
   },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "LineString",
+    ],
+    "id": "circle-drawing-line",
+    "paint": {
+      "line-color": "#3195ff",
+      "line-dasharray": [
+        4,
+        3,
+      ],
+      "line-emissive-strength": 1,
+      "line-width": 1.5,
+    },
+    "source": "circle-drawing",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Point",
+    ],
+    "id": "circle-drawing-center",
+    "layout": {},
+    "paint": {
+      "circle-color": "white",
+      "circle-emissive-strength": 1,
+      "circle-radius": 5,
+      "circle-stroke-color": "#3195ff",
+      "circle-stroke-width": 2,
+    },
+    "source": "circle-drawing",
+    "type": "circle",
+  },
 ]
 `;
 
@@ -2062,6 +2180,43 @@ exports[`makeLayers > ramp 1`] = `
     },
     "source": "features",
     "type": "symbol",
+  },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "LineString",
+    ],
+    "id": "circle-drawing-line",
+    "paint": {
+      "line-color": "#3195ff",
+      "line-dasharray": [
+        4,
+        3,
+      ],
+      "line-emissive-strength": 1,
+      "line-width": 1.5,
+    },
+    "source": "circle-drawing",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Point",
+    ],
+    "id": "circle-drawing-center",
+    "layout": {},
+    "paint": {
+      "circle-color": "white",
+      "circle-emissive-strength": 1,
+      "circle-radius": 5,
+      "circle-stroke-color": "#3195ff",
+      "circle-stroke-width": 2,
+    },
+    "source": "circle-drawing",
+    "type": "circle",
   },
 ]
 `;
@@ -2584,6 +2739,43 @@ exports[`makeLayers > with preview property 1`] = `
     },
     "source": "features",
     "type": "symbol",
+  },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "LineString",
+    ],
+    "id": "circle-drawing-line",
+    "paint": {
+      "line-color": "#3195ff",
+      "line-dasharray": [
+        4,
+        3,
+      ],
+      "line-emissive-strength": 1,
+      "line-width": 1.5,
+    },
+    "source": "circle-drawing",
+    "type": "line",
+  },
+  {
+    "filter": [
+      "==",
+      "$type",
+      "Point",
+    ],
+    "id": "circle-drawing-center",
+    "layout": {},
+    "paint": {
+      "circle-color": "white",
+      "circle-emissive-strength": 1,
+      "circle-radius": 5,
+      "circle-stroke-color": "#3195ff",
+      "circle-stroke-width": 2,
+    },
+    "source": "circle-drawing",
+    "type": "circle",
   },
   {
     "filter": [

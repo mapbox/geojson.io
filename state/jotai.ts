@@ -264,13 +264,26 @@ export interface EphemeralEditingStateLasso {
   box: [Pos2, Pos2];
 }
 
+export interface EphemeralEditingStateCircleDrawing {
+  type: 'circle-drawing';
+  center: Pos2;
+  mouse: Pos2;
+}
+
 export const cursorStyleAtom = atom<React.CSSProperties['cursor']>('default');
 
 export type EphemeralEditingState =
   | EphemeralEditingStateLasso
+  | EphemeralEditingStateCircleDrawing
   | { type: 'none' };
 
 export const ephemeralStateAtom = atom<EphemeralEditingState>({ type: 'none' });
+
+export const drawCursorLabelAtom = atom<{
+  text: string;
+  x: number;
+  y: number;
+} | null>(null);
 
 export { Mode, MODE_INFO, modeAtom };
 
