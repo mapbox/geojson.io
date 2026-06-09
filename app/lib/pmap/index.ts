@@ -279,8 +279,7 @@ export default class PMap {
     map.setTerrain(null);
     // set projection to last known value (if any) so that style reloads don't reset it to default
     map.setProjection(this.lastStyleOptions?.mapProjection ?? 'globe');
-    // Load maki icons as SDF so they can be recolored via icon-color. Done here rather than on
-    // idle so the replace happens before tiles are painted, avoiding a visible flash.
+    // Load maki icons as SDF so they can be recolored via icon-color.
     void loadMakiIcons(map);
   };
 
@@ -524,8 +523,6 @@ export default class PMap {
 
     // If only styleOptions changed, and the style has imports, update config properties instead of reloading style.
     // Only treat as a styleOptions-only change if the style is already applied to the map (features source exists).
-    // Without this guard, the optimization fires on initial load when the map still has the empty placeholder style,
-    // causing the in-flight style fetch to be discarded and leaving the map blank (especially in Firefox).
     const onlyStyleOptionsChanged =
       styleConfig === this.lastLayer &&
       symbolization === this.lastSymbolization &&
