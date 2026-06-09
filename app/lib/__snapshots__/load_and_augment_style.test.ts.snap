@@ -464,8 +464,12 @@ exports[`loadAndAugmentStyle 1`] = `
               1,
             ],
             [
-              "var",
-              "sym",
+              "concat",
+              "maki-",
+              [
+                "var",
+                "sym",
+              ],
             ],
             "",
           ],
@@ -990,8 +994,12 @@ exports[`makeLayers > categorical 2`] = `
             1,
           ],
           [
-            "var",
-            "sym",
+            "concat",
+            "maki-",
+            [
+              "var",
+              "sym",
+            ],
           ],
           "",
         ],
@@ -1506,8 +1514,12 @@ exports[`makeLayers > none 1`] = `
             1,
           ],
           [
-            "var",
-            "sym",
+            "concat",
+            "maki-",
+            [
+              "var",
+              "sym",
+            ],
           ],
           "",
         ],
@@ -1983,8 +1995,12 @@ exports[`makeLayers > ramp 1`] = `
             1,
           ],
           [
-            "var",
-            "sym",
+            "concat",
+            "maki-",
+            [
+              "var",
+              "sym",
+            ],
           ],
           "",
         ],
@@ -2505,8 +2521,12 @@ exports[`makeLayers > with preview property 1`] = `
             1,
           ],
           [
-            "var",
-            "sym",
+            "concat",
+            "maki-",
+            [
+              "var",
+              "sym",
+            ],
           ],
           "",
         ],
