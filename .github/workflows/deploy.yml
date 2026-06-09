@@ -39,6 +39,7 @@ jobs:
       id-token: write
     env:
       VITE_PUBLIC_MAPBOX_TOKEN: ${{ secrets.VITE_PUBLIC_MAPBOX_TOKEN }}
+      VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
