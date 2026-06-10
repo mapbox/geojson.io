@@ -106,6 +106,7 @@ export function fuzzyClick(
     layers: CLICKABLE_LAYERS,
     filter: ['!has', 'lasso']
   });
+
   if (!mapFeatures.length) {
     mapFeatures = map.queryRenderedFeatures(bufferPoint(e.point), {
       layers: CLICKABLE_LAYERS,
@@ -133,7 +134,13 @@ export function fuzzyClick(
   }
 
   results.sort((a, b) => {
-    return a.wrappedFeature.at > b.wrappedFeature.at ? -1 : 1;
+    if (a.wrappedFeature.at !== b.wrappedFeature.at) {
+      return a.wrappedFeature.at > b.wrappedFeature.at ? -1 : 1;
+    }
+    // If the wrappedFeature.at is the same, return the Vertex first
+    return a.decodedId.type === 'vertex' && b.decodedId.type === 'feature'
+      ? -1
+      : 1;
   });
 
   return results[0] || null;

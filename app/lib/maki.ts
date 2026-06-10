@@ -36,8 +36,9 @@ export async function loadMakiIcons(map: mapboxgl.Map): Promise<void> {
       return new Promise<void>((resolve) => {
         const img = new Image(15, 15);
         img.onload = () => {
-          if (!map.hasImage(name)) {
-            map.addImage(name, img, { sdf: true });
+          const mapId = `maki-${name}`;
+          if (!map.hasImage(mapId)) {
+            map.addImage(mapId, img, { sdf: true });
           }
           resolve();
         };

@@ -280,7 +280,7 @@ export default class PMap {
     map.setTerrain(null);
     // set projection to last known value (if any) so that style reloads don't reset it to default
     map.setProjection(this.lastStyleOptions?.mapProjection ?? 'globe');
-    // Load maki icons as SDF images so marker-symbol icons can be recolored via icon-color.
+    // Load maki icons as SDF so they can be recolored via icon-color.
     void loadMakiIcons(map);
   };
 
@@ -556,13 +556,15 @@ export default class PMap {
       JSON.stringify(this.lastCustomRasterLayers) !==
       JSON.stringify(customRasterLayers);
 
-    // If only styleOptions changed, and the style has imports, update config properties instead of reloading style
+    // If only styleOptions changed, and the style has imports, update config properties instead of reloading style.
+    // Only treat as a styleOptions-only change if the style is already applied to the map (features source exists).
     const onlyStyleOptionsChanged =
       styleConfig === this.lastLayer &&
       symbolization === this.lastSymbolization &&
       previewProperty === this.lastPreviewProperty &&
       styleOptions !== this.lastStyleOptions &&
-      !customRasterLayersChanged;
+      !customRasterLayersChanged &&
+      !!this.map.getSource(FEATURES_SOURCE_NAME);
 
     if (
       styleConfig === this.lastLayer &&

@@ -196,7 +196,7 @@ function updateMapboxStyle(
   if (typeof updatedImports !== 'undefined') {
     result.imports = updatedImports;
   }
-  // Apply Standard fog to non-import styles (OSM, Outdoors) so they get
+  // Apply Standard fog to non-import styles (OSM, Outdoors, Light, Dark) so they get
   // stars and atmospheric haze when in globe projection.
   if (!style.imports) {
     result.fog = STANDARD_FOG;

@@ -4,7 +4,10 @@ import { env } from 'app/lib/env_client';
 import type { FlatbushLike } from 'app/lib/generate_flatbush_instance';
 import { EmptyIndex } from 'app/lib/generate_flatbush_instance';
 import { useHandlers } from 'app/lib/handlers/index';
-import { CLICKABLE_LAYERS } from 'app/lib/load_and_augment_style';
+import {
+  CLICKABLE_LAYERS,
+  FEATURES_SOURCE_NAME
+} from 'app/lib/load_and_augment_style';
 import { wrappedFeaturesFromMapFeatures } from 'app/lib/map_component_utils';
 import type { PMapHandlers } from 'app/lib/pmap';
 import PMap from 'app/lib/pmap';
@@ -238,7 +241,7 @@ export const MapComponent = memo(function MapComponent({
 
   const throttledMovePointer = useMemo(() => {
     function fastMovePointer(point: mapboxgl.Point) {
-      if (!map) return;
+      if (!map || !map.map.getSource(FEATURES_SOURCE_NAME)) return;
       const features = map.map.queryRenderedFeatures(point, {
         layers: CLICKABLE_LAYERS
       });
@@ -249,9 +252,7 @@ export const MapComponent = memo(function MapComponent({
         });
         setCursor(syntheticUnderCursor || features.length ? 'move' : '');
       } catch (_e) {
-        // Deck can throw here if it's just been initialized
-        // or uninitialized.
-        // console.error(e);
+        // Deck can throw here if it's just been initialized or uninitialized.
       }
     }
     return fastMovePointer;
@@ -382,12 +383,12 @@ export const MapComponent = memo(function MapComponent({
         const mapDivBox = mapDivRef.current?.getBoundingClientRect();
         const map = mapRef.current;
         if (mapDivBox && map) {
-          const featureUnderMouse = map.map.queryRenderedFeatures(
-            [event.pageX - mapDivBox.left, event.pageY - mapDivBox.top],
-            {
-              layers: CLICKABLE_LAYERS
-            }
-          );
+          const featureUnderMouse = map.map.getSource(FEATURES_SOURCE_NAME)
+            ? map.map.queryRenderedFeatures(
+                [event.pageX - mapDivBox.left, event.pageY - mapDivBox.top],
+                { layers: CLICKABLE_LAYERS }
+              )
+            : [];
 
           const position = map.map
             .unproject([
