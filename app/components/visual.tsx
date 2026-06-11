@@ -1,5 +1,6 @@
 import { LayersIcon, InfoCircledIcon } from '@radix-ui/react-icons';
 import * as E from 'app/components/elements';
+import { OptionsDropdown } from 'app/components/options_dropdown';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Popover, Tooltip as T } from 'radix-ui';
 import { memo, Suspense } from 'react';
@@ -57,6 +58,7 @@ export const Visual = memo(function Visual() {
           <span className="whitespace-nowrap">Change Basemap</span>
         </E.TContent>
       </T.Root>
+      <OptionsDropdown />
       <T.Root>
         <div className="h-10 w-10 p-1 flex items-stretch">
           <T.Trigger asChild>

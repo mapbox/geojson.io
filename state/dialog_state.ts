@@ -62,6 +62,7 @@ export type DialogStateRasterLayer = {
 };
 
 type DialogState =
+  | { type: 'options'; title: string; description: string }
   | DialogStateImport
   | DialogStateImportNotes
   | DialogStateCastProperty
