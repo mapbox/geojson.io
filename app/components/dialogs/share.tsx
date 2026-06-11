@@ -1,4 +1,8 @@
-import { Share2Icon, CopyIcon } from '@radix-ui/react-icons';
+import {
+  Share2Icon,
+  CopyIcon,
+  ExclamationTriangleIcon
+} from '@radix-ui/react-icons';
 import { DialogHeader } from 'app/components/dialog';
 import * as E from 'app/components/elements';
 import { useAtomValue } from 'jotai';
@@ -8,7 +12,7 @@ import type { FeatureMap } from 'types';
 import { UWrappedFeature } from 'types';
 
 const WARN_LENGTH = 2000;
-const MAX_LENGTH = 10000;
+const MAX_URL_LENGTH = 8000;
 
 export function buildShareUrl(featureMap: FeatureMap): {
   url: string;
@@ -21,8 +25,8 @@ export function buildShareUrl(featureMap: FeatureMap): {
   const url = `${window.location.origin}/?data=${encodeURIComponent(dataUri)}`;
   return {
     url,
-    tooLong: url.length >= MAX_LENGTH,
-    longWarning: url.length >= WARN_LENGTH && url.length < MAX_LENGTH
+    tooLong: url.length >= MAX_URL_LENGTH,
+    longWarning: url.length >= WARN_LENGTH && url.length < MAX_URL_LENGTH
   };
 }
 
@@ -43,8 +47,8 @@ export function ShareDialog({ onClose }: { onClose: () => void }) {
         {tooLong ? (
           <E.TextWell variant="destructive">
             The current dataset is too large to share via URL. Share links are
-            limited to {MAX_LENGTH.toLocaleString()} characters. Try reducing
-            the number of features or simplifying geometry.
+            limited to {MAX_URL_LENGTH.toLocaleString()} characters. Try
+            reducing the number of features or simplifying geometry.
           </E.TextWell>
         ) : (
           <>
@@ -53,10 +57,11 @@ export function ShareDialog({ onClose }: { onClose: () => void }) {
               is encoded directly in the URL — no account or upload required.
             </E.TextWell>
             {longWarning && (
-              <E.TextWell variant="destructive">
+              <div className="text-sm py-2 px-3 rounded bg-yellow-50 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100">
+                <ExclamationTriangleIcon className="inline-block w-3 h-3 mr-1" />
                 This URL is over {WARN_LENGTH.toLocaleString()} characters. Very
                 long URLs may not work in all browsers or apps.
-              </E.TextWell>
+              </div>
             )}
             <div className="flex gap-2 items-center">
               <input
