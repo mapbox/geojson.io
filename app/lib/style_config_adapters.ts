@@ -79,7 +79,10 @@ function updateMapboxStyle(
     (layer) => layer.visible !== false
   );
   visibleCustomRasterLayers.forEach((layer) => {
-    const isTms = layer.tileUrl.includes('{-y}');
+    const isWms =
+      /service=wms/i.test(layer.tileUrl) ||
+      layer.tileUrl.includes('{bbox-epsg-3857}');
+    const isTms = !isWms && layer.tileUrl.includes('{-y}');
     const tiles = [
       isTms ? layer.tileUrl.replace('{-y}', '{y}') : layer.tileUrl
     ];
