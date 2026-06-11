@@ -61,7 +61,6 @@ export function useNoneHandlers({
   const lastPoint = useRef<mapboxgl.LngLat | null>(null);
   const spaceHeld = useSpaceHeld();
   const altHeld = useAltHeld();
-
   const handlers: Handlers = {
     double: noop,
     down: (e) => {

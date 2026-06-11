@@ -1,17 +1,8 @@
 import { getFilesFromDataTransferItems } from '@placemarkio/flat-drop-files';
-import { groupFiles } from 'app/lib/group_files';
-import { DialogHelpers } from 'state/dialog_helpers';
-import type { FileWithHandle } from 'browser-fs-access';
+import { useImportFiles } from 'app/hooks/use_import_files';
 import { captureException } from 'integrations/errors';
-import { useSetAtom } from 'jotai';
 import { memo, useEffect, useState } from 'react';
-import { dialogAtom } from 'state/jotai';
 import { StyledDropOverlay } from './elements';
-
-/**
- * From an event, get files, with handles for re-saving.
- * Result is nullable.
- */
 
 const stopWindowDrag = (event: DragEvent) => {
   event.preventDefault();
@@ -19,15 +10,9 @@ const stopWindowDrag = (event: DragEvent) => {
 
 export default memo(function Drop() {
   const [dragging, setDragging] = useState<boolean>(false);
-  const setDialogState = useSetAtom(dialogAtom);
+  const importFiles = useImportFiles();
 
   useEffect(() => {
-    const onDropFiles = (files: FileWithHandle[]) => {
-      if (!files.length) return;
-      const groupedFiles = groupFiles(files);
-      setDialogState(DialogHelpers.import(groupedFiles));
-    };
-
     const onDragEnter = () => {
       setDragging(true);
     };
@@ -54,7 +39,7 @@ export default memo(function Drop() {
       const files = event.dataTransfer?.items
         ? await getFilesFromDataTransferItems(event.dataTransfer.items)
         : [];
-      onDropFiles(files);
+      await importFiles(files);
       event.preventDefault();
     };
 
@@ -75,7 +60,7 @@ export default memo(function Drop() {
       window.removeEventListener('dragover', stopWindowDrag);
       window.removeEventListener('drop', stopWindowDrag);
     };
-  }, [setDialogState]);
+  }, [importFiles]);
 
   return dragging ? (
     <StyledDropOverlay>Drop files to add to the map</StyledDropOverlay>

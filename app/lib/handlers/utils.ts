@@ -147,7 +147,6 @@ const calculateSnapPosition = (
       // Note: polygonToLine returns a FeatureCollection for MultiPolygons,
       // which is compatible with nearestPointOnLine, but TypeScript's types don't align here.
       // We cast it to TurfFeature<TurfLineString | TurfMultiLineString> to satisfy TypeScript.
-
       const polygonLine = polygonToLine(feature.geometry);
       const nearestPoint = nearestPointOnLine(
         polygonLine as unknown as TurfFeature<
