@@ -1,8 +1,8 @@
-import { Share2Icon, CopyIcon, CheckIcon } from '@radix-ui/react-icons';
+import { Share2Icon, CopyIcon } from '@radix-ui/react-icons';
 import { DialogHeader } from 'app/components/dialog';
 import * as E from 'app/components/elements';
 import { useAtomValue } from 'jotai';
-import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { dataAtom } from 'state/jotai';
 import type { FeatureMap } from 'types';
 import { UWrappedFeature } from 'types';
@@ -20,14 +20,12 @@ export function buildShareUrl(featureMap: FeatureMap): {
 
 export function ShareDialog({ onClose }: { onClose: () => void }) {
   const data = useAtomValue(dataAtom);
-  const [copied, setCopied] = useState(false);
 
   const { url, tooLong } = buildShareUrl(data.featureMap);
 
   async function copyUrl() {
     await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    toast.success('Copied link');
   }
 
   return (
@@ -56,13 +54,9 @@ export function ShareDialog({ onClose }: { onClose: () => void }) {
                   focus:outline-none"
                 onFocus={(e) => e.target.select()}
               />
-              <E.Button
-                variant="quiet"
-                size="sm"
-                onClick={copyUrl}
-                aria-label="Copy URL"
-              >
-                {copied ? <CheckIcon /> : <CopyIcon />}
+              <E.Button size="xs" onClick={copyUrl} aria-label="Copy URL">
+                <CopyIcon className="w-3 h-3" />
+                Copy
               </E.Button>
             </div>
           </>
