@@ -2,6 +2,10 @@
 
 Recent changes to the geojson.io application. Entries are grouped by ship date.
 
+## 2026-07-15
+
+- **Vertex snapping:** Hold modifier keys while dragging to snap to vertices of nearby features. ([#1025](https://github.com/mapbox/geojson.io/pull/1007))
+
 ## 2026-06-25
 
 - **Fix 2 finger pan while in drawing mode:** Fix for users on touch devices, now 2 finger gestures while drawing is in process will make it to the map and will allow for panning.

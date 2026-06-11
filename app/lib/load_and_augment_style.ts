@@ -25,6 +25,8 @@ const CIRCLE_LAYOUT: mapboxgl.CircleLayout = {};
 export const FEATURES_SOURCE_NAME = 'features';
 export const EPHEMERAL_SOURCE_NAME = 'ephemeral';
 export const CIRCLE_DRAWING_SOURCE_NAME = 'circle-drawing';
+export const VERTEX_SNAP_SOURCE_NAME = 'vertex-snap';
+export const VERTEX_SNAP_LAYER_NAME = 'vertex-snap-circles';
 
 const EPHEMERAL_LINE_LAYER_NAME = 'ephemeral-line';
 const EPHEMERAL_FILL_LAYER_NAME = 'ephemeral-fill';
@@ -108,6 +110,10 @@ export function addEditingLayers({
   style.sources[FEATURES_SOURCE_NAME] = emptyGeoJSONSource;
   style.sources[EPHEMERAL_SOURCE_NAME] = emptyGeoJSONSource;
   style.sources[CIRCLE_DRAWING_SOURCE_NAME] = {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] }
+  };
+  style.sources[VERTEX_SNAP_SOURCE_NAME] = {
     type: 'geojson',
     data: { type: 'FeatureCollection', features: [] }
   };
@@ -277,6 +283,18 @@ export function makeLayers({
         'circle-radius': 5,
         'circle-stroke-color': LINE_COLORS_SELECTED,
         'circle-stroke-width': 2,
+        'circle-emissive-strength': 1
+      } as mapboxgl.CirclePaint
+    } as mapboxgl.AnyLayer,
+
+    {
+      id: VERTEX_SNAP_LAYER_NAME,
+      type: 'circle',
+      source: VERTEX_SNAP_SOURCE_NAME,
+      layout: CIRCLE_LAYOUT,
+      paint: {
+        'circle-color': ['coalesce', ['get', 'stroke'], '#312E81'],
+        'circle-radius': 3,
         'circle-emissive-strength': 1
       } as mapboxgl.CirclePaint
     } as mapboxgl.AnyLayer,
