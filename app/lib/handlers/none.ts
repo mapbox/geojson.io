@@ -157,25 +157,9 @@ export function useNoneHandlers({
       });
 
       if (!feature?.object || selection.type !== 'single') {
-        const fuzzyResult = utils.fuzzyClick(e, {
-          idMap,
-          featureMap,
-          pmap
-        });
-
-        if (fuzzyResult) {
-          const { wrappedFeature, id } = fuzzyResult;
-          if (
-            selection.type === 'single' &&
-            selection.id !== wrappedFeature.id
-          ) {
-            void startSnapshot(wrappedFeature);
-            dragTargetRef.current = id;
-            setSelection(USelection.single(wrappedFeature.id));
-          }
-          e.preventDefault();
-        }
-
+        // Feature selection is handled by the click event, which fires
+        // after mousedown+mouseup without significant movement. Don't
+        // preventDefault here so the map can pan when the user drags.
         return;
       }
       e.preventDefault();
