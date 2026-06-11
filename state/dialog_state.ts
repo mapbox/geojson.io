@@ -94,6 +94,11 @@ type DialogState =
       title: string;
       description: string;
     }
+  | {
+      type: 'share';
+      title: string;
+      description: string;
+    }
   | null;
 
 export const dialogAtom = atomWithReset<DialogState>(null);

@@ -53,6 +53,12 @@ In addition to exporting GeoJSON, you can choose other file formats such as KML,
 
 When export GeoJSON, geojson.io always exports a FeatureCollection.
 
+## Sharing data
+
+Use the **Share button** to generate a URL that encodes the current GeoJSON data directly in the link. Anyone with the link can open it in geojson.io and see the same data — no account or file upload required.
+
+Share links use the `?data` URL parameter with a URL-encoded data URI. Because URLs have practical length limits, the Share button is only available when the encoded URL is fewer than 2000 characters. For larger datasets, use the Export button to save a file and share that instead.
+
 ## Supported File Types
 
 **geojson.io** supports the following file types for import and export as outlined in the table below.

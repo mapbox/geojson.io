@@ -29,6 +29,10 @@ export const DIALOG_CONFIGS = {
     title: 'About',
     description: 'About this application'
   },
+  share: {
+    title: 'Share',
+    description: 'Share a link to the current data'
+  },
   from_url: {
     title: 'Import from URL',
     description: 'Load GeoJSON data from a URL'
@@ -66,6 +70,11 @@ export const DialogHelpers = {
   about: () => ({
     type: 'about' as const,
     ...DIALOG_CONFIGS.about
+  }),
+
+  share: () => ({
+    type: 'share' as const,
+    ...DIALOG_CONFIGS.share
   }),
 
   fromUrl: () => ({
