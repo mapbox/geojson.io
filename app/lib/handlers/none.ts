@@ -71,8 +71,6 @@ export function useNoneHandlers({
 
   // Immediately show/hide vertex-snap highlights when modifier keys change,
   // without waiting for the next mousemove event.
-  // Immediately show/hide vertex-snap highlights when modifier keys change,
-  // without waiting for the next mousemove event.
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const draggingVertex =
