@@ -35,9 +35,10 @@ Select a feature to edit its geometry.
 - Drag vertices to reshape lines and polygons.
 - Drag the midpoint between vertices to add a new vertex.
 - <kbd>Delete</kbd> to delete a selected vertex.
-- <kbd>Option</kbd> + drag a vertex to snap to nearby features.
+- <kbd>Option</kbd> + drag a vertex to snap to the nearest edge of a nearby feature.
+- <kbd>Shift</kbd> + <kbd>Option</kbd> + drag a vertex to snap to vertices only — nearby vertices are highlighted to guide precise alignment.
 - Hold <kbd>Space</kbd> and drag to move a feature.
-- <kbd>Command</kbd> + <kbd>Option</kbd> + drag to rotate a feature.
+- <kbd>Option</kbd> + drag to rotate a feature.
 
 ### Editing Properties
 
