@@ -10,6 +10,7 @@ import { RasterLayerDialog } from 'app/components/dialogs/raster_layer';
 import { QuickswitcherDialog } from 'app/components/search/quickswitcher';
 import SimplifyDialog from 'app/components/dialogs/simplify';
 import AboutModal from 'app/components/about_modal';
+import { ShareDialog } from 'app/components/dialogs/share';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useAtom } from 'jotai';
 import { Dialog as D } from 'radix-ui';
@@ -68,6 +69,7 @@ export const Dialogs = memo(function Dialogs() {
       extraWide = true;
       return <AboutModal open={true} />;
     })
+    .with({ type: 'share' }, () => <ShareDialog onClose={onClose} />)
     .exhaustive();
 
   return (

@@ -1,8 +1,9 @@
 import { LayersIcon, InfoCircledIcon } from '@radix-ui/react-icons';
 import * as E from 'app/components/elements';
+import { buildShareUrl } from 'app/components/dialogs/share';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Popover, Tooltip as T } from 'radix-ui';
-import { memo, Suspense } from 'react';
+import { memo, Suspense, useMemo } from 'react';
 import { dataAtom, dialogAtom } from 'state/jotai';
 import { DialogHelpers } from 'state/dialog_helpers';
 import { StylesPopover } from './styles/popover';
@@ -13,6 +14,11 @@ export const Visual = memo(function Visual() {
   const data = useAtomValue(dataAtom);
   const openFiles = useOpenFiles();
   const hasFeatures = data.featureMap.size > 0;
+
+  const { tooLong: shareTooLong } = useMemo(
+    () => buildShareUrl(data.featureMap),
+    [data.featureMap]
+  );
 
   return (
     <div className="flex items-center">
@@ -35,6 +41,27 @@ export const Visual = memo(function Visual() {
       >
         Export
       </E.Button>
+      <T.Root>
+        <T.Trigger asChild>
+          <E.Button
+            variant="quiet"
+            aria-label="Share"
+            disabled={!hasFeatures || shareTooLong}
+            onClick={() => {
+              setDialogState(DialogHelpers.share());
+            }}
+          >
+            Share
+          </E.Button>
+        </T.Trigger>
+        {shareTooLong && hasFeatures ? (
+          <E.TContent side="bottom">
+            <span className="whitespace-nowrap">
+              Dataset too large to share via URL
+            </span>
+          </E.TContent>
+        ) : null}
+      </T.Root>
 
       <T.Root>
         <Popover.Root>
