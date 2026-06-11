@@ -7,21 +7,29 @@ import { dataAtom } from 'state/jotai';
 import type { FeatureMap } from 'types';
 import { UWrappedFeature } from 'types';
 
+const WARN_LENGTH = 2000;
+const MAX_LENGTH = 10000;
+
 export function buildShareUrl(featureMap: FeatureMap): {
   url: string;
   tooLong: boolean;
+  longWarning: boolean;
 } {
   const fc = UWrappedFeature.mapToFeatureCollection(featureMap);
   const json = JSON.stringify(fc);
   const dataUri = `data:application/json,${encodeURIComponent(json)}`;
   const url = `${window.location.origin}/?data=${encodeURIComponent(dataUri)}`;
-  return { url, tooLong: url.length >= 2000 };
+  return {
+    url,
+    tooLong: url.length >= MAX_LENGTH,
+    longWarning: url.length >= WARN_LENGTH && url.length < MAX_LENGTH
+  };
 }
 
 export function ShareDialog({ onClose }: { onClose: () => void }) {
   const data = useAtomValue(dataAtom);
 
-  const { url, tooLong } = buildShareUrl(data.featureMap);
+  const { url, tooLong, longWarning } = buildShareUrl(data.featureMap);
 
   async function copyUrl() {
     await navigator.clipboard.writeText(url);
@@ -35,8 +43,8 @@ export function ShareDialog({ onClose }: { onClose: () => void }) {
         {tooLong ? (
           <E.TextWell variant="destructive">
             The current dataset is too large to share via URL. Share links are
-            limited to 2000 characters. Try reducing the number of features or
-            simplifying geometry.
+            limited to {MAX_LENGTH.toLocaleString()} characters. Try reducing
+            the number of features or simplifying geometry.
           </E.TextWell>
         ) : (
           <>
@@ -44,6 +52,12 @@ export function ShareDialog({ onClose }: { onClose: () => void }) {
               Share this link to load the current data in geojson.io. The data
               is encoded directly in the URL — no account or upload required.
             </E.TextWell>
+            {longWarning && (
+              <E.TextWell variant="destructive">
+                This URL is over {WARN_LENGTH.toLocaleString()} characters. Very
+                long URLs may not work in all browsers or apps.
+              </E.TextWell>
+            )}
             <div className="flex gap-2 items-center">
               <input
                 readOnly
