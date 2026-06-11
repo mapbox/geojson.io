@@ -140,10 +140,10 @@ export function RasterLayerDialog({
               <br />
               <br />
               <strong>WMS:</strong> Provide a WMS GetMap URL with{' '}
-              {'{bbox-epsg-3857}'} as the BBOX parameter value. The URL must
-              include <code>SERVICE=WMS</code>, <code>REQUEST=GetMap</code>,{' '}
-              <code>CRS=EPSG:3857</code>, <code>WIDTH=256</code>, and{' '}
-              <code>HEIGHT=256</code>.
+              <code>{'{bbox-epsg-3857}'}</code> as the BBOX parameter value. The
+              URL must include <code>SERVICE=WMS</code>,{' '}
+              <code>REQUEST=GetMap</code>, <code>CRS=EPSG:3857</code>,{' '}
+              <code>WIDTH=256</code>, and <code>HEIGHT=256</code>.
             </TextWell>
             <TextWell>
               <strong>Note:</strong> Your raster layer configuration will be
