@@ -116,6 +116,12 @@ export const DialogHelpers = {
     features
   }),
 
+  options: () => ({
+    type: 'options' as const,
+    title: 'Options',
+    description: 'Configure application options'
+  }),
+
   circle: (position: Pos2): DialogStateCircle => ({
     type: 'circle',
     title: 'Create Circle',

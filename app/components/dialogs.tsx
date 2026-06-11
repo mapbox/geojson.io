@@ -1,4 +1,5 @@
 import BufferDialog from 'app/components/dialogs/buffer';
+import { OptionsDialog } from 'app/components/dialogs/options';
 import { CastPropertyDialog } from 'app/components/dialogs/cast_property';
 import { CircleDialog } from 'app/components/dialogs/circle';
 import { CircleTypesDialog } from 'app/components/dialogs/circle_types';
@@ -64,6 +65,7 @@ export const Dialogs = memo(function Dialogs() {
     .with({ type: 'raster_layer' }, (modal) => (
       <RasterLayerDialog modal={modal} onClose={onClose} />
     ))
+    .with({ type: 'options' }, () => <OptionsDialog />)
     .with({ type: 'about' }, () => {
       extraWide = true;
       return <AboutModal open={true} />;
