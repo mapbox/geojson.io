@@ -122,6 +122,50 @@ const getNearestPointFromMultiPoint = (
   return nearestPoint;
 };
 
+/**
+ * Returns every vertex coordinate in the feature's geometry.
+ * Polygon ring-closing duplicates are included (harmless for snapping).
+ */
+export const getAllVerticesFromFeature = (feature: Feature): Position[] => {
+  if (!feature.geometry) return [];
+  const g = feature.geometry;
+  switch (g.type) {
+    case 'Point':
+      return [g.coordinates];
+    case 'MultiPoint':
+      return g.coordinates;
+    case 'LineString':
+      return g.coordinates;
+    case 'MultiLineString':
+      return g.coordinates.flat();
+    case 'Polygon':
+      return g.coordinates.flat();
+    case 'MultiPolygon':
+      return g.coordinates.flat(2);
+    default:
+      return [];
+  }
+};
+
+const getNearestVertexFromFeature = (
+  feature: Feature,
+  cursorCoords: Position
+): Position => {
+  const vertices = getAllVerticesFromFeature(feature);
+  if (!vertices.length) return cursorCoords;
+
+  let nearest = cursorCoords;
+  let shortest = Infinity;
+  for (const v of vertices) {
+    const d = distance(cursorCoords, v);
+    if (d < shortest) {
+      shortest = d;
+      nearest = v;
+    }
+  }
+  return nearest;
+};
+
 const calculateSnapPosition = (
   feature: Feature,
   cursorCoordinates: Position
@@ -169,7 +213,8 @@ export const getSnappingCoordinates = (
   featureMap: FeatureMap,
   pmap: PMap,
   idMap: IDMap,
-  excludeFeatureId?: string
+  excludeFeatureId?: string,
+  verticesOnly?: boolean
 ): Position => {
   const cursorCoordinates = getMapCoord(e);
   const featureId = getNeighborCandidate(
@@ -188,5 +233,54 @@ export const getSnappingCoordinates = (
 
   if (!feature.geometry) return cursorCoordinates;
 
+  if (verticesOnly) {
+    return getNearestVertexFromFeature(feature, cursorCoordinates);
+  }
   return calculateSnapPosition(feature, cursorCoordinates);
+};
+
+/** Default feature stroke color — matches geojson.io's symbolization default. */
+const DEFAULT_STROKE = '#312E81';
+
+/**
+ * Returns all vertices from features within a ~80px radius of the cursor,
+ * each paired with that feature's stroke color for data-driven layer styling.
+ */
+export const getNearbyVertices = (
+  e: MapMouseEvent | MapTouchEvent,
+  featureMap: FeatureMap,
+  pmap: PMap,
+  idMap: IDMap,
+  excludeFeatureId?: string
+): { position: Pos2; stroke: string }[] => {
+  const { x, y } = e.point;
+  const radius = 80;
+  const searchBox = [
+    [x - radius, y - radius] as PointLike,
+    [x + radius, y + radius] as PointLike
+  ] as [PointLike, PointLike];
+
+  const mapFeatures = pmap.map.queryRenderedFeatures(searchBox, {
+    layers: CLICKABLE_LAYERS
+  });
+
+  const seen = new Set<string>();
+  const vertices: { position: Pos2; stroke: string }[] = [];
+
+  for (const f of mapFeatures) {
+    const decodedId = decodeId(f.id as RawId);
+    const uuid = UIDMap.getUUID(idMap, decodedId.featureId);
+    if (!uuid || uuid === excludeFeatureId || seen.has(uuid)) continue;
+    seen.add(uuid);
+    const wrapped = featureMap.get(uuid);
+    if (!wrapped?.feature.geometry) continue;
+    const stroke =
+      (wrapped.feature.properties?.stroke as string | undefined) ??
+      DEFAULT_STROKE;
+    for (const position of getAllVerticesFromFeature(wrapped.feature)) {
+      vertices.push({ position: position as Pos2, stroke });
+    }
+  }
+
+  return vertices;
 };

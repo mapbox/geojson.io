@@ -270,11 +270,18 @@ export interface EphemeralEditingStateCircleDrawing {
   mouse: Pos2;
 }
 
+export interface EphemeralEditingStateVertexSnap {
+  type: 'vertex-snap';
+  /** Vertices of nearby features to highlight, each with its feature's stroke color. */
+  vertices: { position: Pos2; stroke: string }[];
+}
+
 export const cursorStyleAtom = atom<React.CSSProperties['cursor']>('default');
 
 export type EphemeralEditingState =
   | EphemeralEditingStateLasso
   | EphemeralEditingStateCircleDrawing
+  | EphemeralEditingStateVertexSnap
   | { type: 'none' };
 
 export const ephemeralStateAtom = atom<EphemeralEditingState>({ type: 'none' });

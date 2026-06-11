@@ -14,7 +14,7 @@ import { useEndSnapshot, useStartSnapshot } from 'app/lib/persistence/shared';
 import { captureException } from 'integrations/errors';
 import { useSetAtom } from 'jotai';
 import noop from 'lodash/noop';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { USelection } from 'state';
 import {
   cursorStyleAtom,
@@ -25,7 +25,11 @@ import {
 } from 'state/jotai';
 import { modeAtom } from 'state/mode';
 import type { HandlerContext, IWrappedFeature } from 'types';
-import { getMapCoord, getSnappingCoordinates } from './utils';
+import {
+  getMapCoord,
+  getNearbyVertices,
+  getSnappingCoordinates
+} from './utils';
 
 export const getAllFeatures = ({
   featureMap
@@ -59,8 +63,49 @@ export function useNoneHandlers({
   const endSnapshot = useEndSnapshot();
   const startSnapshot = useStartSnapshot();
   const lastPoint = useRef<mapboxgl.LngLat | null>(null);
+  const lastMoveEvent = useRef<
+    mapboxgl.MapMouseEvent | mapboxgl.MapTouchEvent | null
+  >(null);
   const spaceHeld = useSpaceHeld();
   const altHeld = useAltHeld();
+
+  // Immediately show/hide vertex-snap highlights when modifier keys change,
+  // without waiting for the next mousemove event.
+  // Immediately show/hide vertex-snap highlights when modifier keys change,
+  // without waiting for the next mousemove event.
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      const draggingVertex =
+        dragTargetRef.current !== null &&
+        !Array.isArray(dragTargetRef.current) &&
+        selection.type === 'single' &&
+        decodeId(dragTargetRef.current).type === 'vertex';
+
+      if (e.altKey && e.shiftKey && draggingVertex && lastMoveEvent.current) {
+        setEphemeralState({
+          type: 'vertex-snap',
+          vertices: getNearbyVertices(
+            lastMoveEvent.current,
+            featureMap,
+            pmap,
+            idMap,
+            selection.id
+          )
+        });
+      } else if (!e.shiftKey) {
+        setEphemeralState((prev) =>
+          prev.type === 'vertex-snap' ? { type: 'none' } : prev
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleKey);
+    window.addEventListener('keyup', handleKey);
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      window.removeEventListener('keyup', handleKey);
+    };
+  }, [selection, featureMap, idMap, pmap, setEphemeralState]);
 
   const handlers: Handlers = {
     double: noop,
@@ -224,6 +269,8 @@ export function useNoneHandlers({
       setEphemeralState({ type: 'none' });
     },
     move: (e) => {
+      lastMoveEvent.current = e;
+
       if (dragTargetRef.current === null) {
         throttledMovePointer(e.point);
         return;
@@ -282,13 +329,16 @@ export function useNoneHandlers({
             if (!feature) return;
 
             let nextCoord = getMapCoord(e);
+            const verticesOnly = altHeld.current && e.originalEvent.shiftKey;
+
             if (altHeld.current) {
               nextCoord = getSnappingCoordinates(
                 e,
                 featureMap,
                 pmap,
                 idMap,
-                selection.id
+                selection.id,
+                verticesOnly
               ) as Pos2;
             }
 
@@ -317,6 +367,19 @@ export function useNoneHandlers({
                   mouse: nextCoord
                 });
               }
+            } else if (verticesOnly) {
+              setEphemeralState({
+                type: 'vertex-snap',
+                vertices: getNearbyVertices(
+                  e,
+                  featureMap,
+                  pmap,
+                  idMap,
+                  selection.id
+                )
+              });
+            } else {
+              setEphemeralState({ type: 'none' });
             }
 
             if (wasRectangle && !mode?.modeOptions?.hasResizedRectangle) {
