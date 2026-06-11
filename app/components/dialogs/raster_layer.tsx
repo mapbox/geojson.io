@@ -25,8 +25,16 @@ function validateTileUrl(url: string): string | undefined {
     return 'URL must start with https://';
   }
   if (isWmsUrl(url)) {
-    if (!url.includes('{bbox-epsg-3857}')) {
-      return 'WMS URL must include {bbox-epsg-3857} placeholder';
+    const missing: string[] = [];
+    if (!/service=wms/i.test(url)) missing.push('SERVICE=WMS');
+    if (!/request=getmap/i.test(url)) missing.push('REQUEST=GetMap');
+    if (!/crs=epsg:3857/i.test(url)) missing.push('CRS=EPSG:3857');
+    if (!/width=\d+/i.test(url)) missing.push('WIDTH');
+    if (!/height=\d+/i.test(url)) missing.push('HEIGHT');
+    if (!url.includes('{bbox-epsg-3857}'))
+      missing.push('BBOX={bbox-epsg-3857}');
+    if (missing.length > 0) {
+      return `WMS URL is missing required parameters: ${missing.join(', ')}`;
     }
     return;
   }
