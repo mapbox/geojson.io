@@ -338,11 +338,13 @@ export const contentLike = `py-1
     rounded-sm
     shadow-[0_2px_10px_2px_rgba(0,0,0,0.1)]
     ring-1 ring-gray-200 dark:ring-gray-700
-    content-layout z-50`;
+    content-layout`;
 
-export const DDContent = classed(DD.Content)(contentLike);
-export const CMContent = classed(CM.Content)(contentLike);
-export const CMSubContent = classed(CM.SubContent)(contentLike);
+const floatingContentLike = `${contentLike} z-50`;
+
+export const DDContent = classed(DD.Content)(floatingContentLike);
+export const CMContent = classed(CM.Content)(floatingContentLike);
+export const CMSubContent = classed(CM.SubContent)(floatingContentLike);
 
 const styledLabel =
   'block py-1 pl-3 pr-4 text-xs text-gray-500 dark:text-gray-300';
@@ -515,9 +517,9 @@ export const styledButton = ({
       dark:aria-expanded:bg-mb-blue-300
     data-state-on:bg-purple-400 dark:data-state-on:bg-gray-900`
       : variant === 'primary'
-      ? `aria-expanded:bg-mb-blue-300
+        ? `aria-expanded:bg-mb-blue-300
     data-state-on:bg-mb-blue-300`
-      : `
+        : `
     aria-expanded:bg-gray-200 dark:aria-expanded:bg-black
     data-state-on:bg-gray-200 dark:data-state-on:bg-gray-600`,
     'disabled:opacity-50 disabled:cursor-not-allowed',
