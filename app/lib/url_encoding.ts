@@ -21,10 +21,11 @@ async function collectStream(
 ): Promise<Uint8Array> {
   const chunks: Uint8Array[] = [];
   const reader = readable.getReader();
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
+  let done = false;
+  while (!done) {
+    const result = await reader.read();
+    done = result.done;
+    if (result.value) chunks.push(result.value);
   }
   const total = chunks.reduce((n, c) => n + c.length, 0);
   const out = new Uint8Array(total);
