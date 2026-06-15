@@ -56,13 +56,13 @@ export const Visual = memo(function Visual() {
             <Share2Icon className="w-4 h-4" />
           </E.Button>
         </T.Trigger>
-        {shareTooLong && hasFeatures ? (
-          <E.TContent side="bottom">
-            <span className="whitespace-nowrap">
-              Dataset too large to share via URL
-            </span>
-          </E.TContent>
-        ) : null}
+        <E.TContent side="bottom">
+          <span className="whitespace-nowrap">
+            {shareTooLong && hasFeatures
+              ? 'Dataset too large to share via URL'
+              : 'Share'}
+          </span>
+        </E.TContent>
       </T.Root>
 
       <T.Root>
