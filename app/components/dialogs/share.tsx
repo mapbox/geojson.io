@@ -21,8 +21,7 @@ export function buildShareUrl(featureMap: FeatureMap): {
 } {
   const fc = UWrappedFeature.mapToFeatureCollection(featureMap);
   const json = JSON.stringify(fc);
-  const dataUri = `data:application/json,${encodeURIComponent(json)}`;
-  const url = `${window.location.origin}/?data=${encodeURIComponent(dataUri)}`;
+  const url = `${window.location.origin}/?data=${encodeURIComponent(`data:application/json,${json}`)}`;
   return {
     url,
     tooLong: url.length >= MAX_URL_LENGTH,
