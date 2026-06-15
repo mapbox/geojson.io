@@ -133,6 +133,7 @@ export function UrlAPI() {
 
     // Handle data param (URL or data URL)
     const handleDataParam = async (data: string) => {
+      // Handle gzipped base 64 encoded data
       if (data.startsWith('gz:')) {
         const geojson = await gzipDecode(data.slice(3));
         doImportString(
@@ -144,6 +145,7 @@ export function UrlAPI() {
         return;
       }
 
+      // Handle URL encoded geojson
       const url = new URL(data);
       if (url.protocol === 'https:') {
         const res = await fetch(url);

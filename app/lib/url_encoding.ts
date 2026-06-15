@@ -1,3 +1,7 @@
+// This file is used to encode GeoJSON to base64 for more efficient storage of geojson data in
+// shareable URL's.  Providing as much as 90% increase in larger available geojson for sharing
+// Uses the Browser native CompressionStream() API.
+
 function toBase64Url(bytes: Uint8Array): string {
   let binary = '';
   for (let i = 0; i < bytes.length; i++) {
