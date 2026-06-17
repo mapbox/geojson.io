@@ -20,7 +20,14 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', '%VITE_GA_MEASUREMENT_ID%');
+      // Disable automatic page_view tracking to prevent the ?map= camera
+      // parameter (updated via replaceState on every map move) from firing
+      // a page_view on each interaction.
+      gtag('config', '%VITE_GA_MEASUREMENT_ID%', { send_page_view: false });
+      // Fire a single page_view with a clean URL (no query params).
+      gtag('event', 'page_view', {
+        page_location: window.location.origin + window.location.pathname + window.location.hash
+      });
     </script>
   </head>
   <body>
