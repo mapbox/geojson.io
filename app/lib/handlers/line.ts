@@ -1,6 +1,5 @@
 import { lockDirection, useAltHeld, useShiftHeld } from 'app/hooks/use_held';
 import { CURSOR_DEFAULT } from 'app/lib/constants';
-import * as utils from 'app/lib/map_component_utils';
 import { usePopMoment } from 'app/lib/persistence/shared';
 import replaceCoordinates from 'app/lib/replace_coordinates';
 import { captureException } from 'integrations/errors';

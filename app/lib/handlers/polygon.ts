@@ -2,7 +2,6 @@ import { lockDirection, useAltHeld, useShiftHeld } from 'app/hooks/use_held';
 import { CURSOR_DEFAULT, DECK_SYNTHETIC_ID } from 'app/lib/constants';
 import { decodeId } from 'app/lib/id';
 import { UIDMap } from 'app/lib/id_mapper';
-import * as utils from 'app/lib/map_component_utils';
 import { closePolygon } from 'app/lib/map_operations';
 import { usePopMoment } from 'app/lib/persistence/shared';
 import replaceCoordinates from 'app/lib/replace_coordinates';
