@@ -1,7 +1,6 @@
 import { LayersIcon, InfoCircledIcon, Share2Icon } from '@radix-ui/react-icons';
 import * as E from 'app/components/elements';
 import { buildShareUrl } from 'app/components/dialogs/share';
-import { OptionsDropdown } from 'app/components/options_dropdown';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Popover, Tooltip as T } from 'radix-ui';
 import { memo, Suspense, useEffect, useState } from 'react';
@@ -89,7 +88,6 @@ export const Visual = memo(function Visual() {
           </E.PopoverContent2>
         </Popover.Root>
       </T.Root>
-      <OptionsDropdown />
       <T.Root>
         <div className="h-10 w-10 p-1 flex items-stretch">
           <T.Trigger asChild>

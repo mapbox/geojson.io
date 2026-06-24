@@ -187,7 +187,10 @@ export const addMetadataWithGeocoderAtom = atomWithStorage(
   false
 );
 
-export const removeCoincidentsAtom = atomWithStorage('removeCoincidents', true);
+export const removeCoincidentsAtom = atomWithStorage(
+  'removeCoincidents',
+  false
+);
 
 export type {
   DialogStateCastProperty as ModalStateCastProperty,

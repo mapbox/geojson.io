@@ -7,12 +7,12 @@ import { extendExtent, getExtent } from 'app/lib/geometry';
 import { groupFiles } from 'app/lib/group_files';
 import { DialogHelpers } from 'state/dialog_helpers';
 import type { FileWithHandle } from 'browser-fs-access';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useSetAtom } from 'jotai';
 import type { LngLatBoundsLike } from 'mapbox-gl';
 import { useCallback, useContext, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { Nothing } from 'purify-ts/Maybe';
-import { dialogAtom, removeCoincidentsAtom } from 'state/jotai';
+import { dialogAtom } from 'state/jotai';
 
 // File types that require user input in the import modal
 // (ambiguous column mapping or coordinate order).
@@ -31,7 +31,6 @@ export function useImportFiles() {
   const setDialogState = useSetAtom(dialogAtom);
   const doImport = useImportFile();
   const doImportShapefile = useImportShapefile();
-  const removeCoincidents = useAtomValue(removeCoincidentsAtom);
   const map = useContext(MapContext);
   const mapRef = useRef(map);
   mapRef.current = map;
@@ -49,7 +48,7 @@ export function useImportFiles() {
           const result = await doImportShapefile(fileGroup, {
             ...DEFAULT_IMPORT_OPTIONS,
             type: 'shapefile',
-            removeCoincidents
+            removeCoincidents: false
           });
           await result.caseOf<Promise<void>>({
             Left: (err) => {
@@ -73,7 +72,7 @@ export function useImportFiles() {
           } else {
             const result = await doImport(
               fileGroup.file,
-              { ...options, removeCoincidents },
+              { ...options, removeCoincidents: false },
               () => {}
             );
             await result.caseOf<Promise<void>>({
@@ -104,6 +103,6 @@ export function useImportFiles() {
         setDialogState(DialogHelpers.import(modalFiles));
       }
     },
-    [doImport, doImportShapefile, removeCoincidents, setDialogState]
+    [doImport, doImportShapefile, setDialogState]
   );
 }
