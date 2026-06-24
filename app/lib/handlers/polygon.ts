@@ -10,11 +10,18 @@ import { captureException } from 'integrations/errors';
 import { useSetAtom } from 'jotai';
 import { useRef } from 'react';
 import { USelection } from 'state';
-import { cursorStyleAtom, Mode, modeAtom, selectionAtom } from 'state/jotai';
+import {
+  cursorStyleAtom,
+  ephemeralStateAtom,
+  Mode,
+  modeAtom,
+  selectionAtom
+} from 'state/jotai';
 import type { HandlerContext, IFeature, Polygon } from 'types';
 import {
   createOrUpdateFeature,
   getMapCoord,
+  getNearbyVertices,
   getSnappingCoordinates
 } from './utils';
 
@@ -31,6 +38,7 @@ export function usePolygonHandlers({
   const setSelection = useSetAtom(selectionAtom);
   const setMode = useSetAtom(modeAtom);
   const setCursor = useSetAtom(cursorStyleAtom);
+  const setEphemeralState = useSetAtom(ephemeralStateAtom);
   const popMoment = usePopMoment();
   const transact = rep.useTransact();
   /**
@@ -117,7 +125,8 @@ export function usePolygonHandlers({
       }
 
       const lastCoord = feature.geometry.coordinates[0].at(-3);
-      if (shiftHeld.current && lastCoord) {
+      const verticesOnly = altHeld.current && shiftHeld.current;
+      if (shiftHeld.current && !altHeld.current && lastCoord) {
         nextCoord = lockDirection(lastCoord, nextCoord);
       }
 
@@ -127,7 +136,8 @@ export function usePolygonHandlers({
           featureMap,
           pmap,
           idMap,
-          selection.id
+          selection.id,
+          verticesOnly
         ) as Pos2;
       }
 
@@ -168,7 +178,8 @@ export function usePolygonHandlers({
       const feature = wrappedFeature.feature as IFeature<Polygon>;
 
       const lastCoord = feature.geometry.coordinates[0].at(-3);
-      if (shiftHeld.current && lastCoord) {
+      const verticesOnly = altHeld.current && shiftHeld.current;
+      if (shiftHeld.current && !altHeld.current && lastCoord) {
         nextCoord = lockDirection(lastCoord, nextCoord);
       }
 
@@ -178,8 +189,15 @@ export function usePolygonHandlers({
           featureMap,
           pmap,
           idMap,
-          selection.id
+          selection.id,
+          verticesOnly
         ) as Pos2;
+        setEphemeralState({
+          type: 'vertex-snap',
+          vertices: getNearbyVertices(e, featureMap, pmap, idMap, selection.id)
+        });
+      } else {
+        setEphemeralState({ type: 'none' });
       }
 
       const newRing = feature.geometry.coordinates[0].slice();

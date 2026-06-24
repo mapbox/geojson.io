@@ -4,7 +4,11 @@ import { useBreakpoint } from 'app/hooks/use_responsive';
 import { getIsMac, localizeKeybinding } from 'app/lib/utils';
 import clsx from 'clsx';
 import { useAtom, useAtomValue } from 'jotai';
-import { hideHintsAtom, selectionAtom } from 'state/jotai';
+import {
+  hideHintsAtom,
+  selectedFeaturesAtom,
+  selectionAtom
+} from 'state/jotai';
 import { Mode, modeAtom } from 'state/mode';
 
 function ModeHint({
@@ -48,8 +52,16 @@ function ModeHint({
 export function ModeHints() {
   const mode = useAtomValue(modeAtom);
   const selection = useAtomValue(selectionAtom);
+  const selectedFeatures = useAtomValue(selectedFeaturesAtom);
   const show = useBreakpoint('lg');
   const isMac = getIsMac();
+
+  const selectedGeometryType = selectedFeatures[0]?.feature.geometry?.type;
+  const selectionHasVertices =
+    selectedGeometryType === 'LineString' ||
+    selectedGeometryType === 'MultiLineString' ||
+    selectedGeometryType === 'Polygon' ||
+    selectedGeometryType === 'MultiPolygon';
 
   if (!show) {
     return null;
@@ -57,8 +69,9 @@ export function ModeHints() {
 
   const hold = (shift: boolean = false) => (
     <div className="text-xs">
-      Hold {localizeKeybinding('Option', isMac)} to snap to existing features.
-      {shift ? 'Hold Shift to snap to right angles.' : null}
+      Hold {localizeKeybinding('Option', isMac)} to snap to existing features,{' '}
+      {localizeKeybinding('Option', isMac)}+Shift to snap to vertices.
+      {shift ? ' Hold Shift to snap to right angles.' : null}
     </div>
   );
 
@@ -107,8 +120,12 @@ export function ModeHints() {
               <div>
                 Hold space bar & drag to move entire features. Hold option &
                 drag to rotate.
-                <br />
-                {hold()}
+                {selectionHasVertices ? (
+                  <>
+                    <br />
+                    {hold()}
+                  </>
+                ) : null}
               </div>
             </ModeHint>
           );

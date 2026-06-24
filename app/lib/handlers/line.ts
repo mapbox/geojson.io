@@ -7,11 +7,18 @@ import { captureException } from 'integrations/errors';
 import { useSetAtom } from 'jotai';
 import { useRef } from 'react';
 import { USelection } from 'state';
-import { cursorStyleAtom, Mode, modeAtom, selectionAtom } from 'state/jotai';
+import {
+  cursorStyleAtom,
+  ephemeralStateAtom,
+  Mode,
+  modeAtom,
+  selectionAtom
+} from 'state/jotai';
 import type { HandlerContext, IFeature, LineString, Position } from 'types';
 import {
   createOrUpdateFeature,
   getMapCoord,
+  getNearbyVertices,
   getSnappingCoordinates
 } from './utils';
 
@@ -28,6 +35,7 @@ export function useLineHandlers({
   const setSelection = useSetAtom(selectionAtom);
   const setMode = useSetAtom(modeAtom);
   const setCursor = useSetAtom(cursorStyleAtom);
+  const setEphemeralState = useSetAtom(ephemeralStateAtom);
   const transact = rep.useTransact();
   const popMoment = usePopMoment();
   const usingTouchEvents = useRef<boolean>(false);
@@ -117,12 +125,26 @@ export function useLineHandlers({
 
       let nextCoord = getMapCoord(e) as Position;
       const lastCoord = feature.geometry.coordinates.at(-2);
-      if (shiftHeld.current && lastCoord) {
+      const verticesOnly = altHeld.current && shiftHeld.current;
+      if (shiftHeld.current && !altHeld.current && lastCoord) {
         nextCoord = lockDirection(lastCoord, nextCoord);
       }
 
       if (altHeld.current && lastCoord) {
-        nextCoord = getSnappingCoordinates(e, featureMap, pmap, idMap);
+        nextCoord = getSnappingCoordinates(
+          e,
+          featureMap,
+          pmap,
+          idMap,
+          selection.id,
+          verticesOnly
+        );
+        setEphemeralState({
+          type: 'vertex-snap',
+          vertices: getNearbyVertices(e, featureMap, pmap, idMap, selection.id)
+        });
+      } else {
+        setEphemeralState({ type: 'none' });
       }
 
       void transact({
