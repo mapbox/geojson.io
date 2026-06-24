@@ -52,7 +52,21 @@ export function useLineHandlers({
          * Drawing a new line: create the line and set the new
          * selection
          */
-        const lineString = utils.newLineStringFromClickEvent(e);
+        const verticesOnly = altHeld.current && shiftHeld.current;
+        const pos = altHeld.current
+          ? (getSnappingCoordinates(
+              e,
+              featureMap,
+              pmap,
+              idMap,
+              undefined,
+              verticesOnly
+            ) as Position)
+          : getMapCoord(e);
+        const lineString: LineString = {
+          type: 'LineString',
+          coordinates: [pos, pos]
+        };
 
         const putFeature = createOrUpdateFeature({
           mode,
@@ -109,7 +123,17 @@ export function useLineHandlers({
      */
     move: (e) => {
       const { modeOptions } = mode;
-      if (selection.type !== 'single') return;
+      if (selection.type !== 'single') {
+        if (altHeld.current) {
+          setEphemeralState({
+            type: 'vertex-snap',
+            vertices: getNearbyVertices(e, featureMap, pmap, idMap)
+          });
+        } else {
+          setEphemeralState({ type: 'none' });
+        }
+        return;
+      }
 
       /**
        * Ignore mousemove events produced by the Apple Pencil.

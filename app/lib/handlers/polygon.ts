@@ -56,7 +56,21 @@ export function usePolygonHandlers({
 
       // Starting a new polygon
       if (selection.type !== 'single') {
-        const polygon = utils.newPolygonFromClickEvent(e);
+        const verticesOnly = altHeld.current && shiftHeld.current;
+        const pos = altHeld.current
+          ? (getSnappingCoordinates(
+              e,
+              featureMap,
+              pmap,
+              idMap,
+              undefined,
+              verticesOnly
+            ) as Pos2)
+          : getMapCoord(e);
+        const polygon: Polygon = {
+          type: 'Polygon',
+          coordinates: [[pos, pos, pos]]
+        };
         const putFeature = createOrUpdateFeature({
           featureMap,
           geometry: polygon,
@@ -157,7 +171,17 @@ export function usePolygonHandlers({
     },
 
     move: (e) => {
-      if (selection?.type !== 'single') return;
+      if (selection?.type !== 'single') {
+        if (altHeld.current) {
+          setEphemeralState({
+            type: 'vertex-snap',
+            vertices: getNearbyVertices(e, featureMap, pmap, idMap)
+          });
+        } else {
+          setEphemeralState({ type: 'none' });
+        }
+        return;
+      }
 
       /**
        * Ignore mousemove events produced by the Apple Pencil.
