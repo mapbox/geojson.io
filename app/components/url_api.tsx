@@ -1,6 +1,7 @@
 import { MapContext } from 'app/context/map_context';
 import { useImportFile, useImportString } from 'app/hooks/use_import';
 import { DEFAULT_IMPORT_OPTIONS, detectType } from 'app/lib/convert';
+import { gzipDecode } from 'app/lib/url_encoding';
 import { useSetAtom } from 'jotai';
 import { useCallback, useContext, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
@@ -132,6 +133,19 @@ export function UrlAPI() {
 
     // Handle data param (URL or data URL)
     const handleDataParam = async (data: string) => {
+      // Handle gzipped base 64 encoded data
+      if (data.startsWith('gz:')) {
+        const geojson = await gzipDecode(data.slice(3));
+        doImportString(
+          geojson,
+          { ...DEFAULT_IMPORT_OPTIONS, type: 'geojson' },
+          () => {}
+        );
+        getExtentAndZoomTo(geojson);
+        return;
+      }
+
+      // Handle URL encoded geojson
       const url = new URL(data);
       if (url.protocol === 'https:') {
         const res = await fetch(url);

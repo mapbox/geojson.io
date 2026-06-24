@@ -5,7 +5,9 @@ import {
 } from '@radix-ui/react-icons';
 import { DialogHeader } from 'app/components/dialog';
 import * as E from 'app/components/elements';
+import { gzipEncode } from 'app/lib/url_encoding';
 import { useAtomValue } from 'jotai';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { dataAtom } from 'state/jotai';
 import type { FeatureMap } from 'types';
@@ -14,14 +16,15 @@ import { UWrappedFeature } from 'types';
 const WARN_LENGTH = 2000;
 const MAX_URL_LENGTH = 8000;
 
-export function buildShareUrl(featureMap: FeatureMap): {
+export async function buildShareUrl(featureMap: FeatureMap): Promise<{
   url: string;
   tooLong: boolean;
   longWarning: boolean;
-} {
+}> {
   const fc = UWrappedFeature.mapToFeatureCollection(featureMap);
   const json = JSON.stringify(fc);
-  const url = `${window.location.origin}/?data=${encodeURIComponent(`data:application/json,${json}`)}`;
+  const encoded = await gzipEncode(json);
+  const url = `${window.location.origin}/?data=gz:${encoded}`;
   return {
     url,
     tooLong: url.length >= MAX_URL_LENGTH,
@@ -31,11 +34,19 @@ export function buildShareUrl(featureMap: FeatureMap): {
 
 export function ShareDialog({ onClose }: { onClose: () => void }) {
   const data = useAtomValue(dataAtom);
+  const [result, setResult] = useState<{
+    url: string;
+    tooLong: boolean;
+    longWarning: boolean;
+  } | null>(null);
 
-  const { url, tooLong, longWarning } = buildShareUrl(data.featureMap);
+  useEffect(() => {
+    buildShareUrl(data.featureMap).then(setResult);
+  }, [data.featureMap]);
 
   async function copyUrl() {
-    await navigator.clipboard.writeText(url);
+    if (!result) return;
+    await navigator.clipboard.writeText(result.url);
     toast.success('Copied link');
   }
 
@@ -43,7 +54,9 @@ export function ShareDialog({ onClose }: { onClose: () => void }) {
     <>
       <DialogHeader title="Share" titleIcon={Share2Icon} />
       <div className="space-y-4">
-        {tooLong ? (
+        {!result ? (
+          <E.TextWell>Generating link…</E.TextWell>
+        ) : result.tooLong ? (
           <E.TextWell variant="destructive">
             The current dataset is too large to share via URL. Share links are
             limited to {MAX_URL_LENGTH.toLocaleString()} characters. Try
@@ -55,7 +68,7 @@ export function ShareDialog({ onClose }: { onClose: () => void }) {
               Share this link to load the current data in geojson.io. The data
               is encoded directly in the URL — no account or upload required.
             </E.TextWell>
-            {longWarning && (
+            {result.longWarning && (
               <div className="text-sm py-2 px-3 rounded bg-yellow-50 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100">
                 <ExclamationTriangleIcon className="inline-block w-3 h-3 mr-1" />
                 This URL is over {WARN_LENGTH.toLocaleString()} characters. Very
@@ -65,7 +78,7 @@ export function ShareDialog({ onClose }: { onClose: () => void }) {
             <div className="flex gap-2 items-center">
               <input
                 readOnly
-                value={url}
+                value={result.url}
                 className="flex-1 text-xs font-mono bg-gray-100 dark:bg-gray-800
                   border border-gray-300 dark:border-gray-600
                   rounded px-2 py-1.5 text-gray-800 dark:text-gray-200

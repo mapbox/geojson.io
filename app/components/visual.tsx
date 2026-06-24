@@ -3,7 +3,7 @@ import * as E from 'app/components/elements';
 import { buildShareUrl } from 'app/components/dialogs/share';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Popover, Tooltip as T } from 'radix-ui';
-import { memo, Suspense, useMemo } from 'react';
+import { memo, Suspense, useEffect, useState } from 'react';
 import { dataAtom, dialogAtom } from 'state/jotai';
 import { DialogHelpers } from 'state/dialog_helpers';
 import { StylesPopover } from './styles/popover';
@@ -14,11 +14,13 @@ export const Visual = memo(function Visual() {
   const data = useAtomValue(dataAtom);
   const openFiles = useOpenFiles();
   const hasFeatures = data.featureMap.size > 0;
+  const [shareTooLong, setShareTooLong] = useState(false);
 
-  const { tooLong: shareTooLong } = useMemo(
-    () => buildShareUrl(data.featureMap),
-    [data.featureMap]
-  );
+  useEffect(() => {
+    buildShareUrl(data.featureMap).then(({ tooLong }) =>
+      setShareTooLong(tooLong)
+    );
+  }, [data.featureMap]);
 
   return (
     <div className="flex items-center">
