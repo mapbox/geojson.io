@@ -37,6 +37,7 @@ export function usePolygonHandlers({
    * Workarounds for Apple Pencil (same as in line drawing)
    */
   const usingTouchEvents = useRef<boolean>(false);
+  const isMultiTouch = useRef<boolean>(false);
 
   const shiftHeld = useShiftHeld();
   const altHeld = useAltHeld();
@@ -201,19 +202,27 @@ export function usePolygonHandlers({
 
     touchstart: (e) => {
       usingTouchEvents.current = true;
+      if (e.originalEvent.touches.length > 1) {
+        isMultiTouch.current = true;
+        return;
+      }
+      isMultiTouch.current = false;
       e.preventDefault();
     },
 
     touchmove: (e) => {
+      if (e.originalEvent.touches.length > 1 || isMultiTouch.current) return;
       e.preventDefault();
-      // If this is a Pencil, allow moving. If it
-      // is a finger, do not.
       if (e.originalEvent?.touches[0]?.force) {
         handlers.move(e);
       }
     },
 
     touchend: (e) => {
+      if (isMultiTouch.current) {
+        if (e.originalEvent.touches.length === 0) isMultiTouch.current = false;
+        return;
+      }
       handlers.click(e);
     },
     up() {

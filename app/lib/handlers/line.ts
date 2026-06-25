@@ -31,6 +31,7 @@ export function useLineHandlers({
   const transact = rep.useTransact();
   const popMoment = usePopMoment();
   const usingTouchEvents = useRef<boolean>(false);
+  const isMultiTouch = useRef<boolean>(false);
   const shiftHeld = useShiftHeld();
   const altHeld = useAltHeld();
 
@@ -146,14 +147,24 @@ export function useLineHandlers({
 
     touchstart: (e) => {
       usingTouchEvents.current = true;
+      if (e.originalEvent.touches.length > 1) {
+        isMultiTouch.current = true;
+        return;
+      }
+      isMultiTouch.current = false;
       e.preventDefault();
     },
 
     touchmove: (e) => {
+      if (e.originalEvent.touches.length > 1 || isMultiTouch.current) return;
       handlers.move(e);
     },
 
     touchend: (e) => {
+      if (isMultiTouch.current) {
+        if (e.originalEvent.touches.length === 0) isMultiTouch.current = false;
+        return;
+      }
       handlers.click(e);
     },
 
