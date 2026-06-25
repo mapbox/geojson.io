@@ -4,6 +4,8 @@ Recent changes to the geojson.io application. Entries are grouped by ship date.
 
 ## 2026-06-25
 
+- **Fix 2 finger pan while in drawing mode:** Fix for users on touch devices, now 2 finger gestures while drawing is in process will make it to the map and will allow for panning.
+- **Mobile Panel Resizing:** On Mobile devices the bottom panel now presents clickable surface for resizing.
 - **Streamlined file import:** Files with unambiguous formats (GeoJSON, KML, GPX, shapefiles, etc.) now import directly without showing a dialog. The import modal only appears when user input is needed (CSV, XLS, coordinate strings). Drag-and-drop and the Import button now share identical logic, and `fitBounds` works correctly after drag-and-drop imports.
 
 ## 2026-06-24
