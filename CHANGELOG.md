@@ -2,6 +2,10 @@
 
 Recent changes to the geojson.io application. Entries are grouped by ship date.
 
+## 2026-06-25
+
+- **Streamlined file import:** Files with unambiguous formats (GeoJSON, KML, GPX, shapefiles, etc.) now import directly without showing a dialog. The import modal only appears when user input is needed (CSV, XLS, coordinate strings). Drag-and-drop and the Import button now share identical logic, and `fitBounds` works correctly after drag-and-drop imports.
+
 ## 2026-06-24
 
 - **Adds Share Url Functionality**: Get a share url to send others, with geojson features zipped and base64 encoded to allow for large geojson to be encoded efficiently. ([#1017](https://github.com/mapbox/geojson.io/pull/1017))
