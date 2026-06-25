@@ -262,7 +262,7 @@ export const BottomResizer = memo(function BottomResizerInner() {
         flex items-center
         justify-center
         h-1
-        hover-none:w-3
+        hover-none:h-3
         z-max
         bg-opacity-0
         dark:bg-opacity-0
@@ -279,8 +279,8 @@ export const BottomResizer = memo(function BottomResizerInner() {
       <div
         className="
         hover-hover:hidden
-        h-16
-        w-1
+        w-16
+        h-1
         rounded
         bg-white"
       />
