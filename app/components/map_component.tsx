@@ -349,7 +349,10 @@ export const MapComponent = memo(function MapComponent({
       const newSearch = otherParams
         ? `?${otherParams}&map=${cameraStr}`
         : `?map=${cameraStr}`;
-      window.history.replaceState(
+      // Use the prototype method directly to bypass GA4's instance-level
+      // patch of history.replaceState, which fires a page_view on every call.
+      History.prototype.replaceState.call(
+        history,
         null,
         '',
         window.location.pathname + newSearch + window.location.hash
