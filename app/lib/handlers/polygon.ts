@@ -171,7 +171,7 @@ export function usePolygonHandlers({
 
     move: (e) => {
       if (selection?.type !== 'single') {
-        if (altHeld.current) {
+        if (altHeld.current && shiftHeld.current) {
           setEphemeralState({
             type: 'vertex-snap',
             vertices: getNearbyVertices(e, featureMap, pmap, idMap)
@@ -215,10 +215,20 @@ export function usePolygonHandlers({
           selection.id,
           verticesOnly
         ) as Pos2;
-        setEphemeralState({
-          type: 'vertex-snap',
-          vertices: getNearbyVertices(e, featureMap, pmap, idMap, selection.id)
-        });
+        if (verticesOnly) {
+          setEphemeralState({
+            type: 'vertex-snap',
+            vertices: getNearbyVertices(
+              e,
+              featureMap,
+              pmap,
+              idMap,
+              selection.id
+            )
+          });
+        } else {
+          setEphemeralState({ type: 'none' });
+        }
       } else {
         setEphemeralState({ type: 'none' });
       }

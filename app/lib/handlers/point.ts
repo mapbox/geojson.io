@@ -78,7 +78,7 @@ export function usePointHandlers({
         .catch((e) => captureException(e));
     },
     move: (e) => {
-      if (altHeld.current) {
+      if (altHeld.current && shiftHeld.current) {
         setEphemeralState({
           type: 'vertex-snap',
           vertices: getNearbyVertices(e, featureMap, pmap, idMap)
