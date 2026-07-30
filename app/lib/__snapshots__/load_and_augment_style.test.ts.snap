@@ -585,6 +585,24 @@ exports[`loadAndAugmentStyle 1`] = `
       "source": "circle-drawing",
       "type": "circle",
     },
+    {
+      "id": "vertex-snap-circles",
+      "layout": {},
+      "paint": {
+        "circle-color": [
+          "coalesce",
+          [
+            "get",
+            "stroke",
+          ],
+          "#312E81",
+        ],
+        "circle-emissive-strength": 1,
+        "circle-radius": 3,
+      },
+      "source": "vertex-snap",
+      "type": "circle",
+    },
   ],
   "name": "Empty",
   "sources": {
@@ -611,6 +629,13 @@ exports[`loadAndAugmentStyle 1`] = `
         "type": "FeatureCollection",
       },
       "tolerance": 0,
+      "type": "geojson",
+    },
+    "vertex-snap": {
+      "data": {
+        "features": [],
+        "type": "FeatureCollection",
+      },
       "type": "geojson",
     },
   },
@@ -1157,6 +1182,24 @@ exports[`makeLayers > categorical 2`] = `
       "circle-stroke-width": 2,
     },
     "source": "circle-drawing",
+    "type": "circle",
+  },
+  {
+    "id": "vertex-snap-circles",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "coalesce",
+        [
+          "get",
+          "stroke",
+        ],
+        "#312E81",
+      ],
+      "circle-emissive-strength": 1,
+      "circle-radius": 3,
+    },
+    "source": "vertex-snap",
     "type": "circle",
   },
 ]
@@ -1716,6 +1759,24 @@ exports[`makeLayers > none 1`] = `
     "source": "circle-drawing",
     "type": "circle",
   },
+  {
+    "id": "vertex-snap-circles",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "coalesce",
+        [
+          "get",
+          "stroke",
+        ],
+        "#312E81",
+      ],
+      "circle-emissive-strength": 1,
+      "circle-radius": 3,
+    },
+    "source": "vertex-snap",
+    "type": "circle",
+  },
 ]
 `;
 
@@ -2232,6 +2293,24 @@ exports[`makeLayers > ramp 1`] = `
       "circle-stroke-width": 2,
     },
     "source": "circle-drawing",
+    "type": "circle",
+  },
+  {
+    "id": "vertex-snap-circles",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "coalesce",
+        [
+          "get",
+          "stroke",
+        ],
+        "#312E81",
+      ],
+      "circle-emissive-strength": 1,
+      "circle-radius": 3,
+    },
+    "source": "vertex-snap",
     "type": "circle",
   },
 ]
@@ -2795,6 +2874,24 @@ exports[`makeLayers > with preview property 1`] = `
       "circle-stroke-width": 2,
     },
     "source": "circle-drawing",
+    "type": "circle",
+  },
+  {
+    "id": "vertex-snap-circles",
+    "layout": {},
+    "paint": {
+      "circle-color": [
+        "coalesce",
+        [
+          "get",
+          "stroke",
+        ],
+        "#312E81",
+      ],
+      "circle-emissive-strength": 1,
+      "circle-radius": 3,
+    },
+    "source": "vertex-snap",
     "type": "circle",
   },
   {

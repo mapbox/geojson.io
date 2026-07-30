@@ -18,7 +18,8 @@ import type { IDMap } from 'app/lib/id_mapper';
 import loadAndAugmentStyle, {
   CIRCLE_DRAWING_SOURCE_NAME,
   EPHEMERAL_SOURCE_NAME,
-  FEATURES_SOURCE_NAME
+  FEATURES_SOURCE_NAME,
+  VERTEX_SNAP_SOURCE_NAME
 } from 'app/lib/load_and_augment_style';
 import { makeRectangle } from 'app/lib/pmap/merge_ephemeral_state';
 import { splitFeatureGroups } from 'app/lib/pmap/split_feature_groups';
@@ -392,6 +393,24 @@ export default class PMap {
           type: 'FeatureCollection',
           features: []
         });
+      }
+    }
+
+    const vertexSnapSource = this.map.getSource(VERTEX_SNAP_SOURCE_NAME) as
+      | mapboxgl.GeoJSONSource
+      | undefined;
+    if (vertexSnapSource) {
+      if (ephemeralState.type === 'vertex-snap') {
+        vertexSnapSource.setData({
+          type: 'FeatureCollection',
+          features: ephemeralState.vertices.map(({ position, stroke }) => ({
+            type: 'Feature',
+            properties: { stroke },
+            geometry: { type: 'Point', coordinates: position }
+          }))
+        });
+      } else if (this.lastEphemeralState.type === 'vertex-snap') {
+        vertexSnapSource.setData({ type: 'FeatureCollection', features: [] });
       }
     }
 
