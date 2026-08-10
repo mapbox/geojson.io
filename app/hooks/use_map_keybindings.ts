@@ -127,12 +127,13 @@ export function useMapKeybindings() {
   );
 
   useHotkeys(
-    'Backspace, delete',
+    'Backspace, delete, decimal', // decimal is added for numpad [Del.] key strokes
     (e) => {
+      if (e.code === 'NumpadDecimal' && e.key !== 'Delete') return; // gates to only when numLock sets decimal to delete
       e.preventDefault();
       void onDelete();
     },
-    { ...keybindingOptions, useKey: true },
+    keybindingOptions,
     [onDelete]
   );
 }
