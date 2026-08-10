@@ -41,6 +41,7 @@ export function useMapKeybindings() {
       historyControl('undo').catch((e) => captureException(e));
       return false;
     },
+    { useKey: true },
     [historyControl]
   );
 
@@ -49,6 +50,7 @@ export function useMapKeybindings() {
     (_e: KeyboardEvent) => {
       historyControl('redo').catch((e) => captureException(e));
     },
+    { useKey: true },
     [historyControl]
   );
 
