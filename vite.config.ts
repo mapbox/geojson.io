@@ -9,7 +9,7 @@ export default defineConfig((env) => ({
     env.mode === 'test'
       ? [react(), tsconfigPaths()]
       : [react(), tsconfigPaths(), nodePolyfills()],
-  base: '/',
+  base: env.mode === 'staging' ? '/geojson-io-staging/' : '/',
   build: {
     outDir: './dist'
   },
