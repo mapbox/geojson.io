@@ -33,6 +33,10 @@ Then, start the development server:
 npm run dev
 ```
 
+## Deploying to Staging
+
+For Mapboxer's who are want to test branches before deploying to production use the `mbx env` CLI tool for authentication and then run `npm run deploy:staging` to deploy to Mapbox's labs.tilestream.net staging server.
+
 This will start the application on `http://localhost:5173`. Open this URL in your web browser to view and interact with the application.
 
 ## History & Attribution

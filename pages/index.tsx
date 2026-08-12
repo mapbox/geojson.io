@@ -28,7 +28,7 @@ function App() {
       <StrictMode>
         <QueryClientProvider client={queryClient}>
           <T.Provider>
-            <Router base="">
+            <Router base={import.meta.env.BASE_URL}>
               <Switch>
                 <Route path="/">
                   <Provider store={store}>

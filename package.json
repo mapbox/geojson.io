@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy:staging": "vite build --mode staging && aws s3 sync dist/ s3://labs.mapbox.com-staging/geojson-io-staging/ --cache-control max-age=120",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "npm run lint && vitest run",
