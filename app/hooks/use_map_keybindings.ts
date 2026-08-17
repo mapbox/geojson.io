@@ -108,7 +108,7 @@ export function useMapKeybindings() {
       e.preventDefault();
       void onSelectAll();
     },
-    keybindingOptions,
+    { ...keybindingOptions, useKey: true },
     [onSelectAll]
   );
 
