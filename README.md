@@ -20,7 +20,7 @@ If you encounter any issues or have suggestions for new features, please open an
 To run this project locally, you'll need [Node.js](https://nodejs.org/) installed. Then, clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/mapbox/geojson-io.git
+git clone https://github.com/mapbox/geojson.io.git
 cd geojson.io
 npm install
 ```
