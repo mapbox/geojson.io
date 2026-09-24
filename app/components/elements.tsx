@@ -340,6 +340,7 @@ export const contentLike = `py-1
     ring-1 ring-gray-200 dark:ring-gray-700
     content-layout`;
 
+// Menus use z-50 so they open above in-map overlays like mode hints (z-10)
 const floatingContentLike = `${contentLike} z-50`;
 
 export const DDContent = classed(DD.Content)(floatingContentLike);
