@@ -27,7 +27,7 @@ function ModeHint({
   return (
     <div
       className={clsx(
-        'z-0 absolute top-2 left-2 px-2 text-sm flex gap-x-2 items-center dark:text-white',
+        'z-10 absolute top-2 left-2 px-2 text-sm flex gap-x-2 items-center dark:text-white',
         contentLike
       )}
     >
